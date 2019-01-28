@@ -1,0 +1,132 @@
+version: 2.1
+commands:
+  bazel_install:
+    steps:
+      - run:
+          name: Bazel - Install
+          command: |
+            curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-linux-x86_64.sh
+            chmod +x bazel-0.20.0-installer-linux-x86_64.sh
+            sudo ./bazel-0.20.0-installer-linux-x86_64.sh
+
+  bazel_add_rbe_credential:
+    steps:
+      - run:
+          name: Bazel - Add RBE Credential
+          command: |
+            if [[ -n "$BAZEL_RBE_CREDENTIAL" ]]; then
+              BAZEL_RBE_CREDENTIAL_LOCATION=~/.config/gcloud/application_default_credentials.json
+              echo "An RBE credential is found and will be saved to $BAZEL_RBE_CREDENTIAL_LOCATION. Bazel will be executed with RBE support."
+              mkdir -p ~/.config/gcloud/
+              echo $BAZEL_RBE_CREDENTIAL > "$BAZEL_RBE_CREDENTIAL_LOCATION"
+            else
+              echo "No RBE credential found. Bazel will be executed locally without RBE support."
+            fi
+
+  bazel:
+    parameters:
+      command:
+          type: string
+    steps:
+      - run:
+          name: Bazel - Execute
+          command: |
+            if [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
+              echo "Bazel will be executed with RBE support. This means the build is remotely executed and the cache will be re-used by subsequent CI jobs."
+              CMD="<< parameters.command >> --config=rbe"
+            else
+              echo "Bazel will be executed locally (without RBE support)."
+              CMD="<< parameters.command >>"
+            fi
+            echo "Executing $CMD"
+            $CMD
+
+  run_grakn_server:
+    steps:
+      - run: bazel build @graknlabs_grakn//:distribution
+      - run: unzip bazel-genfiles/grakn-core-all.zip -d bazel-genfiles/dist/
+      - run: nohup bazel-genfiles/dist/grakn-core-all/grakn server start
+      - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test-end-to-end/test-fixtures/basic-genealogy.gql -k gene
+
+jobs:
+  workbase:
+    machine: true
+    working_directory: ~/grakn
+    steps:
+    - checkout
+    - bazel_install
+    # - bazel_add_rbe_credential
+    - run: bazel run @nodejs//:npm install
+    - run: bazel test //:tests-unit --test_output=errors
+    - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
+    - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
+    - run_grakn_server
+    - run: Xvfb :99 &
+    - run: export DISPLAY=:99
+    - run: bazel test //:tests-e2e --test_output=streamed
+
+
+  build-workbase-linux:
+      machine: true
+      working_directory: ~/grakn
+      steps:
+        - attach_workspace:
+            at: ~/grakn
+        - checkout
+        - bazel_install
+        - bazel:
+            command: bazel run @nodejs//:npm install
+        - bazel:
+            command: bazel run @nodejs//:npm run build
+        - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
+        # TODO: make a separate rule for building on Linux / use another naming scheme
+        - run: mv ./bazel-genfiles/grakn-workbase.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
+        - persist_to_workspace:
+            root: ~/grakn
+            paths:
+              - artifacts/*-linux.tar.gz
+
+  build-workbase-mac:
+      macos:
+          xcode: "9.0"
+      working_directory: ~/grakn
+      steps:
+        - attach_workspace:
+            at: ~/grakn
+        - checkout
+        - bazel_install
+        - run_grakn_server
+        - bazel:
+            command: bazel run @nodejs//:npm install
+        - bazel:
+            command: bazel test //:tests-e2e --test_output=errors
+        - bazel:
+            command: bazel run @nodejs//:npm run build
+        - run: mv ./bazel-genfiles/grakn-workbase.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
+        - persist_to_workspace:
+            root: ~/grakn
+            paths:
+              - artifacts/*-mac.zip
+
+workflows:
+  version: 2
+  grakn-workbase-ci:
+    jobs:
+      - workbase
+      - build-workbase-mac
+      - build-workbase-linux
+
+#  build-and-deploy:
+#    jobs:
+#      - build-workbase-mac:
+#          filters:
+#            tags:
+#              only: /^v.*/
+#            branches:
+#              ignore: /.*/
+#      - build-workbase-linux:
+#          filters:
+#            tags:
+#              only: /^v.*/
+#            branches:
+#              ignore: /.*/

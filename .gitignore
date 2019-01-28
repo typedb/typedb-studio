@@ -12,3 +12,6 @@ coverage
 .vscode
 .idea
 package-lock.json
+bazel-*
+.ijwb
+
