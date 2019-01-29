@@ -68,6 +68,7 @@ function getMockEntity2() {
     isThing: () => true,
     isInferred: () => Promise.resolve(false),
     isRelationship: () => false,
+    isType: () => false,
   };
 }
 

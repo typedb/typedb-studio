@@ -8,6 +8,8 @@ jest.mock('@/components/ServerSettings', () => ({
   getServerUri: () => '127.0.0.1:48555',
 }));
 
+jest.setTimeout(10000);
+
 describe('actions', () => {
   store.dispatch('initGrakn');
 

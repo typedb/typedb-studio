@@ -19,7 +19,7 @@ jest.setTimeout(30000);
 const grakn = new Grakn(ServerSettings.getServerUri(), null);
 let graknSession;
 
-beforeEach(() => {
+beforeAll(() => {
   graknSession = grakn.session('testkeyspace2');
 });
 
@@ -28,8 +28,7 @@ describe('Actions', () => {
   test('define entity type', async () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
-
-    await schemaHandler.defineEntityType({ label: 'person' });
+    await schemaHandler.defineEntityType({ entityLabel: 'person' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -40,7 +39,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineAttributeType({ label: 'name', dataType: 'string' });
+    await schemaHandler.defineAttributeType({ attributeLabel: 'name', dataType: 'string' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -51,9 +50,9 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationshipType({ label: 'parentship' });
-    await schemaHandler.defineRole({ label: 'parent' });
-    await schemaHandler.addRelatesRole({ label: 'parentship', roleLabel: 'parent' });
+    await schemaHandler.defineRelationshipType({ relationshipLabel: 'parentship' });
+    await schemaHandler.defineRole({ roleLabel: 'parent' });
+    await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
 
     await graknTx.commit();
 
@@ -68,7 +67,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     let schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineEntityType({ label: 'delete-type' });
+    await schemaHandler.defineEntityType({ entityLabel: 'delete-type' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -87,7 +86,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.addAttribute({ label: 'person', attributeLabel: 'name' });
+    await schemaHandler.addAttribute({ schemaLabel: 'person', attributeLabel: 'name' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -99,7 +98,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     let schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.addAttribute({ label: 'person', attributeLabel: 'name' });
+    await schemaHandler.addAttribute({ schemaLabel: 'person', attributeLabel: 'name' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -119,7 +118,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.addPlaysRole({ label: 'person', roleLabel: 'parent' });
+    await schemaHandler.addPlaysRole({ schemaLabel: 'person', roleLabel: 'parent' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
@@ -143,9 +142,9 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     let schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationshipType({ label: 'parentship' });
-    await schemaHandler.defineRole({ label: 'parent' });
-    await schemaHandler.addRelatesRole({ label: 'parentship', roleLabel: 'parent' });
+    await schemaHandler.defineRelationshipType({ relationshipLabel: 'parentship' });
+    await schemaHandler.defineRole({ roleLabel: 'parent' });
+    await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
 
     await graknTx.commit();
 

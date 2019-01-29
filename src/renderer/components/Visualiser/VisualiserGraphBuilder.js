@@ -199,7 +199,7 @@ async function constructEdges(result) {
 
     const attributes = map.filter(x => x.isAttribute());
     const relationships = map.filter(x => x.isRelationship());
-    const schemaConcepts = map.filter(x => x.isSchemaConcept());
+    const schemaConcepts = map.filter(x => x.isType());
 
     // Compute edges that connect things to their attributes
     const attributeEdges = await computeAttributeEdges(attributes, thingIds);
