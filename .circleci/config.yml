@@ -9,6 +9,15 @@ commands:
             chmod +x bazel-0.20.0-installer-linux-x86_64.sh
             sudo ./bazel-0.20.0-installer-linux-x86_64.sh
 
+  bazel_install_macos:
+    steps:
+      - run:
+          name: Bazel - Install (macOS)
+          command: |
+            curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-darwin-x86_64.sh
+            chmod +x bazel-0.20.0-installer-darwin-x86_64.sh
+            sudo ./bazel-0.20.0-installer-darwin-x86_64.sh
+
   bazel_add_rbe_credential:
     steps:
       - run:
@@ -44,9 +53,9 @@ commands:
   run_grakn_server:
     steps:
       - run: bazel build @graknlabs_grakn//:distribution
-      - run: unzip bazel-genfiles/grakn-core-all.zip -d bazel-genfiles/dist/
+      - run: unzip bazel-genfiles/external/graknlabs_grakn/grakn-core-all.zip -d bazel-genfiles/dist/
       - run: nohup bazel-genfiles/dist/grakn-core-all/grakn server start
-      - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test-end-to-end/test-fixtures/basic-genealogy.gql -k gene
+      - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
 
 jobs:
   workbase:
@@ -57,13 +66,13 @@ jobs:
     - bazel_install
     # - bazel_add_rbe_credential
     - run: bazel run @nodejs//:npm install
-    - run: bazel test //:tests-unit --test_output=errors
     - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
     - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
     - run_grakn_server
     - run: Xvfb :99 &
     - run: export DISPLAY=:99
-    - run: bazel test //:tests-e2e --test_output=streamed
+    - run: bazel run @nodejs//:npm test
+    - run: bazel run @nodejs//:npm run e2e
 
 
   build-workbase-linux:
@@ -74,13 +83,15 @@ jobs:
             at: ~/grakn
         - checkout
         - bazel_install
-        - bazel:
+        - run:
+            name: npm install
             command: bazel run @nodejs//:npm install
-        - bazel:
+        - run:
+            name: npm run build
             command: bazel run @nodejs//:npm run build
         - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
         # TODO: make a separate rule for building on Linux / use another naming scheme
-        - run: mv ./bazel-genfiles/grakn-workbase.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
+        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
         - persist_to_workspace:
             root: ~/grakn
             paths:
@@ -94,15 +105,18 @@ jobs:
         - attach_workspace:
             at: ~/grakn
         - checkout
-        - bazel_install
+        - bazel_install_macos
         - run_grakn_server
-        - bazel:
+        - run:
+            name: npm install
             command: bazel run @nodejs//:npm install
-        - bazel:
-            command: bazel test //:tests-e2e --test_output=errors
-        - bazel:
+        - run:
+            name: npm run build
             command: bazel run @nodejs//:npm run build
-        - run: mv ./bazel-genfiles/grakn-workbase.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
+        - run:
+            name: npm run e2e
+            command: bazel run @nodejs//:npm run e2e
+        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
         - persist_to_workspace:
             root: ~/grakn
             paths:
