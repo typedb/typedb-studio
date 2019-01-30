@@ -134,31 +134,25 @@ jobs:
 
 workflows:
   version: 2
-  grakn-workbase-ci:
-    jobs:
-      - workbase
-      - build-workbase-mac
-      - build-workbase-linux
+  # grakn-workbase-ci:
+  #   jobs:
+  #     - workbase
+  #     - build-workbase-mac
+  #     - build-workbase-linux
   build-and-deploy:
     jobs:
       - build-workbase-mac:
           filters:
-            tags:
-              only: /^v.*/
             branches:
-              ignore: /.*/
+              only: ci-release
       - build-workbase-linux:
           filters:
-            tags:
-              only: /^v.*/
             branches:
-              ignore: /.*/
+              only: ci-release
       - publish-github-draft:
           requires:
             - build-workbase-mac
             - build-workbase-linux
           filters:
-            tags:
-              only: /^v.*/
             branches:
-              ignore: /.*/
+              only: ci-release
