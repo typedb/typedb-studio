@@ -74,7 +74,6 @@ jobs:
     - run: bazel run @nodejs//:npm test
     - run: bazel run @nodejs//:npm run e2e
 
-
   build-workbase-linux:
       machine: true
       working_directory: ~/grakn
@@ -122,6 +121,17 @@ jobs:
             paths:
               - artifacts/*-mac.zip
 
+  publish-github-draft:
+    docker:
+      - image: cibuilds/github:0.10
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - run:
+          name: "Publish Draft Release on GitHub"
+          command: echo hello
+
 workflows:
   version: 2
   grakn-workbase-ci:
@@ -129,18 +139,26 @@ workflows:
       - workbase
       - build-workbase-mac
       - build-workbase-linux
-
-#  build-and-deploy:
-#    jobs:
-#      - build-workbase-mac:
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
-#      - build-workbase-linux:
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
+  build-and-deploy:
+    jobs:
+      - build-workbase-mac:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build-workbase-linux:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+  publish-github-draft:
+    requires:
+      - build-workbase-mac
+      - build-workbase-linux
+    filters:
+      tags:
+        only: /^v.*/
+      branches:
+        ignore: /.*/
