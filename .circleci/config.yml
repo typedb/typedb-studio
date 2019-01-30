@@ -9,7 +9,7 @@ commands:
             chmod +x bazel-0.20.0-installer-linux-x86_64.sh
             sudo ./bazel-0.20.0-installer-linux-x86_64.sh
 
-  bazel_install_macos:
+  bazel-install-macos:
     steps:
       - run:
           name: Bazel - Install (macOS)
@@ -50,7 +50,7 @@ commands:
             echo "Executing $CMD"
             $CMD
 
-  run_grakn_server:
+  run-grakn-server:
     steps:
       - run: bazel build @graknlabs_grakn//:distribution
       - run: unzip bazel-genfiles/external/graknlabs_grakn/grakn-core-all.zip -d bazel-genfiles/dist/
@@ -58,89 +58,121 @@ commands:
       - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
 
 jobs:
-  workbase:
+  test:
     machine: true
     working_directory: ~/grakn
     steps:
-    - checkout
-    - bazel_install
-    # - bazel_add_rbe_credential
-    - run: bazel run @nodejs//:npm install
-    - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
-    - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-    - run_grakn_server
-    - run: Xvfb :99 &
-    - run: export DISPLAY=:99
-    - run: bazel run @nodejs//:npm test
-    - run: bazel run @nodejs//:npm run e2e
+      - checkout
+      - bazel_install
+      # - bazel_add_rbe_credential
+      - run: bazel run @nodejs//:npm install
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
+      - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
+      - run-grakn-server
+      - run: Xvfb :99 &
+      - run: export DISPLAY=:99
+      # - run: bazel run @nodejs//:npm test
+      # - run: bazel run @nodejs//:npm run e2e
 
+  approve-release:
+    machine: true
+    steps:
+      - checkout
+      - run: python .circleci/approve-release.py
 
   build-workbase-linux:
-      machine: true
-      working_directory: ~/grakn
-      steps:
-        - attach_workspace:
-            at: ~/grakn
-        - checkout
-        - bazel_install
-        - run:
-            name: npm install
-            command: bazel run @nodejs//:npm install
-        - run:
-            name: npm run build
-            command: bazel run @nodejs//:npm run build
-        - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
-        # TODO: make a separate rule for building on Linux / use another naming scheme
-        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
-        - persist_to_workspace:
-            root: ~/grakn
-            paths:
-              - artifacts/*-linux.tar.gz
+    machine: true
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - checkout
+      - bazel_install
+      - run:
+          name: npm install
+          command: bazel run @nodejs//:npm install
+      - run:
+          name: npm run build
+          command: bazel run @nodejs//:npm run build
+      # TODO: make a separate rule for building on Linux / use another naming scheme
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
+      - persist_to_workspace:
+          root: ~/grakn
+          paths:
+            - artifacts/*-linux.tar.gz
+            - VERSION
 
   build-workbase-mac:
-      macos:
-          xcode: "9.0"
-      working_directory: ~/grakn
-      steps:
-        - attach_workspace:
-            at: ~/grakn
-        - checkout
-        - bazel_install_macos
-        - run_grakn_server
-        - run:
-            name: npm install
-            command: bazel run @nodejs//:npm install
-        - run:
-            name: npm run build
-            command: bazel run @nodejs//:npm run build
-        - run:
-            name: npm run e2e
-            command: bazel run @nodejs//:npm run e2e
-        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
-        - persist_to_workspace:
-            root: ~/grakn
-            paths:
-              - artifacts/*-mac.zip
+    macos:
+        xcode: "9.0"
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - checkout
+      - bazel-install-macos
+      - run-grakn-server
+      - run:
+          name: npm install
+          command: bazel run @nodejs//:npm install
+      - run:
+          name: npm run build
+          command: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
+      # - run:
+      #     name: npm run e2e
+      #     command: bazel run @nodejs//:npm run e2e
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
+      - persist_to_workspace:
+          root: ~/grakn
+          paths:
+            - artifacts/*-mac.zip
+  publish-github-draft:
+    docker:
+      - image: cibuilds/github:0.10
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - run:
+          name: "Publish Draft Release on GitHub"
+          command: |
+            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft v$(cat VERSION) ./artifacts
+
 
 workflows:
   version: 2
-  grakn-workbase-ci:
+  ci-pull-request:
     jobs:
-      - workbase
-      - build-workbase-mac
-      - build-workbase-linux
-
-#  build-and-deploy:
-#    jobs:
-#      - build-workbase-mac:
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
-#      - build-workbase-linux:
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
+      - test:
+          filters:
+            branches:
+              ignore: /master|trigger-workflow-deploy/
+  ci-master-branch:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: master
+      - approve-release:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+  ci-release:
+    jobs:
+      - build-workbase-mac:
+          filters:
+            branches:
+              only: trigger-workflow-deploy
+      - build-workbase-linux:
+          filters:
+            branches:
+              only: trigger-workflow-deploy
+      - publish-github-draft:
+          requires:
+            - build-workbase-mac
+            - build-workbase-linux
+          filters:
+            branches:
+              only: trigger-workflow-deploy
