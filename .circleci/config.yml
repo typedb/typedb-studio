@@ -153,12 +153,12 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-  publish-github-draft:
-    requires:
-      - build-workbase-mac
-      - build-workbase-linux
-    filters:
-      tags:
-        only: /^v.*/
-      branches:
-        ignore: /.*/
+      - publish-github-draft:
+          requires:
+            - build-workbase-mac
+            - build-workbase-linux
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
