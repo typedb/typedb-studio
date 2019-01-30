@@ -121,16 +121,16 @@ jobs:
             paths:
               - artifacts/*-mac.zip
 
-  publish-github-draft:
-    docker:
-      - image: cibuilds/github:0.10
-    working_directory: ~/grakn
-    steps:
-      - attach_workspace:
-          at: ~/grakn
-      - run:
-          name: "Publish Draft Release on GitHub"
-          command: echo hello
+    publish-github-draft:
+      docker:
+        - image: cibuilds/github:0.10
+      working_directory: ~/grakn
+      steps:
+        - attach_workspace:
+            at: ~/grakn
+        - run:
+            name: "Publish Draft Release on GitHub"
+            command: echo hello
 
 workflows:
   version: 2
