@@ -62,75 +62,75 @@ jobs:
     machine: true
     working_directory: ~/grakn
     steps:
-    - checkout
-    - bazel_install
-    # - bazel_add_rbe_credential
-    - run: bazel run @nodejs//:npm install
-    - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
-    - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-    - run_grakn_server
-    - run: Xvfb :99 &
-    - run: export DISPLAY=:99
-    - run: bazel run @nodejs//:npm test
-    - run: bazel run @nodejs//:npm run e2e
+      - checkout
+      - bazel_install
+      # - bazel_add_rbe_credential
+      - run: bazel run @nodejs//:npm install
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
+      - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
+      - run_grakn_server
+      - run: Xvfb :99 &
+      - run: export DISPLAY=:99
+      - run: bazel run @nodejs//:npm test
+      - run: bazel run @nodejs//:npm run e2e
 
   build-workbase-linux:
-      machine: true
-      working_directory: ~/grakn
-      steps:
-        - attach_workspace:
-            at: ~/grakn
-        - checkout
-        - bazel_install
-        - run:
-            name: npm install
-            command: bazel run @nodejs//:npm install
-        - run:
-            name: npm run build
-            command: bazel run @nodejs//:npm run build
-        - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
-        # TODO: make a separate rule for building on Linux / use another naming scheme
-        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
-        - persist_to_workspace:
-            root: ~/grakn
-            paths:
-              - artifacts/*-linux.tar.gz
+    machine: true
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - checkout
+      - bazel_install
+      - run:
+          name: npm install
+          command: bazel run @nodejs//:npm install
+      - run:
+          name: npm run build
+          command: bazel run @nodejs//:npm run build
+      - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
+      # TODO: make a separate rule for building on Linux / use another naming scheme
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
+      - persist_to_workspace:
+          root: ~/grakn
+          paths:
+            - artifacts/*-linux.tar.gz
 
   build-workbase-mac:
-      macos:
-          xcode: "9.0"
-      working_directory: ~/grakn
-      steps:
-        - attach_workspace:
-            at: ~/grakn
-        - checkout
-        - bazel_install_macos
-        - run_grakn_server
-        - run:
-            name: npm install
-            command: bazel run @nodejs//:npm install
-        - run:
-            name: npm run build
-            command: bazel run @nodejs//:npm run build
-        - run:
-            name: npm run e2e
-            command: bazel run @nodejs//:npm run e2e
-        - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
-        - persist_to_workspace:
-            root: ~/grakn
-            paths:
-              - artifacts/*-mac.zip
+    macos:
+        xcode: "9.0"
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - checkout
+      - bazel_install_macos
+      - run_grakn_server
+      - run:
+          name: npm install
+          command: bazel run @nodejs//:npm install
+      - run:
+          name: npm run build
+          command: bazel run @nodejs//:npm run build
+      - run:
+          name: npm run e2e
+          command: bazel run @nodejs//:npm run e2e
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
+      - persist_to_workspace:
+          root: ~/grakn
+          paths:
+            - artifacts/*-mac.zip
 
-    publish-github-draft:
-      docker:
-        - image: cibuilds/github:0.10
-      working_directory: ~/grakn
-      steps:
-        - attach_workspace:
-            at: ~/grakn
-        - run:
-            name: "Publish Draft Release on GitHub"
-            command: echo hello
+  publish-github-draft:
+    docker:
+      - image: cibuilds/github:0.10
+    working_directory: ~/grakn
+    steps:
+      - attach_workspace:
+          at: ~/grakn
+      - run:
+          name: "Publish Draft Release on GitHub"
+          command: echo hello
 
 workflows:
   version: 2
