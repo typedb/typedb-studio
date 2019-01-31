@@ -131,7 +131,7 @@ jobs:
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ./artifacts
+            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft v$(cat VERSION) ./artifacts
 
 
 workflows:
