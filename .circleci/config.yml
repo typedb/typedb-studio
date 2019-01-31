@@ -112,9 +112,9 @@ jobs:
       - run:
           name: npm run build
           command: bazel run @nodejs//:npm run build
-      - run:
-          name: npm run e2e
-          command: bazel run @nodejs//:npm run e2e
+      # - run:
+      #     name: npm run e2e
+      #     command: bazel run @nodejs//:npm run e2e
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
       - persist_to_workspace:
           root: ~/grakn
