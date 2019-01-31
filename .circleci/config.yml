@@ -154,6 +154,8 @@ workflows:
             branches:
               only: ci-release
       - approve-release:
+          requires:
+            - test
           filters:
             branches:
               only: ci-release
