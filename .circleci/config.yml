@@ -50,7 +50,7 @@ commands:
             echo "Executing $CMD"
             $CMD
 
-  run_grakn_server:
+  run-grakn-server:
     steps:
       - run: bazel build @graknlabs_grakn//:distribution
       - run: unzip bazel-genfiles/external/graknlabs_grakn/grakn-core-all.zip -d bazel-genfiles/dist/
@@ -58,7 +58,7 @@ commands:
       - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
 
 jobs:
-  workbase:
+  test:
     machine: true
     working_directory: ~/grakn
     steps:
@@ -68,7 +68,7 @@ jobs:
       - run: bazel run @nodejs//:npm install
       - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
       - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-      - run_grakn_server
+      - run-grakn-server
       - run: Xvfb :99 &
       - run: export DISPLAY=:99
       - run: bazel run @nodejs//:npm test
@@ -104,7 +104,7 @@ jobs:
           at: ~/grakn
       - checkout
       - bazel_install_macos
-      - run_grakn_server
+      - run-grakn-server
       - run:
           name: npm install
           command: bazel run @nodejs//:npm install
@@ -120,7 +120,7 @@ jobs:
           paths:
             - artifacts/*-mac.zip
 
-  publish-github-draft:
+  deploy-github:
     docker:
       - image: cibuilds/github:0.10
     working_directory: ~/grakn
@@ -133,25 +133,25 @@ jobs:
 
 workflows:
   version: 2
-  # grakn-workbase-ci:
+  # ci-pull-request:
   #   jobs:
-  #     - workbase
+  #     - test
   #     - build-workbase-mac
   #     - build-workbase-linux
-  build-and-deploy:
+  ci-release:
     jobs:
       - build-workbase-mac:
           filters:
             branches:
-              only: ci-release
+              only: ci-release #TODO: change to trigger-workflow-release
       - build-workbase-linux:
           filters:
             branches:
-              only: ci-release
-      - publish-github-draft:
+              only: ci-release #TODO: change to trigger-workflow-release
+      - deploy-github:
           requires:
             - build-workbase-mac
             - build-workbase-linux
           filters:
             branches:
-              only: ci-release
+              only: ci-release #TODO: change to trigger-workflow-release
