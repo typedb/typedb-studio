@@ -146,17 +146,17 @@ workflows:
       - test:
           filters:
             branches:
-              ignore: ci-pipeline
+              ignore: ci-release
   ci-master-branch:
     jobs:
       - test:
           filters:
             branches:
-              only: ci-pipeline
+              only: ci-release
       - approve-release:
           filters:
             branches:
-              only: ci-pipeline
+              only: ci-release
   ci-release:
     jobs:
       - build-workbase-mac:
