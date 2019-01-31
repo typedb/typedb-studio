@@ -74,6 +74,12 @@ jobs:
       - run: bazel run @nodejs//:npm test
       - run: bazel run @nodejs//:npm run e2e
 
+  approve-release:
+    machine: true
+    steps:
+      - checkout
+      - run: python .circleci/approve-release.py
+
   build-workbase-linux:
     machine: true
     working_directory: ~/grakn
@@ -120,7 +126,6 @@ jobs:
           root: ~/grakn
           paths:
             - artifacts/*-mac.zip
-
   publish-github-draft:
     docker:
       - image: cibuilds/github:0.10
@@ -138,21 +143,34 @@ workflows:
   version: 2
   ci-pull-request:
     jobs:
-      - test
+      - test:
+          filters:
+            branches:
+              ignore: ci-pipeline
+  ci-master-branch:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: ci-pipeline
+      - approve-release:
+          filters:
+            branches:
+              only: ci-pipeline
   ci-release:
     jobs:
       - build-workbase-mac:
           filters:
             branches:
-              only: trigger-ci-release
+              only: trigger-workflow-deploy
       - build-workbase-linux:
           filters:
             branches:
-              only: trigger-ci-release
+              only: trigger-workflow-deploy
       - publish-github-draft:
           requires:
             - build-workbase-mac
             - build-workbase-linux
           filters:
             branches:
-              only: trigger-ci-release
+              only: trigger-workflow-deploy
