@@ -120,8 +120,7 @@ jobs:
           root: ~/grakn
           paths:
             - artifacts/*-mac.zip
-            - VERSION
-
+            
   publish-github-draft:
     docker:
       - image: cibuilds/github:0.10
