@@ -136,11 +136,9 @@ jobs:
 
 workflows:
   version: 2
-  # ci-pull-request:
-  #   jobs:
-  #     - test
-  #     - build-workbase-mac
-  #     - build-workbase-linux
+  ci-pull-request:
+    jobs:
+      - test
   ci-release:
     jobs:
       - build-workbase-mac:
