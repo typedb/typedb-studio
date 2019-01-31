@@ -9,7 +9,7 @@ commands:
             chmod +x bazel-0.20.0-installer-linux-x86_64.sh
             sudo ./bazel-0.20.0-installer-linux-x86_64.sh
 
-  bazel_install_macos:
+  bazel-install-macos:
     steps:
       - run:
           name: Bazel - Install (macOS)
@@ -94,6 +94,7 @@ jobs:
           root: ~/grakn
           paths:
             - artifacts/*-linux.tar.gz
+            - VERSION
 
   build-workbase-mac:
     macos:
@@ -103,14 +104,14 @@ jobs:
       - attach_workspace:
           at: ~/grakn
       - checkout
-      - bazel_install_macos
+      - bazel-install-macos
       - run-grakn-server
       - run:
           name: npm install
           command: bazel run @nodejs//:npm install
       - run:
           name: npm run build
-          command: bazel run @nodejs//:npm run build
+          command: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
       # - run:
       #     name: npm run e2e
       #     command: bazel run @nodejs//:npm run e2e
@@ -119,6 +120,7 @@ jobs:
           root: ~/grakn
           paths:
             - artifacts/*-mac.zip
+            - VERSION
 
   publish-github-draft:
     docker:
@@ -130,7 +132,7 @@ jobs:
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft ${CIRCLE_TAG} ./artifacts
+            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ./artifacts
 
 
 workflows:
