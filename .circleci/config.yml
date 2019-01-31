@@ -129,7 +129,9 @@ jobs:
           at: ~/grakn
       - run:
           name: "Publish Draft Release on GitHub"
-          command: echo hello
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft ${CIRCLE_TAG} ./artifacts
+
 
 workflows:
   version: 2
