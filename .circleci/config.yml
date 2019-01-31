@@ -88,9 +88,8 @@ jobs:
       - run:
           name: npm run build
           command: bazel run @nodejs//:npm run build
-      - run: echo 'export GRAKN_VERSION=$(echo ${CIRCLE_TAG} | cut -c 2-)' >> $BASH_ENV # TODO: remove 'v' from tag name and use it as Grakn Version to be released
       # TODO: make a separate rule for building on Linux / use another naming scheme
-      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-linux.tar.gz
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
       - persist_to_workspace:
           root: ~/grakn
           paths:
@@ -115,7 +114,7 @@ jobs:
       # - run:
       #     name: npm run e2e
       #     command: bazel run @nodejs//:npm run e2e
-      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-${GRAKN_VERSION}-mac.zip
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
       - persist_to_workspace:
           root: ~/grakn
           paths:
