@@ -146,7 +146,7 @@ workflows:
       - test:
           filters:
             branches:
-              ignore: ci-release
+              ignore: /ci-release|trigger-workflow-deploy/
   ci-master-branch:
     jobs:
       - test:
