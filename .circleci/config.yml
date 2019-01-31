@@ -146,19 +146,19 @@ workflows:
       - test:
           filters:
             branches:
-              ignore: /ci-release|trigger-workflow-deploy/
+              ignore: /master|trigger-workflow-deploy/
   ci-master-branch:
     jobs:
       - test:
           filters:
             branches:
-              only: ci-release
+              only: master
       - approve-release:
           requires:
             - test
           filters:
             branches:
-              only: ci-release
+              only: master
   ci-release:
     jobs:
       - build-workbase-mac:
