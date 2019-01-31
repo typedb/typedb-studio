@@ -71,8 +71,8 @@ jobs:
       - run-grakn-server
       - run: Xvfb :99 &
       - run: export DISPLAY=:99
-      - run: bazel run @nodejs//:npm test
-      - run: bazel run @nodejs//:npm run e2e
+      # - run: bazel run @nodejs//:npm test
+      # - run: bazel run @nodejs//:npm run e2e
 
   approve-release:
     machine: true
