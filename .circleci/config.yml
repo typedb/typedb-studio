@@ -120,7 +120,7 @@ jobs:
           paths:
             - artifacts/*-mac.zip
 
-  deploy-github:
+  publish-github-draft:
     docker:
       - image: cibuilds/github:0.10
     working_directory: ~/grakn
@@ -148,7 +148,7 @@ workflows:
           filters:
             branches:
               only: ci-release #TODO: change to trigger-workflow-release
-      - deploy-github:
+      - publish-github-draft:
           requires:
             - build-workbase-mac
             - build-workbase-linux
