@@ -80,6 +80,12 @@ jobs:
       - checkout
       - run: python .circleci/approve-release.py
 
+  release-cleanup:
+    machine: true
+    steps:
+      - checkout
+      - run: git push --delete origin trigger-ci-release
+
   build-workbase-linux:
     machine: true
     working_directory: ~/grakn
@@ -146,7 +152,7 @@ workflows:
       - test:
           filters:
             branches:
-              ignore: /master|trigger-workflow-deploy/
+              ignore: /master|trigger-ci-release/
   ci-master-branch:
     jobs:
       - test:
@@ -164,15 +170,21 @@ workflows:
       - build-workbase-mac:
           filters:
             branches:
-              only: trigger-workflow-deploy
+              only: trigger-ci-release
       - build-workbase-linux:
           filters:
             branches:
-              only: trigger-workflow-deploy
+              only: trigger-ci-release
       - publish-github-draft:
           requires:
             - build-workbase-mac
             - build-workbase-linux
           filters:
             branches:
-              only: trigger-workflow-deploy
+              only: trigger-ci-release
+      - release-cleanup:
+          requires:
+            - publish-github-draft
+          filters:
+            branches:
+              only: trigger-ci-release
