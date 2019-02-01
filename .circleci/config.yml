@@ -152,19 +152,19 @@ workflows:
       - test:
           filters:
             branches:
-              ignore: /master|trigger-ci-release/
+              ignore: /workflow-add-cleanup|trigger-ci-release/
   ci-master-branch:
     jobs:
       - test:
           filters:
             branches:
-              only: master
+              only: workflow-add-cleanup
       - approve-release:
           requires:
             - test
           filters:
             branches:
-              only: master
+              only: workflow-add-cleanup
   ci-release:
     jobs:
       - build-workbase-mac:
