@@ -4,7 +4,7 @@
 
 Grakn Workbase is Grakn's Integrated Development Environment to perform knowledge engineering. At the moment, Workbase provides two main functionalities: visualisation of the knowledge graph, and modelling of the knowledge schema. 
 
-You can also see Workbase as another interface for a user to interact with their Grakn database, as an alternative to the [Grakn Console](http://dev.grakn.ai/docs/running-grakn/console) and [Grkan Client API/Drivers](http://dev.grakn.ai/docs/client-api/overview).
+You can also see Workbase as another interface for a user to interact with their Grakn database, as an alternative to the [Grakn Console](http://dev.grakn.ai/docs/running-grakn/console) and [Grakn Client API/Drivers](http://dev.grakn.ai/docs/client-api/overview).
 
 Workbase Visualiser allows you to visualise data in the Grakn knowledge graph, and investigate their relationships, by performing read queries ([`match-get` queries](/docs/query/get-query)) as well as one of the computer queries: [`compute path`](/docs/query/compute-query#compute-the-shortest-path) queries. Whether you need a tool to test and experiment with your newly created Grakn knowledge graph, or that you prefer a graphical interface for reading data from Grakn, you will find Workbase extremely useful.
 
