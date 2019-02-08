@@ -5,7 +5,7 @@
     "url": "https://github.com/graknlabs/grakn.git"
   },
   "name": "grakn-workbase",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "IDE to perform knowledge engineering at scale and control everything in your Grakn knowledge graph, from development to production.",
   "author": "Grakn Labs",
   "homepage": "https://grakn.ai",
