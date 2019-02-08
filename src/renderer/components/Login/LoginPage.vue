@@ -12,7 +12,7 @@
           Log In
         </div>
         <div class="row">
-          <div class="column">
+          <div class="column-1">
             <div class="row">
               <h1 class="label">Host:</h1>
               <input class="input left-input" v-model="serverHost">
@@ -21,11 +21,8 @@
               <h1 class="label">Username:</h1>
               <input class="input left-input" v-model="username">
             </div>
-            <div class="row">
-              <div class="btn login-btn" v-bind:style="{ visibility: 'hidden' }"></div>
-            </div>
           </div>
-          <div class="column">
+          <div class="column-1">
             <div class="row">
               <h1 class="label">Port:</h1>
               <input class="input" type="number" v-model="serverPort">
@@ -46,16 +43,13 @@
           Connection
         </div>
         <div class="row">
-          <div class="column">
+          <div class="column-2">
             <div class="row">
               <h1 class="label">Host:</h1>
               <input class="input left-input" v-model="serverHost">
             </div>
-            <div class="row">
-              <div class="btn login-btn" v-bind:style="{ visibility: 'hidden' }"></div>
-            </div>
           </div>
-          <div class="column">
+          <div class="column-2">
             <div class="row">
               <h1 class="label">Port:</h1>
               <input class="input" type="number" v-model="serverPort">
@@ -89,10 +83,18 @@
     width: 100%;
   }
 
-  .column {
+  .column-1 {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 120px;
+  }
+
+  .column-2 {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 80px;
   }
 
   .row {
@@ -232,6 +234,7 @@ export default {
   },
   methods: {
     loginToKgms() {
+      this.$toasted.clear();
       this.isLoading = true;
       const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
       grakn.session('grakn').transaction().then(() => {
@@ -243,8 +246,10 @@ export default {
         .catch((e) => {
           this.isLoading = false;
           let error;
-          if (e.message.includes('2 UNKNOWN') || e.message.includes('14 UNAVAILABLE')) {
-            error = 'Login failed: <br> - make sure Grakn KGMS is running <br> - check that host and port are correct <br> - check if credentials are correct';
+          if (e.message.includes('2 UNKNOWN')) {
+            error = 'Login failed: <br> - check if credentials are correct';
+          } else if (e.message.includes('14 UNAVAILABLE')) {
+            error = 'Login failed: <br> - make sure Grakn KGMS is running <br> - check that host and port are correct';
           } else {
             error = e;
           }
@@ -252,17 +257,25 @@ export default {
         });
     },
     connectToCore() {
+      this.$toasted.clear();
       this.isLoading = true;
-      const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
+      const grakn = new Grakn(ServerSettings.getServerUri());
       grakn.session('grakn').transaction().then(() => {
         this.$router.push('develop/data');
         this.$store.dispatch('initGrakn');
-        this.$toasted.clear();
         this.isLoading = false;
       })
-        .catch(() => {
+        .catch((e) => {
           this.isLoading = false;
-          this.$notifyError('Looks like Grakn is not running: <br> - Verify the Host and Port then refresh workbase');
+          if (e.message.includes('2 UNKNOWN')) { // -> show login panel for kgms
+            this.showLoginPage = true;
+            this.showLoginPanel = true;
+            this.showConnectionPanel = false;
+          } else if (e.message.includes('14 UNAVAILABLE')) { // -> show connection panel for core
+            this.$notifyError('Looks like Grakn is not running: <br> - Verify Grakn is running, check the Host and Port, then refresh workbase');
+          } else {
+            this.$notifyError(e);
+          }
         });
     },
   },
