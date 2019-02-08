@@ -147,11 +147,11 @@ export default {
         this.$notifyInfo('It was not possible to retrieve keyspaces <br> - make sure Grakn is running <br> - check that host and port in connection settings are correct');
       }
     },
-    showKeyspaceList(show) {
-      // Close keyspaces list when user clicks anywhere else
-      if (show) window.addEventListener('click', this.clickEvent);
-      else window.removeEventListener('click', this.clickEvent);
-    },
+    // showKeyspaceList(show) {
+    //   // Close keyspaces list when user clicks anywhere else
+    //   if (show) window.addEventListener('click', this.clickEvent);
+    //   else window.removeEventListener('click', this.clickEvent);
+    // },
   },
   methods: {
     setKeyspace(name) {
