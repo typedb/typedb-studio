@@ -3,11 +3,11 @@
     <div class="wrapper noselect" v-if="showLoginPage">
       <div class="login-header">
         <img src="static/img/logo-text.png" class="icon">
-        <div v-if="!showPanel" class="workbase3">WORKBASE</div>
+        <div v-if="showConnectionPanel" class="workbase3">WORKBASE</div>
         <div v-else class="workbase2">WORKBASE FOR KGMS</div>
       </div>
 
-      <div class="login-panel" v-if="showPanel">
+      <div class="login-panel" v-if="showLoginPanel">
         <div class="header">
           Log In
         </div>
@@ -22,7 +22,7 @@
               <input class="input left-input" v-model="username">
             </div>
             <div class="row">
-              <button class="btn landing-btn non-btn"></button>
+              <div class="btn login-btn" v-bind:style="{ visibility: 'hidden' }"></div>
             </div>
           </div>
           <div class="column">
@@ -36,6 +36,32 @@
             </div>
             <div class="row flex-end">
               <loading-button v-on:clicked="loginToKgms()" text="Login" :loading="isLoading" className="btn login-btn"></loading-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-panel" v-if="showConnectionPanel">
+        <div class="header">
+          Connection
+        </div>
+        <div class="row">
+          <div class="column">
+            <div class="row">
+              <h1 class="label">Host:</h1>
+              <input class="input left-input" v-model="serverHost">
+            </div>
+            <div class="row">
+              <div class="btn login-btn" v-bind:style="{ visibility: 'hidden' }"></div>
+            </div>
+          </div>
+          <div class="column">
+            <div class="row">
+              <h1 class="label">Port:</h1>
+              <input class="input" type="number" v-model="serverPort">
+            </div>
+            <div class="row flex-end">
+              <loading-button v-on:clicked="connectToCore()" text="Connect" :loading="isLoading" className="btn login-btn"></loading-button>
             </div>
           </div>
         </div>
@@ -162,8 +188,9 @@ export default {
       isLoading: false,
       serverHost: ServerSettings.getServerHost(),
       serverPort: ServerSettings.getServerPort(),
-      showPanel: true,
+      showLoginPanel: false,
       showLoginPage: false,
+      showConnectionPanel: false,
     };
   },
   watch: {
@@ -181,11 +208,15 @@ export default {
       this.$store.dispatch('initGrakn');
     })
       .catch((e) => {
-        if (!e.message.includes('2 UNKNOWN')) {
-          this.showPanel = false;
-          this.$notifyError('Looks like Grakn is not running: <br> - Please make sure Grakn is running and refresh workbase.');
+        if (e.message.includes('2 UNKNOWN')) { // -> show login panel for kgms
+          this.showLoginPage = true;
+          this.showLoginPanel = true;
+        } else if (e.message.includes('14 UNAVAILABLE')) { // -> show connection panel for core
+          this.showLoginPage = true;
+          this.showConnectionPanel = true;
+        } else {
+          this.$notifyError(e);
         }
-        this.showLoginPage = true;
       });
   },
   created() {
@@ -218,6 +249,20 @@ export default {
             error = e;
           }
           this.$notifyError(error);
+        });
+    },
+    connectToCore() {
+      this.isLoading = true;
+      const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
+      grakn.session('grakn').transaction().then(() => {
+        this.$router.push('develop/data');
+        this.$store.dispatch('initGrakn');
+        this.$toasted.clear();
+        this.isLoading = false;
+      })
+        .catch(() => {
+          this.isLoading = false;
+          this.$notifyError('Looks like Grakn is not running: <br> - Verify the Host and Port then refresh workbase');
         });
     },
   },
