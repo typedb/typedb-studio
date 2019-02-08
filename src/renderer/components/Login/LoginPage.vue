@@ -29,7 +29,7 @@
             </div>
             <div class="row">
               <h1 class="label">Password:</h1>
-              <input class="input" v-model="password">
+              <input class="input" type="password" v-model="password">
             </div>
             <div class="row flex-end">
               <loading-button v-on:clicked="loginToKgms()" text="Login" :loading="isLoading" className="btn login-btn"></loading-button>
