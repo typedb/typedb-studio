@@ -3,13 +3,13 @@
 from __future__ import print_function
 
 import os
-import subprocess
+import subprocess as sp
 import tempfile
 import time
 
 
 def ssh(command, ssh_host, ssh_user, ssh_pass, check_call=False):
-    exit_code = subprocess.call([
+    exit_code = sp.call([
         'sshpass',
         '-p',
         ssh_pass,
@@ -22,13 +22,13 @@ def ssh(command, ssh_host, ssh_user, ssh_pass, check_call=False):
         command
     ])
     if check_call and exit_code:
-        raise subprocess.CalledProcessError(
+        raise sp.CalledProcessError(
             'command {} failed with exit code {}'.format(command, exit_code))
     return exit_code
 
 
 def scp(remote, local, ssh_host, ssh_user, ssh_pass, check_call=False):
-    exit_code = subprocess.call([
+    exit_code = sp.call([
         'sshpass',
         '-p',
         ssh_pass,
@@ -37,7 +37,7 @@ def scp(remote, local, ssh_host, ssh_user, ssh_pass, check_call=False):
         local,
     ])
     if check_call and exit_code:
-        raise subprocess.CalledProcessError(
+        raise sp.CalledProcessError(
             'scp {} failed with exit code {}'.format(remote, exit_code))
     return exit_code
 
@@ -61,7 +61,7 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
         time.sleep(5)
 
     if status > 0:
-        raise subprocess.CalledProcessError('Waiting for instance to come alive failed')
+        raise sp.CalledProcessError('Waiting for instance to come alive failed')
 
 
 def replace_git_url_to_https(url):
@@ -69,11 +69,11 @@ def replace_git_url_to_https(url):
 
 
 print('Installing sshpass')
-subprocess.check_call([
+sp.check_call([
     'sudo', 'apt-get', 'update'
 ])
 
-subprocess.check_call([
+sp.check_call([
     'sudo', 'apt-get', 'install', 'sshpass'
 ])
 
@@ -81,19 +81,19 @@ print('Configuring GCP credentials')
 with tempfile.NamedTemporaryFile(suffix='.json') as credential_file:
     credential_file.write(os.getenv('GCP_CREDENTIAL').encode())
     credential_file.flush()
-    subprocess.check_call([
+    sp.check_call([
         'gcloud', 'auth', 'activate-service-account', '--key-file', credential_file.name
     ])
 
-subprocess.check_call([
+sp.check_call([
     'gcloud', 'config', 'set', 'project', 'grakn-dev'
 ])
-subprocess.check_call([
+sp.check_call([
     'gcloud', 'config', 'set', 'compute/zone', 'europe-west1-b'
 ])
 
 print('Generating password for instance')
-instance_password = subprocess.check_output([
+instance_password = sp.check_output([
     'openssl', 'rand', '-base64', '12'
 ]).strip()
 
@@ -107,7 +107,7 @@ with tempfile.NamedTemporaryFile(suffix='.ps1') as powershell_script:
         powershell_script.flush()
 
     print('Provisioning instance [{}]'.format(instance_name))
-    subprocess.check_call([
+    sp.check_call([
         'gcloud', 'compute', 'instances', 'create', instance_name,
         '--image-project', 'windows-cloud', '--image-family', 'windows-2019',
         '--machine-type', 'n1-standard-1', '--metadata-from-file',
@@ -115,7 +115,7 @@ with tempfile.NamedTemporaryFile(suffix='.ps1') as powershell_script:
     ])
 
 print('Storing instance\'s external IP')
-instance_ip = subprocess.check_output([
+instance_ip = sp.check_output([
     'gcloud', '--format', 'value(networkInterfaces[0].accessConfigs[0].natIP)',
     'compute', 'instances', 'list', '--filter', 'name={}'.format(instance_name)
 ])
@@ -154,12 +154,12 @@ try:
     scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './GRAKN.exe', instance_ip, 'circleci', instance_password, check_call=True)
 
     print('Verifying local file')
-    subprocess.check_call(['file', './GRAKN.exe'])
+    sp.check_call(['file', './GRAKN.exe'])
 
 
 finally:
     print('Remove instance')
-    subprocess.check_call([
+    sp.check_call([
         'gcloud', '--quiet', 'compute', 'instances',
         'delete', instance_name, '--delete-disks=all'
     ])
