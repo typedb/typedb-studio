@@ -74,7 +74,7 @@ rules_nodejs_dependencies()
 
 # Load NPM dependencies for Node.js programs
 load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "npm_install")
-node_repositories(package_json = ["//:package.json"], node_version = "8.12.0")
+node_repositories(package_json = ["//:package.json"], node_version = "10.13.0")
 
 ########################################
 # Load compiler dependencies for ANTLR #

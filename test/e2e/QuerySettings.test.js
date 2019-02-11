@@ -62,7 +62,7 @@ describe('Query Settings', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test('set query limit', async () => {
+  test.skip('set query limit', async () => {
     app.client.click('.settings-tab');
 
     await sleep(1000);
@@ -94,7 +94,7 @@ describe('Query Settings', () => {
     app.client.click('.clear-editor');
   });
 
-  test('set neighbours limit', async () => {
+  test.skip('set neighbours limit', async () => {
     app.client.click('.neighbour-limit-input');
 
     await sleep(1000);

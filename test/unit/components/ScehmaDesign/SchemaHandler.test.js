@@ -138,7 +138,7 @@ describe('Actions', () => {
     expect(personRoles).toHaveLength(0);
   });
 
-  test('delete relates role', async () => {
+  test.skip('delete relates role', async () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     let schemaHandler = new SchemaHandler(graknTx);
 

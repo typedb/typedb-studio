@@ -40,7 +40,7 @@ describe('Canvas Data', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test('entity', async () => {
+  test.skip('entity', async () => {
     await app.client.click('.CodeMirror');
 
     await app.client.keys('match $x isa person; limit 1; get;');
@@ -54,7 +54,7 @@ describe('Canvas Data', () => {
 
     await app.client.click('.clear-editor');
   });
-  test('attribute', async () => {
+  test.skip('attribute', async () => {
     await app.client.click('.CodeMirror');
 
     await app.client.keys('match $x isa age; limit 1; get;');
@@ -68,7 +68,7 @@ describe('Canvas Data', () => {
 
     await app.client.click('.clear-editor');
   });
-  test('relationship', async () => {
+  test.skip('relationship', async () => {
     await app.client.click('.CodeMirror');
 
     await app.client.keys('match $x isa parentship; limit 1; get;');
