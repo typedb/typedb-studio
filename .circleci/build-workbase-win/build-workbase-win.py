@@ -8,8 +8,8 @@ import tempfile
 import time
 
 
-def ssh(command, ssh_host, ssh_user, ssh_pass, check_call=False):
-    exit_code = sp.call([
+def ssh(command, ssh_host, ssh_user, ssh_pass):
+    sp.check_call([
         'sshpass',
         '-p',
         ssh_pass,
@@ -21,14 +21,10 @@ def ssh(command, ssh_host, ssh_user, ssh_pass, check_call=False):
         '{}@{}'.format(ssh_user, ssh_host),
         command
     ])
-    if check_call and exit_code:
-        raise sp.CalledProcessError(
-            'command {} failed with exit code {}'.format(command, exit_code))
-    return exit_code
 
 
-def scp(remote, local, ssh_host, ssh_user, ssh_pass, check_call=False):
-    exit_code = sp.call([
+def scp(remote, local, ssh_host, ssh_user, ssh_pass):
+    sp.check_call([
         'sshpass',
         '-p',
         ssh_pass,
@@ -36,10 +32,14 @@ def scp(remote, local, ssh_host, ssh_user, ssh_pass, check_call=False):
         '{}@{}:"{}"'.format(ssh_user, ssh_host, remote),
         local,
     ])
-    if check_call and exit_code:
-        raise sp.CalledProcessError(
-            'scp {} failed with exit code {}'.format(remote, exit_code))
-    return exit_code
+
+
+def check_call(func, *args, **kwargs):
+    try:
+        func(*args, **kwargs)
+        return 0
+    except sp.CalledProcessError as e:
+        return e.returncode
 
 
 def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
@@ -54,7 +54,7 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
     status = 255
 
     while not time_limit_exceeded():
-        status = ssh('dir', ssh_host, ssh_user, ssh_pass)
+        status = check_call(ssh, 'dir', ssh_host, ssh_user, ssh_pass)
         print('called command, status = {}; sleeping 5 secs (elapsed {} secs)'.format(status, time_elapsed_in_seconds()))
         if status == 0:
             break
@@ -126,32 +126,32 @@ try:
     wait_for_ssh(instance_ip, 'circleci', instance_password)
 
     print('Executing command remotely')
-    ssh('dir', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('dir', instance_ip, 'circleci', instance_password)
 
     print('Executing PowerShell command remotely [Get-LocalUser]')
-    ssh('powershell Get-LocalUser', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('powershell Get-LocalUser', instance_ip, 'circleci', instance_password)
 
     print('Installing git')
-    ssh('choco install git -y', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('choco install git -y', instance_ip, 'circleci', instance_password)
 
     print('Installing nodejs 8')
-    ssh('choco install nodejs -y --version 8.15.0', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('choco install nodejs -y --version 8.15.0', instance_ip, 'circleci', instance_password)
 
     print('Cloning workbase')
     ssh(
         'refreshenv && git clone {repo_url} repo && cd repo && git checkout {repo_commit}'.format(
             repo_url=replace_git_url_to_https(os.getenv('CIRCLE_REPOSITORY_URL')),
             repo_commit=os.getenv('CIRCLE_SHA1')),
-        instance_ip, 'circleci', instance_password, check_call=True)
+        instance_ip, 'circleci', instance_password)
 
     print('[Remote]: npm install')
-    ssh('refreshenv && cd repo && npm install', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('refreshenv && cd repo && npm install', instance_ip, 'circleci', instance_password)
 
     print('[Remote]: npm run build')
-    ssh('refreshenv && cd repo && npm run build', instance_ip, 'circleci', instance_password, check_call=True)
+    ssh('refreshenv && cd repo && npm run build', instance_ip, 'circleci', instance_password)
 
     print('Copying built Workbase executable from remote to local')
-    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './grakn-setup.exe', instance_ip, 'circleci', instance_password, check_call=True)
+    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './grakn-setup.exe', instance_ip, 'circleci', instance_password)
 
     print('Verifying local file')
     sp.check_call(['file', './grakn-setup.exe'])
