@@ -158,9 +158,8 @@ try:
 
 
 finally:
-    pass
-    # print('Remove instance')
-    # subprocess.check_call([
-    #     'gcloud', '--quiet', 'compute', 'instances',
-    #     'delete', instance_name, '--delete-disks=all'
-    # ])
+    print('Remove instance')
+    subprocess.check_call([
+        'gcloud', '--quiet', 'compute', 'instances',
+        'delete', instance_name, '--delete-disks=all'
+    ])
