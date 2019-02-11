@@ -46,14 +46,15 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
     while not time_limit_exceeded():
         try:
             ssh('dir', ssh_host, ssh_user, ssh_pass)
-            break
+            return
         except sp.CalledProcessError as e:
             if e.returncode == 255:
-                print('called command, status = {}; sleeping 5 secs (elapsed {} secs)'.format(
-                    status, time_elapsed_in_seconds()))
+                print('called command, status = 255; sleeping 5 secs (elapsed {} secs)'.format(time_elapsed_in_seconds()))
                 time.sleep(5)
             else:
                 raise e
+
+    raise Exception('Time limit exceeded while waiting for instance to come alive')
 
 
 def replace_git_url_to_https(url):
