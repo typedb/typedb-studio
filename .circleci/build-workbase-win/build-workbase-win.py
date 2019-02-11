@@ -151,10 +151,10 @@ try:
     ssh('refreshenv && cd repo && npm run build', instance_ip, 'circleci', instance_password, check_call=True)
 
     print('Copying built Workbase executable from remote to local')
-    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './GRAKN.exe', instance_ip, 'circleci', instance_password, check_call=True)
+    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './grakn-setup.exe', instance_ip, 'circleci', instance_password, check_call=True)
 
     print('Verifying local file')
-    sp.check_call(['file', './GRAKN.exe'])
+    sp.check_call(['file', './grakn-setup.exe'])
 
 
 finally:
