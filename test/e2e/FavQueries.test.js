@@ -26,7 +26,7 @@ describe('Favourite queries', () => {
     assert.equal(count, 1);
   });
 
-  test('select keyspace', async () => {
+  test.skip('select keyspace', async () => {
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
@@ -40,7 +40,7 @@ describe('Favourite queries', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test('add new favourite query', async () => {
+  test.skip('add new favourite query', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
@@ -75,7 +75,7 @@ describe('Favourite queries', () => {
     app.client.click('.action');
   });
 
-  test('add existing favourite query', async () => {
+  test.skip('add existing favourite query', async () => {
     app.client.click('.add-fav-query-btn');
 
     await sleep(1000);
@@ -96,7 +96,7 @@ describe('Favourite queries', () => {
   });
 
 
-  test('run favourite query', async () => {
+  test.skip('run favourite query', async () => {
     app.client.click('.fav-queries-container-btn');
 
     await sleep(1000);
@@ -117,7 +117,7 @@ describe('Favourite queries', () => {
     await app.client.click('.clear-graph-btn');
   });
 
-  test('edit favourite query', async () => {
+  test.skip('edit favourite query', async () => {
     await app.client.click('.fav-queries-container-btn');
 
     await app.client.click('.edit-fav-query-btn');
@@ -140,7 +140,7 @@ describe('Favourite queries', () => {
     await assert.equal((await app.client.getText('.CodeMirror'))[1], 'match $x isa person; limit 1; get;');
   });
 
-  test('delete favourite query', async () => {
+  test.skip('delete favourite query', async () => {
     await sleep(5000);
 
     await app.client.click('.delete-fav-query-btn');
