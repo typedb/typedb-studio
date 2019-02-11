@@ -43,8 +43,6 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
 
     start_time = time.time()
 
-    status = 255
-
     while not time_limit_exceeded():
         try:
             ssh('dir', ssh_host, ssh_user, ssh_pass)
@@ -56,9 +54,6 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
                 time.sleep(5)
             else:
                 raise e
-
-    if status > 0:
-        raise sp.CalledProcessError('Waiting for instance to come alive failed')
 
 
 def replace_git_url_to_https(url):
