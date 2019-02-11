@@ -34,14 +34,6 @@ def scp(remote, local, ssh_host, ssh_user, ssh_pass):
     ])
 
 
-def check_call(func, *args, **kwargs):
-    try:
-        func(*args, **kwargs)
-        return 0
-    except sp.CalledProcessError as e:
-        return e.returncode
-
-
 def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
     def time_elapsed_in_seconds():
         return time.time() - start_time
@@ -54,11 +46,16 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
     status = 255
 
     while not time_limit_exceeded():
-        status = check_call(ssh, 'dir', ssh_host, ssh_user, ssh_pass)
-        print('called command, status = {}; sleeping 5 secs (elapsed {} secs)'.format(status, time_elapsed_in_seconds()))
-        if status == 0:
+        try:
+            ssh('dir', ssh_host, ssh_user, ssh_pass)
             break
-        time.sleep(5)
+        except sp.CalledProcessError as e:
+            if e.returncode == 255:
+                print('called command, status = {}; sleeping 5 secs (elapsed {} secs)'.format(
+                    status, time_elapsed_in_seconds()))
+                time.sleep(5)
+            else:
+                raise e
 
     if status > 0:
         raise sp.CalledProcessError('Waiting for instance to come alive failed')
