@@ -23,6 +23,9 @@ beforeAll(() => {
   graknSession = grakn.session('testkeyspace2');
 });
 
+afterAll(() => {
+  graknSession.close();
+});
 
 describe('Actions', () => {
   test('define entity type', async () => {
@@ -33,6 +36,7 @@ describe('Actions', () => {
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     expect(await graknTx.getSchemaConcept('person')).toBeDefined();
+    await graknTx.close();
   });
 
   test('define attribute type', async () => {
@@ -44,6 +48,7 @@ describe('Actions', () => {
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     expect(await graknTx.getSchemaConcept('name')).toBeDefined();
+    await graknTx.close();
   });
 
   test('define relationship type & role type', async () => {
@@ -61,6 +66,7 @@ describe('Actions', () => {
 
     const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
     expect(parentshipRoles).toHaveLength(1);
+    await graknTx.close();
   });
 
   test('delete type', async () => {
@@ -80,6 +86,7 @@ describe('Actions', () => {
 
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     expect(await graknTx.getSchemaConcept('delete-type')).toBe(null);
+    await graknTx.close();
   });
 
   test('add attribute', async () => {
@@ -92,6 +99,7 @@ describe('Actions', () => {
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const personAttributes = await (await (await graknTx.getSchemaConcept('person')).attributes()).collect();
     expect(personAttributes).toHaveLength(1);
+    await graknTx.close();
   });
 
   test('delete attribute', async () => {
@@ -112,6 +120,7 @@ describe('Actions', () => {
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     personAttributes = await (await (await graknTx.getSchemaConcept('person')).attributes()).collect();
     expect(personAttributes).toHaveLength(0);
+    await graknTx.close();
   });
 
   test('add plays role', async () => {
@@ -124,6 +133,7 @@ describe('Actions', () => {
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const personRoles = await (await (await graknTx.getSchemaConcept('person')).playing()).collect();
     expect(personRoles).toHaveLength(1);
+    await graknTx.close();
   });
 
   test('delete plays role', async () => {
@@ -136,6 +146,7 @@ describe('Actions', () => {
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const personRoles = await (await (await graknTx.getSchemaConcept('person')).playing()).collect();
     expect(personRoles).toHaveLength(0);
+    await graknTx.close();
   });
 
   test.skip('delete relates role', async () => {
@@ -162,6 +173,7 @@ describe('Actions', () => {
     graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
     expect(parentshipRoles).toHaveLength(0);
+    await graknTx.close();
   });
 });
 
