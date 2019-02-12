@@ -71,6 +71,7 @@ describe('actions', () => {
 
     expect(graknTx).toBeDefined();
     expect(store.state['schema-design'].schemaHandler).toBeDefined();
+    await graknTx.close();
   });
 
   test('UPDATE_METATYPE_INSTANCES', async () => {
