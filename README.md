@@ -1,3 +1,9 @@
+[![CircleCI](https://circleci.com/gh/graknlabs/workbase/tree/master.svg?style=shield)](https://circleci.com/gh/graknlabs/workbase/tree/master)
+[![Slack Status](http://grakn-slackin.herokuapp.com/badge.svg)](https://grakn.ai/slack)
+[![Discussion Forum](https://img.shields.io/discourse/https/discuss.grakn.ai/topics.svg)](https://discuss.grakn.ai)
+[![Stack Overflow](https://img.shields.io/badge/stackoverflow-grakn-796de3.svg)](https://stackoverflow.com/questions/tagged/grakn)
+[![Stack Overflow](https://img.shields.io/badge/stackoverflow-graql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/graql)
+
 ## Grakn Workbase
 
 ![Grakn Workbase 1.0](https://user-images.githubusercontent.com/567679/45933937-7987bc00-bf8e-11e8-8b26-8fb020c77310.png)
