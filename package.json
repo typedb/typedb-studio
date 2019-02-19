@@ -18,18 +18,9 @@
     "pack": "npm run pack:main && npm run pack:renderer",
     "pack:main": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.main.config.js",
     "pack:renderer": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.renderer.config.js",
-    "postinstall": "npm install grpc --runtime=electron --target=3.0.6",
-    "//": [
-      "For running tests we first copy them over __test_run_root folder, also resolving symlinks",
-      "This is required for being able to run tests with bazel"
-    ],
-    "pretest": "rm -rf __test_run_root && cp -RL test __test_run_root",
-    "unittest": "./node_modules/jest/bin/jest.js ./__test_run_root/unit",
-    "test": "npm install grpc && npm run unittest",
-    "posttest": "npm run postinstall && rm -rf __test_run_root",
-    "pree2e": "npm run pretest",
-    "e2e": "npm run pack && ./node_modules/jest/bin/jest.js ./__test_run_root/e2e --runInBand",
-    "poste2e": "npm run posttest"
+    "postinstall": "bash ./install-node-electron.sh",
+    "unit": "./node_modules/jest/bin/jest.js ./test/unit",
+    "e2e": "npm run pack && ./node_modules/jest/bin/jest.js ./test/e2e --runInBand"
   },
   "build": {
     "productName": "Grakn Workbase",
