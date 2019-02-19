@@ -25,40 +25,40 @@ describe('Relationships Panel', () => {
     assert.equal(count, 1);
   });
 
-//   test('select keyspace', async () => {
-//     app.client.click('.keyspaces');
-//     await app.client.waitUntilWindowLoaded();
+  test.skip('select keyspace', async () => {
+    app.client.click('.keyspaces');
+    await app.client.waitUntilWindowLoaded();
 
-//     const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
-//     assert.ok(keyspaceList);
+    const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
+    assert.ok(keyspaceList);
 
-//     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
+    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
-//     app.client.click('#gene');
+    app.client.click('#gene');
 
-//     assert.equal(await app.client.getText('.keyspaces'), 'gene');
-//   });
+    assert.equal(await app.client.getText('.keyspaces'), 'gene');
+  });
 
-//   test('click on a node', async () => {
-//     await app.client.click('.CodeMirror');
+  test.skip('click on a node', async () => {
+    await app.client.click('.CodeMirror');
 
-//     await app.client.keys('match $x isa person id V61528; get;');
+    await app.client.keys('match $x isa person id V61528; get;');
 
-//     await sleep(1000);
+    await sleep(1000);
 
-//     await app.client.click('.run-btn');
+    await app.client.click('.run-btn');
 
-//     await sleep(10000);
+    await sleep(10000);
 
-//     await app.client.click('#graph-div');
+    await app.client.click('#graph-div');
 
-//     await sleep(4000);
+    await sleep(4000);
 
-//     await assert.equal(await app.client.getText('.role-btn-text'), 'child');
-//     await assert.equal(await app.client.getText('.relationship-item'), 'parentship');
-//     await assert.equal((await app.client.getText('.role-label'))[0], 'parent');
-//     await assert.equal((await app.client.getText('.role-label'))[1], 'parent');
-//     await assert.equal((await app.client.getText('.player-value'))[0], 'person: V61472');
-//     await assert.equal((await app.client.getText('.player-value'))[1], 'person: V123120');
-//   });
+    await assert.equal(await app.client.getText('.role-btn-text'), 'child');
+    await assert.equal(await app.client.getText('.relationship-item'), 'parentship');
+    await assert.equal((await app.client.getText('.role-label'))[0], 'parent');
+    await assert.equal((await app.client.getText('.role-label'))[1], 'parent');
+    await assert.equal((await app.client.getText('.player-value'))[0], 'person: V61472');
+    await assert.equal((await app.client.getText('.player-value'))[1], 'person: V123120');
+  });
 });
