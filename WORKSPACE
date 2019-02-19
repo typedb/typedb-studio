@@ -23,9 +23,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
 git_repository(
-    name = "graknlabs_grakn",
+    name = "graknlabs_grakn_core",
     remote = "https://github.com/graknlabs/grakn",
-    commit = "760c46dc1f19d572c2abaa61fc5a16bf4ced4312"
+    commit = "c9913c782d19edb2fb0144a556d66b2248a7c9b7"
 )
 
 
@@ -49,7 +49,7 @@ http_archive(
 ####################
 
 # Load additional build tools, such bazel-deps and unused-deps
-load("@graknlabs_grakn//dependencies/tools:dependencies.bzl", "tools_dependencies")
+load("@graknlabs_grakn_core//dependencies/tools:dependencies.bzl", "tools_dependencies")
 tools_dependencies()
 
 
@@ -57,7 +57,7 @@ tools_dependencies()
 # Load Java dependencies from Maven #
 #####################################
 
-load("@graknlabs_grakn//dependencies/maven:dependencies.bzl", maven_dependencies_for_build = "maven_dependencies")
+load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl", maven_dependencies_for_build = "maven_dependencies")
 maven_dependencies_for_build()
 
 
@@ -66,8 +66,12 @@ maven_dependencies_for_build()
 ######################################
 
 # Load Node.js depdendencies for Bazel
-load("@graknlabs_grakn//dependencies/npm:dependencies.bzl", "node_dependencies")
-node_dependencies()
+git_repository(
+    name = "build_bazel_rules_nodejs",
+    remote = "https://github.com/graknlabs/rules_nodejs.git",
+    commit = "ac3f6854365f119130186f971588514ccff503ab",
+)
+
 
 load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
 rules_nodejs_dependencies()
@@ -81,7 +85,7 @@ node_repositories(package_json = ["//:package.json"], node_version = "10.13.0")
 ########################################
 
 # Load ANTLR dependencies for Bazel
-load("@graknlabs_grakn//dependencies/compilers:dependencies.bzl", "antlr_dependencies")
+load("@graknlabs_grakn_core//dependencies/compilers:dependencies.bzl", "antlr_dependencies")
 antlr_dependencies()
 
 # Load ANTLR dependencies for ANTLR programs
@@ -94,7 +98,7 @@ antlr_dependencies()
 #######################################
 
 # Load GRPC dependencies
-load("@graknlabs_grakn//dependencies/compilers:dependencies.bzl", "grpc_dependencies")
+load("@graknlabs_grakn_core//dependencies/compilers:dependencies.bzl", "grpc_dependencies")
 grpc_dependencies()
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", com_github_grpc_grpc_bazel_grpc_deps = "grpc_deps")
@@ -137,5 +141,5 @@ git_repository(
 load("@com_github_google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
 google_common_workspace_rules()
 
-load("@graknlabs_grakn//dependencies/tools/checkstyle:checkstyle.bzl", "checkstyle_dependencies")
+load("@graknlabs_grakn_core//dependencies/tools/checkstyle:checkstyle.bzl", "checkstyle_dependencies")
 checkstyle_dependencies()
