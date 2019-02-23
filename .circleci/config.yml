@@ -32,48 +32,19 @@ commands:
               echo "No RBE credential found. Bazel will be executed locally without RBE support."
             fi
 
-  bazel:
-    parameters:
-      command:
-          type: string
-    steps:
-      - run:
-          name: Bazel - Execute
-          command: |
-            if [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
-              echo "Bazel will be executed with RBE support. This means the build is remotely executed and the cache will be re-used by subsequent CI jobs."
-              CMD="<< parameters.command >> --config=rbe"
-            else
-              echo "Bazel will be executed locally (without RBE support)."
-              CMD="<< parameters.command >>"
-            fi
-            echo "Executing $CMD"
-            $CMD
-
   run-grakn-server:
+    parameters:
+      rbe:
+        description: use RBE while building
+        type: boolean
+        default: false
     steps:
-      - run: bazel build @graknlabs_grakn//:distribution
-      - run: unzip bazel-genfiles/external/graknlabs_grakn/grakn-core-all.zip -d bazel-genfiles/dist/
+      - run: bazel build @graknlabs_grakn_core//:distribution <<# rbe >> --config=rbe <</ rbe >>
+      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all.zip -d bazel-genfiles/dist/
       - run: nohup bazel-genfiles/dist/grakn-core-all/grakn server start
-      - run: bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: bash bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
 
 jobs:
-  test:
-    machine: true
-    working_directory: ~/grakn
-    steps:
-      - checkout
-      - bazel_install
-      # - bazel_add_rbe_credential
-      - run: bazel run @nodejs//:npm install
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
-      - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-      - run-grakn-server
-      - run: Xvfb :99 &
-      - run: export DISPLAY=:99
-      # - run: bazel run @nodejs//:npm test
-      # - run: bazel run @nodejs//:npm run e2e
-
   approve-release:
     machine: true
     steps:
@@ -106,19 +77,27 @@ jobs:
           at: ~/grakn
       - checkout
       - bazel_install
+      - bazel_add_rbe_credential
+      - run-grakn-server:
+          rbe: yes
       - run:
           name: npm install
           command: bazel run @nodejs//:npm install
       - run:
           name: npm run build
           command: bazel run @nodejs//:npm run build
-      # TODO: make a separate rule for building on Linux / use another naming scheme
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
       - persist_to_workspace:
+          name: "Storing built Workbase"
           root: ~/grakn
           paths:
             - artifacts/*-linux.tar.gz
             - VERSION
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
+      - run: Xvfb :99 &
+      - run: export DISPLAY=:99
+      - run: bazel run @nodejs//:npm test
+      - run: bazel run @nodejs//:npm run e2e
 
   build-workbase-mac:
     macos:
@@ -133,12 +112,9 @@ jobs:
       - run:
           name: npm install
           command: bazel run @nodejs//:npm install
-      - run:
-          name: npm run build
-          command: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
-      # - run:
-      #     name: npm run e2e
-      #     command: bazel run @nodejs//:npm run e2e
+      - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
+      - run: bazel run @nodejs//:npm run unit
+      - run: bazel run @nodejs//:npm run e2e
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
       - persist_to_workspace:
           root: ~/grakn
@@ -159,39 +135,61 @@ jobs:
 
 workflows:
   version: 2
-  # TODO: include 'build-workbase-win' job
   ci-pull-request:
     jobs:
+      - build-workbase-linux:
+          filters:
+            branches:
+              ignore: /master|trigger-ci-release/
+      - build-workbase-mac:
+          filters:
+            branches:
+              ignore: /master|trigger-ci-release/
       - build-workbase-win:
           filters:
             branches:
               ignore: /master|trigger-ci-release/
   ci-master-branch:
     jobs:
-      - test:
+      - build-workbase-linux:
+          filters:
+            branches:
+              only: master
+      - build-workbase-mac:
+          filters:
+            branches:
+              only: master
+      - build-workbase-win:
           filters:
             branches:
               only: master
       - approve-release:
           requires:
-            - test
+            - build-workbase-linux
+            - build-workbase-mac
+            - build-workbase-win
           filters:
             branches:
               only: master
   ci-release:
     jobs:
+      - build-workbase-linux:
+          filters:
+            branches:
+              only: trigger-ci-release
       - build-workbase-mac:
           filters:
             branches:
               only: trigger-ci-release
-      - build-workbase-linux:
+      - build-workbase-win:
           filters:
             branches:
               only: trigger-ci-release
       - publish-github-draft:
           requires:
-            - build-workbase-mac
             - build-workbase-linux
+            - build-workbase-mac
+            - build-workbase-win
           filters:
             branches:
               only: trigger-ci-release

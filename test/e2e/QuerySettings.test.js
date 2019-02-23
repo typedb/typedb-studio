@@ -59,6 +59,8 @@ describe('Query Settings', () => {
 
     app.client.click('#gene');
 
+    await sleep(1000);
+
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 

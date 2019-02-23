@@ -7,8 +7,21 @@ import subprocess as sp
 import tempfile
 import time
 
+MACHINE_TYPE = 'n1-standard-8'
+VALID_EXIT_CODES = {
+    5,   # Permission denied, please try again.
+         # (valid because sshd comes alive earlier than user is created)
+    255  # SSH error
+}
 
-def ssh(command, ssh_host, ssh_user, ssh_pass):
+
+def lprint(msg):
+    # TODO: replace with proper logging
+    from datetime import datetime
+    print('[{}]: {}'.format(datetime.now().isoformat(), msg))
+
+
+def ssh(command, ssh_host, ssh_user, ssh_pass, attempts=5):
     sp.check_call([
         'sshpass',
         '-p',
@@ -18,6 +31,8 @@ def ssh(command, ssh_host, ssh_user, ssh_pass):
         'StrictHostKeyChecking=no',
         '-o',
         'ConnectTimeout=2',
+        '-o',
+        'ConnectionAttempts={}'.format(attempts),
         '{}@{}'.format(ssh_user, ssh_host),
         command
     ])
@@ -45,11 +60,12 @@ def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
 
     while not time_limit_exceeded():
         try:
-            ssh('dir', ssh_host, ssh_user, ssh_pass)
+            ssh('dir', ssh_host, ssh_user, ssh_pass, attempts=1)
             return
         except sp.CalledProcessError as e:
-            if e.returncode == 255:
-                print('called command, status = 255; sleeping 5 secs (elapsed {} secs)'.format(time_elapsed_in_seconds()))
+            if e.returncode in VALID_EXIT_CODES:
+                print('called command, status = {}; sleeping 5 secs (elapsed {} secs)'.format(
+                    e.returncode, time_elapsed_in_seconds()))
                 time.sleep(5)
             else:
                 raise e
@@ -61,16 +77,16 @@ def replace_git_url_to_https(url):
     return url.replace(':', '/').replace('git@', 'https://')
 
 
-print('Installing sshpass')
+lprint('Installing sshpass')
 sp.check_call([
-    'sudo', 'apt-get', 'update'
+    'sudo', 'apt-get', '-qq', 'update'
 ])
 
 sp.check_call([
-    'sudo', 'apt-get', 'install', 'sshpass'
+    'sudo', 'apt-get', '-qq', 'install', '-y', 'sshpass'
 ])
 
-print('Configuring GCP credentials')
+lprint('Configuring GCP credentials')
 with tempfile.NamedTemporaryFile(suffix='.json') as credential_file:
     credential_file.write(os.getenv('GCP_CREDENTIAL').encode())
     credential_file.flush()
@@ -85,7 +101,7 @@ sp.check_call([
     'gcloud', 'config', 'set', 'compute/zone', 'europe-west1-b'
 ])
 
-print('Generating password for instance')
+lprint('Generating password for instance')
 instance_password = sp.check_output([
     'openssl', 'rand', '-base64', '12'
 ]).strip()
@@ -93,65 +109,113 @@ instance_password = sp.check_output([
 instance_name = 'circleci-{}-{}'.format(
     os.getenv('CIRCLE_JOB'), os.getenv('CIRCLE_BUILD_NUM'))
 
-print('Generating bootup script for instance [{}]'.format(instance_name))
+lprint('Generating bootup script for instance [{}]'.format(instance_name))
 with tempfile.NamedTemporaryFile(suffix='.ps1') as powershell_script:
     with open('.circleci/build-workbase-win/instance-setup-template.ps1') as template:
         powershell_script.write(template.read().replace('INSTANCE_PASSWORD', instance_password).encode())
         powershell_script.flush()
 
-    print('Provisioning instance [{}]'.format(instance_name))
+    lprint('Provisioning instance [{}]'.format(instance_name))
     sp.check_call([
         'gcloud', 'compute', 'instances', 'create', instance_name,
-        '--image-project', 'windows-cloud', '--image-family', 'windows-2019',
-        '--machine-type', 'n1-standard-1', '--metadata-from-file',
+        '--image', 'circleci-workbase-build',
+        '--machine-type', MACHINE_TYPE, '--metadata-from-file',
         'sysprep-specialize-script-ps1={}'.format(powershell_script.name)
     ])
 
-print('Storing instance\'s external IP')
+lprint('Storing instance\'s external IP')
 instance_ip = sp.check_output([
     'gcloud', '--format', 'value(networkInterfaces[0].accessConfigs[0].natIP)',
     'compute', 'instances', 'list', '--filter', 'name={}'.format(instance_name)
-])
+]).strip()
 
 
 try:
-    print('Waiting for instance to some alive (sshd)')
+    lprint('Waiting for instance to some alive (sshd)')
     wait_for_ssh(instance_ip, 'circleci', instance_password)
 
-    print('Executing command remotely')
+    lprint('Executing command remotely')
     ssh('dir', instance_ip, 'circleci', instance_password)
 
-    print('Executing PowerShell command remotely [Get-LocalUser]')
-    ssh('powershell Get-LocalUser', instance_ip, 'circleci', instance_password)
+    lprint('[Remote]: setting env variables')
+    ssh(' && '.join([
+        'SETX BAZEL_SH C:\\tools\\msys64\\usr\\bin\\bash.exe',
+        'SETX BAZEL_VC "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC"',
+        'SETX PATH "%PATH%;C:\\tools\\msys64\\usr\\bin"'
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('Installing git')
-    ssh('choco install git -y', instance_ip, 'circleci', instance_password)
+    lprint('[Remote] Cloning workbase')
+    ssh(' && '.join([
+        'refreshenv',
+        'git clone {} repo'.format(replace_git_url_to_https(os.getenv('CIRCLE_REPOSITORY_URL'))),
+        'cd repo',
+        'git checkout -b ci-branch {}'.format(os.getenv('CIRCLE_SHA1'))
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('Installing nodejs 8')
-    ssh('choco install nodejs -y --version 8.15.0', instance_ip, 'circleci', instance_password)
+    lprint('[Remote]: building @graknlabs_grakn_core//:distribution')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel build @graknlabs_grakn_core//:distribution'
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('Cloning workbase')
-    ssh(
-        'refreshenv && git clone {repo_url} repo && cd repo && git checkout {repo_commit}'.format(
-            repo_url=replace_git_url_to_https(os.getenv('CIRCLE_REPOSITORY_URL')),
-            repo_commit=os.getenv('CIRCLE_SHA1')),
-        instance_ip, 'circleci', instance_password)
+    lprint('[Remote]: unpacking Grakn')
+    ssh(' && '.join([
+        'cd repo',
+        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all.zip -d bazel-genfiles/dist/'
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('[Remote]: npm install')
-    ssh('refreshenv && cd repo && npm install', instance_ip, 'circleci', instance_password)
+    lprint('[Remote]: starting Grakn')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bash bazel-genfiles/dist/grakn-core-all/grakn server start'
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('[Remote]: npm run build')
-    ssh('refreshenv && cd repo && npm run build', instance_ip, 'circleci', instance_password)
+    lprint('[Remote]: populating Grakn')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bash bazel-genfiles/dist/grakn-core-all/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
+    ]), instance_ip, 'circleci', instance_password)
 
-    print('Copying built Workbase executable from remote to local')
+    lprint('[Remote]: running npm install')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- install'
+    ]), instance_ip, 'circleci', instance_password)
+
+    lprint('[Remote]: running npm run build')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run build'
+    ]), instance_ip, 'circleci', instance_password)
+
+    lprint('Copying built Workbase executable from remote to local')
     scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './grakn-setup.exe', instance_ip, 'circleci', instance_password)
 
-    print('Verifying local file')
+    lprint('Verifying local file')
     sp.check_call(['file', './grakn-setup.exe'])
+
+    lprint('[Remote]: running npm run e2e')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run e2e'
+    ]), instance_ip, 'circleci', instance_password)
+
+    lprint('[Remote]: running npm run unit')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run unit'
+    ]), instance_ip, 'circleci', instance_password)
 
 
 finally:
-    print('Remove instance')
+    lprint('Remove instance')
     sp.check_call([
         'gcloud', '--quiet', 'compute', 'instances',
         'delete', instance_name, '--delete-disks=all'

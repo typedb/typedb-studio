@@ -72,7 +72,6 @@ git_repository(
     commit = "ac3f6854365f119130186f971588514ccff503ab",
 )
 
-
 load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
 rules_nodejs_dependencies()
 
@@ -124,7 +123,7 @@ node_grpc_compile()
 git_repository(
     name="graknlabs_bazel_distribution",
     remote="https://github.com/graknlabs/bazel-distribution",
-    commit="df751d03b1fcbb69ed11dd1e7265020144d7233b"
+    commit="5f7a464b943fc3c370c42d2f5b59993ec2cd435f"
 )
 
 load("@graknlabs_bazel_distribution//github:dependencies.bzl", "github_dependencies_for_deployment")

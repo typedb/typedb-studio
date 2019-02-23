@@ -19,14 +19,14 @@ describe('actions', () => {
     expect(store.state.keyspaces).toBeDefined();
   });
 
-  test('create keyspace', async () => {
+  test.skip('create keyspace', async () => {
     expect(store.state.keyspaces).not.toContain('test_keyspace');
     await store.dispatch('createKeyspace', 'test_keyspace');
     await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).toContain('test_keyspace');
   });
 
-  test('delete keyspace', async () => {
+  test.skip('delete keyspace', async () => {
     await store.dispatch('createKeyspace', 'test_keyspace');
     await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).toContain('test_keyspace');
