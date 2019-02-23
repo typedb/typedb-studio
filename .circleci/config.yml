@@ -32,24 +32,6 @@ commands:
               echo "No RBE credential found. Bazel will be executed locally without RBE support."
             fi
 
-  bazel:
-    parameters:
-      command:
-          type: string
-    steps:
-      - run:
-          name: Bazel - Execute
-          command: |
-            if [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
-              echo "Bazel will be executed with RBE support. This means the build is remotely executed and the cache will be re-used by subsequent CI jobs."
-              CMD="<< parameters.command >> --config=rbe"
-            else
-              echo "Bazel will be executed locally (without RBE support)."
-              CMD="<< parameters.command >>"
-            fi
-            echo "Executing $CMD"
-            $CMD
-
   run-grakn-server:
     parameters:
       rbe:

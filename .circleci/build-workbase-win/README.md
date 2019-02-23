@@ -15,10 +15,10 @@
   
 # Custom Windows Server image
 
-A prebuilt image (`circleci-workbase-build`) is used to execute CI steps.
-This is how it can be recreated:
+A prebuilt image (`circleci-workbase-build`) is used to execute CI steps. These are the steps to recreate it:
 
-`template_setup.ps1`
+1. Create a template file `template_setup.ps1` locally:
+
 ```
 New-LocalUser -Name template -Password $(ConvertTo-SecureString "template_password" -AsPlainText -Force)
 Add-LocalGroupMember -Group "Administrators" -Member "template"
@@ -29,6 +29,8 @@ Set-Service -Name sshd -StartupType 'Automatic'
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 ```
 
+2. Create a VM instance in GCP based on that template:
+
 ```
 gcloud compute instances create circleci-workbase-template-builder \
   --image-project  windows-cloud --image-family windows-2019 \
@@ -36,22 +38,23 @@ gcloud compute instances create circleci-workbase-template-builder \
   --metadata-from-file sysprep-specialize-script-ps1=template_setup.ps1
 ```
 
-Connect to the machine via SSH:
+3. Connect to the machine via SSH:
+
 `ssh template@<instance_ip>`
 
-Install needed dependencies:
+4. Install needed dependencies:
 
 ```
 choco install vcredist2015 git bazel jdk8 visualstudio2017buildtools visualstudio2017-workload-vctools --limit-output --yes --no-progress
 c:\\tools\\msys64\\usr\\bin\\pacman.exe -S --noconfirm unzip
 ```
 
-Prepare for image creation:
+5. Prepare for image creation:
 ```
 GCESysprep
 ```
 
-Create the template image:
+6. Create the template image:
 `gcloud compute images create circleci-workbase-build --source-disk circleci-workbase-template-builder`
 
 
