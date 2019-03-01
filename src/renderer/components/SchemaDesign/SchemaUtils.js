@@ -1,5 +1,5 @@
 import storage from '@/components/shared/PersistentStorage';
-import { relationshipTypesOutboundEdges } from '@/components/shared/SharedUtils';
+import { relationTypesOutboundEdges } from '@/components/shared/SharedUtils';
 
 export function updateNodePositions(nodes) {
   let positionMap = storage.get('schema-node-positions');
@@ -18,7 +18,7 @@ export function updateNodePositions(nodes) {
 export async function loadMetaTypeInstances(graknTx) {
   // Fetch types
   const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
-  const rels = await (await graknTx.query('match $x sub relationship; get;')).collectConcepts();
+  const rels = await (await graknTx.query('match $x sub relation; get;')).collectConcepts();
   const attributes = await (await graknTx.query('match $x sub attribute; get;')).collectConcepts();
   const roles = await (await graknTx.query('match $x sub role; get;')).collectConcepts();
 
@@ -28,8 +28,8 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relationships = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
-    .then(labels => labels.filter(l => l && l !== 'relationship')
+  metaTypeInstances.relations = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
+    .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
   metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.label()))
@@ -45,8 +45,8 @@ export async function loadMetaTypeInstances(graknTx) {
 
 export async function typeInboundEdges(type, visFacade) {
   const roles = await (await type.playing()).collect();
-  const relationshipTypes = await Promise.all(roles.map(async role => (await role.relationships()).collect())).then(rels => rels.flatMap(x => x));
-  return relationshipTypesOutboundEdges(relationshipTypes.filter(rel => visFacade.getNode(rel)));
+  const relationTypes = await Promise.all(roles.map(async role => (await role.relations()).collect())).then(rels => rels.flatMap(x => x));
+  return relationTypesOutboundEdges(relationTypes.filter(rel => visFacade.getNode(rel)));
 }
 
 // attach attribute labels and data types to each node

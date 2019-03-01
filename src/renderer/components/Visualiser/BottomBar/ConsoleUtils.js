@@ -22,7 +22,7 @@ async function conceptToString(concept) {
       break;
   }
 
-  if (concept.isRelationship()) {
+  if (concept.isRelation()) {
     const rolePlayerList = [];
 
     const roleplayers = Array.from(((await concept.rolePlayersMap()).entries()));

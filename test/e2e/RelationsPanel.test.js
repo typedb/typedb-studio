@@ -3,6 +3,7 @@ const assert = require('assert');
 const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
 const path = require('path');
 
+const sleep = time => new Promise(r => setTimeout(r, time));
 jest.setTimeout(30000);
 
 const app = new Application({
@@ -19,7 +20,7 @@ afterAll(async () => {
   return undefined;
 });
 
-describe('Relationships Panel', () => {
+describe('Relations Panel', () => {
   test('initialize workbase', async () => {
     const count = await app.client.getWindowCount();
     assert.equal(count, 1);
@@ -55,7 +56,7 @@ describe('Relationships Panel', () => {
     await sleep(4000);
 
     await assert.equal(await app.client.getText('.role-btn-text'), 'child');
-    await assert.equal(await app.client.getText('.relationship-item'), 'parentship');
+    await assert.equal(await app.client.getText('.relation-item'), 'parentship');
     await assert.equal((await app.client.getText('.role-label'))[0], 'parent');
     await assert.equal((await app.client.getText('.role-label'))[1], 'parent');
     await assert.equal((await app.client.getText('.player-value'))[0], 'person: V61472');

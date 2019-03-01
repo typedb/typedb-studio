@@ -1,4 +1,4 @@
-import { dataType } from 'grakn';
+import { dataType } from 'grakn-client';
 
 let tx;
 
@@ -30,8 +30,8 @@ SchemaHandler.prototype.defineRole = async function define({ roleLabel, superTyp
   return type;
 };
 
-SchemaHandler.prototype.defineRelationshipType = async function define({ relationshipLabel, superType }) {
-  const type = await tx.putRelationshipType(relationshipLabel);
+SchemaHandler.prototype.defineRelationType = async function define({ relationLabel, superType }) {
+  const type = await tx.putRelationType(relationLabel);
   const directSuper = await tx.getSchemaConcept(superType);
   await type.sup(directSuper);
   return type;
@@ -78,15 +78,15 @@ SchemaHandler.prototype.deletePlaysRole = async function deletePlaysRole({ label
 };
 
 SchemaHandler.prototype.addRelatesRole = async function addRelatesRole({ schemaLabel, roleLabel }) {
-  const relationshipType = await tx.getSchemaConcept(schemaLabel);
+  const relationType = await tx.getSchemaConcept(schemaLabel);
   const role = await tx.getSchemaConcept(roleLabel);
-  return relationshipType.relates(role);
+  return relationType.relates(role);
 };
 
 SchemaHandler.prototype.deleteRelatesRole = async function deleteRelatesRole({ label, roleLabel }) {
-  const relationshipType = await tx.getSchemaConcept(label);
+  const relationType = await tx.getSchemaConcept(label);
   const role = await tx.getSchemaConcept(roleLabel);
-  await relationshipType.unrelate(role);
+  await relationType.unrelate(role);
   return role.delete();
 };
 

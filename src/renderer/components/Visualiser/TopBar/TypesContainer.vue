@@ -76,7 +76,7 @@
     name: 'TypesContainer',
     data() {
       return {
-        tabs: ['entities', 'attributes', 'relationships'],
+        tabs: ['entities', 'attributes', 'relations'],
         currentTab: 'entities',
       };
     },

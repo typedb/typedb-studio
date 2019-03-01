@@ -19,12 +19,12 @@ import logger from '@/../Logger';
 
 import {
   META_CONCEPTS,
-  relationshipTypesOutboundEdges,
+  relationTypesOutboundEdges,
   ownerHasEdges,
   computeSubConcepts,
 } from '@/components/shared/SharedUtils';
 
-import Grakn from 'grakn';
+import Grakn from 'grakn-client';
 import SchemaHandler from '../SchemaHandler';
 import {
   updateNodePositions,
@@ -38,8 +38,8 @@ async function buildSchema(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
   const subConcepts = await computeSubConcepts(nodes);
 
-  // Draw all edges from relationships to roleplayers
-  const relEdges = await relationshipTypesOutboundEdges(nodes);
+  // Draw all edges from relations to roleplayers
+  const relEdges = await relationTypesOutboundEdges(nodes);
 
   // Draw all edges from owners to attributes
   const hasEdges = await ownerHasEdges(nodes);
@@ -103,7 +103,7 @@ export default {
         .filter(x => x.label !== 'thing')
         .filter(x => x.label !== 'entity')
         .filter(x => x.label !== 'attribute')
-        .filter(x => x.label !== 'relationship');
+        .filter(x => x.label !== 'relation');
 
       const data = await buildSchema(nodes);
 
@@ -289,27 +289,27 @@ export default {
 
   async [DEFINE_RELATIONSHIP_TYPE]({ state, dispatch }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
-    await state.schemaHandler.defineRelationshipType(payload);
+    await state.schemaHandler.defineRelationType(payload);
 
-    // define and relate roles to relationship type
+    // define and relate roles to relation type
     await Promise.all(payload.defineRoles.map(async (roleType) => {
       await state.schemaHandler.defineRole({ roleLabel: roleType.label, superType: roleType.superType });
-      await state.schemaHandler.addRelatesRole({ schemaLabel: payload.relationshipLabel, roleLabel: roleType.label });
+      await state.schemaHandler.addRelatesRole({ schemaLabel: payload.relationLabel, roleLabel: roleType.label });
     }));
 
-    // relate roles to relationship type
+    // relate roles to relation type
     await Promise.all(payload.relateRoles.map(async (roleType) => {
-      await state.schemaHandler.addRelatesRole({ schemaLabel: payload.relationshipLabel, roleLabel: roleType });
+      await state.schemaHandler.addRelatesRole({ schemaLabel: payload.relationLabel, roleLabel: roleType });
     }));
 
-    // add attribute types to relationship type
+    // add attribute types to relation type
     await Promise.all(payload.attributeTypes.map(async (attributeType) => {
-      await state.schemaHandler.addAttribute({ schemaLabel: payload.relationshipLabel, attributeLabel: attributeType });
+      await state.schemaHandler.addAttribute({ schemaLabel: payload.relationLabel, attributeLabel: attributeType });
     }));
 
-    // add roles to relationship type
+    // add roles to relation type
     await Promise.all(payload.roleTypes.map(async (roleType) => {
-      await state.schemaHandler.addPlaysRole({ schemaLabel: payload.relationshipLabel, roleLabel: roleType });
+      await state.schemaHandler.addPlaysRole({ schemaLabel: payload.relationLabel, roleLabel: roleType });
     }));
 
     await dispatch(COMMIT_TX, graknTx)
@@ -323,9 +323,9 @@ export default {
 
     graknTx = await dispatch(OPEN_GRAKN_TX);
 
-    const type = await graknTx.getSchemaConcept(payload.relationshipLabel);
+    const type = await graknTx.getSchemaConcept(payload.relationLabel);
 
-    Object.assign(type, { label: payload.relationshipLabel });
+    Object.assign(type, { label: payload.relationLabel });
 
     const data = await buildSchema([type]);
 
@@ -361,12 +361,12 @@ export default {
           await state.schemaHandler.deletePlaysRole({ label: await player.label(), roleLabel });
         }));
 
-        // If relationship type is suptyped and inherits a role only unrelate the role
+        // If relation type is suptyped and inherits a role only unrelate the role
         // otherwise unrelate and delete role
         const sup = await type.sup();
         if (sup) {
           const supLabel = await sup.label();
-          if (!META_CONCEPTS.has(supLabel)) { // check if relationship type is sub-typed or not
+          if (!META_CONCEPTS.has(supLabel)) { // check if relation type is sub-typed or not
             const roleSup = await role.sup();
             const roleSupLabel = await roleSup.label();
             if (roleSupLabel === 'role') await type.unrelate(role); // check if role is overridden or not
@@ -452,14 +452,14 @@ export default {
   //     case 'plays': {
   //       await this.schemaHandler.addPlaysRole({ label: state.selectedNodes[0].label, typeLabel: payload.typeLabel });
   //       const type = await graknTx.getSchemaConcept(state.selectedNodes[0].label);
-  //       const relatesEdges = await relationshipTypesOutboundEdges([type]);
+  //       const relatesEdges = await relationTypesOutboundEdges([type]);
   //       state.visFacade.addToCanvas({ nodes: [], edges: relatesEdges });
   //       break;
   //     }
   //     case 'relates': {
   //       await this.schemaHandler.addRelatesRole({ label: state.selectedNodes[0].label, typeLabel: payload.typeLabel });
   //       const type = await graknTx.getSchemaConcept(state.selectedNodes[0].label);
-  //       const relatesEdges = await relationshipTypesOutboundEdges([type]);
+  //       const relatesEdges = await relationTypesOutboundEdges([type]);
   //       state.visFacade.addToCanvas({ nodes: [], edges: relatesEdges });
   //       break;
   //     }

@@ -3,7 +3,7 @@
         <div class="canvas-data">
             <div class="data-item no-of-entities"> entities: {{canvasData.entities}}</div>
             <div class="data-item no-of-attributes"> attributes: {{canvasData.attributes}}</div>
-            <div class="data-item no-of-relationships"> relationships: {{canvasData.relationships}}</div>
+            <div class="data-item no-of-relations"> relations: {{canvasData.relations}}</div>
         </div>
     </div>
 </template>

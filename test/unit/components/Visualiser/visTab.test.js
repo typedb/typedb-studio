@@ -11,7 +11,7 @@ import TabState from '@/components/Visualiser/store/tabState';
 
 import { shallowMount } from '@vue/test-utils';
 
-jest.mock('grakn', () => ({ txType: { WRITE: 'write' } }));
+jest.mock('grakn-client', () => ({ txType: { WRITE: 'write' } }));
 
 jest.mock('@/../Logger', () => ({ error: () => {} }));
 

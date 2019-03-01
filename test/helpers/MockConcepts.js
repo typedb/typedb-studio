@@ -23,7 +23,7 @@ function getMockAttributeType() {
   };
 }
 
-function getMockRelationshipType() {
+function getMockRelationType() {
   return {
     baseType: 'RELATIONSHIP_TYPE',
     id: '2222',
@@ -32,7 +32,7 @@ function getMockRelationshipType() {
   };
 }
 
-function getMockImplicitRelationshipType() {
+function getMockImplicitRelationType() {
   return {
     baseType: 'RELATIONSHIP_TYPE',
     id: '2222',
@@ -46,14 +46,14 @@ function getMockEntity1() {
     baseType: 'ENTITY',
     id: '3333',
     type: () => Promise.resolve(getMockEntityType()),
-    relationships: () => Promise.resolve({ next: () => Promise.resolve(getMockRelationship()) }), // eslint-disable-line no-use-before-define
+    relations: () => Promise.resolve({ next: () => Promise.resolve(getMockRelation()) }), // eslint-disable-line no-use-before-define
     attributes: () => Promise.resolve({ next: () => Promise.resolve(getMockAttribute()), collect: () => Promise.resolve([getMockAttribute()]) }), // eslint-disable-line no-use-before-define
     isType: () => false,
     isInferred: () => Promise.resolve(false),
     isAttribute: () => false,
     isEntity: () => true,
     isThing: () => true,
-    isRelationship: () => false,
+    isRelation: () => false,
     offset: 0,
   };
 }
@@ -67,7 +67,7 @@ function getMockEntity2() {
     isEntity: () => true,
     isThing: () => true,
     isInferred: () => Promise.resolve(false),
-    isRelationship: () => false,
+    isRelation: () => false,
     isType: () => false,
   };
 }
@@ -84,12 +84,12 @@ function getMockAttribute() {
     isInferred: () => Promise.resolve(false),
     isAttribute: () => true,
     isThing: () => true,
-    isRelationship: () => false,
+    isRelation: () => false,
     offset: 0,
   };
 }
 
-function getMockRelationship() {
+function getMockRelation() {
   const mockRole1 = { label: () => Promise.resolve('son') };
   const mockRole2 = { label: () => Promise.resolve('father') };
   const mockRolePlayers = new Map();
@@ -99,7 +99,7 @@ function getMockRelationship() {
   return {
     baseType: 'RELATIONSHIP',
     id: '6666',
-    type: () => Promise.resolve(getMockRelationshipType()),
+    type: () => Promise.resolve(getMockRelationType()),
     rolePlayersMap: () => Promise.resolve(mockRolePlayers),
     attributes: () => Promise.resolve({ next: () => Promise.resolve(getMockAttribute()), collect: () => Promise.resolve([getMockAttribute()]) }), // eslint-disable-line no-use-before-define
     isType: () => false,
@@ -107,17 +107,17 @@ function getMockRelationship() {
     isAttribute: () => false,
     isEntity: () => false,
     isThing: () => true,
-    isRelationship: () => true,
+    isRelation: () => true,
     explanation: { answers: () => [getMockAnswer1(), getMockAnswer2()], queryPattern: () => '{$y id 1234; $r (father: $m, role: $y) isa parentship; $m id 4444;}' },
     offset: 0,
   };
 }
 
-function getMockImplicitRelationship() {
+function getMockImplicitRelation() {
   return {
     baseType: 'RELATIONSHIP',
     id: '6666',
-    type: () => Promise.resolve(getMockImplicitRelationshipType()),
+    type: () => Promise.resolve(getMockImplicitRelationType()),
     isThing: () => true,
   };
 }
@@ -157,7 +157,7 @@ function getMockAnswer3() {
       const map = new Map();
       map.set('p', getMockEntity1());
       map.set('c', getMockEntity2());
-      map.set('1234', getMockRelationship());
+      map.set('1234', getMockRelation());
       return map;
     },
   };
@@ -172,7 +172,7 @@ function getMockAnswer4() {
     map: () => {
       const map = new Map();
       map.set('1234', getMockAttribute());
-      map.set('5678', getMockRelationship());
+      map.set('5678', getMockRelation());
       return map;
     },
   };
@@ -187,18 +187,18 @@ function getMockAnswerContainingImplicitType() {
       const map = new Map();
       map.set('p', getMockEntity1());
       map.set('c', getMockEntity2());
-      map.set('r', getMockImplicitRelationship());
+      map.set('r', getMockImplicitRelation());
       return map;
     },
   };
 }
 
-function getMockAnswerContainingRelationship() {
+function getMockAnswerContainingRelation() {
   return {
     explanation: () => 'mockExplanation',
     map: () => {
       const map = new Map();
-      map.set('r', getMockRelationship());
+      map.set('r', getMockRelation());
       map.set('c', getMockEntity2());
       return map;
     },
@@ -219,12 +219,12 @@ function getMockAnswerContainingEntity() {
 export default {
   getMockEntityType,
   getMockAttributeType,
-  getMockRelationshipType,
+  getMockRelationType,
   getMockEntity1,
   getMockEntity2,
   getMockAttribute,
-  getMockRelationship,
-  getMockImplicitRelationship,
+  getMockRelation,
+  getMockImplicitRelation,
   getMockAnswer1,
   getMockQueryPattern1,
   getMockAnswer2,
@@ -234,7 +234,7 @@ export default {
   getMockAnswer4,
   getMockQueryPattern4,
   getMockAnswerContainingImplicitType,
-  getMockAnswerContainingRelationship,
+  getMockAnswerContainingRelation,
   getMockAnswerContainingEntity,
 };
 

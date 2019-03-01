@@ -49,7 +49,7 @@ export default {
       event: 'oncontext',
       callback: (params) => {
         // Show context menu when keyspace is selected and canvas has data
-        if (state.currentKeyspace && (state.canvasData.entities || state.canvasData.attributes || state.canvasData.relationships)) {
+        if (state.currentKeyspace && (state.canvasData.entities || state.canvasData.attributes || state.canvasData.relations)) {
           commit('setContextMenu', { show: true, x: params.pointer.DOM.x, y: params.pointer.DOM.y });
         }
       },

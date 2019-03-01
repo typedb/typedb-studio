@@ -3,7 +3,7 @@
 import SchemaHandler from '@/components/SchemaDesign/SchemaHandler';
 import ServerSettings from '@/components/ServerSettings';
 
-import Grakn from 'grakn';
+import Grakn from 'grakn-client';
 
 jest.mock('@/components/shared/PersistentStorage', () => ({
 //   get: jest.fn(),
@@ -51,11 +51,11 @@ describe('Actions', () => {
     await graknTx.close();
   });
 
-  test('define relationship type & role type', async () => {
+  test('define relation type & role type', async () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationshipType({ relationshipLabel: 'parentship' });
+    await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
     await schemaHandler.defineRole({ roleLabel: 'parent' });
     await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
 
@@ -153,7 +153,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction(Grakn.txType.WRITE);
     let schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationshipType({ relationshipLabel: 'parentship' });
+    await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
     await schemaHandler.defineRole({ roleLabel: 'parent' });
     await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
 

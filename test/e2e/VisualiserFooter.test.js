@@ -3,7 +3,6 @@ const assert = require('assert');
 const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
 const path = require('path');
 
-const sleep = time => new Promise(r => setTimeout(r, time));
 jest.setTimeout(30000);
 
 const app = new Application({
@@ -68,17 +67,17 @@ describe('Canvas Data', () => {
 
     await app.client.click('.clear-editor');
   });
-  test.skip('relationship', async () => {
+  test.skip('relation', async () => {
     await app.client.click('.CodeMirror');
 
     await app.client.keys('match $x isa parentship; limit 1; get;');
 
     await app.client.click('.run-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relationships')) !== 'relationships: 0', 25000, 'wait for canvas data to be updated');
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) !== 'relations: 0', 25000, 'wait for canvas data to be updated');
 
-    const noOfRelationships = await app.client.getText('.no-of-relationships');
-    assert.equal(noOfRelationships, 'relationships: 1');
+    const noOfRelations = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelations, 'relations: 1');
 
     await app.client.click('.clear-editor');
   });

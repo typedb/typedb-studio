@@ -36,7 +36,7 @@ jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   buildFromConceptMap: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [MockConcepts.getMockEntity1()], edges: [{ from: 1234, to: 4321, label: 'son' }] })),
 }));
 
-jest.mock('grakn', () => ({ txType: { WRITE: 'write' } }));
+jest.mock('grakn-client', () => ({ txType: { WRITE: 'write' } }));
 
 jest.mock('@/../Logger', () => ({ error: () => {} }));
 
@@ -88,8 +88,8 @@ describe('actions', () => {
       state: {
         visFacade: { resetCanvas: jest.fn(), getAllNodes: jest.fn().mockImplementation(() => [{ id: 1234, type: 'person' }]),
         },
-        selectedNodes: [MockConcepts.getMockRelationship()],
-        canvasData: { entities: 2, attributes: 2, relationships: 2 },
+        selectedNodes: [MockConcepts.getMockRelation()],
+        canvasData: { entities: 2, attributes: 2, relations: 2 },
       },
       actions,
       mutations,
@@ -99,7 +99,7 @@ describe('actions', () => {
       expect(store.state.selectedNodes).toBe(null);
       expect(store.state.canvasData.entities).toBe(0);
       expect(store.state.canvasData.attributes).toBe(0);
-      expect(store.state.canvasData.relationships).toBe(0);
+      expect(store.state.canvasData.relations).toBe(0);
     });
   });
 
@@ -264,7 +264,7 @@ describe('actions', () => {
         visFacade: {
           deleteNode: jest.fn(),
         },
-        selectedNodes: [MockConcepts.getMockRelationship()],
+        selectedNodes: [MockConcepts.getMockRelation()],
       },
       actions,
       mutations: { selectedNodes: mutations.selectedNodes },
@@ -313,7 +313,7 @@ describe('actions', () => {
           addToCanvas: jest.fn(),
           getAllNodes: jest.fn().mockImplementation(() => [{ id: 1234, type: 'person' }]),
         },
-        selectedNodes: [MockConcepts.getMockRelationship()],
+        selectedNodes: [MockConcepts.getMockRelation()],
         graknSession,
         visStyle: { computeExplanationEdgeStyle: jest.fn() },
       },

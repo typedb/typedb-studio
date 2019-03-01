@@ -27,17 +27,17 @@ describe('prepareNodes', () => {
     expect(prepared[0].value).toBe('John');
     expect(prepared[0].label).toBe('name: John');
   });
-  test('relationship', async () => {
-    const prepared = await VisualiserGraphBuilder.prepareNodes([MockConcepts.getMockRelationship()]);
+  test('relation', async () => {
+    const prepared = await VisualiserGraphBuilder.prepareNodes([MockConcepts.getMockRelation()]);
     expect(prepared[0].type).toBe('parentship');
   });
 });
 
-describe('relationshipsRolePlayers', () => {
-  test('loadRelationshipsRolePlayers', async () => {
-    const relationships = [];
-    relationships.push(MockConcepts.getMockRelationship());
-    const roleplayers = await VisualiserGraphBuilder.relationshipsRolePlayers(relationships);
+describe('relationsRolePlayers', () => {
+  test('loadRelationsRolePlayers', async () => {
+    const relations = [];
+    relations.push(MockConcepts.getMockRelation());
+    const roleplayers = await VisualiserGraphBuilder.relationsRolePlayers(relations);
 
     expect(roleplayers.nodes).toHaveLength(2);
     expect(roleplayers.nodes.filter(x => x.id === '3333')[0].label).toBe('person: 3333');
@@ -53,7 +53,7 @@ describe('relationshipsRolePlayers', () => {
 
 describe('buildFromConceptMap', () => {
   test('buildFromConceptMap', async () => {
-    const result = [MockConcepts.getMockAnswer2(), MockConcepts.getMockAnswerContainingRelationship()];
+    const result = [MockConcepts.getMockAnswer2(), MockConcepts.getMockAnswerContainingRelation()];
 
     const data = await VisualiserGraphBuilder.buildFromConceptMap(result, true, 20);
 
@@ -81,7 +81,7 @@ describe('buildFromConceptMap', () => {
 describe('buildFromConceptList', () => {
   test('buildFromConceptList', async () => {
     const mockPath = { list: () => ['3333', '6666', '4444'], explanation: () => null };
-    const mockPathNodes = [MockConcepts.getMockEntity1(), MockConcepts.getMockRelationship(), MockConcepts.getMockEntity2()];
+    const mockPathNodes = [MockConcepts.getMockEntity1(), MockConcepts.getMockRelation(), MockConcepts.getMockEntity2()];
 
     const data = await VisualiserGraphBuilder.buildFromConceptList(mockPath, mockPathNodes);
 

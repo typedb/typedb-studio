@@ -12,7 +12,7 @@ import {
   LOAD_NEIGHBOURS,
   LOAD_ATTRIBUTES,
 } from '@/components/shared/StoresActions';
-import Grakn from 'grakn';
+import Grakn from 'grakn-client';
 import logger from '@/../Logger';
 
 import {

@@ -19,8 +19,8 @@
                     <div class="panel-value load-roleplayers-switch"><vue-switch :isToggled="showAttributes" v-on:toggled="showAttributes = !showAttributes"></vue-switch></div>
                 </div>
                 <div class="panel-content-item">
-                    <h1 class="panel-label">Relationship Types:</h1>
-                    <div class="panel-value load-roleplayers-switch"><vue-switch :isToggled="showRelationships" v-on:toggled="showRelationships = !showRelationships"></vue-switch></div>
+                    <h1 class="panel-label">Relation Types:</h1>
+                    <div class="panel-value load-roleplayers-switch"><vue-switch :isToggled="showRelations" v-on:toggled="showRelations = !showRelations"></vue-switch></div>
                 </div>
         
                 
@@ -40,7 +40,7 @@
         showConceptDisplayContent: true,
         showEntities: true,
         showAttributes: true,
-        showRelationships: true,
+        showRelations: true,
       };
     },
     beforeCreate() {
@@ -59,7 +59,7 @@
       showAttributes(val) {
         this.showTypes(val, 'ATTRIBUTE_TYPE');
       },
-      showRelationships(val) {
+      showRelations(val) {
         this.showTypes(val, 'RELATIONSHIP_TYPE');
       },
     },

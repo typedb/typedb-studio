@@ -1,15 +1,15 @@
 <template>
   <div>
-    <button class="btn define-btn" :class="(showPanel === 'relationship') ? 'green-border': ''" @click="togglePanel">Relationship Type</button>
-    <div class="new-relationship-panel-container" v-if="showPanel === 'relationship'">
+    <button class="btn define-btn" :class="(showPanel === 'relation') ? 'green-border': ''" @click="togglePanel">Relation Type</button>
+    <div class="new-relation-panel-container" v-if="showPanel === 'relation'">
       <div class="title">
-        Define New Relationship Type
+        Define New Relation Type
         <div class="close-container" @click="$emit('show-panel', undefined)"><vue-icon icon="cross" iconSize="12" className="tab-icon"></vue-icon></div>
       </div>
       <div class="content">
 
         <div class="row">
-          <input class="input-small label-input" v-model="relationshipLabel" placeholder="Relationship Label">
+          <input class="input-small label-input" v-model="relationLabel" placeholder="Relation Label">
           sub
           <div v-bind:class="(showTypeList) ? 'btn type-btn type-list-shown' : 'btn type-btn'" @click="showTypeList = !showTypeList"><div class="type-btn-text" >{{superType}}</div><div class="type-btn-caret"><vue-icon className="vue-icon" icon="caret-down"></vue-icon></div></div>
 
@@ -94,7 +94,7 @@
 
         <div class="submit-row">
           <button class="btn submit-btn" @click="resetPanel">Clear</button>
-          <loading-button v-on:clicked="defineRelationshipType" text="Submit" :loading="showSpinner" className="btn submit-btn"></loading-button>
+          <loading-button v-on:clicked="defineRelationType" text="Submit" :loading="showSpinner" className="btn submit-btn"></loading-button>
         </div>
 
       </div>
@@ -291,7 +291,7 @@
     justify-content: space-between;
   }
 
-  .new-relationship-panel-container {
+  .new-relation-panel-container {
     position: absolute;
     left: 120px;
     top: 10px;
@@ -403,7 +403,7 @@
         showTypeList: false,
         superTypes: [],
         superType: undefined,
-        relationshipLabel: '',
+        relationLabel: '',
         showSpinner: false,
         newRoles: [''],
         superRelatipnshipTypeRoles: [],
@@ -433,22 +433,22 @@
     },
     watch: {
       showPanel(val) {
-        if (val === 'relationship') { // reset panel when it is toggled
+        if (val === 'relation') { // reset panel when it is toggled
           this.resetPanel();
         }
       },
       metaTypeInstances(val) {
         this.hasAttributes = val.attributes;
-        this.superTypes = ['relationship', ...this.metaTypeInstances.relationships];
+        this.superTypes = ['relation', ...this.metaTypeInstances.relations];
       },
       async superType(val) {
-        if (val !== 'relationship') { // if super type is not 'relationship' then compute roles of supertype for inheriting and overriding
+        if (val !== 'relation') { // if super type is not 'relation' then compute roles of supertype for inheriting and overriding
           this.newRoles = [];
 
           const graknTx = await this[OPEN_GRAKN_TX]();
-          const RelationshipType = await graknTx.getSchemaConcept(val);
+          const RelationType = await graknTx.getSchemaConcept(val);
 
-          this.superRelatipnshipTypeRoles = await Promise.all((await (await RelationshipType.roles()).collect()).map(async role => role.label()));
+          this.superRelatipnshipTypeRoles = await Promise.all((await (await RelationType.roles()).collect()).map(async role => role.label()));
 
 
           this.overridenRoles.push(...this.superRelatipnshipTypeRoles.map(role => ({ label: role, override: false })));
@@ -482,11 +482,11 @@
           this.toggledRoleTypes.push(type);
         }
       },
-      async defineRelationshipType() {
-        if (this.relationshipLabel === '') {
-          this.$notifyError('Cannot define Relationship Type without Relationship Label');
-        } else if (this.superType === 'relationship' && !this.newRoles[0].length && !this.toggledRoleTypes.length) {
-          this.$notifyError('Cannot define Relationship Type without atleast one related role');
+      async defineRelationType() {
+        if (this.relationLabel === '') {
+          this.$notifyError('Cannot define Relation Type without Relation Label');
+        } else if (this.superType === 'relation' && !this.newRoles[0].length && !this.toggledRoleTypes.length) {
+          this.$notifyError('Cannot define Relation Type without atleast one related role');
         } else {
           let overrideError = false;
 
@@ -495,7 +495,7 @@
           });
 
           if (overrideError) {
-            this.$notifyError('Cannot define Relationship Type with an empty overriden role');
+            this.$notifyError('Cannot define Relation Type with an empty overriden role');
           } else {
             this.showSpinner = true;
 
@@ -507,7 +507,7 @@
             const relateRoles = this.overridenRoles.map(role => ((!role.override) ? role.label : null)).filter(r => r);
 
             this[DEFINE_RELATIONSHIP_TYPE]({
-              relationshipLabel: this.relationshipLabel,
+              relationLabel: this.relationLabel,
               superType: this.superType,
               defineRoles,
               relateRoles,
@@ -516,7 +516,7 @@
             })
               .then(() => {
                 this.showSpinner = false;
-                this.$notifyInfo(`Relationship Type, ${this.relationshipLabel}, has been defined`);
+                this.$notifyInfo(`Relation Type, ${this.relationLabel}, has been defined`);
                 this.resetPanel();
               })
               .catch((e) => {
@@ -532,8 +532,8 @@
         this.showTypeList = false;
       },
       resetPanel() {
-        this.relationshipLabel = '';
-        this.superTypes = ['relationship', ...this.metaTypeInstances.relationships];
+        this.relationLabel = '';
+        this.superTypes = ['relation', ...this.metaTypeInstances.relations];
         this.superType = this.superTypes[0];
         this.newRoles = [''];
         this.toggledAttributeTypes = [];
@@ -544,8 +544,8 @@
         this.overridenRoles = [];
       },
       togglePanel() {
-        if (this.showPanel === 'relationship') this.$emit('show-panel', undefined);
-        else this.$emit('show-panel', 'relationship');
+        if (this.showPanel === 'relation') this.$emit('show-panel', undefined);
+        else this.$emit('show-panel', 'relation');
       },
       addNewRole() {
         this.newRoles.push('');
