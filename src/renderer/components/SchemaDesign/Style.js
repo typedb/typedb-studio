@@ -13,7 +13,7 @@ function nodeColour(node) {
   let dimmedCol;
 
   switch (node.baseType) {
-    case 'INFERRED_RELATIONSHIP_TYPE':
+    case 'INFERRED_RELATION_TYPE':
       backgroundCol = '#20a194';
       highlightCol = '#0aca88';
       dimmedCol = 'rgba(32, 161, 148, 0.5)';
@@ -23,8 +23,8 @@ function nodeColour(node) {
       highlightCol = '#56fd92';
       dimmedCol = 'rgba(32, 161, 148, 0.6)';
       break;
-    case 'RELATIONSHIP_TYPE':
-    case 'RELATIONSHIP':
+    case 'RELATION_TYPE':
+    case 'RELATION':
       backgroundCol = '#20a194';
       highlightCol = '#0aca88';
       dimmedCol = 'rgba(32, 161, 148, 0.6)';
@@ -68,11 +68,11 @@ function nodeFont() {
 function nodeShape(node) {
   let shape;
   switch (node.baseType) {
-    case 'RELATIONSHIP':
+    case 'RELATION':
     case 'ROLE':
       shape = 'dot';
       break;
-    case 'RELATIONSHIP_TYPE':
+    case 'RELATION_TYPE':
       shape = 'diamond';
       break;
     case 'ENTITY_TYPE':
@@ -90,8 +90,8 @@ function nodeShape(node) {
 function nodeSize(node) {
   let size;
   switch (node.baseType) {
-    case 'RELATIONSHIP':
-    case 'INFERRED_RELATIONSHIP_TYPE':
+    case 'RELATION':
+    case 'INFERRED_RELATION_TYPE':
       size = 8;
       break;
     case 'ROLE':

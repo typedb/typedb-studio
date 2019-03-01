@@ -393,7 +393,7 @@
 
 <script>
   import logger from '@/../Logger';
-  import { DEFINE_RELATIONSHIP_TYPE, OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { DEFINE_RELATION_TYPE, OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
   import { createNamespacedHelpers } from 'vuex';
 
   export default {
@@ -428,7 +428,7 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([DEFINE_RELATIONSHIP_TYPE, OPEN_GRAKN_TX]),
+        ...mapActions([DEFINE_RELATION_TYPE, OPEN_GRAKN_TX]),
       };
     },
     watch: {
@@ -506,7 +506,7 @@
             // collect all roles which are already defined but only need to be related
             const relateRoles = this.overridenRoles.map(role => ((!role.override) ? role.label : null)).filter(r => r);
 
-            this[DEFINE_RELATIONSHIP_TYPE]({
+            this[DEFINE_RELATION_TYPE]({
               relationLabel: this.relationLabel,
               superType: this.superType,
               defineRoles,

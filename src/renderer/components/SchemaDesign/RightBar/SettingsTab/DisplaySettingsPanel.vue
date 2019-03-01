@@ -60,7 +60,7 @@
         this.showTypes(val, 'ATTRIBUTE_TYPE');
       },
       showRelations(val) {
-        this.showTypes(val, 'RELATIONSHIP_TYPE');
+        this.showTypes(val, 'RELATION_TYPE');
       },
     },
     methods: {

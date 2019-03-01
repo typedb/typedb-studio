@@ -8,13 +8,13 @@ function getNeighboursQuery(node, neighboursLimit) {
   switch (node.baseType) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
-    case 'RELATIONSHIP_TYPE':
+    case 'RELATION_TYPE':
       return `match $x id "${node.id}"; $y isa $x; offset ${node.offset}; limit ${neighboursLimit}; get $y;`;
     case 'ENTITY':
       return `match $x id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $r, $y;`;
     case 'ATTRIBUTE':
       return `match $x has attribute $y; $y id "${node.id}"; offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
-    case 'RELATIONSHIP':
+    case 'RELATION':
       return `match $r id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
     default:
       throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
@@ -219,11 +219,11 @@ export async function getNeighboursData(visNode, graknTx, neighboursLimit) {
   switch (visNode.baseType) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
-    case 'RELATIONSHIP_TYPE':
+    case 'RELATION_TYPE':
       return { nodes, edges: getTypeNeighbourEdges(nodes, visNode.id) };
     case 'ENTITY':
       return { nodes, edges: await getEntityNeighbourEdges(nodes) };
-    case 'RELATIONSHIP':
+    case 'RELATION':
       return { nodes, edges: await getRelationNeighbourEdges(nodes, graknTx, visNode.id) };
     case 'ATTRIBUTE':
       return { nodes, edges: getAttributeNeighbourEdges(nodes, visNode.id) };

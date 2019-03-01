@@ -50,7 +50,7 @@ beforeAll(() => {
     getAllNodes: jest.fn().mockImplementation(() => [
       { id: 123, baseType: 'ENTITY' },
       { id: 456, baseType: 'ATTRIBUTE' },
-      { id: 789, baseType: 'RELATIONSHIP' },
+      { id: 789, baseType: 'RELATION' },
     ]),
   };
 

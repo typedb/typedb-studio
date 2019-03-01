@@ -3,7 +3,7 @@
 // Schema Design store actions
 export const DEFINE_ENTITY_TYPE = 'define-entity-type';
 export const DEFINE_ATTRIBUTE_TYPE = 'define-attribute-type';
-export const DEFINE_RELATIONSHIP_TYPE = 'define-relation-type';
+export const DEFINE_RELATION_TYPE = 'define-relation-type';
 export const DEFINE_ROLE = 'define-role';
 export const DELETE_TYPE = 'delete-type';
 export const DELETE_SCHEMA_CONCEPT = 'delete-schema-concept';

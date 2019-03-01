@@ -8,7 +8,7 @@ import {
   DEFINE_ENTITY_TYPE,
   COMMIT_TX,
   DEFINE_ATTRIBUTE_TYPE,
-  DEFINE_RELATIONSHIP_TYPE,
+  DEFINE_RELATION_TYPE,
   DELETE_SCHEMA_CONCEPT,
   REFRESH_SELECTED_NODE,
   DELETE_ATTRIBUTE,
@@ -287,7 +287,7 @@ export default {
     graknTx.close();
   },
 
-  async [DEFINE_RELATIONSHIP_TYPE]({ state, dispatch }, payload) {
+  async [DEFINE_RELATION_TYPE]({ state, dispatch }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
     await state.schemaHandler.defineRelationType(payload);
 
@@ -351,7 +351,7 @@ export default {
 
     if (await (await type.instances()).next()) throw Error('Cannot delete schema concept which has instances');
 
-    if (payload.baseType === 'RELATIONSHIP_TYPE') {
+    if (payload.baseType === 'RELATION_TYPE') {
       const roles = await (await type.roles()).collect();
       await Promise.all(roles.map(async (role) => {
         const roleLabel = await role.label();

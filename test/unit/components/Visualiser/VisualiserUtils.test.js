@@ -130,7 +130,7 @@ describe('Get neighbours data', () => {
 
     expect(neighboursData.nodes).toHaveLength(2);
     expect(neighboursData.edges).toHaveLength(2);
-    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"RELATIONSHIP","id":"6666","explanation":"mockExplanation","offset":0,"graqlVar":"r"}');
+    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"RELATION","id":"6666","explanation":"mockExplanation","offset":0,"graqlVar":"r"}');
     expect(JSON.stringify(neighboursData.nodes[1])).toBe('{"baseType":"ENTITY","id":"4444","explanation":"mockExplanation","graqlVar":"r"}');
     expect(JSON.stringify(neighboursData.edges[0])).toBe('{"from":"6666","to":"3333","label":"son"}');
     expect(JSON.stringify(neighboursData.edges[1])).toBe('{"from":"6666","to":"4444","label":"father"}');

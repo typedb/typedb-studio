@@ -25,7 +25,7 @@ function getMockAttributeType() {
 
 function getMockRelationType() {
   return {
-    baseType: 'RELATIONSHIP_TYPE',
+    baseType: 'RELATION_TYPE',
     id: '2222',
     label: () => Promise.resolve('parentship'),
     isImplicit: () => Promise.resolve(false),
@@ -34,7 +34,7 @@ function getMockRelationType() {
 
 function getMockImplicitRelationType() {
   return {
-    baseType: 'RELATIONSHIP_TYPE',
+    baseType: 'RELATION_TYPE',
     id: '2222',
     isImplicit: () => Promise.resolve(true),
     isThing: () => false,
@@ -97,7 +97,7 @@ function getMockRelation() {
   mockRolePlayers.set(mockRole2, new Set([getMockEntity2()]));
 
   return {
-    baseType: 'RELATIONSHIP',
+    baseType: 'RELATION',
     id: '6666',
     type: () => Promise.resolve(getMockRelationType()),
     rolePlayersMap: () => Promise.resolve(mockRolePlayers),
@@ -115,7 +115,7 @@ function getMockRelation() {
 
 function getMockImplicitRelation() {
   return {
-    baseType: 'RELATIONSHIP',
+    baseType: 'RELATION',
     id: '6666',
     type: () => Promise.resolve(getMockImplicitRelationType()),
     isThing: () => true,

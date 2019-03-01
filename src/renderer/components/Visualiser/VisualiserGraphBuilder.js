@@ -55,7 +55,7 @@ async function buildLabel(node) {
     case 'ATTRIBUTE':
       label = `${node.type}: ${await node.value}`;
       break;
-    case 'RELATIONSHIP':
+    case 'RELATION':
       label = '';
       break;
     default:
@@ -99,7 +99,7 @@ async function prepareNodes(concepts) {
     switch (concept.baseType) {
       case 'ENTITY_TYPE':
       case 'ATTRIBUTE_TYPE':
-      case 'RELATIONSHIP_TYPE':
+      case 'RELATION_TYPE':
         await prepareSchemaConcept(concept);
         break;
       case 'ENTITY':
@@ -108,7 +108,7 @@ async function prepareNodes(concepts) {
       case 'ATTRIBUTE':
         await prepareAttribute(concept);
         break;
-      case 'RELATIONSHIP': {
+      case 'RELATION': {
         await prepareRelation(concept);
         break;
       }
@@ -143,7 +143,7 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
         case 'ATTRIBUTE':
           await prepareAttribute(thing);
           break;
-        case 'RELATIONSHIP':
+        case 'RELATION':
           await prepareRelation(thing);
           break;
         default:
@@ -222,7 +222,7 @@ async function buildFromConceptMap(result, autoLoadRolePlayers, limitRoleplayers
 
   // Check if auto-load role players is selected
   if (autoLoadRolePlayers) {
-    const relations = nodes.filter(x => x.baseType === 'RELATIONSHIP');
+    const relations = nodes.filter(x => x.baseType === 'RELATION');
     const roleplayers = await relationsRolePlayers(relations, limitRoleplayers, QuerySettings.getNeighboursLimit());
 
     nodes.push(...roleplayers.nodes);
@@ -234,7 +234,7 @@ async function buildFromConceptMap(result, autoLoadRolePlayers, limitRoleplayers
 async function buildFromConceptList(path, pathNodes) {
   const data = { nodes: await prepareNodes(pathNodes), edges: [] };
 
-  const relations = data.nodes.filter(x => x.baseType === 'RELATIONSHIP');
+  const relations = data.nodes.filter(x => x.baseType === 'RELATION');
 
   const roleplayers = await relationsRolePlayers(relations);
 
