@@ -6,6 +6,12 @@ git_repository(
     commit = "cef8a507d9946207bd1171986dec67eb4ea3b51a"
 )
 
+git_repository(
+    name = "graknlabs_client_java",
+    remote = "https://github.com/graknlabs/client-java",
+    commit = "79c1f242b91fe315a5a52a9c0a04dd4fe0dc04b5"
+)
+
 load("@graknlabs_grakn_core//dependencies/compilers:dependencies.bzl", "grpc_dependencies")
 grpc_dependencies()
 
