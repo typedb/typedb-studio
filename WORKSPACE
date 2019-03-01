@@ -12,6 +12,24 @@ git_repository(
     commit = "79c1f242b91fe315a5a52a9c0a04dd4fe0dc04b5"
 )
 
+######################################
+# Load Node.js dependencies from NPM #
+######################################
+
+# Load Node.js depdendencies for Bazel
+git_repository(
+    name = "build_bazel_rules_nodejs",
+    remote = "https://github.com/graknlabs/rules_nodejs.git",
+    commit = "ac3f6854365f119130186f971588514ccff503ab",
+)
+
+load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
+rules_nodejs_dependencies()
+
+# Load NPM dependencies for Node.js programs
+load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "npm_install")
+node_repositories(package_json = ["//:package.json"], node_version = "10.13.0")
+
 load("@graknlabs_grakn_core//dependencies/compilers:dependencies.bzl", "grpc_dependencies")
 grpc_dependencies()
 
