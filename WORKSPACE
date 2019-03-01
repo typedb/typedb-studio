@@ -25,7 +25,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 git_repository(
     name = "graknlabs_grakn_core",
     remote = "https://github.com/graknlabs/grakn",
-    commit = "c9913c782d19edb2fb0144a556d66b2248a7c9b7"
+    commit = "cef8a507d9946207bd1171986dec67eb4ea3b51a"
 )
 
 
