@@ -142,3 +142,15 @@ google_common_workspace_rules()
 
 load("@graknlabs_grakn_core//dependencies/tools/checkstyle:checkstyle.bzl", "checkstyle_dependencies")
 checkstyle_dependencies()
+
+load("@graknlabs_grakn_core//dependencies/distribution:dependencies.bzl", "distribution_dependencies")
+distribution_dependencies()
+
+load("@graknlabs_grakn_core//dependencies/git:dependencies.bzl", "graknlabs_graql")
+graknlabs_graql()
+
+load("@graknlabs_graql//dependencies/maven:dependencies.bzl", graql_dependencies = "maven_dependencies")
+graql_dependencies()
+
+load("@graknlabs_grakn_core//dependencies/docker:dependencies.bzl", "docker_dependencies")
+docker_dependencies()
