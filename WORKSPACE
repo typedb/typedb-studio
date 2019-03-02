@@ -3,7 +3,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "graknlabs_grakn_core",
     remote = "https://github.com/graknlabs/grakn",
-    commit = "3c416379e6fd8f57fc2cfc7e337551f9c6d3edf1" # grabl-marker: do not remove this comment, this is used for dependency-update by @graknlabs_grakn_core
+    commit = "74c16c99719813dc69de1fd42542244b6e92a85e" # grabl-marker: do not remove this comment, this is used for dependency-update by @graknlabs_grakn_core
 )
 
 git_repository(
