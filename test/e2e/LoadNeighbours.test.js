@@ -3,7 +3,6 @@ const assert = require('assert');
 const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
 const path = require('path');
 
-const sleep = time => new Promise(r => setTimeout(r, time));
 jest.setTimeout(15000);
 
 const app = new Application({
@@ -62,8 +61,8 @@ describe('Load neighbours', () => {
     assert.equal(noOfEntities, 'entities: 20');
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
-    const noOfRelationships = await app.client.getText('.no-of-relationships');
-    assert.equal(noOfRelationships, 'relationships: 0');
+    const noOfRelationships = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelationships, 'relations: 0');
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
@@ -91,8 +90,8 @@ describe('Load neighbours', () => {
     assert.equal(noOfEntities, 'entities: 10');
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
-    const noOfRelationships = await app.client.getText('.no-of-relationships');
-    assert.equal(noOfRelationships, 'relationships: 14');
+    const noOfRelationships = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelationships, 'relations: 14');
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
@@ -120,14 +119,14 @@ describe('Load neighbours', () => {
     assert.equal(noOfEntities, 'entities: 1');
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 1');
-    const noOfRelationships = await app.client.getText('.no-of-relationships');
-    assert.equal(noOfRelationships, 'relationships: 0');
+    const noOfRelationships = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelationships, 'relations: 0');
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
   });
 
-  test.skip('double click on relationship', async () => {
+  test.skip('double click on relation', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
@@ -149,7 +148,7 @@ describe('Load neighbours', () => {
     assert.equal(noOfEntities, 'entities: 2');
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
-    const noOfRelationships = await app.client.getText('.no-of-relationships');
-    assert.equal(noOfRelationships, 'relationships: 1');
+    const noOfRelationships = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelationships, 'relations: 1');
   });
 });

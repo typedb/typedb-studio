@@ -1,11 +1,11 @@
 <template>
     <div class="panel-container">
         <div @click="toggleContent" class="panel-header">
-            <vue-icon :icon="(showRelationshipsPanel) ?  'chevron-down' : 'chevron-right'" iconSize="14" className="vue-icon"></vue-icon>
-            <h1>Relationships</h1>
+            <vue-icon :icon="(showRelationsPanel) ?  'chevron-down' : 'chevron-right'" iconSize="14" className="vue-icon"></vue-icon>
+            <h1>Relations</h1>
         </div>
 
-        <div v-show="showRelationshipsPanel">
+        <div v-show="showRelationsPanel">
 
             <div class="content noselect" v-if="!currentKeyspace">
                 Please select a keyspace
@@ -17,7 +17,7 @@
             <div class="content" v-else>
 
                 <div v-if="!currentRole">
-                    This concept does not take part in any relationships
+                    This concept does not take part in any relations
                 </div>
 
                 <div v-else class="row plays-row">
@@ -29,22 +29,22 @@
                     </div>
                 </div>
 
-                <div v-if="relationships" class="panel-list-item">
+                <div v-if="relations" class="panel-list-item">
                     <div class="role-list" v-show="showRolesList">
-                        <ul v-for="role in Array.from(relationships.keys())" :key="role">
+                        <ul v-for="role in Array.from(relations.keys())" :key="role">
                             <li class="role-item" @click="selectRole(role)" v-bind:class="[(role === currentRole) ? 'role-item-selected' : '']">{{role}}</li>
                         </ul>
                     </div>
                 </div>
 
                 <div v-if="showRolePLayers">
-                    <div v-for="rel in Array.from(relationships.get(currentRole).keys())" :key="rel">
+                    <div v-for="rel in Array.from(relations.get(currentRole).keys())" :key="rel">
                         <div class="column">
                             <div class="row content-item">
                                 <div class="label">
                                     In
                                 </div>
-                                <div class="value relationship-item">
+                                <div class="value relation-item">
                                     {{rel}}
                                 </div>
                             </div>
@@ -58,7 +58,7 @@
                             </div>
 
                             <div v-if="showRolePLayers">
-                                <div class="roleplayers-list content-item" v-for="(rp, index) in relationships.get(currentRole).get(rel)" :key="index">
+                                <div class="roleplayers-list content-item" v-for="(rp, index) in relations.get(currentRole).get(rel)" :key="index">
                                     <div class="label role-label">
                                         {{rp.role}}
                                     </div>
@@ -83,14 +83,14 @@
 
 
   export default {
-    name: 'RelationshipsPanel',
+    name: 'RelationsPanel',
     props: ['tabId'],
     data() {
       return {
-        showRelationshipsPanel: true,
+        showRelationsPanel: true,
         showRolesList: false,
         currentRole: undefined,
-        relationships: undefined,
+        relations: undefined,
         showRolePLayers: false,
       };
     },
@@ -112,14 +112,14 @@
     watch: {
       async selectedNodes() {
         this.showRolePLayers = false;
-        // Initialise new relationship map whenever a node is selected
-        this.relationships = new Map();
-        this.currentRole = await this.loadRolesAndRelationships();
+        // Initialise new relation map whenever a node is selected
+        this.relations = new Map();
+        this.currentRole = await this.loadRolesAndRelations();
       },
       async currentRole(currentRole) {
         this.showRolePLayers = false;
-        // For each relationship per role, compute all other role players
-        await Promise.all(Array.from(this.relationships.get(currentRole).keys()).map(async (x) => { await this.loadOtherRolePlayers(x); }));
+        // For each relation per role, compute all other role players
+        await Promise.all(Array.from(this.relations.get(currentRole).keys()).map(async (x) => { await this.loadOtherRolePlayers(x); }));
         this.showRolePLayers = true;
       },
     },
@@ -132,7 +132,7 @@
     },
     methods: {
       toggleContent() {
-        this.showRelationshipsPanel = !this.showRelationshipsPanel;
+        this.showRelationsPanel = !this.showRelationsPanel;
       },
       toggleRoleList() {
         this.showRolesList = !this.showRolesList;
@@ -141,30 +141,30 @@
         this.showRolesList = false;
         this.currentRole = role;
       },
-      async loadRolesAndRelationships() {
+      async loadRolesAndRelations() {
         const graknTx = await this[OPEN_GRAKN_TX]();
 
         const node = await graknTx.getConcept(this.selectedNodes[0].id);
 
         const roles = await (await node.roles()).collect();
 
-        // Map roles to their respective relationships which map to an empty array of other role players in that relationship
-        // Role => { Relationship => [] }
+        // Map roles to their respective relations which map to an empty array of other role players in that relation
+        // Role => { Relation => [] }
         await Promise.all(roles.map(async (x) => {
           const roleLabel = await x.label();
-          if (!(roleLabel in this.relationships)) {
-            this.relationships.set(roleLabel, new Map());
-            (await Promise.all((await (await x.relationships()).collect()).map(async rel => rel.label()))).forEach((x) => {
-              this.relationships.get(roleLabel).set(x, []);
+          if (!(roleLabel in this.relations)) {
+            this.relations.set(roleLabel, new Map());
+            (await Promise.all((await (await x.relations()).collect()).map(async rel => rel.label()))).forEach((x) => {
+              this.relations.get(roleLabel).set(x, []);
             });
           }
         }));
         graknTx.close();
-        return this.relationships.keys().next().value;
+        return this.relations.keys().next().value;
       },
       async loadOtherRolePlayers(rel) {
         // If roleplayers have not already been computed
-        if (!this.relationships.get(this.currentRole).get(rel).length) {
+        if (!this.relations.get(this.currentRole).get(rel).length) {
           const graknTx = await this[OPEN_GRAKN_TX]();
 
           const node = await graknTx.getConcept(this.selectedNodes[0].id);
@@ -174,14 +174,14 @@
           // Get role concept of selected current role
           const role = await (Promise.all(roles.map(async x => ((await x.label() === this.currentRole) ? x : null)))).then(roles => roles.filter(r => r));
 
-          // Get relationship concepts of current role
-          let relationships = await (await node.relationships(...role[0])).collect();
+          // Get relation concepts of current role
+          let relations = await (await node.relations(...role[0])).collect();
 
-          // Filter relationships
-          relationships = await (Promise.all(relationships.map(async x => ((await (await x.type()).label() === rel) ? x : null)))).then(rels => rels.filter(r => r));
+          // Filter relations
+          relations = await (Promise.all(relations.map(async x => ((await (await x.type()).label() === rel) ? x : null)))).then(rels => rels.filter(r => r));
 
-          // For every relationship, map relationships to their respective roleplayer and the role it plays
-          await Promise.all(relationships.map(async (x) => {
+          // For every relation, map relations to their respective roleplayer and the role it plays
+          await Promise.all(relations.map(async (x) => {
             let roleplayers = await x.rolePlayersMap();
             roleplayers = Array.from(roleplayers.entries());
 
@@ -193,7 +193,7 @@
 
                   // Do not include the current role
                   if (thing.id !== this.selectedNodes[0].id && roleLabel !== this.currentRole) {
-                    this.relationships.get(this.currentRole).get(rel).push({ role: roleLabel, player: `${thingLabel}: ${thing.id}` });
+                    this.relations.get(this.currentRole).get(rel).push({ role: roleLabel, player: `${thingLabel}: ${thing.id}` });
                   }
                 }));
             }));

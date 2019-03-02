@@ -177,7 +177,7 @@
 
 </style>
 <script>
-import Grakn from 'grakn';
+import Grakn from 'grakn-client';
 import storage from '@/components/shared/PersistentStorage';
 import ServerSettings from '@/components/ServerSettings';
 

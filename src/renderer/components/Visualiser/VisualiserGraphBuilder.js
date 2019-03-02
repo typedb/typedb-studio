@@ -1,5 +1,5 @@
 import {
-  relationshipTypesOutboundEdges,
+  relationTypesOutboundEdges,
   ownerHasEdges,
   computeSubConcepts,
 } from '@/components/shared/SharedUtils';
@@ -55,7 +55,7 @@ async function buildLabel(node) {
     case 'ATTRIBUTE':
       label = `${node.type}: ${await node.value}`;
       break;
-    case 'RELATIONSHIP':
+    case 'RELATION':
       label = '';
       break;
     default:
@@ -75,7 +75,7 @@ async function prepareEntity(entity) {
   entity.isInferred = await entity.isInferred();
 }
 
-async function prepareRelationship(rel) {
+async function prepareRelation(rel) {
   rel.type = await (await rel.type()).label();
   rel.isInferred = await rel.isInferred();
 }
@@ -99,7 +99,7 @@ async function prepareNodes(concepts) {
     switch (concept.baseType) {
       case 'ENTITY_TYPE':
       case 'ATTRIBUTE_TYPE':
-      case 'RELATIONSHIP_TYPE':
+      case 'RELATION_TYPE':
         await prepareSchemaConcept(concept);
         break;
       case 'ENTITY':
@@ -108,8 +108,8 @@ async function prepareNodes(concepts) {
       case 'ATTRIBUTE':
         await prepareAttribute(concept);
         break;
-      case 'RELATIONSHIP': {
-        await prepareRelationship(concept);
+      case 'RELATION': {
+        await prepareRelation(concept);
         break;
       }
       default:
@@ -123,10 +123,10 @@ async function prepareNodes(concepts) {
   return nodes;
 }
 
-async function loadRolePlayers(relationship, limitRolePlayers, limit, offset) {
+async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
   const nodes = [];
   const edges = [];
-  let roleplayers = await relationship.rolePlayersMap();
+  let roleplayers = await relation.rolePlayersMap();
   roleplayers = Array.from(roleplayers.entries());
   if (limitRolePlayers) {
     roleplayers = roleplayers.slice(offset, limit + offset);
@@ -143,8 +143,8 @@ async function loadRolePlayers(relationship, limitRolePlayers, limit, offset) {
         case 'ATTRIBUTE':
           await prepareAttribute(thing);
           break;
-        case 'RELATIONSHIP':
-          await prepareRelationship(thing);
+        case 'RELATION':
+          await prepareRelation(thing);
           break;
         default:
           throw new Error(`Unrecognised baseType of thing: ${thing.baseType}`);
@@ -153,14 +153,14 @@ async function loadRolePlayers(relationship, limitRolePlayers, limit, offset) {
       thing.attrOffset = 0;
 
       nodes.push(thing);
-      edges.push({ from: relationship.id, to: thing.id, label: roleLabel });
+      edges.push({ from: relation.id, to: thing.id, label: roleLabel });
     }));
   });
   return Promise.all(promises).then((() => ({ nodes, edges })));
 }
 
-async function relationshipsRolePlayers(relationships, limitRolePlayers, limit) {
-  const results = await Promise.all(relationships.map(rel => loadRolePlayers(rel, limitRolePlayers, limit, rel.offset)));
+async function relationsRolePlayers(relations, limitRolePlayers, limit) {
+  const results = await Promise.all(relations.map(rel => loadRolePlayers(rel, limitRolePlayers, limit, rel.offset)));
   return {
     nodes: results.flatMap(x => x.nodes),
     edges: results.flatMap(x => x.edges),
@@ -180,8 +180,8 @@ async function computeSchemaEdges(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
   const subConceptEdges = (await computeSubConcepts(nodes)).edges;
 
-  // Draw all edges from relationships to roleplayers
-  const relEdges = await relationshipTypesOutboundEdges(nodes);
+  // Draw all edges from relations to roleplayers
+  const relEdges = await relationTypesOutboundEdges(nodes);
 
   // Draw all edges from owners to attributes
   const hasEdges = await ownerHasEdges(nodes);
@@ -192,26 +192,26 @@ async function computeSchemaEdges(nodes) {
 async function constructEdges(result) {
   const conceptMaps = result.map(x => Array.from(x.map().values()));
 
-  // Edges are a combination of relationship edges and attribute edges
+  // Edges are a combination of relation edges and attribute edges
   const edges = await Promise.all(conceptMaps.map(async (map) => {
     // collect ids of all entities in a concept map
     const thingIds = map.map(x => x.id);
 
     const attributes = map.filter(x => x.isAttribute());
-    const relationships = map.filter(x => x.isRelationship());
+    const relations = map.filter(x => x.isRelation());
     const schemaConcepts = map.filter(x => x.isType());
 
     // Compute edges that connect things to their attributes
     const attributeEdges = await computeAttributeEdges(attributes, thingIds);
 
-    const roleplayers = await relationshipsRolePlayers(relationships, false);
+    const roleplayers = await relationsRolePlayers(relations, false);
     // Compute edges that connect things to their role players
-    const relationshipEdges = roleplayers.edges.filter(edge => thingIds.includes(edge.to));
+    const relationEdges = roleplayers.edges.filter(edge => thingIds.includes(edge.to));
 
     const schemaEdges = await computeSchemaEdges(schemaConcepts);
 
-    // Combine attribute, relationship, and schema edges
-    return attributeEdges.concat(relationshipEdges, schemaEdges).flatMap(x => x);
+    // Combine attribute, relation, and schema edges
+    return attributeEdges.concat(relationEdges, schemaEdges).flatMap(x => x);
   }));
   return edges.flatMap(x => x);
 }
@@ -222,8 +222,8 @@ async function buildFromConceptMap(result, autoLoadRolePlayers, limitRoleplayers
 
   // Check if auto-load role players is selected
   if (autoLoadRolePlayers) {
-    const relationships = nodes.filter(x => x.baseType === 'RELATIONSHIP');
-    const roleplayers = await relationshipsRolePlayers(relationships, limitRoleplayers, QuerySettings.getNeighboursLimit());
+    const relations = nodes.filter(x => x.baseType === 'RELATION');
+    const roleplayers = await relationsRolePlayers(relations, limitRoleplayers, QuerySettings.getNeighboursLimit());
 
     nodes.push(...roleplayers.nodes);
     edges.push(...roleplayers.edges);
@@ -234,9 +234,9 @@ async function buildFromConceptMap(result, autoLoadRolePlayers, limitRoleplayers
 async function buildFromConceptList(path, pathNodes) {
   const data = { nodes: await prepareNodes(pathNodes), edges: [] };
 
-  const relationships = data.nodes.filter(x => x.baseType === 'RELATIONSHIP');
+  const relations = data.nodes.filter(x => x.baseType === 'RELATION');
 
-  const roleplayers = await relationshipsRolePlayers(relationships);
+  const roleplayers = await relationsRolePlayers(relations);
 
   roleplayers.nodes.filter(x => path.list().includes(x.id));
   roleplayers.edges.filter(x => (path.list().includes(x.to) && path.list().includes(x.to)));
@@ -253,6 +253,6 @@ export default {
   buildFromConceptMap,
   buildFromConceptList,
   prepareNodes,
-  relationshipsRolePlayers,
+  relationsRolePlayers,
   attachExplanation,
 };

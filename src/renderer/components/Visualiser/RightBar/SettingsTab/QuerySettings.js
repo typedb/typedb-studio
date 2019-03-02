@@ -18,7 +18,7 @@ function setQueryLimit(value) {
   storage.set('query_limit', parsedValue);
 }
 
-// -------------- Relationship Settings ------------ //
+// -------------- Relation Settings ------------ //
 
 const DEFAULT_ROLE_PLAYERS = true;
 

@@ -1,4 +1,4 @@
-export const META_CONCEPTS = new Set(['entity', 'relationship', 'attribute', 'role']);
+export const META_CONCEPTS = new Set(['entity', 'relation', 'attribute', 'role']);
 
 export async function ownerHasEdges(nodes) {
   const edges = [];
@@ -22,9 +22,9 @@ export async function ownerHasEdges(nodes) {
   return edges;
 }
 
-export async function relationshipTypesOutboundEdges(nodes) {
+export async function relationTypesOutboundEdges(nodes) {
   const edges = [];
-  const promises = nodes.filter(x => x.isRelationshipType())
+  const promises = nodes.filter(x => x.isRelationType())
     .map(async rel =>
       Promise.all(((await (await rel.roles()).collect())).map(async (role) => {
         const types = await (await role.players()).collect();

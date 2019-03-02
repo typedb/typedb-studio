@@ -1,4 +1,4 @@
-import Grakn from 'grakn';
+import Grakn from 'grakn-client';
 import ServerSettings from '@/components/ServerSettings';
 
 export const loadKeyspaces = async (context) => {

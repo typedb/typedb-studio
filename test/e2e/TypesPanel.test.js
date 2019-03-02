@@ -102,7 +102,7 @@ describe('Types Panel', () => {
     assert.equal(noOfNodes, 'nodes: 0');
   });
 
-  test.skip('load relationship types', async () => {
+  test.skip('load relation types', async () => {
     app.client.click('#types-panel');
     await app.client.waitUntilWindowLoaded();
     const typesPanel = app.client.selectByAttribute('class', 'types-panel');
@@ -113,7 +113,7 @@ describe('Types Panel', () => {
     let noOfNodes = await app.client.getText('#nodes');
     assert.equal(noOfNodes, 'nodes: 0');
 
-    app.client.click('#relationships');
+    app.client.click('#relations');
     await sleep(3000);
 
     noOfNodes = await app.client.getText('#nodes');
@@ -200,7 +200,7 @@ describe('Types Panel', () => {
     assert.equal(noOfNodes, 'nodes: 0');
   });
 
-  test.skip('load parentiship relationships', async () => {
+  test.skip('load parentiship relations', async () => {
     app.client.click('#types-panel');
     await app.client.waitUntilWindowLoaded();
     const typesPanel = app.client.selectByAttribute('class', 'types-panel');
@@ -208,9 +208,9 @@ describe('Types Panel', () => {
     assert.ok(typesPanel);
     await sleep(1000);
 
-    app.client.click('#list-relationships');
+    app.client.click('#list-relations');
     await app.client.waitUntilWindowLoaded();
-    const entitiesTab = await app.client.getHTML('#relationships-tab');
+    const entitiesTab = await app.client.getHTML('#relations-tab');
 
     assert.ok(entitiesTab);
     await sleep(4000);

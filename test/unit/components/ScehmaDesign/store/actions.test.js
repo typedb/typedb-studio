@@ -6,7 +6,6 @@ import {
   OPEN_GRAKN_TX,
   UPDATE_METATYPE_INSTANCES,
   CANVAS_RESET,
-  INITIALISE_VISUALISER,
 } from '@/components/shared/StoresActions';
 
 import getters from '@/components/SchemaDesign/store/getters';
@@ -51,7 +50,7 @@ beforeAll(() => {
     getAllNodes: jest.fn().mockImplementation(() => [
       { id: 123, baseType: 'ENTITY' },
       { id: 456, baseType: 'ATTRIBUTE' },
-      { id: 789, baseType: 'RELATIONSHIP' },
+      { id: 789, baseType: 'RELATION' },
     ]),
   };
 
@@ -79,7 +78,7 @@ describe('actions', () => {
 
     expect(store.state['schema-design'].metaTypeInstances.entities).toHaveLength(1);
     expect(store.state['schema-design'].metaTypeInstances.attributes).toHaveLength(9);
-    expect(store.state['schema-design'].metaTypeInstances.relationships).toHaveLength(6);
+    expect(store.state['schema-design'].metaTypeInstances.relations).toHaveLength(6);
     expect(store.state['schema-design'].metaTypeInstances.roles).toHaveLength(23);
   });
 

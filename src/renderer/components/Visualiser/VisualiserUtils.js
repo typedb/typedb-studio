@@ -8,13 +8,13 @@ function getNeighboursQuery(node, neighboursLimit) {
   switch (node.baseType) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
-    case 'RELATIONSHIP_TYPE':
+    case 'RELATION_TYPE':
       return `match $x id "${node.id}"; $y isa $x; offset ${node.offset}; limit ${neighboursLimit}; get $y;`;
     case 'ENTITY':
       return `match $x id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $r, $y;`;
     case 'ATTRIBUTE':
       return `match $x has attribute $y; $y id "${node.id}"; offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
-    case 'RELATIONSHIP':
+    case 'RELATION':
       return `match $r id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
     default:
       throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
@@ -30,12 +30,9 @@ export function limitQuery(query) {
     const limitRegex = /.*;\s*(limit\b.*?;).*/;
     const offsetRegex = /.*;\s*(offset\b.*?;).*/;
     const deleteRegex = /^(.*;)\s*(delete\b.*;)$/;
-    const match = getRegex.exec(query);
-    limitedQuery = match[1];
-    const getPattern = match[3];
+
     if (!(offsetRegex.test(query)) && !(deleteRegex.test(query))) { limitedQuery = `${limitedQuery} offset 0;`; }
     if (!(limitRegex.test(query)) && !(deleteRegex.test(query))) { limitedQuery = `${limitedQuery} limit ${QuerySettings.getQueryLimit()};`; }
-    limitedQuery = `${limitedQuery} ${getPattern}`;
   }
   return limitedQuery;
 }
@@ -49,7 +46,7 @@ export function buildExplanationQuery(answer, queryPattern) {
       const attributeRegex = queryPattern.match(/(?:has )(\S+)/);
       if (attributeRegex) { // if attribute is only an attribute of a concept
         attributeQuery = `has ${attributeRegex[1]} $${graqlVar};`;
-      } else { // attribute plays a role player in a relationship
+      } else { // attribute plays a role player in a relation
         let attributeType = queryPattern.match(/\(([^)]+)\)/)[0].split(',').filter(y => y.includes(graqlVar));
         attributeType = attributeType[0].slice(1, attributeType[0].indexOf(':'));
         attributeQuery = `has ${attributeType} $${graqlVar};`;
@@ -57,7 +54,7 @@ export function buildExplanationQuery(answer, queryPattern) {
       // attributeQuery = `has ${queryPattern.match(/(?:has )(\w+)/)[1]} $${graqlVar};`;
     } else if (concept.isEntity()) {
       query += `$${graqlVar} id ${concept.id}; `;
-    } else if (attributeQuery && concept.isRelationship()) { // if answer has a relationship and attribute
+    } else if (attributeQuery && concept.isRelation()) { // if answer has a relation and attribute
       attributeQuery = `$${graqlVar} id ${concept.id} ${attributeQuery}`;
     }
   });
@@ -86,7 +83,7 @@ export function computeAttributes(nodes) {
 export async function loadMetaTypeInstances(graknTx) {
 // Fetch types
   const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
-  const rels = await (await graknTx.query('match $x sub relationship; get;')).collectConcepts();
+  const rels = await (await graknTx.query('match $x sub relation; get;')).collectConcepts();
   const attributes = await (await graknTx.query('match $x sub attribute; get;')).collectConcepts();
   const roles = await (await graknTx.query('match $x sub role; get;')).collectConcepts();
 
@@ -96,8 +93,8 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relationships = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
-    .then(labels => labels.filter(l => l && l !== 'relationship')
+  metaTypeInstances.relations = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
+    .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
   metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.label()))
@@ -161,14 +158,14 @@ async function answerContainsImplicitType(answer) {
  * @param {Object[]} answers array of ConceptMap Answers to be inspected
  * @return {Object[]} filtered array of Answers
  */
-export async function filterMaps(answers) { // Filter out ConceptMaps that contain implicit relationships
+export async function filterMaps(answers) { // Filter out ConceptMaps that contain implicit relations
   return Promise.all(answers.map(async x => ((await answerContainsImplicitType(x)) ? null : x)))
     .then(maps => maps.filter(map => map));
 }
 
 /**
  * Executes query to load neighbours of given node and filters our all the answers that contain implicit concepts, given that we
- * don't want to show implicit concepts (relationships to attributes) to the user, for now.
+ * don't want to show implicit concepts (relations to attributes) to the user, for now.
  * @param {Object} node VisJs node of which we want to load the neighbours
  * @param {Object} graknTx Grakn transaction used to execute query
  * @param {Number} limit Limit of neighbours to load
@@ -191,8 +188,8 @@ function getTypeNeighbourEdges(nodes, superTypeId) {
 }
 
 async function getEntityNeighbourEdges(nodes) {
-  const relationships = nodes.filter(x => x.isRelationship());
-  const roleplayers = await VisualiserGraphBuilder.relationshipsRolePlayers(relationships, false);
+  const relations = nodes.filter(x => x.isRelation());
+  const roleplayers = await VisualiserGraphBuilder.relationsRolePlayers(relations, false);
   const edges = roleplayers.edges.flatMap(x => x);
   return edges;
 }
@@ -202,15 +199,15 @@ function getAttributeNeighbourEdges(nodes, attributeId) {
   return edges;
 }
 
-async function getRelationshipNeighbourEdges(nodes, graknTx, relationshipId) {
+async function getRelationNeighbourEdges(nodes, graknTx, relationId) {
   const roleplayersIds = nodes.map(x => x.id);
-  const relationshipConcept = await graknTx.getConcept(relationshipId);
-  const roleplayers = Array.from((await relationshipConcept.rolePlayersMap()).entries());
+  const relationConcept = await graknTx.getConcept(relationId);
+  const roleplayers = Array.from((await relationConcept.rolePlayersMap()).entries());
   const edges = (await Promise.all(Array.from(roleplayers, async ([role, setOfThings]) => {
     const roleLabel = await role.label();
     return Array.from(setOfThings.values())
       .filter(thing => roleplayersIds.includes(thing.id))
-      .map(thing => ({ from: relationshipId, to: thing.id, label: roleLabel }));
+      .map(thing => ({ from: relationId, to: thing.id, label: roleLabel }));
   }))).flatMap(x => x);
   return edges;
 }
@@ -222,12 +219,12 @@ export async function getNeighboursData(visNode, graknTx, neighboursLimit) {
   switch (visNode.baseType) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
-    case 'RELATIONSHIP_TYPE':
+    case 'RELATION_TYPE':
       return { nodes, edges: getTypeNeighbourEdges(nodes, visNode.id) };
     case 'ENTITY':
       return { nodes, edges: await getEntityNeighbourEdges(nodes) };
-    case 'RELATIONSHIP':
-      return { nodes, edges: await getRelationshipNeighbourEdges(nodes, graknTx, visNode.id) };
+    case 'RELATION':
+      return { nodes, edges: await getRelationNeighbourEdges(nodes, graknTx, visNode.id) };
     case 'ATTRIBUTE':
       return { nodes, edges: getAttributeNeighbourEdges(nodes, visNode.id) };
     default:

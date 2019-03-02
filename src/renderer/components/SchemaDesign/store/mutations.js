@@ -25,7 +25,7 @@ export default {
       state.canvasData = {
         entities: state.visFacade.getAllNodes().filter(x => x.baseType === 'ENTITY').length,
         attributes: state.visFacade.getAllNodes().filter(x => x.baseType === 'ATTRIBUTE').length,
-        relationships: state.visFacade.getAllNodes().filter(x => x.baseType === 'RELATIONSHIP').length };
+        relations: state.visFacade.getAllNodes().filter(x => x.baseType === 'RELATION').length };
     }
   },
   setContextMenu(state, contextMenu) {

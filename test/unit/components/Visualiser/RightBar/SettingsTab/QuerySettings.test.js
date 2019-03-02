@@ -32,7 +32,7 @@ describe('LimitQuerySettings', () => {
   });
 });
 
-describe('RelationshipSettings', () => {
+describe('RelationSettings', () => {
   const DEFAULT_ROLE_PLAYERS = true;
 
   test('setRolePlayersStatus', () => {
