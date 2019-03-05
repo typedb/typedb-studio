@@ -137,7 +137,8 @@ export default {
     }
   },
   async [LOAD_ATTRIBUTES]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
-    const query = `match $x id "${visNode.id}" has attribute $y; offset ${visNode.attrOffset}; limit ${neighboursLimit}; get $y;`;
+    commit('loadingQuery', true);
+    const query = `match $x id "${visNode.id}", has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
     state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
 
     const graknTx = await dispatch(OPEN_GRAKN_TX);
