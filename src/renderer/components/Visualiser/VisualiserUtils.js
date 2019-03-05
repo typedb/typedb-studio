@@ -9,13 +9,13 @@ function getNeighboursQuery(node, neighboursLimit) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
     case 'RELATION_TYPE':
-      return `match $x id "${node.id}"; $y isa $x; offset ${node.offset}; limit ${neighboursLimit}; get $y;`;
+      return `match $x id "${node.id}"; $y isa $x; get $y; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'ENTITY':
-      return `match $x id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $r, $y;`;
+      return `match $x id "${node.id}"; $r ($x, $y); get $r, $y; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'ATTRIBUTE':
-      return `match $x has attribute $y; $y id "${node.id}"; offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
+      return `match $x has attribute $y; $y id "${node.id}"; get $x; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'RELATION':
-      return `match $r id "${node.id}"; $r ($x, $y); offset ${node.offset}; limit ${neighboursLimit}; get $x;`;
+      return `match $r id "${node.id}"; $r ($x, $y); get $x; offset ${node.offset}; limit ${neighboursLimit};`;
     default:
       throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
   }
@@ -137,7 +137,7 @@ export function mapAnswerToExplanationQuery(answer) {
     query = query.slice(0, -2);
     query += `, ${buildExplanationQuery(answer, queryPattern).attributeQuery} get;`;
   } else {
-    query += `$r ${queryPattern.slice(1, -1).match(/\((.*?;)/)[0]} offset 0; limit 1; get $r;`;
+    query += `$r ${queryPattern.slice(1, -1).match(/\((.*?;)/)[0]} get $r; offset 0; limit 1;`;
   }
   return query;
 }
