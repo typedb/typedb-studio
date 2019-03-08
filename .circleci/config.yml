@@ -32,7 +32,7 @@ commands:
               echo "No RBE credential found. Bazel will be executed locally without RBE support."
             fi
 
-  run-grakn-server-mac:
+  run-grakn-server:
     parameters:
       rbe:
         description: use RBE while building
