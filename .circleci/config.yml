@@ -110,7 +110,7 @@ jobs:
       - run: export DISPLAY=:99
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
-      - run: bazel run @nodejs//:npm run e2e
+      # - run: bazel run @nodejs//:npm run e2e
 
   build-workbase-mac:
     macos:
@@ -128,7 +128,7 @@ jobs:
       - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
-      - run: bazel run @nodejs//:npm run e2e
+      # - run: bazel run @nodejs//:npm run e2e
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
       - persist_to_workspace:
           root: ~/grakn
