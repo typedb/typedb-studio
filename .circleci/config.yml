@@ -32,15 +32,15 @@ commands:
               echo "No RBE credential found. Bazel will be executed locally without RBE support."
             fi
 
-  run-grakn-server:
+  run-grakn-server-mac:
     parameters:
       rbe:
         description: use RBE while building
         type: boolean
         default: false
     steps:
-      - run: bazel build @graknlabs_grakn_core//:distribution <<# rbe >> --config=rbe <</ rbe >>
-      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all.zip -d bazel-genfiles/dist/
+      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip <<# rbe >> --config=rbe <</ rbe >>
+      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d bazel-genfiles/dist/
       - run: nohup bazel-genfiles/dist/grakn-core-all/grakn server start
       - run: bash bazel-genfiles/dist/grakn-core-all/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
 
