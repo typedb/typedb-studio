@@ -20,6 +20,7 @@
     "pack:renderer": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.renderer.config.js",
     "postinstall": "bash ./install-node-electron.sh",
     "unit": "node ./node_modules/jest/bin/jest.js ./test/unit",
+    "integration": "node ./node_modules/jest/bin/jest.js ./test/integration",
     "e2e": "npm run pack && node ./node_modules/jest/bin/jest.js ./test/e2e --runInBand"
   },
   "build": {

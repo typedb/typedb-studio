@@ -199,13 +199,6 @@ try:
     lprint('Verifying local file')
     sp.check_call(['file', './grakn-setup.exe'])
 
-    lprint('[Remote]: running npm run e2e')
-    ssh(' && '.join([
-        'refreshenv',
-        'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- run e2e'
-    ]), instance_ip, 'circleci', instance_password)
-
     lprint('[Remote]: running npm run unit')
     ssh(' && '.join([
         'refreshenv',
@@ -213,6 +206,19 @@ try:
         'bazel run @nodejs//:bin/npm.cmd -- run unit'
     ]), instance_ip, 'circleci', instance_password)
 
+    lprint('[Remote]: running npm run integration')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run integration'
+    ]), instance_ip, 'circleci', instance_password)
+
+    lprint('[Remote]: running npm run e2e')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run e2e'
+    ]), instance_ip, 'circleci', instance_password)
 
 finally:
     lprint('Remove instance')

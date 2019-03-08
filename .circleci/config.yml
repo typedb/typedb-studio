@@ -108,7 +108,8 @@ jobs:
       - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
       - run: Xvfb :99 &
       - run: export DISPLAY=:99
-      - run: bazel run @nodejs//:npm test
+      - run: bazel run @nodejs//:npm run unit
+      - run: bazel run @nodejs//:npm run integration
       - run: bazel run @nodejs//:npm run e2e
 
   build-workbase-mac:
@@ -126,6 +127,7 @@ jobs:
           command: bazel run @nodejs//:npm install
       - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
       - run: bazel run @nodejs//:npm run unit
+      - run: bazel run @nodejs//:npm run integration
       - run: bazel run @nodejs//:npm run e2e
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
       - persist_to_workspace:
