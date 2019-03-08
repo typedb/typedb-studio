@@ -13,7 +13,7 @@ export const loadKeyspaces = async (context) => {
 
 export const createKeyspace = async (context, name) => {
   const session = await context.state.grakn.session(name);
-  await session.transaction().write().then(async () => { await context.dispatch('loadKeyspaces'); });
+  await session.transaction().write().then(async (tx) => { await context.dispatch('loadKeyspaces'); tx.close(); });
   await session.close();
 };
 

@@ -14,7 +14,7 @@ jest.mock('@/components/ServerSettings', () => ({
   getServerUri: () => '127.0.0.1:48555',
 }));
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 const grakn = new Grakn(ServerSettings.getServerUri(), null);
 let graknSession;
@@ -170,7 +170,6 @@ describe('Actions', () => {
       const personRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
       expect(personRoles).toHaveLength(2);
 
-      graknTx = await graknSession.transaction().write();
       schemaHandler = new SchemaHandler(graknTx);
 
       await schemaHandler.deleteRelatesRole({ label: 'parentship', roleLabel: 'parent' });
