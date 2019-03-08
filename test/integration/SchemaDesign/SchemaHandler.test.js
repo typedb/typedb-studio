@@ -154,7 +154,6 @@ describe('Actions', () => {
 
   test('delete relates role', async () => {
     let graknTx = await graknSession.transaction().write();
-
     try {
       let schemaHandler = new SchemaHandler(graknTx);
 
@@ -183,7 +182,6 @@ describe('Actions', () => {
     } finally {
       await graknTx.close();
     }
-    await graknTx.close();
   });
 });
 
