@@ -18,7 +18,7 @@ export const createKeyspace = async (context, name) => {
 };
 
 export const deleteKeyspace = async (context, name) => context.state.grakn.keyspaces().delete(name)
-  .then(() => { context.dispatch('loadKeyspaces'); });
+  .then(async () => { await context.dispatch('loadKeyspaces'); });
 
 export const login = (context, credentials) =>
   // TODO: Keyspace 'grakn' is hardcoded until we will implement an authenticate endpoint in gRPC

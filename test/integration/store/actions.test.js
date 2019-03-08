@@ -27,6 +27,7 @@ describe('actions', () => {
   });
 
   test('delete keyspace', async () => {
+    await store.dispatch('loadKeyspaces');
     await store.dispatch('createKeyspace', 'test_keyspace_del');
     await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).toContain('test_keyspace_del');

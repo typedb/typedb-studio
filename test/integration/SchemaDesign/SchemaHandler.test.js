@@ -53,20 +53,23 @@ describe('Actions', () => {
 
   test('define relation type & role type', async () => {
     let graknTx = await graknSession.transaction().write();
-    const schemaHandler = new SchemaHandler(graknTx);
+    try {
+      const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
-    await schemaHandler.defineRole({ roleLabel: 'parent' });
-    await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
+      await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
+      await schemaHandler.defineRole({ roleLabel: 'parent' });
+      await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
 
-    await graknTx.commit();
+      await graknTx.commit();
 
-    graknTx = await graknSession.transaction().write();
-    expect(await graknTx.getSchemaConcept('parent')).toBeDefined();
+      graknTx = await graknSession.transaction().write();
+      expect(await graknTx.getSchemaConcept('parent')).toBeDefined();
 
-    const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
-    expect(parentshipRoles).toHaveLength(1);
-    await graknTx.close();
+      const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
+      expect(parentshipRoles).toHaveLength(1);
+    } finally {
+      await graknTx.close();
+    }
   });
 
   test('delete type', async () => {
@@ -151,30 +154,35 @@ describe('Actions', () => {
 
   test('delete relates role', async () => {
     let graknTx = await graknSession.transaction().write();
-    let schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
-    await schemaHandler.defineRole({ roleLabel: 'parent' });
-    await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
-    await schemaHandler.defineRole({ roleLabel: 'child' });
-    await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'child' });
+    try {
+      let schemaHandler = new SchemaHandler(graknTx);
 
-    await graknTx.commit();
+      await schemaHandler.defineRelationType({ relationLabel: 'parentship' });
+      await schemaHandler.defineRole({ roleLabel: 'parent' });
+      await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'parent' });
+      await schemaHandler.defineRole({ roleLabel: 'child' });
+      await schemaHandler.addRelatesRole({ schemaLabel: 'parentship', roleLabel: 'child' });
 
-    graknTx = await graknSession.transaction().write();
+      await graknTx.commit();
 
-    const personRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
-    expect(personRoles).toHaveLength(2);
+      graknTx = await graknSession.transaction().write();
 
-    graknTx = await graknSession.transaction().write();
-    schemaHandler = new SchemaHandler(graknTx);
+      const personRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
+      expect(personRoles).toHaveLength(2);
 
-    await schemaHandler.deleteRelatesRole({ label: 'parentship', roleLabel: 'parent' });
-    await graknTx.commit();
+      graknTx = await graknSession.transaction().write();
+      schemaHandler = new SchemaHandler(graknTx);
 
-    graknTx = await graknSession.transaction().write();
-    const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
-    expect(parentshipRoles).toHaveLength(1);
+      await schemaHandler.deleteRelatesRole({ label: 'parentship', roleLabel: 'parent' });
+      await graknTx.commit();
+
+      graknTx = await graknSession.transaction().write();
+      const parentshipRoles = await (await (await graknTx.getSchemaConcept('parentship')).roles()).collect();
+      expect(parentshipRoles).toHaveLength(1);
+    } finally {
+      await graknTx.close();
+    }
     await graknTx.close();
   });
 });
