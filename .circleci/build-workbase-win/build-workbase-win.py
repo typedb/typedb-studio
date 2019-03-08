@@ -169,14 +169,14 @@ try:
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn server start'
+        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn.bat server start'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: populating Grakn')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
+        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn.bat console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: running npm install')
