@@ -11,9 +11,11 @@ export const loadKeyspaces = async (context) => {
   }
 };
 
-export const createKeyspace = (context, name) => context.state.grakn.session(name)
-  .transaction(Grakn.txType.WRITE)
-  .then(() => { context.dispatch('loadKeyspaces'); });
+export const createKeyspace = async (context, name) => {
+  const session = await context.state.grakn.session(name);
+  await session.transaction().write().then(async () => { await context.dispatch('loadKeyspaces'); });
+  await session.close();
+};
 
 export const deleteKeyspace = async (context, name) => context.state.grakn.keyspaces().delete(name)
   .then(() => { context.dispatch('loadKeyspaces'); });
@@ -37,8 +39,4 @@ export const logout = async (context) => {
   context.commit('setKeyspaces', undefined);
   context.commit('userLogged', false);
   // Need to notify all the other states that they need to invalidate GraknClient
-};
-
-export const closeSession = (context) => {
-  context.state.grakn.session.close();
 };

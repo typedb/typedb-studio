@@ -24,7 +24,6 @@ import {
   computeSubConcepts,
 } from '@/components/shared/SharedUtils';
 
-import Grakn from 'grakn-client';
 import SchemaHandler from '../SchemaHandler';
 import {
   updateNodePositions,
@@ -49,16 +48,16 @@ async function buildSchema(nodes) {
 
 export default {
   async [OPEN_GRAKN_TX]({ state, commit }) {
-    const graknTx = await state.graknSession.transaction(Grakn.txType.WRITE);
+    const graknTx = await state.graknSession.transaction().write();
     commit('setSchemaHandler', new SchemaHandler(graknTx));
     return graknTx;
   },
 
-  [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
+  async [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
     if (keyspace !== state.currentKeyspace) {
       dispatch(CANVAS_RESET);
       commit('currentKeyspace', keyspace);
-      commit('graknSession', rootState.grakn.session(keyspace));
+      await commit('graknSession', await rootState.grakn.session(keyspace));
       dispatch(UPDATE_METATYPE_INSTANCES);
       dispatch(LOAD_SCHEMA);
     }
