@@ -2,7 +2,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/graknlabs/grakn.git"
+    "url": "https://github.com/graknlabs/workbase.git"
   },
   "name": "grakn-workbase",
   "version": "1.1.1",
@@ -25,7 +25,7 @@
   },
   "build": {
     "productName": "Grakn Workbase",
-    "appId": "grakn.core.workbase",
+    "appId": "grakn.workbase",
     "directories": {
       "output": "build"
     },
@@ -50,7 +50,7 @@
     "mac": {
       "icon": "build/icons/icon.icns",
       "artifactName": "grakn-workbase-${version}-mac.${ext}",
-      "target": "zip",
+      "target": "dmg",
       "type": "distribution"
     },
     "win": {
