@@ -129,11 +129,11 @@ jobs:
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
       # - run: bazel run @nodejs//:npm run e2e
-      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.zip ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.zip
+      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.dmg ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg
       - persist_to_workspace:
           root: ~/grakn
           paths:
-            - artifacts/*-mac.zip
+            - artifacts/*-mac.dmg
   publish-github-draft:
     docker:
       - image: cibuilds/github:0.10
