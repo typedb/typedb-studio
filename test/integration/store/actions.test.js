@@ -34,6 +34,6 @@ describe('actions', () => {
     await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).not.toContain('test_keyspace');
   });
-  store.dispatch('close-session');
+  store.dispatch('closeSession');
 });
 
