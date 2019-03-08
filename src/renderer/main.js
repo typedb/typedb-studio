@@ -3,6 +3,7 @@ import VueRouter from 'vue-router';
 
 import store from './store';
 
+
 // UI Elements
 import LoadingButton from './components/UIElements/LoadingButton.vue';
 import VueTabs from './components/UIElements/VueTabs.vue';
@@ -63,3 +64,7 @@ new Vue({
   store,
   created: initialiseStore,
 }).$mount('#grakn-app');
+
+window.addEventListener('beforeunload', () => {
+  store.state.grakn.close();
+});

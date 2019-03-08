@@ -203,9 +203,10 @@ export default {
       ServerSettings.setServerPort(newVal);
     },
   },
-  beforeCreate() {
+  async beforeCreate() {
     const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
-    grakn.session('grakn').transaction().then(() => {
+    const session = await grakn.session('grakn');
+    session.transaction().write().then(() => {
       this.$router.push('develop/data');
       this.$store.dispatch('initGrakn');
     })
@@ -233,11 +234,12 @@ export default {
     });
   },
   methods: {
-    loginToKgms() {
+    async loginToKgms() {
       this.$toasted.clear();
       this.isLoading = true;
       const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
-      grakn.session('grakn').transaction().then(() => {
+      const session = await grakn.session('grakn');
+      session.transaction().write().then(() => {
         this.$store.dispatch('login', { username: this.username, password: this.password });
         storage.set('user-credentials', JSON.stringify({ username: this.username, password: this.password }));
         this.isLoading = false;
@@ -256,11 +258,12 @@ export default {
           this.$notifyError(error);
         });
     },
-    connectToCore() {
+    async connectToCore() {
       this.$toasted.clear();
       this.isLoading = true;
       const grakn = new Grakn(ServerSettings.getServerUri());
-      grakn.session('grakn').transaction().then(() => {
+      const session = await grakn.session('grakn');
+      session.transaction().write().then(() => {
         this.$router.push('develop/data');
         this.$store.dispatch('initGrakn');
         this.isLoading = false;

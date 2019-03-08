@@ -75,6 +75,7 @@ export default {
     this.$store.registerModule(namespace, { namespaced: true, getters, state: TabState.create(), mutations, actions });
   },
   beforeDestroy() {
+    if (this.$store.state[`tab-${this.tabId}`].graknSession) this.$store.state[`tab-${this.tabId}`].graknSession.close();
     this.$store.unregisterModule(`tab-${this.tabId}`);
   },
 };

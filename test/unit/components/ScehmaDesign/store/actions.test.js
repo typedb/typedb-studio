@@ -58,8 +58,8 @@ beforeAll(() => {
 });
 
 describe('actions', () => {
-  test('CURRENT_KEYSPACE_CHANGED', () => {
-    store.dispatch(`schema-design/${CURRENT_KEYSPACE_CHANGED}`, 'gene');
+  test('CURRENT_KEYSPACE_CHANGED', async () => {
+    await store.dispatch(`schema-design/${CURRENT_KEYSPACE_CHANGED}`, 'gene');
 
     expect(store.state['schema-design'].currentKeyspace).toBe('gene');
     expect(store.state['schema-design'].graknSession).toBeDefined();

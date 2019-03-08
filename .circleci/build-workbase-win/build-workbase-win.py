@@ -152,31 +152,31 @@ try:
         'git checkout -b ci-branch {}'.format(os.getenv('CIRCLE_SHA1'))
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: building @graknlabs_grakn_core//:distribution')
+    lprint('[Remote]: building @graknlabs_grakn_core//:assemble-mac-zip')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bazel build @graknlabs_grakn_core//:distribution'
+        'bazel build @graknlabs_grakn_core//:assemble-mac-zip'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: unpacking Grakn')
     ssh(' && '.join([
         'cd repo',
-        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all.zip -d bazel-genfiles/dist/'
+        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d bazel-genfiles/dist/'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: starting Grakn')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all/grakn server start'
+        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn server start'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: populating Grakn')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
+        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: running npm install')
@@ -199,13 +199,6 @@ try:
     lprint('Verifying local file')
     sp.check_call(['file', './grakn-setup.exe'])
 
-    lprint('[Remote]: running npm run e2e')
-    ssh(' && '.join([
-        'refreshenv',
-        'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- run e2e'
-    ]), instance_ip, 'circleci', instance_password)
-
     lprint('[Remote]: running npm run unit')
     ssh(' && '.join([
         'refreshenv',
@@ -213,10 +206,23 @@ try:
         'bazel run @nodejs//:bin/npm.cmd -- run unit'
     ]), instance_ip, 'circleci', instance_password)
 
+    lprint('[Remote]: running npm run integration')
+    ssh(' && '.join([
+        'refreshenv',
+        'cd repo',
+        'bazel run @nodejs//:bin/npm.cmd -- run integration'
+    ]), instance_ip, 'circleci', instance_password)
+
+    # lprint('[Remote]: running npm run e2e')
+    # ssh(' && '.join([
+    #     'refreshenv',
+    #     'cd repo',
+    #     'bazel run @nodejs//:bin/npm.cmd -- run e2e'
+    # ]), instance_ip, 'circleci', instance_password)
 
 finally:
     lprint('Remove instance')
-    sp.check_call([
-        'gcloud', '--quiet', 'compute', 'instances',
-        'delete', instance_name, '--delete-disks=all'
-    ])
+    # sp.check_call([
+    #     'gcloud', '--quiet', 'compute', 'instances',
+    #     'delete', instance_name, '--delete-disks=all'
+    # ])

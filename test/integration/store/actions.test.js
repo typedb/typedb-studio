@@ -8,7 +8,7 @@ jest.mock('@/components/ServerSettings', () => ({
   getServerUri: () => '127.0.0.1:48555',
 }));
 
-jest.setTimeout(10000);
+jest.setTimeout(60000);
 
 describe('actions', () => {
   store.dispatch('initGrakn');
@@ -19,20 +19,21 @@ describe('actions', () => {
     expect(store.state.keyspaces).toBeDefined();
   });
 
-  test.skip('create keyspace', async () => {
+  test('create keyspace', async () => {
+    await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).not.toContain('test_keyspace');
     await store.dispatch('createKeyspace', 'test_keyspace');
-    await store.dispatch('loadKeyspaces');
     expect(store.state.keyspaces).toContain('test_keyspace');
   });
 
-  test.skip('delete keyspace', async () => {
-    await store.dispatch('createKeyspace', 'test_keyspace');
+  test('delete keyspace', async () => {
     await store.dispatch('loadKeyspaces');
-    expect(store.state.keyspaces).toContain('test_keyspace');
-    await store.dispatch('deleteKeyspace', 'test_keyspace');
+    await store.dispatch('createKeyspace', 'test_keyspace_del');
     await store.dispatch('loadKeyspaces');
-    expect(store.state.keyspaces).not.toContain('test_keyspace');
+    expect(store.state.keyspaces).toContain('test_keyspace_del');
+    await store.dispatch('deleteKeyspace', 'test_keyspace_del');
+    await store.dispatch('loadKeyspaces');
+    expect(store.state.keyspaces).not.toContain('test_keyspace_del');
   });
 });
 

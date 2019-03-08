@@ -36,8 +36,6 @@ jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   buildFromConceptMap: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [MockConcepts.getMockEntity1()], edges: [{ from: 1234, to: 4321, label: 'son' }] })),
 }));
 
-jest.mock('grakn-client', () => ({ txType: { WRITE: 'write' } }));
-
 jest.mock('@/../Logger', () => ({ error: () => {} }));
 
 jest.mock('@/components/shared/PersistentStorage', () => {});
@@ -149,7 +147,7 @@ describe('actions', () => {
     const store = new Vuex.Store({
       state: {
         graknSession: {
-          transaction: jest.fn(),
+          transaction: () => ({ write: jest.fn() }),
         },
       },
       actions,

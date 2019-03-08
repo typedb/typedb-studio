@@ -12,7 +12,6 @@ import {
   LOAD_NEIGHBOURS,
   LOAD_ATTRIBUTES,
 } from '@/components/shared/StoresActions';
-import Grakn from 'grakn-client';
 import logger from '@/../Logger';
 
 import {
@@ -39,12 +38,12 @@ export default {
     commit('updateCanvasData');
   },
 
-  [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
+  async [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
     if (keyspace !== state.currentKeyspace) {
       dispatch(CANVAS_RESET);
       commit('setCurrentQuery', '');
       commit('currentKeyspace', keyspace);
-      commit('graknSession', rootState.grakn.session(keyspace));
+      commit('graknSession', await rootState.grakn.session(keyspace));
       dispatch(UPDATE_METATYPE_INSTANCES);
     }
   },
@@ -57,7 +56,7 @@ export default {
   },
 
   [OPEN_GRAKN_TX]({ state }) {
-    return state.graknSession.transaction(Grakn.txType.WRITE);
+    return state.graknSession.transaction().write();
   },
 
   async [UPDATE_NODES_LABEL]({ state, dispatch }, type) {
