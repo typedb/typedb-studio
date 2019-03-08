@@ -1,4 +1,4 @@
-workspace(name = "graknlabs_client_nodejs")
+workspace(name = "graknlabs_workbase")
 
 
 ###########################
