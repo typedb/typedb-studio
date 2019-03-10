@@ -57,7 +57,7 @@ jobs:
       - install-bazel-linux
       - install-linux-dependencies
       - run-grakn-server-linux
-      - run: ./grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: ./dist/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
@@ -71,7 +71,7 @@ jobs:
       - checkout
       - install-bazel-mac
       - run-grakn-server-mac
-      - run: bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: ./dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
