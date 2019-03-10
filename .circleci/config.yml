@@ -32,7 +32,8 @@ commands:
     parameters:
       command:
         type: string
-    steps: bazel run @graknlabs_build_tools//ci:run-bazel-rbe << parameters.command >>
+    steps:
+      - run: bazel run @graknlabs_build_tools//ci:run-bazel-rbe << parameters.command >>
 
   run-grakn-server-mac:
     steps:
