@@ -164,13 +164,10 @@ workflows:
           requires:
             - test-linux
             - test-mac
-      - assemble-win:
+      - assemble-windows:
           filters:
             branches:
               only: master
-          requires:
-            - test-linux
-            - test-mac
       - release-approval:
           filters:
             branches:
