@@ -1,103 +1,91 @@
 version: 2.1
 commands:
-  bazel_install:
+  install-bazel-linux:
     steps:
       - run:
-          name: Bazel - Install
+          name: Install Bazel on Linux and add RBE credential
           command: |
+            # Install bazel
             curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-linux-x86_64.sh
             chmod +x bazel-0.20.0-installer-linux-x86_64.sh
             sudo ./bazel-0.20.0-installer-linux-x86_64.sh
 
-  bazel-install-macos:
+            # Install RBE credential
+            bazel run @graknlabs_build_tools//ci:install-bazel-rbe-credential
+
+  install-bazel-mac:
     steps:
       - run:
-          name: Bazel - Install (macOS)
+          name: Install Bazel on Mac
           command: |
             curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-darwin-x86_64.sh
             chmod +x bazel-0.20.0-installer-darwin-x86_64.sh
             sudo ./bazel-0.20.0-installer-darwin-x86_64.sh
 
-  bazel_add_rbe_credential:
+  install-linux-dependencies:
     steps:
-      - run:
-          name: Bazel - Add RBE Credential
-          command: |
-            if [[ -n "$BAZEL_RBE_CREDENTIAL" ]]; then
-              BAZEL_RBE_CREDENTIAL_LOCATION=~/.config/gcloud/application_default_credentials.json
-              echo "An RBE credential is found and will be saved to $BAZEL_RBE_CREDENTIAL_LOCATION. Bazel will be executed with RBE support."
-              mkdir -p ~/.config/gcloud/
-              echo $BAZEL_RBE_CREDENTIAL > "$BAZEL_RBE_CREDENTIAL_LOCATION"
-            else
-              echo "No RBE credential found. Bazel will be executed locally without RBE support."
-            fi
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
+      - run: Xvfb :99 &
+      - run: export DISPLAY=:99
+
+  run-bazel-rbe:
+    parameters:
+      command:
+        type: string
+    steps: bazel run @graknlabs_build_tools//ci:run-bazel-rbe << parameters.command >>
 
   run-grakn-server-mac:
-    parameters:
-      rbe:
-        description: use RBE while building
-        type: boolean
-        default: false
     steps:
-      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip <<# rbe >> --config=rbe <</ rbe >>
-      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d bazel-genfiles/dist/
-      - run: nohup bazel-genfiles/dist/grakn-core-all-mac/grakn server start
-      - run: bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
+      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
+      - run: nohup ./dist/grakn-core-all-mac/grakn server start
       
   run-grakn-server-linux:
-    parameters:
-      rbe:
-        description: use RBE while building
-        type: boolean
-        default: false
     steps:
-      - run: bazel build @graknlabs_grakn_core//:assemble-linux-targz <<# rbe >> --config=rbe <</ rbe >>
-      - run: tar -xf bazel-bin/external/graknlabs_grakn_core/assemble-linux-targz.tar.gz -C bazel-bin
-      - run: nohup bazel-bin/grakn-core-all-linux/grakn server start
-      - run: bash bazel-bin/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run-bazel-rbe:
+          command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
+      - run: mkdir dist && tar -xvzf bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
+      - run: nohup ./dist/grakn-core-all-linux/grakn server start
 
 jobs:
-  approve-release:
+  test-linux:
     machine: true
+    working_directory: ~/grakn
     steps:
       - checkout
-      - run: python .circleci/approve-release.py
+      - install-bazel-linux
+      - install-linux-dependencies
+      - run-grakn-server-linux
+      - run: ./grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: bazel run @nodejs//:npm install
+      - run: bazel run @nodejs//:npm run unit
+      - run: bazel run @nodejs//:npm run integration
+      # - run: bazel run @nodejs//:npm run e2e
 
-  release-cleanup:
-    machine: true
+  test-mac:
+    macos:
+      xcode: "9.0"
+    working_directory: ~/grakn
     steps:
       - checkout
-      - run: git push --delete origin trigger-ci-release
+      - install-bazel-mac
+      - run-grakn-server-mac
+      - run: bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: bazel run @nodejs//:npm install
+      - run: bazel run @nodejs//:npm run unit
+      - run: bazel run @nodejs//:npm run integration
+      # - run: bazel run @nodejs//:npm run e2e
 
-
-  build-workbase-win:
+  assemble-linux:
     machine: true
     working_directory: ~/grakn
     steps:
       - attach_workspace:
           at: ~/grakn
       - checkout
-      - run:
-          command: .circleci/build-workbase-win/build-workbase-win.py
-          no_output_timeout: 20m
-
-  build-workbase-linux:
-    machine: true
-    working_directory: ~/grakn
-    steps:
-      - attach_workspace:
-          at: ~/grakn
-      - checkout
-      - bazel_install
-      - bazel_add_rbe_credential
-      - run-grakn-server-linux:
-          rbe: yes
-      - run:
-          name: npm install
-          command: bazel run @nodejs//:npm install
-      - run:
-          name: npm run build
-          command: bazel run @nodejs//:npm run build
+      - install-bazel-linux
+      - run: bazel run @nodejs//:npm install
+      - run: bazel run @nodejs//:npm run build
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
       - persist_to_workspace:
           name: "Storing built Workbase"
@@ -105,111 +93,101 @@ jobs:
           paths:
             - artifacts/*-linux.tar.gz
             - VERSION
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
-      - run: Xvfb :99 &
-      - run: export DISPLAY=:99
-      - run: bazel run @nodejs//:npm run unit
-      - run: bazel run @nodejs//:npm run integration
-      # - run: bazel run @nodejs//:npm run e2e
 
-  build-workbase-mac:
+  assemble-mac:
     macos:
-        xcode: "9.0"
+      xcode: "9.0"
     working_directory: ~/grakn
     steps:
       - attach_workspace:
           at: ~/grakn
       - checkout
-      - bazel-install-macos
-      - run-grakn-server-mac
-      - run:
-          name: npm install
-          command: bazel run @nodejs//:npm install
-      - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD" bazel run @nodejs//:npm run build
-      - run: bazel run @nodejs//:npm run unit
-      - run: bazel run @nodejs//:npm run integration
-      # - run: bazel run @nodejs//:npm run e2e
+      - install-bazel-mac
+      - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD"
+      - run: bazel run @nodejs//:npm install
+      - run: bazel run @nodejs//:npm run build
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.dmg ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg
       - persist_to_workspace:
           root: ~/grakn
           paths:
             - artifacts/*-mac.dmg
-  publish-github-draft:
-    docker:
-      - image: cibuilds/github:0.10
+
+  assemble-windows:
+    machine: true
     working_directory: ~/grakn
     steps:
       - attach_workspace:
           at: ~/grakn
+      - checkout
       - run:
-          name: "Publish Draft Release on GitHub"
-          command: |
-            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft v$(cat VERSION) ./artifacts
+          command: .circleci/windows/assemble.py
+          no_output_timeout: 20m
 
+  release-approval:
+    machine: true
+    steps:
+      - checkout
+      - run: bazel run @graknlabs_build_tools//ci:release-approval
+
+  release-github-draft:
+    machine: true
+    working_directory: ~/grakn
+    steps:
+      - checkout
+      - install-bazel-linux
+      - run: bazel run //:deploy-github-zip -- ${GRABL_CREDENTIAL}
+
+  release-cleanup:
+    machine: true
+    steps:
+      - checkout
+      - run: git push --delete origin workbase-release-branch
 
 workflows:
   version: 2
-  ci-pull-request:
+  workbase:
     jobs:
-      - build-workbase-linux:
-          filters:
-            branches:
-              ignore: /master|trigger-ci-release/
-      - build-workbase-mac:
-          filters:
-            branches:
-              ignore: /master|trigger-ci-release/
-      - build-workbase-win:
-          filters:
-            branches:
-              ignore: /master|trigger-ci-release/
-  ci-master-branch:
-    jobs:
-      - build-workbase-linux:
+      - test-linux
+      - test-mac
+      - assemble-linux:
           filters:
             branches:
               only: master
-      - build-workbase-mac:
-          filters:
-            branches:
-              only: master
-      - build-workbase-win:
-          filters:
-            branches:
-              only: master
-      - approve-release:
           requires:
-            - build-workbase-linux
-            - build-workbase-mac
-            - build-workbase-win
+            - test-linux
+            - test-mac
+      - assemble-mac:
           filters:
             branches:
               only: master
-  ci-release:
-    jobs:
-      - build-workbase-linux:
-          filters:
-            branches:
-              only: trigger-ci-release
-      - build-workbase-mac:
-          filters:
-            branches:
-              only: trigger-ci-release
-      - build-workbase-win:
-          filters:
-            branches:
-              only: trigger-ci-release
-      - publish-github-draft:
           requires:
-            - build-workbase-linux
-            - build-workbase-mac
-            - build-workbase-win
+            - test-linux
+            - test-mac
+      - assemble-win:
           filters:
             branches:
-              only: trigger-ci-release
+              only: master
+          requires:
+            - test-linux
+            - test-mac
+      - release-approval:
+          filters:
+            branches:
+              only: master
+          requires:
+            - assemble-linux
+            - assemble-mac
+            - assemble-windows
+
+  workbase-release:
+    jobs:
+      - release-github-draft:
+          filters:
+            branches:
+              only: workbase-release-branch
       - release-cleanup:
           requires:
-            - publish-github-draft
+            - release-github-draft
           filters:
             branches:
-              only: trigger-ci-release
+              only: workbase-release-branch

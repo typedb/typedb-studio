@@ -2,7 +2,7 @@
 
 # Implementation
 
-`.circleci/build-workbase-win/build-workspace-win.py` is the script performing CI tasks, such as:
+`.circleci/windows/assemble.py` is the script performing CI tasks, such as:
 * provisioning Windows Server instance with a custom image
 * communicating with the instance via `ssh`:
   * cloning Workbase repo
