@@ -89,7 +89,6 @@ jobs:
       - run: bazel run @nodejs//:npm run build
       - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
       - persist_to_workspace:
-          name: "Storing built Workbase"
           root: ~/grakn
           paths:
             - artifacts/*-linux.tar.gz
