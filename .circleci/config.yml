@@ -128,6 +128,7 @@ jobs:
     machine: true
     steps:
       - checkout
+      - install-bazel-linux
       - run: bazel run @graknlabs_build_tools//ci:release-approval
 
   release-github-draft:
