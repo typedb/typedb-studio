@@ -27,11 +27,15 @@ export function limitQuery(query) {
 
   // If there is no `get` the user mistyped the query
   if (getRegex.test(query)) {
-    const limitRegex = /.*;\s*(limit\b.*?;).*/;
+    const limitRegex = /(.*;\s*)(limit\b.*?;).*/;
     const offsetRegex = /.*;\s*(offset\b.*?;).*/;
     const deleteRegex = /^(.*;)\s*(delete\b.*;)$/;
 
-    if (!(offsetRegex.test(query)) && !(deleteRegex.test(query))) { limitedQuery = `${limitedQuery} offset 0;`; }
+    if (!(offsetRegex.test(query)) && !(deleteRegex.test(query)) && limitRegex.test(query)) { // if query does not contain offset and delete but does contain limit
+      limitedQuery = `${query.match(limitRegex)[1]}offset 0; ${query.match(limitRegex)[2]}`;
+    } else if (!(offsetRegex.test(query)) && !(deleteRegex.test(query)) && !limitRegex.test(query)) { // if query does not contain offset, delete and limit
+      limitedQuery = `${limitedQuery} offset 0;`;
+    }
     if (!(limitRegex.test(query)) && !(deleteRegex.test(query))) { limitedQuery = `${limitedQuery} limit ${QuerySettings.getQueryLimit()};`; }
   }
   return limitedQuery;
