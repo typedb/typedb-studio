@@ -20,7 +20,7 @@ describe('limit Query', () => {
   test('add offset to query already containing limit', () => {
     const query = 'match $x isa person; get; limit 40;';
     const limited = limitQuery(query);
-    expect(limited).toBe('match $x isa person; get; limit 40; offset 0;');
+    expect(limited).toBe('match $x isa person; get; offset 0; limit 40;');
   });
   test('add limit to query already containing offset', () => {
     const query = 'match $x isa person; get; offset 20;';
@@ -33,7 +33,7 @@ describe('limit Query', () => {
     expect(limited).toBe(query);
   });
   test('query already containing offset and limit in inverted order does not get changed', () => {
-    const query = 'match $x isa person; get; limit 40; offset 0;';
+    const query = 'match $x isa person; get; offset 0; limit 40;';
     const limited = limitQuery(query);
     expect(limited).toBe(query);
   });
