@@ -138,7 +138,7 @@ const getMockQueryPattern1 = '{(child: $c1, parent: $p) isa parentship;}';
 
 function getMockAnswer2() {
   return {
-    explanation: () => 'mockExplanation',
+    explanation: () => ({ answers: () => [getMockAnswer1()], queryPattern: () => 'mock pattern' }),
     map: () => {
       const map = new Map();
       map.set('c', getMockEntity1());
@@ -195,7 +195,7 @@ function getMockAnswerContainingImplicitType() {
 
 function getMockAnswerContainingRelation() {
   return {
-    explanation: () => 'mockExplanation',
+    explanation: () => ({ answers: () => [getMockAnswer1()], queryPattern: () => 'mock pattern' }),
     map: () => {
       const map = new Map();
       map.set('r', getMockRelation());

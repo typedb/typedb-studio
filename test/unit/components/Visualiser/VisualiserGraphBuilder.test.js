@@ -59,11 +59,10 @@ describe('buildFromConceptMap', () => {
 
     expect(data.nodes).toHaveLength(6);
     expect(data.edges).toHaveLength(4);
-
-    expect(data.nodes[0].explanation).toBe('mockExplanation');
-    expect(data.nodes[1].explanation).toBe('mockExplanation');
-    expect(data.nodes[2].explanation).toBe('mockExplanation');
-    expect(data.nodes[3].explanation).toBe('mockExplanation');
+    expect(data.nodes[0].explanation).toBeDefined();
+    expect(data.nodes[1].explanation).toBeDefined();
+    expect(data.nodes[2].explanation).toBeDefined();
+    expect(data.nodes[3].explanation).toBeDefined();
 
     expect(data.nodes[1].label).toBeDefined();
     expect(data.nodes[2].label).toBeDefined();

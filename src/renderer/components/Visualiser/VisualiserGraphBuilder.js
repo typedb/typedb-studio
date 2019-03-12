@@ -10,6 +10,19 @@ import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
   return result.map((x) => {
+    if (x.explanation() && x.explanation().queryPattern() === '') { // if explantion is formed from a conjuction go one level deeper and attach explanations for each answer individually
+      return Array.from(x.explanation().answers()).flatMap((ans) => {
+        const exp = ans.explanation();
+        const key = ans.map().keys().next().value;
+        return Array.from(ans.map().values()).flatMap((y) => {
+          y.explanation = exp;
+          y.graqlVar = key;
+          return y;
+        });
+      }).flatMap(x => x);
+    }
+
+    // else explanation of query respose is same for all concepts in map
     const exp = x.explanation();
     const key = x.map().keys().next().value;
 
