@@ -55,11 +55,10 @@ export function buildExplanationQuery(answer, queryPattern) {
         attributeType = attributeType[0].slice(1, attributeType[0].indexOf(':'));
         attributeQuery = `has ${attributeType} $${graqlVar};`;
       }
-      // attributeQuery = `has ${queryPattern.match(/(?:has )(\w+)/)[1]} $${graqlVar};`;
     } else if (concept.isEntity()) {
       query += `$${graqlVar} id ${concept.id}; `;
-    } else if (attributeQuery && concept.isRelation()) { // if answer has a relation and attribute
-      attributeQuery = `$${graqlVar} id ${concept.id} ${attributeQuery}`;
+    } else if (concept.isRelation()) {
+      query += `$${graqlVar} id ${concept.id}; `;
     }
   });
   return { query, attributeQuery };
