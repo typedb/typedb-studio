@@ -150,14 +150,18 @@ jobs:
       - checkout
       - install-bazel-linux
       - run: bazel run @graknlabs_build_tools//ci:release-approval
-
+      
   release-github-draft:
-    machine: true
+    docker:
+      - image: cibuilds/github:0.10
     working_directory: ~/grakn
     steps:
-      - checkout
-      - install-bazel-linux
-      - run: bazel run //:deploy-github-zip -- ${GRABL_CREDENTIAL}
+      - attach_workspace:
+          at: ~/grakn
+      - run:
+          name: "Publish Draft Release on GitHub"
+          command: |
+            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft v$(cat VERSION) ./artifacts
 
   release-cleanup:
     machine: true
