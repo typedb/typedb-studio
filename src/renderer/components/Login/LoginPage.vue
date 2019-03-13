@@ -205,11 +205,11 @@ export default {
   },
   async beforeCreate() {
     const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
-    const session = await grakn.session('grakn');
-    session.transaction().write().then(() => {
-      this.$router.push('develop/data');
-      this.$store.dispatch('initGrakn');
-    })
+    await grakn.session('grakn')
+      .then(() => {
+        this.$router.push('develop/data');
+        this.$store.dispatch('initGrakn');
+      })
       .catch((e) => {
         if (e.message.includes('2 UNKNOWN')) { // -> show login panel for kgms
           this.showLoginPage = true;
@@ -238,13 +238,13 @@ export default {
       this.$toasted.clear();
       this.isLoading = true;
       const grakn = new Grakn(ServerSettings.getServerUri(), { username: this.username, password: this.password });
-      const session = await grakn.session('grakn');
-      session.transaction().write().then(() => {
-        this.$store.dispatch('login', { username: this.username, password: this.password });
-        storage.set('user-credentials', JSON.stringify({ username: this.username, password: this.password }));
-        this.isLoading = false;
-        this.$router.push('develop/data');
-      })
+      await grakn.session('grakn')
+        .then(() => {
+          this.$store.dispatch('login', { username: this.username, password: this.password });
+          storage.set('user-credentials', JSON.stringify({ username: this.username, password: this.password }));
+          this.isLoading = false;
+          this.$router.push('develop/data');
+        })
         .catch((e) => {
           this.isLoading = false;
           let error;
@@ -262,12 +262,12 @@ export default {
       this.$toasted.clear();
       this.isLoading = true;
       const grakn = new Grakn(ServerSettings.getServerUri());
-      const session = await grakn.session('grakn');
-      session.transaction().write().then(() => {
-        this.$router.push('develop/data');
-        this.$store.dispatch('initGrakn');
-        this.isLoading = false;
-      })
+      await grakn.session('grakn')
+        .then(() => {
+          this.$router.push('develop/data');
+          this.$store.dispatch('initGrakn');
+          this.isLoading = false;
+        })
         .catch((e) => {
           this.isLoading = false;
           if (e.message.includes('2 UNKNOWN')) { // -> show login panel for kgms
