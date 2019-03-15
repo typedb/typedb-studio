@@ -152,31 +152,31 @@ try:
         'git checkout -b ci-branch {}'.format(os.getenv('CIRCLE_SHA1'))
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: building @graknlabs_grakn_core//:assemble-mac-zip')
+    lprint('[Remote]: building @graknlabs_grakn_core//:assemble-windows-zip')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bazel build @graknlabs_grakn_core//:assemble-mac-zip'
+        'bazel build @graknlabs_grakn_core//:assemble-windows-zip'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: unpacking Grakn')
     ssh(' && '.join([
         'cd repo',
-        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d bazel-genfiles/dist/'
+        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-windows.zip -d bazel-genfiles/dist/'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: starting Grakn')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn server start'
+        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn server start'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: populating Grakn')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
+        'bash bazel-genfiles/dist/grakn-core-all-windows/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: running npm install')
