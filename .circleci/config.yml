@@ -197,7 +197,7 @@ workflows:
       - assemble-windows:
           filters:
             branches:
-              only: test-deployment-windows-bugfix # TODO: revert back to master before merging the PR
+              only: master
       - release-approval:
           filters:
             branches:
