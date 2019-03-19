@@ -18,50 +18,30 @@
 
 version: 2.1
 commands:
-  install-bazel-linux:
+  install-bazel-linux-rbe:
     steps:
-      - run:
-          name: Install Bazel on Linux and add RBE credential
-          command: |
-            # Install bazel
-            curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-linux-x86_64.sh
-            chmod +x bazel-0.20.0-installer-linux-x86_64.sh
-            sudo ./bazel-0.20.0-installer-linux-x86_64.sh
-
-            # Install RBE credential
-            bazel run @graknlabs_build_tools//ci:install-bazel-rbe-credential
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-linux.sh
+      - run: bash ./install-bazel-linux.sh && rm ./install-bazel-linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-rbe.sh
+      - run: bash ./install-bazel-rbe.sh && rm ./install-bazel-rbe.sh
 
   install-bazel-mac:
     steps:
-      - run:
-          name: Install Bazel on Mac
-          command: |
-            curl -OL https://github.com/bazelbuild/bazel/releases/download/0.20.0/bazel-0.20.0-installer-darwin-x86_64.sh
-            chmod +x bazel-0.20.0-installer-darwin-x86_64.sh
-            sudo ./bazel-0.20.0-installer-darwin-x86_64.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-mac.sh
+      - run: bash ./install-bazel-mac.sh && rm ./install-bazel-mac.sh
 
   install-linux-dependencies:
     steps:
-      - run:
-          name: Install Linux dependencies for running workbase tests
-          command: |
-            sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
-            Xvfb :99 &
-            export DISPLAY=:99
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
+      - run: Xvfb :99 & && export DISPLAY=:99
 
   run-bazel-rbe:
     parameters:
       command:
         type: string
     steps:
-      - run: bazel run @graknlabs_build_tools//ci:run-bazel-rbe << parameters.command >>
+      - run: bazel run @graknlabs_build_tools//ci:run-bazel-rbe -- << parameters.command >>
 
-  run-grakn-server-mac:
-    steps:
-      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
-      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
-      - run: nohup ./dist/grakn-core-all-mac/grakn server start
-      
   run-grakn-server-linux:
     steps:
       - run-bazel-rbe:
@@ -69,14 +49,20 @@ commands:
       - run: mkdir dist && tar -xvzf bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
 
+  run-grakn-server-mac:
+    steps:
+      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
+      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
+      - run: nohup ./dist/grakn-core-all-mac/grakn server start
+
 jobs:
   test-linux:
     machine: true
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
-      - checkout
-      - install-bazel-linux
       - install-linux-dependencies
+      - install-bazel-linux-rbe
+      - checkout
       - run-grakn-server-linux
       - run: ./dist/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
       - run: bazel run @nodejs//:npm install
@@ -87,7 +73,7 @@ jobs:
   test-mac:
     macos:
       xcode: "9.0"
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
       - checkout
       - install-bazel-mac
@@ -100,17 +86,15 @@ jobs:
 
   assemble-linux:
     machine: true
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
-      - attach_workspace:
-          at: ~/grakn
+      - install-bazel-linux-rbe
       - checkout
-      - install-bazel-linux
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run build
-      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.tar.gz ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
+      - run: mkdir -p ~/workbase/artifacts && mv ./build/*.tar.gz ~/workbase/artifacts/grakn-workbase-$(cat VERSION)-linux.tar.gz
       - persist_to_workspace:
-          root: ~/grakn
+          root: ~/workbase
           paths:
             - artifacts/*-linux.tar.gz
             - VERSION
@@ -118,27 +102,23 @@ jobs:
   assemble-mac:
     macos:
       xcode: "9.0"
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
-      - attach_workspace:
-          at: ~/grakn
-      - checkout
       - install-bazel-mac
+      - checkout
       - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD"
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run build
-      - run: mkdir -p ~/grakn/artifacts && mv ./build/*.dmg ~/grakn/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg
+      - run: mkdir -p ~/workbase/artifacts && mv ./build/*.dmg ~/workbase/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg
       - persist_to_workspace:
-          root: ~/grakn
+          root: ~/workbase
           paths:
             - artifacts/*-mac.dmg
 
   assemble-windows:
     machine: true
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
-      - attach_workspace:
-          at: ~/grakn
       - checkout
       - run:
           command: .circleci/windows/assemble.py
@@ -147,21 +127,23 @@ jobs:
   release-approval:
     machine: true
     steps:
+      - install-bazel-linux-rbe
       - checkout
-      - install-bazel-linux
       - run: bazel run @graknlabs_build_tools//ci:release-approval
-      
+
   release-github-draft:
     docker:
       - image: cibuilds/github:0.10
-    working_directory: ~/grakn
+    working_directory: ~/workbase
     steps:
       - attach_workspace:
-          at: ~/grakn
+          at: ~/workbase
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft v$(cat VERSION) ./artifacts
+            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} \
+            -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} \
+            -delete -draft v$(cat VERSION) ./artifacts
 
   release-cleanup:
     machine: true
