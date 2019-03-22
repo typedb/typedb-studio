@@ -200,10 +200,10 @@ try:
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('Copying built Workbase executable from remote to local')
-    scp('C:\\Users\\circleci\\repo\\build\\Grakn//Workbase//Setup//1.1.1.exe', '"./Grakn//Workbase//Setup//1.1.1.exe"', instance_ip, 'circleci', instance_password)
+    scp('C:\\Users\\circleci\\repo\\build\\Grakn//Workbase//Setup//1.1.1.exe', './GraknWorkbase1.1.1.exe', instance_ip, 'circleci', instance_password)
 
     lprint('Verifying local file')
-    sp.check_call(['file', '"./Grakn Workbase Setup 1.1.1.exe"'])
+    sp.check_call(['file', './GraknWorkbase1.1.1.exe'])
 
     lprint('[Remote]: running npm run unit')
     ssh(' && '.join([
