@@ -200,7 +200,7 @@ try:
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('Copying built Workbase executable from remote to local')
-    scp('C:\\Users\\circleci\\repo\\build\\Grakn Workbase Setup.exe', './Grakn-Setup.exe', instance_ip, 'circleci', instance_password)
+    scp('"C:\\Users\\circleci\\repo\\build\\Grakn Workbase Setup.exe', './Grakn-Setup.exe"', instance_ip, 'circleci', instance_password)
 
     lprint('Verifying local file')
     sp.check_call(['file', './Grakn.1.exe'])
