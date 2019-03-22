@@ -10,15 +10,21 @@ import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
   return result.map((x) => {
+    const keys = Array.from(x.map().keys());
+
     if (x.explanation() && x.explanation().queryPattern() === '') { // if explantion is formed from a conjuction go one level deeper and attach explanations for each answer individually
-      return Array.from(x.explanation().answers()).flatMap((ans) => {
+      return Array.from(x.explanation().answers()).map((ans) => {
         const exp = ans.explanation();
-        const key = ans.map().keys().next().value;
-        return Array.from(ans.map().values()).flatMap((y) => {
-          y.explanation = exp;
-          y.graqlVar = key;
-          return y;
+        const concepts = [];
+
+        ans.map().forEach((concept, key) => {
+          if (keys.includes(key)) { // only return those concepts which were asked for since the explanation.map() contains all the concepts in the query. e.g. (match $x isa person; $y isa company; get $x; => only $x should be returned)
+            concept.explanation = exp;
+            concept.graqlVar = key;
+            concepts.push(concept);
+          }
         });
+        return concepts;
       }).flatMap(x => x);
     }
 
@@ -26,10 +32,10 @@ function attachExplanation(result) {
     const exp = x.explanation();
     const key = x.map().keys().next().value;
 
-    return Array.from(x.map().values()).flatMap((y) => {
-      y.explanation = exp;
-      y.graqlVar = key;
-      return y;
+    return Array.from(x.map().values()).flatMap((concept) => {
+      concept.explanation = exp;
+      concept.graqlVar = key;
+      return concept;
     });
   }).flatMap(x => x);
 }
