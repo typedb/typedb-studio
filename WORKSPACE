@@ -82,9 +82,11 @@ node_grpc_compile()
 # Load Grakn Core Dependencies #
 ################################
 
-load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl", "graknlabs_graql", "graknlabs_client_java")
+load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl",
+     "graknlabs_graql", "graknlabs_client_java", "graknlabs_benchmark")
 graknlabs_graql()
 graknlabs_client_java()
+graknlabs_benchmark()
 
 load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl", maven_dependencies_for_build = "maven_dependencies")
 maven_dependencies_for_build()
