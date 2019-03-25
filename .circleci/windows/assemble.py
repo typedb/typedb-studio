@@ -44,6 +44,7 @@ def scp(remote, local, ssh_host, ssh_user, ssh_pass):
         '-p',
         ssh_pass,
         'scp',
+        '-T',
         '{}@{}:"{}"'.format(ssh_user, ssh_host, remote),
         local,
     ])
