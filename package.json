@@ -157,5 +157,8 @@
     "moduleNameMapper": {
       "@/(.*)$": "<rootDir>/src/renderer/$1"
     }
+  },
+  "resolutions": {
+    "write-file-atomic": "2.4.1"
   }
 }
