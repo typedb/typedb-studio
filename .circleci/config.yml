@@ -176,10 +176,10 @@ workflows:
           requires:
             - test-linux
             - test-mac
-      - assemble-windows
-          # filters:
-          #   branches:
-          #     only: master
+      - assemble-windows:
+          filters:
+            branches:
+              only: master
       - release-approval:
           filters:
             branches:
