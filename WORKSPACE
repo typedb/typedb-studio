@@ -88,8 +88,13 @@ graknlabs_graql()
 graknlabs_client_java()
 graknlabs_benchmark()
 
-load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl", maven_dependencies_for_build = "maven_dependencies")
-maven_dependencies_for_build()
+load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl",
+graknlabs_grakn_core_maven_dependencies = "maven_dependencies")
+graknlabs_grakn_core_maven_dependencies()
+
+load("@graknlabs_benchmark//dependencies/maven:dependencies.bzl",
+graknlabs_benchmark_maven_dependencies = "maven_dependencies")
+graknlabs_benchmark_maven_dependencies()
 
 # Load Graql dependencies for Grakn Core
 
