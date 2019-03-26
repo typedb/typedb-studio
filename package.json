@@ -127,7 +127,7 @@
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",
-    "jest": "^24.5.0",
+    "jest": "^23.6.0",
     "multispinner": "^0.2.1",
     "node-loader": "^0.6.0",
     "node-sass": "^4.9.2",
@@ -157,5 +157,8 @@
     "moduleNameMapper": {
       "@/(.*)$": "<rootDir>/src/renderer/$1"
     }
+  },
+  "resolutions": {
+    "write-file-atomic": "2.4.1"
   }
 }
