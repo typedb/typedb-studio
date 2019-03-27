@@ -152,7 +152,11 @@ jobs:
           at: ~/workbase
       - install-bazel-linux-rbe
       - checkout
-      - run: DEPLOY_BREW_CHECKSUM=$(sha256sum ~/workbase/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg | awk '{print $1}') bazel run //:deploy-brew -- release
+      - run:
+          command: |
+            export DEPLOY_BREW_FN="~/workbase/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg"
+            export DEPLOY_BREW_CHECKSUM=$(sha256sum $DEPLOY_BREW_FN | awk '{print $1}')
+            bazel run //:deploy-brew -- release
 
   release-cleanup:
     machine: true
