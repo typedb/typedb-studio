@@ -131,7 +131,7 @@ jobs:
       - checkout
       - run: bazel run @graknlabs_build_tools//ci:release-approval
 
-  release-github-draft:
+  deploy-github:
     docker:
       - image: cibuilds/github:0.10
     working_directory: ~/workbase
@@ -144,6 +144,15 @@ jobs:
             ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} \
             -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} \
             -delete -draft v$(cat VERSION) ./artifacts
+
+  deploy-brew:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: ~/workbase
+      - install-bazel-linux-rbe
+      - checkout
+      - run: DEPLOY_BREW_CHECKSUM=$(sha256sum ~/workbase/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg | awk '{print $1}') bazel run //:deploy-brew -- release
 
   release-cleanup:
     machine: true
@@ -191,13 +200,26 @@ workflows:
 
   workbase-release:
     jobs:
-      - release-github-draft:
+      - deploy-github:
+          filters:
+            branches:
+              only: workbase-release-branch
+      - deploy-approval:
+          type: approval
+          requires:
+            - deploy-github
+          filters:
+            branches:
+              only: workbase-release-branch
+      - deploy-brew:
+          requires:
+            - deploy-approval
           filters:
             branches:
               only: workbase-release-branch
       - release-cleanup:
           requires:
-            - release-github-draft
+            - deploy-github
           filters:
             branches:
               only: workbase-release-branch
