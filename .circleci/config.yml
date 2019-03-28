@@ -145,7 +145,7 @@ jobs:
             -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} \
             -delete -draft v$(cat VERSION) ./artifacts
 
-  deploy-brew:
+  deploy-brew-release:
     machine: true
     steps:
       - attach_workspace:
@@ -215,7 +215,7 @@ workflows:
           filters:
             branches:
               only: workbase-release-branch
-      - deploy-brew:
+      - deploy-brew-release:
           requires:
             - deploy-approval
           filters:
@@ -223,7 +223,7 @@ workflows:
               only: workbase-release-branch
       - release-cleanup:
           requires:
-            - deploy-github
+            - deploy-brew-release
           filters:
             branches:
               only: workbase-release-branch
