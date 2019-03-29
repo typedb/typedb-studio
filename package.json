@@ -51,7 +51,7 @@
         "@blueprintjs/table": "^3.1.1",
         "codemirror": "^5.38.0",
         "electron-store": "^1.3.0",
-        "grakn-client": "https://repo.grakn.ai/repository/npm-snapshot-group/grakn-client/-/grakn-client-1.5.0-8ee4357372ef6ee78cf0d57f49d7d56dfb4223af.tgz",
+        "grakn-client": "https://repo.grakn.ai/repository/npm-snapshot-group/grakn-client/-/grakn-client-1.5.0-59b204075d5f87ac4911992c3cee5671d74e8e32.tgz",
         "grpc": "^1.18.0",
         "hex-to-hsl": "^1.0.2",
         "image-data-uri": "^1.1.1",
