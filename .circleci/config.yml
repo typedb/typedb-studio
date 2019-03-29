@@ -129,7 +129,9 @@ jobs:
     steps:
       - install-bazel-linux-rbe
       - checkout
-      - run: bazel run @graknlabs_build_tools//ci:release-approval
+      - run: |
+          export RELEASE_APPROVAL_TOKEN=$REPO_GITHUB_TOKEN_GRABL
+          bazel run @graknlabs_build_tools//ci:release-approval
 
   deploy-github:
     docker:
@@ -141,7 +143,7 @@ jobs:
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            ghr -t ${GRABL_CREDENTIAL} -u ${CIRCLE_PROJECT_USERNAME} \
+            ghr -t ${REPO_GITHUB_TOKEN_GRABL} -u ${CIRCLE_PROJECT_USERNAME} \
             -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} \
             -delete -draft v$(cat VERSION) ./artifacts
 
@@ -154,6 +156,7 @@ jobs:
       - checkout
       - run:
           command: |
+            export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN_GRABL
             export DEPLOY_BREW_FN="~/workbase/artifacts/grakn-workbase-$(cat VERSION)-mac.dmg"
             export DEPLOY_BREW_CHECKSUM=$(sha256sum $DEPLOY_BREW_FN | awk '{print $1}')
             bazel run //:deploy-brew -- release
