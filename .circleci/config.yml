@@ -92,7 +92,7 @@ jobs:
       - checkout
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run build
-      - run: mkdir -p ~/distribution && mv ./build/*.tar.gz ~/distribution/grakn-workbase-$(cat VERSION)-linux.tar.gz
+      - run: mkdir -p ~/distribution && mv ./build/*.tar.gz ~/distribution/grakn-workbase-linux-$(cat VERSION).tar.gz
       - persist_to_workspace:
           root: ~/distribution
           paths:
@@ -188,7 +188,7 @@ jobs:
       - run:
           command: |
             export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN_GRABL
-            export DEPLOY_BREW_FN="~/distribution/grakn-workbase-$(cat VERSION)-mac.dmg"
+            export DEPLOY_BREW_FN="~/distribution/grakn-workbase-mac-$(cat VERSION).dmg"
             export DEPLOY_BREW_CHECKSUM=$(sha256sum $DEPLOY_BREW_FN | awk '{print $1}')
             bazel run //:deploy-brew -- release
 
