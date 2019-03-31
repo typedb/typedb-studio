@@ -171,6 +171,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/distribution
+      - checkout
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
