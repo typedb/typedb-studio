@@ -120,8 +120,9 @@ jobs:
     steps:
       - checkout
       - run:
-          command: .circleci/windows/assemble.py ~/distribution/grakn-workbase-$(cat VERSION)-windows.exe
+          command: .circleci/windows/assemble.py grakn-workbase-$(cat VERSION)-windows.exe
           no_output_timeout: 20m
+      - run: mkdir ~/distribution && mv ./grakn-workbase-$(cat VERSION)-windows.exe ~/distribution/
       - persist_to_workspace:
           root: ~/distribution
           paths:
@@ -135,7 +136,7 @@ jobs:
           at: ~/distribution
       - restore_cache:
           key: distribution-{{ .Environment.CIRCLE_SHA1 }}
-      - run: cp ~/cache/* ~/distribution/
+      - run: [ "$(ls -A ~/cache)" ] && cp ~/cache/* ~/distribution/
       - run: cp ~/distribution/* ~/cache/
       - save_cache:
           key: distribution-{{ .Environment.CIRCLE_SHA1 }}

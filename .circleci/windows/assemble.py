@@ -8,7 +8,7 @@ import sys
 import tempfile
 import time
 
-output_file = sys.argv[1]
+output_filename = sys.argv[1]
 MACHINE_TYPE = 'n1-standard-8'
 VALID_EXIT_CODES = {
     5,   # Permission denied, please try again.
@@ -203,10 +203,10 @@ try:
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('Copying built Workbase executable from remote to local')
-    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', output_file, instance_ip, 'circleci', instance_password)
+    scp('C:\\Users\\circleci\\repo\\build\\GRAKNW~1.EXE', './' + output_filename, instance_ip, 'circleci', instance_password)
 
     lprint('Verifying local file')
-    sp.check_call(['file', output_file])
+    sp.check_call(['file', './' + output_filename])
 
     lprint('[Remote]: running npm run unit')
     ssh(' && '.join([
