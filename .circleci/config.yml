@@ -96,7 +96,7 @@ jobs:
       - persist_to_workspace:
           root: ~/distribution
           paths:
-            - grakn-workbase-$(cat VERSION)-linux.tar.gz
+            - ./*
 
   assemble-mac:
     macos:
@@ -112,7 +112,7 @@ jobs:
       - persist_to_workspace:
           root: ~/distribution
           paths:
-            - grakn-workbase-$(cat VERSION)-mac.dmg
+            - ./*
 
   assemble-windows:
     machine: true
@@ -125,7 +125,7 @@ jobs:
       - persist_to_workspace:
           root: ~/distribution
           paths:
-            - grakn-workbase-$(cat VERSION)-windows.exe
+            - ./*
 
   cache-distribution:
     machine: true
@@ -188,6 +188,8 @@ jobs:
     steps:
       - checkout
       - run: git push --delete origin workbase-release-branch
+
+  test-a:
 
 workflows:
   workbase:
