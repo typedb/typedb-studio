@@ -46,7 +46,7 @@ commands:
     steps:
       - run-bazel-rbe:
           command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
-      - run: mkdir dist && tar -xvzf bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
+      - run: mkdir -p dist && tar -xvzf bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
 
   run-grakn-server-mac:
@@ -108,7 +108,7 @@ jobs:
       - run: CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL" CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD"
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run build
-      - run: mkdir -p ~/distribution && mv ./build/*.dmg ~/distribution/grakn-workbase-$(cat VERSION)-mac.dmg
+      - run: mkdir -p ~/distribution && mv ./build/*.dmg ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg
       - persist_to_workspace:
           root: ~/distribution
           paths:
@@ -120,9 +120,9 @@ jobs:
     steps:
       - checkout
       - run:
-          command: .circleci/windows/assemble.py grakn-workbase-$(cat VERSION)-windows.exe
+          command: .circleci/windows/assemble.py grakn-workbase-windows-$(cat VERSION).exe
           no_output_timeout: 20m
-      - run: mkdir ~/distribution && mv ./grakn-workbase-$(cat VERSION)-windows.exe ~/distribution/
+      - run: mkdir -p ~/distribution && mv ./grakn-workbase-windows-$(cat VERSION).exe ~/distribution/
       - persist_to_workspace:
           root: ~/distribution
           paths:
@@ -136,8 +136,16 @@ jobs:
           at: ~/distribution
       - restore_cache:
           key: distribution-{{ .Environment.CIRCLE_SHA1 }}
-      - run: [ "$(ls -A ~/cache)" ] && cp ~/cache/* ~/distribution/
-      - run: cp ~/distribution/* ~/cache/
+      - run: |
+          if [ "$(ls -A ~/cache)" ]; then
+            ls ~/cache/
+            mkdir -p ~/distribution
+            cp ~/cache/* ~/distribution/
+          else
+            ls ~/distribution
+            mkdir -p ~/cache
+            cp ~/distribution/* ~/cache/
+          fi
       - save_cache:
           key: distribution-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -189,8 +197,6 @@ jobs:
     steps:
       - checkout
       - run: git push --delete origin workbase-release-branch
-
-  test-a:
 
 workflows:
   workbase:
