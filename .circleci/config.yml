@@ -185,9 +185,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/distribution
-      - run: cp ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg ~/workbase/
       - install-bazel-linux-rbe
       - checkout
+      - run: cp ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg ~/workbase/
       - run:
           command: |
             export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN_GRABL
