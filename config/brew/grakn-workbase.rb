@@ -2,7 +2,7 @@ cask 'grakn-workbase' do
   version '{version}'
   sha256 '{sha256}'
 
-  url "https://github.com/graknlabs/workbase/releases/download/v{version}/grakn-workbase-{version}-mac.dmg"
+  url "https://github.com/graknlabs/workbase/releases/download/{version}/grakn-workbase-mac-{version}.dmg"
   name 'Grakn Workbase'
   homepage 'https://grakn.ai/'
 
