@@ -181,16 +181,17 @@ jobs:
 
   deploy-brew-release:
     machine: true
+    working_directory: ~/workbase
     steps:
       - attach_workspace:
           at: ~/distribution
+      - run: cp ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg ~/workbase/
       - install-bazel-linux-rbe
       - checkout
       - run:
           command: |
             export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN_GRABL
-            export DEPLOY_BREW_FN="~/distribution/grakn-workbase-mac-$(cat VERSION).dmg"
-            export DEPLOY_BREW_CHECKSUM=$(sha256sum $DEPLOY_BREW_FN | awk '{print $1}')
+            export DEPLOY_BREW_CHECKSUM=$(sha256sum grakn-workbase-mac-$(cat VERSION).dmg | awk '{print $1}')
             bazel run //:deploy-brew -- release
 
   release-cleanup:
