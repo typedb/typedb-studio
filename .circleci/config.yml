@@ -121,7 +121,7 @@ jobs:
       - checkout
       - run:
           command: .circleci/windows/assemble.py grakn-workbase-windows-$(cat VERSION).exe
-          no_output_timeout: 20m
+          no_output_timeout: 30m
       - run: mkdir -p ~/distribution && mv ./grakn-workbase-windows-$(cat VERSION).exe ~/distribution/
       - persist_to_workspace:
           root: ~/distribution
