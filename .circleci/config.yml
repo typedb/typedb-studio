@@ -221,10 +221,9 @@ workflows:
             - test-linux
             - test-mac
       - assemble-mac:
-          # TODO: enable the filter before merging to master
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           requires:
             - test-linux
             - test-mac
