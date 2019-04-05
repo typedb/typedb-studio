@@ -7,8 +7,18 @@ function getMockEntityType() {
     instances: () => Promise.resolve({ next: () => Promise.resolve(getMockEntity1()) }), // eslint-disable-line no-use-before-define
     isImplicit: () => Promise.resolve(false),
     attributes: () => Promise.resolve({ next: () => Promise.resolve(getMockAttributeType()), collect: () => Promise.resolve([getMockAttributeType()]) }), // eslint-disable-line no-use-before-define
+    playing: () => Promise.resolve({ next: () => Promise.resolve(getMockRoleType()), collect: () => Promise.resolve([getMockRoleType()]) }), // eslint-disable-line no-use-before-define
     isType: () => true,
     offset: 0,
+  };
+}
+
+function getMockRoleType() {
+  return {
+    baseType: 'Role_TYPE',
+    id: 'rrrr',
+    label: () => Promise.resolve('child'),
+    isType: () => true,
   };
 }
 

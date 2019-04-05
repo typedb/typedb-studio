@@ -15,6 +15,9 @@ export const REFRESH_SELECTED_NODE = 'refresh-selected-node';
 export const DELETE_PLAYS_ROLE = 'delete-plays-role';
 export const DELETE_RELATES_ROLE = 'delete-relates-role';
 export const DEFINE_RULE = 'define-rule';
+export const ADD_ROLE_TYPE = 'add-role-type';
+export const DELETE_ROLE = 'delete-tole';
+
 
 // Visualiser store actions
 export const RUN_CURRENT_QUERY = 'run-current-query';
