@@ -62,7 +62,7 @@ export async function computeAttributes(nodes) {
 export async function computeRoles(nodes) {
   return Promise.all(nodes.map(async (node) => {
     const roles = await (await node.playing()).collect();
-    node.roles = await Promise.all(roles.map(async concept => concept.label()));
+    node.roles = await Promise.all(roles.map(async concept => ((await concept.isImplicit()) ? null : concept.label()))).then(nodes => nodes.filter(x => x));
     return node;
   }));
 }
