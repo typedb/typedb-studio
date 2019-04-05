@@ -14,6 +14,8 @@ import {
   DELETE_ATTRIBUTE,
   DEFINE_RULE,
   ADD_ATTRIBUTE_TYPE,
+  ADD_ROLE_TYPE,
+  DELETE_ROLE,
 } from '@/components/shared/StoresActions';
 import logger from '@/../Logger';
 
@@ -30,6 +32,7 @@ import {
   loadMetaTypeInstances,
   typeInboundEdges,
   computeAttributes,
+  computeRoles,
 } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
 
@@ -112,6 +115,7 @@ export default {
       state.visFacade.fitGraphToWindow();
 
       nodes = await computeAttributes(nodes);
+      nodes = await computeRoles(nodes);
       state.visFacade.updateNode(nodes);
 
       graknTx.close();
@@ -171,8 +175,9 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
-    // attach attributes to visnode and update on graph to render the right bar attributes
+    // attach attributes and roles to visnode and update on graph to render the right bar attributes
     data.nodes = await computeAttributes(data.nodes);
+    data.nodes = await computeRoles(data.nodes);
     state.visFacade.updateNode(data.nodes);
     graknTx.close();
   },
@@ -214,8 +219,9 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
-    // attach attributes to visnode and update on graph to render the right bar attributes
+    // attach attributes and roles to visnode and update on graph to render the right bar attributes
     data.nodes = await computeAttributes(data.nodes);
+    data.nodes = await computeRoles(data.nodes);
     state.visFacade.updateNode(data.nodes);
     graknTx.close();
   },
@@ -252,6 +258,36 @@ export default {
     state.visFacade.updateNode(node);
   },
 
+  async [ADD_ROLE_TYPE]({ state, dispatch }, payload) {
+    let graknTx = await dispatch(OPEN_GRAKN_TX);
+
+    // add role types to schema concept
+    await Promise.all(payload.roleTypes.map(async (roleType) => {
+      await state.schemaHandler.addPlaysRole({ schemaLabel: payload.label, roleLabel: roleType });
+    }));
+
+    await dispatch(COMMIT_TX, graknTx)
+      .catch((e) => {
+        graknTx.close();
+        logger.error(e.stack);
+        throw e;
+      });
+    graknTx = await dispatch(OPEN_GRAKN_TX);
+
+    const node = state.visFacade.getNode(state.selectedNodes[0].id);
+
+    const edges = await Promise.all(payload.roleTypes.map(async (roleType) => {
+      const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
+      node.roles = [...node.roles, roleType];
+
+      return Promise.all(relationTypes.map(async relType => ({ from: relType.id, to: state.selectedNodes[0].id, label: roleType })));
+    })).then(edges => edges.flatMap(x => x));
+
+    state.visFacade.addToCanvas({ nodes: [], edges });
+    graknTx.close();
+    state.visFacade.updateNode(node);
+  },
+
   async [DELETE_ATTRIBUTE]({ state, dispatch }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
 
@@ -280,7 +316,41 @@ export default {
     const edgesIds = state.visFacade.edgesConnectedToNode(state.selectedNodes[0].id);
 
     edgesIds
-      .filter(edgeId => (state.visFacade.getEdge(edgeId).to === attributeTypeId) && (state.visFacade.getEdge(edgeId).label === 'has'))
+      .filter(edgeId => (state.visFacade.getEdge(edgeId).to === attributeTypeId) &&
+      ((state.visFacade.getEdge(edgeId).label === 'has') || (state.visFacade.getEdge(edgeId).hiddenLabel === 'has')))
+      .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
+
+    graknTx.close();
+  },
+
+  async [DELETE_ROLE]({ state, dispatch }, payload) {
+    let graknTx = await dispatch(OPEN_GRAKN_TX);
+
+    const type = await graknTx.getSchemaConcept(state.selectedNodes[0].label);
+
+    if (await (await type.instances()).next()) throw Error('Cannot remove role type from schema concept with instances.');
+
+    await state.schemaHandler.deletePlaysRole(payload);
+
+    await dispatch(COMMIT_TX, graknTx)
+      .catch((e) => {
+        graknTx.close();
+        logger.error(e.stack);
+        throw e;
+      });
+
+    const node = state.visFacade.getNode(state.selectedNodes[0].id);
+    node.roles = Object.values(node.roles).sort((a, b) => ((a.type > b.type) ? 1 : -1));
+    node.roles.splice(payload.index, 1);
+    state.visFacade.updateNode(node);
+
+    // delete role edge
+    graknTx = await dispatch(OPEN_GRAKN_TX);
+
+    const edgesIds = state.visFacade.edgesConnectedToNode(state.selectedNodes[0].id);
+    edgesIds
+      .filter(edgeId => (state.visFacade.getEdge(edgeId).to === state.selectedNodes[0].id) &&
+      ((state.visFacade.getEdge(edgeId).label === payload.roleLabel) || (state.visFacade.getEdge(edgeId).hiddenLabel === payload.roleLabel)))
       .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
 
     graknTx.close();
@@ -332,8 +402,9 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
-    // attach attributes to visnode and update on graph to render the right bar attributes
+    // attach attributes and roles to visnode and update on graph to render the right bar attributes
     data.nodes = await computeAttributes(data.nodes);
+    data.nodes = await computeRoles(data.nodes);
     state.visFacade.updateNode(data.nodes);
     graknTx.close();
   },

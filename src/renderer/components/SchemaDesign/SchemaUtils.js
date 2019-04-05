@@ -58,3 +58,12 @@ export async function computeAttributes(nodes) {
   }));
 }
 
+// attach role labels to each node
+export async function computeRoles(nodes) {
+  return Promise.all(nodes.map(async (node) => {
+    const roles = await (await node.playing()).collect();
+    node.roles = await Promise.all(roles.map(async concept => concept.label()));
+    return node;
+  }));
+}
+
