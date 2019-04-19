@@ -12,10 +12,11 @@ Please replace every line in curly brackets ( { like this } ) with appropriate a
 
 ## Environment
 
-1. OS (where Grakn server runs): { e.g. Mac OS 10, Windows 10, Ubuntu 16.4, etc. }
-2. Grakn version (and platform): { e.g. Grakn Core 1.4, or Grakn KGMS 1.4.3 on Google Cloud }
-3. Workbase version (and OS): { e.g. Workbase 1.1 on Mac }
-4. Other environment details:
+1. Grakn version: { e.g. Grakn Core 1.5, Grakn KGMS 1.4.3 }
+2. OS of Grakn server: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4, Google Cloud }
+3. Workbase version: { e.g. 1.1, 1.2 }
+4. OS of Workbase: {e.g. Mac OS 10, Windows 10, Ubuntu 16.4 }
+5. Other environment details:
 
 ## Reproducible Steps
 
