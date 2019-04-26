@@ -51,7 +51,7 @@
         "@blueprintjs/table": "^3.1.1",
         "codemirror": "^5.38.0",
         "electron-store": "^1.3.0",
-        "grakn-client": "1.5.1",
+        "grakn-client": "1.5.3",
         "grpc": "^1.18.0",
         "hex-to-hsl": "^1.0.2",
         "image-data-uri": "^1.1.1",
@@ -160,7 +160,7 @@
         "pack:main": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.main.config.js",
         "pack:renderer": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.renderer.config.js",
         "postinstall": "bash ./install-node-electron.sh",
-        "unit": "node ./node_modules/jest/bin/jest.js ./test/unit"
+        "unit": "node ./node_modules/jest/bin/jest.js ./test/unit/components/ScehmaDesign/store/actions.test.js"
     },
     "version": "0.0.0-development"
 }
