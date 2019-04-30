@@ -9,13 +9,13 @@ function getNeighboursQuery(node, neighboursLimit) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
     case 'RELATION_TYPE':
-      return `match $x id "${node.id}"; $y isa $x; get $y; offset ${node.offset}; limit ${neighboursLimit};`;
+      return `match $x id ${node.id}; $y isa $x; get $y; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'ENTITY':
-      return `match $x id "${node.id}"; $r ($x, $y); get $r, $y; offset ${node.offset}; limit ${neighboursLimit};`;
+      return `match $x id ${node.id}; $r ($x, $y); get $r, $y; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'ATTRIBUTE':
-      return `match $x has attribute $y; $y id "${node.id}"; get $x; offset ${node.offset}; limit ${neighboursLimit};`;
+      return `match $x has attribute $y; $y id ${node.id}; get $x; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'RELATION':
-      return `match $r id "${node.id}"; $r ($x, $y); get $x; offset ${node.offset}; limit ${neighboursLimit};`;
+      return `match $r id ${node.id}; $r ($x, $y); get $x; offset ${node.offset}; limit ${neighboursLimit};`;
     default:
       throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
   }
