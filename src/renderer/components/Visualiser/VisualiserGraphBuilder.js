@@ -257,10 +257,8 @@ async function buildFromConceptList(path, pathNodes) {
 
   const roleplayers = await relationsRolePlayers(relations);
 
-  roleplayers.nodes.filter(x => path.list().includes(x.id));
-  roleplayers.edges.filter(x => (path.list().includes(x.to) && path.list().includes(x.to)));
+  roleplayers.edges = roleplayers.edges.filter(x => (path.list().includes(x.from) && path.list().includes(x.to)));
 
-  data.nodes.push(...roleplayers.nodes);
   data.edges.push(...roleplayers.edges);
 
   data.edges.map(edge => Object.assign(edge, Style.computeShortestPathEdgeStyle()));
