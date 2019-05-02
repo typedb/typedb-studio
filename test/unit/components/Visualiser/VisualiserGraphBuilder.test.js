@@ -84,7 +84,7 @@ describe('buildFromConceptList', () => {
 
     const data = await VisualiserGraphBuilder.buildFromConceptList(mockPath, mockPathNodes);
 
-    expect(data.nodes).toHaveLength(5);
+    expect(data.nodes).toHaveLength(3);
     expect(data.nodes[0].id).toBe('6666');
     expect(data.nodes[1].id).toBe('3333');
     expect(data.nodes[2].id).toBe('4444');

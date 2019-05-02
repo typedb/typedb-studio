@@ -57,7 +57,7 @@
       },
       computeShortestPath() {
         this.setContextMenu({ show: false, x: null, y: null });
-        this.setCurrentQuery(`compute path from "${this.selectedNodes[0].id}", to "${this.selectedNodes[1].id}";`);
+        this.setCurrentQuery(`compute path from ${this.selectedNodes[0].id}, to ${this.selectedNodes[1].id};`);
         this[RUN_CURRENT_QUERY]().catch((err) => { this.$notifyError(err, 'Run Query'); });
       },
     },
