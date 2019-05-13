@@ -62,6 +62,13 @@ describe('limit Query', () => {
     const limited = limitQuery(query);
     expect(limited).toBe('match $x isa person;');
   });
+  test('multiline query with only limit', () => {
+    const query = `match $x isa person;
+    get; limit 1;`;
+    const limited = limitQuery(query);
+    expect(limited).toBe(`match $x isa person;
+    get; offset 0; limit 1;`);
+  });
 });
 
 describe('Compute Attributes', () => {

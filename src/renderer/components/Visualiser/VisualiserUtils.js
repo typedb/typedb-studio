@@ -27,7 +27,7 @@ export function limitQuery(query) {
 
   // If there is no `get` the user mistyped the query
   if (getRegex.test(query)) {
-    const limitRegex = /(.*;\s*)(limit\b.*?;).*/;
+    const limitRegex = /(.*\s.*;\s*)(limit\b.*?;).*/;
     const offsetRegex = /.*;\s*(offset\b.*?;).*/;
     const deleteRegex = /^(.*;)\s*(delete\b.*;)$/;
 
