@@ -11,7 +11,8 @@
 
         <ul id="keyspaces-list" class="keyspaces-list arrow_box z-depth-1" v-if="showKeyspaceList">
             <div style="text-align:center;" v-if="allKeyspaces && !allKeyspaces.length">no existing keyspace</div>
-            <li :id="ks" v-bind:class="(ks === currentKeyspace)? 'ks-key active noselect' : 'ks-key noselect'" v-for="ks in allKeyspaces" :key="ks" @click="setKeyspace(ks)">{{ks}}</li>
+            <input class="input-small" v-model="searchedKeyspace" placeholder="search">
+            <li :id="ks" v-bind:class="(ks === currentKeyspace)? 'ks-key active noselect' : 'ks-key noselect'" v-for="ks in keyspaceList" :key="ks" @click="setKeyspace(ks)">{{ks}}</li>
         </ul>
 </div>
 </template>
@@ -104,11 +105,11 @@ export default {
   components: { ToolTip },
   data() {
     return {
-      keyspaceItems: [],
       showKeyspaceList: false,
       clickEvent: () => {
         this.showKeyspaceList = false;
       },
+      searchedKeyspace: '',
     };
   },
   beforeCreate() {
@@ -129,6 +130,9 @@ export default {
   },
   computed: {
     ...mapGetters(['allKeyspaces', 'isGraknRunning']),
+    keyspaceList() {
+      return this.allKeyspaces.filter(keyspace => keyspace.toLowerCase().includes(this.searchedKeyspace.toLowerCase()));
+    },
   },
   filters: {
     truncate(ks) {
