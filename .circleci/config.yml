@@ -175,12 +175,15 @@ jobs:
       - attach_workspace:
           at: ~/distribution
       - checkout
+      - run: |
+          export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
+          bazel run @graknlabs_build_tools//ci:release-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
             ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
-            -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} \
-            -delete -draft $(cat VERSION) ~/distribution/
+            -r ${CIRCLE_PROJECT_REPONAME} -b "$(cat ./RELEASE_TEMPLATE.md)" \
+            -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
 
   deploy-brew-release:
     machine: true
