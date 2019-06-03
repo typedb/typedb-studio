@@ -17,6 +17,14 @@ VALID_EXIT_CODES = {
     255  # SSH error
 }
 
+ENV_VARIABLES = [
+    'GCP_CREDENTIAL',
+    'CIRCLE_JOB',
+    'CIRCLE_BUILD_NUM',
+    'CIRCLE_REPOSITORY_URL',
+    'CIRCLE_SHA1'
+]
+
 
 def lprint(msg):
     # TODO: replace with proper logging
@@ -29,6 +37,13 @@ def cmd_exists(cmd):
         os.access(os.path.join(path, cmd), os.X_OK)
         for path in os.environ["PATH"].split(os.pathsep)
     )
+
+
+def verify_environment():
+    lprint('Verifying environment variables to be present: %s' % ENV_VARIABLES)
+    for var in ENV_VARIABLES:
+        if not os.getenv(var):
+            raise ValueError('Should specify {} env variable'.format(var))
 
 
 def install_sshpass():
@@ -114,6 +129,7 @@ def replace_git_url_to_https(url):
     return url.replace(':', '/').replace('git@', 'https://')
 
 
+verify_environment()
 install_sshpass()
 
 lprint('Configuring GCP credentials')
