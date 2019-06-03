@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+import platform
 import subprocess as sp
 import sys
 import tempfile
@@ -16,11 +17,56 @@ VALID_EXIT_CODES = {
     255  # SSH error
 }
 
+ENV_VARIABLES = [
+    'GCP_CREDENTIAL',
+    'CIRCLE_JOB',
+    'CIRCLE_BUILD_NUM',
+    'CIRCLE_REPOSITORY_URL',
+    'CIRCLE_SHA1'
+]
+
 
 def lprint(msg):
     # TODO: replace with proper logging
     from datetime import datetime
     print('[{}]: {}'.format(datetime.now().isoformat(), msg))
+
+
+def cmd_exists(cmd):
+    return any(
+        os.access(os.path.join(path, cmd), os.X_OK)
+        for path in os.environ["PATH"].split(os.pathsep)
+    )
+
+
+def verify_environment():
+    lprint('Verifying environment variables to be present: %s' % ENV_VARIABLES)
+    for var in ENV_VARIABLES:
+        if not os.getenv(var):
+            raise ValueError('Should specify {} env variable'.format(var))
+
+
+def install_sshpass():
+    if cmd_exists('sshpass'):
+        lprint('sshpass already installed')
+        return
+    lprint('Installing sshpass')
+    system = platform.system()
+    if system == 'Linux':
+        sp.check_call([
+            'sudo', 'apt-get', '-qq', 'update'
+        ])
+
+        sp.check_call([
+            'sudo', 'apt-get', '-qq', 'install', '-y', 'sshpass'
+        ])
+    elif system == 'Darwin':
+        # sshpass is not available in core Homebrew repo
+        sp.check_call([
+            'brew', 'install', 'http://git.io/sshpass.rb'
+        ])
+    else:
+        raise Exception('sshpass does not have executable for platform {}'.format(system))
 
 
 def ssh(command, ssh_host, ssh_user, ssh_pass, attempts=5):
@@ -41,15 +87,18 @@ def ssh(command, ssh_host, ssh_user, ssh_pass, attempts=5):
 
 
 def scp(remote, local, ssh_host, ssh_user, ssh_pass):
-    sp.check_call([
+    system = platform.system()
+    sp.check_call(filter(None, [
         'sshpass',
         '-p',
         ssh_pass,
         'scp',
-        '-T',
+        # '-T' (suppresses strict filename check) parameter
+        # is not available on scp on macOS
+        '-T' if system == 'Linux' else None,
         '{}@{}:"{}"'.format(ssh_user, ssh_host, remote),
         local,
-    ])
+    ]))
 
 
 def wait_for_ssh(ssh_host, ssh_user, ssh_pass, timeout_mins=10):
@@ -80,14 +129,8 @@ def replace_git_url_to_https(url):
     return url.replace(':', '/').replace('git@', 'https://')
 
 
-lprint('Installing sshpass')
-sp.check_call([
-    'sudo', 'apt-get', '-qq', 'update'
-])
-
-sp.check_call([
-    'sudo', 'apt-get', '-qq', 'install', '-y', 'sshpass'
-])
+verify_environment()
+install_sshpass()
 
 lprint('Configuring GCP credentials')
 with tempfile.NamedTemporaryFile(suffix='.json') as credential_file:
@@ -161,31 +204,11 @@ try:
         'git checkout -b ci-branch {}'.format(os.getenv('CIRCLE_SHA1'))
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: building @graknlabs_grakn_core//:assemble-mac-zip')
+    lprint('[Remote]: building @graknlabs_grakn_core//:assemble-windows-zip')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bazel build @graknlabs_grakn_core//:assemble-mac-zip'
-    ]), instance_ip, 'circleci', instance_password)
-
-    lprint('[Remote]: unpacking Grakn')
-    ssh(' && '.join([
-        'cd repo',
-        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d bazel-genfiles/dist/'
-    ]), instance_ip, 'circleci', instance_password)
-
-    lprint('[Remote]: starting Grakn')
-    ssh(' && '.join([
-        'refreshenv',
-        'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn server start'
-    ]), instance_ip, 'circleci', instance_password)
-
-    lprint('[Remote]: populating Grakn')
-    ssh(' && '.join([
-        'refreshenv',
-        'cd repo',
-        'bash bazel-genfiles/dist/grakn-core-all-mac/grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene'
+        'bazel build @graknlabs_grakn_core//:assemble-windows-zip'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('[Remote]: running npm install')
@@ -208,18 +231,23 @@ try:
     lprint('Verifying local file')
     sp.check_call(['file', './' + output_filename])
 
-    lprint('[Remote]: running npm run unit')
+    lprint('[Remote]: unpacking Grakn')
     ssh(' && '.join([
-        'refreshenv',
         'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- run unit'
+        'unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-windows.zip -d bazel-genfiles/dist/'
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: running npm run integration')
+    lprint('[Remote]: executing tests')
     ssh(' && '.join([
         'refreshenv',
-        'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- run integration'
+        'cd repo/bazel-genfiles/dist/grakn-core-all-windows/',
+        'grakn server start',
+        'grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene',
+        'cd C:\\Users\\circleci\\repo\\',
+        'bazel run @nodejs//:bin/npm.cmd -- run unit',
+        'bazel run @nodejs//:bin/npm.cmd -- run integration',
+        'cd bazel-genfiles/dist/grakn-core-all-windows/',
+        'grakn server stop'
     ]), instance_ip, 'circleci', instance_password)
 
     # lprint('[Remote]: running npm run e2e')
