@@ -16,7 +16,7 @@
                     <input class="input" v-model="serverHost">
                     <h1 class="connection-label port">Port:</h1>
                     <input class="input" type="number" v-model="serverPort">
-                    <loading-button v-on:clicked="testConnection" :text="connectionTest" className="btn test-btn" :loading="connectionTest === 'testing'"></loading-button>
+                    <loading-button v-on:clicked="testConnection" :text="connectionTest" className="btn test-btn" :loading="connectionTest === 'testing'" :disabled="connectionTest !== 'Test'"></loading-button>
                 </div>
             </div>
 
