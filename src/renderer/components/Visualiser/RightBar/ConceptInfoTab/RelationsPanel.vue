@@ -247,7 +247,7 @@
         padding: var(--container-padding);
         display: flex;
         flex-direction: column;
-        overflow: scroll;
+        overflow: auto;
         justify-content: center;
         border-bottom: var(--container-darkest-border);
     }
