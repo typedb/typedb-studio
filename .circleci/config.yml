@@ -82,7 +82,7 @@ jobs:
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
-      # - run: bazel run @nodejs//:npm run e2e
+      - run: bazel run @nodejs//:npm run e2e
 
   assemble-linux:
     machine: true
