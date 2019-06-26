@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(15000);
+jest.setTimeout(30000);
 
 const app = new Application({
   path: electronPath,
@@ -22,11 +22,11 @@ afterAll(async () => {
 
 describe('Favourite queries', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
-  test.skip('select keyspace', async () => {
+  test('select keyspace', async () => {
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
@@ -40,63 +40,26 @@ describe('Favourite queries', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test.skip('right click on canvas', async () => {
+  test('right click on canvas', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
 
-    app.client.keys('match $x isa cousins; limit 1; get;');
+    app.client.keys('match $x isa person; get; limit 1;');
 
     await sleep(1000);
 
     app.client.click('.run-btn');
 
-    await sleep(2000);
+    await sleep(4000);
 
     app.client.rightClick('#graph-div', 10, 10);
 
     await sleep(2000);
 
-    assert.equal(await app.client.getText('#context-menu'), 'Delete\nExplain\nShortest Path');
-    await sleep(2000);
-
+    assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
     assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes disabled');
-    await sleep(2000);
-
     assert.equal(await app.client.getAttribute('.explain-node', 'class'), 'context-action explain-node disabled');
-    await sleep(2000);
-
     assert.equal(await app.client.getAttribute('.compute-shortest-path', 'class'), 'context-action compute-shortest-path disabled');
-    await sleep(2000);
-  });
-
-  test.skip('right click on node', async () => {
-    app.client.rightClick('#graph-div', 540, 470);
-
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes');
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.explain-node', 'class'), 'context-action explain-node disabled');
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.compute-shortest-path', 'class'), 'context-action compute-shortest-path disabled');
-    await sleep(2000);
-  });
-
-  test.skip('right click on inferred node', async () => {
-    app.client.rightClick('#graph-div', 750, 470);
-
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes');
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.explain-node', 'class'), 'context-action explain-node');
-    await sleep(2000);
-
-    assert.equal(await app.client.getAttribute('.compute-shortest-path', 'class'), 'context-action compute-shortest-path disabled');
-    await sleep(2000);
   });
 });

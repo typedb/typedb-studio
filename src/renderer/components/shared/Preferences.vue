@@ -31,7 +31,7 @@
                             <div class="keyspace-label">
                                 {{ks}}
                             </div>
-                            <div class="right-side" @click="deleteKeyspace(ks)" >
+                            <div class="right-side delete-keyspace-btn" @click="deleteKeyspace(ks)" >
                                 <vue-icon icon="trash" className="vue-icon delete-icon" iconSize="14"></vue-icon>
                             </div>
                         </div>

@@ -23,28 +23,24 @@ afterAll(async () => {
 
 describe('Favourite queries', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
-  test.skip('create new keyspace', async () => {
-    app.client.click('#manage-keyspaces');
-    await sleep(1000);
-    app.client.click('#create-keyspace-btn');
-    await sleep(1000);
-    await app.client.setValue('#keyspace-name', 'test');
-    app.client.click('#create-btn');
-
-    await sleep(7000);
-
-    assert.equal(await app.client.getText('.toasted.primary.default'), 'New keyspace [test] successfully created!\nCLOSE');
+  test('create new keyspace', async () => {
+    app.client.click('.toggle-preferences');
+    await sleep(2000);
+    await app.client.setValue('.keyspace-input', 'test');
+    app.client.click('.new-keyspace-btn');
+    await sleep(10000);
+    assert.equal(await app.client.getText('.toasted'), 'New keyspace, test, successfully created!\nCLOSE');
   });
 
-  test.skip('delete exisiting keyspace', async () => {
-    app.client.click('#delete-test');
+  test('delete exisiting keyspace', async () => {
+    app.client.click('.delete-keyspace-btn');
     await sleep(1000);
     app.client.click('.confirm');
-    await sleep(3000);
-    assert.equal(await app.client.getText('.toasted.primary.default'), 'Keyspace [test] successfully deleted\nCLOSE');
+    await sleep(10000);
+    assert.equal(await app.client.getText('.toasted'), 'Keyspace, test, successfully deleted!\nCLOSE');
   });
 });

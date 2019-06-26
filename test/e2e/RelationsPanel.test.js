@@ -22,11 +22,11 @@ afterAll(async () => {
 
 describe('Relations Panel', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
-  test.skip('select keyspace', async () => {
+  test('select keyspace', async () => {
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
@@ -40,10 +40,10 @@ describe('Relations Panel', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test.skip('click on a node', async () => {
+  test('click on a node', async () => {
     await app.client.click('.CodeMirror');
 
-    await app.client.keys('match $x isa person id V61528; get;');
+    await app.client.keys('match $x isa person; get; limit 1;');
 
     await sleep(1000);
 
@@ -59,7 +59,5 @@ describe('Relations Panel', () => {
     await assert.equal(await app.client.getText('.relation-item'), 'parentship');
     await assert.equal((await app.client.getText('.role-label'))[0], 'parent');
     await assert.equal((await app.client.getText('.role-label'))[1], 'parent');
-    await assert.equal((await app.client.getText('.player-value'))[0], 'person: V61472');
-    await assert.equal((await app.client.getText('.player-value'))[1], 'person: V123120');
   });
 });

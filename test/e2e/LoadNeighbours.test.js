@@ -3,7 +3,9 @@ const assert = require('assert');
 const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
 const path = require('path');
 
-jest.setTimeout(15000);
+const sleep = time => new Promise(r => setTimeout(r, time));
+
+jest.setTimeout(40000);
 
 const app = new Application({
   path: electronPath,
@@ -21,11 +23,11 @@ afterAll(async () => {
 
 describe('Load neighbours', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
-  test.skip('select keyspace', async () => {
+  test('select keyspace', async () => {
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
@@ -39,12 +41,12 @@ describe('Load neighbours', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test.skip('double click on type', async () => {
+  test('double click on type', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
 
-    app.client.keys('match $x sub entity; offset 1; limit 1; get;');
+    app.client.keys('match $x sub entity; get; offset 1; limit 1;');
 
     await sleep(1000);
 
@@ -66,14 +68,16 @@ describe('Load neighbours', () => {
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
+
+    await sleep(1000);
   });
 
-  test.skip('double click on entity', async () => {
+  test('double click on attribute', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
 
-    app.client.keys('match $x isa person; limit 1; get;');
+    app.client.keys('match $x isa age; get; limit 1;');
 
     await sleep(1000);
 
@@ -87,36 +91,7 @@ describe('Load neighbours', () => {
     await sleep(6000);
 
     const noOfEntities = await app.client.getText('.no-of-entities');
-    assert.equal(noOfEntities, 'entities: 10');
-    const noOfAttributes = await app.client.getText('.no-of-attributes');
-    assert.equal(noOfAttributes, 'attributes: 0');
-    const noOfRelationships = await app.client.getText('.no-of-relations');
-    assert.equal(noOfRelationships, 'relations: 14');
-
-    app.client.click('.clear-graph-btn');
-    app.client.click('.clear-editor');
-  });
-
-  test.skip('double click on attribute', async () => {
-    app.client.click('.CodeMirror');
-
-    await sleep(1000);
-
-    app.client.keys('match $x isa age; limit 1; get;');
-
-    await sleep(1000);
-
-    app.client.click('.run-btn');
-
-    await sleep(1000);
-
-    app.client.leftClick('#graph-div');
-    app.client.leftClick('#graph-div');
-
-    await sleep(6000);
-
-    const noOfEntities = await app.client.getText('.no-of-entities');
-    assert.equal(noOfEntities, 'entities: 1');
+    assert.equal(noOfEntities, 'entities: 2');
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 1');
     const noOfRelationships = await app.client.getText('.no-of-relations');
@@ -124,14 +99,16 @@ describe('Load neighbours', () => {
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
+
+    await sleep(1000);
   });
 
-  test.skip('double click on relation', async () => {
+  test('double click on relation', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
 
-    app.client.keys('match $x isa parentship; limit 1; get;');
+    app.client.keys('match $x isa parentship; get; limit 1;');
 
     await sleep(1000);
 
@@ -150,5 +127,36 @@ describe('Load neighbours', () => {
     assert.equal(noOfAttributes, 'attributes: 0');
     const noOfRelationships = await app.client.getText('.no-of-relations');
     assert.equal(noOfRelationships, 'relations: 1');
+
+    app.client.click('.clear-graph-btn');
+    app.client.click('.clear-editor');
+
+    await sleep(1000);
+  });
+
+  test('double click on entity', async () => {
+    app.client.click('.CodeMirror');
+
+    await sleep(1000);
+
+    app.client.keys('match $x isa person; get; limit 1;');
+
+    await sleep(1000);
+
+    app.client.click('.run-btn');
+
+    await sleep(1000);
+
+    app.client.leftClick('#graph-div');
+    app.client.leftClick('#graph-div');
+
+    await sleep(15000);
+
+    const noOfEntities = await app.client.getText('.no-of-entities');
+    assert.equal(noOfEntities, 'entities: 10');
+    const noOfAttributes = await app.client.getText('.no-of-attributes');
+    assert.equal(noOfAttributes, 'attributes: 0');
+    const noOfRelationships = await app.client.getText('.no-of-relations');
+    assert.equal(noOfRelationships, 'relations: 11');
   });
 });
