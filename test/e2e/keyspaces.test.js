@@ -30,10 +30,10 @@ describe('Favourite queries', () => {
   test('create new keyspace', async () => {
     app.client.click('.toggle-preferences');
     await sleep(1000);
-    await app.client.setValue('.keyspace-input', 'test');
+    await app.client.setValue('.keyspace-input', 'atest');
     app.client.click('.new-keyspace-btn');
     await sleep(10000);
-    expect(await app.client.getText('.keyspace-label')).toEqual(expect.arrayContaining(['test']));
+    expect(await app.client.getText('.keyspace-label')).toEqual(expect.arrayContaining(['atest']));
   });
 
   test('delete exisiting keyspace', async () => {
@@ -41,6 +41,6 @@ describe('Favourite queries', () => {
     await sleep(1000);
     app.client.click('.confirm');
     await sleep(10000);
-    expect(await app.client.getText('.keyspace-label')).not.toEqual(expect.arrayContaining(['test']));
+    expect(await app.client.getText('.keyspace-label')).not.toEqual(expect.arrayContaining(['atest']));
   });
 });

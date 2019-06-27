@@ -27,6 +27,8 @@ describe('Load neighbours', () => {
   });
 
   test('select keyspace', async () => {
+    await sleep(3000);
+
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
