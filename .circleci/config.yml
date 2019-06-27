@@ -68,10 +68,6 @@ jobs:
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
-      - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-      - run: Xvfb :99 &
-      - run: export DISPLAY=:99
       - run: bazel run @nodejs//:npm run e2e
 
   test-mac:
@@ -86,10 +82,6 @@ jobs:
       - run: bazel run @nodejs//:npm install
       - run: bazel run @nodejs//:npm run unit
       - run: bazel run @nodejs//:npm run integration
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 -y
-      - run: sudo apt install libnss3 libasound2 libgconf-2-4 -y
-      - run: Xvfb :99 &
-      - run: export DISPLAY=:99
       - run: bazel run @nodejs//:npm run e2e
 
   assemble-linux:
