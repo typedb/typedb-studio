@@ -27,6 +27,8 @@ describe('Favourite queries', () => {
   });
 
   test('select keyspace', async () => {
+    await sleep(1000);
+
     app.client.click('.keyspaces');
     await app.client.waitUntilWindowLoaded();
 
