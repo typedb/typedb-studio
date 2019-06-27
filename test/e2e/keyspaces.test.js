@@ -41,6 +41,6 @@ describe('Favourite queries', () => {
     await sleep(1000);
     app.client.click('.confirm');
     await sleep(10000);
-    assert.equal(await app.client.getText('.keyspace-label'), 'grakn');
+    assert.equal((await app.client.getText('.keyspace-label'))[0], 'gene');
   });
 });
