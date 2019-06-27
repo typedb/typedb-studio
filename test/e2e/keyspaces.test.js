@@ -32,7 +32,7 @@ describe('Favourite queries', () => {
     await sleep(2000);
     await app.client.setValue('.keyspace-input', 'test');
     app.client.click('.new-keyspace-btn');
-    await sleep(10000);
+    await sleep(15000);
     assert.equal(await app.client.getText('.toasted'), 'New keyspace, test, successfully created!\nCLOSE');
   });
 
@@ -40,7 +40,7 @@ describe('Favourite queries', () => {
     app.client.click('.delete-keyspace-btn');
     await sleep(1000);
     app.client.click('.confirm');
-    await sleep(10000);
+    await sleep(15000);
     assert.equal(await app.client.getText('.toasted'), 'Keyspace, test, successfully deleted!\nCLOSE');
   });
 });
