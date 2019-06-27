@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(15000);
+jest.setTimeout(30000);
 
 
 const app = new Application({
@@ -29,18 +29,18 @@ describe('Favourite queries', () => {
 
   test('create new keyspace', async () => {
     app.client.click('.toggle-preferences');
-    await sleep(2000);
+    await sleep(1000);
     await app.client.setValue('.keyspace-input', 'test');
     app.client.click('.new-keyspace-btn');
-    await sleep(15000);
-    assert.equal(await app.client.getText('.toasted'), 'New keyspace, test, successfully created!\nCLOSE');
+    await sleep(10000);
+    assert.equal((await app.client.getText('.keyspace-label'))[0], 'test');
   });
 
   test('delete exisiting keyspace', async () => {
     app.client.click('.delete-keyspace-btn');
     await sleep(1000);
     app.client.click('.confirm');
-    await sleep(15000);
-    assert.equal(await app.client.getText('.toasted'), 'Keyspace, test, successfully deleted!\nCLOSE');
+    await sleep(10000);
+    assert.equal(await app.client.getText('.keyspace-label'), 'grakn');
   });
 });
