@@ -141,7 +141,7 @@ describe('Load neighbours', () => {
 
     await sleep(1000);
 
-    app.client.keys('match $x isa person; get; limit 1;');
+    app.client.keys('match $x isa person; get; offset 1; limit 1;');
 
     await sleep(1000);
 
