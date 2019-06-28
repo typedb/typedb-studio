@@ -51,6 +51,8 @@ describe('Load neighbours', () => {
 
     await sleep(3000);
 
+    console.log(await app.client.getText('.ks-key'));
+
     app.client.click('#gene');
 
     await sleep(4000);
