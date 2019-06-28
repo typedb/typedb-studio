@@ -27,13 +27,10 @@ describe('actions', () => {
   });
 
   test('delete keyspace', async () => {
+    expect(store.state.keyspaces).toContain('test_keyspace');
+    await store.dispatch('deleteKeyspace', 'test_keyspace');
     await store.dispatch('loadKeyspaces');
-    await store.dispatch('createKeyspace', 'test_keyspace_del');
-    await store.dispatch('loadKeyspaces');
-    expect(store.state.keyspaces).toContain('test_keyspace_del');
-    await store.dispatch('deleteKeyspace', 'test_keyspace_del');
-    await store.dispatch('loadKeyspaces');
-    expect(store.state.keyspaces).not.toContain('test_keyspace_del');
+    expect(store.state.keyspaces).not.toContain('test_keyspace');
   });
 });
 
