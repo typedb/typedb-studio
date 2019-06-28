@@ -49,8 +49,6 @@ describe('Load neighbours', () => {
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
-    await sleep(1000);
-
 
     app.client.click('#gene');
 
@@ -179,7 +177,7 @@ describe('Load neighbours', () => {
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
 
-    await sleep(2000);
+    await sleep(4000);
     const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
     expect(noOfRelationships).toBeGreaterThan(0);
   });
