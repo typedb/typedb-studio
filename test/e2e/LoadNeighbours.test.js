@@ -49,10 +49,11 @@ describe('Load neighbours', () => {
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
+    await sleep(3000);
 
     app.client.click('#gene');
 
-    await sleep(1000);
+    await sleep(4000);
 
 
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
@@ -159,7 +160,7 @@ describe('Load neighbours', () => {
 
     await sleep(1000);
 
-    app.client.keys('match $x isa person; get; offset 1; limit 1;');
+    app.client.keys('match $x isa person; get; offset 2; limit 1;');
 
     await sleep(1000);
 
@@ -170,7 +171,7 @@ describe('Load neighbours', () => {
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(20000);
+    await sleep(24000);
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
