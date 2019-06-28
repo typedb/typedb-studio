@@ -53,7 +53,7 @@ describe('Relations Panel', () => {
 
     await app.client.click('#graph-div');
 
-    await sleep(4000);
+    await sleep(6000);
 
     expect((await app.client.getText('.role-btn-text')).length).toBeGreaterThan(0);
     expect((await app.client.getText('.relation-item')).length).toBeGreaterThan(0);

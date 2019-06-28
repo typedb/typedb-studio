@@ -161,7 +161,9 @@ describe('Load neighbours', () => {
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
 
-    await sleep(4000);
+    await sleep(10000);
+    console.log((await app.client.getText('.no-of-relations')));
+
     const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
     expect(noOfRelationships).toBeGreaterThan(0);
   });
