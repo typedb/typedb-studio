@@ -27,10 +27,6 @@ describe('Canvas Data', () => {
 
   test('select keyspace', async () => {
     app.client.click('.keyspaces');
-    await app.client.waitUntilWindowLoaded();
-
-    const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
-    assert.ok(keyspaceList);
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
