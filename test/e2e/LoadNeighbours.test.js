@@ -30,16 +30,36 @@ describe('Load neighbours', () => {
     await sleep(3000);
 
     app.client.click('.keyspaces');
+
+    await sleep(1000);
+
     await app.client.waitUntilWindowLoaded();
 
+    await sleep(1000);
+
+
     const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
+
+    await sleep(1000);
+
     assert.ok(keyspaceList);
+
+    await sleep(1000);
+
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
+    await sleep(1000);
+
+
     app.client.click('#gene');
 
+    await sleep(1000);
+
+
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
+
+    await sleep(1000);
   });
 
   test('double click on type', async () => {
@@ -158,6 +178,8 @@ describe('Load neighbours', () => {
     expect(noOfEntities).toBeGreaterThan(0);
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
+
+    await sleep(2000);
     const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
     expect(noOfRelationships).toBeGreaterThan(0);
   });

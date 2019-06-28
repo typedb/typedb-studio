@@ -23,7 +23,8 @@ beforeAll(async () => {
   graknSession = await grakn.session('testkeyspace2');
 });
 
-afterAll(() => {
+afterAll(async () => {
+  await grakn.keyspaces().delete('testkeyspace2');
   graknSession.close();
 });
 
