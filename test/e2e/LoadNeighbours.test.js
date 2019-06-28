@@ -27,36 +27,17 @@ describe('Load neighbours', () => {
   });
 
   test('select keyspace', async () => {
-    await sleep(3000);
+    await sleep(15000);
 
     app.client.click('.keyspaces');
-
-    await sleep(1000);
-
-    await app.client.waitUntilWindowLoaded();
-
-    await sleep(1000);
-
-
-    const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
-
-    await sleep(1000);
-
-    assert.ok(keyspaceList);
-
-    await sleep(1000);
-
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
     await sleep(3000);
 
-    console.log(await app.client.getText('.ks-key'));
-
     app.client.click('#gene');
 
     await sleep(4000);
-
 
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
 
