@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(200000);
+jest.setTimeout(300000);
 
 const app = new Application({
   path: electronPath,
@@ -64,7 +64,6 @@ describe('Load neighbours', () => {
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
-
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
     const noOfRelationships = await app.client.getText('.no-of-relations');
@@ -123,7 +122,7 @@ describe('Load neighbours', () => {
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(50000);
+    await sleep(100000);
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
@@ -160,9 +159,7 @@ describe('Load neighbours', () => {
     expect(noOfEntities).toBeGreaterThan(0);
     const noOfAttributes = await app.client.getText('.no-of-attributes');
     assert.equal(noOfAttributes, 'attributes: 0');
-
     const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
-
     expect(noOfRelationships).toBeGreaterThan(0);
   });
 });

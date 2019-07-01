@@ -45,7 +45,6 @@ describe('Types Panel', () => {
 
     app.client.click('.select-type-btn');
 
-
     await sleep(1000);
 
     app.client.click('.run-btn');

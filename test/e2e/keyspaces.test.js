@@ -29,9 +29,12 @@ describe('Favourite queries', () => {
 
   test('create new keyspace', async () => {
     app.client.click('.toggle-preferences');
+
     await sleep(1000);
+
     await app.client.setValue('.keyspace-input', 'keyspace');
     app.client.click('.new-keyspace-btn');
+
     await sleep(10000);
 
     const noOfKeyspace = (await app.client.getText('.keyspace-label')).length;
@@ -40,8 +43,11 @@ describe('Favourite queries', () => {
 
   test('delete exisiting keyspace', async () => {
     app.client.click('.delete-keyspace-btn');
+
     await sleep(1000);
+
     app.client.click('.confirm');
+
     await sleep(10000);
 
     const noOfKeyspace = (await app.client.getText('.keyspace-label')).length;
