@@ -107,7 +107,7 @@ describe('Load neighbours', () => {
     await sleep(1000);
   });
 
-  test('double click on relation', async () => {
+  test.skip('double click on relation', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
@@ -138,7 +138,7 @@ describe('Load neighbours', () => {
     await sleep(1000);
   });
 
-  test('double click on entity', async () => {
+  test.skip('double click on entity', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);

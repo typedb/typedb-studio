@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(30000);
+jest.setTimeout(40000);
 
 const app = new Application({
   path: electronPath,
@@ -45,11 +45,11 @@ describe('Relations Panel', () => {
 
     await app.client.click('.run-btn');
 
-    await sleep(10000);
+    await sleep(15000);
 
     await app.client.click('#graph-div');
 
-    await sleep(6000);
+    await sleep(10000);
 
     expect((await app.client.getText('.role-btn-text')).length).toBeGreaterThan(0);
     expect((await app.client.getText('.relation-item')).length).toBeGreaterThan(0);
