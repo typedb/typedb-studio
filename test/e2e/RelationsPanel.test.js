@@ -53,6 +53,5 @@ describe('Relations Panel', () => {
 
     expect((await app.client.getText('.role-btn-text')).length).toBeGreaterThan(0);
     expect((await app.client.getText('.relation-item')).length).toBeGreaterThan(0);
-    expect(((await app.client.getText('.role-label'))[0]).length).toBeGreaterThan(0);
   });
 });
