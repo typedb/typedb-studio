@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(60000);
+jest.setTimeout(90000);
 
 const app = new Application({
   path: electronPath,
@@ -107,18 +107,18 @@ describe('Load neighbours', () => {
     await sleep(1000);
   });
 
-  test.skip('double click on relation', async () => {
+  test('double click on relation', async () => {
     app.client.click('.CodeMirror');
 
-    await sleep(1000);
+    await sleep(2000);
 
     app.client.keys('match $x isa parentship; get; limit 1;');
 
-    await sleep(1000);
+    await sleep(2000);
 
     app.client.click('.run-btn');
 
-    await sleep(1000);
+    await sleep(10000);
 
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
@@ -138,7 +138,7 @@ describe('Load neighbours', () => {
     await sleep(1000);
   });
 
-  test.skip('double click on entity', async () => {
+  test('double click on entity', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
@@ -149,7 +149,7 @@ describe('Load neighbours', () => {
 
     app.client.click('.run-btn');
 
-    await sleep(1000);
+    await sleep(10000);
 
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
