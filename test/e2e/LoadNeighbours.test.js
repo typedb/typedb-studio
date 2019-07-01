@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(120000);
+jest.setTimeout(200000);
 
 const app = new Application({
   path: electronPath,
@@ -154,7 +154,7 @@ describe('Load neighbours', () => {
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(60000);
+    await sleep(100000);
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
