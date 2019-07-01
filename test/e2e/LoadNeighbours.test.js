@@ -123,7 +123,7 @@ describe('Load neighbours', () => {
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(6000);
+    await sleep(10000);
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
@@ -138,7 +138,7 @@ describe('Load neighbours', () => {
     await sleep(1000);
   });
 
-  test.skip('double click on entity', async () => {
+  test('double click on entity', async () => {
     app.client.click('.CodeMirror');
 
     await sleep(1000);
