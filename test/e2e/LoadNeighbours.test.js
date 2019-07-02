@@ -140,11 +140,11 @@ describe('Load neighbours', () => {
   test('double click on entity', async () => {
     app.client.click('.CodeMirror');
 
-    await sleep(1000);
+    await sleep(2000);
 
     app.client.keys('match $x isa person; get; offset 2; limit 1;');
 
-    await sleep(1000);
+    await sleep(3000);
 
     app.client.click('.run-btn');
 
