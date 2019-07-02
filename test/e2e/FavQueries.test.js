@@ -27,7 +27,7 @@ describe('Favourite queries', () => {
   });
 
   test('select keyspace', async () => {
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getAttribute('.keyspaces', 'class')) === 'btn keyspaces', 20000, 'timeout reached');
 
     app.client.click('.keyspaces');
 
@@ -35,7 +35,7 @@ describe('Favourite queries', () => {
 
     app.client.click('#gene');
 
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
+    await app.client.waitUntil(async () => (await app.client.getText('.keyspaces')) === 'gene', 20000, 'timeout reached');
   });
 
   test('add new favourite query', async () => {
@@ -47,11 +47,11 @@ describe('Favourite queries', () => {
 
     app.client.click('.add-fav-query-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getAttribute('.save-query-btn', 'class')) === 'btn save-query-btn', 20000, 'timeout reached');
 
     app.client.click('.save-query-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.fav-query-name-tooltip')) !== '', 20000, 'timeout reached');
 
     assert.equal(await app.client.getText('.fav-query-name-tooltip'), 'Please write a query name');
 
@@ -63,7 +63,7 @@ describe('Favourite queries', () => {
 
     app.client.click('.save-query-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.toasted')) !== '', 20000, 'timeout reached');
 
     assert.equal(await app.client.getText('.toasted'), 'New query saved!\nCLOSE');
 
@@ -76,7 +76,7 @@ describe('Favourite queries', () => {
   test('add existing favourite query', async () => {
     app.client.click('.add-fav-query-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getAttribute('.query-name-input', 'class')) === 'input query-name-input', 20000, 'timeout reached');
 
     app.client.click('.query-name-input');
 
@@ -84,11 +84,9 @@ describe('Favourite queries', () => {
 
     app.client.keys('get persons');
 
-    await sleep(1000);
-
     app.client.click('.save-query-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.toasted')) !== '', 20000, 'timeout reached');
 
     assert.equal(await app.client.getText('.toasted'), 'Query name already saved. Please choose a different name.\nCLOSE');
   });
@@ -97,20 +95,15 @@ describe('Favourite queries', () => {
   test('run favourite query', async () => {
     app.client.click('.fav-queries-container-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getAttribute('.run-fav-query-btn', 'class')) === 'btn run-fav-query-btn', 20000, 'timeout reached');
 
     app.client.click('.run-fav-query-btn');
 
-    await sleep(1000);
-
     app.client.click('.run-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 20000, 'timeout reached');
 
-    const noOfEntities = await app.client.getText('.no-of-entities');
-    await sleep(1000);
-
-    assert.equal(noOfEntities, 'entities: 30');
+    assert.equal(await app.client.getText('.no-of-entities'), 'entities: 30');
 
     await app.client.click('.clear-graph-btn');
   });
@@ -139,14 +132,10 @@ describe('Favourite queries', () => {
   });
 
   test('delete favourite query', async () => {
-    await sleep(5000);
-
     await app.client.click('.delete-fav-query-btn');
 
-    await sleep(3000);
+    await app.client.waitUntil(async () => (await app.client.getText('.toasted')) !== '', 20000, 'timeout reached');
 
-    await assert.equal(await app.client.getText('.toasted'), 'Query get persons has been deleted from saved queries.\nCLOSE');
-
-    await sleep(1000);
+    await assert.equal((await app.client.getText('.toasted'))[1], 'Query get persons has been deleted from saved queries.\nCLOSE');
   });
 });
