@@ -134,8 +134,8 @@ describe('Favourite queries', () => {
   test('delete favourite query', async () => {
     await app.client.click('.delete-fav-query-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.toasted')).length === 1, 20000, 'timeout reached');
+    await app.client.waitUntil(async () => (await app.client.getText('.toasted')) !== '', 20000, 'timeout reached');
 
-    await assert.equal(await app.client.getText('.toasted'), 'Query get persons has been deleted from saved queries.\nCLOSE');
+    await assert.equal((await app.client.getText('.toasted'))[1], 'Query get persons has been deleted from saved queries.\nCLOSE');
   });
 });

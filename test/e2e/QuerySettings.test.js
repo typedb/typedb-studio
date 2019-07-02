@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(400000);
+jest.setTimeout(15000);
 
 const app = new Application({
   path: electronPath,
