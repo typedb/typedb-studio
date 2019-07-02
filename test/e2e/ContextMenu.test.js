@@ -33,7 +33,7 @@ describe('Favourite queries', () => {
 
     app.client.click('#gene');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.keyspaces')) === 'gene', 20000, 'timeout reached');
+    assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
   test('right click on canvas', async () => {
@@ -47,11 +47,11 @@ describe('Favourite queries', () => {
 
     app.client.click('.run-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 20000, 'timeout reached');
+    await sleep(4000);
 
     app.client.rightClick('#graph-div', 10, 10);
 
-    await app.client.waitUntil(async () => (await app.client.getText('#context-menu')) !== '', 20000, 'timeout reached');
+    await sleep(2000);
 
     assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
     assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes disabled');

@@ -14,27 +14,27 @@ const app = new Application({
 beforeAll(async () => app.start());
 
 afterAll(async () => {
-  await sleep(1000);
+  await sleep(2000);
 
   app.client.click('.neighbour-limit-input');
 
-  await sleep(1000);
+  await sleep(2000);
 
   app.client.keys(['Backspace', 'Backspace', '20']);
 
-  await sleep(1000);
+  await sleep(3000);
 
   app.client.click('.query-limit-input');
 
-  await sleep(1000);
+  await sleep(2000);
 
   app.client.keys(['Backspace', 'Backspace', '30']);
 
-  await sleep(1000);
+  await sleep(2000);
 
   app.client.click('.load-roleplayers-switch');
 
-  await sleep(1000);
+  await sleep(2000);
 
   if (app && app.isRunning()) {
     return app.stop();
@@ -55,7 +55,9 @@ describe('Query Settings', () => {
 
     app.client.click('#gene');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.keyspaces')) === 'gene', 20000, 'timeout reached');
+    await sleep(1000);
+
+    assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
   test('set query limit', async () => {
@@ -81,15 +83,16 @@ describe('Query Settings', () => {
 
     app.client.click('.run-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) === 'entities: 1', 20000, 'timeout reached');
+    await sleep(1000);
+
+    const noOfEntities = await app.client.getText('.no-of-entities');
+    assert.equal(noOfEntities, 'entities: 1');
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
   });
 
   test('set neighbours limit', async () => {
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) === 'entities: 0', 20000, 'timeout reached');
-
     app.client.click('.neighbour-limit-input');
 
     await sleep(1000);
@@ -108,17 +111,16 @@ describe('Query Settings', () => {
 
     app.client.click('.run-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) === 'relations: 1', 20000, 'timeout reached');
+    await sleep(1000);
 
-    assert.equal((await app.client.getText('.no-of-entities')), 'entities: 1');
+    const noOfEntities = await app.client.getText('.no-of-entities');
+    assert.equal(noOfEntities, 'entities: 1');
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
   });
 
   test('dont auto load neighbours', async () => {
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) === 'relations: 0', 20000, 'timeout reached');
-
     app.client.click('.load-roleplayers-switch');
 
     await sleep(1000);
@@ -133,8 +135,12 @@ describe('Query Settings', () => {
 
     app.client.click('.run-btn');
 
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) === 'relations: 1', 20000, 'timeout reached');
+    await sleep(1000);
 
-    assert.equal((await app.client.getText('.no-of-entities')), 'entities: 0');
+    const noOfEntities = await app.client.getText('.no-of-entities');
+    assert.equal(noOfEntities, 'entities: 0');
+
+    app.client.click('.clear-graph-btn');
+    app.client.click('.clear-editor');
   });
 });
