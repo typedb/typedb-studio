@@ -27,21 +27,15 @@ describe('Load neighbours', () => {
   });
 
   test('select keyspace', async () => {
-    await sleep(15000);
+    await app.client.waitUntil(async () => (await app.client.getAttribute('.keyspaces', 'class')) === 'btn keyspaces', 20000, 'timeout reached');
 
     app.client.click('.keyspaces');
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
-    await sleep(3000);
-
     app.client.click('#gene');
 
-    await sleep(4000);
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
-
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.keyspaces')) === 'gene', 20000, 'timeout reached');
   });
 
   test('double click on type', async () => {
@@ -60,7 +54,7 @@ describe('Load neighbours', () => {
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(4000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 20000, 'timeout reached');
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
@@ -71,8 +65,6 @@ describe('Load neighbours', () => {
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
-
-    await sleep(1000);
   });
 
   test('double click on attribute', async () => {
@@ -86,12 +78,12 @@ describe('Load neighbours', () => {
 
     app.client.click('.run-btn');
 
-    await sleep(1000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-attributes')) !== 'attributes: 0', 20000, 'timeout reached');
 
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(10000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 20000, 'timeout reached');
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
@@ -102,11 +94,17 @@ describe('Load neighbours', () => {
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
-
-    await sleep(1000);
   });
 
   test('double click on relation', async () => {
+    app.client.click('.settings-tab');
+
+    await sleep(1000);
+
+    app.client.click('.load-roleplayers-switch');
+
+    await sleep(1000);
+
     app.client.click('.CodeMirror');
 
     await sleep(2000);
@@ -117,12 +115,12 @@ describe('Load neighbours', () => {
 
     app.client.click('.run-btn');
 
-    await sleep(10000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) !== 'relations: 0', 200000, 'timeout reached');
 
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(100000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 200000, 'timeout reached');
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
@@ -133,8 +131,6 @@ describe('Load neighbours', () => {
 
     app.client.click('.clear-graph-btn');
     app.client.click('.clear-editor');
-
-    await sleep(1000);
   });
 
   test('double click on entity', async () => {
@@ -148,12 +144,12 @@ describe('Load neighbours', () => {
 
     app.client.click('.run-btn');
 
-    await sleep(20000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 200000, 'timeout reached');
 
     app.client.leftClick('#graph-div');
     app.client.leftClick('#graph-div');
 
-    await sleep(100000);
+    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) !== 'relations: 0', 200000, 'timeout reached');
 
     const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
     expect(noOfEntities).toBeGreaterThan(0);
