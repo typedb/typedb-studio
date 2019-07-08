@@ -21,16 +21,12 @@ afterAll(async () => {
 
 describe('Canvas Data', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
   test('select keyspace', async () => {
     app.client.click('.keyspaces');
-    await app.client.waitUntilWindowLoaded();
-
-    const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
-    assert.ok(keyspaceList);
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
@@ -39,10 +35,10 @@ describe('Canvas Data', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test.skip('entity', async () => {
+  test('entity', async () => {
     await app.client.click('.CodeMirror');
 
-    await app.client.keys('match $x isa person; limit 1; get;');
+    await app.client.keys('match $x isa person; get; limit 1;');
 
     await app.client.click('.run-btn');
 
@@ -53,10 +49,10 @@ describe('Canvas Data', () => {
 
     await app.client.click('.clear-editor');
   });
-  test.skip('attribute', async () => {
+  test('attribute', async () => {
     await app.client.click('.CodeMirror');
 
-    await app.client.keys('match $x isa age; limit 1; get;');
+    await app.client.keys('match $x isa age; get; limit 1;');
 
     await app.client.click('.run-btn');
 
@@ -67,10 +63,10 @@ describe('Canvas Data', () => {
 
     await app.client.click('.clear-editor');
   });
-  test.skip('relation', async () => {
+  test('relation', async () => {
     await app.client.click('.CodeMirror');
 
-    await app.client.keys('match $x isa parentship; limit 1; get;');
+    await app.client.keys('match $x isa parentship; get; limit 1;');
 
     await app.client.click('.run-btn');
 

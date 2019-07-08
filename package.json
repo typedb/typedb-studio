@@ -110,7 +110,7 @@
         "node-loader": "^0.6.0",
         "node-sass": "^4.9.2",
         "sass-loader": "^6.0.6",
-        "spectron": "^3.8.0",
+        "spectron": "^5.0.0",
         "style-loader": "^0.18.2",
         "url-loader": "^1.0.1",
         "vue-eslint-parser": "^1.0.0",

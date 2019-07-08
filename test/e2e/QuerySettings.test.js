@@ -44,16 +44,12 @@ afterAll(async () => {
 
 describe('Query Settings', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
   test('select keyspace', async () => {
     app.client.click('.keyspaces');
-    await app.client.waitUntilWindowLoaded();
-
-    const keyspaceList = app.client.selectByAttribute('class', 'keyspaces-list');
-    assert.ok(keyspaceList);
 
     assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
 
@@ -64,7 +60,7 @@ describe('Query Settings', () => {
     assert.equal(await app.client.getText('.keyspaces'), 'gene');
   });
 
-  test.skip('set query limit', async () => {
+  test('set query limit', async () => {
     app.client.click('.settings-tab');
 
     await sleep(1000);
@@ -96,7 +92,7 @@ describe('Query Settings', () => {
     app.client.click('.clear-editor');
   });
 
-  test.skip('set neighbours limit', async () => {
+  test('set neighbours limit', async () => {
     app.client.click('.neighbour-limit-input');
 
     await sleep(1000);

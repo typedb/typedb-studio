@@ -23,6 +23,7 @@ function registerNotifications() {
   };
 
   Vue.prototype.$notifyInfo = function infoFn(message) {
+    this.$toasted.clear();
     this.$toasted.show(message, {
       action: {
         text: 'CLOSE',

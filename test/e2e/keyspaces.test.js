@@ -4,7 +4,7 @@ const electronPath = require('electron'); // Require Electron from the binaries 
 const path = require('path');
 
 const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(15000);
+jest.setTimeout(30000);
 
 
 const app = new Application({
@@ -23,28 +23,34 @@ afterAll(async () => {
 
 describe('Favourite queries', () => {
   test('initialize workbase', async () => {
-    const count = await app.client.getWindowCount();
-    assert.equal(count, 1);
+    const visible = await app.browserWindow.isVisible();
+    assert.equal(visible, true);
   });
 
-  test.skip('create new keyspace', async () => {
-    app.client.click('#manage-keyspaces');
-    await sleep(1000);
-    app.client.click('#create-keyspace-btn');
-    await sleep(1000);
-    await app.client.setValue('#keyspace-name', 'test');
-    app.client.click('#create-btn');
+  test('create new keyspace', async () => {
+    app.client.click('.toggle-preferences');
 
-    await sleep(7000);
+    await sleep(1000);
 
-    assert.equal(await app.client.getText('.toasted.primary.default'), 'New keyspace [test] successfully created!\nCLOSE');
+    await app.client.setValue('.keyspace-input', 'keyspace');
+    app.client.click('.new-keyspace-btn');
+
+    await sleep(10000);
+
+    const noOfKeyspace = (await app.client.getText('.keyspace-label')).length;
+    assert.equal(noOfKeyspace, 3);
   });
 
-  test.skip('delete exisiting keyspace', async () => {
-    app.client.click('#delete-test');
+  test('delete exisiting keyspace', async () => {
+    app.client.click('.delete-keyspace-btn');
+
     await sleep(1000);
+
     app.client.click('.confirm');
-    await sleep(3000);
-    assert.equal(await app.client.getText('.toasted.primary.default'), 'Keyspace [test] successfully deleted\nCLOSE');
+
+    await sleep(10000);
+
+    const noOfKeyspace = (await app.client.getText('.keyspace-label')).length;
+    assert.equal(noOfKeyspace, 2);
   });
 });
