@@ -168,8 +168,7 @@ jobs:
           bazel run @graknlabs_build_tools//ci:release-approval
 
   deploy-github:
-    docker:
-      - image: cibuilds/github:0.10
+    machine: true
     working_directory: ~/workbase
     steps:
       - attach_workspace:
