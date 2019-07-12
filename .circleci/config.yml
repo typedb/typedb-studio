@@ -176,14 +176,17 @@ jobs:
       - install-bazel-linux-rbe
       - checkout
       - run: |
+          pip install certifi
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
           bazel run @graknlabs_build_tools//ci:release-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
-            -r ${CIRCLE_PROJECT_REPONAME} -b "$(cat ./RELEASE_TEMPLATE.md)" \
-            -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
+            wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
+            tar -xf ghr_v0.12.1_linux_amd64.tar.gz
+            ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+              -r ${CIRCLE_PROJECT_REPONAME} -b "$(cat ./RELEASE_TEMPLATE.md)" \
+              -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
 
   deploy-brew-release:
     machine: true
