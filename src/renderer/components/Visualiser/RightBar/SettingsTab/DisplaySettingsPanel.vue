@@ -25,7 +25,7 @@
 
                 <div class="panel-content-item" v-bind:class="(showTypeList) ? 'disable-content' : ''">
                     <h1 class="sub-panel-header">
-                        <div class="sub-title">Label</div>
+                        <div class="sub-title">Attribute Label</div>
                         <div class="btn right-bar-btn reset-setting-btn" @click="toggleAttributeToLabel(undefined)"><vue-icon icon="eraser" class="vue-icon" iconSize="12"></vue-icon></div>
                     </h1>
                     <p v-if="!nodeAttributes.length">There are no attribute types available for this type of node.</p>
