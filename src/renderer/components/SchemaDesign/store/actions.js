@@ -41,7 +41,7 @@ async function buildSchema(nodes) {
   const subConcepts = await computeSubConcepts(nodes);
 
   // Draw all edges from relations to roleplayers
-  const relEdges = await relationTypesOutboundEdges(nodes);
+  const relEdges = await relationTypesOutboundEdges(nodes, { showLabel: true });
 
   // Draw all edges from owners to attributes
   const hasEdges = await ownerHasEdges(nodes);
@@ -316,8 +316,8 @@ export default {
     const edgesIds = state.visFacade.edgesConnectedToNode(state.selectedNodes[0].id);
 
     edgesIds
-      .filter(edgeId => (state.visFacade.getEdge(edgeId).to === attributeTypeId) &&
-      ((state.visFacade.getEdge(edgeId).label === 'has') || (state.visFacade.getEdge(edgeId).hiddenLabel === 'has')))
+      .filter(edgeId => (state.visFacade.getEdges(edgeId).to === attributeTypeId) &&
+      ((state.visFacade.getEdges(edgeId).label === 'has') || (state.visFacade.getEdges(edgeId).hiddenLabel === 'has')))
       .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
 
     graknTx.close();
@@ -349,8 +349,8 @@ export default {
 
     const edgesIds = state.visFacade.edgesConnectedToNode(state.selectedNodes[0].id);
     edgesIds
-      .filter(edgeId => (state.visFacade.getEdge(edgeId).to === state.selectedNodes[0].id) &&
-      ((state.visFacade.getEdge(edgeId).label === payload.roleLabel) || (state.visFacade.getEdge(edgeId).hiddenLabel === payload.roleLabel)))
+      .filter(edgeId => (state.visFacade.getEdges(edgeId).to === state.selectedNodes[0].id) &&
+      ((state.visFacade.getEdges(edgeId).label === payload.roleLabel) || (state.visFacade.getEdges(edgeId).label === payload.roleLabel)))
       .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
 
     graknTx.close();

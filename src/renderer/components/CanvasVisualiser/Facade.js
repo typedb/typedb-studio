@@ -21,7 +21,7 @@ function createFacade(prototype, state, container, style) {
  */
 function deleteEdgesOnNode(nodeId, label) {
   const edgesIds = this.container.visualiser.edgesConnectedToNode(nodeId);
-  const idsToDelete = (label) ? this.container.visualiser.getEdge(edgesIds)
+  const idsToDelete = (label) ? this.container.visualiser.getEdges(edgesIds)
     .filter(x => x.label === label).map(x => x.id) : edgesIds;
   idsToDelete.forEach((edgeId) => { this.container.visualiser.deleteEdge(edgeId); });
 }
@@ -73,8 +73,8 @@ function getNode(nodeId) {
   return this.container.visualiser.getNode(nodeId);
 }
 
-function getEdge(edgeId) {
-  return this.container.visualiser.getEdge(edgeId);
+function getEdges(edgeId) {
+  return this.container.visualiser.getEdges(edgeId);
 }
 
 function updateNode(node) {
@@ -90,7 +90,7 @@ function getAllNodes() {
 }
 
 function getAllEdges() {
-  return this.container.visualiser.getEdge();
+  return this.container.visualiser.getEdges();
 }
 
 /**
@@ -131,7 +131,7 @@ const prototype = {
   fitGraphToWindow,
   getAllNodes,
   getNode,
-  getEdge,
+  getEdges,
   getAllEdges,
   updateNode,
   getNetwork,

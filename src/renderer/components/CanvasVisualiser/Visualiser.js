@@ -67,7 +67,7 @@ function clearGraph() {
  * Retrieve edge/s with given id/s
  * @param {String | String[]} edgeId sigle or array of ids
  */
-function getEdge(edgeIdOrIds) {
+function getEdges(edgeIdOrIds) {
   return this._edges.get(edgeIdOrIds);
 }
 
@@ -78,7 +78,12 @@ function edgesBetweenTwoNodes(a, b) {
 function addEdge(edge) {
   if (this.nodeExists(edge.from) && this.nodeExists(edge.to)
         && !this.alreadyConnected(edge.from, edge.to, edge.label)) {
-    this._edges.add(Object.assign(edge, { label: '', hiddenLabel: edge.label }));
+    if (edge.showLabel) {
+      Object.assign(edge, { label: edge.label });
+    } else {
+      Object.assign(edge, { label: '', hiddenLabel: edge.label });
+    }
+    this._edges.add(edge);
     this.checkParallelEdges(edge.from, edge.to);
   }
 }
@@ -178,7 +183,7 @@ const prototype = {
   highlightNode,
   removeHighlightNode,
   addEdge,
-  getEdge,
+  getEdges,
   deleteEdge,
   updateEdge,
   clearGraph,

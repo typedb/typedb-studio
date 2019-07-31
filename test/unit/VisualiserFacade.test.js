@@ -5,7 +5,7 @@ jest.mock('@/components/CanvasVisualiser/Visualiser', () => ({
   createVisualiser: () => ({
     render: jest.fn(),
     edgesConnectedToNode: jest.fn(),
-    getEdge: jest.fn(),
+    getEdges: jest.fn(),
     deleteEdge: jest.fn(),
     deleteNode: jest.fn(),
     getNode: jest.fn(),
@@ -33,7 +33,7 @@ describe('Visualiser Facade methods', () => {
 
   test('deleteEdgesOnNode with label', () => {
     facade.container.visualiser.edgesConnectedToNode.mockImplementation(() => (['098', '765']));
-    facade.container.visualiser.getEdge.mockImplementation(() => ([{ id: '098', label: 'deleteme' }, { id: '765', label: 'exists' }]));
+    facade.container.visualiser.getEdges.mockImplementation(() => ([{ id: '098', label: 'deleteme' }, { id: '765', label: 'exists' }]));
     facade.deleteEdgesOnNode('234', 'deleteme');
     expect(facade.container.visualiser.deleteEdge).toHaveBeenNthCalledWith(1, '098');
     expect(facade.container.visualiser.deleteEdge).toHaveBeenCalledTimes(1);

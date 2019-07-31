@@ -22,14 +22,14 @@ export async function ownerHasEdges(nodes) {
   return edges;
 }
 
-export async function relationTypesOutboundEdges(nodes) {
+export async function relationTypesOutboundEdges(nodes, options) {
   const edges = [];
   const promises = nodes.filter(x => x.isRelationType())
     .map(async rel =>
       Promise.all(((await (await rel.roles()).collect())).map(async (role) => {
         const types = await (await role.players()).collect();
         const label = await role.label();
-        return types.forEach((type) => { edges.push({ from: rel.id, to: type.id, label }); });
+        return types.forEach((type) => { edges.push({ from: rel.id, to: type.id, label, ...options }); });
       })),
     );
   await Promise.all(promises);
