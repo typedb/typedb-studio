@@ -44,7 +44,7 @@ async function buildSchema(nodes) {
   const relEdges = await relationTypesOutboundEdges(nodes, { showLabel: true });
 
   // Draw all edges from owners to attributes
-  const hasEdges = await ownerHasEdges(nodes);
+  const hasEdges = await ownerHasEdges(nodes, { showLabel: true });
 
   return { nodes, edges: relEdges.concat(subConcepts.edges, hasEdges) };
 }

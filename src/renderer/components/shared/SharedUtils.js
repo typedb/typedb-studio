@@ -1,6 +1,6 @@
 export const META_CONCEPTS = new Set(['entity', 'relation', 'attribute', 'role']);
 
-export async function ownerHasEdges(nodes) {
+export async function ownerHasEdges(nodes, options) {
   const edges = [];
 
   await Promise.all(nodes.map(async (node) => {
@@ -10,12 +10,12 @@ export async function ownerHasEdges(nodes) {
       if (META_CONCEPTS.has(supLabel)) {
         let attributes = await node.attributes();
         attributes = await attributes.collect();
-        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has' }));
+        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has', ...options }));
       } else { // if node has a super type which is not a META_CONCEPT construct edges to attributes expect those which are inherited from its super type
         const supAttributeIds = (await (await sup.attributes()).collect()).map(x => x.id);
 
         const attributes = (await (await node.attributes()).collect()).filter(attr => !supAttributeIds.includes(attr.id));
-        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has' }));
+        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has', ...options }));
       }
     }
   }));
