@@ -24,6 +24,7 @@ import {
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
+import { getEdgeDefaultOptions } from '../../shared/SharedUtils';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -151,7 +152,8 @@ export default {
     graknTx.close();
 
     if (data) { // when attributes are found, construct edges and add to graph
-      const edges = data.nodes.map(attr => ({ from: visNode.id, to: attr.id, label: 'has' }));
+      const options = { ...getEdgeDefaultOptions(), interfaceType: 'VISUALISer' };
+      const edges = data.nodes.map(attr => ({ from: visNode.id, to: attr.id, label: 'has', ...options }));
 
       state.visFacade.addToCanvas({ nodes: data.nodes, edges });
       commit('updateCanvasData');

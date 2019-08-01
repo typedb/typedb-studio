@@ -35,16 +35,17 @@ import {
   computeRoles,
 } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
+import { getEdgeDefaultOptions } from '../../shared/SharedUtils';
 
 async function buildSchema(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
   const subConcepts = await computeSubConcepts(nodes);
 
   // Draw all edges from relations to roleplayers
-  const relEdges = await relationTypesOutboundEdges(nodes, { showLabel: true });
+  const relEdges = await relationTypesOutboundEdges(nodes);
 
   // Draw all edges from owners to attributes
-  const hasEdges = await ownerHasEdges(nodes, { showLabel: true });
+  const hasEdges = await ownerHasEdges(nodes);
 
   return { nodes, edges: relEdges.concat(subConcepts.edges, hasEdges) };
 }
@@ -249,7 +250,8 @@ export default {
       const dataType = await type.dataType();
       node.attributes = [...node.attributes, { type: attributeType, dataType }];
 
-      return { from: state.selectedNodes[0].id, to: type.id, label: 'has' };
+      const options = { ...getEdgeDefaultOptions(), interfaceType: 'SCHEMA_DESIGNER', label: { show: true }, arrow: { show: true, type: 'bar' } };
+      return { from: state.selectedNodes[0].id, to: type.id, label: 'has', options };
     }));
 
     state.visFacade.addToCanvas({ nodes: [], edges });
@@ -280,7 +282,8 @@ export default {
       const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
       node.roles = [...node.roles, roleType];
 
-      return Promise.all(relationTypes.map(async relType => ({ from: relType.id, to: state.selectedNodes[0].id, label: roleType })));
+      const options = { ...getEdgeDefaultOptions(), interfaceType: 'SCHEMA_DESIGNER', label: { show: true }, arrow: { show: true } };
+      return Promise.all(relationTypes.map(async relType => ({ from: relType.id, to: state.selectedNodes[0].id, label: roleType, options })));
     })).then(edges => edges.flatMap(x => x));
 
     state.visFacade.addToCanvas({ nodes: [], edges });
