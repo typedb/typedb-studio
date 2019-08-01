@@ -83,7 +83,9 @@ function addEdge(edge) {
     } else {
       Object.assign(edge, { label: '', hiddenLabel: edge.label });
     }
-    this._edges.add(edge);
+    const edgeId = this._edges.add(edge);
+    // eslint-disable-next-line no-proto
+    this._network.body.edges[edgeId].edgeType.__proto__.__proto__.drawArrowHead = () => { console.log('nothing happens because we are hackers'); };
     this.checkParallelEdges(edge.from, edge.to);
   }
 }
