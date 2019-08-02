@@ -152,7 +152,7 @@ export default {
     graknTx.close();
 
     if (data) { // when attributes are found, construct edges and add to graph
-      const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.VISUALISER };
+      const options = { ...edgeDefaultOptions, interfaceType: interfaceTypes.VISUALISER };
       const edges = data.nodes.map(attr => ({ from: visNode.id, to: attr.id, label: 'has', options }));
 
       state.visFacade.addToCanvas({ nodes: data.nodes, edges });

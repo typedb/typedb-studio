@@ -5,12 +5,10 @@ export const interfaceTypes = {
   VISUALISER: 'VISUALISER',
 };
 
-export function getEdgeDefaultOptions() {
-  return {
-    label: { show: false },
-    arrow: { show: false, type: 'arrow' },
-  };
-}
+export const edgeDefaultOptions = {
+  label: { show: false },
+  arrow: { show: false, type: 'arrow' },
+};
 
 export async function ownerHasEdges(nodes) {
   const edges = [];
@@ -18,7 +16,7 @@ export async function ownerHasEdges(nodes) {
   await Promise.all(nodes.map(async (node) => {
     const sup = await node.sup();
     if (sup) {
-      const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
+      const options = { ...edgeDefaultOptions, interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
       const supLabel = await sup.label();
       if (META_CONCEPTS.has(supLabel)) {
         let attributes = await node.attributes();
@@ -41,7 +39,7 @@ export async function relationTypesOutboundEdges(nodes) {
       Promise.all(((await (await rel.roles()).collect())).map(async (role) => {
         const types = await (await role.players()).collect();
         const label = await role.label();
-        const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
+        const options = { ...edgeDefaultOptions, interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
         return types.forEach((type) => { edges.push({ from: rel.id, to: type.id, label, options }); });
       })),
     );
@@ -57,7 +55,7 @@ export async function computeSubConcepts(nodes) {
     if (sup) {
       const supLabel = await sup.label();
       if (!META_CONCEPTS.has(supLabel)) {
-        const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
+        const options = { ...edgeDefaultOptions, interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
         const edge = { from: concept.id, to: sup.id, label: 'sub', arrows: { to: { enabled: true } }, options };
         edges.push(edge);
         subConcepts.push(concept);

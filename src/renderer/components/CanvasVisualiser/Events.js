@@ -48,11 +48,7 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
 }
 
 export function showEdgeLabels(edges) {
-  const edgesToUpdate = edges.map((edge) => {
-    const updatedEdge = { ...edge, label: edge.hiddenLabel };
-    delete updatedEdge.options;
-    return updatedEdge;
-  }).reduce(collect, []);
+  const edgesToUpdate = edges.map(edge => ({ ...edge, label: edge.hiddenLabel })).reduce(collect, []);
   this.updateEdge(edgesToUpdate);
 }
 
