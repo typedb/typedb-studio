@@ -1,4 +1,3 @@
-const collect = (array, current) => array.concat(current);
 let selectedNodes = null;
 
 export function dimNotHighlightedNodesAndEdges(connectedNodes, connectedEdges) {
