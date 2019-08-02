@@ -154,7 +154,7 @@ export function onHoverNode(params) {
 
     const shouldAlwaysShowArrow = connectedEdges[0].options.arrow && connectedEdges[0].options.arrow.show;
     if (!shouldAlwaysShowArrow) {
-      // this.showEdgeArrows(connectedEdges);
+      this.showEdgeArrows(connectedEdges);
     }
   }
 
