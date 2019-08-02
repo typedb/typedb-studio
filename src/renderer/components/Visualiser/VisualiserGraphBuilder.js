@@ -2,7 +2,7 @@ import {
   relationTypesOutboundEdges,
   ownerHasEdges,
   computeSubConcepts,
-  getEdgeDefaultOptions,
+  edgeDefaultOptions,
 } from '@/components/shared/SharedUtils';
 import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';

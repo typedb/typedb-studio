@@ -35,7 +35,7 @@ import {
   computeRoles,
 } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
-import { getEdgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
+import { edgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
 
 async function buildSchema(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges

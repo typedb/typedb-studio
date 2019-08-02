@@ -24,7 +24,7 @@ import {
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
-import { getEdgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
+import { edgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
