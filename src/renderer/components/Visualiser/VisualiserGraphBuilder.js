@@ -7,6 +7,7 @@ import {
 import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';
 import QuerySettings from './RightBar/SettingsTab/QuerySettings';
+import { interfaceTypes } from '../shared/SharedUtils';
 
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
@@ -173,7 +174,7 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
       thing.attrOffset = 0;
 
       nodes.push(thing);
-      edges.push({ from: relation.id, to: thing.id, label: roleLabel, options: { ...getEdgeDefaultOptions(), interfaceType: 'VISUALISER' } });
+      edges.push({ from: relation.id, to: thing.id, label: roleLabel, options: { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.VISUALISER } });
     }));
   });
   return Promise.all(promises).then((() => ({ nodes, edges })));
@@ -191,7 +192,7 @@ async function computeAttributeEdges(attributes, thingIds) {
   return Promise.all(attributes.map(async (attr) => {
     const owners = await (await attr.owners()).collect();
     const ownersInMap = owners.filter(owner => thingIds.includes(owner.id));
-    return ownersInMap.map(owner => ({ from: owner.id, to: attr.id, label: 'has', options: { ...getEdgeDefaultOptions(), interfaceType: 'VISUALISER' } }),
+    return ownersInMap.map(owner => ({ from: owner.id, to: attr.id, label: 'has', options: { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.VISUALISER } }),
     );
   }));
 }

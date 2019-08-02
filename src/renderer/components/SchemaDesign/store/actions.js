@@ -35,7 +35,7 @@ import {
   computeRoles,
 } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
-import { getEdgeDefaultOptions } from '../../shared/SharedUtils';
+import { getEdgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
 
 async function buildSchema(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
@@ -250,7 +250,7 @@ export default {
       const dataType = await type.dataType();
       node.attributes = [...node.attributes, { type: attributeType, dataType }];
 
-      const options = { ...getEdgeDefaultOptions(), interfaceType: 'SCHEMA_DESIGNER', label: { show: true }, arrow: { show: true, type: 'bar' } };
+      const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true, type: 'bar' } };
       return { from: state.selectedNodes[0].id, to: type.id, label: 'has', options };
     }));
 
@@ -282,7 +282,7 @@ export default {
       const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
       node.roles = [...node.roles, roleType];
 
-      const options = { ...getEdgeDefaultOptions(), interfaceType: 'SCHEMA_DESIGNER', label: { show: true }, arrow: { show: true } };
+      const options = { ...getEdgeDefaultOptions(), interfaceType: interfaceTypes.SCHEMA_DESIGNER, label: { show: true }, arrow: { show: true } };
       return Promise.all(relationTypes.map(async relType => ({ from: relType.id, to: state.selectedNodes[0].id, label: roleType, options })));
     })).then(edges => edges.flatMap(x => x));
 
