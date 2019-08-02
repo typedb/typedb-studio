@@ -5,8 +5,7 @@ export function dimNotHighlightedNodesAndEdges(connectedNodes, connectedEdges) {
   const nodesToUpdate =
     this.getNode()
       .filter(x => !connectedNodes.includes(x.id))
-      .map(x => ({ id: x.id, color: x.color.dimmedColor, font: { color: x.font.dimmedColor } }))
-      .reduce(collect, []);
+      .map(x => ({ id: x.id, color: x.color.dimmedColor, font: { color: x.font.dimmedColor } }));
 
   const edgesToUpdate =
     this.getEdges()
@@ -18,8 +17,7 @@ export function dimNotHighlightedNodesAndEdges(connectedNodes, connectedEdges) {
           highlight: edge.color.highlight,
           hover: edge.color.hover,
         },
-      }))
-      .reduce(collect, []);
+      }));
   this.updateEdge(edgesToUpdate);
   this.updateNode(nodesToUpdate);
 }
@@ -28,8 +26,7 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
   const nodesToUpdate =
     this.getNode()
       .filter(x => !connectedNodes.includes(x.id))
-      .map(x => ({ id: x.id, color: x.colorClone, font: x.fontClone }))
-      .reduce(collect, []);
+      .map(x => ({ id: x.id, color: x.colorClone, font: x.fontClone }));
 
   const edgesToUpdate =
     this.getEdges()
@@ -41,29 +38,29 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
           highlight: edge.color.highlight,
           hover: edge.color.hover,
         },
-      })).reduce(collect, []);
+      }));
 
   this.updateNode(nodesToUpdate);
   this.updateEdge(edgesToUpdate);
 }
 
 export function showEdgeLabels(edges) {
-  const edgesToUpdate = edges.map(edge => ({ ...edge, label: edge.hiddenLabel })).reduce(collect, []);
+  const edgesToUpdate = edges.map(edge => ({ ...edge, label: edge.hiddenLabel }));
   this.updateEdge(edgesToUpdate);
 }
 
 export function showEdgeArrows(edges) {
-  const edgesToUpdate = edges.map(edge => ({ ...edge, arrows: { to: { enabled: true, scaleFactor: 0.3 } } })).reduce(collect, []);
+  const edgesToUpdate = edges.map(edge => ({ ...edge, arrows: { to: { enabled: true, scaleFactor: 0.3 } } }));
   this.updateEdge(edgesToUpdate);
 }
 
 export function hideEdgeLabels(edges) {
-  const edgesToUpdate = edges.map(edge => ({ ...edge, label: '' })).reduce(collect, []);
+  const edgesToUpdate = edges.map(edge => ({ ...edge, label: '' }));
   this.updateEdge(edgesToUpdate);
 }
 
 export function hideEdgeArrows(edges) {
-  const edgesToUpdate = edges.map(edge => ({ ...edge, arrows: { to: { enabled: false } } })).reduce(collect, []);
+  const edgesToUpdate = edges.map(edge => ({ ...edge, arrows: { to: { enabled: false } } }));
   this.updateEdge(edgesToUpdate);
 }
 
@@ -71,8 +68,7 @@ export function removeLabelsOnNotConncetedEdges(nodeId) {
   const connectedEdges = this.getNetwork().getConnectedEdges(nodeId);
   const edgesToUpdate = this.getEdges()
     .filter(x => !connectedEdges.includes(x.id))
-    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }))
-    .reduce(collect, []);
+    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }));
 
   this.updateEdge(edgesToUpdate);
 }
