@@ -5,7 +5,6 @@ import _ from 'underscore';
 
 import Settings from './Settings';
 import * as eventsHandlers from './Events';
-import { interfaceTypes } from '../shared/SharedUtils';
 
 
 function render(container) {
@@ -79,17 +78,6 @@ function edgesBetweenTwoNodes(a, b) {
 function addEdge(edge) {
   if (this.nodeExists(edge.from) && this.nodeExists(edge.to)
     && !this.alreadyConnected(edge.from, edge.to, edge.label)) {
-    if (edge.options.interfaceType === interfaceTypes.SCHEMA_DESIGNER) {
-      if (edge.options.label.show) {
-        Object.assign(edge, { label: edge.label });
-      }
-      if (edge.options.arrow.show) {
-        Object.assign(edge, { arrows: { to: { enabled: true, scaleFactor: 0.5, type: edge.options.arrow.type || 'arrow' } } });
-      }
-    } else if (edge.options.interfaceType === interfaceTypes.VISUALISER) {
-      Object.assign(edge, { label: '', hiddenLabel: edge.label });
-      Object.assign(edge, { arrows: { to: { enabled: false } } });
-    }
     this._edges.add(edge);
     this.checkParallelEdges(edge.from, edge.to);
   }

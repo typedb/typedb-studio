@@ -21,10 +21,11 @@ import {
   computeAttributes,
   mapAnswerToExplanationQuery,
   getNeighboursData } from '../VisualiserUtils';
+
+import { constructEdge } from '../../shared/SharedUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
-import { edgeDefaultOptions, interfaceTypes } from '../../shared/SharedUtils';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -128,7 +129,6 @@ export default {
       commit('loadingQuery', false);
 
       graknTx.close();
-
       return data;
     } catch (e) {
       logger.error(e.stack);
@@ -152,8 +152,10 @@ export default {
     graknTx.close();
 
     if (data) { // when attributes are found, construct edges and add to graph
-      const options = { ...edgeDefaultOptions, interfaceType: interfaceTypes.VISUALISER };
-      const edges = data.nodes.map(attr => ({ from: visNode.id, to: attr.id, label: 'has', options }));
+      const edges = data.nodes.map(attr => (constructEdge(
+        { from: visNode.id, to: attr.id, label: 'has' },
+        { hideLabel: true, hideArrow: true },
+      )));
 
       state.visFacade.addToCanvas({ nodes: data.nodes, edges });
       commit('updateCanvasData');

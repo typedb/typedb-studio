@@ -2,12 +2,11 @@ import {
   relationTypesOutboundEdges,
   ownerHasEdges,
   computeSubConcepts,
-  edgeDefaultOptions,
+  constructEdge,
 } from '@/components/shared/SharedUtils';
 import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';
 import QuerySettings from './RightBar/SettingsTab/QuerySettings';
-import { interfaceTypes } from '../shared/SharedUtils';
 
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
@@ -174,7 +173,10 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
       thing.attrOffset = 0;
 
       nodes.push(thing);
-      edges.push({ from: relation.id, to: thing.id, label: roleLabel, options: { ...edgeDefaultOptions, interfaceType: interfaceTypes.VISUALISER } });
+      edges.push(constructEdge(
+        { from: relation.id, to: thing.id, label: roleLabel },
+        { hideLabel: true, hideArrow: true },
+      ));
     }));
   });
   return Promise.all(promises).then((() => ({ nodes, edges })));
@@ -192,27 +194,28 @@ async function computeAttributeEdges(attributes, thingIds) {
   return Promise.all(attributes.map(async (attr) => {
     const owners = await (await attr.owners()).collect();
     const ownersInMap = owners.filter(owner => thingIds.includes(owner.id));
-    return ownersInMap.map(owner => ({ from: owner.id, to: attr.id, label: 'has', options: { ...edgeDefaultOptions, interfaceType: interfaceTypes.VISUALISER } }),
-    );
+    return ownersInMap.map(owner => (constructEdge(
+      { from: owner.id, to: attr.id, label: 'has' },
+      { hideLabel: true, hideArrow: true },
+    )));
   }));
 }
 
 async function computeSchemaEdges(nodes) {
   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
-  const subConceptEdges = (await computeSubConcepts(nodes)).edges;
+  const subConceptEdges = (await computeSubConcepts(nodes, { hideLabel: true, hideArrow: true })).edges;
 
   // Draw all edges from relations to roleplayers
-  const relEdges = await relationTypesOutboundEdges(nodes);
+  const relEdges = await relationTypesOutboundEdges(nodes, { hideLabel: true, hideArrow: true });
 
   // Draw all edges from owners to attributes
-  const hasEdges = await ownerHasEdges(nodes);
+  const hasEdges = await ownerHasEdges(nodes, { hideLabel: true, hideArrow: true });
 
   return relEdges.concat(hasEdges, subConceptEdges);
 }
 
 async function constructEdges(result) {
   const conceptMaps = result.map(x => Array.from(x.map().values()));
-
   // Edges are a combination of relation edges and attribute edges
   const edges = await Promise.all(conceptMaps.map(async (map) => {
     // collect ids of all entities in a concept map
@@ -224,7 +227,6 @@ async function constructEdges(result) {
 
     // Compute edges that connect things to their attributes
     const attributeEdges = await computeAttributeEdges(attributes, thingIds);
-
     const roleplayers = await relationsRolePlayers(relations, false);
     // Compute edges that connect things to their role players
     const relationEdges = roleplayers.edges.filter(edge => thingIds.includes(edge.to));
