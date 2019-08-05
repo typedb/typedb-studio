@@ -55,6 +55,7 @@ node_repositories(package_json = ["//:package.json"])
 npm_install(
     name = "nodejs_dependencies",
     package_json = "//:package.json",
+    package_lock_json = "//:package-lock.json",
     data = [
       "@build_bazel_rules_nodejs//internal/babel_library:package.json",
       "@build_bazel_rules_nodejs//internal/babel_library:babel.js",
