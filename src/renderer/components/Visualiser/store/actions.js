@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   RUN_CURRENT_QUERY,
   EXPLAIN_CONCEPT,
@@ -24,6 +25,7 @@ import {
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
+import { getData } from '../../shared/SharedUtils';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -91,6 +93,7 @@ export default {
     commit('loadingQuery', false);
   },
 
+  // eslint-disable-next-line consistent-return
   async [RUN_CURRENT_QUERY]({ state, dispatch, commit }) {
     try {
       const query = state.currentQuery;
@@ -100,21 +103,36 @@ export default {
       const result = (await (await graknTx.query(query)).collect());
 
       if (!result.length) {
-        // this.$notifyInfo('No results were found for your query!');
         commit('loadingQuery', false);
         return null;
       }
 
+      const queryTypes = {
+        GET: 'get',
+        PATH: 'compute path',
+      };
+
+      // eslint-disable-next-line no-prototype-builtins
+      const queryType = (result[0].hasOwnProperty('map') ? queryTypes.GET : queryTypes.PATH);
+
       let data;
-      if (result[0].map) {
-        const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-        data = await VisualiserGraphBuilder.buildFromConceptMap(result, autoloadRolePlayers, true);
-      } else { // result is conceptList
-        // TBD - handle multiple paths
-        const path = result[0];
-        const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
-        data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+      if (queryType === queryTypes.GET) {
+        const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+        data = await getData(result, shouldLoadRPs, QuerySettings.getNeighboursLimit(), graknTx);
+      } else if (queryType === queryTypes.PATH) {
+        console.log('path');
       }
+
+      // let data;
+      // if (concepts[0].map) {
+      //   const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
+      //   data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, autoloadRolePlayers, true);
+      // } else { // concepts is conceptList
+      //   // TBD - handle multiple paths
+      //   const path = concepts[0];
+      //   const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
+      //   data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+      // }
 
       state.visFacade.addToCanvas(data);
       state.visFacade.fitGraphToWindow();
@@ -141,9 +159,9 @@ export default {
     state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
 
     const graknTx = await dispatch(OPEN_GRAKN_TX);
-    const result = await (await graknTx.query(query)).collect();
+    const concepts = await (await graknTx.query(query)).collect();
     const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-    const data = await VisualiserGraphBuilder.buildFromConceptMap(result, autoloadRolePlayers, false);
+    const data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, autoloadRolePlayers, false);
     state.visFacade.addToCanvas(data);
     data.nodes = await computeAttributes(data.nodes);
     state.visFacade.updateNode(data.nodes);
@@ -172,9 +190,9 @@ export default {
     for (const query of queries) { // eslint-disable-line
       commit('loadingQuery', true);
       const graknTx = await dispatch(OPEN_GRAKN_TX);
-      const result = (await (await graknTx.query(query)).collect());
+      const concepts = (await (await graknTx.query(query)).collect());
 
-      const data = await VisualiserGraphBuilder.buildFromConceptMap(result, true, false);
+      const data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, true, false);
       state.visFacade.addToCanvas(data);
       commit('updateCanvasData');
       const nodesWithAttributes = await computeAttributes(data.nodes);

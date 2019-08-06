@@ -63,7 +63,7 @@ async function labelFromStorage(node, attributeTypes) {
   return `${node.type}\n${label}`;
 }
 
-async function buildLabel(node) {
+export async function buildLabel(node) {
   const labels = NodeSettings.getTypeLabels(node.type);
   if (labels.length) return labelFromStorage(node, labels); // this function is async
   let label;
@@ -208,8 +208,8 @@ async function computeSchemaEdges(nodes) {
   return relEdges.concat(hasEdges, subConceptEdges);
 }
 
-async function constructEdges(result) {
-  const conceptMaps = result.map(x => Array.from(x.map().values()));
+async function constructEdges(conceptMaps) {
+  // const conceptMaps = result.map(x => Array.from(x.map().values()));
 
   // Edges are a combination of relation edges and attribute edges
   const edges = await Promise.all(conceptMaps.map(async (map) => {
