@@ -291,10 +291,6 @@ export default {
   async [DELETE_ATTRIBUTE]({ state, dispatch }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
 
-    const type = await graknTx.getSchemaConcept(state.selectedNodes[0].label);
-
-    if (await (await type.instances()).next()) throw Error('Cannot remove attribute type from schema concept with instances.');
-
     await state.schemaHandler.deleteAttribute(payload);
 
     await dispatch(COMMIT_TX, graknTx)
