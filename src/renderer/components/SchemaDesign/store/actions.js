@@ -91,6 +91,7 @@ export default {
     try {
       if (!state.visFacade) return;
       commit('loadingSchema', true);
+      commit('shouldPostProcess', true);
 
       const response = (await (await graknTx.query('match $x sub thing; get;')).collect());
 
@@ -135,7 +136,9 @@ export default {
     return graknTx.commit();
   },
 
-  async [DEFINE_ENTITY_TYPE]({ state, dispatch }, payload) {
+  async [DEFINE_ENTITY_TYPE]({ state, dispatch, commit }, payload) {
+    commit('shouldPostProcess', true);
+
     let graknTx = await dispatch(OPEN_GRAKN_TX);
 
     // define entity type
@@ -188,8 +191,9 @@ export default {
     graknTx.close();
   },
 
-  async [DEFINE_ATTRIBUTE_TYPE]({ state, dispatch }, payload) {
+  async [DEFINE_ATTRIBUTE_TYPE]({ state, dispatch, commit }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
+    commit('shouldPostProcess', true);
 
     // define entity type
     await state.schemaHandler.defineAttributeType(payload);
@@ -364,8 +368,10 @@ export default {
     graknTx.close();
   },
 
-  async [DEFINE_RELATION_TYPE]({ state, dispatch }, payload) {
+  async [DEFINE_RELATION_TYPE]({ state, dispatch, commit }, payload) {
     let graknTx = await dispatch(OPEN_GRAKN_TX);
+    commit('shouldPostProcess', true);
+
     await state.schemaHandler.defineRelationType(payload);
 
     // define and relate roles to relation type

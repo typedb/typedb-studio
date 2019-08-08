@@ -77,6 +77,8 @@ export default {
 
   async [LOAD_NEIGHBOURS]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
     commit('loadingQuery', true);
+    commit('shouldPostProcess', true);
+
     const graknTx = await dispatch(OPEN_GRAKN_TX);
     const data = await getNeighboursData(visNode, graknTx, neighboursLimit);
     visNode.offset += neighboursLimit;
@@ -102,6 +104,8 @@ export default {
       const query = state.currentQuery;
       validateQuery(query);
       commit('loadingQuery', true);
+      commit('shouldPostProcess', true);
+
       const graknTx = await dispatch(OPEN_GRAKN_TX);
       const result = (await (await graknTx.query(query)).collect());
 
@@ -144,6 +148,8 @@ export default {
   },
   async [LOAD_ATTRIBUTES]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
     commit('loadingQuery', true);
+    commit('shouldPostProcess', true);
+
     const query = `match $x id ${visNode.id}, has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
     state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
 
@@ -182,6 +188,8 @@ export default {
     /* eslint-disable no-await-in-loop */
     for (const query of queries) { // eslint-disable-line
       commit('loadingQuery', true);
+      commit('shouldPostProcess', true);
+
       const graknTx = await dispatch(OPEN_GRAKN_TX);
       const result = (await (await graknTx.query(query)).collect());
 
