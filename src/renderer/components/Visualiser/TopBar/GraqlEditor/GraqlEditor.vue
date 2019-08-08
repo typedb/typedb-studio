@@ -290,6 +290,7 @@ export default {
     },
     clearGraph() {
       if (!this.currentKeyspace) this.$emit('keyspace-not-selected');
+      else if (this.showSpinner) this.$notifyInfo('Please wait for action to complete');
       else {
         this[CANVAS_RESET]();
       }

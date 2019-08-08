@@ -119,7 +119,7 @@ export default {
     // computed
     this.$options.computed = {
       ...(this.$options.computed || {}),
-      ...mapGetters(['currentKeyspace']),
+      ...mapGetters(['currentKeyspace', 'showSpinner']),
     };
 
     // methods
@@ -165,8 +165,12 @@ export default {
       this.showKeyspaceList = false;
     },
     toggleKeyspaceList() {
-      this.$emit('keyspace-selected');
-      this.showKeyspaceList = !this.showKeyspaceList;
+      if (this.showSpinner) {
+        this.$notifyInfo('Please wait for action to complete');
+      } else {
+        this.$emit('keyspace-selected');
+        this.showKeyspaceList = !this.showKeyspaceList;
+      }
     },
   },
 };
