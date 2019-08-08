@@ -21,11 +21,12 @@ import {
   validateQuery,
   computeAttributes,
   mapAnswerToExplanationQuery,
-  getNeighboursData } from '../VisualiserUtils';
+  getNeighboursData,
+} from '../VisualiserUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
-import { getData } from '../../shared/SharedUtils';
+import { getNodesAndEdges } from '../../shared/SharedUtils';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -118,21 +119,14 @@ export default {
       let data;
       if (queryType === queryTypes.GET) {
         const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
-        data = await getData(result, shouldLoadRPs, QuerySettings.getNeighboursLimit(), graknTx);
+        const shouldLimit = true;
+        data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
       } else if (queryType === queryTypes.PATH) {
-        console.log('path');
+        // TBD - handle multiple paths
+        const path = result[0];
+        const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
+        data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
       }
-
-      // let data;
-      // if (concepts[0].map) {
-      //   const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-      //   data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, autoloadRolePlayers, true);
-      // } else { // concepts is conceptList
-      //   // TBD - handle multiple paths
-      //   const path = concepts[0];
-      //   const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
-      //   data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
-      // }
 
       state.visFacade.addToCanvas(data);
       state.visFacade.fitGraphToWindow();
@@ -148,6 +142,7 @@ export default {
 
       return data;
     } catch (e) {
+      console.log(e);
       logger.error(e.stack);
       commit('loadingQuery', false);
       throw e;
@@ -159,9 +154,10 @@ export default {
     state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
 
     const graknTx = await dispatch(OPEN_GRAKN_TX);
-    const concepts = await (await graknTx.query(query)).collect();
-    const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-    const data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, autoloadRolePlayers, false);
+    const result = await (await graknTx.query(query)).collect();
+    const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+    const shouldLimit = true;
+    const data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
     state.visFacade.addToCanvas(data);
     data.nodes = await computeAttributes(data.nodes);
     state.visFacade.updateNode(data.nodes);
@@ -190,9 +186,11 @@ export default {
     for (const query of queries) { // eslint-disable-line
       commit('loadingQuery', true);
       const graknTx = await dispatch(OPEN_GRAKN_TX);
-      const concepts = (await (await graknTx.query(query)).collect());
+      const result = (await (await graknTx.query(query)).collect());
 
-      const data = await VisualiserGraphBuilder.buildFromConceptMap(concepts, true, false);
+      const shouldLoadRPs = true;
+      const shouldLimit = true;
+      const data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
       state.visFacade.addToCanvas(data);
       commit('updateCanvasData');
       const nodesWithAttributes = await computeAttributes(data.nodes);

@@ -20,10 +20,10 @@ import {
 import logger from '@/../Logger';
 
 import {
-  META_CONCEPTS,
-  relationTypesOutboundEdges,
-  ownerHasEdges,
-  computeSubConcepts,
+  META_LABELS,
+  // relationTypesOutboundEdges,
+  // ownerHasEdges,
+  // computeSubConcepts,
 } from '@/components/shared/SharedUtils';
 
 import SchemaHandler from '../SchemaHandler';
@@ -35,19 +35,20 @@ import {
   computeRoles,
 } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
+import { getNodesAndEdges, constructNodesAndEdges, getRoleEdges, getAttributeEdges, getNodeForType, getEdgesForType } from '../../shared/SharedUtils';
 
-async function buildSchema(nodes) {
-  // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
-  const subConcepts = await computeSubConcepts(nodes);
+// async function buildSchema(nodes) {
+//   // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
+//   const subConcepts = await computeSubConcepts(nodes);
 
-  // Draw all edges from relations to roleplayers
-  const relEdges = await relationTypesOutboundEdges(nodes);
+//   // Draw all edges from relations to roleplayers
+//   const relEdges = await relationTypesOutboundEdges(nodes);
 
-  // Draw all edges from owners to attributes
-  const hasEdges = await ownerHasEdges(nodes);
+//   // Draw all edges from owners to attributes
+//   const hasEdges = await ownerHasEdges(nodes);
 
-  return { nodes, edges: relEdges.concat(subConcepts.edges, hasEdges) };
-}
+//   return { nodes, edges: relEdges.concat(subConcepts.edges, hasEdges) };
+// }
 
 export default {
   async [OPEN_GRAKN_TX]({ state, commit }) {
@@ -91,32 +92,33 @@ export default {
       if (!state.visFacade) return;
       commit('loadingSchema', true);
 
-      const response = (await (await graknTx.query('match $x sub thing; get;')).collect());
+      const result = (await (await graknTx.query('match $x sub thing; get;')).collect());
 
-      const concepts = response.map(answer => Array.from(answer.map().values())).flatMap(x => x);
-      const explicitConcepts = await Promise.all(concepts
-        .map(async type => ((!await type.isImplicit()) ? type : null)))
-        .then(explicits => explicits.filter(l => l));
 
-      const labelledNodes = await Promise.all(explicitConcepts.map(async x => Object.assign(x, { label: await x.label() })));
+      // const concepts = result.map(answer => Array.from(answer.map().values())).flatMap(x => x);
+      // const explicitConcepts = await Promise.all(concepts
+      //   .map(async type => ((!await type.isImplicit()) ? type : null)))
+      //   .then(explicits => explicits.filter(l => l));
 
-      let nodes = labelledNodes
-        // .filter(x => !x.isAttributeType())
-        .filter(x => x.label !== 'thing')
-        .filter(x => x.label !== 'entity')
-        .filter(x => x.label !== 'attribute')
-        .filter(x => x.label !== 'relation');
+      // const labelledNodes = await Promise.all(explicitConcepts.map(async x => Object.assign(x, { label: await x.label() })));
 
-      const data = await buildSchema(nodes);
+      // let nodes = labelledNodes
+      //   // .filter(x => !x.isAttributeType())
+      //   .filter(x => x.label !== 'thing')
+      //   .filter(x => x.label !== 'entity')
+      //   .filter(x => x.label !== 'attribute')
+      //   .filter(x => x.label !== 'relation');
+
+      const data = await getNodesAndEdges(result);
 
       data.nodes = updateNodePositions(data.nodes);
 
       state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
       state.visFacade.fitGraphToWindow();
 
-      nodes = await computeAttributes(nodes);
-      nodes = await computeRoles(nodes);
-      state.visFacade.updateNode(nodes);
+      data.nodes = await computeAttributes(data.nodes);
+      data.odes = await computeRoles(data.nodes);
+      state.visFacade.updateNode(data.nodes);
 
       graknTx.close();
       commit('loadingSchema', false);
@@ -163,12 +165,12 @@ export default {
 
     Object.assign(type, { label: payload.entityLabel });
 
-    const data = await buildSchema([type]);
+    const data = await constructNodesAndEdges({ concept: type });
 
     const sup = await type.sup();
     if (sup) {
       const supLabel = await sup.label();
-      if (META_CONCEPTS.has(supLabel)) {
+      if (META_LABELS.has(supLabel)) {
         data.edges.push(...((await typeInboundEdges(type, state.visFacade)).filter(x => x.to === type.id)));
       }
     }
@@ -209,20 +211,18 @@ export default {
 
     graknTx = await dispatch(OPEN_GRAKN_TX);
 
-    const type = await graknTx.getSchemaConcept(payload.attributeLabel);
+    const concept = await graknTx.getSchemaConcept(payload.attributeLabel);
+    concept.label = payload.attributeLabel;
 
-    Object.assign(type, { label: payload.attributeLabel });
+    const node = await getNodeForType(concept);
+    const edges = await getEdgesForType(concept);
 
-    const data = await buildSchema([type]);
-
-    data.edges.push(...((await typeInboundEdges(type, state.visFacade)).filter(x => x.to === type.id)));
-
-    state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
+    state.visFacade.addToCanvas({ nodes: [node], edges });
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    data.nodes = await computeAttributes(data.nodes);
-    data.nodes = await computeRoles(data.nodes);
-    state.visFacade.updateNode(data.nodes);
+    let nodes = await computeAttributes([node]);
+    nodes = await computeRoles(nodes);
+    state.visFacade.updateNode(nodes);
     graknTx.close();
   },
 
@@ -244,13 +244,9 @@ export default {
 
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
 
-    const edges = await Promise.all(payload.attributeTypes.map(async (attributeType) => {
-      const type = await graknTx.getSchemaConcept(attributeType);
-      const dataType = await type.dataType();
-      node.attributes = [...node.attributes, { type: attributeType, dataType }];
-
-      return { from: state.selectedNodes[0].id, to: type.id, label: 'has' };
-    }));
+    const ownerConcept = await graknTx.getSchemaConcept(node.label);
+    const edges = await getAttributeEdges(ownerConcept);
+    debugger;
 
     state.visFacade.addToCanvas({ nodes: [], edges });
 
@@ -276,14 +272,19 @@ export default {
 
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
 
-    const edges = await Promise.all(payload.roleTypes.map(async (roleType) => {
-      const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
-      node.roles = [...node.roles, roleType];
+    const roleEdges = [];
 
-      return Promise.all(relationTypes.map(async relType => ({ from: relType.id, to: state.selectedNodes[0].id, label: roleType })));
-    })).then(edges => edges.flatMap(x => x));
+    for (let i = 0; i < payload.roleTypes.length; i += 1) {
+      const roleType = payload.roleTypes[i];
+      // eslint-disable-next-line no-await-in-loop
+      const relationConcepts = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
+      for (let k = 0; k < relationConcepts.length; k += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        roleEdges.push(...await getRoleEdges(relationConcepts[k]));
+      }
+    }
 
-    state.visFacade.addToCanvas({ nodes: [], edges });
+    state.visFacade.addToCanvas({ nodes: [], edges: roleEdges });
     graknTx.close();
     state.visFacade.updateNode(node);
   },
@@ -396,9 +397,10 @@ export default {
 
     Object.assign(type, { label: payload.relationLabel });
 
-    const data = await buildSchema([type]);
+    // const data = await buildSchema([type]);
+    const data = await constructNodesAndEdges({ concept: type });
 
-    data.edges.push(...((await typeInboundEdges(type, state.visFacade)).filter(x => x.to === type.id)));
+    // data.edges.push(...((await typeInboundEdges(type, state.visFacade)).filter(x => x.to === type.id)));
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
@@ -436,7 +438,7 @@ export default {
         const sup = await type.sup();
         if (sup) {
           const supLabel = await sup.label();
-          if (!META_CONCEPTS.has(supLabel)) { // check if relation type is sub-typed or not
+          if (!META_LABELS.has(supLabel)) { // check if relation type is sub-typed or not
             const roleSup = await role.sup();
             const roleSupLabel = await roleSup.label();
             if (roleSupLabel === 'role') await type.unrelate(role); // check if role is overridden or not
