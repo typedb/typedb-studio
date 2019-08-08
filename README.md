@@ -20,13 +20,27 @@ Grakn Workbase is available for Linux, Mac and Windows. Head over to the [Workba
 ## Documentation
 Learn how to [connect Workbase to the Grakn Server](http://dev.grakn.ai/docs/workbase/connection), [execute and visualise Graql queries](http://dev.grakn.ai/docs/workbase/visualisation), and interact with the visualiser to [investigate instances of data](http://dev.grakn.ai/docs/workbase/investigation).
 
-## Building Workbase from Source
+## Development
+
+### Dependencies
 Make sure you have the following dependencies:
   - npm >= 6.4.1
   - node >= 10
   
-Steps: 
+### Building from Source
 1. ```npm run install```
 2. ```npm run build```
 
-Outputs to: ```build/```
+Outputs built workbase application to: ```build/```
+
+### Developing
+1. ```npm run dev``` - Run workbase in development mode
+
+### Tests
+1. ```npm run unit``` - Run all unit tests
+2. ```npm run integration``` - Run all integration tests
+3. ```npm run e2e``` - Run all end-to-end tests
+
+
+
+
