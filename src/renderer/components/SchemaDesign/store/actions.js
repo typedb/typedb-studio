@@ -40,7 +40,7 @@ import {
   getEdgesForEntityType,
   getNodeForEntityType,
   getNodeForRelationType,
-  getEdgesForRelationType } from '../../shared/SharedUtils';
+  getEdgesForRelationType } from '../../shared/CanvasDataConstructor';
 
 export default {
   async [OPEN_GRAKN_TX]({ state, commit }) {

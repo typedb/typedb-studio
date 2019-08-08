@@ -26,7 +26,7 @@ import {
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
-import { getNodesAndEdges } from '../../shared/SharedUtils';
+import { getNodesAndEdges } from '../../shared/CanvasDataConstructor';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
