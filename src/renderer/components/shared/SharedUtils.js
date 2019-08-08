@@ -4,57 +4,6 @@ import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 
 export const META_LABELS = new Set(['entity', 'relation', 'attribute', 'role', 'thing']);
 
-export async function ownerHasEdges(nodes) {
-  const edges = [];
-
-  await Promise.all(nodes.map(async (node) => {
-    const sup = await node.sup();
-    if (sup) {
-      const supLabel = await sup.label();
-      if (META_LABELS.has(supLabel)) {
-        let attributes = await node.attributes();
-        attributes = await attributes.collect();
-        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has' }));
-      } else { // if node has a super type which is not a META_CONCEPT construct edges to attributes expect those which are inherited from its super type
-        const supAttributeIds = (await (await sup.attributes()).collect()).map(x => x.id);
-        const attributes = (await (await node.attributes()).collect()).filter(attr => !supAttributeIds.includes(attr.id));
-        attributes.map(attr => edges.push({ from: node.id, to: attr.id, label: 'has' }));
-      }
-    }
-  }));
-  return edges;
-}
-
-export async function relationTypesOutboundEdges(nodes) {
-  const edges = [];
-  const promises = nodes.filter(x => x.isRelationType())
-    .map(async rel =>
-      Promise.all(((await (await rel.roles()).collect())).map(async (role) => {
-        const types = await (await role.players()).collect();
-        const label = await role.label();
-        return types.forEach((type) => { edges.push({ from: rel.id, to: type.id, label }); });
-      })),
-    );
-  await Promise.all(promises);
-  return edges;
-}
-
-export async function computeSubConcepts(nodes) {
-  const edges = [];
-  const subConcepts = [];
-  await Promise.all(nodes.map(async (concept) => {
-    const sup = await concept.sup();
-    if (sup) {
-      const supLabel = await sup.label();
-      if (!META_LABELS.has(supLabel)) {
-        edges.push({ from: concept.id, to: sup.id, label: 'sub' });
-        subConcepts.push(concept);
-      }
-    }
-  }));
-  return { nodes: subConcepts, edges };
-}
-
 export const baseTypes = {
   TYPE: 'META_TYPE',
   ENTITY_TYPE: 'ENTITY_TYPE',
@@ -72,10 +21,10 @@ async function getTypeOfInstance(concept) {
   return type;
 }
 
-async function getSubEdges(concept) {
+async function getSubEdge(concept) {
   const sup = await concept.sup();
   if (sup && !META_LABELS.has(await sup.label())) return { from: concept.id, to: sup.id, label: 'sub' };
-  return {};
+  return undefined;
 }
 
 export async function getAttributeEdges(concept) {
@@ -126,7 +75,8 @@ async function getAutoRPData(concept, shouldLimit, graknTx) {
 /** GET EDGES */
 async function getEdgesForType(concept) {
   const edges = [];
-  edges.push(await getSubEdges(concept));
+  const subEdge = await getSubEdge(concept);
+  if (subEdge) edges.push(await getSubEdge(concept));
   edges.push(...await getAttributeEdges(concept));
 
   return edges;
@@ -222,8 +172,8 @@ export async function getNodeForRelationInstance(concept, graqlVar, explanation)
 
 export async function getNodeForAttributeInstance(concept, graqlVar, explanation) {
   const node = await getNodeForInstance(concept, graqlVar, explanation);
-  node.label = await buildLabel(node);
   node.value = await concept.value();
+  node.label = await buildLabel(node);
   return node;
 }
 /** END OF GET NODE */
@@ -232,52 +182,48 @@ export async function constructNodesAndEdges(data, shouldLoadRPs, shouldLimit, g
   const nodes = [];
   const edges = [];
 
-  try {
-    const { concept, graqlVar, explanation, thingIds } = data;
+  const { concept, graqlVar, explanation, thingIds } = data;
 
-    const { ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE, ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE } = baseTypes;
+  const { ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE, ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE } = baseTypes;
 
-    switch (concept.baseType) {
-      case ENTITY_TYPE:
-        nodes.push(await getNodeForEntityType(concept, graqlVar));
-        edges.push(...await getEdgesForEntityType(concept));
-        break;
+  switch (concept.baseType) {
+    case ENTITY_TYPE:
+      nodes.push(await getNodeForEntityType(concept, graqlVar));
+      edges.push(...await getEdgesForEntityType(concept));
+      break;
 
-      case RELATION_TYPE:
-        nodes.push(await getNodeForRelationType(concept, graqlVar));
-        edges.push(...await getEdgesForRelationType(concept));
-        break;
+    case RELATION_TYPE:
+      nodes.push(await getNodeForRelationType(concept, graqlVar));
+      edges.push(...await getEdgesForRelationType(concept));
+      break;
 
-      case ATTRIBUTE_TYPE:
-        nodes.push(await getNodeForAttributeType(concept, graqlVar));
-        edges.push(...await getEdgesForAttributeType(concept));
-        break;
+    case ATTRIBUTE_TYPE:
+      nodes.push(await getNodeForAttributeType(concept, graqlVar));
+      edges.push(...await getEdgesForAttributeType(concept));
+      break;
 
-      case ENTITY_INSTANCE:
-        nodes.push(await getNodeForEntityInstance(concept, graqlVar, explanation));
-        break;
+    case ENTITY_INSTANCE:
+      nodes.push(await getNodeForEntityInstance(concept, graqlVar, explanation));
+      break;
 
-      case RELATION_INSTANCE: {
-        nodes.push(await getNodeForRelationInstance(concept, graqlVar, explanation));
+    case RELATION_INSTANCE: {
+      nodes.push(await getNodeForRelationInstance(concept, graqlVar, explanation));
 
-        if (shouldLoadRPs) {
-          const { edges: autoRpEdges, nodes: autoRpNodes } = await getAutoRPData(concept, shouldLimit, graknTx);
-          nodes.push(...autoRpNodes);
-          edges.push(...autoRpEdges);
-        }
-        break;
+      if (shouldLoadRPs) {
+        const { edges: autoRpEdges, nodes: autoRpNodes } = await getAutoRPData(concept, shouldLimit, graknTx);
+        nodes.push(...autoRpNodes);
+        edges.push(...autoRpEdges);
       }
-
-      case ATTRIBUTE_INSTANCE: {
-        nodes.push(await getNodeForAttributeInstance(concept, graqlVar, explanation));
-        edges.push(...await getEdgesForAttributeInstance(concept, thingIds));
-        break;
-      }
-      default:
-        break;
+      break;
     }
-  } catch (error) {
-    console.log(error);
+
+    case ATTRIBUTE_INSTANCE: {
+      nodes.push(await getNodeForAttributeInstance(concept, graqlVar, explanation));
+      edges.push(...await getEdgesForAttributeInstance(concept, thingIds));
+      break;
+    }
+    default:
+      break;
   }
 
   return { nodes, edges };
@@ -287,31 +233,27 @@ export async function getNodesAndEdges(answers, shouldLoadRPs, shouldLimit, grak
   const nodes = [];
   const edges = [];
 
-  try {
-    for (let i = 0; i < answers.length; i += 1) {
-      const answer = answers[i];
-      const answersGroup = Array.from(answers[i].map().entries());
-      const thingIds = answersGroup.map(x => x[1].id);
+  for (let i = 0; i < answers.length; i += 1) {
+    const answer = answers[i];
+    const answersGroup = Array.from(answers[i].map().entries());
+    const thingIds = answersGroup.map(x => x[1].id);
 
-      for (let j = 0; j < answersGroup.length; j += 1) {
-        const [graqlVar, concept] = answersGroup[j];
+    for (let j = 0; j < answersGroup.length; j += 1) {
+      const [graqlVar, concept] = answersGroup[j];
+      let shouldSkip = false;
+      if (concept.isRole()) shouldSkip = true;
+      else if (concept.isType() && await concept.isImplicit()) shouldSkip = true;
+      else if (concept.isThing() && (await (await concept.type()).isImplicit())) shouldSkip = true;
+      else if (concept.isType() && META_LABELS.has(await concept.label())) shouldSkip = true;
+      else if (concept.isThing() && META_LABELS.has(await (await concept.type()).label())) shouldSkip = true;
 
-        let shouldSkip = false;
-        if (concept.isRole()) shouldSkip = true;
-        else if (concept.isType() && await concept.isImplicit()) shouldSkip = true;
-        else if (concept.isThing() && (await (await concept.type()).isImplicit())) shouldSkip = true;
-        else if (META_LABELS.has(await concept.label())) shouldSkip = true;
-
-        if (!shouldSkip) {
-          const data = await constructNodesAndEdges({ concept, graqlVar, explanation: answer.explanation, thingIds }, shouldLoadRPs, shouldLimit, graknTx);
-          nodes.push(...data.nodes);
-          edges.push(...data.edges);
-        }
+      if (!shouldSkip) {
+        const data = await constructNodesAndEdges({ concept, graqlVar, explanation: answer.explanation, thingIds }, shouldLoadRPs, shouldLimit, graknTx);
+        nodes.push(...data.nodes);
+        edges.push(...data.edges);
       }
     }
-  } catch (error) {
-    console.log(error);
   }
-  debugger;
+
   return { nodes, edges };
 }
