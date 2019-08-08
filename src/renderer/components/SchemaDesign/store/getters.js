@@ -10,4 +10,5 @@ export default {
   loadingSchema: state => state.loadingSchema,
   schemaHandler: state => state.schemaHandler,
   visFacade: state => state.visFacade,
+  shouldPostProcess: state => state.shouldPostProcess,
 };

@@ -34,4 +34,7 @@ export default {
   setSchemaHandler(state, schemaHandler) {
     state.schemaHandler = schemaHandler;
   },
+  shouldPostProcess(state, shouldPostProcess) {
+    state.shouldPostProcess = shouldPostProcess;
+  },
 };

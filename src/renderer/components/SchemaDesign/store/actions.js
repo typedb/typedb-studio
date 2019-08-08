@@ -63,6 +63,7 @@ export default {
       await commit('graknSession', await rootState.grakn.session(keyspace));
       dispatch(UPDATE_METATYPE_INSTANCES);
       dispatch(LOAD_SCHEMA);
+      commit('shouldPostProcess', false);
     }
   },
 
@@ -114,9 +115,11 @@ export default {
       state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
       state.visFacade.fitGraphToWindow();
 
-      nodes = await computeAttributes(nodes);
-      nodes = await computeRoles(nodes);
-      state.visFacade.updateNode(nodes);
+      if (state.shouldPostProcess) {
+        nodes = await computeAttributes(nodes);
+        nodes = await computeRoles(nodes);
+        state.visFacade.updateNode(nodes);
+      }
 
       graknTx.close();
       commit('loadingSchema', false);
@@ -175,10 +178,13 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
+    if (state.shouldPostProcess) {
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    data.nodes = await computeAttributes(data.nodes);
-    data.nodes = await computeRoles(data.nodes);
-    state.visFacade.updateNode(data.nodes);
+      data.nodes = await computeAttributes(data.nodes);
+      data.nodes = await computeRoles(data.nodes);
+      state.visFacade.updateNode(data.nodes);
+    }
+
     graknTx.close();
   },
 
@@ -219,10 +225,12 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
+    if (state.shouldPostProcess) {
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    data.nodes = await computeAttributes(data.nodes);
-    data.nodes = await computeRoles(data.nodes);
-    state.visFacade.updateNode(data.nodes);
+      data.nodes = await computeAttributes(data.nodes);
+      data.nodes = await computeRoles(data.nodes);
+      state.visFacade.updateNode(data.nodes);
+    }
     graknTx.close();
   },
 
@@ -402,10 +410,12 @@ export default {
 
     state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
 
+    if (state.shouldPostProcess) {
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    data.nodes = await computeAttributes(data.nodes);
-    data.nodes = await computeRoles(data.nodes);
-    state.visFacade.updateNode(data.nodes);
+      data.nodes = await computeAttributes(data.nodes);
+      data.nodes = await computeRoles(data.nodes);
+      state.visFacade.updateNode(data.nodes);
+    }
     graknTx.close();
   },
 
