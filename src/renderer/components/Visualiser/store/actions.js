@@ -36,6 +36,7 @@ export default {
     state.visFacade.resetCanvas();
     commit('selectedNodes', null);
     commit('updateCanvasData');
+    commit('shouldPostProcess', false);
   },
 
   async [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
@@ -45,6 +46,7 @@ export default {
       commit('currentKeyspace', keyspace);
       commit('graknSession', await rootState.grakn.session(keyspace));
       dispatch(UPDATE_METATYPE_INSTANCES);
+      commit('shouldPostProcess', false);
     }
   },
 
@@ -82,11 +84,15 @@ export default {
     state.visFacade.addToCanvas(data);
     if (data.nodes.length) state.visFacade.fitGraphToWindow();
     commit('updateCanvasData');
-    const labelledNodes = await VisualiserGraphBuilder.prepareNodes(data.nodes);
-    const styledNodes = labelledNodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
-    state.visFacade.updateNode(styledNodes);
-    const nodesWithAttribtues = await computeAttributes(data.nodes);
-    state.visFacade.updateNode(nodesWithAttribtues);
+
+    if (state.shouldPostProcess) {
+      const labelledNodes = await VisualiserGraphBuilder.prepareNodes(data.nodes);
+      const styledNodes = labelledNodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
+      state.visFacade.updateNode(styledNodes);
+      const nodesWithAttribtues = await computeAttributes(data.nodes);
+      state.visFacade.updateNode(nodesWithAttribtues);
+    }
+
     graknTx.close();
     commit('loadingQuery', false);
   },
@@ -120,9 +126,10 @@ export default {
       state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');
 
-      data.nodes = await computeAttributes(data.nodes);
-
-      state.visFacade.updateNode(data.nodes);
+      if (state.shouldPostProcess) {
+        data.nodes = await computeAttributes(data.nodes);
+        state.visFacade.updateNode(data.nodes);
+      }
 
       commit('loadingQuery', false);
 
@@ -145,8 +152,12 @@ export default {
     const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
     const data = await VisualiserGraphBuilder.buildFromConceptMap(result, autoloadRolePlayers, false);
     state.visFacade.addToCanvas(data);
-    data.nodes = await computeAttributes(data.nodes);
-    state.visFacade.updateNode(data.nodes);
+
+    if (state.shouldPostProcess) {
+      data.nodes = await computeAttributes(data.nodes);
+      state.visFacade.updateNode(data.nodes);
+    }
+
     commit('loadingQuery', false);
     graknTx.close();
 
@@ -177,12 +188,14 @@ export default {
       const data = await VisualiserGraphBuilder.buildFromConceptMap(result, true, false);
       state.visFacade.addToCanvas(data);
       commit('updateCanvasData');
-      const nodesWithAttributes = await computeAttributes(data.nodes);
-      graknTx.close();
 
-      state.visFacade.updateNode(nodesWithAttributes);
-      const styledEdges = data.edges.map(edge => Object.assign(edge, state.visStyle.computeExplanationEdgeStyle()));
-      state.visFacade.updateEdge(styledEdges);
+      if (state.shouldPostProcess) {
+        const nodesWithAttributes = await computeAttributes(data.nodes);
+        state.visFacade.updateNode(nodesWithAttributes);
+        const styledEdges = data.edges.map(edge => Object.assign(edge, state.visStyle.computeExplanationEdgeStyle()));
+        state.visFacade.updateEdge(styledEdges);
+      }
+      graknTx.close();
       commit('loadingQuery', false);
     }
   },

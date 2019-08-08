@@ -34,4 +34,7 @@ export default {
   setContextMenu(state, contextMenu) {
     state.contextMenu = contextMenu;
   },
+  shouldPostProcess(state, shouldPostProcess) {
+    state.shouldPostProcess = shouldPostProcess;
+  },
 };
