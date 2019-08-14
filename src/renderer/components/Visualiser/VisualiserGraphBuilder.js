@@ -57,7 +57,7 @@ async function labelFromStorage(node, attributeTypes) {
   return `${node.type}\n${label}`;
 }
 
-export async function buildLabel(node) {
+async function buildLabel(node) {
   const labels = NodeSettings.getTypeLabels(node.type);
   if (labels.length) return labelFromStorage(node, labels); // this function is async
   let label;
