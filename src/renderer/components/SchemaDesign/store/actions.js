@@ -225,20 +225,16 @@ export default {
 
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
 
-    const roleEdges = [];
+    const edges = await Promise.all(payload.roleTypes.map(async (roleType) => {
+      const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
+      node.roles = [...node.roles, roleType];
 
-    for (let i = 0; i < payload.roleTypes.length; i += 1) {
-      const roleType = payload.roleTypes[i];
-      // eslint-disable-next-line no-await-in-loop
-      const relationConcepts = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
-      roleEdges.push(...relationConcepts.map(concept => CDB.getTypeRelatesEdges(concept)));
-    }
+      return Promise.all(relationTypes.map(async relType => CDB.getTypeRelatesEdges(relType)));
+    })).then(edges => edges.flatMap(x => x));
 
-    Promise.all(roleEdges).then((edges) => {
-      state.visFacade.addToCanvas({ nodes: [], edges: edges.flatMap(x => x) });
-      graknTx.close();
-      state.visFacade.updateNode(node);
-    });
+    state.visFacade.addToCanvas({ nodes: [], edges: edges.flatMap(x => x) });
+    graknTx.close();
+    state.visFacade.updateNode(node);
   },
 
   async [DELETE_ATTRIBUTE]({ state, dispatch }, payload) {
@@ -270,7 +266,7 @@ export default {
 
     edgesIds
       .filter(edgeId => (state.visFacade.getEdge(edgeId).to === attributeTypeId) &&
-      ((state.visFacade.getEdge(edgeId).label === 'has') || (state.visFacade.getEdge(edgeId).hiddenLabel === 'has')))
+        ((state.visFacade.getEdge(edgeId).label === 'has') || (state.visFacade.getEdge(edgeId).hiddenLabel === 'has')))
       .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
 
     graknTx.close();
@@ -303,7 +299,7 @@ export default {
     const edgesIds = state.visFacade.edgesConnectedToNode(state.selectedNodes[0].id);
     edgesIds
       .filter(edgeId => (state.visFacade.getEdge(edgeId).to === state.selectedNodes[0].id) &&
-      ((state.visFacade.getEdge(edgeId).label === payload.roleLabel) || (state.visFacade.getEdge(edgeId).hiddenLabel === payload.roleLabel)))
+        ((state.visFacade.getEdge(edgeId).label === payload.roleLabel) || (state.visFacade.getEdge(edgeId).hiddenLabel === payload.roleLabel)))
       .forEach((edgeId) => { state.visFacade.deleteEdge(edgeId); });
 
     graknTx.close();
