@@ -9,7 +9,6 @@ thumbs.db
 !.gitkeep
 coverage
 .nyc_output
-.vscode
 .idea
 package-lock.json
 bazel-*

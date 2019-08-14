@@ -50,7 +50,6 @@ export default {
   async [UPDATE_METATYPE_INSTANCES]({ dispatch, commit }) {
     const graknTx = await dispatch(OPEN_GRAKN_TX);
     const metaTypeInstances = await loadMetaTypeInstances(graknTx);
-    debugger;
     graknTx.close();
     commit('metaTypeInstances', metaTypeInstances);
   },

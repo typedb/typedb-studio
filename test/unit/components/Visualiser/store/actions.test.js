@@ -20,6 +20,8 @@ import CanvasDataBuilder from '@/components/shared/CanvasDataBuilder';
 import actions from '@/components/Visualiser/store/actions';
 import mutations from '@/components/Visualiser/store/mutations';
 import getters from '@/components/Visualiser/store/getters';
+import QuerySettings from '@/components/Visualiser/RightBar/SettingsTab/QuerySettings';
+
 import {
   addResetGraphListener,
   loadMetaTypeInstances,
@@ -30,7 +32,6 @@ import {
 } from '@/components/Visualiser/VisualiserUtils';
 import VisualiserCanvasEventsHandler from '@/components/Visualiser/VisualiserCanvasEventsHandler';
 import MockConcepts from '../../../../helpers/MockConcepts';
-
 jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   prepareNodes: jest.fn(),
   buildFromConceptMap: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [MockConcepts.getMockEntity1()], edges: [{ from: 1234, to: 4321, label: 'son' }] })),
@@ -65,9 +66,12 @@ Vue.use(Vuex);
 
 describe('actions', () => {
   const graknSession = {
-    transaction: () => Promise.resolve({ query: () => Promise.resolve({ collect: () => Promise.resolve([MockConcepts.getMockAnswer2()]) }),
-      close: jest.fn(),
-      getConcept: () => Promise.resolve([{ id: 1234 }]) }),
+    transaction: () => ({
+      write: () => Promise.resolve({
+        query: () => Promise.resolve({ collect: () => Promise.resolve([MockConcepts.getMockAnswer2()]) }),
+        close: jest.fn(),
+        getConcept: () => Promise.resolve([{ id: 1234 }]) }),
+    }),
   };
 
   test('INITIALISE_VISUALISER', () => {
@@ -247,7 +251,6 @@ describe('actions', () => {
       actions,
       mutations: { loadingQuery, updateCanvasData: mutations.updateCanvasData },
     });
-
     store.dispatch(RUN_CURRENT_QUERY).then(() => {
       expect(validateQuery).toHaveBeenCalled();
       // expect(loadingQuery.mock.calls).toHaveLength(2);
