@@ -71,7 +71,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   node.attrOffset = 0;
   node.type = await getConceptLabel(instance);
   node.isInferred = await instance.isInferred();
-  // eslint-disable-next-line no-proto
   node.attributes = instance.attributes;
   // this is required for the post-processing jobs
   // TODO: handle post-processing here, so that we don't have to include
