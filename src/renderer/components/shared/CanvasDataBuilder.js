@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
+const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
 const edgeTypes = {
   type: {
@@ -98,8 +99,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
 const getInstanceNode = async (instance, graqlVar, explanation) => {
   const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
 
-  const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE } = baseTypes;
-
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = `${node.type}: ${node.id}`;
@@ -168,7 +167,6 @@ const buildInstances = async (answers) => {
  * @param {String} graqlVar
  */
 const getTypeNode = async (type, graqlVar) => {
-  const { ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
   const node = {};
   switch (type.baseType) {
     case ENTITY_TYPE:
@@ -281,8 +279,6 @@ const getTypeRelatesEdges = async (type) => {
 const getTypeEdges = async (type) => {
   const edges = [];
 
-  const { ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
-
   switch (type.baseType) {
     case ENTITY_TYPE:
     case ATTRIBUTE_TYPE:
@@ -366,8 +362,8 @@ const buildRPInstances = async (answers, shouldLimit, graknTx) => {
 
         for (let k = 0; k < answers.length; k += 1) {
           const rolesAndRps = Array.from(answers[k].map().values());
-          const role = rolesAndRps.filter(x => x.baseType === baseTypes.ROLE)[0];
-          const roleplayers = rolesAndRps.filter(x => x.baseType !== baseTypes.ROLE);
+          const role = rolesAndRps.filter(x => x.isRole())[0];
+          const roleplayers = rolesAndRps.filter(x => !x.isRole());
           const edgeLabel = await role.label();
 
           for (let l = 0; l < roleplayers.length; l += 1) {
