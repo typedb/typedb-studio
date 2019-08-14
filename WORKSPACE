@@ -50,16 +50,12 @@ bazel_rules_nodejs()
 load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
 rules_nodejs_dependencies()
 
-load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "npm_install")
+load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "yarn_install")
 node_repositories(package_json = ["//:package.json"])
-npm_install(
+yarn_install(
     name = "nodejs_dependencies",
     package_json = "//:package.json",
-    data = [
-      "@build_bazel_rules_nodejs//internal/babel_library:package.json",
-      "@build_bazel_rules_nodejs//internal/babel_library:babel.js",
-      "@build_bazel_rules_nodejs//internal/babel_library:yarn.lock",
-    ],
+    yarn_lock = "//:yarn.lock"
 )
 
 
