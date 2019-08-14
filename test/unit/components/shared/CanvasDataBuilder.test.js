@@ -73,6 +73,7 @@ const mockedEntityInstance = {
   isRole: () => false,
   isType: () => false,
   isThing: () => true,
+  isAttribute: () => false,
   isInferred: () => Promise.resolve(false),
   type: () => Promise.resolve(mockedEntityType),
 };
@@ -83,6 +84,7 @@ const mockedRelationInstance = {
   isRole: () => false,
   isType: () => false,
   isThing: () => true,
+  isAttribute: () => false,
   isInferred: () => Promise.resolve(false),
   type: () => Promise.resolve(mockedRelationType),
 };
@@ -93,6 +95,7 @@ const mockedAttributeInstance = {
   isRole: () => false,
   isType: () => false,
   isThing: () => true,
+  isAttribute: () => true,
   isInferred: () => Promise.resolve(false),
   type: () => Promise.resolve(mockedAttributeType),
   value: () => Promise.resolve('some value'),
@@ -143,7 +146,7 @@ describe('buildInstances', () => {
     expect(edges).toHaveLength(0);
   });
 
-  test('when graql answer contains an attribute instance without owners not present', async () => {
+  test('when graql answer contains an attribute', async () => {
     const attributeInstance = {
       ...mockedAttributeInstance,
       owners: () => Promise.resolve({ collect: () => Promise.resolve([mockedEntityInstance]) }),
@@ -152,7 +155,6 @@ describe('buildInstances', () => {
     const { nodes, edges } = await CDB.buildInstances(answers);
 
     expect(nodes).toHaveLength(1);
-
     const node = nodes[0];
 
     expectCommonPropsOnInstanceNode(node);
@@ -160,19 +162,6 @@ describe('buildInstances', () => {
     expect(node.value).toEqual('some value');
     expect(node.label).toEqual('some attribute type: some value');
     expect(node.offset).toEqual(0);
-
-    expect(edges).toHaveLength(0);
-  });
-
-  test('when graql answer contains an attribute instance with owners present', async () => {
-    const attributeInstance = {
-      ...mockedAttributeInstance,
-      owners: () => Promise.resolve({ collect: () => Promise.resolve([mockedEntityInstance]) }),
-    };
-    const answers = [getMockedAnswer([attributeInstance, mockedEntityInstance], null)];
-    const { nodes, edges } = await CDB.buildInstances(answers);
-
-    expect(nodes).toHaveLength(2);
 
     expect(edges).toEqual([{ from: 'ent-instance', label: 'has', to: 'attr-instance' }]);
   });

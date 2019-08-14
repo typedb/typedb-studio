@@ -231,7 +231,7 @@ export default {
       const roleType = payload.roleTypes[i];
       // eslint-disable-next-line no-await-in-loop
       const relationConcepts = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
-      roleEdges.push(...relationConcepts.map(concept => CDB.getTypeRoleEdges(concept)));
+      roleEdges.push(...relationConcepts.map(concept => CDB.getTypeRelatesEdges(concept)));
     }
 
     Promise.all(roleEdges).then((edges) => {

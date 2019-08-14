@@ -63,6 +63,14 @@ const getEdge = async (from, to, edgeType, label) => {
   return edge;
 };
 
+/**
+ * produces and returns the common node object for a concept instance
+ * most node properties are available on the instance, but graqlVar and explanation
+ * need to be passed to here for the ConceptMap that contained the instance
+ * @param {Concept} instance guaranteed to be a concept instance
+ * @param {String} graqlVar
+ * @param {ConceptMap[]} explanation
+ */
 const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   const node = {};
   node.id = instance.id;
@@ -81,6 +89,12 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   return node;
 };
 
+/**
+ * produces and returns the node for the given concept instance based on is basetype
+ * @param {Concept} instance guaranteed to be a concept instance
+ * @param {String} graqlVar
+ * @param {ConceptMap[]} explanation
+ */
 const getInstanceNode = async (instance, graqlVar, explanation) => {
   const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
 
@@ -110,24 +124,27 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
   return node;
 };
 
-const getInstanceEdges = async (instance, instanceIds) => {
-  let edges = [];
-
-  if (instance.baseType === baseTypes.ATTRIBUTE_INSTANCE) {
-    const owners = (await (await instance.owners()).collect()).filter(owner => instanceIds.includes(owner.id));
-    owners.forEach((owner) => { edges.push(getEdge(owner, instance, edgeTypes.instance.HAS)); });
+/**
+ * produces and returns the edges for the given concept instance
+ * @param {Thing} instance must be a concept instance
+ */
+const getInstanceEdges = async (instance) => {
+  if (instance.isAttribute()) {
+    const owners = (await (await instance.owners()).collect());
+    const edges = await Promise.all(owners.map(owner => getEdge(owner, instance, edgeTypes.instance.HAS)));
+    return edges;
   }
-
-  edges = await Promise.all(edges);
-
-  return edges;
+  return [];
 };
 
+/**
+ * produces and returns nodes and edges for the given answers
+ * only the instances stored within the answers are processed.
+ * @param {ConceptMap[]} answers the untouched response of a transaction.query()
+ */
 const buildInstances = async (answers) => {
-  let nodes = [];
-  let edges = [];
-
-  const instanceIds = answers.map(answer => Array.from(answer.map().values())).flatMap(x => x).map(instance => instance.id);
+  const nodes = [];
+  const edges = [];
 
   for (let i = 0; i < answers.length; i += 1) {
     const answer = answers[i];
@@ -136,18 +153,20 @@ const buildInstances = async (answers) => {
     for (let j = 0; j < answersGroup.length; j += 1) {
       const [graqlVar, instance] = answersGroup[j];
       if (instance.isThing() && await shouldVisualiseInstance(instance)) {
-        nodes.push(getInstanceNode(instance, graqlVar, answer.explanation));
-        edges.push(getInstanceEdges(instance, instanceIds));
+        nodes.push(await getInstanceNode(instance, graqlVar, answer.explanation));
+        edges.push(...await getInstanceEdges(instance));
       }
     }
   }
 
-  nodes = await Promise.all(nodes);
-  edges = (await Promise.all(edges)).flatMap(x => x);
-
   return { nodes, edges };
 };
 
+/**
+ * produce and return the node for the given concept type based on its subtype
+ * @param {Concept} type guaranteed to be a concept type
+ * @param {String} graqlVar
+ */
 const getTypeNode = async (type, graqlVar) => {
   const { ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
   const node = {};
@@ -176,6 +195,11 @@ const getTypeNode = async (type, graqlVar) => {
   return node;
 };
 
+/**
+ * produces and returns the edge from the given concept type to its super type
+ * given that the supertype in question isn't a meta type
+ * @param {Concept} type must be a concept type
+ */
 const getTypeSubEdge = async (type) => {
   const sup = await type.sup();
   const supLabel = await sup.label();
@@ -183,6 +207,11 @@ const getTypeSubEdge = async (type) => {
   return [];
 };
 
+/**
+ * produces and returns the edges from the given concept type to the attribute
+ * types which it owns
+ * @param {Concept} type must be a concept type
+ */
 const getTypeAttributeEdges = async (type) => {
   let edges = [];
 
@@ -193,39 +222,41 @@ const getTypeAttributeEdges = async (type) => {
     const typesAttrs = await (await type.attributes()).collect();
 
     if (META_LABELS.has(supLabel)) {
-      typesAttrs.forEach(attr => edges.push(getEdge(type, attr, edgeTypes.type.HAS)));
+      edges = await Promise.all(typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS)));
     } else { // if type has a super type which is not a META_CONCEPT construct edges to attributes except those which are inherited from its super type
       const supAttrIds = (await (await sup.attributes()).collect()).map(x => x.id);
       const supAttrs = typesAttrs.filter(attr => !supAttrIds.includes(attr.id));
-      supAttrs.forEach(attr => edges.push(getEdge(type, attr, edgeTypes.type.HAS)));
+      edges = await Promise.all(supAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS)));
     }
   }
-
-  edges = await Promise.all(edges);
 
   return edges;
 };
 
+/**
+ * produces and returns the edges from the given concept type to the relation type,
+ * in which the given type plays a role
+ * @param {Concept} type must be a concept type
+ */
 const getTypePlayEdges = async (type) => {
-  let edges = [];
   const playRoles = await (await type.playing()).collect();
 
   for (let i = 0; i < playRoles.length; i += 1) {
     const role = playRoles[i];
     const roleLabel = await role.label();
     const relations = await (await role.relations()).collect();
-    // eslint-disable-next-line no-loop-func
-    relations.forEach((relation) => { edges.push(getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel)); });
+    const edges = await Promise.all(relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel)));
+    return edges;
   }
 
-  edges = await Promise.all(edges);
-
-  return Promise.all(edges);
+  return [];
 };
 
-const getTypeRoleEdges = async (type) => {
-  if (!type.isRelationType()) return [];
-
+/**
+ * produces and returns the edges from the relation type to its roleplayer types
+ * @param {Concept} type must be a concept relation type
+ */
+const getTypeRelatesEdges = async (type) => {
   let edges = [];
 
   const roles = await (await type.roles()).collect();
@@ -243,6 +274,10 @@ const getTypeRoleEdges = async (type) => {
   return edges;
 };
 
+/**
+ * produces and returns edges for the given type depending on its basetype
+ * @param {Concept} type must be a concept type
+ */
 const getTypeEdges = async (type) => {
   const edges = [];
 
@@ -250,6 +285,7 @@ const getTypeEdges = async (type) => {
 
   switch (type.baseType) {
     case ENTITY_TYPE:
+    case ATTRIBUTE_TYPE:
       edges.push(...await getTypeSubEdge(type));
       edges.push(...await getTypeAttributeEdges(type));
       edges.push(...await getTypePlayEdges(type));
@@ -258,11 +294,7 @@ const getTypeEdges = async (type) => {
       edges.push(...await getTypeSubEdge(type));
       edges.push(...await getTypeAttributeEdges(type));
       edges.push(...await getTypePlayEdges(type));
-      edges.push(...await getTypeRoleEdges(type));
-      break;
-    case ATTRIBUTE_TYPE:
-      edges.push(...await getTypeSubEdge(type));
-      edges.push(...await getTypeAttributeEdges(type));
+      edges.push(...await getTypeRelatesEdges(type));
       break;
     default:
       break;
@@ -271,12 +303,22 @@ const getTypeEdges = async (type) => {
   return edges;
 };
 
+/**
+ * produces and returns nodes and edges for the given concept type
+ * @param {Concept} type guaranteed to be a concept type
+ * @param {String} graqlVar the Graql variable (as written in the original query) which holds the concept
+ */
 const buildType = async (type, graqlVar = '') => {
   const node = await getTypeNode(type, graqlVar);
   const edges = await getTypeEdges(type);
   return { node, edges };
 };
 
+/**
+ * produces and returns nodes and edges for the given answers
+ * only the types stored within the answers are processed
+ * @param {ConceptMap[]} answers the untouched response of a transaction.query()
+ */
 const buildTypes = async (answers) => {
   const nodes = [];
   const edges = [];
@@ -298,6 +340,13 @@ const buildTypes = async (answers) => {
   return { nodes, edges };
 };
 
+/**
+ * Produces and returns nodes and edges for the roleplayers of relation instances.
+ * this function is only called when the user has chosen to enable "Load Roleplayers" query settings and set "Neighbours Limit" to higher than 0
+ * @param {ConceptMap[]} answers the untouched response of a transaction.query()
+ * @param {*} shouldLimit whether or not the roleplayers should be limited. false, when called to buildRPInstances for explanations
+ * @param {*} graknTx
+ */
 const buildRPInstances = async (answers, shouldLimit, graknTx) => {
   const edges = [];
   const nodes = [];
@@ -343,6 +392,6 @@ export default {
   buildRPInstances,
   getTypeEdges,
   getTypeSubEdge,
-  getTypeRoleEdges,
+  getTypeRelatesEdges,
   getTypeAttributeEdges,
 };
