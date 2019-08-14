@@ -51,13 +51,15 @@ load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
 rules_nodejs_dependencies()
 
 load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "yarn_install")
-node_repositories(package_json = ["//:package.json"])
+node_repositories()
 yarn_install(
     name = "nodejs_dependencies",
     package_json = "//:package.json",
     yarn_lock = "//:yarn.lock"
 )
 
+load("@nodejs_dependencies//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
+install_bazel_dependencies()
 
 ##########################
 # Load GRPC Dependencies #

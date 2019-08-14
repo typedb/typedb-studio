@@ -16,6 +16,7 @@ const edgeTypes = {
     SUB: 'SUBS_INSTANCE',
   },
 };
+
 const getConceptLabel = async (concept) => {
   let label;
   if (typeof concept.label === 'string') label = concept.label;
