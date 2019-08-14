@@ -16,6 +16,7 @@ import {
   EXPLAIN_CONCEPT,
 } from '@/components/shared/StoresActions';
 import VisualiserGraphBuilder from '@/components/Visualiser/VisualiserGraphBuilder';
+import CanvasDataBuilder from '@/components/shared/CanvasDataBuilder';
 import actions from '@/components/Visualiser/store/actions';
 import mutations from '@/components/Visualiser/store/mutations';
 import getters from '@/components/Visualiser/store/getters';
@@ -28,12 +29,15 @@ import {
   mapAnswerToExplanationQuery,
 } from '@/components/Visualiser/VisualiserUtils';
 import VisualiserCanvasEventsHandler from '@/components/Visualiser/VisualiserCanvasEventsHandler';
-import QuerySettings from '@/components/Visualiser/RightBar/SettingsTab/QuerySettings';
 import MockConcepts from '../../../../helpers/MockConcepts';
 
 jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   prepareNodes: jest.fn(),
   buildFromConceptMap: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [MockConcepts.getMockEntity1()], edges: [{ from: 1234, to: 4321, label: 'son' }] })),
+}));
+
+jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
+  getRolePlayersStatus: () => true,
 }));
 
 jest.mock('@/../Logger', () => ({ error: () => {} }));
@@ -248,7 +252,8 @@ describe('actions', () => {
       expect(validateQuery).toHaveBeenCalled();
       // expect(loadingQuery.mock.calls).toHaveLength(2);
       expect(QuerySettings.getRolePlayersStatus).toHaveBeenCalled();
-      expect(VisualiserGraphBuilder.buildFromConceptMap).toHaveBeenCalled();
+      expect(CanvasDataBuilder.buildInstances).toHaveBeenCalled();
+      expect(CanvasDataBuilder.buildRPInstances).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(store.state.visFacade.fitGraphToWindow).toHaveBeenCalled();
       expect(computeAttributes).toHaveBeenCalled();
@@ -294,7 +299,8 @@ describe('actions', () => {
     store.dispatch(LOAD_ATTRIBUTES, { visNode: mockVisNode, neighboursLimit: 1 }).then(() => {
       expect(store.state.visFacade.updateNode).toHaveBeenCalled();
       expect(QuerySettings.getRolePlayersStatus).toHaveBeenCalled();
-      expect(VisualiserGraphBuilder.buildFromConceptMap).toHaveBeenCalled();
+      expect(CanvasDataBuilder.buildInstances).toHaveBeenCalled();
+      expect(CanvasDataBuilder.buildRPInstances).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(computeAttributes).toHaveBeenCalled();
       expect(loadingQuery.mock.calls).toHaveLength(1);

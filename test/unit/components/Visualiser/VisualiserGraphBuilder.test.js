@@ -51,32 +51,6 @@ describe('relationsRolePlayers', () => {
   });
 });
 
-describe('buildFromConceptMap', () => {
-  test('buildFromConceptMap', async () => {
-    const result = [MockConcepts.getMockAnswer2(), MockConcepts.getMockAnswerContainingRelation()];
-
-    const data = await VisualiserGraphBuilder.buildFromConceptMap(result, true, 20);
-
-    expect(data.nodes).toHaveLength(6);
-    expect(data.edges).toHaveLength(4);
-    expect(data.nodes[0].explanation).toBeDefined();
-    expect(data.nodes[1].explanation).toBeDefined();
-    expect(data.nodes[2].explanation).toBeDefined();
-    expect(data.nodes[3].explanation).toBeDefined();
-
-    expect(data.nodes[1].label).toBeDefined();
-    expect(data.nodes[2].label).toBeDefined();
-    expect(data.nodes[3].label).toBeDefined();
-    expect(data.nodes[4].label).toBeDefined();
-    expect(data.nodes[5].label).toBeDefined();
-
-    expect(data.edges.filter(x => x.label === 'son')[0].from).toBe('6666');
-    expect(data.edges.filter(x => x.label === 'son')[0].to).toBe('3333');
-    expect(data.edges.filter(x => x.label === 'father')[0].from).toBe('6666');
-    expect(data.edges.filter(x => x.label === 'father')[0].to).toBe('4444');
-  });
-});
-
 describe('buildFromConceptList', () => {
   test('buildFromConceptList', async () => {
     const mockPath = { list: () => ['3333', '6666', '4444'], explanation: () => null };

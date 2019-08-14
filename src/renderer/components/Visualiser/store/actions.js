@@ -26,7 +26,7 @@ import {
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
-import { getNodesAndEdges } from '../../shared/CanvasDataConstructor';
+import CDB from '../../shared/CanvasDataBuilder';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -116,31 +116,47 @@ export default {
       // eslint-disable-next-line no-prototype-builtins
       const queryType = (result[0].hasOwnProperty('map') ? queryTypes.GET : queryTypes.PATH);
 
-      let data;
+      let nodes = [];
+      const edges = [];
       if (queryType === queryTypes.GET) {
         const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
         const shouldLimit = true;
-        data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
+
+        const instancesData = await CDB.buildInstances(result);
+        nodes.push(...instancesData.nodes);
+        edges.push(...instancesData.edges);
+
+        const typesData = await CDB.buildTypes(result);
+        nodes.push(...typesData.nodes);
+        edges.push(...typesData.edges);
+
+        if (shouldLoadRPs) {
+          const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+          nodes.push(...rpData.nodes);
+          edges.push(...rpData.edges);
+        }
       } else if (queryType === queryTypes.PATH) {
         // TBD - handle multiple paths
         const path = result[0];
         const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
-        data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+        const pathData = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+        nodes.push(...pathData.nodes);
+        edges.push(...pathData.edges);
       }
 
-      state.visFacade.addToCanvas(data);
+      state.visFacade.addToCanvas({ nodes, edges });
       state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');
 
-      data.nodes = await computeAttributes(data.nodes);
+      nodes = await computeAttributes(nodes);
 
-      state.visFacade.updateNode(data.nodes);
+      state.visFacade.updateNode(nodes);
 
       commit('loadingQuery', false);
 
       graknTx.close();
 
-      return data;
+      return { nodes, edges };
     } catch (e) {
       console.log(e);
       logger.error(e.stack);
@@ -157,7 +173,13 @@ export default {
     const result = await (await graknTx.query(query)).collect();
     const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
     const shouldLimit = true;
-    const data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
+    const data = await CDB.buildInstances(result);
+
+    if (shouldLoadRPs) {
+      const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+      data.nodes.push(...rpData.nodes);
+      data.edges.push(...rpData.edges);
+    }
     state.visFacade.addToCanvas(data);
     data.nodes = await computeAttributes(data.nodes);
     state.visFacade.updateNode(data.nodes);
@@ -188,9 +210,13 @@ export default {
       const graknTx = await dispatch(OPEN_GRAKN_TX);
       const result = (await (await graknTx.query(query)).collect());
 
-      const shouldLoadRPs = true;
-      const shouldLimit = true;
-      const data = await getNodesAndEdges(result, shouldLoadRPs, shouldLimit, graknTx);
+
+      const data = await CDB.buildInstances(result);
+
+      const rpData = await CDB.buildRPInstances(result, false, graknTx);
+      data.nodes.push(...rpData.nodes);
+      data.edges.push(...rpData.edges);
+
       state.visFacade.addToCanvas(data);
       commit('updateCanvasData');
       const nodesWithAttributes = await computeAttributes(data.nodes);
