@@ -94,7 +94,6 @@ export default {
     commit('loadingQuery', false);
   },
 
-  // eslint-disable-next-line consistent-return
   async [RUN_CURRENT_QUERY]({ state, dispatch, commit }) {
     try {
       const query = state.currentQuery;
