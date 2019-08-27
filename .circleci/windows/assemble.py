@@ -93,9 +93,6 @@ def scp(remote, local, ssh_host, ssh_user, ssh_pass):
         '-p',
         ssh_pass,
         'scp',
-        # '-T' (suppresses strict filename check) parameter
-        # is not available on scp on macOS
-        '-T' if system == 'Linux' else None,
         '{}@{}:"{}"'.format(ssh_user, ssh_host, remote),
         local,
     ]))
@@ -190,12 +187,6 @@ try:
         'SETX PATH "%PATH%;C:\\tools\\msys64\\usr\\bin"'
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: installing python dependencies')
-    ssh(' && '.join([
-        'set PYTHONIOENCODING=UTF-8',
-        'pip install wheel'
-    ]), instance_ip, 'circleci', instance_password)
-    
     lprint('[Remote] Cloning workbase')
     ssh(' && '.join([
         'refreshenv',
@@ -211,18 +202,11 @@ try:
         'bazel build @graknlabs_grakn_core//:assemble-windows-zip'
     ]), instance_ip, 'circleci', instance_password)
 
-    lprint('[Remote]: running npm install')
+    lprint('[Remote]: running yarn run build')
     ssh(' && '.join([
         'refreshenv',
         'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- install'
-    ]), instance_ip, 'circleci', instance_password)
-
-    lprint('[Remote]: running npm run build')
-    ssh(' && '.join([
-        'refreshenv',
-        'cd repo',
-        'bazel run @nodejs//:bin/npm.cmd -- run build'
+        'bazel run @nodejs//:bin/yarn.cmd -- run build'
     ]), instance_ip, 'circleci', instance_password)
 
     lprint('Copying built Workbase executable from remote to local')
@@ -244,17 +228,17 @@ try:
         'grakn server start',
         'grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene',
         'cd C:\\Users\\circleci\\repo\\',
-        'bazel run @nodejs//:bin/npm.cmd -- run unit',
-        'bazel run @nodejs//:bin/npm.cmd -- run integration',
+        'bazel run @nodejs//:bin/yarn.cmd -- run unit',
+        'bazel run @nodejs//:bin/yarn.cmd -- run integration',
         'cd bazel-genfiles/dist/grakn-core-all-windows/',
         'grakn server stop'
     ]), instance_ip, 'circleci', instance_password)
 
-#     lprint('[Remote]: running npm run e2e')
+#     lprint('[Remote]: running yarn run e2e')
 #     ssh(' && '.join([
 #         'refreshenv',
 #         'cd repo',
-#         'bazel run @nodejs//:bin/npm.cmd -- run e2e'
+#         'bazel run @nodejs//:bin/yarn.cmd -- run e2e'
 #     ]), instance_ip, 'circleci', instance_password)
 
 finally:
