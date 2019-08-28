@@ -47,18 +47,15 @@ graknlabs_build_tools_ci_pip_install()
 load("@graknlabs_build_tools//bazel:dependencies.bzl", "bazel_rules_nodejs")
 bazel_rules_nodejs()
 
-load("@build_bazel_rules_nodejs//:package.bzl", "rules_nodejs_dependencies")
-rules_nodejs_dependencies()
-
 load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories", "yarn_install")
 node_repositories()
 yarn_install(
-    name = "nodejs_dependencies",
+    name = "npm",
     package_json = "//:package.json",
     yarn_lock = "//:yarn.lock"
 )
 
-load("@nodejs_dependencies//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
+load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
 install_bazel_dependencies()
 
 ##########################

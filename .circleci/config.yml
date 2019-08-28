@@ -1,6 +1,6 @@
 #
 # GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2018 Grakn Labs Ltd
+# Copyright (C) 2019 Grakn Labs Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -65,10 +65,10 @@ jobs:
       - checkout
       - run-grakn-server-linux
       - run: ./dist/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
-      - run: bazel run @nodejs//:npm install
-      - run: bazel run @nodejs//:npm run unit
-      - run: bazel run @nodejs//:npm run integration
-      - run: bazel run @nodejs//:npm run e2e
+      - run: bazel run @nodejs//:bin/yarn install
+      - run: bazel run @nodejs//:bin/yarn run unit
+      - run: bazel run @nodejs//:bin/yarn run integration
+      - run: bazel run @nodejs//:bin/yarn run e2e
 
   test-mac:
     macos:
@@ -79,10 +79,10 @@ jobs:
       - install-bazel-mac
       - run-grakn-server-mac
       - run: ./dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
-      - run: bazel run @nodejs//:npm install
-      - run: bazel run @nodejs//:npm run unit
-      - run: bazel run @nodejs//:npm run integration
-      - run: bazel run @nodejs//:npm run e2e
+      - run: bazel run @nodejs//:bin/yarn install
+      - run: bazel run @nodejs//:bin/yarn run unit
+      - run: bazel run @nodejs//:bin/yarn run integration
+      - run: bazel run @nodejs//:bin/yarn run e2e
 
   assemble-linux:
     machine: true
@@ -90,8 +90,8 @@ jobs:
     steps:
       - install-bazel-linux-rbe
       - checkout
-      - run: bazel run @nodejs//:npm install
-      - run: bazel run @nodejs//:npm run build
+      - run: bazel run @nodejs//:bin/yarn install
+      - run: bazel run @nodejs//:bin/yarn run build
       - run: mkdir -p ~/distribution && mv ./build/*.tar.gz ~/distribution/grakn-workbase-linux-$(cat VERSION).tar.gz
       - persist_to_workspace:
           root: ~/distribution
@@ -105,11 +105,11 @@ jobs:
     steps:
       - install-bazel-mac
       - checkout
-      - run: bazel run @nodejs//:npm install
+      - run: bazel run @nodejs//:bin/yarn install
       - run: |
           export CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL"
           export CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD"
-          bazel run @nodejs//:npm run build
+          bazel run @nodejs//:bin/yarn run build
       - run: mkdir -p ~/distribution && mv ./build/*.dmg ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg
       - persist_to_workspace:
           root: ~/distribution

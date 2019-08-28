@@ -1,6 +1,6 @@
 #
 # GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2018 Grakn Labs Ltd
+# Copyright (C) 2019 Grakn Labs Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@ def graknlabs_grakn_core():
     git_repository(
         name = "graknlabs_grakn_core",
         remote = "https://github.com/graknlabs/grakn",
-        commit = "1779414ed041f0ec9f6befd9285c6aa90f4ca7aa", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_grakn_core
+        commit = "f7018bca241640791ea993dc2ff3231f70f1892b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_grakn_core
     )
 
 def graknlabs_client_nodejs():

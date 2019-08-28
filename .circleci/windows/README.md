@@ -45,8 +45,12 @@ gcloud compute instances create circleci-workbase-template-builder \
 4. Install needed dependencies:
 
 ```
-choco install vcredist2015 git bazel jdk8 visualstudio2017buildtools visualstudio2017-workload-vctools --limit-output --yes --no-progress
+choco install vcredist2015 git jdk8 visualstudio2017buildtools visualstudio2017-workload-vctools --limit-output --yes --no-progress
+choco install bazel --version 0.26.0 --limit-output --yes --no-progress
 c:\\tools\\msys64\\usr\\bin\\pacman.exe -S --noconfirm unzip
+refreshenv
+set PYTHONIOENCODING=UTF-8
+pip install wheel
 ```
 
 5. Prepare for image creation:
