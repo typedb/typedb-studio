@@ -114,6 +114,7 @@ describe('Favourite queries', () => {
   });
 
   test('edit favourite query', async () => {
+    await app.client.click('.clear-graph-btn');
     await app.client.click('.fav-queries-container-btn');
     await app.client.click('.edit-fav-query-btn');
     // select all text in input
