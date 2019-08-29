@@ -112,12 +112,21 @@ export async function loadMetaTypeInstances(graknTx) {
 }
 
 export function validateQuery(query) {
-  const trimmed = query.trim();
-  if (/^(.*;)\s*(delete\b.*;)$/.test(trimmed) || /^(.*;)\s*(delete\b.*;)$/.test(trimmed)
-        || /^insert/.test(trimmed)
-        || /^(.*;)\s*(aggregate\b.*;)$/.test(trimmed) || /^(.*;)\s*(aggregate\b.*;)$/.test(trimmed)
-        || (/^compute/.test(trimmed) && !trimmed.startsWith('compute path'))) {
-    throw new Error('Only get and compute path queries are supported for now.');
+  const trimmedQuery = query.trim();
+  if (
+    /^insert/.test(trimmedQuery)
+    || /^(.*;)\s*(insert\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(delete\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(count\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(sum\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(max\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(min\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(mean\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(median\b.*;)$/.test(trimmedQuery)
+    || /^(.*;)\s*(group\b.*;)$/.test(trimmedQuery)
+    || (/^compute/.test(trimmedQuery) && !(/^compute path/.test(trimmedQuery)))
+  ) {
+    throw new Error('Only match get and compute path queries are supported by workbase for now.');
   }
 }
 
