@@ -14,8 +14,24 @@ You can also see Workbase as another interface for a user to interact with their
 
 Workbase Visualiser allows you to visualise data in the Grakn knowledge graph, and investigate their relations, by performing read queries ([`match-get` queries](/docs/query/get-query)) as well as one of the computer queries: [`compute path`](/docs/query/compute-query#compute-the-shortest-path) queries. Whether you need a tool to test and experiment with your newly created Grakn knowledge graph, or that you prefer a graphical interface for reading data from Grakn, you will find Workbase extremely useful.
 
-## Download Workbase
+## Download Grakn Workbase
 Grakn Workbase is available for Linux, Mac and Windows. Head over to the [Workbase Releases page](https://github.com/graknlabs/workbase/releases) to download and install the latest release of Workbase.
 
 ## Documentation
 Learn how to [connect Workbase to the Grakn Server](http://dev.grakn.ai/docs/workbase/connection), [execute and visualise Graql queries](http://dev.grakn.ai/docs/workbase/visualisation), and interact with the visualiser to [investigate instances of data](http://dev.grakn.ai/docs/workbase/investigation).
+
+- - -
+
+## Build From Source
+> Note: You don't need to build Workbase from source if you just want to use it. See the "Download Grakn Workbase" section above.
+
+1. Make sure you have the following dependencies installed on your machine:
+  - `npm` >= 6.4.1
+  - `node` >= 10.0
+  - `yarn` >= 1.17
+2. Run `yarn install`
+3. Run `yarn build`
+Outputs to `build/grakn-workbase-{version}-{mac|linux|windows}.{dmg|tar.gz|exe}`.
+
+To run Grakn Workbase in development mode, run `yarn dev`.
+To run the unit, integration and end-to-end tests, run `yarn unit`, `yarn integration` and `yarn e2e` respectively.
