@@ -290,9 +290,8 @@ export default {
     },
     clearGraph() {
       if (!this.currentKeyspace) this.$emit('keyspace-not-selected');
-      else {
-        this[CANVAS_RESET]();
-      }
+      else if (this.showSpinner) this.$notifyInfo('Please wait for action to complete');
+      else this[CANVAS_RESET]();
     },
     toggleAddFavQuery() {
       this.showAddFavQuery = !this.showAddFavQuery;
