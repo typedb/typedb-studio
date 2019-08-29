@@ -44,7 +44,7 @@ describe('Favourite queries', () => {
 
     await sleep(1000);
 
-    app.client.keys('match $x isa person; get;');
+    app.client.keys('match $x isa person; get; limit 30;');
 
     app.client.click('.add-fav-query-btn');
 
@@ -69,9 +69,6 @@ describe('Favourite queries', () => {
     assert.equal(await app.client.getText('.toasted'), 'New query saved!\nCLOSE');
 
     await sleep(1000);
-
-    // app.client.click('.close-add-fav-query-container');
-    // app.client.click('.action');
   });
 
   test('add existing favourite query', async () => {
