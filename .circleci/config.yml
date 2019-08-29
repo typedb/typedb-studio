@@ -82,7 +82,9 @@ jobs:
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
-      - run: bazel run @nodejs//:bin/yarn run e2e
+      - run: 
+          command: bazel run @nodejs//:bin/yarn run e2e
+          no_output_timeout: 20m
 
   assemble-linux:
     machine: true
