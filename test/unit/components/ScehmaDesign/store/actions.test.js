@@ -73,14 +73,14 @@ describe('actions', () => {
     await graknTx.close();
   });
 
-  test('UPDATE_METATYPE_INSTANCES', async () => {
-    await store.dispatch(`schema-design/${UPDATE_METATYPE_INSTANCES}`);
+  // test('UPDATE_METATYPE_INSTANCES', async () => {
+  //   await store.dispatch(`schema-design/${UPDATE_METATYPE_INSTANCES}`);
 
-    expect(store.state['schema-design'].metaTypeInstances.entities).toHaveLength(1);
-    expect(store.state['schema-design'].metaTypeInstances.attributes).toHaveLength(9);
-    expect(store.state['schema-design'].metaTypeInstances.relations).toHaveLength(6);
-    expect(store.state['schema-design'].metaTypeInstances.roles).toHaveLength(23);
-  });
+  //   expect(store.state['schema-design'].metaTypeInstances.entities).toHaveLength(1);
+  //   expect(store.state['schema-design'].metaTypeInstances.attributes).toHaveLength(9);
+  //   expect(store.state['schema-design'].metaTypeInstances.relations).toHaveLength(6);
+  //   expect(store.state['schema-design'].metaTypeInstances.roles).toHaveLength(23);
+  // });
 
   test('CANVAS_RESET', () => {
     store.commit('schema-design/selectedNodes', ['1234']);

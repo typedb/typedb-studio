@@ -1,5 +1,4 @@
 import storage from '@/components/shared/PersistentStorage';
-import { relationTypesOutboundEdges } from '@/components/shared/SharedUtils';
 
 export function updateNodePositions(nodes) {
   let positionMap = storage.get('schema-node-positions');
@@ -41,12 +40,6 @@ export async function loadMetaTypeInstances(graknTx) {
       .concat()
       .sort());
   return metaTypeInstances;
-}
-
-export async function typeInboundEdges(type, visFacade) {
-  const roles = await (await type.playing()).collect();
-  const relationTypes = await Promise.all(roles.map(async role => (await role.relations()).collect())).then(rels => rels.flatMap(x => x));
-  return relationTypesOutboundEdges(relationTypes.filter(rel => visFacade.getNode(rel)));
 }
 
 // attach attribute labels and data types to each node

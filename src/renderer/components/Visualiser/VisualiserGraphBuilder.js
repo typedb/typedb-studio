@@ -1,11 +1,5 @@
-import {
-  relationTypesOutboundEdges,
-  ownerHasEdges,
-  computeSubConcepts,
-} from '@/components/shared/SharedUtils';
 import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';
-import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
@@ -186,70 +180,6 @@ async function relationsRolePlayers(relations, limitRolePlayers, limit) {
   };
 }
 
-async function computeAttributeEdges(attributes, thingIds) {
-  return Promise.all(attributes.map(async (attr) => {
-    const owners = await (await attr.owners()).collect();
-    const ownersInMap = owners.filter(owner => thingIds.includes(owner.id));
-    return ownersInMap.map(owner => ({ from: owner.id, to: attr.id, label: 'has' }),
-    );
-  }));
-}
-
-async function computeSchemaEdges(nodes) {
-  // Find nodes that are subconcepts of existing types - these nodes will only have isa edges
-  const subConceptEdges = (await computeSubConcepts(nodes)).edges;
-
-  // Draw all edges from relations to roleplayers
-  const relEdges = await relationTypesOutboundEdges(nodes);
-
-  // Draw all edges from owners to attributes
-  const hasEdges = await ownerHasEdges(nodes);
-
-  return relEdges.concat(hasEdges, subConceptEdges);
-}
-
-async function constructEdges(result) {
-  const conceptMaps = result.map(x => Array.from(x.map().values()));
-
-  // Edges are a combination of relation edges and attribute edges
-  const edges = await Promise.all(conceptMaps.map(async (map) => {
-    // collect ids of all entities in a concept map
-    const thingIds = map.map(x => x.id);
-
-    const attributes = map.filter(x => x.isAttribute());
-    const relations = map.filter(x => x.isRelation());
-    const schemaConcepts = map.filter(x => x.isType());
-
-    // Compute edges that connect things to their attributes
-    const attributeEdges = await computeAttributeEdges(attributes, thingIds);
-
-    const roleplayers = await relationsRolePlayers(relations, false);
-    // Compute edges that connect things to their role players
-    const relationEdges = roleplayers.edges.filter(edge => thingIds.includes(edge.to));
-
-    const schemaEdges = await computeSchemaEdges(schemaConcepts);
-
-    // Combine attribute, relation, and schema edges
-    return attributeEdges.concat(relationEdges, schemaEdges).flatMap(x => x);
-  }));
-  return edges.flatMap(x => x);
-}
-
-async function buildFromConceptMap(result, autoLoadRolePlayers, limitRoleplayers) {
-  const nodes = await prepareNodes(attachExplanation(result));
-  const edges = await constructEdges(result);
-
-  // Check if auto-load role players is selected
-  if (autoLoadRolePlayers) {
-    const relations = nodes.filter(x => x.baseType === 'RELATION');
-    const roleplayers = await relationsRolePlayers(relations, limitRoleplayers, QuerySettings.getNeighboursLimit());
-
-    nodes.push(...roleplayers.nodes);
-    edges.push(...roleplayers.edges);
-  }
-  return { nodes, edges };
-}
-
 async function buildFromConceptList(path, pathNodes) {
   const data = { nodes: await prepareNodes(pathNodes), edges: [] };
 
@@ -267,7 +197,6 @@ async function buildFromConceptList(path, pathNodes) {
 
 
 export default {
-  buildFromConceptMap,
   buildFromConceptList,
   prepareNodes,
   relationsRolePlayers,

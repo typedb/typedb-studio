@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   RUN_CURRENT_QUERY,
   EXPLAIN_CONCEPT,
@@ -20,10 +21,12 @@ import {
   validateQuery,
   computeAttributes,
   mapAnswerToExplanationQuery,
-  getNeighboursData } from '../VisualiserUtils';
+  getNeighboursData,
+} from '../VisualiserUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
+import CDB from '../../shared/CanvasDataBuilder';
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -100,36 +103,61 @@ export default {
       const result = (await (await graknTx.query(query)).collect());
 
       if (!result.length) {
-        // this.$notifyInfo('No results were found for your query!');
         commit('loadingQuery', false);
         return null;
       }
 
-      let data;
-      if (result[0].map) {
-        const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-        data = await VisualiserGraphBuilder.buildFromConceptMap(result, autoloadRolePlayers, true);
-      } else { // result is conceptList
+      const queryTypes = {
+        GET: 'get',
+        PATH: 'compute path',
+      };
+
+      // eslint-disable-next-line no-prototype-builtins
+      const queryType = (result[0].hasOwnProperty('map') ? queryTypes.GET : queryTypes.PATH);
+
+      let nodes = [];
+      const edges = [];
+      if (queryType === queryTypes.GET) {
+        const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+        const shouldLimit = true;
+
+        const instancesData = await CDB.buildInstances(result);
+        nodes.push(...instancesData.nodes);
+        edges.push(...instancesData.edges);
+
+        const typesData = await CDB.buildTypes(result);
+        nodes.push(...typesData.nodes);
+        edges.push(...typesData.edges);
+
+        if (shouldLoadRPs) {
+          const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+          nodes.push(...rpData.nodes);
+          edges.push(...rpData.edges);
+        }
+      } else if (queryType === queryTypes.PATH) {
         // TBD - handle multiple paths
         const path = result[0];
         const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
-        data = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+        const pathData = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
+        nodes.push(...pathData.nodes);
+        edges.push(...pathData.edges);
       }
 
-      state.visFacade.addToCanvas(data);
+      state.visFacade.addToCanvas({ nodes, edges });
       state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');
 
-      data.nodes = await computeAttributes(data.nodes);
+      nodes = await computeAttributes(nodes);
 
-      state.visFacade.updateNode(data.nodes);
+      state.visFacade.updateNode(nodes);
 
       commit('loadingQuery', false);
 
       graknTx.close();
 
-      return data;
+      return { nodes, edges };
     } catch (e) {
+      console.log(e);
       logger.error(e.stack);
       commit('loadingQuery', false);
       throw e;
@@ -142,8 +170,15 @@ export default {
 
     const graknTx = await dispatch(OPEN_GRAKN_TX);
     const result = await (await graknTx.query(query)).collect();
-    const autoloadRolePlayers = QuerySettings.getRolePlayersStatus();
-    const data = await VisualiserGraphBuilder.buildFromConceptMap(result, autoloadRolePlayers, false);
+    const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+    const shouldLimit = true;
+    const data = await CDB.buildInstances(result);
+
+    if (shouldLoadRPs) {
+      const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+      data.nodes.push(...rpData.nodes);
+      data.edges.push(...rpData.edges);
+    }
     state.visFacade.addToCanvas(data);
     data.nodes = await computeAttributes(data.nodes);
     state.visFacade.updateNode(data.nodes);
@@ -174,7 +209,13 @@ export default {
       const graknTx = await dispatch(OPEN_GRAKN_TX);
       const result = (await (await graknTx.query(query)).collect());
 
-      const data = await VisualiserGraphBuilder.buildFromConceptMap(result, true, false);
+
+      const data = await CDB.buildInstances(result);
+
+      const rpData = await CDB.buildRPInstances(result, false, graknTx);
+      data.nodes.push(...rpData.nodes);
+      data.edges.push(...rpData.edges);
+
       state.visFacade.addToCanvas(data);
       commit('updateCanvasData');
       const nodesWithAttributes = await computeAttributes(data.nodes);
