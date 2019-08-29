@@ -94,33 +94,33 @@ describe('Query Settings', () => {
     app.client.click('.clear-editor');
   });
 
-  // test('set neighbours limit', async () => {
-  //   app.client.click('.neighbour-limit-input');
+  test('set neighbours limit', async () => {
+    app.client.click('.neighbour-limit-input');
 
-  //   await sleep(1000);
+    await sleep(1000);
 
-  //   app.client.keys(['Backspace', 'Backspace', '1']);
+    app.client.keys(['Backspace', 'Backspace', '1']);
 
-  //   await sleep(1000);
+    await sleep(1000);
 
-  //   app.client.click('.CodeMirror');
+    app.client.click('.CodeMirror');
 
-  //   await sleep(1000);
+    await sleep(1000);
 
-  //   app.client.keys('match $x isa parentship; get;');
+    app.client.keys('match $x isa parentship; get;');
 
-  //   await sleep(1000);
+    await sleep(1000);
 
-  //   app.client.click('.run-btn');
+    app.client.click('.run-btn');
 
-  //   await sleep(1000);
+    await sleep(1000);
 
-  //   const noOfEntities = await app.client.getText('.no-of-entities');
-  //   assert.equal(noOfEntities, 'entities: 1');
+    const noOfEntities = await app.client.getText('.no-of-entities');
+    assert.equal(noOfEntities, 'entities: 1');
 
-  //   app.client.click('.clear-graph-btn');
-  //   app.client.click('.clear-editor');
-  // });
+    app.client.click('.clear-graph-btn');
+    app.client.click('.clear-editor');
+  });
 
   test('dont auto load neighbours', async () => {
     app.client.click('.load-roleplayers-switch');

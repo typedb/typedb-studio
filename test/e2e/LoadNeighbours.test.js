@@ -107,32 +107,35 @@ describe('Load neighbours', () => {
     app.client.click('.clear-editor');
   });
 
-  // test('double click on relation', async () => {
-  //   app.client.click('.CodeMirror');
+  test('double click on relation', async () => {
+    app.client.click('.CodeMirror');
 
-  //   await sleep(2000);
+    await sleep(2000);
 
-  //   app.client.keys('match $x isa parentship; get; limit 1;');
+    app.client.keys('match $x isa parentship; get; limit 1;');
 
-  //   await sleep(2000);
+    await sleep(2000);
 
-  //   app.client.click('.run-btn');
+    app.client.click('.run-btn');
 
-  //   await sleep(10000);
+    await sleep(10000);
 
-  //   app.client.leftClick('#graph-div');
-  //   app.client.leftClick('#graph-div');
+    app.client.leftClick('#graph-div');
+    app.client.leftClick('#graph-div');
 
-  //   await spectronHelper.waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
-  //   await spectronHelper.waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
+    await spectronHelper.waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
+    await spectronHelper.waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 
-  //   const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
-  //   expect(noOfEntities).toBeGreaterThan(0);
-  //   const noOfAttributes = await app.client.getText('.no-of-attributes');
-  //   assert.equal(noOfAttributes, 'attributes: 0');
-  //   const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
-  //   expect(noOfRelationships).toBeGreaterThan(0);
-  // });
+    const noOfEntities = Number((await app.client.getText('.no-of-entities')).match(/\d+/)[0]);
+    expect(noOfEntities).toBeGreaterThan(0);
+    const noOfAttributes = await app.client.getText('.no-of-attributes');
+    assert.equal(noOfAttributes, 'attributes: 0');
+    const noOfRelationships = Number((await app.client.getText('.no-of-relations')).match(/\d+/)[0]);
+    expect(noOfRelationships).toBeGreaterThan(0);
+
+    app.client.click('.clear-graph-btn');
+    app.client.click('.clear-editor');
+  });
 
   test('double click on entity', async () => {
     app.client.click('.CodeMirror');
