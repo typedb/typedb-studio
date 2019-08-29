@@ -1,3 +1,4 @@
+import spectronHelper from '../helpers/spectron';
 const Application = require('spectron').Application;
 const assert = require('assert');
 const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
@@ -69,8 +70,8 @@ describe('Favourite queries', () => {
 
     await sleep(1000);
 
-    app.client.click('.close-add-fav-query-container');
-    app.client.click('.action');
+    // app.client.click('.close-add-fav-query-container');
+    // app.client.click('.action');
   });
 
   test('add existing favourite query', async () => {
@@ -117,30 +118,33 @@ describe('Favourite queries', () => {
 
   test('edit favourite query', async () => {
     await app.client.click('.fav-queries-container-btn');
-
     await app.client.click('.edit-fav-query-btn');
+    // select all text in input
+    await app.client.leftClick('.CodeMirror-focused');
+    await app.client.leftClick('.CodeMirror-focused');
+    await app.client.leftClick('.CodeMirror-focused');
 
-    await app.client.click('.CodeMirror-focused');
-
-    await app.client.keys(['ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'limit 1; ']);
-
+    await app.client.keys('match $x isa person; get; offset 0; limit 1;');
     await app.client.click('.save-edited-fav-query');
-
-    await app.client.click('.action');
-
     await app.client.click('.run-fav-query-btn');
+
+    await sleep(1000);
+
+    app.client.click('.run-btn');
+
+    await spectronHelper.waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
+    await spectronHelper.waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 
     const noOfEntities = await app.client.getText('.no-of-entities');
 
-    await assert.equal(noOfEntities, 'entities: 0');
+    await assert.equal(noOfEntities, 'entities: 1');
 
-    await assert.equal((await app.client.getText('.CodeMirror'))[0], ' match $x isa person; limit 1; get;');
-    await assert.equal((await app.client.getText('.CodeMirror'))[1], 'match $x isa person; limit 1; get;');
+    await assert.equal((await app.client.getText('.CodeMirror')), 'match $x isa person; get; offset 0; limit 1;');
   });
 
   test('delete favourite query', async () => {
     await sleep(5000);
-
+    await app.client.click('.fav-queries-container-btn');
     await app.client.click('.delete-fav-query-btn');
 
     await sleep(3000);
