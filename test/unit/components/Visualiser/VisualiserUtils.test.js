@@ -1,4 +1,4 @@
-import { limitQuery, buildExplanationQuery, computeAttributes, filterMaps, getNeighboursData } from '@/components/Visualiser/VisualiserUtils.js';
+import { limitQuery, buildExplanationQuery, computeAttributes, filterMaps, getNeighboursData, validateQuery } from '@/components/Visualiser/VisualiserUtils.js';
 import MockConcepts from '../../../helpers/MockConcepts';
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
@@ -49,12 +49,12 @@ describe('limit Query', () => {
   test('query containing multi-line get query', () => {
     const query = `
     match $x isa person;
-    get    
+    get
          $x;`;
     const limited = limitQuery(query);
     expect(limited).toBe(`
     match $x isa person;
-    get    
+    get
          $x; offset 0; limit 10;`);
   });
   test('query without get', () => {
@@ -164,5 +164,92 @@ describe('Get neighbours data', () => {
     expect(neighboursData.edges).toHaveLength(1);
     expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"ENTITY","id":"3333","offset":0,"graqlVar":"x"}');
     expect(JSON.stringify(neighboursData.edges[0])).toBe('{"from":"6666","to":"3333","label":"son"}');
+  });
+});
+
+describe('Validate Query', () => {
+  test('match get', async () => {
+    const query = 'match $p isa person; get;';
+    expect(() => {
+      validateQuery(query);
+    }).not.toThrow();
+  });
+  test('compute path', async () => {
+    const query = 'compute path from V229424, to V446496;';
+    expect(() => {
+      validateQuery(query);
+    }).not.toThrow();
+  });
+  test('insert', async () => {
+    const query = 'insert $x isa emotion; $x "like";';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('match insert', async () => {
+    const query = 'match $x ias person, has name "John"; $y isa person, has name "Mary"; insert $r (child: $x, parent: $y) isa parentship;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('match delete', async () => {
+    const query = 'match $p isa person, has email "raphael.santos@gmail.com"; delete $p;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('count', async () => {
+    const query = 'match $sce isa school-course-enrollment, has score $sco; $sco > 7.0; get; count;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('sum', async () => {
+    const query = 'match $org isa organisation, has name $orn; $orn "Medicely"; ($org) isa employment, has salary $sal; get $sal; sum $sal;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('max', async () => {
+    const query = 'match $sch isa school, has ranking $ran; get $ran; max $ran;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('min', async () => {
+    const query = 'match ($per) isa marriage; ($per) isa employment, has salary $sal; get $sal; min $sal;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('mean', async () => {
+    const query = 'match $emp isa employment, has salary $sal; get $sal; mean $sal;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('median', async () => {
+    const query = 'match ($per) isa school-course-enrollment, has score $sco; get $sco; median $sco;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('group', async () => {
+    const query = 'match $per isa person; $scc isa school-course, has title $tit; (student: $per, enrolled-course: $scc) isa school-course-enrollment; get; group $tit;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('group count', async () => {
+    const query = 'match $per isa person; $scc isa school-course, has title $tit; (student: $per, enrolled-course: $scc) isa school-course-enrollment; get; group $tit; count;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
+  });
+  test('compute', async () => {
+    const query = 'compute count in person;';
+    expect(() => {
+      validateQuery(query);
+    }).toThrow();
   });
 });
