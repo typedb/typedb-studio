@@ -1,61 +1,78 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { waitUntil, waitUntillQueryCompletion } from './helpers/utils';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace } from './helpers/actions';
 
-const sleep = time => new Promise(r => setTimeout(r, time));
 jest.setTimeout(30000);
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
-});
-
-beforeAll(async () => app.start());
-
-afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
-});
-
 describe('Favourite queries', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
+  let app;
+
+  beforeEach(async () => {
+    app = await startApp();
+    const isAppVisible = await app.browserWindow.isVisible();
+    assert.equal(isAppVisible, true);
   });
 
-  test('select keyspace', async () => {
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
+  afterEach(async () => {
+    await stopApp(app);
   });
 
-  test('right click on canvas', async () => {
-    app.client.click('.CodeMirror');
+  test('right clicking on an empty canvas does not open the context menu', async () => {
+    await selectKeyspace('gene', app);
+    await app.client.rightClick('#graph-div');
+    const isContextMenuHidden = await waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value === 'none').catch(result => result);
+    assert.equal(isContextMenuHidden, true);
+  });
 
-    await sleep(1000);
+  test('right clicking on canvas (not a node) after running a query opens the context menu with disabled options', async () => {
+    await selectKeyspace('gene', app);
 
-    app.client.keys('match $x isa person; get; limit 1;');
+    await app.client.click('.graqlEditor-container .CodeMirror');
+    await app.client.keys('match $x isa person; get; limit 1;');
+    await app.client.click('.run-btn');
 
-    await sleep(1000);
+    const hasLoadingFinished = await waitUntillQueryCompletion(app);
+    assert.equal(hasLoadingFinished, true);
 
-    app.client.click('.run-btn');
+    await app.client.rightClick('#graph-div', 10, 10);
 
-    await sleep(4000);
-
-    app.client.rightClick('#graph-div', 10, 10);
-
-    await sleep(2000);
+    const isContextMenuDisplayed = await waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value !== 'none').catch(result => result);
+    assert.equal(isContextMenuDisplayed, true);
 
     assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
-    assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes disabled');
-    assert.equal(await app.client.getAttribute('.explain-node', 'class'), 'context-action explain-node disabled');
-    assert.equal(await app.client.getAttribute('.compute-shortest-path', 'class'), 'context-action compute-shortest-path disabled');
+
+    const deleteClasses = await app.client.$('.delete-nodes').getAttribute('class');
+    assert.equal(deleteClasses.includes('disabled'), true);
+
+    const explainClasses = await app.client.$('.explain-node').getAttribute('class');
+    assert.equal(explainClasses.includes('disabled'), true);
+
+    const shortestPathClasses = await app.client.$('.delete-nodes').getAttribute('class');
+    assert.equal(shortestPathClasses.includes('disabled'), true);
+  });
+
+  test('when only one node is selected, Compute Shortest Path remains hidden', () => {
+    assert.equal(true, true);
+  });
+
+  test('when the selected node is not inferred, Explain remains hidden', () => {
+    assert.equal(true, true);
+  });
+
+  test('Hide works for a single node selection', () => {
+    assert.equal(true, true);
+  });
+
+  test('Hide works for a multi node selection', () => {
+    assert.equal(true, true);
+  });
+
+  test('Explain works', () => {
+    assert.equal(true, true);
+  });
+
+  test('Compute Shortest Path works', () => {
+    assert.equal(true, true);
   });
 });

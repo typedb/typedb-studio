@@ -111,6 +111,7 @@ let rendererConfig = {
   plugins: [
     new ExtractTextPlugin('styles.css'),
     new HtmlWebpackPlugin({
+      title: 'Caching',
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
       minify: {
@@ -126,10 +127,13 @@ let rendererConfig = {
     new webpack.NoEmitOnErrorsPlugin()
   ],
   output: {
-    filename: '[name].js',
+    filename: '[name].[contenthash].js',
     libraryTarget: 'commonjs2',
     path: path.resolve('./dist/electron')
   },
+  // optimization: {
+  //   runtimeChunk: 'single'
+  // },
   resolve: {
     alias: {
       '@': path.join(__dirname, '../src/renderer'),
