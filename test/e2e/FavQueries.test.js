@@ -122,22 +122,22 @@ describe('Favourite queries', () => {
     await app.client.leftClick('.CodeMirror-focused');
     await app.client.leftClick('.CodeMirror-focused');
 
-    await app.client.keys('match $x isa person; get; offset 0; limit 1;');
-    await app.client.click('.save-edited-fav-query');
-    await app.client.click('.run-fav-query-btn');
-
+    await app.client.keys('match $x isa person; get; offset 0; limit 10;');
     await sleep(1000);
-
-    app.client.click('.run-btn');
+    await app.client.click('.save-edited-fav-query');
+    await sleep(2000);
+    await app.client.click('.run-fav-query-btn');
+    await sleep(1000);
+    await app.client.click('.run-btn');
 
     await spectronHelper.waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
     await spectronHelper.waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 
     const noOfEntities = await app.client.getText('.no-of-entities');
 
-    await assert.equal(noOfEntities, 'entities: 1');
+    await assert.equal(noOfEntities, 'entities: 10');
 
-    await assert.equal((await app.client.getText('.CodeMirror')), 'match $x isa person; get; offset 0; limit 1;');
+    await assert.equal((await app.client.getText('.CodeMirror')), 'match $x isa person; get; offset 0; limit 10;');
   });
 
   test('delete favourite query', async () => {
