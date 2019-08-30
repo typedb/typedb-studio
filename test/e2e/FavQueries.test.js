@@ -115,6 +115,10 @@ describe('Favourite queries', () => {
 
   test('edit favourite query', async () => {
     await app.client.click('.clear-graph-btn');
+    let noOfEntities = await app.client.getText('.no-of-entities');
+
+    await assert.equal(noOfEntities, 'entities: 0');
+
     await app.client.click('.fav-queries-container-btn');
     await app.client.click('.edit-fav-query-btn');
     // select all text in input
@@ -133,7 +137,7 @@ describe('Favourite queries', () => {
     await spectronHelper.waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
     await spectronHelper.waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 
-    const noOfEntities = await app.client.getText('.no-of-entities');
+    noOfEntities = await app.client.getText('.no-of-entities');
 
     await assert.equal(noOfEntities, 'entities: 10');
 
