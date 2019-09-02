@@ -1,23 +1,23 @@
+/* eslint-disable no-await-in-loop */
 import interval from 'interval-promise';
 
-export const waitUntil = async condition => new Promise((resolve, reject) => {
-  let totalTime = 0;
+export const waitUntil = criteria => new Promise(async (resolve, reject) => {
   const intervalTime = 1;
-  const maxTime = 100000;
+  const iterations = 10000;
+  let isFullfilled = false;
 
-  interval(async (iteration, stop) => {
-    totalTime += intervalTime;
-    const conditionResult = await condition();
-    if (conditionResult) {
+  await interval(async (iteration, stop) => {
+    if (await criteria()) {
+      isFullfilled = true;
       stop();
-      resolve(true);
     }
-    if (totalTime === maxTime) reject(false);
-  }, intervalTime);
+  }, intervalTime, { iterations });
+
+  if (isFullfilled) return resolve();
+  return reject();
 });
 
 export const waitUntillQueryCompletion = async (app) => {
-  const hasLoadingStarted = await waitUntil(async () => app.client.isExisting('.bp3-spinner-animation')).catch(result => result);
-  const hasLoadingFinished = await waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation'))).catch(result => result);
-  return hasLoadingStarted && hasLoadingFinished;
+  await waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
+  await waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 };

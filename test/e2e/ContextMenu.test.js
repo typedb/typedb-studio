@@ -21,8 +21,10 @@ describe('Favourite queries', () => {
   test('right clicking on an empty canvas does not open the context menu', async () => {
     await selectKeyspace('gene', app);
     await app.client.rightClick('#graph-div');
-    const isContextMenuHidden = await waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value === 'none').catch(result => result);
-    assert.equal(isContextMenuHidden, true);
+    await assert.doesNotReject(async () => {
+      await waitUntil(async () => app.client.$('#context-menu').isExisting());
+      await waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value === 'none');
+    });
   });
 
   test('right clicking on canvas (not a node) after running a query opens the context menu with disabled options', async () => {
@@ -32,13 +34,11 @@ describe('Favourite queries', () => {
     await app.client.keys('match $x isa person; get; limit 1;');
     await app.client.click('.run-btn');
 
-    const hasLoadingFinished = await waitUntillQueryCompletion(app);
-    assert.equal(hasLoadingFinished, true);
+    await assert.doesNotReject(async () => waitUntillQueryCompletion(app));
 
     await app.client.rightClick('#graph-div', 10, 10);
 
-    const isContextMenuDisplayed = await waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value !== 'none').catch(result => result);
-    assert.equal(isContextMenuDisplayed, true);
+    await assert.doesNotReject(async () => waitUntil(async () => (await app.client.$('#context-menu').getCssProperty('display')).value !== 'none'));
 
     assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
 
