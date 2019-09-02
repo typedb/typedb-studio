@@ -21,3 +21,8 @@ export const waitUntillQueryCompletion = async (app) => {
   await waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
   await waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
 };
+
+export const waitUntilNotificationDisapears = async (app) => {
+  await waitUntil(async () => app.client.isExisting('.toasted'));
+  await waitUntil(async () => !(await app.client.isExisting('.toasted')));
+};

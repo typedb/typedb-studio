@@ -5,7 +5,7 @@ import { selectKeyspace } from './helpers/actions';
 
 jest.setTimeout(30000);
 
-describe('Favourite queries', () => {
+describe('Context Menu', () => {
   let app;
 
   beforeEach(async () => {
