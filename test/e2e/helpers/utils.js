@@ -1,5 +1,6 @@
-/* eslint-disable no-await-in-loop */
 import interval from 'interval-promise';
+import assert from 'assert';
+
 
 export const waitUntil = criteria => new Promise(async (resolve, reject) => {
   const intervalTime = 1;
@@ -18,11 +19,11 @@ export const waitUntil = criteria => new Promise(async (resolve, reject) => {
 });
 
 export const waitUntillQueryCompletion = async (app) => {
-  await waitUntil(async () => app.client.isExisting('.bp3-spinner-animation'));
-  await waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation')));
+  await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.toasted.info')));
+  await assert.doesNotReject(async () => waitUntil(async () => !(await app.client.isExisting('.bp3-spinner-animation'))));
 };
 
 export const waitUntilNotificationDisapears = async (app) => {
-  await waitUntil(async () => app.client.isExisting('.toasted'));
-  await waitUntil(async () => !(await app.client.isExisting('.toasted')));
+  await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.toasted.info')));
+  await assert.doesNotReject(async () => waitUntil(async () => !(await app.client.isExisting('.toasted.info'))));
 };
