@@ -1,6 +1,7 @@
 import assert from 'assert';
-import { waitUntil, waitUntilNotificationDisapears } from './helpers/utils';
+import { waitUntil } from './helpers/utils';
 import { startApp, stopApp } from './helpers/hooks';
+import { waitForNotificationToDisapear, loadKeyspace } from './helpers/actions';
 
 jest.setTimeout(100000);
 
@@ -22,7 +23,7 @@ const deleteAllKeyspaces = async (app) => {
     await waitUntil(async () => app.client.isExisting('.toasted.default'));
     await waitUntil(async () => app.client.isExisting('.toasted .confirm'));
     await app.client.click('.toasted .confirm');
-    await waitUntilNotificationDisapears(app);
+    await waitForNotificationToDisapear(app);
   }
 };
 
@@ -30,7 +31,7 @@ const addKeyspace = async (keyspace, app) => {
   await app.client.click('.keyspace-input');
   await app.client.keys(keyspace);
   await app.client.click('.new-keyspace-btn');
-  await waitUntilNotificationDisapears(app);
+  await waitForNotificationToDisapear(app);
   assert.equal(await app.client.getText('.keyspace-label'), keyspace);
 };
 
@@ -38,6 +39,8 @@ describe('Keyspaces', () => {
   let app;
 
   beforeEach(async () => {
+    loadKeyspace('gene');
+
     app = await startApp();
     const isAppVisible = await app.browserWindow.isVisible();
     assert.equal(isAppVisible, true);
@@ -64,7 +67,7 @@ describe('Keyspaces', () => {
     await waitUntil(async () => app.client.isExisting('.toasted.default'));
     await waitUntil(async () => app.client.isExisting('.toasted .confirm'));
     await app.client.click('.toasted .confirm');
-    await waitUntilNotificationDisapears(app);
+    await waitForNotificationToDisapear(app);
     assert.equal(await app.client.isExisting('.keyspace-item'), false);
     await closePreferencesPanel(app);
   });

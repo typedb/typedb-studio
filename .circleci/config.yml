@@ -64,7 +64,7 @@ jobs:
       - install-bazel-linux-rbe
       - checkout
       - run-grakn-server-linux
-      - run: ./dist/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: ./dist/grakn-core-all-linux/grakn console -f `pwd`/test/helpers/gene.gql -k gene
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
@@ -78,7 +78,7 @@ jobs:
       - checkout
       - install-bazel-mac
       - run-grakn-server-mac
-      - run: ./dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/basic-genealogy.gql -k gene
+      - run: ./dist/grakn-core-all-mac/grakn console -f `pwd`/test/helpers/gene.gql -k gene
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration

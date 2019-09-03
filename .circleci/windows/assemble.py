@@ -226,7 +226,7 @@ try:
         'refreshenv',
         'cd repo/bazel-genfiles/dist/grakn-core-all-windows/',
         'grakn server start',
-        'grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\basic-genealogy.gql -k gene',
+        'grakn console -f C:\\Users\\circleci\\repo\\test\\helpers\\gene.gql -k gene',
         'cd C:\\Users\\circleci\\repo\\',
         'bazel run @nodejs//:bin/yarn.cmd -- run unit',
         'bazel run @nodejs//:bin/yarn.cmd -- run integration',
