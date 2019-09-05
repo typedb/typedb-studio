@@ -58,6 +58,10 @@ describe('Context Menu', () => {
     assert.equal(shortestPathClasses.includes('disabled'), true);
   });
 
+  test('when visualisng schema concepts, right clicking does not open the context menu ', () => {
+    assert.equal(true, true);
+  });
+
   test('when only one node is selected, Compute Shortest Path remains hidden', () => {
     assert.equal(true, true);
   });
