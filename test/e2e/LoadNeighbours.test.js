@@ -1,5 +1,4 @@
 import assert from 'assert';
-// import { waitUntil } from './helpers/utils';
 import { startApp, stopApp } from './helpers/hooks';
 import { selectKeyspace, loadKeyspace, cleanKeyspace, waitForQueryCompletion, doubleClick, waitForNodeToStabalize } from './helpers/actions';
 import { getNodePosition, getNodeId } from './helpers/canvas';

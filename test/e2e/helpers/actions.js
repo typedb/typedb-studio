@@ -17,9 +17,10 @@ export const clearInput = async (selector, app) => {
   await app.client.click(selector);
   await app.client.click(selector);
   await app.client.click(selector);
+  await app.client.click(selector);
 
   await app.client.keys(['Backspace']);
-  await assert.doesNotReject(async () => waitUntil(async () => (await app.client.getText(selector)) === ''));
+  assert.equal(await app.client.getValue(selector), '');
 };
 
 export const waitForQueryCompletion = async (app) => {
