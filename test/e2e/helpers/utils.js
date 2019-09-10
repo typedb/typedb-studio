@@ -24,7 +24,7 @@ export const waitUntil = criteria => new Promise(async (resolve, reject) => {
 });
 
 
-export const loadKeyspace = async (keyspaceName) => {
+export const loadKeyspace = (keyspaceName) => {
   if (!process.env.GRAKN_PATH) throw new Error('The path to the Grakn distribution is not provided as the environmental variable; graknPath');
   execSync(`${process.env.GRAKN_PATH}grakn console -k ${keyspaceName} -f $(pwd)/test/helpers/${keyspaceName}.gql`);
 };

@@ -7,8 +7,8 @@ jest.setTimeout(100000);
 
 let app;
 
-beforeAll(async () => {
-  await loadKeyspace('gene');
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
 beforeEach(async () => {

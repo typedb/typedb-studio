@@ -7,8 +7,8 @@ jest.setTimeout(100000);
 
 let app;
 
-beforeAll(async () => {
-  await loadKeyspace('gene');
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
 beforeEach(async () => {
@@ -43,7 +43,7 @@ describe('Context Menu', () => {
     );
   });
 
-  test('right clicking on canvas (not a node) after running a query opens the context menu with disabled options', async () => {
+  test.skip('right clicking on canvas (not a node) after running a query opens the context menu with disabled options', async () => {
     await selectKeyspace('gene', app);
     await app.client.click('.top-bar-container .CodeMirror');
     await app.client.keys('match $x isa person; get; limit 1;');

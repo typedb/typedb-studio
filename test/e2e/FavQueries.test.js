@@ -35,8 +35,8 @@ const deleteAllFavouriteQueries = async (app) => {
 
 let app;
 
-beforeAll(async () => {
-  await loadKeyspace('gene');
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
 beforeEach(async () => {
