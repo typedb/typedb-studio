@@ -155,7 +155,6 @@ export default {
 
       graknTx.close();
 
-      window.visFacade = state.visFacade;
       return { nodes, edges };
     } catch (e) {
       console.log(e);
