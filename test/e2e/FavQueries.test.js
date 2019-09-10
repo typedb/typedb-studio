@@ -37,8 +37,6 @@ let app;
 
 beforeAll(async () => {
   await loadKeyspace('gene');
-  const sleep = time => new Promise(r => setTimeout(r, time));
-  await sleep(10000);
 });
 
 beforeEach(async () => {

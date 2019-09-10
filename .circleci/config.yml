@@ -67,7 +67,7 @@ jobs:
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
-      - run: GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
+      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
 
   test-mac:
     macos:
@@ -80,7 +80,7 @@ jobs:
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
-      - run: GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
+      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-mac/ bazel run @nodejs//:bin/yarn run e2e
 
   assemble-linux:
     machine: true
