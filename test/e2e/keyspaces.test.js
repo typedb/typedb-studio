@@ -1,10 +1,9 @@
 import assert from 'assert';
-import { waitUntil } from './helpers/utils';
+import { waitUntil, deleteKeyspace, loadKeyspace } from './helpers/utils';
 import { startApp, stopApp } from './helpers/hooks';
-import { waitForNotificationToDisapear, loadKeyspace } from './helpers/actions';
+import { waitForNotificationToDisappear, confirmAction } from './helpers/actions';
 
 jest.setTimeout(100000);
-
 
 const openPreferencesPanel = async (app) => {
   await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.toggle-preferences')));
@@ -20,10 +19,7 @@ const deleteAllKeyspaces = async (app) => {
   /* eslint-disable no-await-in-loop */
   while (await app.client.isExisting('.delete-keyspace-btn')) {
     await app.client.$('.delete-keyspace-btn').click();
-    await waitUntil(async () => app.client.isExisting('.toasted.default'));
-    await waitUntil(async () => app.client.isExisting('.toasted .confirm'));
-    await app.client.click('.toasted .confirm');
-    await waitForNotificationToDisapear(app);
+    await confirmAction(app);
   }
 };
 
@@ -31,44 +27,45 @@ const addKeyspace = async (keyspace, app) => {
   await app.client.click('.keyspace-input');
   await app.client.keys(keyspace);
   await app.client.click('.new-keyspace-btn');
-  await waitForNotificationToDisapear(app);
+  await waitForNotificationToDisappear(app);
   assert.equal(await app.client.getText('.keyspace-label'), keyspace);
 };
 
+let app;
+
+beforeAll(async () => {
+  await loadKeyspace('gene');
+});
+
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+
+  await openPreferencesPanel(app);
+  await deleteAllKeyspaces(app);
+  await closePreferencesPanel(app);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
+
+afterAll(async () => {
+  await deleteKeyspace('gene');
+});
+
 describe('Keyspaces', () => {
-  let app;
-
-  beforeEach(async () => {
-    loadKeyspace('gene');
-
-    app = await startApp();
-    const isAppVisible = await app.browserWindow.isVisible();
-    assert.equal(isAppVisible, true);
-
-    await openPreferencesPanel(app);
-    await deleteAllKeyspaces(app);
-    await closePreferencesPanel(app);
-  });
-
-  afterEach(async () => {
-    await stopApp(app);
-  });
-
   test('creating a new keyspace works', async () => {
     await openPreferencesPanel(app);
     await addKeyspace('test_keyspace', app);
-    await closePreferencesPanel(app);
   });
 
   test('deleting a keyspace works', async () => {
     await openPreferencesPanel(app);
     await addKeyspace('test_keyspace', app);
     await app.client.click('.delete-keyspace-btn');
-    await waitUntil(async () => app.client.isExisting('.toasted.default'));
-    await waitUntil(async () => app.client.isExisting('.toasted .confirm'));
-    await app.client.click('.toasted .confirm');
-    await waitForNotificationToDisapear(app);
+    await confirmAction(app);
     assert.equal(await app.client.isExisting('.keyspace-item'), false);
-    await closePreferencesPanel(app);
   });
 });

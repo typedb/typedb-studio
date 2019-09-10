@@ -7,6 +7,7 @@ export const startApp = async () => {
     path: electronPath,
     args: [path.join(__dirname, '../../../dist/electron/main.js')],
   }).start();
+
   return app;
 };
 

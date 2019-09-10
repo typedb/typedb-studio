@@ -1,33 +1,33 @@
 import assert from 'assert';
 import { startApp, stopApp } from './helpers/hooks';
-import { selectKeyspace, loadKeyspace, cleanKeyspace } from './helpers/actions';
-import { waitUntil } from './helpers/utils';
+import { selectKeyspace } from './helpers/actions';
+import { waitUntil, deleteKeyspace, loadKeyspace } from './helpers/utils';
 
 jest.setTimeout(100000);
 
+let app;
+
+beforeAll(async () => {
+  await loadKeyspace('gene');
+});
+
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
+
+afterAll(async () => {
+  await deleteKeyspace('gene');
+});
+
 describe('Types Panel', () => {
-  let app;
-
-  beforeAll(() => {
-    loadKeyspace('gene');
-  });
-
-  beforeEach(async () => {
-    app = await startApp();
-    const isAppVisible = await app.browserWindow.isVisible();
-    assert.equal(isAppVisible, true);
-    await selectKeyspace('gene', app);
-  });
-
-  afterEach(async () => {
-    await stopApp(app);
-  });
-
-  afterAll(async () => {
-    await cleanKeyspace('gene');
-  });
-
   test('selecting a type autofills Graql Editor', async () => {
+    await selectKeyspace('gene', app);
     await app.client.click('.types-container-btn');
     await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.select-type-btn')));
     await app.client.click('.select-type-btn=person');
