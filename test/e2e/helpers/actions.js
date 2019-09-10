@@ -17,7 +17,7 @@ export const selectKeyspace = async (keyspace, app) => {
   );
   await app.client.click(`#${keyspace}`);
   await assert.doesNotReject(
-    async () => waitUntil(async () => (await app.client.$('.keyspaces').getText()) === keyspace),
+    async () => waitUntil(async () => (await app.client.getText('.keyspaces')) === keyspace),
     undefined, `the target keyspace was not selected: ${keyspace}`,
   );
 };

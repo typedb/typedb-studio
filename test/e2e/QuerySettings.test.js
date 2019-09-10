@@ -30,7 +30,7 @@ describe('Query Settings', () => {
     await selectKeyspace('gene', app);
     await changeSetting({ queryLimit: 1 }, app);
     await runQuery('match $x isa person; get;', app);
-    assert.equal(await app.client.getText('.top-bar-container .CodeMirror'), ' match $x isa person; get; offset 0; limit 1;');
+    assert.equal((await app.client.getText('.top-bar-container .CodeMirror')).trim(), 'match $x isa person; get; offset 0; limit 1;');
   });
 
   test('Neighbours Limit setting is applied', async () => {

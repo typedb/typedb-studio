@@ -29,8 +29,14 @@ describe('Types Panel', () => {
   test('selecting a type autofills Graql Editor', async () => {
     await selectKeyspace('gene', app);
     await app.client.click('.types-container-btn');
-    await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.select-type-btn')));
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('.select-type-btn')),
+      undefined, 'type button did not appear',
+    );
     await app.client.click('.select-type-btn=person');
-    await assert.doesNotReject(async () => waitUntil(async () => (await app.client.getText('.top-bar-container .CodeMirror')) === 'match $x isa person; get;'));
+    await assert.doesNotReject(
+      async () => waitUntil(async () => (await app.client.getText('.top-bar-container .CodeMirror')) === 'match $x isa person; get;'),
+      undefined, 'Graql Editor did not contain the expected query: match $x isa person; get;',
+    );
   });
 });

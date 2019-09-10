@@ -28,15 +28,18 @@ afterAll(async () => {
 describe('Context Menu', () => {
   test('right clicking on an empty canvas does not open the context menu', async () => {
     await selectKeyspace('gene', app);
-    await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('#graph-div')), 'canvas is not present');
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('#graph-div'))
+      , undefined, 'canvas is not present',
+    );
     await app.client.rightClick('#graph-div');
     await assert.doesNotReject(
       async () => waitUntil(async () => app.client.isExisting('#context-menu')),
-      'context menu did not appear',
+      undefined, 'context menu did not appear',
     );
     await assert.doesNotReject(
       async () => waitUntil(async () => (await app.client.getCssProperty('#context-menu', 'display')).value === 'none'),
-      'context menu was displayed',
+      undefined, 'context menu was displayed',
     );
   });
 
@@ -49,7 +52,7 @@ describe('Context Menu', () => {
     await app.client.rightClick('#graph-div', 10, 10);
     await assert.doesNotReject(
       async () => waitUntil(async () => (await app.client.getCssProperty('#context-menu', 'display')).value !== 'none'),
-      'context menu was not displayed',
+      undefined, 'context menu was not displayed',
     );
     assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
     const deleteClasses = await app.client.getAttribute('.delete-nodes', 'class');

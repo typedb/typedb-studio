@@ -81,7 +81,7 @@ describe('Favourite queries', () => {
     await addFavouriteQuery('get persons', 'match $x isa person; get; offset 0; limit 30;', 'New query saved!\nCLOSE', app);
     await app.client.click('.fav-queries-container-btn');
     await app.client.click('.run-fav-query-btn');
-    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0], ' match $x isa person; get; offset 0; limit 30;');
+    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0].trim(), 'match $x isa person; get; offset 0; limit 30;');
   });
 
   test('editing a favourite query works', async () => {
@@ -92,7 +92,7 @@ describe('Favourite queries', () => {
     await app.client.keys('match $x isa person; get; offset 0; limit 2;');
     await app.client.click('.save-edited-fav-query');
     await app.client.click('.run-fav-query-btn');
-    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0], ' match $x isa person; get; offset 0; limit 2;');
+    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0].trim(), 'match $x isa person; get; offset 0; limit 2;');
   });
 
   test('deleting a favourite query works', async () => {

@@ -6,7 +6,10 @@ import { waitForNotificationToDisappear, confirmAction } from './helpers/actions
 jest.setTimeout(100000);
 
 const openPreferencesPanel = async (app) => {
-  await assert.doesNotReject(async () => waitUntil(async () => app.client.isExisting('.toggle-preferences')));
+  await assert.doesNotReject(
+    async () => waitUntil(async () => app.client.isExisting('.toggle-preferences')),
+    undefined, 'preferences did not appear',
+  );
   await app.client.click('.toggle-preferences');
   assert.equal(await app.client.isExisting('.preferences-container'), true);
 };
@@ -18,7 +21,7 @@ const closePreferencesPanel = async (app) => {
 const deleteAllKeyspaces = async (app) => {
   /* eslint-disable no-await-in-loop */
   while (await app.client.isExisting('.delete-keyspace-btn')) {
-    await app.client.$('.delete-keyspace-btn').click();
+    await app.client.click('.delete-keyspace-btn');
     await confirmAction(app);
   }
 };
