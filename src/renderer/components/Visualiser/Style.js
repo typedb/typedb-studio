@@ -230,7 +230,6 @@ function computeEdgeStyle() {
     hoverWidth: 2,
     selectionWidth: 2,
     arrowStrikethrough: false,
-    arrows: { to: { enabled: false } },
     smooth: {
       enabled: false,
       forceDirection: 'none',
