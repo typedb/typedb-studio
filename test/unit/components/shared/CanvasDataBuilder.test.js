@@ -27,6 +27,10 @@ const mockedMetaType = {
   label: () => Promise.resolve('entity'),
 };
 
+const mockedRole = {
+  label: () => Promise.resolve('some role'),
+};
+
 const mockedEntityType = {
   id: 'ent-type',
   baseType: 'ENTITY_TYPE',
@@ -130,8 +134,14 @@ describe('buildInstances', () => {
     expect(edges).toHaveLength(0);
   });
 
-  test('when graql answer contains a relation instance', async () => {
-    const answers = [getMockedAnswer([mockedRelationInstance], null)];
+  test.only('when graql answer contains a relation instance', async () => {
+    const rolePlayersMap = new Map([[mockedRole, [{ ...mockedEntityInstance, id: 'some entity' }]]]);
+    const relationInstance = {
+      ...mockedRelationInstance,
+      id: 'some relation',
+      rolePlayersMap: () => Promise.resolve(rolePlayersMap),
+    };
+    const answers = [getMockedAnswer([relationInstance], null)];
     const { nodes, edges } = await CDB.buildInstances(answers);
 
     expect(nodes).toHaveLength(1);
@@ -143,7 +153,7 @@ describe('buildInstances', () => {
     expect(node.label).toEqual('');
     expect(node.offset).toEqual(2);
 
-    expect(edges).toHaveLength(0);
+    expect(edges).toEqual([{ from: 'some relation', label: 'some role', to: 'some entity' }]);
   });
 
   test('when graql answer contains an attribute', async () => {

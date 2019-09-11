@@ -124,16 +124,55 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
 };
 
 /**
+ * produces the `has` edges from owners to the given attribute instance
+ * @param {Concept} attribute must be an attribute instance
+ */
+const getInstanceHasEdges = async (attribute) => {
+  const owners = (await (await attribute.owners()).collect());
+  const edges = await Promise.all(owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS)));
+  return edges;
+};
+
+/**
+ * produces the `role` edges from the given relation instance to its roleplayers
+ * @param {Concept} relation must be a relation instance
+ */
+const getInstanceRoleEdges = async (relation) => {
+  const edges = [];
+  const rpMap = await relation.rolePlayersMap();
+  const roleAndPlayersMap = Array.from(rpMap.entries());
+  // eslint-disable-next-line no-restricted-syntax
+  for (const roleAndPlayers of roleAndPlayersMap) {
+    const role = roleAndPlayers[0];
+    const players = roleAndPlayers[1];
+
+    const roleLabel = await role.label();
+    // eslint-disable-next-line no-loop-func
+    players.forEach(player => edges.push({ to: player.id, label: roleLabel, from: relation.id }));
+  }
+  return edges;
+};
+
+/**
  * produces and returns the edges for the given concept instance
  * @param {Thing} instance must be a concept instance
  */
 const getInstanceEdges = async (instance) => {
-  if (instance.isAttribute()) {
-    const owners = (await (await instance.owners()).collect());
-    const edges = await Promise.all(owners.map(owner => getEdge(owner, instance, edgeTypes.instance.HAS)));
-    return edges;
+  const edges = [];
+
+  switch (instance.baseType) {
+    case ATTRIBUTE_INSTANCE: {
+      edges.push(...await getInstanceHasEdges(instance));
+      break;
+    }
+    case RELATION_INSTANCE: {
+      edges.push(...await getInstanceRoleEdges(instance));
+      break;
+    }
+    default:
+      break;
   }
-  return [];
+  return edges;
 };
 
 /**
