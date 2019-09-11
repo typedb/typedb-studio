@@ -58,7 +58,7 @@ const getEdge = async (from, to, edgeType, label) => {
       edge = { from: from.id, to: to.id, label: 'sub' };
       break;
     default:
-      break;
+      throw new Error(`Edge type [${edgeType}] is not recoganised`);
   }
 
   return edge;
@@ -117,7 +117,7 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
       break;
     }
     default:
-      break;
+      throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
 
   return node;
@@ -170,7 +170,7 @@ const getInstanceEdges = async (instance) => {
       break;
     }
     default:
-      break;
+      throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
   return edges;
 };
@@ -226,7 +226,7 @@ const getTypeNode = async (type, graqlVar) => {
       break;
     }
     default:
-      break;
+      throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
   return node;
@@ -332,7 +332,7 @@ const getTypeEdges = async (type) => {
       edges.push(...await getTypeRelatesEdges(type));
       break;
     default:
-      break;
+      throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
   return edges;
