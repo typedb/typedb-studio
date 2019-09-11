@@ -34,5 +34,5 @@
         ]
       }
     },
-    "plugins": ["transform-runtime"]
+    "plugins": ["transform-runtime"],
   }  

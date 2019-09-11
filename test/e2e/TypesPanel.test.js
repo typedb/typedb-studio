@@ -1,60 +1,42 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace } from './helpers/actions';
+import { waitUntil, deleteKeyspace, loadKeyspace } from './helpers/utils';
 
-const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(15000);
+jest.setTimeout(100000);
 
+let app;
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
-beforeAll(async () => app.start());
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
 
 afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
+  await deleteKeyspace('gene');
 });
 
-
 describe('Types Panel', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
-  });
-
-  test('select keyspace', async () => {
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
-  });
-
-  test('load person entities', async () => {
-    app.client.click('.types-container-btn');
-
-    await sleep(1000);
-
-    app.client.click('.select-type-btn');
-
-    await sleep(1000);
-
-    app.client.click('.run-btn');
-
-    await sleep(1000);
-
-    const noOfEntities = await app.client.getText('.no-of-entities');
-    assert.equal(noOfEntities, 'entities: 30');
-
-    app.client.click('.clear-graph-btn');
-    app.client.click('.clear-editor');
+  test('selecting a type autofills Graql Editor', async () => {
+    await selectKeyspace('gene', app);
+    await app.client.click('.types-container-btn');
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('.select-type-btn')),
+      undefined, 'type button did not appear',
+    );
+    await app.client.click('.select-type-btn=person');
+    await assert.doesNotReject(
+      async () => waitUntil(async () => (await app.client.getText('.top-bar-container .CodeMirror')) === 'match $x isa person; get;'),
+      undefined, 'Graql Editor did not contain the expected query: match $x isa person; get;',
+    );
   });
 });

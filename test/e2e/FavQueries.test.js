@@ -1,152 +1,114 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace, clearEditor, waitForNotificationToDisappear, waitForNotificationWithMsgToDisappear } from './helpers/actions';
+import { waitUntil, loadKeyspace, deleteKeyspace } from './helpers/utils';
 
-const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(30000);
+jest.setTimeout(100000);
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
+const addFavouriteQuery = async (queryName, query, expectedNotification, app) => {
+  await clearEditor('.top-bar-container .CodeMirror', app);
+  await app.client.click('.top-bar-container .CodeMirror');
+  await app.client.keys(query);
+  await app.client.click('.add-fav-query-btn');
+  await app.client.click('.query-name-input');
+  await app.client.keys(queryName);
+  await app.client.click('.save-query-btn');
+  await waitForNotificationWithMsgToDisappear(expectedNotification, app);
+  await clearEditor('.top-bar-container .CodeMirror', app);
+};
+
+const deleteAllFavouriteQueries = async (app) => {
+  await app.client.click('.fav-queries-container-btn');
+
+  const existsNoFavQueries = await app.client.isExisting('.tooltip-container');
+  if (existsNoFavQueries) {
+    await app.client.click('#graph-div');
+    return;
+  }
+
+  /* eslint-disable no-await-in-loop */
+  while (await app.client.isExisting('.delete-fav-query-btn')) {
+    await app.client.click('.delete-fav-query-btn');
+    await waitForNotificationToDisappear(app);
+  }
+};
+
+let app;
+
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
-beforeAll(async () => app.start());
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+  await selectKeyspace('gene', app);
+  await deleteAllFavouriteQueries(app);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
 
 afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
+  await deleteKeyspace('gene');
 });
 
 describe('Favourite queries', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
-  });
-
-  test('select keyspace', async () => {
-    await sleep(1000);
-
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
-  });
-
-  test('add new favourite query', async () => {
-    app.client.click('.CodeMirror');
-
-    await sleep(1000);
-
-    app.client.keys('match $x isa person; get;');
-
-    app.client.click('.add-fav-query-btn');
-
-    await sleep(1000);
-
-    app.client.click('.save-query-btn');
-
-    await sleep(1000);
-
+  test('adding a new favourite query wihtout a name fails', async () => {
+    await app.client.click('.top-bar-container .CodeMirror');
+    await app.client.keys('match $x isa person; get;');
+    await app.client.click('.add-fav-query-btn');
+    await app.client.click('.save-query-btn');
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('.fav-query-name-tooltip')),
+      undefined, 'tooltip did not appear',
+    );
     assert.equal(await app.client.getText('.fav-query-name-tooltip'), 'Please write a query name');
-
-    app.client.click('.query-name-input');
-
-    await sleep(1000);
-
-    app.client.keys('get persons');
-
-    app.client.click('.save-query-btn');
-
-    await sleep(1000);
-
-    assert.equal(await app.client.getText('.toasted'), 'New query saved!\nCLOSE');
-
-    await sleep(1000);
-
-    app.client.click('.close-add-fav-query-container');
-    app.client.click('.action');
   });
 
-  test('add existing favourite query', async () => {
-    app.client.click('.add-fav-query-btn');
-
-    await sleep(1000);
-
-    app.client.click('.query-name-input');
-
-    await sleep(1000);
-
-    app.client.keys('get persons');
-
-    await sleep(1000);
-
-    app.client.click('.save-query-btn');
-
-    await sleep(1000);
-
-    assert.equal(await app.client.getText('.toasted'), 'Query name already saved. Please choose a different name.\nCLOSE');
+  test('adding a new favourite query works', async () => {
+    await addFavouriteQuery('get persons', 'match $x isa person; get;', 'New query saved!\nCLOSE', app);
   });
 
-
-  test('run favourite query', async () => {
-    app.client.click('.fav-queries-container-btn');
-
-    await sleep(1000);
-
-    app.client.click('.run-fav-query-btn');
-
-    await sleep(1000);
-
-    app.client.click('.run-btn');
-
-    await sleep(1000);
-
-    const noOfEntities = await app.client.getText('.no-of-entities');
-    await sleep(1000);
-
-    assert.equal(noOfEntities, 'entities: 30');
-
-    await app.client.click('.clear-graph-btn');
+  test('adding a favourite query with an existing name fails', async () => {
+    await addFavouriteQuery('get persons', 'match $x isa person; get;', 'New query saved!\nCLOSE', app);
+    await addFavouriteQuery('get persons', 'match $x isa person; get;', 'Query name already saved. Please choose a different name.\nCLOSE', app);
   });
 
-  test('edit favourite query', async () => {
+  test('running a favourite query works', async () => {
+    await addFavouriteQuery('get persons', 'match $x isa person; get; offset 0; limit 30;', 'New query saved!\nCLOSE', app);
     await app.client.click('.fav-queries-container-btn');
-
-    await app.client.click('.edit-fav-query-btn');
-
-    await app.client.click('.CodeMirror-focused');
-
-    await app.client.keys(['ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'limit 1; ']);
-
-    await app.client.click('.save-edited-fav-query');
-
-    await app.client.click('.action');
-
     await app.client.click('.run-fav-query-btn');
-
-    const noOfEntities = await app.client.getText('.no-of-entities');
-
-    await assert.equal(noOfEntities, 'entities: 0');
-
-    await assert.equal((await app.client.getText('.CodeMirror'))[0], ' match $x isa person; limit 1; get;');
-    await assert.equal((await app.client.getText('.CodeMirror'))[1], 'match $x isa person; limit 1; get;');
+    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0].trim(), 'match $x isa person; get; offset 0; limit 30;');
   });
 
-  test('delete favourite query', async () => {
-    await sleep(5000);
+  test('editing a favourite query works', async () => {
+    await addFavouriteQuery('get persons', 'match $x isa person; get; offset 0; limit 1;', 'New query saved!\nCLOSE', app);
+    await app.client.click('.fav-queries-container-btn');
+    await app.client.click('.edit-fav-query-btn');
+    await clearEditor('.fav-query-item .CodeMirror', app);
+    await app.client.keys('match $x isa person; get; offset 0; limit 2;');
+    await app.client.click('.save-edited-fav-query');
+    await app.client.click('.run-fav-query-btn');
+    assert.equal((await app.client.getText('.top-bar-container .CodeMirror'))[0].trim(), 'match $x isa person; get; offset 0; limit 2;');
+  });
 
+  test('deleting a favourite query works', async () => {
+    await selectKeyspace('gene', app);
+    await deleteAllFavouriteQueries(app);
+    await addFavouriteQuery('get persons', 'match $x isa person; get; offset 0; limit 1;', 'New query saved!\nCLOSE', app);
+    await app.client.click('.fav-queries-container-btn');
     await app.client.click('.delete-fav-query-btn');
-
-    await sleep(3000);
-
-    await assert.equal(await app.client.getText('.toasted'), 'Query get persons has been deleted from saved queries.\nCLOSE');
-
-    await sleep(1000);
+    await waitForNotificationWithMsgToDisappear('Query get persons has been deleted from saved queries.\nCLOSE', app);
   });
+
+  // test('saving a miltiline query as a favourite query retains line breaks', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('running a miltiline favourite query shows up in main editor while retaining break lines', () => {
+  //   assert.equal(true, true);
+  // });
 });

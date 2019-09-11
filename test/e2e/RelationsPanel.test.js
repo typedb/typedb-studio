@@ -1,57 +1,40 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace, runQuery, clickOnNode } from './helpers/actions';
+import { getNodePosition } from './helpers/canvas';
+import { waitUntil, loadKeyspace, deleteKeyspace } from './helpers/utils';
 
-const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(40000);
+jest.setTimeout(100000);
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
+let app;
+
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
-beforeAll(async () => app.start());
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
 
 afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
+  await deleteKeyspace('gene');
 });
 
 describe('Relations Panel', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
-  });
-
-  test('select keyspace', async () => {
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
-  });
-
   test('click on a node', async () => {
-    await app.client.click('.CodeMirror');
-
-    await app.client.keys('match $x isa person; get; limit 1;');
-
-    await sleep(1000);
-
-    await app.client.click('.run-btn');
-
-    await sleep(15000);
-
-    await app.client.click('#graph-div');
-
-    await sleep(10000);
-
-    expect((await app.client.getText('.role-btn-text')).length).toBeGreaterThan(0);
-    expect((await app.client.getText('.relation-item')).length).toBeGreaterThan(0);
+    await selectKeyspace('gene', app);
+    await runQuery('match $x isa person; $r($x) isa parentship; get $x; offset 0; limit 1;', app);
+    const targetNodeCoordinates = await getNodePosition({ by: 'var', value: 'x' }, app);
+    await clickOnNode(targetNodeCoordinates, app);
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('.role-btn-text') && app.client.isExisting('.relation-item')),
+      undefined, 'relation panel items did not appear',
+    );
   });
 });
