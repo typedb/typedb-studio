@@ -148,7 +148,7 @@ const getInstanceRoleEdges = async (relation) => {
 
     const roleLabel = await role.label();
     // eslint-disable-next-line no-loop-func
-    players.forEach(player => edges.push({ to: player.id, label: roleLabel, from: relation.id }));
+    players.forEach(player => edges.push(getEdge(relation, player, edgeTypes.instance.relates, roleLabel)));
   }
   return edges;
 };
