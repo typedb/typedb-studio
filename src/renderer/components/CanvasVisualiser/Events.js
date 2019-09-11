@@ -1,12 +1,10 @@
-const collect = (array, current) => array.concat(current);
 let selectedNodes = null;
 
 export function dimNotHighlightedNodesAndEdges(connectedNodes, connectedEdges) {
   const nodesToUpdate =
   this.getNode()
     .filter(x => !connectedNodes.includes(x.id))
-    .map(x => ({ id: x.id, color: x.color.dimmedColor, font: { color: x.font.dimmedColor } }))
-    .reduce(collect, []);
+    .map(x => ({ id: x.id, color: x.color.dimmedColor, font: { color: x.font.dimmedColor } }));
 
   const edgesToUpdate =
   this.getEdge()
@@ -16,8 +14,7 @@ export function dimNotHighlightedNodesAndEdges(connectedNodes, connectedEdges) {
         color: edge.color.color.replace('1)', '0.2)'),
         highlight: edge.color.highlight,
         hover: edge.color.hover,
-      } }))
-    .reduce(collect, []);
+      } }));
 
   this.updateEdge(edgesToUpdate);
   this.updateNode(nodesToUpdate);
@@ -27,8 +24,7 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
   const nodesToUpdate =
   this.getNode()
     .filter(x => !connectedNodes.includes(x.id))
-    .map(x => ({ id: x.id, color: x.colorClone, font: x.fontClone }))
-    .reduce(collect, []);
+    .map(x => ({ id: x.id, color: x.colorClone, font: x.fontClone }));
 
   const edgesToUpdate =
   this.getEdge()
@@ -38,7 +34,7 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
         color: edge.color.color.replace('0.2)', '1)'),
         highlight: edge.color.highlight,
         hover: edge.color.hover,
-      } })).reduce(collect, []);
+      } }));
 
   this.updateNode(nodesToUpdate);
   this.updateEdge(edgesToUpdate);
@@ -47,8 +43,7 @@ export function setDefaultColoursOnDimmedElements(connectedNodes, connectedEdges
 export function showEdgeLabels(edges) {
   const edgesToUpdate =
   edges.map(id => this.getEdge(id))
-    .map(edge => ({ id: edge.id, arrows: { to: { enabled: true, scaleFactor: 0.3 } }, label: edge.hiddenLabel }))
-    .reduce(collect, []);
+    .map(edge => ({ id: edge.id, arrows: { to: { enabled: true, scaleFactor: 0.3 } }, label: edge.hiddenLabel }));
 
   this.updateEdge(edgesToUpdate);
 }
@@ -56,8 +51,7 @@ export function showEdgeLabels(edges) {
 export function hideEdgeLabels(edges) {
   const edgesToUpdate =
   edges.map(id => this.getEdge(id))
-    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }))
-    .reduce(collect, []);
+    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }));
 
   this.updateEdge(edgesToUpdate);
 }
@@ -66,8 +60,7 @@ export function removeLabelsOnNotConncetedEdges(nodeId) {
   const connectedEdges = this.getNetwork().getConnectedEdges(nodeId);
   const edgesToUpdate = this.getEdge()
     .filter(x => !connectedEdges.includes(x.id))
-    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }))
-    .reduce(collect, []);
+    .map(edge => ({ id: edge.id, arrows: { to: { enabled: false } }, label: '' }));
 
   this.updateEdge(edgesToUpdate);
 }
