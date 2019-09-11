@@ -223,25 +223,25 @@ workflows:
       - assemble-linux:
           filters:
             branches:
-              only: master
+              only: release-1.2.3
           requires:
             - test-linux
             - test-mac
       - assemble-mac:
           filters:
             branches:
-              only: master
+              only: release-1.2.3
           requires:
             - test-linux
             - test-mac
       - assemble-windows:
           filters:
             branches:
-              only: master
+              only: release-1.2.3
       - cache-distribution:
           filters:
             branches:
-              only: master
+              only: release-1.2.3
           requires:
             - assemble-linux
             - assemble-mac
@@ -249,7 +249,7 @@ workflows:
       - release-approval:
           filters:
             branches:
-              only: master
+              only: release-1.2.3
           requires:
             - cache-distribution
 
