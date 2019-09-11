@@ -40,22 +40,45 @@ const shouldVisualiseType = async (type) => {
 };
 
 const getEdge = async (from, to, edgeType, label) => {
-  let edge;
+  const edge = { from: from.id, to: to.id };
 
   switch (edgeType) {
+    // TYPES
     case edgeTypes.type.PLAYS:
     case edgeTypes.type.RELATES:
-    case edgeTypes.instance.RELATES:
-    case edgeTypes.instance.PLAYS:
-      edge = { from: from.id, to: to.id, label };
+      edge.label = label;
+      edge.arrows = { to: { enabled: true } };
+      edge.options = { hideLabel: false, hideArrow: false };
       break;
     case edgeTypes.type.HAS:
-    case edgeTypes.instance.HAS:
-      edge = { from: from.id, to: to.id, label: 'has' };
+      edge.label = 'has';
+      edge.arrows = { to: { enabled: true } };
+      edge.options = { hideLabel: false, hideArrow: false };
       break;
     case edgeTypes.type.SUB:
+      edge.label = 'sub';
+      edge.arrows = { to: { enabled: true } };
+      edge.options = { hideLabel: false, hideArrow: false };
+      break;
+    // INSTANCES
+    case edgeTypes.instance.RELATES:
+    case edgeTypes.instance.PLAYS:
+      edge.label = '';
+      edge.hiddenLabel = label;
+      edge.arrows = { to: { enable: false } };
+      edge.options = { hideLabel: true, hideArrow: true };
+      break;
+    case edgeTypes.instance.HAS:
+      edge.label = '';
+      edge.hiddenLabel = 'has';
+      edge.arrows = { to: { enable: false } };
+      edge.options = { hideLabel: true, hideArrow: true };
+      break;
     case edgeTypes.instance.SUB:
-      edge = { from: from.id, to: to.id, label: 'sub' };
+      edge.label = '';
+      edge.hiddenLabel = 'sub';
+      edge.arrows = { to: { enable: false } };
+      edge.options = { hideLabel: true, hideArrow: true };
       break;
     default:
       break;
