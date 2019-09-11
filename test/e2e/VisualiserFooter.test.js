@@ -1,80 +1,46 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace, runQuery } from './helpers/actions';
+import { deleteKeyspace, loadKeyspace } from './helpers/utils';
 
-jest.setTimeout(30000);
+jest.setTimeout(100000);
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
+let app;
+
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
-beforeAll(async () => app.start());
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
 
 afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
+  await deleteKeyspace('gene');
 });
 
 describe('Canvas Data', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
+  test('Footer shows correct number of entities', async () => {
+    await selectKeyspace('gene', app);
+    await runQuery('match $x isa person; get; offset 0; limit 1;', app);
+    assert.equal(await app.client.getText('.no-of-entities'), 'entities: 1');
   });
 
-  test('select keyspace', async () => {
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
+  test('Footer shows correct number of attributes', async () => {
+    await selectKeyspace('gene', app);
+    await runQuery('match $x isa age; get; offset 0; limit 1;', app);
+    assert.equal(await app.client.getText('.no-of-attributes'), 'attributes: 1');
   });
 
-  test('entity', async () => {
-    await app.client.click('.CodeMirror');
-
-    await app.client.keys('match $x isa person; get; limit 1;');
-
-    await app.client.click('.run-btn');
-
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-entities')) !== 'entities: 0', 25000, 'wait for canvas data to be updated');
-
-    const noOfEntities = await app.client.getText('.no-of-entities');
-    assert.equal(noOfEntities, 'entities: 1');
-
-    await app.client.click('.clear-editor');
-  });
-  test('attribute', async () => {
-    await app.client.click('.CodeMirror');
-
-    await app.client.keys('match $x isa age; get; limit 1;');
-
-    await app.client.click('.run-btn');
-
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-attributes')) !== 'attributes: 0', 25000, 'wait for canvas data to be updated');
-
-    const noOfAttributes = await app.client.getText('.no-of-attributes');
-    assert.equal(noOfAttributes, 'attributes: 1');
-
-    await app.client.click('.clear-editor');
-  });
-  test('relation', async () => {
-    await app.client.click('.CodeMirror');
-
-    await app.client.keys('match $x isa parentship; get; limit 1;');
-
-    await app.client.click('.run-btn');
-
-    await app.client.waitUntil(async () => (await app.client.getText('.no-of-relations')) !== 'relations: 0', 25000, 'wait for canvas data to be updated');
-
-    const noOfRelations = await app.client.getText('.no-of-relations');
-    assert.equal(noOfRelations, 'relations: 1');
-
-    await app.client.click('.clear-editor');
+  test('Footer shows correct number of relations', async () => {
+    await selectKeyspace('gene', app);
+    await runQuery('match $x isa parentship; get; limit 1;', app);
+    assert.equal(await app.client.getText('.no-of-relations'), 'relations: 1');
   });
 });

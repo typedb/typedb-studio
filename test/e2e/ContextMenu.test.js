@@ -1,61 +1,93 @@
-const Application = require('spectron').Application;
-const assert = require('assert');
-const electronPath = require('electron'); // Require Electron from the binaries included in node_modules.
-const path = require('path');
+import assert from 'assert';
+import { waitUntil, loadKeyspace, deleteKeyspace } from './helpers/utils';
+import { startApp, stopApp } from './helpers/hooks';
+import { selectKeyspace, waitForQueryCompletion } from './helpers/actions';
 
-const sleep = time => new Promise(r => setTimeout(r, time));
-jest.setTimeout(30000);
+jest.setTimeout(100000);
 
-const app = new Application({
-  path: electronPath,
-  args: [path.join(__dirname, '../../dist/electron/main.js')],
+let app;
+
+beforeAll(() => {
+  loadKeyspace('gene');
 });
 
-beforeAll(async () => app.start());
+beforeEach(async () => {
+  app = await startApp();
+  const isAppVisible = await app.browserWindow.isVisible();
+  assert.equal(isAppVisible, true);
+});
+
+afterEach(async () => {
+  await stopApp(app);
+});
 
 afterAll(async () => {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-  return undefined;
+  await deleteKeyspace('gene');
 });
 
-describe('Favourite queries', () => {
-  test('initialize workbase', async () => {
-    const visible = await app.browserWindow.isVisible();
-    assert.equal(visible, true);
+describe('Context Menu', () => {
+  test('right clicking on an empty canvas does not open the context menu', async () => {
+    await selectKeyspace('gene', app);
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('#graph-div'))
+      , undefined, 'canvas is not present',
+    );
+    await app.client.rightClick('#graph-div');
+    await assert.doesNotReject(
+      async () => waitUntil(async () => app.client.isExisting('#context-menu')),
+      undefined, 'context menu did not appear',
+    );
+    await assert.doesNotReject(
+      async () => waitUntil(async () => (await app.client.getCssProperty('#context-menu', 'display')).value === 'none'),
+      undefined, 'context menu was displayed',
+    );
   });
 
-  test('select keyspace', async () => {
-    app.client.click('.keyspaces');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'keyspace');
-
-    app.client.click('#gene');
-
-    assert.equal(await app.client.getText('.keyspaces'), 'gene');
-  });
-
-  test('right click on canvas', async () => {
-    app.client.click('.CodeMirror');
-
-    await sleep(1000);
-
-    app.client.keys('match $x isa person; get; limit 1;');
-
-    await sleep(1000);
-
-    app.client.click('.run-btn');
-
-    await sleep(4000);
-
-    app.client.rightClick('#graph-div', 10, 10);
-
-    await sleep(2000);
-
+  test.skip('right clicking on canvas (not a node) after running a query opens the context menu with disabled options', async () => {
+    await selectKeyspace('gene', app);
+    await app.client.click('.top-bar-container .CodeMirror');
+    await app.client.keys('match $x isa person; get; limit 1;');
+    await app.client.click('.run-btn');
+    waitForQueryCompletion(app);
+    await app.client.rightClick('#graph-div', 10, 10);
+    await assert.doesNotReject(
+      async () => waitUntil(async () => (await app.client.getCssProperty('#context-menu', 'display')).value !== 'none'),
+      undefined, 'context menu was not displayed',
+    );
     assert.equal(await app.client.getText('#context-menu'), 'Hide\nExplain\nShortest Path');
-    assert.equal(await app.client.getAttribute('.delete-nodes', 'class'), 'context-action delete-nodes disabled');
-    assert.equal(await app.client.getAttribute('.explain-node', 'class'), 'context-action explain-node disabled');
-    assert.equal(await app.client.getAttribute('.compute-shortest-path', 'class'), 'context-action compute-shortest-path disabled');
+    const deleteClasses = await app.client.getAttribute('.delete-nodes', 'class');
+    assert.equal(deleteClasses.includes('disabled'), true);
+    const explainClasses = await app.client.getAttribute('.explain-node', 'class');
+    assert.equal(explainClasses.includes('disabled'), true);
+    const shortestPathClasses = await app.client.getAttribute('.delete-nodes', 'class');
+    assert.equal(shortestPathClasses.includes('disabled'), true);
   });
+
+  // test('when visualisng schema concepts, right clicking does not open the context menu ', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('when only one node is selected, Compute Shortest Path remains hidden', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('when the selected node is not inferred, Explain remains hidden', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('Hide works for a single node selection', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('Hide works for a multi node selection', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('Explain works', () => {
+  //   assert.equal(true, true);
+  // });
+
+  // test('Compute Shortest Path works', () => {
+  //   assert.equal(true, true);
+  // });
 });
