@@ -153,7 +153,12 @@ describe('buildInstances', () => {
     expect(node.label).toEqual('');
     expect(node.offset).toEqual(2);
 
-    expect(edges).toEqual([{ from: 'some relation', label: 'some role', to: 'some entity' }]);
+    expect(edges).toEqual([{ arrows: { to: { enable: false } },
+      from: 'some relation',
+      hiddenLabel: 'some role',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'some entity' }]);
   });
 
   test('when graql answer contains an attribute', async () => {
