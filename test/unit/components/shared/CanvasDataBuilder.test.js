@@ -134,7 +134,7 @@ describe('buildInstances', () => {
     expect(edges).toHaveLength(0);
   });
 
-  test.only('when graql answer contains a relation instance', async () => {
+  test('when graql answer contains a relation instance', async () => {
     const rolePlayersMap = new Map([[mockedRole, [{ ...mockedEntityInstance, id: 'some entity' }]]]);
     const relationInstance = {
       ...mockedRelationInstance,
