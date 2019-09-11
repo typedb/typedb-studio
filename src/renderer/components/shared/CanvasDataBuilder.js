@@ -45,17 +45,23 @@ const getEdge = async (from, to, edgeType, label) => {
   switch (edgeType) {
     case edgeTypes.type.PLAYS:
     case edgeTypes.type.RELATES:
+      edge = { from: from.id, to: to.id, label, options: { hideLabel: false, hideArrow: false } };
+      break;
     case edgeTypes.instance.RELATES:
     case edgeTypes.instance.PLAYS:
-      edge = { from: from.id, to: to.id, label };
+      edge = { from: from.id, to: to.id, label, options: { hideLabel: true, hideArrow: true } };
       break;
     case edgeTypes.type.HAS:
+      edge = { from: from.id, to: to.id, label: 'has', options: { hideLabel: false, hideArrow: false } };
+      break;
     case edgeTypes.instance.HAS:
-      edge = { from: from.id, to: to.id, label: 'has' };
+      edge = { from: from.id, to: to.id, label: 'has', options: { hideLabel: true, hideArrow: true } };
       break;
     case edgeTypes.type.SUB:
+      edge = { from: from.id, to: to.id, label: 'sub', options: { hideLabel: false, hideArrow: false } };
+      break;
     case edgeTypes.instance.SUB:
-      edge = { from: from.id, to: to.id, label: 'sub' };
+      edge = { from: from.id, to: to.id, label: 'sub', options: { hideLabel: true, hideArrow: true } };
       break;
     default:
       break;
