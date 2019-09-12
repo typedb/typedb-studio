@@ -222,6 +222,8 @@ const buildInstances = async (answers) => {
     return item;
   });
 
+  data = data.filter((item, index, self) => index === self.findIndex(t => t.concept.id === item.concept.id));
+
   const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
   const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept)));
 
