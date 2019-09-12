@@ -159,8 +159,12 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
  * @param {Concept} attribute must be an attribute instance
  */
 const getInstanceHasEdges = async (attribute) => {
+<<<<<<< HEAD
   // 0 // use Promise.all
   const owners = await (await attribute.owners()).collect();
+=======
+  const owners = (await (await attribute.owners()).collect());
+>>>>>>> ef75729322ec517dfdacfafccc1439a2291382de
   const edges = owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS));
   return edges;
 };
@@ -169,6 +173,7 @@ const getInstanceHasEdges = async (attribute) => {
  * produces the `role` edges from the given relation instance to its roleplayers
  * @param {Concept} relation must be a relation instance
  */
+<<<<<<< HEAD
 // eslint-disable-next-line no-unused-vars
 const getInstanceRoleEdges = async (relation) => {
   const rpMap = await relation.rolePlayersMap();
@@ -179,6 +184,19 @@ const getInstanceRoleEdges = async (relation) => {
     )))
   ).reduce(collect, []);
   return [edges];
+=======
+const getInstanceRoleEdges = async (relation) => {
+  const edges = [];
+  const rpMap = await relation.rolePlayersMap();
+  const roleAndPlayersMap = Array.from(rpMap.entries());
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [role, players] of roleAndPlayersMap) {
+    const roleLabel = await role.label();
+    // eslint-disable-next-line no-loop-func
+    players.forEach(player => edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, roleLabel)));
+  }
+  return edges;
+>>>>>>> ef75729322ec517dfdacfafccc1439a2291382de
 };
 
 /**
@@ -187,6 +205,10 @@ const getInstanceRoleEdges = async (relation) => {
  */
 const getInstanceEdges = async (instance) => {
   const edges = [];
+<<<<<<< HEAD
+=======
+
+>>>>>>> ef75729322ec517dfdacfafccc1439a2291382de
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
       edges.push(...await getInstanceHasEdges(instance));
@@ -198,7 +220,11 @@ const getInstanceEdges = async (instance) => {
     default:
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
+<<<<<<< HEAD
   return edges.reduce(collect, []);
+=======
+  return edges;
+>>>>>>> ef75729322ec517dfdacfafccc1439a2291382de
 };
 
 /**
@@ -309,6 +335,7 @@ const getTypeAttributeEdges = async (type) => {
  */
 const getTypePlayEdges = async (type) => {
   const playRoles = await (await type.playing()).collect();
+<<<<<<< HEAD
   const edges = (await Promise.all(playRoles.map(role =>
     role.label().then(label =>
       role.relations().then(relationsIterator =>
@@ -319,6 +346,18 @@ const getTypePlayEdges = async (type) => {
     ),
   ))).reduce(collect, []);
   return edges;
+=======
+
+  for (let i = 0; i < playRoles.length; i += 1) {
+    const role = playRoles[i];
+    const roleLabel = await role.label();
+    const relations = await (await role.relations()).collect();
+    const edges = relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel));
+    return edges;
+  }
+
+  return [];
+>>>>>>> ef75729322ec517dfdacfafccc1439a2291382de
 };
 
 /**
