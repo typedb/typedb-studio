@@ -30,15 +30,12 @@ const getConceptLabel = async (concept) => {
 
 const shouldVisualiseInstance = async (instance) => {
   let shouldSkip = false;
-  // 1 // .type() is called on the same concept more than once.
-  // we should call it only once and store the result in a variable that's accessible from here
   if ((await (await instance.type()).isImplicit())) shouldSkip = true;
   return !shouldSkip;
 };
 
 const shouldVisualiseType = async (type) => {
   let shouldSkip = false;
-  // 1 // .isImplicit() is called on the same concept more than once.
   if (await type.isImplicit()) shouldSkip = true;
   else if (META_LABELS.has(await getConceptLabel(type))) shouldSkip = true;
   return !shouldSkip;
@@ -52,16 +49,16 @@ const getEdge = (from, to, edgeType, label) => {
     case edgeTypes.type.PLAYS:
     case edgeTypes.type.RELATES:
       edge.label = label;
-      edge.arrows = { to: { enabled: true } }; // 2 // this should come from the facade
+      edge.arrows = { to: { enabled: true } };
       edge.options = { hideLabel: false, hideArrow: false };
       break;
     case edgeTypes.type.HAS:
-      edge.label = 'has'; // 2 // this should be a constant
+      edge.label = 'has';
       edge.arrows = { to: { enabled: true } };
       edge.options = { hideLabel: false, hideArrow: false };
       break;
     case edgeTypes.type.SUB:
-      edge.label = 'sub'; // 2 // this should be a constant
+      edge.label = 'sub';
       edge.arrows = { to: { enabled: true } };
       edge.options = { hideLabel: false, hideArrow: false };
       break;
@@ -125,9 +122,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
  * @param {ConceptMap[]} explanation
  */
 const getInstanceNode = async (instance, graqlVar, explanation) => {
-  // 1 // we don't have to resolve this right away.
-  // we can call it here and resolve its promise after the switch case
-  // this would make the function faster in case of ATTRIBUTE_INSTANCE
   const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
 
   switch (instance.baseType) {
