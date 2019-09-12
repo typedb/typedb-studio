@@ -39,7 +39,7 @@ const shouldVisualiseType = async (type) => {
   return !shouldSkip;
 };
 
-const getEdge = async (from, to, edgeType, label) => {
+const getEdge = (from, to, edgeType, label) => {
   const edge = { from: from.id, to: to.id };
 
   switch (edgeType) {
@@ -81,7 +81,7 @@ const getEdge = async (from, to, edgeType, label) => {
       edge.options = { hideLabel: true, hideArrow: true };
       break;
     default:
-      break;
+      throw new Error(`Edge type [${edgeType}] is not recoganised`);
   }
 
   return edge;
@@ -140,10 +140,37 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
       break;
     }
     default:
-      break;
+      throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
 
   return node;
+};
+
+/**
+ * produces the `has` edges from owners to the given attribute instance
+ * @param {Concept} attribute must be an attribute instance
+ */
+const getInstanceHasEdges = async (attribute) => {
+  const owners = (await (await attribute.owners()).collect());
+  const edges = owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS));
+  return edges;
+};
+
+/**
+ * produces the `role` edges from the given relation instance to its roleplayers
+ * @param {Concept} relation must be a relation instance
+ */
+const getInstanceRoleEdges = async (relation) => {
+  const edges = [];
+  const rpMap = await relation.rolePlayersMap();
+  const roleAndPlayersMap = Array.from(rpMap.entries());
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [role, players] of roleAndPlayersMap) {
+    const roleLabel = await role.label();
+    // eslint-disable-next-line no-loop-func
+    players.forEach(player => edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, roleLabel)));
+  }
+  return edges;
 };
 
 /**
@@ -151,12 +178,20 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
  * @param {Thing} instance must be a concept instance
  */
 const getInstanceEdges = async (instance) => {
-  if (instance.isAttribute()) {
-    const owners = (await (await instance.owners()).collect());
-    const edges = await Promise.all(owners.map(owner => getEdge(owner, instance, edgeTypes.instance.HAS)));
-    return edges;
+  const edges = [];
+
+  switch (instance.baseType) {
+    case ATTRIBUTE_INSTANCE:
+      edges.push(...await getInstanceHasEdges(instance));
+      break;
+    case RELATION_INSTANCE:
+      edges.push(...await getInstanceRoleEdges(instance));
+      break;
+    case ENTITY_INSTANCE: break;
+    default:
+      throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
-  return [];
+  return edges;
 };
 
 /**
@@ -210,7 +245,7 @@ const getTypeNode = async (type, graqlVar) => {
       break;
     }
     default:
-      break;
+      throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
   return node;
@@ -224,7 +259,7 @@ const getTypeNode = async (type, graqlVar) => {
 const getTypeSubEdge = async (type) => {
   const sup = await type.sup();
   const supLabel = await sup.label();
-  if (sup && !META_LABELS.has(supLabel)) return [await getEdge(type, sup, edgeTypes.type.SUB)];
+  if (sup && !META_LABELS.has(supLabel)) return [getEdge(type, sup, edgeTypes.type.SUB)];
   return [];
 };
 
@@ -243,11 +278,11 @@ const getTypeAttributeEdges = async (type) => {
     const typesAttrs = await (await type.attributes()).collect();
 
     if (META_LABELS.has(supLabel)) {
-      edges = await Promise.all(typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS)));
+      edges = typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
     } else { // if type has a super type which is not a META_CONCEPT construct edges to attributes except those which are inherited from its super type
       const supAttrIds = (await (await sup.attributes()).collect()).map(x => x.id);
       const supAttrs = typesAttrs.filter(attr => !supAttrIds.includes(attr.id));
-      edges = await Promise.all(supAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS)));
+      edges = supAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
     }
   }
 
@@ -266,7 +301,7 @@ const getTypePlayEdges = async (type) => {
     const role = playRoles[i];
     const roleLabel = await role.label();
     const relations = await (await role.relations()).collect();
-    const edges = await Promise.all(relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel)));
+    const edges = relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel));
     return edges;
   }
 
@@ -316,7 +351,7 @@ const getTypeEdges = async (type) => {
       edges.push(...await getTypeRelatesEdges(type));
       break;
     default:
-      break;
+      throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
   return edges;
@@ -392,7 +427,7 @@ const buildRPInstances = async (answers, shouldLimit, graknTx) => {
           for (let l = 0; l < roleplayers.length; l += 1) {
             const rp = roleplayers[l];
             if (rp.isThing() && await shouldVisualiseInstance(rp)) {
-              edges.push(await getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
+              edges.push(getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
               nodes.push(await getInstanceNode(rp, graqlVar, answer.explanation));
             }
           }
