@@ -4920,10 +4920,9 @@ graceful-fs@^4.1.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6,
   resolved "https://registry.yarnpkg.com/graceful-readlink/-/graceful-readlink-1.0.1.tgz#4cafad76bc62f02fa039b2f94e9a3dd3a391a725"
   integrity sha1-TK+tdrxi8C+gObL5Tpo906ORpyU=
 
-grakn-client@1.5.5:
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/grakn-client/-/grakn-client-1.5.5.tgz#176551271ec5f7af06a40962a6dfbd25800a3b6a"
-  integrity sha512-Yl1EMzcBK9wMutBg+v7tIdNUH3uGDOK4hdXvFDnd8jVU6GMa2sHQ1tWKb6YFcpzRTsS+Qh5GPXaAHUFl5d7Dyw==
+"grakn-client@https://repo.grakn.ai/repository/npm-snapshot-group/grakn-client/-/grakn-client-1.5.4-cb3c6c761623ebcdfac5ccf1ed29c82b0b9ad98b.tgz":
+  version "1.5.4-cb3c6c761623ebcdfac5ccf1ed29c82b0b9ad98b"
+  resolved "https://repo.grakn.ai/repository/npm-snapshot-group/grakn-client/-/grakn-client-1.5.4-cb3c6c761623ebcdfac5ccf1ed29c82b0b9ad98b.tgz#255126d9e0391a0306a555d5a5d09c9907fb0877"
   dependencies:
     google-protobuf "^3.6.0"
     grpc "^1.22.2"
