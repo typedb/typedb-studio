@@ -3,6 +3,8 @@ import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
 const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
+const collect = (array, current) => array.concat(current);
+
 const edgeTypes = {
   type: {
     HAS: 'HAS_TYPE',
@@ -160,17 +162,16 @@ const getInstanceHasEdges = async (attribute) => {
  * produces the `role` edges from the given relation instance to its roleplayers
  * @param {Concept} relation must be a relation instance
  */
+// eslint-disable-next-line no-unused-vars
 const getInstanceRoleEdges = async (relation) => {
-  const edges = [];
   const rpMap = await relation.rolePlayersMap();
-  const roleAndPlayersMap = Array.from(rpMap.entries());
-  // eslint-disable-next-line no-restricted-syntax
-  for (const [role, players] of roleAndPlayersMap) {
-    const roleLabel = await role.label();
-    // eslint-disable-next-line no-loop-func
-    players.forEach(player => edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, roleLabel)));
-  }
-  return edges;
+  const rpMapEntries = Array.from(rpMap.entries());
+  const edges = (await Promise.all(
+    rpMapEntries.map(([role, players]) => role.label().then(label =>
+      Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, label)),
+    )))
+  ).reduce(collect, []);
+  return [edges];
 };
 
 /**
@@ -179,7 +180,6 @@ const getInstanceRoleEdges = async (relation) => {
  */
 const getInstanceEdges = async (instance) => {
   const edges = [];
-
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
       edges.push(...await getInstanceHasEdges(instance));
@@ -191,7 +191,7 @@ const getInstanceEdges = async (instance) => {
     default:
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
-  return edges;
+  return edges.reduce(collect, []);
 };
 
 /**
@@ -200,21 +200,27 @@ const getInstanceEdges = async (instance) => {
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
 const buildInstances = async (answers) => {
-  const nodes = [];
-  const edges = [];
+  let data = answers.map((answerGroup) => {
+    const explanation = answerGroup.explanation;
+    return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
+      graqlVar,
+      concept,
+      explanation,
+    }));
+  }).reduce(collect, []);
 
-  for (let i = 0; i < answers.length; i += 1) {
-    const answer = answers[i];
-    const answersGroup = Array.from(answer.map().entries());
+  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
 
-    for (let j = 0; j < answersGroup.length; j += 1) {
-      const [graqlVar, instance] = answersGroup[j];
-      if (instance.isThing() && await shouldVisualiseInstance(instance)) {
-        nodes.push(await getInstanceNode(instance, graqlVar, answer.explanation));
-        edges.push(...await getInstanceEdges(instance));
-      }
-    }
-  }
+  data = data.map((item, index) => {
+    item.shouldVisualise = shouldVisualiseVals[index];
+    return item;
+  });
+
+  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
+  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept)));
+
+  const nodes = await nodesPromises;
+  const edges = (await edgesPromises).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -296,16 +302,16 @@ const getTypeAttributeEdges = async (type) => {
  */
 const getTypePlayEdges = async (type) => {
   const playRoles = await (await type.playing()).collect();
-
-  for (let i = 0; i < playRoles.length; i += 1) {
-    const role = playRoles[i];
-    const roleLabel = await role.label();
-    const relations = await (await role.relations()).collect();
-    const edges = relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, roleLabel));
-    return edges;
-  }
-
-  return [];
+  const edges = (await Promise.all(playRoles.map(role =>
+    role.label().then(label =>
+      role.relations().then(relationsIterator =>
+        relationsIterator.collect().then(relations =>
+          relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, label)),
+        ),
+      ),
+    ),
+  ))).reduce(collect, []);
+  return edges;
 };
 
 /**
@@ -313,19 +319,15 @@ const getTypePlayEdges = async (type) => {
  * @param {Concept} type must be a concept relation type
  */
 const getTypeRelatesEdges = async (type) => {
-  let edges = [];
-
   const roles = await (await type.roles()).collect();
 
-  for (let i = 0; i < roles.length; i += 1) {
-    const role = roles[i];
-    const roleLabel = await role.label();
-    const roleplayers = await (await role.players()).collect();
-    // eslint-disable-next-line no-loop-func
-    roleplayers.forEach((rp) => { edges.push(getEdge(type, rp, edgeTypes.type.RELATES, roleLabel)); });
-  }
-
-  edges = await Promise.all(edges);
+  const edges = (await Promise.all(roles.map(role => role.label().then(label =>
+    role.players().then(playersIterator =>
+      playersIterator.collect().then(players =>
+        players.map(player => getEdge(type, player, edgeTypes.type.RELATES, label)),
+      ),
+    ),
+  )))).reduce(collect, []);
 
   return edges;
 };
@@ -377,19 +379,23 @@ const buildTypes = async (answers) => {
   const nodes = [];
   const edges = [];
 
-  for (let i = 0; i < answers.length; i += 1) {
-    const answer = answers[i];
-    const answersGroup = Array.from(answer.map().entries());
+  let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
+    graqlVar,
+    concept,
+  }))).reduce(collect, []);
 
-    for (let j = 0; j < answersGroup.length; j += 1) {
-      const [graqlVar, type] = answersGroup[j];
-      if (type.isType() && await shouldVisualiseType(type)) {
-        const typeData = await buildType(type, graqlVar);
-        nodes.push(typeData.node);
-        edges.push(...typeData.edges);
-      }
-    }
-  }
+  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isType() && shouldVisualiseType(item.concept)));
+
+  data = data.map((item, index) => {
+    item.shouldVisualise = shouldVisualiseVals[index];
+    return item;
+  });
+
+  const typeData = await Promise.all(data.filter(item => item.shouldVisualise).map(item => buildType(item.concept, item.graqlVar)));
+  typeData.forEach((item) => {
+    nodes.push(item.node);
+    edges.push(...item.edges);
+  });
 
   return { nodes, edges };
 };
