@@ -130,7 +130,7 @@ export default {
         edges.push(...typesData.edges);
 
         if (shouldLoadRPs) {
-          const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+          const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, graknTx);
           nodes.push(...rpData.nodes);
           edges.push(...rpData.edges);
         }

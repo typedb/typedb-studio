@@ -1,4 +1,5 @@
 import Visualiser from './Visualiser';
+import { sameEdgeCriteria } from '../shared/SharedUtils';
 /*
 * Creates a new object that can be used to interact with the visualiser graph
 * given a specific container(DOM element)
@@ -58,9 +59,13 @@ function addToCanvas(data) {
     this.container.visualiser.addNode(styledNode);
   });
 
+  const currentEdges = this.getAllEdges();
   data.edges.forEach((edge) => {
-    if (!edge.color) { Object.assign(edge, this.style.computeEdgeStyle(edge)); }
-    this.container.visualiser.addEdge(edge);
+    const isDuplicate = currentEdges.find(currentEdge => sameEdgeCriteria(currentEdge, edge)) !== undefined;
+    if (!isDuplicate) {
+      if (!edge.color) { Object.assign(edge, this.style.computeEdgeStyle(edge)); }
+      this.container.visualiser.addEdge(edge);
+    }
   });
 }
 

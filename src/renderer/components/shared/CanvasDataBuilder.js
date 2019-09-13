@@ -1,9 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
-import { META_LABELS, baseTypes } from './SharedUtils';
+import { META_LABELS, baseTypes, sameEdgeCriteria } from './SharedUtils';
 const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
 const collect = (array, current) => array.concat(current);
+const deduplicateConcepts = arr => arr.filter((item, index, self) => index === self.findIndex(t => t.concept.id === item.concept.id));
 
 const edgeTypes = {
   type: {
@@ -222,7 +223,7 @@ const buildInstances = async (answers) => {
     return item;
   });
 
-  data = data.filter((item, index, self) => index === self.findIndex(t => t.concept.id === item.concept.id));
+  data = deduplicateConcepts(data);
 
   const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
   const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept)));
@@ -415,8 +416,8 @@ const buildTypes = async (answers) => {
  * @param {*} shouldLimit whether or not the roleplayers should be limited. false, when called to buildRPInstances for explanations
  * @param {*} graknTx
  */
-const buildRPInstances = async (answers, shouldLimit, graknTx) => {
-  const edges = [];
+const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
+  let edges = [];
   const nodes = [];
 
   for (let i = 0; i < answers.length; i += 1) {
@@ -449,6 +450,9 @@ const buildRPInstances = async (answers, shouldLimit, graknTx) => {
       }
     }
   }
+
+  // exclude any edges that have already been produced by this module (i.e. currentData)
+  edges = edges.filter(nEdge => !currentData.edges.some(cEdge => sameEdgeCriteria(cEdge, nEdge)));
 
   return { nodes, edges };
 };
