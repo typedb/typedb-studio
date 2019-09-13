@@ -11,3 +11,5 @@ export const baseTypes = {
   RELATION_INSTANCE: 'RELATION',
   ATTRIBUTE_INSTANCE: 'ATTRIBUTE',
 };
+
+export const sameEdgeCriteria = (edgeA, edgeB) => edgeA.from === edgeB.from && edgeA.to === edgeB.to && edgeA.hiddenLabel === edgeB.hiddenLabel;
