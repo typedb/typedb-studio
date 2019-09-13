@@ -183,10 +183,10 @@ jobs:
             wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
             tar -xf ghr_v0.12.1_linux_amd64.tar.gz
             ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
-              -r ${CIRCLE_PROJECT_REPONAME} -b "$(cat ./RELEASE_TEMPLATE.md)" \
+              -r ${CIRCLE_PROJECT_REPONAME} -n "Grakn Workbase $(cat VERSION)" -b "$(cat ./RELEASE_TEMPLATE.md)" \
               -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
 
-  deploy-brew-release:
+  deploy-brew:
     machine: true
     working_directory: ~/workbase
     steps:
@@ -270,7 +270,7 @@ workflows:
               only: workbase-release-branch
           requires:
             - deploy-github
-      - deploy-brew-release:
+      - deploy-brew:
           filters:
             branches:
               only: workbase-release-branch
@@ -281,4 +281,4 @@ workflows:
             branches:
               only: workbase-release-branch
           requires:
-            - deploy-brew-release
+            - deploy-brew
