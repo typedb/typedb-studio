@@ -235,7 +235,7 @@ workflows:
       - assemble-windows:
           filters:
             branches:
-              only: master
+              only: debug-assemble-windows
       - cache-distribution:
           filters:
             branches:
