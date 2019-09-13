@@ -164,5 +164,5 @@
     "prebuild": "node version.js",
     "unit": "node ./node_modules/jest/bin/jest.js ./test/unit"
   },
-  "version": "1.2.2"
+  "version": "0.0.0-development"
 }
