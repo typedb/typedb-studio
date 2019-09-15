@@ -78,8 +78,10 @@ node_grpc_compile()
 ################################
 
 load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl",
-"graknlabs_graql", "graknlabs_protocol", "graknlabs_client_java", "graknlabs_benchmark", "graknlabs_console")
+"graknlabs_graql", "graknlabs_common", "graknlabs_protocol",
+"graknlabs_client_java", "graknlabs_benchmark", "graknlabs_console")
 graknlabs_graql()
+graknlabs_common()
 graknlabs_protocol()
 graknlabs_client_java()
 graknlabs_console()
