@@ -44,10 +44,10 @@ describe('relationsRolePlayers', () => {
     expect(roleplayers.nodes.filter(x => x.id === '4444')[0].label).toBe('person: 4444');
 
     expect(roleplayers.edges).toHaveLength(2);
-    expect(roleplayers.edges.filter(x => x.label === 'son')[0].from).toBe('6666');
-    expect(roleplayers.edges.filter(x => x.label === 'son')[0].to).toBe('3333');
-    expect(roleplayers.edges.filter(x => x.label === 'father')[0].from).toBe('6666');
-    expect(roleplayers.edges.filter(x => x.label === 'father')[0].to).toBe('4444');
+    expect(roleplayers.edges.filter(x => x.hiddenLabel === 'son')[0].from).toBe('6666');
+    expect(roleplayers.edges.filter(x => x.hiddenLabel === 'son')[0].to).toBe('3333');
+    expect(roleplayers.edges.filter(x => x.hiddenLabel === 'father')[0].from).toBe('6666');
+    expect(roleplayers.edges.filter(x => x.hiddenLabel === 'father')[0].to).toBe('4444');
   });
 });
 
@@ -64,9 +64,9 @@ describe('buildFromConceptList', () => {
     expect(data.nodes[2].id).toBe('4444');
 
     expect(data.edges).toHaveLength(2);
-    expect(data.edges.filter(x => x.label === 'son')[0].from).toBe('6666');
-    expect(data.edges.filter(x => x.label === 'son')[0].to).toBe('3333');
-    expect(data.edges.filter(x => x.label === 'father')[0].from).toBe('6666');
-    expect(data.edges.filter(x => x.label === 'father')[0].to).toBe('4444');
+    expect(data.edges.filter(x => x.hiddenLabel === 'son')[0].from).toBe('6666');
+    expect(data.edges.filter(x => x.hiddenLabel === 'son')[0].to).toBe('3333');
+    expect(data.edges.filter(x => x.hiddenLabel === 'father')[0].from).toBe('6666');
+    expect(data.edges.filter(x => x.hiddenLabel === 'father')[0].to).toBe('4444');
   });
 });
