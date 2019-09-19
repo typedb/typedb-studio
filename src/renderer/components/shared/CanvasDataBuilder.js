@@ -445,7 +445,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
   }
 
   // exclude any edges that have already been produced by this module (i.e. currentData)
-  edges = edges.filter(nEdge => !currentData.edges.some(cEdge => sameEdgeCriteria(cEdge, nEdge)));
+  if (currentData) edges = edges.filter(nEdge => !currentData.edges.some(cEdge => sameEdgeCriteria(cEdge, nEdge)));
 
   return { nodes, edges };
 };
