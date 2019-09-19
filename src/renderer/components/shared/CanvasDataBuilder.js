@@ -17,7 +17,7 @@ const edgeTypes = {
     HAS: 'HAS_INSTANCE',
     PLAYS: 'PLAYS_IN_INSTANCE',
     RELATES: 'RELATES_TO_INSTANCE',
-    SUB: 'SUBS_INSTANCE',
+    ISA: 'SUBS_INSTANCE',
   },
 };
 
@@ -77,16 +77,15 @@ const getEdge = (from, to, edgeType, label) => {
       edge.arrows = { to: { enable: false } };
       edge.options = { hideLabel: true, hideArrow: true };
       break;
-    case edgeTypes.instance.SUB:
+    case edgeTypes.instance.ISA:
       edge.label = '';
-      edge.hiddenLabel = 'sub';
+      edge.hiddenLabel = 'isa';
       edge.arrows = { to: { enable: false } };
       edge.options = { hideLabel: true, hideArrow: true };
       break;
     default:
       throw new Error(`Edge type [${edgeType}] is not recoganised`);
   }
-
   return edge;
 };
 
@@ -460,4 +459,11 @@ export default {
   getTypeSubEdge,
   getTypeRelatesEdges,
   getTypeAttributeEdges,
+  // ideally the following functions should be private functions
+  // of this module. However, this can be the case only when this
+  // module becomes the only place that contains the logic for
+  // constructing the nodes and edges. This will require further
+  // refactoring
+  getEdge,
+  edgeTypes,
 };
