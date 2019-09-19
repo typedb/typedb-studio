@@ -1,8 +1,8 @@
 import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from './VisualiserGraphBuilder';
+import CDB from '../shared/CanvasDataBuilder';
 const LETTER_G_KEYCODE = 71;
-const HAS_ATTRIBUTE_LABEL = 'has';
-const ISA_INSTANCE_LABEL = 'isa';
+
 
 function getNeighboursQuery(node, neighboursLimit) {
   switch (node.baseType) {
@@ -194,8 +194,8 @@ async function getFilteredNeighbourAnswers(node, graknTx, limit) {
   return resultAnswers;
 }
 
-function getTypeNeighbourEdges(nodes, superTypeId) {
-  const edges = nodes.map(instance => ({ from: instance.id, to: superTypeId, label: ISA_INSTANCE_LABEL }));
+function getTypeNeighbourEdges(nodes, superType) {
+  const edges = nodes.map(instance => CDB.getEdge(instance, superType, CDB.edgeTypes.instance.ISA));
   return edges;
 }
 
@@ -206,20 +206,20 @@ async function getEntityNeighbourEdges(nodes) {
   return edges;
 }
 
-function getAttributeNeighbourEdges(nodes, attributeId) {
-  const edges = nodes.map(owner => ({ from: owner.id, to: attributeId, label: HAS_ATTRIBUTE_LABEL }));
+function getAttributeNeighbourEdges(nodes, attribute) {
+  const edges = nodes.map(owner => CDB.getEdge(owner, attribute, CDB.edgeTypes.instance.HAS));
   return edges;
 }
 
-async function getRelationNeighbourEdges(nodes, graknTx, relationId) {
+async function getRelationNeighbourEdges(nodes, graknTx, relation) {
   const roleplayersIds = nodes.map(x => x.id);
-  const relationConcept = await graknTx.getConcept(relationId);
+  const relationConcept = await graknTx.getConcept(relation.id);
   const roleplayers = Array.from((await relationConcept.rolePlayersMap()).entries());
   const edges = (await Promise.all(Array.from(roleplayers, async ([role, setOfThings]) => {
     const roleLabel = await role.label();
     return Array.from(setOfThings.values())
       .filter(thing => roleplayersIds.includes(thing.id))
-      .map(thing => ({ from: relationId, to: thing.id, label: roleLabel }));
+      .map(thing => CDB.getEdge(relation, thing, CDB.edgeTypes.instance.RELATES, roleLabel));
   }))).flatMap(x => x);
   return edges;
 }
@@ -232,13 +232,15 @@ export async function getNeighboursData(visNode, graknTx, neighboursLimit) {
     case 'ENTITY_TYPE':
     case 'ATTRIBUTE_TYPE':
     case 'RELATION_TYPE':
-      return { nodes, edges: getTypeNeighbourEdges(nodes, visNode.id) };
+      return { nodes, edges: getTypeNeighbourEdges(nodes, visNode) };
     case 'ENTITY':
+
       return { nodes, edges: await getEntityNeighbourEdges(nodes) };
     case 'RELATION':
-      return { nodes, edges: await getRelationNeighbourEdges(nodes, graknTx, visNode.id) };
+
+      return { nodes, edges: await getRelationNeighbourEdges(nodes, graknTx, visNode) };
     case 'ATTRIBUTE':
-      return { nodes, edges: getAttributeNeighbourEdges(nodes, visNode.id) };
+      return { nodes, edges: getAttributeNeighbourEdges(nodes, visNode) };
     default:
       throw new Error(`Unrecognised baseType of thing: ${visNode.baseType}`);
   }

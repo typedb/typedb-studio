@@ -1,5 +1,6 @@
 import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';
+import CDB from '../shared/CanvasDataBuilder';
 
 // Map graql variables and explanations to each concept
 function attachExplanation(result) {
@@ -166,7 +167,7 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
       thing.attrOffset = 0;
 
       nodes.push(thing);
-      edges.push({ from: relation.id, to: thing.id, label: roleLabel });
+      edges.push(CDB.getEdge(relation, thing, CDB.edgeTypes.instance.PLAYS, roleLabel));
     }));
   });
   return Promise.all(promises).then((() => ({ nodes, edges })));
