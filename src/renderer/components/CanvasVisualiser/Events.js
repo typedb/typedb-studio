@@ -155,7 +155,7 @@ export function onBlurNode(params) {
     const connectedEdges = this.getEdge(connectedEdgeIds);
     const isNodeSelected = this.getNetwork().getSelectedNodes().includes(nodeId);
 
-    if (!isNodeSelected && connectedEdges[0].options.hideLabel) {
+    if (connectedEdges.length && !isNodeSelected && connectedEdges[0].options.hideLabel) {
       // Hide labels on connected edges - if the blurred node is not selected
       this.hideEdgeLabels(connectedEdges);
     }
@@ -171,12 +171,12 @@ export function onBlurNode(params) {
 export function onDeselectNode(params) {
   const nodeId = params.previousSelection.nodes[0];
   const connectedNodes = this.getNetwork().getConnectedNodes(nodeId).concat(nodeId);
-  const allEdges = this.getEdge();
-
+  let allEdges = this.getEdge();
   if (allEdges.length && allEdges[0].options.hideLabel) {
     this.hideEdgeLabels(allEdges);
   }
 
+  allEdges = this.getEdge();
   if (allEdges.length && allEdges[0].options.hideArrow) {
     this.hideEdgeArrows(allEdges);
   }
