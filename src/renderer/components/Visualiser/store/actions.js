@@ -212,7 +212,7 @@ export default {
 
       const data = await CDB.buildInstances(result);
 
-      const rpData = await CDB.buildRPInstances(result, false, graknTx);
+      const rpData = await CDB.buildRPInstances(result, data, false, graknTx);
       data.nodes.push(...rpData.nodes);
       data.edges.push(...rpData.edges);
 
