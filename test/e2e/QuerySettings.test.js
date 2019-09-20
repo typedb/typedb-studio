@@ -33,14 +33,17 @@ describe('Query Settings', () => {
     assert.equal((await app.client.getText('.top-bar-container .CodeMirror')).trim(), 'match $x isa person; get; offset 0; limit 1;');
   });
 
-  test('Neighbours Limit setting is applied', async () => {
+  // TODO: these tests fail because of a bug in Grakn 1.5.8 which
+  // has already been fixed on master. these must be unskipped in the
+  // next version of workbase that will run against Grakn 1.5.9
+  test.skip('Neighbours Limit setting is applied', async () => {
     await selectKeyspace('gene', app);
     await changeSetting({ loadRoleplayers: true, neighboursLimit: 2 }, app);
     await runQuery('match $x isa parentship; get;', app);
     assert.equal(await app.client.getText('.no-of-entities'), 'entities: 2');
   });
 
-  test('Load Neighbours enabled is applied', async () => {
+  test.skip('Load Neighbours enabled is applied', async () => {
     await selectKeyspace('gene', app);
     await changeSetting({ neighboursLimit: 1, loadRoleplayers: true }, app);
     await runQuery('match $x isa parentship; get;', app);
