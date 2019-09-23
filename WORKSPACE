@@ -13,6 +13,17 @@ load("@graknlabs_build_tools//distribution:dependencies.bzl", "graknlabs_bazel_d
 graknlabs_bazel_distribution()
 
 
+##################################
+# Load Distribution dependencies #
+##################################
+
+load("@graknlabs_bazel_distribution//github:dependencies.bzl", "tcnksm_ghr")
+tcnksm_ghr()
+
+load("@graknlabs_bazel_distribution//common:dependencies.bzl", "bazelbuild_rules_pkg")
+bazelbuild_rules_pkg()
+
+
 ###########################
 # Load Bazel Dependencies #
 ###########################
@@ -79,11 +90,14 @@ node_grpc_compile()
 
 load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl",
 "graknlabs_graql", "graknlabs_protocol",
-"graknlabs_client_java", "graknlabs_benchmark")
+"graknlabs_client_java", "graknlabs_benchmark",
+"graknlabs_console", "graknlabs_common")
 graknlabs_graql()
 graknlabs_protocol()
 graknlabs_client_java()
 graknlabs_benchmark()
+graknlabs_console()
+graknlabs_common()
 
 load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl",
 graknlabs_grakn_core_maven_dependencies = "maven_dependencies")
