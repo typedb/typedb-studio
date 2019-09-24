@@ -214,7 +214,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: git push --delete origin workbase-release-branch
+      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
 
 workflows:
   workbase:
