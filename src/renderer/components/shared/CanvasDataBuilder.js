@@ -5,6 +5,7 @@ const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, REL
 
 const collect = (array, current) => array.concat(current);
 const deduplicateConcepts = arr => arr.filter((item, index, self) => index === self.findIndex(t => t.concept.id === item.concept.id));
+const deduplicateEdges = arr => arr.filter((item, index, self) => index === self.findIndex(t => sameEdgeCriteria(t, item)));
 
 const edgeTypes = {
   type: {
@@ -379,7 +380,7 @@ const buildType = async (type, graqlVar = '') => {
  */
 const buildTypes = async (answers) => {
   const nodes = [];
-  const edges = [];
+  let edges = [];
 
   let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
     graqlVar,
@@ -398,6 +399,8 @@ const buildTypes = async (answers) => {
     nodes.push(item.node);
     edges.push(...item.edges);
   });
+
+  edges = deduplicateEdges(edges);
 
   return { nodes, edges };
 };
