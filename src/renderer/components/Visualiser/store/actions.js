@@ -194,7 +194,6 @@ export default {
   },
   async [EXPLAIN_CONCEPT]({ state, dispatch, getters, commit }) {
     const explanation = getters.selectedNode.explanation;
-
     let queries;
     // If the explanation is formed from a conjuction inside a rule, go one step deeper to access the actual explanation
     if (!explanation.queryPattern().length) {
@@ -209,7 +208,6 @@ export default {
       const graknTx = await dispatch(OPEN_GRAKN_TX);
       const result = (await (await graknTx.query(query)).collect());
 
-
       const data = await CDB.buildInstances(result);
 
       const rpData = await CDB.buildRPInstances(result, data, false, graknTx);
@@ -222,7 +220,7 @@ export default {
       graknTx.close();
 
       state.visFacade.updateNode(nodesWithAttributes);
-      const styledEdges = data.edges.map(edge => Object.assign(edge, state.visStyle.computeExplanationEdgeStyle()));
+      const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
       state.visFacade.updateEdge(styledEdges);
       commit('loadingQuery', false);
     }
