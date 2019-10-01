@@ -234,10 +234,8 @@ export async function getNeighboursData(visNode, graknTx, neighboursLimit) {
     case 'RELATION_TYPE':
       return { nodes, edges: getTypeNeighbourEdges(nodes, visNode) };
     case 'ENTITY':
-
       return { nodes, edges: await getEntityNeighbourEdges(nodes) };
     case 'RELATION':
-
       return { nodes, edges: await getRelationNeighbourEdges(nodes, graknTx, visNode) };
     case 'ATTRIBUTE':
       return { nodes, edges: getAttributeNeighbourEdges(nodes, visNode) };

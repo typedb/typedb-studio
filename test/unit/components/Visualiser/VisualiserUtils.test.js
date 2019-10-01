@@ -126,9 +126,9 @@ describe('Get neighbours data', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     expect(neighboursData.edges).toHaveLength(1);
-    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"ENTITY","id":"3333","offset":0,"graqlVar":"x"}');
-    expect(JSON.stringify(neighboursData.edges[0])).toBe(
-      '{"from":"3333","to":"0000","label":"","hiddenLabel":"isa","arrows":{"to":{"enable":false}},"options":{"hideLabel":true,"hideArrow":true}}',
+    expect(neighboursData.nodes[0]).toMatchObject({ baseType: 'ENTITY', id: '3333', offset: 0, graqlVar: 'x' });
+    expect(neighboursData.edges[0]).toEqual(
+      { id: '3333-0000-isa', from: '3333', to: '0000', label: '', hiddenLabel: 'isa', arrows: { to: { enable: false } }, options: { hideLabel: true, hideArrow: true } },
     );
   });
   test('entity', async () => {
@@ -139,13 +139,13 @@ describe('Get neighbours data', () => {
 
     expect(neighboursData.nodes).toHaveLength(2);
     expect(neighboursData.edges).toHaveLength(2);
-    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"RELATION","id":"6666","explanation":{},"offset":0,"graqlVar":"r"}');
-    expect(JSON.stringify(neighboursData.nodes[1])).toBe('{"baseType":"ENTITY","id":"4444","explanation":{},"graqlVar":"r"}');
-    expect(JSON.stringify(neighboursData.edges[0])).toBe(
-      '{"from":"6666","to":"3333","label":"","hiddenLabel":"son","arrows":{"to":{"enable":false}},"options":{"hideLabel":true,"hideArrow":true}}',
+    expect(neighboursData.nodes[0]).toMatchObject({ baseType: 'RELATION', id: '6666', explanation: {}, offset: 0, graqlVar: 'r' });
+    expect(neighboursData.nodes[1]).toMatchObject({ baseType: 'ENTITY', id: '4444', explanation: {}, graqlVar: 'r' });
+    expect(neighboursData.edges[0]).toEqual(
+      { id: '6666-3333-son', from: '6666', to: '3333', label: '', hiddenLabel: 'son', arrows: { to: { enable: false } }, options: { hideLabel: true, hideArrow: true } },
     );
-    expect(JSON.stringify(neighboursData.edges[1])).toBe(
-      '{"from":"6666","to":"4444","label":"","hiddenLabel":"father","arrows":{"to":{"enable":false}},"options":{"hideLabel":true,"hideArrow":true}}',
+    expect(neighboursData.edges[1]).toEqual(
+      { id: '6666-4444-father', from: '6666', to: '4444', label: '', hiddenLabel: 'father', arrows: { to: { enable: false } }, options: { hideLabel: true, hideArrow: true } },
     );
   });
   test('attribute', async () => {
@@ -156,9 +156,9 @@ describe('Get neighbours data', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     expect(neighboursData.edges).toHaveLength(1);
-    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"ENTITY","id":"3333","offset":0,"graqlVar":"x"}');
-    expect(JSON.stringify(neighboursData.edges[0])).toBe(
-      '{"from":"3333","to":"5555","label":"","hiddenLabel":"has","arrows":{"to":{"enable":false}},"options":{"hideLabel":true,"hideArrow":true}}',
+    expect(neighboursData.nodes[0]).toMatchObject({ baseType: 'ENTITY', id: '3333', offset: 0, graqlVar: 'x' });
+    expect(neighboursData.edges[0]).toEqual(
+      { id: '3333-5555-has', from: '3333', to: '5555', label: '', hiddenLabel: 'has', arrows: { to: { enable: false } }, options: { hideLabel: true, hideArrow: true } },
     );
   });
   test('relation', async () => {
@@ -170,9 +170,9 @@ describe('Get neighbours data', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     expect(neighboursData.edges).toHaveLength(1);
-    expect(JSON.stringify(neighboursData.nodes[0])).toBe('{"baseType":"ENTITY","id":"3333","offset":0,"graqlVar":"x"}');
-    expect(JSON.stringify(neighboursData.edges[0])).toBe(
-      '{"from":"6666","to":"3333","label":"","hiddenLabel":"son","arrows":{"to":{"enable":false}},"options":{"hideLabel":true,"hideArrow":true}}',
+    expect(neighboursData.nodes[0]).toMatchObject({ baseType: 'ENTITY', id: '3333', offset: 0, graqlVar: 'x' });
+    expect(neighboursData.edges[0]).toEqual(
+      { id: '6666-3333-son', from: '6666', to: '3333', label: '', hiddenLabel: 'son', arrows: { to: { enable: false } }, options: { hideLabel: true, hideArrow: true } },
     );
   });
 });

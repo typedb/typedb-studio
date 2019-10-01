@@ -153,12 +153,15 @@ describe('buildInstances', () => {
     expect(node.label).toEqual('');
     expect(node.offset).toEqual(2);
 
-    expect(edges).toEqual([{ arrows: { to: { enable: false } },
+    expect(edges).toEqual([{
+      id: 'some relation-some entity-some role',
+      arrows: { to: { enable: false } },
       from: 'some relation',
       hiddenLabel: 'some role',
       label: '',
       options: { hideArrow: true, hideLabel: true },
-      to: 'some entity' }]);
+      to: 'some entity',
+    }]);
   });
 
   test('when graql answer contains an attribute', async () => {
@@ -178,9 +181,15 @@ describe('buildInstances', () => {
     expect(node.label).toEqual('some attribute type: some value');
     expect(node.offset).toEqual(0);
 
-    expect(edges).toEqual([
-      { arrows: { to: { enable: false } }, from: 'ent-instance', hiddenLabel: 'has', label: '', options: { hideArrow: true, hideLabel: true }, to: 'attr-instance' },
-    ]);
+    expect(edges).toEqual([{
+      id: 'ent-instance-attr-instance-has',
+      arrows: { to: { enable: false } },
+      from: 'ent-instance',
+      hiddenLabel: 'has',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'attr-instance',
+    }]);
   });
 
   test('when graql answer contains an explanation', async () => {
@@ -242,7 +251,14 @@ describe('buildInstances', () => {
     const { nodes, edges } = await CDB.buildTypes(answers);
 
     expect(nodes).toHaveLength(1);
-    expect(edges).toEqual([{ arrows: { to: { enabled: true } }, from: 'ent-type', label: 'has', options: { hideArrow: false, hideLabel: false }, to: 'attr-type' }]);
+    expect(edges).toEqual([{
+      id: 'ent-type-attr-type-has',
+      arrows: { to: { enabled: true } },
+      from: 'ent-type',
+      label: 'has',
+      options: { hideArrow: false, hideLabel: false },
+      to: 'attr-type',
+    }]);
   });
 
   test('when graql answer contains a type that owns the same attributes as its supertype that is not a meta type', async () => {
@@ -264,7 +280,14 @@ describe('buildInstances', () => {
     const { nodes, edges } = await CDB.buildTypes(answers);
 
     expect(nodes).toHaveLength(1);
-    expect(edges).toEqual([{ arrows: { to: { enabled: true } }, from: 'subtype', label: 'sub', options: { hideArrow: false, hideLabel: false }, to: 'supertype' }]);
+    expect(edges).toEqual([{
+      id: 'subtype-supertype-sub',
+      arrows: { to: { enabled: true } },
+      from: 'subtype',
+      label: 'sub',
+      options: { hideArrow: false, hideLabel: false },
+      to: 'supertype',
+    }]);
   });
 
   test('when graql answer contains a type that extends its non-meta supertype by owning more attributes', async () => {
@@ -287,8 +310,15 @@ describe('buildInstances', () => {
 
     expect(nodes).toHaveLength(1);
     expect(edges).toEqual([
-      { arrows: { to: { enabled: true } }, from: 'ent-type', label: 'sub', options: { hideArrow: false, hideLabel: false }, to: 'supertype' },
-      { arrows: { to: { enabled: true } }, from: 'ent-type', label: 'has', options: { hideArrow: false, hideLabel: false }, to: 'the extra attribute' },
+      { id: 'ent-type-supertype-sub', arrows: { to: { enabled: true } }, from: 'ent-type', label: 'sub', options: { hideArrow: false, hideLabel: false }, to: 'supertype' },
+      {
+        id: 'ent-type-the extra attribute-has',
+        arrows: { to: { enabled: true } },
+        from: 'ent-type',
+        label: 'has',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'the extra attribute',
+      },
     ]);
   });
 
@@ -309,7 +339,14 @@ describe('buildInstances', () => {
     const answers = [getMockedAnswer([roleplayerType], null)];
     const { edges } = await CDB.buildTypes(answers);
 
-    expect(edges).toEqual([{ arrows: { to: { enabled: true } }, from: 'relation', label: 'role a', options: { hideArrow: false, hideLabel: false }, to: 'roleplayer' }]);
+    expect(edges).toEqual([{
+      id: 'relation-roleplayer-role a',
+      arrows: { to: { enabled: true } },
+      from: 'relation',
+      label: 'role a',
+      options: { hideArrow: false, hideLabel: false },
+      to: 'roleplayer',
+    }]);
   });
 
   test('when graql answer contains a relation type', async () => {
@@ -327,8 +364,8 @@ describe('buildInstances', () => {
     expect(nodes).toHaveLength(1);
 
     expect(edges).toEqual([
-      { arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role a', options: { hideArrow: false, hideLabel: false }, to: 'ent-type' },
-      { arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role b', options: { hideArrow: false, hideLabel: false }, to: 'attr-type' },
+      { id: 'rel-type-ent-type-role a', arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role a', options: { hideArrow: false, hideLabel: false }, to: 'ent-type' },
+      { id: 'rel-type-attr-type-role b', arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role b', options: { hideArrow: false, hideLabel: false }, to: 'attr-type' },
     ]);
   });
 
