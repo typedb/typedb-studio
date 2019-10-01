@@ -1,11 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
-import { META_LABELS, baseTypes, sameEdgeCriteria } from './SharedUtils';
+import { META_LABELS, baseTypes } from './SharedUtils';
 const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
 const collect = (array, current) => array.concat(current);
 const deduplicateConcepts = arr => arr.filter((item, index, self) => index === self.findIndex(t => t.concept.id === item.concept.id));
-const deduplicateEdges = arr => arr.filter((item, index, self) => index === self.findIndex(t => sameEdgeCriteria(t, item)));
 
 const edgeTypes = {
   type: {
@@ -87,6 +86,8 @@ const getEdge = (from, to, edgeType, label) => {
     default:
       throw new Error(`Edge type [${edgeType}] is not recoganised`);
   }
+
+  edge.id = `${edge.from}-${edge.to}-${edge.label === '' ? edge.hiddenLabel : edge.label}`;
   return edge;
 };
 
@@ -380,7 +381,7 @@ const buildType = async (type, graqlVar = '') => {
  */
 const buildTypes = async (answers) => {
   const nodes = [];
-  let edges = [];
+  const edges = [];
 
   let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
     graqlVar,
@@ -399,8 +400,6 @@ const buildTypes = async (answers) => {
     nodes.push(item.node);
     edges.push(...item.edges);
   });
-
-  edges = deduplicateEdges(edges);
 
   return { nodes, edges };
 };
@@ -448,7 +447,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
   }
 
   // exclude any edges that have already been produced by this module (i.e. currentData)
-  if (currentData) edges = edges.filter(nEdge => !currentData.edges.some(cEdge => sameEdgeCriteria(cEdge, nEdge)));
+  if (currentData) edges = edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
 
   return { nodes, edges };
 };

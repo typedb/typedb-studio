@@ -1,5 +1,4 @@
 import Visualiser from './Visualiser';
-import { sameEdgeCriteria } from '../shared/SharedUtils';
 /*
 * Creates a new object that can be used to interact with the visualiser graph
 * given a specific container(DOM element)
@@ -54,14 +53,18 @@ function deleteFromCanvas(nodeIds) {
  */
 
 function addToCanvas(data) {
+  const currentNodes = this.getAllNodes();
   data.nodes.forEach((node) => {
-    const styledNode = Object.assign(node, this.style.computeNodeStyle(node));
-    this.container.visualiser.addNode(styledNode);
+    const isDuplicate = currentNodes.some(currentNode => currentNode.id === node.id);
+    if (!isDuplicate) {
+      const styledNode = Object.assign(node, this.style.computeNodeStyle(node));
+      this.container.visualiser.addNode(styledNode);
+    }
   });
 
   const currentEdges = this.getAllEdges();
   data.edges.forEach((edge) => {
-    const isDuplicate = currentEdges.find(currentEdge => sameEdgeCriteria(currentEdge, edge)) !== undefined;
+    const isDuplicate = currentEdges.some(currentEdge => currentEdge.id === edge.id);
     if (!isDuplicate) {
       if (!edge.color) { Object.assign(edge, this.style.computeEdgeStyle(edge)); }
       this.container.visualiser.addEdge(edge);
