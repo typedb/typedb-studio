@@ -17,6 +17,8 @@
 #
 
 version: 2.1
+orbs:
+  win: circleci/windows@1.0.0
 commands:
   install-bazel-linux-rbe:
     steps:
@@ -115,16 +117,16 @@ jobs:
             - ./*
 
   assemble-windows:
-    machine: true
+    executor:
+        name: win/vs2019
+        shell: cmd.exe
     working_directory: ~/workbase
     steps:
       - checkout
-      - run:
-          command: .circleci/windows/assemble.py grakn-workbase-windows-$(cat VERSION).exe
-          no_output_timeout: 30m
-      - run: mkdir -p ~/distribution && mv ./grakn-workbase-windows-$(cat VERSION).exe ~/distribution/
+      - run: .circleci\windows\prepare.bat
+      - run: .circleci\windows\assemble.bat
       - persist_to_workspace:
-          root: ~/distribution
+          root: distribution
           paths:
             - ./*
 
