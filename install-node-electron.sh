@@ -15,7 +15,7 @@ if [[ "$platform" == "Darwin" ]]; then
     DOWNLOAD_URL="$DARWIN_URL"
 elif [[ "$platform" == "Linux" ]]; then
     DOWNLOAD_URL="$LINUX_URL"
-elif [[ "$platform" == "MSYS_NT-10.0" ]]; then
+elif [[ "$platform" == MSYS_NT-10.0* ]]; then
     DOWNLOAD_URL="$WINDOWS_URL"
 else
   echo "grpc does not have a binary for $platform"
