@@ -246,7 +246,7 @@ workflows:
       - assemble-windows:
           filters:
             branches:
-              only: master
+              only: migrate-ci-to-windows # FIXME(vmax): revert
       - cache-distribution:
           filters:
             branches:
