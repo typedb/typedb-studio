@@ -28,7 +28,6 @@ REM unpack and start Grakn server
 unzip bazel-genfiles\external\graknlabs_grakn_core\grakn-core-all-windows.zip -d bazel-genfiles\dist\ || GOTO :error
 PUSHD bazel-genfiles\dist\grakn-core-all-windows\
 CALL grakn.bat server start || GOTO :error
-CALL grakn.bat console -f ..\..\..\test\helpers\gene.gql -k gene || GOTO :error
 POPD
 
 REM run unit tests
@@ -36,6 +35,9 @@ bazel run @nodejs//:bin/yarn.cmd -- run unit || GOTO :error
 
 REM run integration tests
 bazel run @nodejs//:bin/yarn.cmd -- run integration || GOTO :error
+
+REM run e2e tests
+bazel run @nodejs//:bin/yarn.cmd -- run e2e || GOTO :error
 
 REM stop Grakn server
 PUSHD bazel-genfiles\dist\grakn-core-all-windows\
