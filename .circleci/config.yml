@@ -118,7 +118,7 @@ jobs:
 
   assemble-windows:
     executor:
-        name: win/vs2019
+        name: win/default
         shell: cmd.exe
     working_directory: ~/workbase
     steps:
