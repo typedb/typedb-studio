@@ -30,18 +30,18 @@
         "linux": {
             "artifactName": "grakn-workbase-${version}-linux.${ext}",
             "category": "Development",
-            "icon": "build/icons",
+            "icon": "assets/icons",
             "target": "tar.gz"
         },
         "mac": {
             "artifactName": "grakn-workbase-${version}-mac.${ext}",
-            "icon": "build/icons/icon.icns",
+            "icon": "assets/icons/icon.icns",
             "target": "dmg",
             "type": "distribution"
         },
         "productName": "Grakn Workbase",
         "win": {
-            "icon": "build/icons/icon.ico"
+            "icon": "assets/icons/icon.ico"
         }
     },
     "dependencies": {
