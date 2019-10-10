@@ -1,109 +1,24 @@
 import CDB from '@/components/shared/CanvasDataBuilder';
+import {
+  mockedMetaType,
+  mockedRole,
+  mockedEntityType,
+  mockedRelationType,
+  mockedAttributeType,
+  mockedEntityInstance,
+  mockedRelationInstance,
+  mockedAttributeInstance,
+  getMockedAnswer,
+  getMockedExplanation,
+  getMockedGraknTx,
+} from '../../../helpers/mockedConcepts';
 
 jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
   getNeighboursLimit: () => 2,
+  getRolePlayersStatus: () => true,
 }));
 
 jest.mock('@/components/shared/PersistentStorage', () => ({}));
-
-const getMockedExplanation = answers => ({ answers: () => answers });
-
-const getMockedAnswer = (concepts, explanation) => {
-  const answer = {};
-
-  const map = new Map();
-  concepts.forEach((concept, index) => { map.set(index, concept); });
-  answer.map = () => map;
-  answer.explanation = () => explanation;
-
-  return answer;
-};
-
-const mockedMetaType = {
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  isImplicit: () => Promise.resolve(false),
-  label: () => Promise.resolve('entity'),
-};
-
-const mockedRole = {
-  label: () => Promise.resolve('some role'),
-};
-
-const mockedEntityType = {
-  id: 'ent-type',
-  baseType: 'ENTITY_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some entity type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('entity') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedRelationType = {
-  id: 'rel-type',
-  baseType: 'RELATION_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isRelationType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some relation type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('relation') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedAttributeType = {
-  id: 'attr-type',
-  baseType: 'ATTRIBUTE_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some attribute type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('attribute') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedEntityInstance = {
-  id: 'ent-instance',
-  baseType: 'ENTITY',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isAttribute: () => false,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedEntityType),
-};
-
-const mockedRelationInstance = {
-  id: 'rel-instance',
-  baseType: 'RELATION',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isAttribute: () => false,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedRelationType),
-};
-
-const mockedAttributeInstance = {
-  id: 'attr-instance',
-  baseType: 'ATTRIBUTE',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isAttribute: () => true,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedAttributeType),
-  value: () => Promise.resolve('some value'),
-};
 
 const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('id');
@@ -117,9 +32,10 @@ const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('txService');
 };
 
-describe('buildInstances', () => {
+describe('building instances', () => {
   test('when graql answer contains an entity instance', async () => {
-    const answers = [getMockedAnswer([mockedEntityInstance], null)];
+    const entityInstance = { ...mockedEntityInstance };
+    const answers = [getMockedAnswer([entityInstance], null)];
     const { nodes, edges } = await CDB.buildInstances(answers);
 
     expect(nodes).toHaveLength(1);
@@ -128,17 +44,27 @@ describe('buildInstances', () => {
 
     expectCommonPropsOnInstanceNode(node);
 
-    expect(node.label).toEqual('some entity type: ent-instance');
+    expect(node.label).toEqual('some-entity-type: ent-instance');
     expect(node.offset).toEqual(0);
 
-    expect(edges).toHaveLength(0);
+    expect(edges).toHaveLength(1);
+
+    const edge = edges[0];
+    expect(edge).toEqual({
+      arrows: { to: { enabled: false } },
+      from: 'ent-instance',
+      id: 'ent-instance-ent-type-isa',
+      label: '',
+      hiddenLabel: 'isa',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'ent-type',
+    });
   });
 
   test('when graql answer contains a relation instance', async () => {
-    const rolePlayersMap = new Map([[mockedRole, [{ ...mockedEntityInstance, id: 'some entity' }]]]);
+    const rolePlayersMap = new Map([[mockedRole, [{ ...mockedEntityInstance, id: 'ent-instance' }]]]);
     const relationInstance = {
       ...mockedRelationInstance,
-      id: 'some relation',
       rolePlayersMap: () => Promise.resolve(rolePlayersMap),
     };
     const answers = [getMockedAnswer([relationInstance], null)];
@@ -153,18 +79,27 @@ describe('buildInstances', () => {
     expect(node.label).toEqual('');
     expect(node.offset).toEqual(2);
 
-    expect(edges).toEqual([{
-      id: 'some relation-some entity-some role',
-      arrows: { to: { enable: false } },
-      from: 'some relation',
-      hiddenLabel: 'some role',
-      label: '',
-      options: { hideArrow: true, hideLabel: true },
-      to: 'some entity',
-    }]);
+    expect(edges).toEqual([
+      {
+        id: 'rel-instance-rel-type-isa',
+        arrows: { to: { enabled: false } },
+        from: 'rel-instance',
+        label: '',
+        hiddenLabel: 'isa',
+        options: { hideArrow: true, hideLabel: true },
+        to: 'rel-type',
+      }, {
+        id: 'rel-instance-ent-instance-some-role',
+        arrows: { to: { enabled: false } },
+        from: 'rel-instance',
+        hiddenLabel: 'some-role',
+        label: '',
+        options: { hideArrow: true, hideLabel: true },
+        to: 'ent-instance',
+      }]);
   });
 
-  test('when graql answer contains an attribute', async () => {
+  test('when graql answer contains an attribute instance', async () => {
     const attributeInstance = {
       ...mockedAttributeInstance,
       owners: () => Promise.resolve({ collect: () => Promise.resolve([mockedEntityInstance]) }),
@@ -178,18 +113,27 @@ describe('buildInstances', () => {
     expectCommonPropsOnInstanceNode(node);
 
     expect(node.value).toEqual('some value');
-    expect(node.label).toEqual('some attribute type: some value');
+    expect(node.label).toEqual('some-attribute-type: some value');
     expect(node.offset).toEqual(0);
 
-    expect(edges).toEqual([{
-      id: 'ent-instance-attr-instance-has',
-      arrows: { to: { enable: false } },
-      from: 'ent-instance',
-      hiddenLabel: 'has',
-      label: '',
-      options: { hideArrow: true, hideLabel: true },
-      to: 'attr-instance',
-    }]);
+    expect(edges).toEqual([
+      {
+        id: 'attr-instance-attr-type-isa',
+        arrows: { to: { enabled: false } },
+        from: 'attr-instance',
+        label: '',
+        hiddenLabel: 'isa',
+        options: { hideArrow: true, hideLabel: true },
+        to: 'attr-type',
+      }, {
+        id: 'ent-instance-attr-instance-has',
+        arrows: { to: { enabled: false } },
+        from: 'ent-instance',
+        hiddenLabel: 'has',
+        label: '',
+        options: { hideArrow: true, hideLabel: true },
+        to: 'attr-instance',
+      }]);
   });
 
   test('when graql answer contains an explanation', async () => {
@@ -212,7 +156,9 @@ describe('buildInstances', () => {
     expect(nodes).toHaveLength(0);
     expect(edges).toHaveLength(0);
   });
+});
 
+describe('building types', () => {
   test('when graql answer contains an subtype of a meta type', async () => {
     const entityType = {
       ...mockedEntityType,
@@ -236,7 +182,7 @@ describe('buildInstances', () => {
 
     expect(node).not.toHaveProperty('explanation');
 
-    expect(node.label).toEqual('some entity type');
+    expect(node.label).toEqual('some-entity-type');
 
     expect(edges).toHaveLength(0);
   });
@@ -386,5 +332,122 @@ describe('buildInstances', () => {
     const { nodes, edges } = await CDB.buildTypes(answers);
     expect(nodes).toHaveLength(0);
     expect(edges).toHaveLength(0);
+  });
+});
+
+describe('building neighbours', () => {
+  test('when the target node is a type', async () => {
+    const entityType = { ...mockedEntityType };
+    const entityInstance = { ...mockedEntityInstance };
+    const answer = getMockedAnswer([entityInstance]);
+    const graknTx = getMockedGraknTx([]);
+    const neighboursData = await CDB.buildNeighbours(entityType, [answer], graknTx);
+
+    expect(neighboursData.nodes).toHaveLength(1);
+
+    const node = neighboursData.nodes[0];
+    expect(node).toMatchObject({
+      baseType: 'ENTITY',
+      id: 'ent-instance',
+      offset: 0,
+      var: 0,
+      label: 'some-entity-type: ent-instance',
+      type: 'some-entity-type',
+    });
+
+    expect(neighboursData.edges).toHaveLength(1);
+
+    const edge = neighboursData.edges[0];
+    expect(edge).toEqual({
+      arrows: { to: { enabled: false } },
+      from: 'ent-instance',
+      hiddenLabel: 'isa',
+      id: 'ent-instance-ent-type-isa',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'ent-type',
+    });
+  });
+
+  test('when the target node is a entity instance', async () => {
+    const entityInstance = { ...mockedEntityInstance };
+    const relationInstance = { ...mockedRelationInstance };
+    const rolePlayersMap = new Map();
+    rolePlayersMap.set(mockedRole, [entityInstance]);
+    relationInstance.rolePlayersMap = () => Promise.resolve(rolePlayersMap);
+    const answer = getMockedAnswer([relationInstance]);
+    const graknTx = getMockedGraknTx([]);
+    const neighboursData = await CDB.buildNeighbours(entityInstance, [answer], graknTx);
+
+    expect(neighboursData.nodes).toHaveLength(1);
+    const node = neighboursData.nodes[0];
+    expect(node).toMatchObject({ baseType: 'RELATION', id: 'rel-instance', offset: 2, var: 0, type: 'some-relation-type', label: '' });
+
+    expect(neighboursData.edges).toHaveLength(1);
+    const edge = neighboursData.edges[0];
+    expect(edge).toEqual({
+      arrows: { to: { enabled: false } },
+      from: 'rel-instance',
+      hiddenLabel: 'some-role',
+      id: 'rel-instance-ent-instance-some-role',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'ent-instance',
+    });
+  });
+
+  test('when the target node is an attribute instance', async () => {
+    const attributeInstance = { ...mockedAttributeInstance };
+    const entityInstance = { ...mockedEntityInstance };
+    const answer = getMockedAnswer([entityInstance]);
+    const graknTx = getMockedGraknTx([]);
+    const neighboursData = await CDB.buildNeighbours(attributeInstance, [answer], graknTx);
+
+    expect(neighboursData.nodes).toHaveLength(1);
+    const node = neighboursData.nodes[0];
+    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'ent-instance', offset: 0, var: 0, type: 'some-entity-type', label: 'some-entity-type: ent-instance' });
+
+    expect(neighboursData.edges).toHaveLength(1);
+    const edge = neighboursData.edges[0];
+    expect(edge).toEqual({
+      arrows: { to: { enabled: false } },
+      from: 'ent-instance',
+      hiddenLabel: 'has',
+      id: 'ent-instance-attr-instance-has',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'attr-instance',
+    });
+  });
+
+  test('when the target node is an relation instance', async () => {
+    const entityInstance = { ...mockedEntityInstance };
+    const role = { ...mockedRole };
+    const rolePlayersMap = new Map([[role, [entityInstance]]]);
+    const relationInstance = {
+      ...mockedRelationInstance,
+      rolePlayersMap: () => Promise.resolve(rolePlayersMap),
+    };
+    const answer = getMockedAnswer([entityInstance]);
+    const graknTx = getMockedGraknTx([], {
+      getConcept: () => Promise.resolve(relationInstance),
+    });
+    const neighboursData = await CDB.buildNeighbours(relationInstance, [answer], graknTx);
+
+    expect(neighboursData.nodes).toHaveLength(1);
+    const node = neighboursData.nodes[0];
+    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'ent-instance', offset: 0, var: 0, type: 'some-entity-type', label: 'some-entity-type: ent-instance' });
+
+    expect(neighboursData.edges).toHaveLength(1);
+    const edge = neighboursData.edges[0];
+    expect(edge).toEqual({
+      arrows: { to: { enabled: false } },
+      from: 'rel-instance',
+      hiddenLabel: 'some-role',
+      id: 'rel-instance-ent-instance-some-role',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'ent-instance',
+    });
   });
 });
