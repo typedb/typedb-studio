@@ -7,7 +7,7 @@ const GraknClient = require('grakn-client');
 // eslint-disable-next-line import/prefer-default-export
 export const waitUntil = criteria => new Promise(async (resolve, reject) => {
   const intervalTime = 1;
-  const iterations = 10000;
+  const iterations = 15000;
   let isFullfilled = false;
 
   await interval(async (iteration, stop) => {

@@ -68,19 +68,19 @@ const getEdge = (from, to, edgeType, label) => {
     case edgeTypes.instance.PLAYS:
       edge.label = '';
       edge.hiddenLabel = label;
-      edge.arrows = { to: { enable: false } };
+      edge.arrows = { to: { enabled: false } };
       edge.options = { hideLabel: true, hideArrow: true };
       break;
     case edgeTypes.instance.HAS:
       edge.label = '';
       edge.hiddenLabel = 'has';
-      edge.arrows = { to: { enable: false } };
+      edge.arrows = { to: { enabled: false } };
       edge.options = { hideLabel: true, hideArrow: true };
       break;
     case edgeTypes.instance.ISA:
       edge.label = '';
       edge.hiddenLabel = 'isa';
-      edge.arrows = { to: { enable: false } };
+      edge.arrows = { to: { enabled: false } };
       edge.options = { hideLabel: true, hideArrow: true };
       break;
     default:
@@ -125,7 +125,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
  */
 const getInstanceNode = async (instance, graqlVar, explanation) => {
   const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
-
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = `${node.type}: ${node.id}`;
@@ -134,7 +133,11 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
     }
     case RELATION_INSTANCE: {
       node.label = '';
-      node.offset = QuerySettings.getNeighboursLimit();
+      if (QuerySettings.getRolePlayersStatus()) {
+        node.offset = QuerySettings.getNeighboursLimit();
+      } else {
+        node.offset = 0;
+      }
       break;
     }
     case ATTRIBUTE_INSTANCE: {
@@ -165,7 +168,7 @@ const getInstanceHasEdges = async (attribute) => {
  * @param {Concept} relation must be a relation instance
  */
 // eslint-disable-next-line no-unused-vars
-const getInstanceRoleEdges = async (relation) => {
+const getInstanceRelatesEdges = async (relation) => {
   const rpMap = await relation.rolePlayersMap();
   const rpMapEntries = Array.from(rpMap.entries());
   const edges = (await Promise.all(
@@ -176,6 +179,11 @@ const getInstanceRoleEdges = async (relation) => {
   return [edges];
 };
 
+const getInstanceIsaEdges = async (instance) => {
+  const type = await instance.type();
+  return getEdge(instance, type, edgeTypes.instance.ISA);
+};
+
 /**
  * produces and returns the edges for the given concept instance
  * @param {Thing} instance must be a concept instance
@@ -184,12 +192,16 @@ const getInstanceEdges = async (instance) => {
   const edges = [];
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
+      edges.push(await getInstanceIsaEdges(instance));
       edges.push(...await getInstanceHasEdges(instance));
       break;
     case RELATION_INSTANCE:
-      edges.push(...await getInstanceRoleEdges(instance));
+      edges.push(await getInstanceIsaEdges(instance));
+      edges.push(...await getInstanceRelatesEdges(instance));
       break;
-    case ENTITY_INSTANCE: break;
+    case ENTITY_INSTANCE:
+      edges.push(await getInstanceIsaEdges(instance));
+      break;
     default:
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
@@ -405,6 +417,98 @@ const buildTypes = async (answers) => {
 };
 
 /**
+ * produces and returns the node for the given concept based on its type
+ * @param {*} concept
+ * @param {*} graqlVar
+ * @param {*} explanation
+ */
+const getNeighbourNode = async (concept, graqlVar, explanation) => {
+  let node;
+  if (concept.isType()) {
+    node = getTypeNode(concept, graqlVar);
+  } else if (concept.isThing()) {
+    node = getInstanceNode(concept, graqlVar, explanation);
+  }
+  return node;
+};
+
+/**
+ * Prroduces and returns the edges that connect the given targetNode with its neighbourNode
+ * @param {*} neighbourConcept
+ * @param {*} targetNode the node whose neighbour edges are to be produced
+ * @param {*} graknTx
+ */
+// eslint-disable-next-line no-unused-vars
+const getNeighbourEdges = async (neighbourConcept, targetNode, graknTx) => {
+  const edges = [];
+
+  switch (targetNode.baseType) {
+    case ENTITY_TYPE:
+    case ATTRIBUTE_TYPE:
+    case RELATION_TYPE:
+      edges.push(getEdge(neighbourConcept, targetNode, edgeTypes.instance.ISA));
+      break;
+
+    case ENTITY_INSTANCE:
+      if (neighbourConcept.baseType === 'RELATION') {
+        const relation = neighbourConcept;
+        edges.push(...await getInstanceRelatesEdges(relation));
+      }
+      break;
+
+    case ATTRIBUTE_INSTANCE: {
+      const owner = neighbourConcept;
+      edges.push(getEdge(owner, targetNode, edgeTypes.instance.HAS));
+      break;
+    }
+
+    case RELATION_INSTANCE: {
+      const relation = await graknTx.getConcept(targetNode.id);
+      edges.push(...await getInstanceRelatesEdges(relation));
+      break;
+    }
+
+    default:
+      throw new Error(`Instance type [${targetNode.baseType}] is not recoganised`);
+  }
+  return edges.reduce(collect, []);
+};
+
+/**
+ * Produces and returns nodes and edges for the neihbours of the given targetNode
+ * @param {*} targetNode the node that has been double clicked, whose neighbours are to be produced
+ * @param {*} answers the untouched response of a transaction.query() that contains the neioghbour concepts of targetNode
+ * @param {*} graknTx
+ */
+const buildNeighbours = async (targetNode, answers, graknTx) => {
+  let data = answers.map((answerGroup) => {
+    const explanation = answerGroup.explanation;
+    return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
+      graqlVar,
+      concept,
+      explanation,
+    }));
+  }).reduce(collect, []);
+
+  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
+
+  data = data.map((item, index) => {
+    item.shouldVisualise = shouldVisualiseVals[index];
+    return item;
+  });
+
+  data = deduplicateConcepts(data);
+
+  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation)));
+  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetNode, graknTx)));
+
+  const nodes = await nodesPromises;
+  const edges = (await edgesPromises).reduce(collect, []);
+
+  return { nodes, edges };
+};
+
+/**
  * Produces and returns nodes and edges for the roleplayers of relation instances.
  * this function is only called when the user has chosen to enable "Load Roleplayers" query settings and set "Neighbours Limit" to higher than 0
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
@@ -461,6 +565,7 @@ export default {
   getTypeSubEdge,
   getTypeRelatesEdges,
   getTypeAttributeEdges,
+  buildNeighbours,
   // ideally the following functions should be private functions
   // of this module. However, this can be the case only when this
   // module becomes the only place that contains the logic for

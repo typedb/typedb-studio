@@ -21,7 +21,7 @@ import {
   validateQuery,
   computeAttributes,
   mapAnswerToExplanationQuery,
-  getNeighboursData,
+  getFilteredNeighbourAnswers,
 } from '../VisualiserUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
@@ -79,14 +79,14 @@ export default {
   async [LOAD_NEIGHBOURS]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
     commit('loadingQuery', true);
     const graknTx = await dispatch(OPEN_GRAKN_TX);
-    const data = await getNeighboursData(visNode, graknTx, neighboursLimit);
+    const filteredResult = await getFilteredNeighbourAnswers(visNode, graknTx, neighboursLimit);
+    const data = await CDB.buildNeighbours(visNode, filteredResult, graknTx);
     visNode.offset += neighboursLimit;
     state.visFacade.updateNode(visNode);
     state.visFacade.addToCanvas(data);
     if (data.nodes.length) state.visFacade.fitGraphToWindow();
     commit('updateCanvasData');
-    const labelledNodes = await VisualiserGraphBuilder.prepareNodes(data.nodes);
-    const styledNodes = labelledNodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
+    const styledNodes = data.nodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
     state.visFacade.updateNode(styledNodes);
     const nodesWithAttribtues = await computeAttributes(data.nodes);
     state.visFacade.updateNode(nodesWithAttribtues);

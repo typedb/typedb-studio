@@ -53,8 +53,8 @@ function deleteFromCanvas(nodeIds) {
  */
 
 function addToCanvas(data) {
-  const currentNodes = this.getAllNodes();
   data.nodes.forEach((node) => {
+    const currentNodes = this.getAllNodes();
     const isDuplicate = currentNodes.some(currentNode => currentNode.id === node.id);
     if (!isDuplicate) {
       const styledNode = Object.assign(node, this.style.computeNodeStyle(node));
@@ -62,8 +62,8 @@ function addToCanvas(data) {
     }
   });
 
-  const currentEdges = this.getAllEdges();
   data.edges.forEach((edge) => {
+    const currentEdges = this.getAllEdges();
     const isDuplicate = currentEdges.some(currentEdge => currentEdge.id === edge.id);
     if (!isDuplicate) {
       if (!edge.color) { Object.assign(edge, this.style.computeEdgeStyle(edge)); }
