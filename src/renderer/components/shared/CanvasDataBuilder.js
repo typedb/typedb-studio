@@ -189,7 +189,7 @@ const getInstanceIsaEdges = async (instance) => {
  * @param {Thing} instance must be a concept instance
  */
 const getInstanceEdges = async (instance, existingNodeIds) => {
-  let edges = [];
+  const edges = [];
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
       edges.push(await getInstanceIsaEdges(instance));
@@ -206,10 +206,8 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
 
-  edges = edges.reduce(collect, []);
   // exclude any edges that connect nodes which do not exist
-  edges = edges.filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
-  return edges;
+  return edges.reduce(collect, []).filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -358,7 +356,7 @@ const getTypeRelatesEdges = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeEdges = async (type, existingNodeIds) => {
-  let edges = [];
+  const edges = [];
 
   switch (type.baseType) {
     case ENTITY_TYPE:
@@ -378,9 +376,7 @@ const getTypeEdges = async (type, existingNodeIds) => {
   }
 
   // exclude any edges that connect nodes which do not exist
-  edges = edges.filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
-
-  return edges;
+  return edges.filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -412,12 +408,9 @@ const buildTypes = async (answers) => {
     return item;
   });
 
-  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)));
-  const nodes = await nodesPromises;
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)));
   const nodeIds = nodes.map(node => node.id);
-  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds)));
-
-  const edges = (await edgesPromises).reduce(collect, []);
+  const edges = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds))).reduce(collect, []);
 
   return { nodes, edges };
 };
