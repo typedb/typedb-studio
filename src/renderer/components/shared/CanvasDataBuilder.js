@@ -234,12 +234,9 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
-  const nodes = await nodesPromises;
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
   const nodeIds = nodes.map(node => node.id);
-  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)));
-
-  const edges = (await edgesPromises).reduce(collect, []);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -410,7 +407,7 @@ const buildTypes = async (answers) => {
 
   const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)));
   const nodeIds = nodes.map(node => node.id);
-  const edges = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds))).reduce(collect, []);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };
