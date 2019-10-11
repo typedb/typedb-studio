@@ -24,7 +24,8 @@
 </template>
 
 <style scoped lang="scss">
-
+    $footerHeight: 23px;
+    $navHeight: 30px;
 
     .minimize-right-bar {
         background-color: var(--gray-1);
@@ -67,18 +68,23 @@
     .right-bar-container {
         background-color: var(--gray-3);
         border-left: var(--container-darkest-border);
-        height: 100% !important;
+        height: calc(100% - #{$footerHeight});
         word-wrap: break-word;
         /*width: 250px;*/
         position: absolute;
         right: 0px;
         top: 0px;
         z-index: 1;
+
+        .content {
+          max-height: calc(100% - #{$navHeight});
+          overflow-y: scroll;
+        }
     }
 
     .nav {
         background-color: var(--gray-2);
-        height: 30px;
+        height: $navHeight;
         display: flex;
         flex-direction: row;
     }

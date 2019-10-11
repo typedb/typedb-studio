@@ -22,15 +22,19 @@
 </template>
 
 <style scoped lang="scss">
+  $footerHeight: 23px;
+  $navHeight: 30px;
 
   .content {
     width: 201px;
+    max-height: calc(100% - #{$navHeight});
+    overflow-y: scroll;
   }
 
   .right-bar-container {
     background-color: var(--gray-3);
     border-left: var(--container-darkest-border);
-    height: 100%;
+    height: calc(100% - #{$footerHeight});
     position: relative;
     right: 0px;
     top: 0px;
@@ -77,7 +81,7 @@
 
      .nav {
         background-color: var(--gray-2);
-        height: 30px;
+        height: $navHeight;
         display: flex;
         flex-direction: row;
     }
