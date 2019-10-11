@@ -188,7 +188,7 @@ const getInstanceIsaEdges = async (instance) => {
  * produces and returns the edges for the given concept instance
  * @param {Thing} instance must be a concept instance
  */
-const getInstanceEdges = async (instance) => {
+const getInstanceEdges = async (instance, existingNodeIds) => {
   const edges = [];
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
@@ -205,7 +205,9 @@ const getInstanceEdges = async (instance) => {
     default:
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
   }
-  return edges.reduce(collect, []);
+
+  // exclude any edges that connect nodes which do not exist
+  return edges.reduce(collect, []).filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -232,11 +234,9 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
-  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept)));
-
-  const nodes = await nodesPromises;
-  const edges = (await edgesPromises).reduce(collect, []);
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
+  const nodeIds = nodes.map(node => node.id);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -352,7 +352,7 @@ const getTypeRelatesEdges = async (type) => {
  * produces and returns edges for the given type depending on its basetype
  * @param {Concept} type must be a concept type
  */
-const getTypeEdges = async (type) => {
+const getTypeEdges = async (type, existingNodeIds) => {
   const edges = [];
 
   switch (type.baseType) {
@@ -372,7 +372,8 @@ const getTypeEdges = async (type) => {
       throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
-  return edges;
+  // exclude any edges that connect nodes which do not exist
+  return edges.filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -382,7 +383,7 @@ const getTypeEdges = async (type) => {
  */
 const buildType = async (type, graqlVar = '') => {
   const node = await getTypeNode(type, graqlVar);
-  const edges = await getTypeEdges(type);
+  const edges = await getTypeEdges(type, [node.id]);
   return { node, edges };
 };
 
@@ -392,9 +393,6 @@ const buildType = async (type, graqlVar = '') => {
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
 const buildTypes = async (answers) => {
-  const nodes = [];
-  const edges = [];
-
   let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
     graqlVar,
     concept,
@@ -407,11 +405,9 @@ const buildTypes = async (answers) => {
     return item;
   });
 
-  const typeData = await Promise.all(data.filter(item => item.shouldVisualise).map(item => buildType(item.concept, item.graqlVar)));
-  typeData.forEach((item) => {
-    nodes.push(item.node);
-    edges.push(...item.edges);
-  });
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)));
+  const nodeIds = nodes.map(node => node.id);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };

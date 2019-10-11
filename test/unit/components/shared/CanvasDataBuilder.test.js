@@ -33,107 +33,70 @@ const expectCommonPropsOnInstanceNode = (node) => {
 };
 
 describe('building instances', () => {
-  test('when graql answer contains an entity instance', async () => {
+  test('when graql answer contains an entity instance with an attribute', async () => {
     const entityInstance = { ...mockedEntityInstance };
-    const answers = [getMockedAnswer([entityInstance], null)];
+    const attributeInstance = { ...mockedAttributeInstance };
+    attributeInstance.owners = () => Promise.resolve({ collect: () => Promise.resolve([entityInstance]) });
+    const answers = [getMockedAnswer([entityInstance, attributeInstance], null)];
     const { nodes, edges } = await CDB.buildInstances(answers);
 
-    expect(nodes).toHaveLength(1);
+    expect(nodes).toHaveLength(2);
+    nodes.forEach(node => expectCommonPropsOnInstanceNode(node));
 
-    const node = nodes[0];
+    const entityNode = nodes.find(node => node.baseType === 'ENTITY');
+    expect(entityNode.label).toEqual('some-entity-type: ent-instance');
+    expect(entityNode.offset).toEqual(0);
 
-    expectCommonPropsOnInstanceNode(node);
-
-    expect(node.label).toEqual('some-entity-type: ent-instance');
-    expect(node.offset).toEqual(0);
+    const attributeNode = nodes.find(node => node.baseType === 'ATTRIBUTE');
+    expect(attributeNode.value).toEqual('some value');
+    expect(attributeNode.label).toEqual('some-attribute-type: some value');
+    expect(attributeNode.offset).toEqual(0);
 
     expect(edges).toHaveLength(1);
-
     const edge = edges[0];
     expect(edge).toEqual({
       arrows: { to: { enabled: false } },
       from: 'ent-instance',
-      id: 'ent-instance-ent-type-isa',
+      hiddenLabel: 'has',
+      id: 'ent-instance-attr-instance-has',
       label: '',
-      hiddenLabel: 'isa',
       options: { hideArrow: true, hideLabel: true },
-      to: 'ent-type',
+      to: 'attr-instance',
     });
   });
 
-  test('when graql answer contains a relation instance', async () => {
-    const rolePlayersMap = new Map([[mockedRole, [{ ...mockedEntityInstance, id: 'ent-instance' }]]]);
+  test('when graql answer contains a relation instance with a roleplayer', async () => {
+    const entityInstance = { ...mockedEntityInstance };
+    const rolePlayersMap = new Map([[mockedRole, [entityInstance]]]);
     const relationInstance = {
       ...mockedRelationInstance,
       rolePlayersMap: () => Promise.resolve(rolePlayersMap),
     };
-    const answers = [getMockedAnswer([relationInstance], null)];
+    const answers = [getMockedAnswer([relationInstance, entityInstance], null)];
     const { nodes, edges } = await CDB.buildInstances(answers);
 
-    expect(nodes).toHaveLength(1);
+    expect(nodes).toHaveLength(2);
+    nodes.forEach(node => expectCommonPropsOnInstanceNode(node));
 
-    const node = nodes[0];
+    const relationNode = nodes.find(node => node.baseType === 'RELATION');
+    expect(relationNode.label).toEqual('');
+    expect(relationNode.offset).toEqual(2);
 
-    expectCommonPropsOnInstanceNode(node);
+    const entityNode = nodes.find(node => node.baseType === 'ENTITY');
+    expect(entityNode.label).toEqual('some-entity-type: ent-instance');
+    expect(entityNode.offset).toEqual(0);
 
-    expect(node.label).toEqual('');
-    expect(node.offset).toEqual(2);
-
-    expect(edges).toEqual([
-      {
-        id: 'rel-instance-rel-type-isa',
-        arrows: { to: { enabled: false } },
-        from: 'rel-instance',
-        label: '',
-        hiddenLabel: 'isa',
-        options: { hideArrow: true, hideLabel: true },
-        to: 'rel-type',
-      }, {
-        id: 'rel-instance-ent-instance-some-role',
-        arrows: { to: { enabled: false } },
-        from: 'rel-instance',
-        hiddenLabel: 'some-role',
-        label: '',
-        options: { hideArrow: true, hideLabel: true },
-        to: 'ent-instance',
-      }]);
-  });
-
-  test('when graql answer contains an attribute instance', async () => {
-    const attributeInstance = {
-      ...mockedAttributeInstance,
-      owners: () => Promise.resolve({ collect: () => Promise.resolve([mockedEntityInstance]) }),
-    };
-    const answers = [getMockedAnswer([attributeInstance], null)];
-    const { nodes, edges } = await CDB.buildInstances(answers);
-
-    expect(nodes).toHaveLength(1);
-    const node = nodes[0];
-
-    expectCommonPropsOnInstanceNode(node);
-
-    expect(node.value).toEqual('some value');
-    expect(node.label).toEqual('some-attribute-type: some value');
-    expect(node.offset).toEqual(0);
-
-    expect(edges).toEqual([
-      {
-        id: 'attr-instance-attr-type-isa',
-        arrows: { to: { enabled: false } },
-        from: 'attr-instance',
-        label: '',
-        hiddenLabel: 'isa',
-        options: { hideArrow: true, hideLabel: true },
-        to: 'attr-type',
-      }, {
-        id: 'ent-instance-attr-instance-has',
-        arrows: { to: { enabled: false } },
-        from: 'ent-instance',
-        hiddenLabel: 'has',
-        label: '',
-        options: { hideArrow: true, hideLabel: true },
-        to: 'attr-instance',
-      }]);
+    expect(edges).toHaveLength(1);
+    const edge = edges[0];
+    expect(edge).toEqual({
+      id: 'rel-instance-ent-instance-some-role',
+      arrows: { to: { enabled: false } },
+      from: 'rel-instance',
+      hiddenLabel: 'some-role',
+      label: '',
+      options: { hideArrow: true, hideLabel: true },
+      to: 'ent-instance',
+    });
   });
 
   test('when graql answer contains an explanation', async () => {
@@ -187,16 +150,18 @@ describe('building types', () => {
     expect(edges).toHaveLength(0);
   });
 
-  test('when graql answer contains a type that owns attributes and is a subtype of a meta type', async () => {
+  test('when graql answer contains a type with an attribute where the type is a subtype of a meta type', async () => {
+    const attributeType = { ...mockedAttributeType };
     const entityType = {
       ...mockedEntityType,
       sup: () => Promise.resolve({ label: () => Promise.resolve('entity') }),
-      attributes: () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType]) }),
+      attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
     };
-    const answers = [getMockedAnswer([entityType], null)];
+    const answers = [getMockedAnswer([entityType, attributeType], null)];
     const { nodes, edges } = await CDB.buildTypes(answers);
 
-    expect(nodes).toHaveLength(1);
+    expect(nodes).toHaveLength(2);
+
     expect(edges).toEqual([{
       id: 'ent-type-attr-type-has',
       arrows: { to: { enabled: true } },
@@ -208,6 +173,8 @@ describe('building types', () => {
   });
 
   test('when graql answer contains a type that owns the same attributes as its supertype that is not a meta type', async () => {
+    const attributeType = { ...mockedAttributeType };
+
     const superType = {
       ...mockedEntityType,
       id: 'supertype',
@@ -222,96 +189,122 @@ describe('building types', () => {
       sup: () => Promise.resolve(superType),
     };
 
-    const answers = [getMockedAnswer([subType], null)];
+    const answers = [getMockedAnswer([subType, attributeType, superType], null)];
     const { nodes, edges } = await CDB.buildTypes(answers);
 
-    expect(nodes).toHaveLength(1);
-    expect(edges).toEqual([{
-      id: 'subtype-supertype-sub',
-      arrows: { to: { enabled: true } },
-      from: 'subtype',
-      label: 'sub',
-      options: { hideArrow: false, hideLabel: false },
-      to: 'supertype',
-    }]);
-  });
+    expect(nodes).toHaveLength(3);
 
-  test('when graql answer contains a type that extends its non-meta supertype by owning more attributes', async () => {
-    const superEntityType = {
-      ...mockedEntityType,
-      id: 'supertype',
-      label: () => Promise.resolve('supertype entity'),
-      attributes: () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType]) }),
-    };
-
-    const extraAttributeType = { ...mockedAttributeType, id: 'the extra attribute' };
-    const subEntityType = {
-      ...mockedEntityType,
-      attributes: () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType, extraAttributeType]) }),
-      sup: () => Promise.resolve(superEntityType),
-    };
-
-    const answers = [getMockedAnswer([subEntityType], null)];
-    const { nodes, edges } = await CDB.buildTypes(answers);
-
-    expect(nodes).toHaveLength(1);
     expect(edges).toEqual([
-      { id: 'ent-type-supertype-sub', arrows: { to: { enabled: true } }, from: 'ent-type', label: 'sub', options: { hideArrow: false, hideLabel: false }, to: 'supertype' },
       {
-        id: 'ent-type-the extra attribute-has',
         arrows: { to: { enabled: true } },
-        from: 'ent-type',
+        from: 'subtype',
+        id: 'subtype-supertype-sub',
+        label: 'sub',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'supertype',
+      },
+      {
+        arrows: { to: { enabled: true } },
+        from: 'supertype',
+        id: 'supertype-attr-type-has',
         label: 'has',
         options: { hideArrow: false, hideLabel: false },
-        to: 'the extra attribute',
+        to: 'attr-type',
       },
     ]);
   });
 
-  test('when graql answer contains a type that plays a role in a relation', async () => {
-    const roleplayerType = {
+  test('when graql answer contains a type that extends its non-meta supertype by owning more attributes', async () => {
+    const attributeType = { ...mockedAttributeType };
+    const superEntityType = {
       ...mockedEntityType,
-      playing: () => Promise.resolve({
-        collect: () => Promise.resolve([
-          { label: () => Promise.resolve('role a'),
-            relations: () => Promise.resolve({
-              collect: () => Promise.resolve([{ ...mockedRelationType, id: 'relation' }]),
-            }) },
-        ]),
-      }),
-      id: 'roleplayer',
+      id: 'supertype',
+      label: () => Promise.resolve('supertype entity'),
+      attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
     };
 
-    const answers = [getMockedAnswer([roleplayerType], null)];
-    const { edges } = await CDB.buildTypes(answers);
-
-    expect(edges).toEqual([{
-      id: 'relation-roleplayer-role a',
-      arrows: { to: { enabled: true } },
-      from: 'relation',
-      label: 'role a',
-      options: { hideArrow: false, hideLabel: false },
-      to: 'roleplayer',
-    }]);
-  });
-
-  test('when graql answer contains a relation type', async () => {
-    const relationType = {
-      ...mockedRelationType,
-      roles: () => Promise.resolve({ collect: () => Promise.resolve([
-        { label: () => Promise.resolve('role a'), players: () => Promise.resolve({ collect: () => Promise.resolve([mockedEntityType]) }) },
-        { label: () => Promise.resolve('role b'), players: () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType]) }) },
-      ]) }),
+    const extraAttributeType = { ...mockedAttributeType, id: 'the-extra-attribute' };
+    const subEntityType = {
+      ...mockedEntityType,
+      attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType, extraAttributeType]) }),
+      sup: () => Promise.resolve(superEntityType),
     };
-    const answers = [getMockedAnswer([relationType], null)];
 
+    const answers = [getMockedAnswer([subEntityType, superEntityType, attributeType, extraAttributeType], null)];
     const { nodes, edges } = await CDB.buildTypes(answers);
 
-    expect(nodes).toHaveLength(1);
+    expect(nodes).toHaveLength(4);
+    expect(edges).toEqual([
+      {
+        arrows: { to: { enabled: true } },
+        from: 'ent-type',
+        id: 'ent-type-supertype-sub',
+        label: 'sub',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'supertype',
+      },
+      {
+        arrows: { to: { enabled: true } },
+        from: 'ent-type',
+        id: 'ent-type-the-extra-attribute-has',
+        label: 'has',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'the-extra-attribute',
+      },
+      {
+        arrows: { to: { enabled: true } },
+        from: 'supertype',
+        id: 'supertype-attr-type-has',
+        label: 'has',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'attr-type',
+      },
+    ]);
+  });
+
+  test('when graql answer contains a relation type with a roleplayer', async () => {
+    const role = { ...mockedRole };
+
+    const relationType = {
+      ...mockedRelationType,
+      roles: () => Promise.resolve({ collect: () => Promise.resolve([role]) }),
+    };
+
+    role.relations = () => Promise.resolve({
+      collect: () => Promise.resolve([{ ...relationType }]),
+    });
+
+    const entityType = {
+      ...mockedEntityType,
+      playing: () => Promise.resolve({
+        collect: () => Promise.resolve([role]),
+      }),
+    };
+
+    role.players = () => Promise.resolve({ collect: () => Promise.resolve([entityType]) });
+
+    const answers = [getMockedAnswer([entityType, relationType], null)];
+    const { nodes, edges } = await CDB.buildTypes(answers);
+
+    expect(nodes).toHaveLength(2);
 
     expect(edges).toEqual([
-      { id: 'rel-type-ent-type-role a', arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role a', options: { hideArrow: false, hideLabel: false }, to: 'ent-type' },
-      { id: 'rel-type-attr-type-role b', arrows: { to: { enabled: true } }, from: 'rel-type', label: 'role b', options: { hideArrow: false, hideLabel: false }, to: 'attr-type' },
+      {
+        arrows: { to: { enabled: true } },
+        from: 'rel-type',
+        id: 'rel-type-ent-type-some-role',
+        label: 'some-role',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'ent-type',
+      },
+      {
+        arrows: { to: { enabled: true } },
+        from: 'rel-type',
+        id: 'rel-type-ent-type-some-role',
+        label: 'some-role',
+        options: { hideArrow: false, hideLabel: false },
+        to: 'ent-type',
+      },
     ]);
   });
 
