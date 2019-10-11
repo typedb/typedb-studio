@@ -12,9 +12,8 @@ function getNeighboursQuery(node, neighboursLimit) {
       return `match $x id ${node.id}; $r ($x, $y); get $r, $y; offset ${node.offset}; limit ${neighboursLimit};`;
     case 'ATTRIBUTE':
       return `match $x has attribute $y; $y id ${node.id}; get $x; offset ${node.offset}; limit ${neighboursLimit};`;
-    case 'RELATION': {
-      return `match $r id ${node.id}; $r ($x, $y); get $x; offset ${node.offset}; limit ${neighboursLimit};`;
-    }
+    case 'RELATION':
+      return `match $r id ${node.id}; $r ($x, $y); get $x; offset ${node.offset}; limit ${node.offset + neighboursLimit};`;
     default:
       throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
   }
