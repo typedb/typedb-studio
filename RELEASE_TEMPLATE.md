@@ -7,8 +7,7 @@ Grakn Workbase is available for Linux, Mac and Windows (download binaries below)
 For Mac, Grakn Workbase also available through Brew Cask:
 ```
 brew tap graknlabs/tap
-brew tap-pin graknlabs/tap
-brew cask install grakn-workbase
+brew cask install graknlabs/tap/grakn-workbase
 ```
 
 { release notes }
