@@ -523,11 +523,10 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
       const [graqlVar, instance] = answersGroup[j];
 
       if (instance.isRelation() && await shouldVisualiseInstance(instance)) {
-        let queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $rl type role; }; get $rp, $rl; offset 0; `;
+        let queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $b sub $rl; $b != $rl; }; get $rp, $rl; offset 0; `;
         if (shouldLimit) queryToGetRPs += `limit ${QuerySettings.getNeighboursLimit()};`;
 
         const answers = await (await graknTx.query(queryToGetRPs)).collect();
-
         for (let k = 0; k < answers.length; k += 1) {
           const rolesAndRps = Array.from(answers[k].map().values());
           const role = rolesAndRps.filter(x => x.isRole())[0];
