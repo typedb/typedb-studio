@@ -527,6 +527,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
         if (shouldLimit) queryToGetRPs += `limit ${QuerySettings.getNeighboursLimit()};`;
 
         const answers = await (await graknTx.query(queryToGetRPs)).collect();
+
         for (let k = 0; k < answers.length; k += 1) {
           const rolesAndRps = Array.from(answers[k].map().values());
           const role = rolesAndRps.filter(x => x.isRole())[0];
