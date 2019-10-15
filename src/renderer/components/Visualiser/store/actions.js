@@ -186,7 +186,7 @@ export default {
     graknTx.close();
 
     if (data) { // when attributes are found, construct edges and add to graph
-      const edges = data.nodes.map(attr => ({ from: visNode.id, to: attr.id, label: 'has' }));
+      const edges = data.nodes.map(attr => CDB.getEdge(visNode, attr, CDB.edgeTypes.instance.HAS));
 
       state.visFacade.addToCanvas({ nodes: data.nodes, edges });
       commit('updateCanvasData');
