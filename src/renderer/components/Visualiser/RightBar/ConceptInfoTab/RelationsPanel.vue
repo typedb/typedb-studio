@@ -79,7 +79,7 @@
 
 <script>
   import { createNamespacedHelpers } from 'vuex';
-  import { OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
+  // import { OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
 
 
   export default {
@@ -95,7 +95,7 @@
       };
     },
     beforeCreate() {
-      const { mapGetters, mapActions } = createNamespacedHelpers(`tab-${this.$options.propsData.tabId}`);
+      const { mapGetters } = createNamespacedHelpers(`tab-${this.$options.propsData.tabId}`);
 
       // computed
       this.$options.computed = {
@@ -106,7 +106,7 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([OPEN_GRAKN_TX]),
+        // ...mapActions([OPEN_GRAKN_TX]),
       };
     },
     watch: {
@@ -142,9 +142,9 @@
         this.currentRole = role;
       },
       async loadRolesAndRelations() {
-        const graknTx = await this[OPEN_GRAKN_TX]();
+        // const graknTx = await this[OPEN_GRAKN_TX]();
 
-        const node = await graknTx.getConcept(this.selectedNodes[0].id);
+        const node = await global.graknTx.getConcept(this.selectedNodes[0].id);
 
         const roles = await (await node.roles()).collect();
 
@@ -159,15 +159,15 @@
             });
           }
         }));
-        graknTx.close();
+        // graknTx.close();
         return this.relations.keys().next().value;
       },
       async loadOtherRolePlayers(rel) {
         // If roleplayers have not already been computed
         if (!this.relations.get(this.currentRole).get(rel).length) {
-          const graknTx = await this[OPEN_GRAKN_TX]();
+          // const graknTx = await this[OPEN_GRAKN_TX]();
 
-          const node = await graknTx.getConcept(this.selectedNodes[0].id);
+          const node = await global.graknTx.getConcept(this.selectedNodes[0].id);
 
           const roles = await (await node.roles()).collect();
 
@@ -198,7 +198,7 @@
                 }));
             }));
           }));
-          graknTx.close();
+          // graknTx.close();
         }
       },
     },

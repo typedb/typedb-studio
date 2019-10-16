@@ -155,12 +155,20 @@ export default {
       throw e;
     }
   },
-  async [LOAD_ATTRIBUTES]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
+  async [LOAD_ATTRIBUTES]({ state, commit }, { visNode, neighboursLimit }) {
     commit('loadingQuery', true);
     const query = `match $x id ${visNode.id}, has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
     state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
+    debugger;
 
-    const result = await (await global.graknTx.query(query)).collect();
+    let result;
+    try {
+      result = await (await global.graknTx.query(query)).collect();
+    } catch (error) {
+      console.log(error);
+    }
+    debugger;
+
     const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
     const shouldLimit = true;
     const data = await CDB.buildInstances(result);
@@ -184,32 +192,40 @@ export default {
   },
   async [EXPLAIN_CONCEPT]({ state, dispatch, getters, commit }) {
     const explanation = getters.selectedNode.explanation;
+
     let queries;
     // If the explanation is formed from a conjuction inside a rule, go one step deeper to access the actual explanation
     if (!explanation.queryPattern().length) {
       queries = explanation.answers().map(answer => answer.explanation().answers().map(answer => mapAnswerToExplanationQuery(answer))).flatMap(x => x);
     } else {
-      queries = getters.selectedNode.explanation.answers().map(answer => mapAnswerToExplanationQuery(answer));
+      queries = explanation.answers().map(answer => mapAnswerToExplanationQuery(answer));
     }
 
-    /* eslint-disable no-await-in-loop */
-    for (const query of queries) { // eslint-disable-line
-      commit('loadingQuery', true);
-      const result = await (await global.graknTx.query(query)).collect();
-      const data = await CDB.buildInstances(result);
+    try {
+      /* eslint-disable no-await-in-loop */
+      for (const query of queries) { // eslint-disable-line
+        commit('loadingQuery', true);
+        const result = await (await global.graknTx.query(query)).collect();
+        const data = await CDB.buildInstances(result);
 
-      const rpData = await CDB.buildRPInstances(result, data, false, global.graknTx);
-      data.nodes.push(...rpData.nodes);
-      data.edges.push(...rpData.edges);
+        const rpData = await CDB.buildRPInstances(result, data, false, global.graknTx);
+        data.nodes.push(...rpData.nodes);
+        data.edges.push(...rpData.edges);
 
-      state.visFacade.addToCanvas(data);
-      commit('updateCanvasData');
-      const nodesWithAttributes = await computeAttributes(data.nodes);
+        state.visFacade.addToCanvas(data);
+        commit('updateCanvasData');
+        const nodesWithAttributes = await computeAttributes(data.nodes);
 
-      state.visFacade.updateNode(nodesWithAttributes);
-      const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
-      state.visFacade.updateEdge(styledEdges);
+        state.visFacade.updateNode(nodesWithAttributes);
+        const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
+        state.visFacade.updateEdge(styledEdges);
+        commit('loadingQuery', false);
+      }
+    } catch (e) {
+      console.log(e);
+      logger.error(e.stack);
       commit('loadingQuery', false);
+      throw e;
     }
   },
 
