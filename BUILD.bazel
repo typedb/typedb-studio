@@ -24,5 +24,4 @@ deploy_brew(
     type = "cask",
     deployment_properties = "@graknlabs_build_tools//:deployment.properties",
     formula = "//config/brew:grakn-workbase.rb",
-    version_file = "//:VERSION"
 )
