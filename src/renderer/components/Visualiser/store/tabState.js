@@ -10,7 +10,6 @@ export default {
       currentKeyspace: null,
       selectedNodes: null,
       loadingQuery: false,
-      graknSession: undefined,
       canvasData: { entities: 0, attributes: 0, relations: 0 },
       contextMenu: { show: false, x: null, y: null },
     };

@@ -12,7 +12,6 @@ const debug = process.env.NODE_ENV !== 'production';
 
 export default new Vuex.Store({
   state: {
-    grakn: undefined,
     keyspaces: undefined,
     credentials: undefined,
     isAuthenticated: undefined,
@@ -23,9 +22,6 @@ export default new Vuex.Store({
   actions,
   getters,
   mutations: {
-    setGrakn(state, grakn) {
-      state.grakn = grakn;
-    },
     setIsGraknRunning(state, isGraknRunning) {
       state.isGraknRunning = isGraknRunning;
     },

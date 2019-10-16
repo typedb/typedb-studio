@@ -1,11 +1,13 @@
 import Grakn from 'grakn-client';
 import ServerSettings from '@/components/ServerSettings';
 
-export const loadKeyspaces = async (context) => {
+export const loadKeyspaces = async (context, credentials) => {
   try {
-    const resp = await context.state.grakn.keyspaces().retrieve();
+    const grakn = new Grakn(ServerSettings.getServerUri(), credentials);
+    const resp = await grakn.keyspaces().retrieve();
     context.commit('setIsGraknRunning', true);
     context.commit('setKeyspaces', resp);
+    grakn.close();
   } catch (e) {
     context.commit('setIsGraknRunning', false);
   }
@@ -28,14 +30,11 @@ export const login = (context, credentials) =>
   });
 
 export const initGrakn = (context, credentials) => {
-  const grakn = new Grakn(ServerSettings.getServerUri(), credentials);
-  context.commit('setGrakn', grakn);
-  context.dispatch('loadKeyspaces');
+  context.dispatch('loadKeyspaces', credentials);
 };
 
 export const logout = async (context) => {
   context.commit('setCredentials', undefined);
-  context.commit('setGrakn', undefined);
   context.commit('setKeyspaces', undefined);
   context.commit('userLogged', false);
   // Need to notify all the other states that they need to invalidate GraknClient

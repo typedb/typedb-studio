@@ -35,5 +35,3 @@ export const UPDATE_METATYPE_INSTANCES = 'update-metatype-instances';
 export const INITIALISE_VISUALISER = 'initialise-visualiser';
 export const CANVAS_RESET = 'canvas-reset';
 export const CURRENT_KEYSPACE_CHANGED = 'current-keyspace-changed';
-export const OPEN_GRAKN_TX = 'open-grakn-tx';
-

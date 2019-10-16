@@ -109,10 +109,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   node.type = await getConceptLabel(instance);
   node.isInferred = await instance.isInferred();
   node.attributes = instance.attributes;
-  // this is required for the post-processing jobs
-  // TODO: handle post-processing here, so that we don't have to include
-  // concept-specific properties within the node objects
-  node.txService = instance.txService;
 
   return node;
 };
@@ -224,9 +220,7 @@ const buildInstances = async (answers) => {
       explanation,
     }));
   }).reduce(collect, []);
-
   const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
-
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
     return item;
@@ -260,10 +254,6 @@ const getTypeNode = async (type, graqlVar) => {
       node.label = await getConceptLabel(type);
       node.attributes = type.attributes;
       node.playing = type.playing;
-      // this is required for the post-processing jobs
-      // TODO: handle post-processing here, so that we don't have to include
-      // concept-specific properties within the node objects
-      node.txService = type.txService;
       break;
     }
     default:
