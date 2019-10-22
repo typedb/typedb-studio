@@ -210,7 +210,7 @@ jobs:
           command: |
             export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
             export DEPLOY_BREW_CHECKSUM=$(sha256sum grakn-workbase-mac-$(cat VERSION).dmg | awk '{print $1}')
-            bazel run //:deploy-brew -- release
+            bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   release-cleanup:
     machine: true
