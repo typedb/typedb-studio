@@ -120,6 +120,8 @@ export default {
       if (this.tabToRename && e.keyCode === 13) this.saveName(this.tabToRename); // Pressing enter will save tab name
       if (this.tabToRename && e.keyCode === 27) this.tabToRename = undefined; // Pressing escape will cancel renaming of tab
     });
+
+    this.setActiveTab('tab-1');
   },
   methods: {
     truncate(name) {

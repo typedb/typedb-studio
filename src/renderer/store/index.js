@@ -18,7 +18,7 @@ export default new Vuex.Store({
     landingPage: undefined,
     userLogged: false,
     isGraknRunning: undefined,
-    activeTab: 'tab-1',
+    activeTab: undefined,
   },
   actions,
   getters,
