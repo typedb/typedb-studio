@@ -51,7 +51,9 @@ export default {
       if (global.graknSession) await global.graknSession.close();
       global.graknSession = await global.grakn.session(keyspace);
 
-      if (global.graknTx && global.graknTx[rootState.activeTab]) await global.graknTx[rootState.activeTab].close();
+      // eslint-disable-next-line no-prototype-builtins
+      if (!global.hasOwnProperty('graknTx')) global.graknTx = {};
+      if (global.graknTx[rootState.activeTab]) await global.graknTx[rootState.activeTab].close();
       global.graknTx[rootState.activeTab] = await global.graknSession.transaction().write();
 
       dispatch(UPDATE_METATYPE_INSTANCES);
@@ -110,6 +112,7 @@ export default {
 
   async [RUN_CURRENT_QUERY]({ state, commit, rootState }) {
     try {
+      commit('setGlobalErrorMsg', '');
       const query = state.currentQuery;
       validateQuery(query);
       commit('loadingQuery', true);
