@@ -37,11 +37,11 @@ export default {
     return graknTx;
   },
 
-  async [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit, rootState }, keyspace) {
+  async [CURRENT_KEYSPACE_CHANGED]({ state, dispatch, commit }, keyspace) {
     if (keyspace !== state.currentKeyspace) {
       dispatch(CANVAS_RESET);
       commit('currentKeyspace', keyspace);
-      await commit('graknSession', await rootState.grakn.session(keyspace));
+      await commit('graknSession', await global.grakn.session(keyspace));
       dispatch(UPDATE_METATYPE_INSTANCES);
       dispatch(LOAD_SCHEMA);
     }
@@ -80,7 +80,7 @@ export default {
       state.visFacade.addToCanvas({ nodes: data.nodes, edges: data.edges });
       state.visFacade.fitGraphToWindow();
 
-      data.nodes = await computeAttributes(data.nodes);
+      data.nodes = await computeAttributes(data.nodes, graknTx);
       data.nodes = await computeRoles(data.nodes);
       state.visFacade.updateNode(data.nodes);
 
@@ -133,7 +133,7 @@ export default {
     state.visFacade.addToCanvas({ nodes: [node], edges });
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    let nodes = await computeAttributes([node]);
+    let nodes = await computeAttributes([node], graknTx);
     nodes = await computeRoles(nodes);
     state.visFacade.updateNode(nodes);
     graknTx.close();
@@ -174,7 +174,7 @@ export default {
     state.visFacade.addToCanvas({ nodes: [node], edges });
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    let nodes = await computeAttributes([node]);
+    let nodes = await computeAttributes([node], graknTx);
     nodes = await computeRoles(nodes);
     state.visFacade.updateNode(nodes);
     graknTx.close();
@@ -350,7 +350,7 @@ export default {
     state.visFacade.addToCanvas({ nodes, edges });
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    nodes = await computeAttributes(nodes);
+    nodes = await computeAttributes(nodes, graknTx);
     nodes = await computeRoles(nodes);
     state.visFacade.updateNode(nodes);
     graknTx.close();

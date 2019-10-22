@@ -1,7 +1,10 @@
-const getMockedGraknTx = (answer, extraProps = {}) => ({
-  query: () => Promise.resolve({ collect: () => Promise.resolve(answer) }),
-  ...extraProps,
-});
+const getMockedGraknTx = (answers, extraProps = {}) => ({
+    query: () => Promise.resolve({
+      collect: () => Promise.resolve(answers),
+      collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
+    }),
+    ...extraProps,
+  });
 
 const getMockedExplanation = answers => ({ answers: () => answers });
 

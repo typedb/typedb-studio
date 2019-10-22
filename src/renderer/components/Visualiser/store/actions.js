@@ -1,6 +1,3 @@
-import Grakn from 'grakn-client';
-import ServerSettings from '@/components/ServerSettings';
-
 /* eslint-disable no-unused-vars */
 import {
   RUN_CURRENT_QUERY,
@@ -29,6 +26,7 @@ import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
+import { reopenTransaction } from '../../shared/SharedUtils';
 
 
 export default {
@@ -49,20 +47,32 @@ export default {
       dispatch(CANVAS_RESET);
       commit('setCurrentQuery', '');
       commit('currentKeyspace', keyspace);
-      const grakn = new Grakn(ServerSettings.getServerUri());
-      const graknSession = await grakn.session(keyspace);
-      global.graknTx = await graknSession.transaction().write();
+
+      if (global.graknSession) await global.graknSession.close();
+      global.graknSession = await global.grakn.session(keyspace);
+
+      if (global.graknTx && global.graknTx[rootState.activeTab]) await global.graknTx[rootState.activeTab].close();
+      global.graknTx[rootState.activeTab] = await global.graknSession.transaction().write();
+
       dispatch(UPDATE_METATYPE_INSTANCES);
     }
   },
 
-  async [UPDATE_METATYPE_INSTANCES]({ dispatch, commit }) {
-    const metaTypeInstances = await loadMetaTypeInstances(global.graknTx);
-    commit('metaTypeInstances', metaTypeInstances);
+  async [UPDATE_METATYPE_INSTANCES]({ dispatch, commit, rootState }) {
+    try {
+      const graknTx = global.graknTx[rootState.activeTab];
+      const metaTypeInstances = await loadMetaTypeInstances(graknTx);
+      commit('metaTypeInstances', metaTypeInstances);
+    } catch (e) {
+      await reopenTransaction(rootState, commit);
+      console.log(e);
+      logger.error(e.stack);
+      throw e;
+    }
   },
 
-  async [UPDATE_NODES_LABEL]({ state, dispatch }, type) {
-    const nodes = await Promise.all(state.visFacade.getAllNodes().filter(x => x.type === type).map(x => global.graknTx.getConcept(x.id)));
+  async [UPDATE_NODES_LABEL]({ state, dispatch, rootState }, type) {
+    const nodes = await Promise.all(state.visFacade.getAllNodes().filter(x => x.type === type).map(x => global.graknTx[rootState.activeTab].getConcept(x.id)));
     const updatedNodes = await VisualiserGraphBuilder.prepareNodes(nodes);
     state.visFacade.updateNode(updatedNodes);
   },
@@ -73,28 +83,38 @@ export default {
     state.visFacade.updateNode(updatedNodes);
   },
 
-  async [LOAD_NEIGHBOURS]({ state, commit, dispatch }, { visNode, neighboursLimit }) {
-    commit('loadingQuery', true);
-    const filteredResult = await getFilteredNeighbourAnswers(visNode, global.graknTx, neighboursLimit);
-    const data = await CDB.buildNeighbours(visNode, filteredResult, global.graknTx);
-    visNode.offset += neighboursLimit;
-    state.visFacade.updateNode(visNode);
-    state.visFacade.addToCanvas(data);
-    if (data.nodes.length) state.visFacade.fitGraphToWindow();
-    commit('updateCanvasData');
-    const styledNodes = data.nodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
-    state.visFacade.updateNode(styledNodes);
-    const nodesWithAttribtues = await computeAttributes(data.nodes);
-    state.visFacade.updateNode(nodesWithAttribtues);
-    commit('loadingQuery', false);
+  async [LOAD_NEIGHBOURS]({ state, commit, dispatch, rootState }, { visNode, neighboursLimit }) {
+    try {
+      commit('loadingQuery', true);
+      const graknTx = global.graknTx[rootState.activeTab];
+      const filteredResult = await getFilteredNeighbourAnswers(visNode, graknTx, neighboursLimit);
+      const data = await CDB.buildNeighbours(visNode, filteredResult, graknTx);
+      visNode.offset += neighboursLimit;
+      state.visFacade.updateNode(visNode);
+      state.visFacade.addToCanvas(data);
+      if (data.nodes.length) state.visFacade.fitGraphToWindow();
+      commit('updateCanvasData');
+      const styledNodes = data.nodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
+      state.visFacade.updateNode(styledNodes);
+      const nodesWithAttribtues = await computeAttributes(data.nodes, graknTx);
+      state.visFacade.updateNode(nodesWithAttribtues);
+      commit('loadingQuery', false);
+    } catch (e) {
+      await reopenTransaction(rootState, commit);
+      commit('loadingQuery', false);
+      console.log(e);
+      logger.error(e.stack);
+      throw e;
+    }
   },
 
-  async [RUN_CURRENT_QUERY]({ state, dispatch, commit }) {
+  async [RUN_CURRENT_QUERY]({ state, commit, rootState }) {
     try {
       const query = state.currentQuery;
       validateQuery(query);
       commit('loadingQuery', true);
-      const result = await (await global.graknTx.query(query)).collect();
+      const graknTx = global.graknTx[rootState.activeTab];
+      const result = await (await graknTx.query(query)).collect();
 
       if (!result.length) {
         commit('loadingQuery', false);
@@ -106,7 +126,7 @@ export default {
         PATH: 'compute path',
       };
 
-      // eslint-disable-next-line no-prototype-builtins
+        // eslint-disable-next-line no-prototype-builtins
       const queryType = (result[0].hasOwnProperty('map') ? queryTypes.GET : queryTypes.PATH);
 
       let nodes = [];
@@ -124,14 +144,14 @@ export default {
         edges.push(...typesData.edges);
 
         if (shouldLoadRPs) {
-          const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, global.graknTx);
+          const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, graknTx);
           nodes.push(...rpData.nodes);
           edges.push(...rpData.edges);
         }
       } else if (queryType === queryTypes.PATH) {
         // TBD - handle multiple paths
         const path = result[0];
-        const pathNodes = await Promise.all(path.list().map(id => global.graknTx.getConcept(id)));
+        const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
         const pathData = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
         nodes.push(...pathData.nodes);
         edges.push(...pathData.edges);
@@ -141,7 +161,7 @@ export default {
       state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');
 
-      nodes = await computeAttributes(nodes);
+      nodes = await computeAttributes(nodes, graknTx);
 
       state.visFacade.updateNode(nodes);
 
@@ -149,51 +169,56 @@ export default {
 
       return { nodes, edges };
     } catch (e) {
+      await reopenTransaction(rootState, commit);
+      commit('loadingQuery', false);
       console.log(e);
       logger.error(e.stack);
-      commit('loadingQuery', false);
       throw e;
     }
   },
-  async [LOAD_ATTRIBUTES]({ state, commit }, { visNode, neighboursLimit }) {
-    commit('loadingQuery', true);
-    const query = `match $x id ${visNode.id}, has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
-    state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
-    debugger;
-
-    let result;
+  async [LOAD_ATTRIBUTES]({ state, commit, rootState }, { visNode, neighboursLimit }) {
     try {
-      result = await (await global.graknTx.query(query)).collect();
-    } catch (error) {
-      console.log(error);
-    }
-    debugger;
+      const graknTx = global.graknTx[rootState.activeTab];
+      commit('loadingQuery', true);
+      const query = `match $x id ${visNode.id}, has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
+      state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
 
-    const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
-    const shouldLimit = true;
-    const data = await CDB.buildInstances(result);
+      const result = await (await graknTx.query(query)).collect();
 
-    if (shouldLoadRPs) {
-      const rpData = await CDB.buildRPInstances(result, shouldLimit, global.graknTx);
-      data.nodes.push(...rpData.nodes);
-      data.edges.push(...rpData.edges);
-    }
-    state.visFacade.addToCanvas(data);
-    data.nodes = await computeAttributes(data.nodes);
-    state.visFacade.updateNode(data.nodes);
-    commit('loadingQuery', false);
+      const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+      const shouldLimit = true;
+      const data = await CDB.buildInstances(result);
 
-    if (data) { // when attributes are found, construct edges and add to graph
-      const edges = data.nodes.map(attr => CDB.getEdge(visNode, attr, CDB.edgeTypes.instance.HAS));
+      if (shouldLoadRPs) {
+        const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+        data.nodes.push(...rpData.nodes);
+        data.edges.push(...rpData.edges);
+      }
+      state.visFacade.addToCanvas(data);
+      data.nodes = await computeAttributes(data.nodes, graknTx);
+      state.visFacade.updateNode(data.nodes);
+      commit('loadingQuery', false);
 
-      state.visFacade.addToCanvas({ nodes: data.nodes, edges });
-      commit('updateCanvasData');
+      if (data) { // when attributes are found, construct edges and add to graph
+        const edges = data.nodes.map(attr => CDB.getEdge(visNode, attr, CDB.edgeTypes.instance.HAS));
+
+        state.visFacade.addToCanvas({ nodes: data.nodes, edges });
+        commit('updateCanvasData');
+      }
+    } catch (e) {
+      await reopenTransaction(rootState, commit);
+      commit('loadingQuery', false);
+      console.log(e);
+      logger.error(e.stack);
+      throw e;
     }
   },
-  async [EXPLAIN_CONCEPT]({ state, dispatch, getters, commit }) {
+  async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
     const explanation = getters.selectedNode.explanation;
+    const graknTx = global.graknTx[rootState.activeTab];
 
     let queries;
+
     // If the explanation is formed from a conjuction inside a rule, go one step deeper to access the actual explanation
     if (!explanation.queryPattern().length) {
       queries = explanation.answers().map(answer => answer.explanation().answers().map(answer => mapAnswerToExplanationQuery(answer))).flatMap(x => x);
@@ -205,26 +230,31 @@ export default {
       /* eslint-disable no-await-in-loop */
       for (const query of queries) { // eslint-disable-line
         commit('loadingQuery', true);
-        const result = await (await global.graknTx.query(query)).collect();
-        const data = await CDB.buildInstances(result);
+        const result = await (await graknTx.query(query)).collect();
+        if (result.length > 0) {
+          const data = await CDB.buildInstances(result);
 
-        const rpData = await CDB.buildRPInstances(result, data, false, global.graknTx);
-        data.nodes.push(...rpData.nodes);
-        data.edges.push(...rpData.edges);
+          const rpData = await CDB.buildRPInstances(result, data, false, graknTx);
+          data.nodes.push(...rpData.nodes);
+          data.edges.push(...rpData.edges);
 
-        state.visFacade.addToCanvas(data);
-        commit('updateCanvasData');
-        const nodesWithAttributes = await computeAttributes(data.nodes);
+          state.visFacade.addToCanvas(data);
+          commit('updateCanvasData');
+          const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
 
-        state.visFacade.updateNode(nodesWithAttributes);
-        const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
-        state.visFacade.updateEdge(styledEdges);
-        commit('loadingQuery', false);
+          state.visFacade.updateNode(nodesWithAttributes);
+          const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
+          state.visFacade.updateEdge(styledEdges);
+          commit('loadingQuery', false);
+        } else {
+          commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
+        }
       }
     } catch (e) {
+      await reopenTransaction(rootState, commit);
+      commit('loadingQuery', false);
       console.log(e);
       logger.error(e.stack);
-      commit('loadingQuery', false);
       throw e;
     }
   },

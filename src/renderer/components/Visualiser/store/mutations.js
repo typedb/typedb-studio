@@ -31,4 +31,7 @@ export default {
   setContextMenu(state, contextMenu) {
     state.contextMenu = contextMenu;
   },
+  setGlobalErrorMsg(state, errorMsg) {
+    state.globalErrorMsg = errorMsg;
+  },
 };

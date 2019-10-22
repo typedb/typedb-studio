@@ -55,7 +55,7 @@
   import { Chrome } from 'vue-color';
   import { createNamespacedHelpers } from 'vuex';
 
-  import { UPDATE_NODES_COLOUR, UPDATE_NODES_LABEL, OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { UPDATE_NODES_COLOUR, UPDATE_NODES_LABEL } from '@/components/shared/StoresActions';
   import DisplaySettings from './DisplaySettings';
 
 
@@ -89,7 +89,7 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([OPEN_GRAKN_TX, UPDATE_NODES_LABEL, UPDATE_NODES_COLOUR]),
+        ...mapActions([UPDATE_NODES_LABEL, UPDATE_NODES_COLOUR]),
       };
     },
     created() {
@@ -133,7 +133,7 @@
     methods: {
       async loadAttributeTypes() {
         if (!this.currentType) return;
-        const graknTx = await this[OPEN_GRAKN_TX]();
+        const graknTx = global.graknTx[this.$store.getters.activeTab];
 
         const type = await graknTx.getSchemaConcept(this.currentType);
 
@@ -141,7 +141,6 @@
         this.nodeAttributes.sort();
         this.currentTypeSavedAttributes = DisplaySettings.getTypeLabels(this.currentType);
 
-        graknTx.close();
         this.attributesLoaded = true;
       },
       loadMetaTypes() {

@@ -18,6 +18,7 @@ export default new Vuex.Store({
     landingPage: undefined,
     userLogged: false,
     isGraknRunning: undefined,
+    activeTab: 'tab-1',
   },
   actions,
   getters,
@@ -52,6 +53,9 @@ export default new Vuex.Store({
     },
     userLogged(state, logged) {
       state.userLogged = logged;
+    },
+    setActiveTab(state, activeTab) {
+      state.activeTab = activeTab;
     },
   },
   strict: debug,

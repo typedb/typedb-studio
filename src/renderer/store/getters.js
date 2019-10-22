@@ -4,3 +4,4 @@ export const landingPage = state => state.landingPage;
 export const userLogged = state => state.userLogged;
 export const credentials = state => state.credentials;
 export const isGraknRunning = state => state.isGraknRunning;
+export const activeTab = state => state.activeTab;

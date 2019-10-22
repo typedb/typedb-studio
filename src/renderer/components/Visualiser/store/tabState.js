@@ -12,6 +12,7 @@ export default {
       loadingQuery: false,
       canvasData: { entities: 0, attributes: 0, relations: 0 },
       contextMenu: { show: false, x: null, y: null },
+      globalErrorMsg: '',
     };
   },
 };

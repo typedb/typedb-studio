@@ -14,12 +14,12 @@ export const loadKeyspaces = async (context, credentials) => {
 };
 
 export const createKeyspace = async (context, name) => {
-  const session = await context.state.grakn.session(name);
+  const session = await global.grakn.session(name);
   await session.transaction().write().then(async (tx) => { await context.dispatch('loadKeyspaces'); tx.close(); });
   await session.close();
 };
 
-export const deleteKeyspace = async (context, name) => context.state.grakn.keyspaces().delete(name)
+export const deleteKeyspace = async (context, name) => global.grakn.keyspaces().delete(name)
   .then(async () => { await context.dispatch('loadKeyspaces'); });
 
 export const login = (context, credentials) =>
@@ -31,6 +31,8 @@ export const login = (context, credentials) =>
 
 export const initGrakn = (context, credentials) => {
   context.dispatch('loadKeyspaces', credentials);
+  global.grakn = new Grakn(ServerSettings.getServerUri(credentials));
+  global.graknTx = {};
 };
 
 export const logout = async (context) => {

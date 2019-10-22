@@ -29,7 +29,6 @@ const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('type');
   expect(node).toHaveProperty('isInferred');
   expect(node).toHaveProperty('attributes');
-  expect(node).toHaveProperty('txService');
 };
 
 describe('building instances', () => {
@@ -141,7 +140,6 @@ describe('building types', () => {
     expect(node).toHaveProperty('offset');
     expect(node).toHaveProperty('attributes');
     expect(node).toHaveProperty('playing');
-    expect(node).toHaveProperty('txService');
 
     expect(node).not.toHaveProperty('explanation');
 

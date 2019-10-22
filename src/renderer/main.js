@@ -66,5 +66,5 @@ new Vue({
 }).$mount('#grakn-app');
 
 window.addEventListener('beforeunload', () => {
-  store.state.grakn.close();
+  global.grakn.close();
 });
