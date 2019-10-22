@@ -1,10 +1,10 @@
 const getMockedGraknTx = (answers, extraProps = {}) => ({
-    query: () => Promise.resolve({
-      collect: () => Promise.resolve(answers),
-      collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
-    }),
-    ...extraProps,
-  });
+  query: () => Promise.resolve({
+    collect: () => Promise.resolve(answers),
+    collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
+  }),
+  ...extraProps,
+});
 
 const getMockedExplanation = answers => ({ answers: () => answers });
 
@@ -69,6 +69,7 @@ const mockedAttributeType = {
   isImplicit: () => Promise.resolve(false),
   sup: () => Promise.resolve({ label: () => Promise.resolve('attribute') }),
   playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+  dataType: () => Promise.resolve('String'),
 };
 
 const mockedEntityInstance = {

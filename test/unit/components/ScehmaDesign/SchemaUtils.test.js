@@ -17,7 +17,7 @@ describe('Schema Utils', () => {
     const graknTx = getMockedGraknTx([answer]);
 
     const nodes = await computeAttributes([entityType], graknTx);
-    expect(nodes[0].attributes[0].type).toBe('name');
+    expect(nodes[0].attributes[0].type).toBe('some-attribute-type');
     expect(nodes[0].attributes[0].dataType).toBe('String');
   });
 
