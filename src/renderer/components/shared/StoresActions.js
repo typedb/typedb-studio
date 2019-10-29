@@ -17,6 +17,7 @@ export const DELETE_RELATES_ROLE = 'delete-relates-role';
 export const DEFINE_RULE = 'define-rule';
 export const ADD_ROLE_TYPE = 'add-role-type';
 export const DELETE_ROLE = 'delete-tole';
+export const OPEN_GRAKN_TX = 'open-grakn-tx';
 
 
 // Visualiser store actions
@@ -35,5 +36,3 @@ export const UPDATE_METATYPE_INSTANCES = 'update-metatype-instances';
 export const INITIALISE_VISUALISER = 'initialise-visualiser';
 export const CANVAS_RESET = 'canvas-reset';
 export const CURRENT_KEYSPACE_CHANGED = 'current-keyspace-changed';
-export const OPEN_GRAKN_TX = 'open-grakn-tx';
-

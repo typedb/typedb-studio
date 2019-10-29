@@ -43,6 +43,7 @@
 
 
 <script>
+import { createNamespacedHelpers } from 'vuex';
 
 import getters from './store/getters';
 import mutations from './store/mutations';
@@ -70,13 +71,31 @@ export default {
       showPreferences: false,
     };
   },
+
+  watch: {
+    globalErrorMsg(msg) {
+      if (msg !== '') {
+        this.$notifyError(msg);
+      }
+    },
+  },
+
   beforeCreate() {
     const namespace = `tab-${this.$options.propsData.tabId}`;
     this.$store.registerModule(namespace, { namespaced: true, getters, state: TabState.create(), mutations, actions });
+    const { mapGetters } = createNamespacedHelpers(`tab-${this.$options.propsData.tabId}`);
+
+    // computed
+    this.$options.computed = {
+      ...(this.$options.computed || {}),
+      ...mapGetters(['globalErrorMsg']),
+    };
   },
+
   beforeDestroy() {
-    if (this.$store.state[`tab-${this.tabId}`].graknSession) this.$store.state[`tab-${this.tabId}`].graknSession.close();
-    this.$store.unregisterModule(`tab-${this.tabId}`);
+    if (global.graknTx[`tab-${this.tabId}`]) global.graknTx[`tab-${this.tabId}`].close();
+    /* eslint-disable no-prototype-builtins */
+    if (this.$store.state.hasOwnProperty(`tab-${this.tabId}`)) this.$store.unregisterModule(`tab-${this.tabId}`);
   },
 };
 </script>

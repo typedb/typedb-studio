@@ -288,10 +288,13 @@ export default {
       this.codeMirror.setValue('');
       if (this.editorMinimized) this.maximizeEditor();
     },
-    clearGraph() {
+    async clearGraph() {
       if (!this.currentKeyspace) this.$emit('keyspace-not-selected');
       else if (this.showSpinner) this.$notifyInfo('Please wait for action to complete');
-      else this[CANVAS_RESET]();
+      else {
+        this[CANVAS_RESET]();
+        global.graknTx[this.$store.getters.activeTab] = await global.graknSession.transaction().write();
+      }
     },
     toggleAddFavQuery() {
       this.showAddFavQuery = !this.showAddFavQuery;

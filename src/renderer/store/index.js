@@ -12,20 +12,17 @@ const debug = process.env.NODE_ENV !== 'production';
 
 export default new Vuex.Store({
   state: {
-    grakn: undefined,
     keyspaces: undefined,
     credentials: undefined,
     isAuthenticated: undefined,
     landingPage: undefined,
     userLogged: false,
     isGraknRunning: undefined,
+    activeTab: undefined,
   },
   actions,
   getters,
   mutations: {
-    setGrakn(state, grakn) {
-      state.grakn = grakn;
-    },
     setIsGraknRunning(state, isGraknRunning) {
       state.isGraknRunning = isGraknRunning;
     },
@@ -56,6 +53,9 @@ export default new Vuex.Store({
     },
     userLogged(state, logged) {
       state.userLogged = logged;
+    },
+    setActiveTab(state, activeTab) {
+      state.activeTab = activeTab;
     },
   },
   strict: debug,

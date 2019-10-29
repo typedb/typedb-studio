@@ -54,17 +54,21 @@ describe('tabs', () => {
     });
 
     // first tab
-    const tab0 = shallowMount(Object.assign({
-      store,
-    }, visTab), {
-      propsData: { tabId: 0 },
-    });
+    const tab0 = shallowMount(
+      Object.assign({ store }, visTab),
+      {
+        propsData: { tabId: 0 },
+        computed: {
+          globalErrorMsg: '',
+        },
+      },
+    );
 
     expect(store.state['tab-0']).toBeDefined();
-
+    global.graknTx = { 'tab-0': { close: () => Promise.resolve() } };
     tab0.destroy();
 
-    // first tab
+    // second tab
     shallowMount(Object.assign({
       store,
     }, visTab), {
@@ -76,29 +80,45 @@ describe('tabs', () => {
 
   test('dispatching actions only effects namespaced state', async () => {
     const store = new Vuex.Store({
-      state: { grakn: { session: () => jest.fn() } },
+      state: {},
     });
 
-    shallowMount(Object.assign({
-      store,
-    }, visTab), {
-      propsData: { tabId: 0 },
-    });
+    shallowMount(
+      Object.assign({ store }, visTab),
+      {
+        propsData: { tabId: 0 },
+        computed: {
+          globalErrorMsg: '',
+        },
+      },
+    );
 
-    shallowMount(Object.assign({
-      store,
-    }, visTab), {
-      propsData: { tabId: 1 },
-    });
+    shallowMount(
+      Object.assign({ store }, visTab),
+      {
+        propsData: { tabId: 1 },
+        computed: {
+          globalErrorMsg: '',
+        },
+      },
+    );
+
+    global.grakn = {
+      session: () => ({
+        transaction: () => ({ write: () => Promise.resolve({ query: () => Promise.resolve({
+          collectConcepts: () => Promise.resolve([]),
+        }) }) }),
+      }),
+    };
+    global.graknTx = {};
+    store.state.activeTab = 'tab-0';
 
     store.commit('tab-0/setVisFacade', { resetCanvas: jest.fn(), getAllNodes: jest.fn().mockImplementation(() => [{ id: 1234, type: 'person' }]) });
     store.commit('tab-1/setVisFacade', { resetCanvas: jest.fn(), getAllNodes: jest.fn().mockImplementation(() => [{ id: 1234, type: 'person' }]) });
-
     expect(store.getters['tab-0/currentKeyspace']).toBe(null);
     expect(store.getters['tab-1/currentKeyspace']).toBe(null);
 
     await store.dispatch('tab-0/current-keyspace-changed', 'gene');
-
     expect(store.getters['tab-0/currentKeyspace']).toBe('gene');
     expect(store.getters['tab-1/currentKeyspace']).toBe(null);
   });

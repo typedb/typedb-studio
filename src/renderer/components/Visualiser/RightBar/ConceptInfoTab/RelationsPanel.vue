@@ -79,8 +79,6 @@
 
 <script>
   import { createNamespacedHelpers } from 'vuex';
-  import { OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
-
 
   export default {
     name: 'RelationsPanel',
@@ -95,7 +93,7 @@
       };
     },
     beforeCreate() {
-      const { mapGetters, mapActions } = createNamespacedHelpers(`tab-${this.$options.propsData.tabId}`);
+      const { mapGetters } = createNamespacedHelpers(`tab-${this.$options.propsData.tabId}`);
 
       // computed
       this.$options.computed = {
@@ -106,7 +104,6 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([OPEN_GRAKN_TX]),
       };
     },
     watch: {
@@ -142,10 +139,7 @@
         this.currentRole = role;
       },
       async loadRolesAndRelations() {
-        const graknTx = await this[OPEN_GRAKN_TX]();
-
-        const node = await graknTx.getConcept(this.selectedNodes[0].id);
-
+        const node = await global.graknTx[this.$store.getters.activeTab].getConcept(this.selectedNodes[0].id);
         const roles = await (await node.roles()).collect();
 
         // Map roles to their respective relations which map to an empty array of other role players in that relation
@@ -159,16 +153,12 @@
             });
           }
         }));
-        graknTx.close();
         return this.relations.keys().next().value;
       },
       async loadOtherRolePlayers(rel) {
         // If roleplayers have not already been computed
         if (!this.relations.get(this.currentRole).get(rel).length) {
-          const graknTx = await this[OPEN_GRAKN_TX]();
-
-          const node = await graknTx.getConcept(this.selectedNodes[0].id);
-
+          const node = await global.graknTx[this.$store.getters.activeTab].getConcept(this.selectedNodes[0].id);
           const roles = await (await node.roles()).collect();
 
           // Get role concept of selected current role
@@ -198,7 +188,6 @@
                 }));
             }));
           }));
-          graknTx.close();
         }
       },
     },

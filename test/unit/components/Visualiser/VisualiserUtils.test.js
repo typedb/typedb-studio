@@ -13,6 +13,7 @@ import {
   getMockedAnswer,
   mockedAttributeInstance,
   mockedRelationInstance,
+  getMockedGraknTx,
 } from '../../../helpers/mockedConcepts';
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
@@ -96,21 +97,30 @@ describe('limit Query', () => {
 describe('Compute Attributes', () => {
   test('attach attributes to type', async () => {
     const entityType = { ...mockedEntityType };
+    const attributeType = { ...mockedAttributeType };
+
+    const answer = getMockedAnswer([attributeType]);
+    const graknTx = getMockedGraknTx([answer]);
+
     entityType.attributes = () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType]) });
 
-    const nodes = await computeAttributes([entityType]);
+    const nodes = await computeAttributes([entityType], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
 
-    const attributeType = nodes[0].attributes[0];
-    expect(attributeType.type).toBe('some-attribute-type');
+    const attrType = nodes[0].attributes[0];
+    expect(attrType.type).toBe('some-attribute-type');
   });
 
   test('attach attributes to thing', async () => {
     const entityInstance = { ...mockedEntityInstance };
     const attributeInstance = { ...mockedAttributeInstance };
+
+    const answer = getMockedAnswer([attributeInstance]);
+    const graknTx = getMockedGraknTx([answer]);
+
     entityInstance.attributes = () => Promise.resolve({ collect: () => Promise.resolve([attributeInstance]) });
 
-    const nodes = await computeAttributes([entityInstance]);
+    const nodes = await computeAttributes([entityInstance], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
 
     expect(nodes[0].attributes[0].type).toBe('some-attribute-type');

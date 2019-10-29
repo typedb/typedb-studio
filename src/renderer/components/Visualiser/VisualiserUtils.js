@@ -62,9 +62,9 @@ export function buildExplanationQuery(answer, queryPattern) {
   return { query, attributeQuery };
 }
 
-export function computeAttributes(nodes) {
+export function computeAttributes(nodes, graknTx) {
   return Promise.all(nodes.map(async (node) => {
-    const attributes = await (await node.attributes()).collect();
+    const attributes = (await (await graknTx.query(`match $x id ${node.id}; $x has attribute $y; get $y;`)).collectConcepts());
     node.attributes = await Promise.all(attributes.map(async (concept) => {
       const attribute = {};
       if (concept.isType()) {

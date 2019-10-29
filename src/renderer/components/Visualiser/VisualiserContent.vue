@@ -88,6 +88,7 @@
 
 <script>
 
+import { mapMutations } from 'vuex';
 import VisTab from './VisTab.vue';
 
 export default {
@@ -103,6 +104,14 @@ export default {
       newTabName: '',
     };
   },
+
+  beforeCreate() {
+    this.$options.methods = {
+      ...(this.$options.methods || {}),
+      ...mapMutations(['setActiveTab']),
+    };
+  },
+
   created() {
     window.addEventListener('keydown', (e) => {
       // pressing CMD + T will create a new tab
@@ -111,6 +120,8 @@ export default {
       if (this.tabToRename && e.keyCode === 13) this.saveName(this.tabToRename); // Pressing enter will save tab name
       if (this.tabToRename && e.keyCode === 27) this.tabToRename = undefined; // Pressing escape will cancel renaming of tab
     });
+
+    this.setActiveTab('tab-1');
   },
   methods: {
     truncate(name) {
@@ -120,15 +131,18 @@ export default {
     toggleTab(tab) {
       this.currentTab = tab;
       this.cancelRename();
+      this.setActiveTab(`tab-${tab}`);
     },
     newTab() {
       const newTabId = Math.max(...Array.from(this.tabs.keys())) + 1; // Get max tab id and increment it for new tab id
       this.tabs.set(newTabId, undefined);
       this.currentTab = newTabId;
+      this.setActiveTab(`tab-${newTabId}`);
     },
-    closeTab(tab) {
+    async closeTab(tab) {
       // Find tab compoenent which has same tabId as tab to be closed and destroy it manually
-      this.$children.filter(x => (x.tabId && x.tabId === tab))[0].$destroy();
+      const visTab = this.$children.find(x => (x.tabId && x.tabId === tab));
+      visTab.$destroy();
 
       this.tabs.delete(tab);
 
@@ -139,6 +153,7 @@ export default {
         this.currentTab = null;
         this.currentTab = temp;
       }
+      this.setActiveTab(`tab-${this.currentTab}`);
     },
     renameTab(tab) {
       this.tabToRename = tab;

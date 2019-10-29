@@ -4,7 +4,6 @@ import Vuex from 'vuex';
 import {
   CANVAS_RESET,
   INITIALISE_VISUALISER,
-  OPEN_GRAKN_TX,
   UPDATE_METATYPE_INSTANCES,
   UPDATE_NODES_LABEL,
   UPDATE_NODES_COLOUR,
@@ -148,21 +147,6 @@ describe('actions', () => {
     store.dispatch(UPDATE_METATYPE_INSTANCES).then(() => {
       expect(loadMetaTypeInstances).toHaveBeenCalled();
       expect(metaTypeInstances.mock.calls).toHaveLength(1);
-    });
-  });
-
-  test('OPEN_GRAKN_TX', () => {
-    const store = new Vuex.Store({
-      state: {
-        graknSession: {
-          transaction: () => ({ write: jest.fn() }),
-        },
-      },
-      actions,
-    });
-
-    store.dispatch(OPEN_GRAKN_TX).then(() => {
-      expect(store.state.graknSession.transaction).toHaveBeenCalled();
     });
   });
 
