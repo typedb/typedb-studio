@@ -99,16 +99,19 @@ const getEdge = (from, to, edgeType, label) => {
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
+const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
   const node = {};
   node.id = instance.id;
   node.baseType = instance.baseType;
   node.var = graqlVar;
-  node.explanation = explanation();
   node.attrOffset = 0;
   node.type = await getConceptLabel(instance);
   node.isInferred = await instance.isInferred();
   node.attributes = instance.attributes;
+  if (node.isInferred) {
+    node.explanation = explanation;
+    node.queryPattern = queryPattern();
+  }
 
   return node;
 };
@@ -119,8 +122,8 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const getInstanceNode = async (instance, graqlVar, explanation) => {
-  const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
+const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
+  const node = await buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = `${node.type}: ${node.id}`;
@@ -213,13 +216,15 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
  */
 const buildInstances = async (answers) => {
   let data = answers.map((answerGroup) => {
-    const explanation = answerGroup.explanation;
+    const { explanation, queryPattern } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
       graqlVar,
       concept,
       explanation,
+      queryPattern,
     }));
   }).reduce(collect, []);
+
   const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
@@ -228,7 +233,7 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation)));
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern)));
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
 
@@ -408,12 +413,12 @@ const buildTypes = async (answers) => {
  * @param {*} graqlVar
  * @param {*} explanation
  */
-const getNeighbourNode = async (concept, graqlVar, explanation) => {
+const getNeighbourNode = async (concept, graqlVar, explanation, queryPattern) => {
   let node;
   if (concept.isType()) {
     node = getTypeNode(concept, graqlVar);
   } else if (concept.isThing()) {
-    node = getInstanceNode(concept, graqlVar, explanation);
+    node = getInstanceNode(concept, graqlVar, explanation, queryPattern);
   }
   return node;
 };
@@ -468,11 +473,12 @@ const getNeighbourEdges = async (neighbourConcept, targetNode, graknTx) => {
  */
 const buildNeighbours = async (targetNode, answers, graknTx) => {
   let data = answers.map((answerGroup) => {
-    const explanation = answerGroup.explanation;
+    const { explanation, queryPattern } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
       graqlVar,
       concept,
       explanation,
+      queryPattern,
     }));
   }).reduce(collect, []);
 
@@ -485,11 +491,8 @@ const buildNeighbours = async (targetNode, answers, graknTx) => {
 
   data = deduplicateConcepts(data);
 
-  const nodesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation)));
-  const edgesPromises = Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetNode, graknTx)));
-
-  const nodes = await nodesPromises;
-  const edges = (await edgesPromises).reduce(collect, []);
+  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern)));
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetNode, graknTx)))).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -535,7 +538,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
             const rp = roleplayers[l];
             if (rp.isThing() && await shouldVisualiseInstance(rp)) {
               edges.push(getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
-              nodes.push(await getInstanceNode(rp, graqlVar, answer.explanation));
+              nodes.push(await getInstanceNode(rp, graqlVar, answer.explanation, answer.queryPattern));
             }
           }
         }
