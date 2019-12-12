@@ -6,7 +6,7 @@ const getMockedGraknTx = (answers, extraProps = {}) => ({
   ...extraProps,
 });
 
-const getMockedExplanation = answers => ({ answers: () => answers });
+const getMockedExplanation = answers => Promise.resolve({ getAnswers: () => answers });
 
 const getMockedAnswer = (concepts, explanation) => {
   const answer = {};
@@ -15,6 +15,7 @@ const getMockedAnswer = (concepts, explanation) => {
   concepts.forEach((concept, index) => { map.set(index, concept); });
   answer.map = () => map;
   answer.explanation = () => explanation;
+  answer.queryPattern = () => '';
 
   return answer;
 };

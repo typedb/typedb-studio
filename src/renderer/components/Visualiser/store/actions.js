@@ -29,6 +29,8 @@ import CDB from '../../shared/CanvasDataBuilder';
 import { reopenTransaction } from '../../shared/SharedUtils';
 
 
+const collect = (array, current) => array.concat(current);
+
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
     addResetGraphListener(dispatch, CANVAS_RESET);
@@ -129,7 +131,7 @@ export default {
         PATH: 'compute path',
       };
 
-        // eslint-disable-next-line no-prototype-builtins
+      // eslint-disable-next-line no-prototype-builtins
       const queryType = (result[0].hasOwnProperty('map') ? queryTypes.GET : queryTypes.PATH);
 
       let nodes = [];
@@ -217,41 +219,49 @@ export default {
     }
   },
   async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
-    const explanation = getters.selectedNode.explanation;
-    const graknTx = global.graknTx[rootState.activeTab];
-
-    let queries;
-
-    // If the explanation is formed from a conjuction inside a rule, go one step deeper to access the actual explanation
-    if (!explanation.queryPattern().length) {
-      queries = explanation.answers().map(answer => answer.explanation().answers().map(answer => mapAnswerToExplanationQuery(answer))).flatMap(x => x);
-    } else {
-      queries = explanation.answers().map(answer => mapAnswerToExplanationQuery(answer));
-    }
-
     try {
-      /* eslint-disable no-await-in-loop */
-      for (const query of queries) { // eslint-disable-line
-        commit('loadingQuery', true);
-        const result = await (await graknTx.query(query)).collect();
-        if (result.length > 0) {
-          const data = await CDB.buildInstances(result);
+      const graknTx = global.graknTx[rootState.activeTab];
 
-          const rpData = await CDB.buildRPInstances(result, data, false, graknTx);
-          data.nodes.push(...rpData.nodes);
-          data.edges.push(...rpData.edges);
+      const node = getters.selectedNode;
+      const queryPattern = node.queryPattern;
+      const queryPatternVariales = Array.from(new Set(queryPattern.match(/\$[^\s|)|;|,]*/g))).map(x => x.substring(1));
 
-          state.visFacade.addToCanvas(data);
-          commit('updateCanvasData');
-          const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
+      const explanationAnswers = (await node.explanation()).getAnswers();
 
-          state.visFacade.updateNode(nodesWithAttributes);
-          const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
-          state.visFacade.updateEdge(styledEdges);
-          commit('loadingQuery', false);
-        } else {
-          commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
+      const explanationPromises = [];
+      const explanationResult = [];
+
+      explanationAnswers.forEach((answer) => {
+        const answerVariabes = Array.from(answer.map().keys());
+
+        const isJointExplanation = answerVariabes.every(variable => queryPatternVariales.includes(variable));
+        if (answer.hasExplanation() && isJointExplanation) {
+          explanationPromises.push(answer.explanation());
+        } else if (!isJointExplanation) {
+          explanationResult.push(answer);
         }
+      });
+
+      (await Promise.all(explanationPromises)).map(expl => expl.getAnswers()).reduce(collect, []).forEach((expl) => {
+        explanationResult.push(expl);
+      });
+
+      if (explanationResult.length > 0) {
+        const data = await CDB.buildInstances(explanationResult);
+        const rpData = await CDB.buildRPInstances(explanationResult, data, false, graknTx);
+        data.nodes.push(...rpData.nodes);
+        data.edges.push(...rpData.edges);
+
+        state.visFacade.addToCanvas(data);
+        commit('updateCanvasData');
+        const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
+
+        state.visFacade.updateNode(nodesWithAttributes);
+        const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
+        state.visFacade.updateEdge(styledEdges);
+        commit('loadingQuery', false);
+      } else {
+        commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
       }
     } catch (e) {
       await reopenTransaction(rootState, commit);

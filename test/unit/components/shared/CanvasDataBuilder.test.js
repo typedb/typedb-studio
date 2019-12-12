@@ -24,10 +24,13 @@ const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('id');
   expect(node).toHaveProperty('baseType');
   expect(node).toHaveProperty('var');
-  expect(node).toHaveProperty('explanation');
   expect(node).toHaveProperty('attrOffset');
   expect(node).toHaveProperty('type');
   expect(node).toHaveProperty('isInferred');
+  if (node.isInferred) {
+    expect(node).toHaveProperty('explanation');
+    expect(node).toHaveProperty('queryPattern');
+  }
   expect(node).toHaveProperty('attributes');
 };
 
@@ -99,13 +102,15 @@ describe('building instances', () => {
   });
 
   test('when graql answer contains an explanation', async () => {
-    const explConcept = mockedAttributeInstance;
+    const entityInstance = { ...mockedEntityInstance };
+    entityInstance.isInferred = () => Promise.resolve(true);
+    const explConcept = { ...mockedAttributeInstance };
     const explAnswer = getMockedAnswer([explConcept], null);
     const explanation = getMockedExplanation([explAnswer]);
-    const answers = [getMockedAnswer([mockedEntityInstance], explanation)];
+    const answers = [getMockedAnswer([entityInstance], explanation)];
     const { nodes } = await CDB.buildInstances(answers);
-
-    expect(nodes[0].explanation.answers()[0].map().get(0)).toEqual(explConcept);
+    const explAnswers = (await nodes[0].explanation()).getAnswers();
+    expect(explAnswers[0].map().get(0)).toEqual(explConcept);
   });
 
   test('when graql answer contains an implicit instance', async () => {
