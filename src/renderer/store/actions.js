@@ -28,7 +28,7 @@ export const login = (context, credentials) =>
   });
 
 export const initGrakn = (context, credentials) => {
-  global.grakn = new Grakn(ServerSettings.getServerUri(credentials));
+  global.grakn = new Grakn(ServerSettings.getServerUri(), credentials);
   context.dispatch('loadKeyspaces', credentials);
 };
 
