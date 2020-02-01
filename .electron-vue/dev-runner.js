@@ -160,11 +160,9 @@ function greeting () {
   const cols = process.stdout.columns
   let text = ''
 
-  if (cols > 104) text = 'GRAKN workbase'
-  else if (cols > 76) text = 'GRAKN|workbase'
-  else text = false
-
-  if (cols < 116) text = 'GRAKN|workbase'
+  text = false
+  if ((cols > 76) && (cols <= 115)) text = 'GRAKN|workbase'
+  else if (cols > 115) text = 'GRAKN workbase'
 
   if (text) {
     say(text, {
