@@ -164,6 +164,8 @@ function greeting () {
   else if (cols > 76) text = 'GRAKN|workbase'
   else text = false
 
+  if (cols < 116) text = 'GRAKN|workbase'
+
   if (text) {
     say(text, {
       colors: ['yellow'],
