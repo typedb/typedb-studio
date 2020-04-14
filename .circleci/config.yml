@@ -48,13 +48,13 @@ commands:
     steps:
       - run-bazel-rbe:
           command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
-      - run: mkdir -p dist && tar -xvzf bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
+      - run: mkdir -p dist && tar -xvzf bazel-bin/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
 
   run-grakn-server-mac:
     steps:
       - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
-      - run: unzip bazel-genfiles/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
+      - run: unzip bazel-bin/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
       - run: nohup ./dist/grakn-core-all-mac/grakn server start
 
 jobs:

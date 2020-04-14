@@ -25,8 +25,8 @@ REM build grakn-core-all-windows archive
 bazel build @graknlabs_grakn_core//:assemble-windows-zip || GOTO :error
 
 REM unpack and start Grakn server
-unzip bazel-genfiles\external\graknlabs_grakn_core\grakn-core-all-windows.zip -d bazel-genfiles\dist\ || GOTO :error
-PUSHD bazel-genfiles\dist\grakn-core-all-windows\
+unzip bazel-bin\external\graknlabs_grakn_core\grakn-core-all-windows.zip -d bazel-bin\dist\ || GOTO :error
+PUSHD bazel-bin\dist\grakn-core-all-windows\
 CALL grakn.bat server start || GOTO :error
 POPD
 
@@ -44,7 +44,7 @@ REM run e2e tests
 REM bazel run @nodejs//:bin/yarn.cmd -- run e2e || GOTO :error
 
 REM stop Grakn server
-PUSHD bazel-genfiles\dist\grakn-core-all-windows\
+PUSHD bazel-bin\dist\grakn-core-all-windows\
 CALL grakn.bat server stop
 POPD
 
