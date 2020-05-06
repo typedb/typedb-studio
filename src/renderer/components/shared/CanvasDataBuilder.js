@@ -1,6 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
+import store from '../../store';
+
 const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
 const collect = (array, current) => array.concat(current);
@@ -157,7 +159,9 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
  * @param {Concept} attribute must be an attribute instance
  */
 const getInstanceHasEdges = async (attribute) => {
-  const owners = (await (await attribute.owners()).collect());
+  const tx = global.graknTx[store.getters.activeTab];
+
+  const owners = (await (await attribute.asRemote(tx).owners()).collect());
   const edges = owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS));
   return edges;
 };
@@ -168,7 +172,9 @@ const getInstanceHasEdges = async (attribute) => {
  */
 // eslint-disable-next-line no-unused-vars
 const getInstanceRelatesEdges = async (relation) => {
-  const rpMap = await relation.rolePlayersMap();
+  const tx = global.graknTx[store.getters.activeTab];
+
+  const rpMap = await relation.asRemote(tx).rolePlayersMap();
   const rpMapEntries = Array.from(rpMap.entries());
   const edges = (await Promise.all(
     rpMapEntries.map(([role, players]) => role.label().then(label =>
@@ -274,7 +280,8 @@ const getTypeNode = async (type, graqlVar) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeSubEdge = async (type) => {
-  const sup = await type.sup();
+  const tx = global.graknTx[store.getters.activeTab];
+  const sup = await type.asRemote(tx).sup();
   const supLabel = await sup.label();
   if (sup && !META_LABELS.has(supLabel)) return [getEdge(type, sup, edgeTypes.type.SUB)];
   return [];
@@ -286,13 +293,14 @@ const getTypeSubEdge = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeAttributeEdges = async (type) => {
+  const tx = global.graknTx[store.getters.activeTab];
   let edges = [];
 
-  const sup = await type.sup();
+  const sup = await type.asRemote(tx).sup();
 
   if (sup) {
     const supLabel = await sup.label();
-    const typesAttrs = await (await type.attributes()).collect();
+    const typesAttrs = await (await type.asRemote(tx).attributes()).collect();
 
     if (META_LABELS.has(supLabel)) {
       edges = typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
@@ -312,7 +320,9 @@ const getTypeAttributeEdges = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypePlayEdges = async (type) => {
-  const playRoles = await (await type.playing()).collect();
+  const tx = global.graknTx[store.getters.activeTab];
+
+  const playRoles = await (await type.asRemote(tx).playing()).collect();
   const edges = (await Promise.all(playRoles.map(role =>
     role.label().then(label =>
       role.relations().then(relationsIterator =>
@@ -330,8 +340,10 @@ const getTypePlayEdges = async (type) => {
  * @param {Concept} type must be a concept relation type
  */
 const getTypeRelatesEdges = async (type) => {
-  const roles = await (await type.roles()).collect();
+  const tx = global.graknTx[store.getters.activeTab];
 
+  const roles = await (await type.asRemote(tx).roles()).collect();
+  debugger;
   const edges = (await Promise.all(roles.map(role => role.label().then(label =>
     role.players().then(playersIterator =>
       playersIterator.collect().then(players =>
@@ -516,7 +528,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
       const [graqlVar, instance] = answersGroup[j];
 
       if (instance.isRelation() && await shouldVisualiseInstance(instance)) {
-        const isRelationSubtyped = (await (await (await instance.type()).sup()).label()) !== 'relation';
+        const isRelationSubtyped = (await (await (await instance.type()).asRemote(graknTx).sup()).label()) !== 'relation';
 
         let queryToGetRPs;
         if (isRelationSubtyped) { // getting the most granular role
