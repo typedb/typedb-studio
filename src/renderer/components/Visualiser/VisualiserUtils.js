@@ -68,12 +68,11 @@ export function computeAttributes(nodes, graknTx) {
     node.attributes = await Promise.all(attributes.map(async (concept) => {
       const attribute = {};
       if (concept.isType()) {
+        attribute.type = concept.label();
         await concept.label().then((label) => { attribute.type = label; });
       } else {
-        await Promise.all([
-          concept.type().then(type => type.label()).then((label) => { attribute.type = label; }),
-          concept.value().then((value) => { attribute.value = value; }),
-        ]);
+        attribute.type = concept.type().label();
+        attribute.value = concept.value();
       }
       return attribute;
     }));
@@ -82,9 +81,9 @@ export function computeAttributes(nodes, graknTx) {
 }
 
 export async function loadMetaTypeInstances(graknTx) {
-// Fetch types
-  const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
+  // Fetch types
   const rels = await (await graknTx.query('match $x sub relation; get;')).collectConcepts();
+  const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
   const attributes = await (await graknTx.query('match $x sub attribute; get;')).collectConcepts();
   const roles = await (await graknTx.query('match $x sub role; get;')).collectConcepts();
 
