@@ -90,13 +90,15 @@ node_grpc_compile()
 
 load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl",
 "graknlabs_graql", "graknlabs_protocol",
-"graknlabs_client_java",
+"graknlabs_client_java", "graknlabs_grabl_tracing",
 "graknlabs_console", "graknlabs_common")
 graknlabs_graql()
 graknlabs_protocol()
 graknlabs_client_java()
+graknlabs_grabl_tracing()
 graknlabs_console()
 graknlabs_common()
+
 
 load("@graknlabs_grakn_core//dependencies/maven:dependencies.bzl",
 graknlabs_grakn_core_maven_dependencies = "maven_dependencies")
@@ -115,6 +117,9 @@ graknlabs_graql_maven_dependencies = "maven_dependencies")
 graknlabs_graql_maven_dependencies()
 
 # Load Client Java dependencies for Grakn Core
+load("@graknlabs_graql//dependencies/maven:dependencies.bzl",
+graknlabs_graql_maven_dependencies = "maven_dependencies")
+graknlabs_graql_maven_dependencies()
 
 load("@stackb_rules_proto//java:deps.bzl", "java_grpc_compile")
 java_grpc_compile()
