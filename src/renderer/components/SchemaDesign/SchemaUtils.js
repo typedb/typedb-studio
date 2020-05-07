@@ -50,7 +50,6 @@ export async function computeAttributes(nodes, graknTx) {
     node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.label() })));
     return node;
   }));
-  debugger;
   return nodesComp;
 }
 
