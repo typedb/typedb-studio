@@ -117,6 +117,10 @@ graknlabs_graql_maven_dependencies = "maven_dependencies")
 graknlabs_graql_maven_dependencies()
 
 # Load Client Java dependencies for Grakn Core
+load("@graknlabs_client_java//dependencies/maven:dependencies.bzl", "maven_dependencies")
+maven_dependencies()
+
+# Load Graql dependencies for Grakn Core
 load("@graknlabs_graql//dependencies/maven:dependencies.bzl",
 graknlabs_graql_maven_dependencies = "maven_dependencies")
 graknlabs_graql_maven_dependencies()
