@@ -94,6 +94,7 @@
         "electron-builder": "^20.24.5",
         "electron-debug": "^1.4.0",
         "electron-devtools-installer": "^2.2.0",
+        "electron-notarize": "^0.3.0",
         "eslint": "^4.19.1",
         "eslint-config-airbnb-base": "^11.2.0",
         "eslint-friendly-formatter": "^3.0.0",
@@ -164,5 +165,5 @@
         "prebuild": "node version.js",
         "unit": "node ./node_modules/jest/bin/jest.js ./test/unit"
     },
-    "version": "1.2.4"
+    "version": "1.2.7"
 }
