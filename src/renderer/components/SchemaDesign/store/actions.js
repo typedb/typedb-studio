@@ -33,6 +33,8 @@ import { META_LABELS } from '../../shared/SharedUtils';
 export default {
   async [OPEN_GRAKN_TX]({ state, commit }) {
     const graknTx = await state.graknSession.transaction().write();
+    if (!global.graknTx) global.graknTx = {};
+    global.graknTx.schemaDesign = graknTx;
     commit('setSchemaHandler', new SchemaHandler(graknTx));
     return graknTx;
   },
@@ -81,7 +83,7 @@ export default {
       state.visFacade.fitGraphToWindow();
 
       data.nodes = await computeAttributes(data.nodes, graknTx);
-      data.nodes = await computeRoles(data.nodes);
+      data.nodes = await computeRoles(data.nodes, graknTx);
       state.visFacade.updateNode(data.nodes);
 
       graknTx.close();

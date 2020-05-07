@@ -11,9 +11,9 @@
             <div class="content" v-else>
 
                 <div v-for="(value, index) in attributes" :key="index">
-                    <div class="content-item">
+                    <div class="content-item" style="display: flex; justify-content: space-between;">
                         <div class="label">{{value.type}}</div>
-                        <div class="value">{{value.dataType}}</div>
+                        <!-- <div class="value">{{value.dataType}}</div> -->
                         <div class="btn right-bar-btn reset-setting-btn" @click="removeAttributeType(value.type, index)"><vue-icon icon="trash" className="vue-icon" iconSize="12"></vue-icon></div>
                     </div>
                 </div>
@@ -104,9 +104,10 @@
 
         const attributes = nodes[0].attributes;
 
-        this.attributes = Object.values(attributes).sort((a, b) => ((a.type > b.type) ? 1 : -1));
-
-        this.showAttributesPanel = true;
+        if (attributes) {
+          this.attributes = Object.values(attributes).sort((a, b) => ((a.type > b.type) ? 1 : -1));
+          this.showAttributesPanel = true;
+        }
       },
       toggleContent() {
         this.showAttributesPanel = !this.showAttributesPanel;
@@ -188,6 +189,9 @@
       padding: var(--container-padding);
       display: flex;
       flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      height: 20px;
   }
 
   .label {

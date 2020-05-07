@@ -5,7 +5,7 @@ import store from '../../store';
 
 const convertToRemote = async (concept) => {
   if (concept.asRemote) {
-    const tx = global.graknTx[store.getters.activeTab];
+    const tx = store.state['schema-design'] ? global.graknTx.schemaDesign : global.graknTx[store.getters.activeTab];
     return concept.asRemote(tx);
   }
   return concept;

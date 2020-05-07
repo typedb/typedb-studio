@@ -43,18 +43,22 @@ export async function loadMetaTypeInstances(graknTx) {
 }
 
 // attach attribute labels and data types to each node
-export async function computeAttributes(nodes) {
-  return Promise.all(nodes.map(async (node) => {
-    const attributes = await (await node.attributes()).collect();
-    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.label(), dataType: await concept.dataType() })));
+export async function computeAttributes(nodes, graknTx) {
+  const nodesComp = await Promise.all(nodes.map(async (node) => {
+    const concept = await graknTx.getSchemaConcept(node.label);
+    const attributes = await (await concept.attributes()).collect();
+    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.label() })));
     return node;
   }));
+  debugger;
+  return nodesComp;
 }
 
 // attach role labels to each node
-export async function computeRoles(nodes) {
+export async function computeRoles(nodes, graknTx) {
   return Promise.all(nodes.map(async (node) => {
-    const roles = await (await node.playing()).collect();
+    const concept = await graknTx.getSchemaConcept(node.label);
+    const roles = await (await concept.playing()).collect();
     node.roles = await Promise.all(roles.map(async concept => ((await concept.isImplicit()) ? null : concept.label()))).then(nodes => nodes.filter(x => x));
     return node;
   }));
