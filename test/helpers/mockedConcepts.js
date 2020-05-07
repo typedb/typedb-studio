@@ -30,6 +30,7 @@ const mockedMetaType = {
 
 const mockedRole = {
   label: () => Promise.resolve('some-role'),
+  isImplicit: () => Promise.resolve(false),
 };
 
 const mockedEntityType = {
@@ -42,7 +43,7 @@ const mockedEntityType = {
   attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
   isImplicit: () => Promise.resolve(false),
   sup: () => Promise.resolve({ label: () => Promise.resolve('entity') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+  playing: () => Promise.resolve({ collect: () => Promise.resolve([mockedRole]) }),
 };
 
 const mockedRelationType = {
