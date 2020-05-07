@@ -3,6 +3,14 @@ import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
 import store from '../../store';
 
+const convertToRemote = async (concept) => {
+  if (concept.asRemote) {
+    const tx = global.graknTx[store.getters.activeTab];
+    return concept.asRemote(tx);
+  }
+  return concept;
+};
+
 const { ENTITY_INSTANCE, RELATION_INSTANCE, ATTRIBUTE_INSTANCE, ENTITY_TYPE, RELATION_TYPE, ATTRIBUTE_TYPE } = baseTypes;
 
 const collect = (array, current) => array.concat(current);
@@ -23,24 +31,24 @@ const edgeTypes = {
   },
 };
 
-const getConceptLabel = async (concept) => {
+const getConceptLabel = (concept) => {
   let label;
   if (typeof concept.label === 'string') label = concept.label;
-  else if (concept.isType()) label = await concept.label();
-  else if (concept.isThing()) label = await (await concept.type()).label();
+  else if (concept.isType()) label = concept.label();
+  else if (concept.isThing()) label = concept.type().label();
   return label;
 };
 
-const shouldVisualiseInstance = async (instance) => {
+const shouldVisualiseInstance = (instance) => {
   let shouldSkip = false;
-  if ((await (await instance.type()).isImplicit())) shouldSkip = true;
+  if (instance.type().isImplicit()) shouldSkip = true;
   return !shouldSkip;
 };
 
-const shouldVisualiseType = async (type) => {
+const shouldVisualiseType = (type) => {
   let shouldSkip = false;
-  if (await type.isImplicit()) shouldSkip = true;
-  else if (META_LABELS.has(await getConceptLabel(type))) shouldSkip = true;
+  if (type.isImplicit()) shouldSkip = true;
+  else if (META_LABELS.has(getConceptLabel(type))) shouldSkip = true;
   return !shouldSkip;
 };
 
@@ -101,14 +109,14 @@ const getEdge = (from, to, edgeType, label) => {
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
+const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
   const node = {};
   node.id = instance.id;
   node.baseType = instance.baseType;
   node.var = graqlVar;
   node.attrOffset = 0;
-  node.type = await getConceptLabel(instance);
-  node.isInferred = await instance.isInferred();
+  node.type = getConceptLabel(instance);
+  node.isInferred = instance.isInferred();
   node.attributes = instance.attributes;
   if (node.isInferred) {
     node.explanation = explanation;
@@ -124,8 +132,8 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPat
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
-  const node = await buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
+const getInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
+  const node = buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = `${node.type}: ${node.id}`;
@@ -142,7 +150,7 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
       break;
     }
     case ATTRIBUTE_INSTANCE: {
-      node.value = await instance.value();
+      node.value = instance.value();
       node.label = `${node.type}: ${node.value}`;
       node.offset = 0;
       break;
@@ -159,9 +167,7 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
  * @param {Concept} attribute must be an attribute instance
  */
 const getInstanceHasEdges = async (attribute) => {
-  const tx = global.graknTx[store.getters.activeTab];
-
-  const owners = (await (await attribute.asRemote(tx).owners()).collect());
+  const owners = (await (await (await convertToRemote(attribute)).owners()).collect());
   const edges = owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS));
   return edges;
 };
@@ -172,10 +178,9 @@ const getInstanceHasEdges = async (attribute) => {
  */
 // eslint-disable-next-line no-unused-vars
 const getInstanceRelatesEdges = async (relation) => {
-  const tx = global.graknTx[store.getters.activeTab];
-
-  const rpMap = await relation.asRemote(tx).rolePlayersMap();
+  const rpMap = await (await convertToRemote(relation)).rolePlayersMap();
   const rpMapEntries = Array.from(rpMap.entries());
+
   const edges = (await Promise.all(
     rpMapEntries.map(([role, players]) => role.label().then(label =>
       Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, label)),
@@ -184,8 +189,8 @@ const getInstanceRelatesEdges = async (relation) => {
   return [edges];
 };
 
-const getInstanceIsaEdges = async (instance) => {
-  const type = await instance.type();
+const getInstanceIsaEdges = (instance) => {
+  const type = instance.type();
   return getEdge(instance, type, edgeTypes.instance.ISA);
 };
 
@@ -197,15 +202,15 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
   const edges = [];
   switch (instance.baseType) {
     case ATTRIBUTE_INSTANCE:
-      edges.push(await getInstanceIsaEdges(instance));
+      edges.push(getInstanceIsaEdges(instance));
       edges.push(...await getInstanceHasEdges(instance));
       break;
     case RELATION_INSTANCE:
-      edges.push(await getInstanceIsaEdges(instance));
+      edges.push(getInstanceIsaEdges(instance));
       edges.push(...await getInstanceRelatesEdges(instance));
       break;
     case ENTITY_INSTANCE:
-      edges.push(await getInstanceIsaEdges(instance));
+      edges.push(getInstanceIsaEdges(instance));
       break;
     default:
       throw new Error(`Instance type [${instance.baseType}] is not recoganised`);
@@ -231,7 +236,7 @@ const buildInstances = async (answers) => {
     }));
   }).reduce(collect, []);
 
-  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
+  const shouldVisualiseVals = data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept));
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
     return item;
@@ -239,7 +244,7 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern)));
+  const nodes = data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern));
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
 
@@ -251,7 +256,7 @@ const buildInstances = async (answers) => {
  * @param {Concept} type guaranteed to be a concept type
  * @param {String} graqlVar
  */
-const getTypeNode = async (type, graqlVar) => {
+const getTypeNode = (type, graqlVar) => {
   const node = {};
   switch (type.baseType) {
     case ENTITY_TYPE:
@@ -262,7 +267,7 @@ const getTypeNode = async (type, graqlVar) => {
       node.var = graqlVar;
       node.attrOffset = 0;
       node.offset = 0;
-      node.label = await getConceptLabel(type);
+      node.label = getConceptLabel(type);
       node.attributes = type.attributes;
       node.playing = type.playing;
       break;
@@ -280,9 +285,8 @@ const getTypeNode = async (type, graqlVar) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeSubEdge = async (type) => {
-  const tx = global.graknTx[store.getters.activeTab];
-  const sup = await type.asRemote(tx).sup();
-  const supLabel = await sup.label();
+  const sup = await (await convertToRemote(type)).sup();
+  const supLabel = sup.label();
   if (sup && !META_LABELS.has(supLabel)) return [getEdge(type, sup, edgeTypes.type.SUB)];
   return [];
 };
@@ -293,14 +297,13 @@ const getTypeSubEdge = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeAttributeEdges = async (type) => {
-  const tx = global.graknTx[store.getters.activeTab];
   let edges = [];
 
-  const sup = await type.asRemote(tx).sup();
+  const sup = await (await convertToRemote(type)).sup();
 
   if (sup) {
-    const supLabel = await sup.label();
-    const typesAttrs = await (await type.asRemote(tx).attributes()).collect();
+    const supLabel = sup.label();
+    const typesAttrs = await (await (await convertToRemote(type)).attributes()).collect();
 
     if (META_LABELS.has(supLabel)) {
       edges = typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
@@ -320,15 +323,11 @@ const getTypeAttributeEdges = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypePlayEdges = async (type) => {
-  const tx = global.graknTx[store.getters.activeTab];
-
-  const playRoles = await (await type.asRemote(tx).playing()).collect();
+  const playRoles = await (await (await convertToRemote(type)).playing()).collect();
   const edges = (await Promise.all(playRoles.map(role =>
-    role.label().then(label =>
-      role.relations().then(relationsIterator =>
-        relationsIterator.collect().then(relations =>
-          relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, label)),
-        ),
+    role.relations().then(relationsIterator =>
+      relationsIterator.collect().then(relations =>
+        relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, role.label())),
       ),
     ),
   ))).reduce(collect, []);
@@ -340,17 +339,16 @@ const getTypePlayEdges = async (type) => {
  * @param {Concept} type must be a concept relation type
  */
 const getTypeRelatesEdges = async (type) => {
-  const tx = global.graknTx[store.getters.activeTab];
-
-  const roles = await (await type.asRemote(tx).roles()).collect();
-  debugger;
-  const edges = (await Promise.all(roles.map(role => role.label().then(label =>
-    role.players().then(playersIterator =>
-      playersIterator.collect().then(players =>
-        players.map(player => getEdge(type, player, edgeTypes.type.RELATES, label)),
+  const roles = await (await (await convertToRemote(type)).roles()).collect();
+  const edges = (await Promise.all(roles.map(role =>
+    role.label().then(label =>
+      role.players().then(playersIterator =>
+        playersIterator.collect().then(players =>
+          players.map(player => getEdge(type, player, edgeTypes.type.RELATES, label)),
+        ),
       ),
     ),
-  )))).reduce(collect, []);
+  ))).reduce(collect, []);
 
   return edges;
 };
@@ -389,7 +387,7 @@ const getTypeEdges = async (type, existingNodeIds) => {
  * @param {String} graqlVar the Graql variable (as written in the original query) which holds the concept
  */
 const buildType = async (type, graqlVar = '') => {
-  const node = await getTypeNode(type, graqlVar);
+  const node = getTypeNode(type, graqlVar);
   const edges = await getTypeEdges(type, [node.id]);
   return { node, edges };
 };
@@ -405,14 +403,14 @@ const buildTypes = async (answers) => {
     concept,
   }))).reduce(collect, []);
 
-  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isType() && shouldVisualiseType(item.concept)));
+  const shouldVisualiseVals = data.map(item => item.concept.isType() && shouldVisualiseType(item.concept));
 
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
     return item;
   });
 
-  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)));
+  const nodes = data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar));
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds)))).reduce(collect, []);
 
@@ -425,7 +423,7 @@ const buildTypes = async (answers) => {
  * @param {*} graqlVar
  * @param {*} explanation
  */
-const getNeighbourNode = async (concept, graqlVar, explanation, queryPattern) => {
+const getNeighbourNode = (concept, graqlVar, explanation, queryPattern) => {
   let node;
   if (concept.isType()) {
     node = getTypeNode(concept, graqlVar);
@@ -494,7 +492,7 @@ const buildNeighbours = async (targetNode, answers, graknTx) => {
     }));
   }).reduce(collect, []);
 
-  const shouldVisualiseVals = await Promise.all(data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept)));
+  const shouldVisualiseVals = data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept));
 
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
@@ -503,7 +501,7 @@ const buildNeighbours = async (targetNode, answers, graknTx) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern)));
+  const nodes = data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern));
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetNode, graknTx)))).reduce(collect, []);
 
   return { nodes, edges };
@@ -527,8 +525,9 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
     for (let j = 0; j < answersGroup.length; j += 1) {
       const [graqlVar, instance] = answersGroup[j];
 
-      if (instance.isRelation() && await shouldVisualiseInstance(instance)) {
-        const isRelationSubtyped = (await (await (await instance.type()).asRemote(graknTx).sup()).label()) !== 'relation';
+      if (instance.isRelation() && shouldVisualiseInstance(instance)) {
+        const relationSup = await instance.type().asRemote(graknTx).sup();
+        const isRelationSubtyped = await relationSup.label() !== 'relation';
 
         let queryToGetRPs;
         if (isRelationSubtyped) { // getting the most granular role
@@ -544,13 +543,13 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
           const rolesAndRps = Array.from(answers[k].map().values());
           const role = rolesAndRps.filter(x => x.isRole())[0];
           const roleplayers = rolesAndRps.filter(x => !x.isRole());
-          const edgeLabel = await role.label();
+          const edgeLabel = role.label();
 
           for (let l = 0; l < roleplayers.length; l += 1) {
             const rp = roleplayers[l];
-            if (rp.isThing() && await shouldVisualiseInstance(rp)) {
+            if (rp.isThing() && shouldVisualiseInstance(rp)) {
               edges.push(getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
-              nodes.push(await getInstanceNode(rp, graqlVar, answer.explanation, answer.queryPattern));
+              nodes.push(getInstanceNode(rp, graqlVar, answer.explanation, answer.queryPattern));
             }
           }
         }
