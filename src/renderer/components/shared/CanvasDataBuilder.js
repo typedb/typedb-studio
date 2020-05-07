@@ -3,7 +3,7 @@ import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
 import store from '../../store';
 
-const convertToRemote = async (concept) => {
+const convertToRemote = (concept) => {
   if (concept.asRemote) {
     const tx = store.state['schema-design'] ? global.graknTx.schemaDesign : global.graknTx[store.getters.activeTab];
     return concept.asRemote(tx);
@@ -167,7 +167,7 @@ const getInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
  * @param {Concept} attribute must be an attribute instance
  */
 const getInstanceHasEdges = async (attribute) => {
-  const owners = (await (await (await convertToRemote(attribute)).owners()).collect());
+  const owners = (await (await convertToRemote(attribute).owners()).collect());
   const edges = owners.map(owner => getEdge(owner, attribute, edgeTypes.instance.HAS));
   return edges;
 };
@@ -178,7 +178,7 @@ const getInstanceHasEdges = async (attribute) => {
  */
 // eslint-disable-next-line no-unused-vars
 const getInstanceRelatesEdges = async (relation) => {
-  const rpMap = await (await convertToRemote(relation)).rolePlayersMap();
+  const rpMap = await convertToRemote(relation).rolePlayersMap();
   const rpMapEntries = Array.from(rpMap.entries());
 
   const edges = (await Promise.all(
@@ -285,7 +285,7 @@ const getTypeNode = (type, graqlVar) => {
  * @param {Concept} type must be a concept type
  */
 const getTypeSubEdge = async (type) => {
-  const sup = await (await convertToRemote(type)).sup();
+  const sup = await convertToRemote(type).sup();
   const supLabel = sup.label();
   if (sup && !META_LABELS.has(supLabel)) return [getEdge(type, sup, edgeTypes.type.SUB)];
   return [];
@@ -299,11 +299,11 @@ const getTypeSubEdge = async (type) => {
 const getTypeAttributeEdges = async (type) => {
   let edges = [];
 
-  const sup = await (await convertToRemote(type)).sup();
+  const sup = await convertToRemote(type).sup();
 
   if (sup) {
     const supLabel = sup.label();
-    const typesAttrs = await (await (await convertToRemote(type)).attributes()).collect();
+    const typesAttrs = await (await convertToRemote(type).attributes()).collect();
 
     if (META_LABELS.has(supLabel)) {
       edges = typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
@@ -323,7 +323,7 @@ const getTypeAttributeEdges = async (type) => {
  * @param {Concept} type must be a concept type
  */
 const getTypePlayEdges = async (type) => {
-  const playRoles = await (await (await convertToRemote(type)).playing()).collect();
+  const playRoles = await (await convertToRemote(type).playing()).collect();
   const edges = (await Promise.all(playRoles.map(role =>
     role.relations().then(relationsIterator =>
       relationsIterator.collect().then(relations =>
@@ -339,7 +339,7 @@ const getTypePlayEdges = async (type) => {
  * @param {Concept} type must be a concept relation type
  */
 const getTypeRelatesEdges = async (type) => {
-  const roles = await (await (await convertToRemote(type)).roles()).collect();
+  const roles = await (await convertToRemote(type).roles()).collect();
   const edges = (await Promise.all(roles.map(role =>
     role.label().then(label =>
       role.players().then(playersIterator =>
