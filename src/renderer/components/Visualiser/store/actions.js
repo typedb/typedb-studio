@@ -52,12 +52,10 @@ export default {
 
       if (global.graknSession) await global.graknSession.close();
       global.graknSession = await global.grakn.session(keyspace);
-
       // eslint-disable-next-line no-prototype-builtins
       if (!global.hasOwnProperty('graknTx')) global.graknTx = {};
-      if (global.graknTx[rootState.activeTab]) await global.graknTx[rootState.activeTab].close();
+      if (global.graknTx[rootState.activeTab]) global.graknTx[rootState.activeTab].close();
       global.graknTx[rootState.activeTab] = await global.graknSession.transaction().write();
-
       dispatch(UPDATE_METATYPE_INSTANCES);
     }
   },
