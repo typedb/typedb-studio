@@ -47,7 +47,7 @@ export async function computeAttributes(nodes, graknTx) {
   const nodesComp = await Promise.all(nodes.map(async (node) => {
     const concept = await graknTx.getSchemaConcept(node.label);
     const attributes = await (await concept.attributes()).collect();
-    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.label() })));
+    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.label(), dataType: await concept.dataType() })));
     return node;
   }));
   return nodesComp;
