@@ -103,6 +103,7 @@ export const getMockedRole = ({ isRemote, customFuncs }) => {
     ...getConceptFuncs(),
     isRole: () => true,
     label: isRemote ? () => Promise.resolve('role') : () => 'role',
+    isImplicit: isRemote ? () => Promise.resolve(false) : () => false,
   };
   if (customFuncs) mocked = { ...mocked, ...customFuncs };
   return mocked;
@@ -174,14 +175,17 @@ export const getMockedConceptMap = (concepts, explanationAnswers) => {
 */
 
 export const getMockedTransaction = (answers, customFuncs) => {
-  const mock = {
-    query: () => Promise.resolve(answers),
+  let mocked = {
+    query: () => ({
+      collect: () => Promise.resolve(answers),
+      collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
+    }),
     commit: () => Promise.resolve(),
     close: () => Promise.resolve(),
     isOpen: () => Promise.resolve(true),
-    ...customFuncs,
   };
-  return mock;
+  if (customFuncs) mocked = { ...mocked, ...customFuncs };
+  return mocked;
 };
 
 // const concept = {
@@ -200,13 +204,13 @@ export const getMockedTransaction = (answers, customFuncs) => {
 //   },
 // };
 
-// const getMockedGraknTx = (answers, extraProps = {}) => ({
-//   query: () => Promise.resolve({
-//     collect: () => Promise.resolve(answers),
-//     collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
-//   }),
-//   ...extraProps,
-// });
+export const getMockedGraknTx = (answers, extraProps = {}) => ({
+  query: () => Promise.resolve({
+    collect: () => Promise.resolve(answers),
+    collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
+  }),
+  ...extraProps,
+});
 
 // const getMockedExplanation = answers => Promise.resolve({ getAnswers: () => answers });
 
