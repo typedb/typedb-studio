@@ -90,7 +90,8 @@ export default {
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
       const filteredResult = await getFilteredNeighbourAnswers(visNode, graknTx, neighboursLimit);
-      const data = await CDB.buildNeighbours(visNode, filteredResult, graknTx);
+      const targetConcept = graknTx.getConcept(visNode.id);
+      const data = await CDB.buildNeighbours(targetConcept, filteredResult, graknTx);
       visNode.offset += neighboursLimit;
       state.visFacade.updateNode(visNode);
       state.visFacade.addToCanvas(data);
