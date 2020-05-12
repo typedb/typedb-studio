@@ -1,19 +1,18 @@
 import {
   limitQuery,
-  buildExplanationQuery,
   computeAttributes,
   filterMaps,
   validateQuery,
 } from '@/components/Visualiser/VisualiserUtils.js';
 
 import {
-  mockedEntityType,
-  mockedAttributeType,
-  mockedEntityInstance,
-  getMockedAnswer,
-  mockedAttributeInstance,
-  mockedRelationInstance,
-  getMockedGraknTx,
+  getMockedEntityType,
+  getMockedAttributeType,
+  getMockedConceptMap,
+  getMockedTransaction,
+  getMockedEntity,
+  getMockedAttribute,
+  getMockedRelation,
 } from '../../../helpers/mockedConcepts';
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
@@ -96,106 +95,61 @@ describe('limit Query', () => {
 
 describe('Compute Attributes', () => {
   test('attach attributes to type', async () => {
-    const entityType = { ...mockedEntityType };
-    const attributeType = { ...mockedAttributeType };
+    const attributeType = getMockedAttributeType();
 
-    const answer = getMockedAnswer([attributeType]);
-    const graknTx = getMockedGraknTx([answer]);
+    const entityType = getMockedEntityType({
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType.asRemote()]) }),
+        },
+      },
+    });
 
-    entityType.attributes = () => Promise.resolve({ collect: () => Promise.resolve([mockedAttributeType]) });
+    const answer = getMockedConceptMap([attributeType]);
+    const graknTx = getMockedTransaction([answer]);
 
     const nodes = await computeAttributes([entityType], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
 
     const attrType = nodes[0].attributes[0];
-    expect(attrType.type).toBe('some-attribute-type');
+    expect(attrType.type).toBe('attribute-type');
   });
 
   test('attach attributes to thing', async () => {
-    const entityInstance = { ...mockedEntityInstance };
-    const attributeInstance = { ...mockedAttributeInstance };
+    const attribute = getMockedAttribute();
+    const entity = getMockedEntity({
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attribute]) }),
+        },
+      },
+    });
 
-    const answer = getMockedAnswer([attributeInstance]);
-    const graknTx = getMockedGraknTx([answer]);
+    const answer = getMockedConceptMap([attribute]);
+    const graknTx = getMockedTransaction([answer]);
 
-    entityInstance.attributes = () => Promise.resolve({ collect: () => Promise.resolve([attributeInstance]) });
-
-    const nodes = await computeAttributes([entityInstance], graknTx);
+    const nodes = await computeAttributes([entity], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
 
-    expect(nodes[0].attributes[0].type).toBe('some-attribute-type');
-    expect(nodes[0].attributes[0].value).toBe('some value');
-  });
-});
-
-describe('Build Explanation Query', () => {
-  test('from two entities', async () => {
-    const fistEntityInstance = { ...mockedEntityInstance };
-    fistEntityInstance.id = 'ent-1';
-
-    const secondEntityInstance = { ...mockedEntityInstance };
-    secondEntityInstance.id = 'ent-2';
-
-    const answer = getMockedAnswer([fistEntityInstance, secondEntityInstance], null);
-    const explanationQuery = buildExplanationQuery(answer, '{(role-a: $0, role-b: $1) isa some-relation-type;}');
-
-    expect(explanationQuery.query).toBe('match $0 id ent-1; $1 id ent-2; ');
-    expect(explanationQuery.attributeQuery).toBe(null);
-  });
-
-  test('from entity and attribute', async () => {
-    const entityInstance = { ...mockedEntityInstance };
-    const attributeInstance = { ...mockedAttributeInstance };
-
-    const answer = getMockedAnswer([entityInstance, attributeInstance], null);
-    const explanationQuery = buildExplanationQuery(answer, '{$1 "male"; $0 has some-attribute-type $1; $0 id ent-instance;}');
-
-    expect(explanationQuery.query).toBe('match $0 id ent-instance; ');
-    expect(explanationQuery.attributeQuery).toBe('has some-attribute-type $1;');
-  });
-
-  test('from entities and relation', async () => {
-    const firstEntityInstance = { ...mockedEntityInstance };
-    firstEntityInstance.id = 'ent-1';
-    const secondEntityInstance = { ...mockedEntityInstance };
-    secondEntityInstance.id = 'ent-2';
-    const relationInstance = { ...mockedRelationInstance };
-    relationInstance.id = 'rel';
-
-    const answer = getMockedAnswer([firstEntityInstance, secondEntityInstance, relationInstance], null);
-    const explanationQuery = buildExplanationQuery(answer, '{$0 id ent-1; $1 id ent-2; $2 (role-a: $0, role-b: $1) isa some-relation-type;}');
-
-    expect(explanationQuery.query).toBe('match $0 id ent-1; $1 id ent-2; $2 id rel; ');
-    expect(explanationQuery.attributeQuery).toBe(null);
-  });
-
-  test('from attribute and relation', async () => {
-    const attributeInstance = { ...mockedAttributeInstance };
-    const relationInstance = { ...mockedRelationInstance };
-
-    const answer = getMockedAnswer([attributeInstance, relationInstance], null);
-
-    const explanationQuery = buildExplanationQuery(answer, '{$r has some-attribute-type $1544633775910879; $1544633775910879 < 120;}');
-    expect(explanationQuery.query).toBe('match $1 id rel-instance; ');
-    expect(explanationQuery.attributeQuery).toBe('has some-attribute-type $0;');
+    expect(nodes[0].attributes[0].type).toBe('attribute-type');
+    expect(nodes[0].attributes[0].value).toBe('attribute-value');
   });
 });
 
 describe('Filters out Answers that contain inferred concepts in their ConceptMap', () => {
   test('contains implicit type', async () => {
-    const nonImplicitInstance = { ...mockedEntityInstance };
-    const implicitInstance = { ...mockedRelationInstance };
-    implicitInstance.isImplicit = () => Promise.resolve(true);
+    const implicitRelation = getMockedRelation({ extraProps: { local: { isImplicit: () => true } } });
+    const nonImplicitRelation = getMockedRelation();
 
-    const answer = getMockedAnswer([nonImplicitInstance, implicitInstance]);
+    const answer = getMockedConceptMap([nonImplicitRelation, implicitRelation]);
 
     const nonImplicitOnlyAnswer = await filterMaps([answer]);
     expect(nonImplicitOnlyAnswer).toHaveLength(1);
   });
 
   test('does not contains implicit type', async () => {
-    const nonImplicitInstance = { ...mockedEntityInstance };
-    const answer = getMockedAnswer([nonImplicitInstance]);
+    const nonImplicitRelation = getMockedRelation();
+    const answer = getMockedConceptMap([nonImplicitRelation]);
 
     const nonImplicitOnlyAnswer = await filterMaps([answer]);
     expect(nonImplicitOnlyAnswer).toHaveLength(1);

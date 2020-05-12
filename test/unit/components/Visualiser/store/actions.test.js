@@ -27,7 +27,6 @@ import {
   getNeighboursData,
   computeAttributes,
   validateQuery,
-  mapAnswerToExplanationQuery,
 } from '@/components/Visualiser/VisualiserUtils';
 import VisualiserCanvasEventsHandler from '@/components/Visualiser/VisualiserCanvasEventsHandler';
 import MockConcepts from '../../../../helpers/MockConcepts';
@@ -48,7 +47,6 @@ jest.mock('@/components/Visualiser/VisualiserUtils', () => ({
   addResetGraphListener: jest.fn(),
   loadMetaTypeInstances: jest.fn(),
   validateQuery: jest.fn(),
-  mapAnswerToExplanationQuery: jest.fn().mockImplementation(() => '{$y id 1234; $r (father: $m, role: $y) isa parentship; $m id 4444;}'),
   getNeighboursData: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [{ id: 1234 }] })),
   computeAttributes: jest.fn().mockImplementation(() => Promise.resolve([MockConcepts.getMockEntity1()])),
 }));
@@ -316,7 +314,6 @@ describe('actions', () => {
     store.dispatch(EXPLAIN_CONCEPT).then(async () => {
       await new Promise(r => setTimeout(r, 1000));
 
-      expect(mapAnswerToExplanationQuery).toHaveBeenCalled();
       expect(loadingQuery.mock.calls).toHaveLength(2);
       expect(VisualiserGraphBuilder.buildFromConceptMap).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();

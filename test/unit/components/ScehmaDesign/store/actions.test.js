@@ -4,7 +4,6 @@ import Vuex from 'vuex';
 import {
   CURRENT_KEYSPACE_CHANGED,
   OPEN_GRAKN_TX,
-  UPDATE_METATYPE_INSTANCES,
   CANVAS_RESET,
 } from '@/components/shared/StoresActions';
 
