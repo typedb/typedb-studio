@@ -7,16 +7,17 @@ jest.mock('@/components/shared/PersistentStorage', () => ({
 
 describe('Schema Utils', () => {
   test('Compute Attributes', async () => {
-    const attributeType = getMockedAttributeType({ isRemote: false });
+    const attributeType = getMockedAttributeType();
     const entityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType.asRemote()]) }),
+        },
       },
     });
 
     const graknTx = getMockedTransaction([], {
-      getSchemaConcept: () => Promise.resolve(entityType),
+      getSchemaConcept: () => Promise.resolve(entityType.asRemote()),
     });
 
     const nodes = await computeAttributes([entityType], graknTx);
@@ -26,14 +27,15 @@ describe('Schema Utils', () => {
 
   test('Compute Roles', async () => {
     const entityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        playing: () => Promise.resolve({ collect: () => Promise.resolve([getMockedRole({ isRemote: true })]) }),
+      extraProps: {
+        remote: {
+          playing: () => Promise.resolve({ collect: () => Promise.resolve([getMockedRole({ isRemote: true })]) }),
+        },
       },
     });
 
     const graknTx = getMockedTransaction([], {
-      getSchemaConcept: () => Promise.resolve(entityType),
+      getSchemaConcept: () => Promise.resolve(entityType.asRemote()),
     });
 
     const nodes = await computeRoles([entityType], graknTx);

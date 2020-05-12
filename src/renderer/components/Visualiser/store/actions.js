@@ -19,7 +19,6 @@ import {
   loadMetaTypeInstances,
   validateQuery,
   computeAttributes,
-  mapAnswerToExplanationQuery,
   getFilteredNeighbourAnswers,
 } from '../VisualiserUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
