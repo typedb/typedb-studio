@@ -286,8 +286,7 @@ const getTypeNode = (type, graqlVar) => {
  */
 const getTypeSubEdge = async (type) => {
   const sup = await convertToRemote(type).sup();
-  const supLabel = sup.label();
-  if (sup && !META_LABELS.has(supLabel)) return [getEdge(type, sup, edgeTypes.type.SUB)];
+  if (sup && sup.baseType !== 'META_TYPE') return [getEdge(type, sup, edgeTypes.type.SUB)];
   return [];
 };
 
@@ -302,10 +301,8 @@ const getTypeAttributeEdges = async (type) => {
   const sup = await convertToRemote(type).sup();
 
   if (sup) {
-    const supLabel = sup.label();
     const typesAttrs = await (await convertToRemote(type).attributes()).collect();
-
-    if (META_LABELS.has(supLabel)) {
+    if (sup.baseType === 'META_TYPE') {
       edges = typesAttrs.map(attr => getEdge(type, attr, edgeTypes.type.HAS));
     } else { // if type has a super type which is not a META_CONCEPT construct edges to attributes except those which are inherited from its super type
       const supAttrIds = (await (await sup.attributes()).collect()).map(x => x.id);
@@ -379,7 +376,6 @@ const getTypeEdges = async (type, existingNodeIds) => {
       throw new Error(`Concept type [${type.baseType}] is not recoganised`);
   }
 
-
   // exclude any edges that connect nodes which do not exist
   return edges.filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
@@ -442,7 +438,6 @@ const getNeighbourNode = (concept, graqlVar, explanation, queryPattern) => {
  * @param {*} targetNode the node whose neighbour edges are to be produced
  * @param {*} graknTx
  */
-// eslint-disable-next-line no-unused-vars
 const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
   const edges = [];
 

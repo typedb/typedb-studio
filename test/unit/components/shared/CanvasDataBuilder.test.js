@@ -10,6 +10,7 @@ import {
   getMockedRole,
   getMockedRelationType,
   getMockedMetaType,
+  getMockedTransaction,
 } from '../../../helpers/mockedConcepts';
 
 
@@ -19,6 +20,8 @@ jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
 }));
 
 jest.mock('@/components/shared/PersistentStorage', () => ({}));
+
+global.graknTx = getMockedTransaction([]);
 
 const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('id');
@@ -37,18 +40,18 @@ const expectCommonPropsOnInstanceNode = (node) => {
 describe('building instances', () => {
   test('when graql answer contains an entity instance with an attribute', async () => {
     const attribute = getMockedAttribute({
-      isRemote: false,
-      customFuncs: {
-        owners: () => Promise.resolve({ collect: () => Promise.resolve([getMockedEntity({ isRemote: true })]) }),
-        type: () => getMockedAttributeType({ isRemote: false }),
+      extraProps: {
+        remote: {
+          owners: () => Promise.resolve({ collect: () => Promise.resolve([getMockedEntity({ isRemote: true })]) }),
+        },
+        local: {
+          type: () => getMockedAttributeType(),
+        },
       },
     });
 
     const answer = getMockedConceptMap([
-      getMockedEntity({
-        isRemote: false,
-        customFuncs: { type: () => getMockedEntityType({ isRemote: false }) },
-      }),
+      getMockedEntity({ extraProps: { local: { type: () => getMockedEntityType() } } }),
       attribute,
     ]);
 
@@ -80,19 +83,19 @@ describe('building instances', () => {
   });
 
   test('when graql answer contains a relation instance with a roleplayer', async () => {
-    const entity = getMockedEntity({
-      isRemote: false,
-      customFuncs: { type: () => getMockedEntityType({ isRemote: false }) },
-    });
+    const entity = getMockedEntity({ extraProps: { local: { type: () => getMockedEntityType({ isRemote: false }) } } });
 
     const relation = getMockedRelation({
-      isRemote: false,
-      customFuncs: {
-        type: () => getMockedRelationType({ isRemote: false }),
-        rolePlayersMap: () => Promise.resolve(new Map([[
-          getMockedRole({ isRemote: true }),
-          [entity],
-        ]])),
+      extraProps: {
+        remote: {
+          rolePlayersMap: () => Promise.resolve(new Map([[
+            getMockedRole({ isRemote: true }),
+            [entity],
+          ]])),
+        },
+        local: {
+          type: () => getMockedRelationType(),
+        },
       },
     });
 
@@ -126,10 +129,11 @@ describe('building instances', () => {
 
   test('when graql answer contains an explanation', async () => {
     const entity = getMockedEntity({
-      isRemote: false,
-      customFuncs: {
-        isInferred: () => true,
-        type: () => getMockedEntityType({ isRemote: false }),
+      extraProps: {
+        local: {
+          isInferred: () => true,
+          type: () => getMockedEntityType({ isRemote: false }),
+        },
       },
     });
     const explConcept = getMockedAttribute({ isRemote: true });
@@ -144,12 +148,12 @@ describe('building instances', () => {
 
   test('when graql answer contains an implicit instance', async () => {
     const attribute = getMockedAttribute({
-      isRemote: false,
-      customFuncs: {
-        type: () => getMockedAttributeType({
-          isRemote: false,
-          customFuncs: { isImplicit: () => true },
-        }),
+      extraProps: {
+        local: {
+          type: () => getMockedAttributeType({
+            extraProps: { local: { isImplicit: () => true } },
+          }),
+        },
       },
     });
     const answer = getMockedConceptMap([attribute]);
@@ -162,10 +166,13 @@ describe('building instances', () => {
 describe('building types', () => {
   test('when graql answer contains a subtype of a meta type', async () => {
     const entityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: { sup: () => Promise.resolve(getMockedEntityType({
-        isRemote: true,
-        customFuncs: { id: 'super-entity-type-id' } })),
+      extraProps: {
+        remoate: {
+          sup: () => Promise.resolve(getMockedEntityType({
+            isRemote: true,
+            extraProps: { remote: { id: 'super-entity-type-id' } },
+          })),
+        },
       },
     });
     const answer = getMockedConceptMap([entityType]);
@@ -190,11 +197,12 @@ describe('building types', () => {
   });
 
   test('when graql answer contains a type with an attribute where the type is a subtype of a meta type', async () => {
-    const attributeType = getMockedAttributeType({ isRemote: false });
+    const attributeType = getMockedAttributeType();
     const entityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+        },
       },
     });
     const answer = getMockedConceptMap([entityType, attributeType]);
@@ -214,21 +222,28 @@ describe('building types', () => {
   });
 
   test('when graql answer contains a type that owns the same attributes as its supertype that is not a meta type', async () => {
-    const attributeType = getMockedAttributeType({ isRemote: false });
+    const attributeType = getMockedAttributeType();
     const superEntityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        id: 'some-super-entity-type-id',
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+          id: 'some-super-entity-type-id',
+        },
+        local: {
+          id: 'some-super-entity-type-id',
+        },
       },
     });
 
     const subEntityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        id: 'sub-entity-type-id',
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
-        sup: () => Promise.resolve(superEntityType),
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+          sup: () => Promise.resolve(superEntityType.asRemote()),
+        },
+        local: {
+          id: 'sub-entity-type-id',
+        },
       },
     });
 
@@ -261,23 +276,27 @@ describe('building types', () => {
   test('when graql answer contains a type that extends its non-meta supertype by owning more attributes', async () => {
     const attributeType = getMockedAttributeType({ isRemote: false });
     const superEntityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        id: 'some-super-entity-type-id',
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType]) }),
+          id: 'some-super-entity-type-id',
+        },
+        local: {
+          id: 'some-super-entity-type-id',
+        },
       },
     });
 
-    const anotherAttributeType = getMockedAttributeType({
-      isRemote: false,
-      customFuncs: { id: 'another-attribute-type-id' },
-    });
+    const anotherAttributeType = getMockedAttributeType({ extraProps: { local: { id: 'another-attribute-type-id' } } });
     const subEntityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        id: 'sub-entity-type-id',
-        sup: () => Promise.resolve(superEntityType),
-        attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType, anotherAttributeType]) }),
+      extraProps: {
+        remote: {
+          sup: () => Promise.resolve(superEntityType.asRemote()),
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType, anotherAttributeType]) }),
+        },
+        local: {
+          id: 'sub-entity-type-id',
+        },
       },
     });
 
@@ -318,16 +337,18 @@ describe('building types', () => {
     const role = getMockedRole({ isRemote: true });
 
     const relationType = getMockedRelationType({
-      isRemote: false,
-      customFuncs: {
-        roles: () => Promise.resolve({ collect: () => Promise.resolve([role]) }),
+      extraProps: {
+        remote: {
+          roles: () => Promise.resolve({ collect: () => Promise.resolve([role]) }),
+        },
       },
     });
 
     const entityType = getMockedEntityType({
-      isRemote: false,
-      customFuncs: {
-        playing: () => Promise.resolve({ collect: () => Promise.resolve([role]) }),
+      extraProps: {
+        remote: {
+          playing: () => Promise.resolve({ collect: () => Promise.resolve([role]) }),
+        },
       },
     });
 
@@ -371,15 +392,15 @@ describe('building types', () => {
 
   test('when graql answer contains an implicit type', async () => {
     const relationType = getMockedRelationType({
-      isRemote: false,
-      customFuncs: {
-        isImplicit: () => true,
+      extraProps: {
+        local: { isImplicit: () => true },
       },
     });
 
     const answer = getMockedConceptMap([relationType]);
 
     const { nodes, edges } = await CDB.buildTypes([answer]);
+
     expect(nodes).toHaveLength(0);
     expect(edges).toHaveLength(0);
   });
@@ -388,12 +409,7 @@ describe('building types', () => {
 describe('building neighbours', () => {
   test('when the target node is a type', async () => {
     const entityType = getMockedEntityType({ isRemote: false });
-    const entity = getMockedEntity({
-      isRemote: true,
-      customFuncs: {
-        type: () => entityType,
-      },
-    });
+    const entity = getMockedEntity({ extraProps: { local: { type: () => entityType } } });
 
     const answer = getMockedConceptMap([entity]);
 
@@ -426,11 +442,12 @@ describe('building neighbours', () => {
   });
 
   test('when the target node is an entity instance', async () => {
-    const entity = getMockedEntity({ isRemote: true });
+    const entity = getMockedEntity();
     const relation = getMockedRelation({
-      isRemote: false,
-      customFuncs: {
-        rolePlayersMap: () => Promise.resolve(new Map([[getMockedRole({ isRemote: true }), [entity]]])),
+      extraProps: {
+        remote: {
+          rolePlayersMap: () => Promise.resolve(new Map([[getMockedRole({ isRemote: true }), [entity]]])),
+        },
       },
     });
     const answer = getMockedConceptMap([relation]);
@@ -455,8 +472,8 @@ describe('building neighbours', () => {
   });
 
   test('when the target node is an attribute instance', async () => {
-    const attribute = getMockedAttribute({ isRemote: false });
-    const entity = getMockedEntity({ isRemote: false });
+    const attribute = getMockedAttribute();
+    const entity = getMockedEntity();
     const answer = getMockedConceptMap([entity]);
 
     const neighboursData = await CDB.buildNeighbours(attribute, [answer]);
@@ -479,11 +496,12 @@ describe('building neighbours', () => {
   });
 
   test('when the target node is an relation instance', async () => {
-    const entity = getMockedEntity({ isRemote: false });
+    const entity = getMockedEntity();
     const relation = getMockedRelation({
-      isRemote: false,
-      customFuncs: {
-        rolePlayersMap: () => Promise.resolve(new Map([[getMockedRole({ isRemote: true }), [entity]]])),
+      extraProps: {
+        remote: {
+          rolePlayersMap: () => Promise.resolve(new Map([[getMockedRole({ isRemote: true }), [entity]]])),
+        },
       },
     });
 
