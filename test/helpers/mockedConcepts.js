@@ -297,25 +297,3 @@ export const getMockedTransaction = (answers, customFuncs) => {
   if (customFuncs) mocked = { ...mocked, ...customFuncs };
   return mocked;
 };
-
-// export const getMockedGraknTx = (answers, extraProps = {}) => ({
-//   query: () => Promise.resolve({
-//     collect: () => Promise.resolve(answers),
-//     collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
-//   }),
-//   ...extraProps,
-// });
-
-// // const getMockedExplanation = answers => Promise.resolve({ getAnswers: () => answers });
-
-// export const getMockedAnswer = (concepts, explanation) => {
-//   const answer = {};
-
-//   const map = new Map();
-//   concepts.forEach((concept, index) => { map.set(index, concept); });
-//   answer.map = () => map;
-//   answer.explanation = () => explanation;
-//   answer.queryPattern = () => '';
-
-//   return answer;
-// };
