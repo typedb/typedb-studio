@@ -1,0 +1,36 @@
+afterSign: ".electron-vue/notarize.js"
+directories:
+  output: build
+  buildResources: build
+appId: grakn.workbase
+dmg:
+  sign: false
+  contents:
+    - path: /Applications
+      type: link
+      x: 410
+      'y': 150
+    - type: file
+      x: 130
+      'y': 150
+files:
+  - filter:
+      - dist/electron/**/*
+linux:
+  artifactName: 'grakn-workbase-${version}-linux.${ext}'
+  category: Development
+  icon: assets/icons
+  target: tar.gz
+mac:
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: 'build/entitlements.mac.plist'
+  entitlementsInherit: "build/entitlements.mac.plist"
+  artifactName: 'grakn-workbase-${version}-mac.${ext}'
+  icon: assets/icons/icon.icns
+  target: dmg
+  type: distribution
+productName: Grakn Workbase
+win:
+  icon: assets/icons/icon.ico
+electronVersion: 3.0.6
