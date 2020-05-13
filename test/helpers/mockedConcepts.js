@@ -1,127 +1,299 @@
-const getMockedGraknTx = (answers, extraProps = {}) => ({
-  query: () => Promise.resolve({
-    collect: () => Promise.resolve(answers),
-    collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
-  }),
-  ...extraProps,
-});
+const methods = {
+  concept: {
+    static: {
+      baseType: 'META_TYPE',
+      id: 'META_TYPE',
+      isType: () => false,
+      isEntityType: () => false,
+      isAttributeType: () => false,
+      isRelationType: () => false,
+      isRule: () => false,
+      isRole: () => false,
+      isThing: () => false,
+      isEntity: () => false,
+      isAttribute: () => false,
+      isRelation: () => false,
+      isSchemaConcept: () => false,
+    },
+    local: {
+      label: () => 'thing',
+      isImplicit: () => false,
+    },
+    remote: {
+      label: () => Promise.resolve('thing'),
+      isImplicit: () => Promise.resolve(false),
+    },
+  },
+  type: {
+    static: {
+      isType: () => true,
+    },
+    local: {
+      label: () => 'type',
+    },
+    remote: {
+      label: () => Promise.resolve('type'),
+      isAbstract: () => Promise.resolve(false),
+      attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+      playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+    },
+  },
+  role: {
+    static: {
+      baseType: 'ROLE',
+      id: 'role-id',
+      isRole: () => true,
+    },
+    local: {
+      label: () => 'role',
+    },
+    remote: {
+      label: () => Promise.resolve('role'),
+    },
+  },
+  entityType: {
+    static: {
+      baseType: 'ENTITY_TYPE',
+      id: 'entity-type-id',
+      isEntityType: () => true,
+    },
+    local: {
+      label: () => 'entity-type',
+    },
+    remote: {
+      label: () => Promise.resolve('entity-type'),
+    },
+  },
+  attributeType: {
+    static: {
+      baseType: 'ATTRIBUTE_TYPE',
+      id: 'attribute-type-id',
+      isAttributeType: () => true,
+    },
+    local: {
+      label: () => 'attribute-type',
+    },
+    remote: {
+      label: () => Promise.resolve('attribute-type'),
+      dataType: () => Promise.resolve('String'),
+    },
+  },
+  relationType: {
+    static: {
+      baseType: 'RELATION_TYPE',
+      id: 'relation-type-id',
+      isRelationType: () => true,
+    },
+    local: {
+      label: () => 'relation-type',
+    },
+    remote: {
+      label: () => Promise.resolve('relation-type'),
+      roles: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+    },
+  },
+  thing: {
+    static: {
+      isThing: () => true,
+    },
+    local: {
+      isInferred: () => false,
+    },
+    remote: {
+      isInferred: () => Promise.resolve(false),
+      attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+      relations: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+      roles: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
+    },
+  },
+  entity: {
+    static: {
+      baseType: 'ENTITY',
+      id: 'entity-id',
+      isEntity: () => true,
+    },
+    local: {},
+    remote: {},
+  },
+  attribute: {
+    static: {
+      baseType: 'ATTRIBUTE',
+      id: 'attribute-id',
+      isEntity: () => true,
+    },
+    local: {
+      dataType: () => 'String',
+      value: () => 'attribute-value',
+    },
+    remote: {
+      dataType: () => Promise.resolve('String'),
+      value: () => Promise.resolve('attribute-value'),
+      owners: () => Promise.resolve({ collect: Promise.resolve([]) }),
+    },
+  },
+  relation: {
+    static: {
+      baseType: 'RELATION',
+      id: 'relation-id',
+      isEntity: () => true,
+    },
+    local: {
+      dataType: () => 'String',
+      value: () => 'relation-value',
+    },
+    remote: {
+      rolePlayersMap: () => Promise.resolve(new Map()),
+    },
+  },
+};
 
-const getMockedExplanation = answers => Promise.resolve({ getAnswers: () => answers });
+const getExtraProps = (mockerOptions, agentDefinedProps) => {
+  const extraProps = { remote: {}, local: {} };
 
-const getMockedAnswer = (concepts, explanation) => {
-  const answer = {};
+  if (agentDefinedProps && agentDefinedProps.remote) extraProps.remote = { ...extraProps.remote, ...agentDefinedProps.remote };
+  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.remote) extraProps.remote = { ...extraProps.remote, ...mockerOptions.extraProps.remote };
 
+  if (agentDefinedProps && agentDefinedProps.local) extraProps.local = { ...extraProps, ...agentDefinedProps.local };
+  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.local) extraProps.local = { ...extraProps.local, ...mockerOptions.extraProps.local };
+
+  return extraProps;
+};
+
+const getMockedConcept = (commons, extraProps, isRemote) => {
+  let staticProps = {};
+  commons.forEach((common) => { staticProps = { ...staticProps, ...methods[common].static }; });
+
+  let remoteProps = {};
+  commons.forEach((common) => { remoteProps = { ...remoteProps, ...methods[common].remote }; });
+  if (extraProps.remote) remoteProps = { ...remoteProps, ...extraProps.remote };
+
+  let localProps = {};
+  commons.forEach((common) => { localProps = { ...localProps, ...methods[common].local }; });
+  if (extraProps.remote) localProps = { ...localProps, ...extraProps.local };
+
+  const remoteConcept = { ...staticProps, ...remoteProps };
+  const localConcept = { ...staticProps, ...localProps, asRemote: () => remoteConcept };
+
+  const mockedConcept = isRemote ? { ...remoteConcept } : { ...localConcept };
+
+  return mockedConcept;
+};
+
+export const getMockedMetaType = (options) => {
+  const extraProps = getExtraProps(options);
+
+  return getMockedConcept(
+    ['concept'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedEntityType = (options) => {
+  const extraProps = getExtraProps(options, {
+    remote: { sup: () => Promise.resolve(getMockedMetaType({ isRemote: true })) },
+  });
+
+  return getMockedConcept(
+    ['concept', 'type', 'entityType'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedAttributeType = (options) => {
+  const extraProps = getExtraProps(options, {
+    remote: { sup: () => Promise.resolve(getMockedMetaType({ isRemote: true })) },
+  });
+
+  return getMockedConcept(
+    ['concept', 'type', 'attributeType'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedRelationType = (options) => {
+  const extraProps = getExtraProps(options, {
+    remote: { sup: () => Promise.resolve(getMockedMetaType({ isRemote: true })) },
+  });
+
+  return getMockedConcept(
+    ['concept', 'type', 'relationType'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedRole = (options) => {
+  const extraProps = getExtraProps(options);
+
+  return getMockedConcept(
+    ['concept', 'type', 'role'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedEntity = (options) => {
+  const extraProps = getExtraProps(options, {
+    local: { type: () => getMockedEntityType() },
+  });
+
+  return getMockedConcept(
+    ['concept', 'thing', 'entity'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+
+export const getMockedAttribute = (options) => {
+  const extraProps = getExtraProps(options, {
+    local: { type: () => getMockedAttributeType() },
+  });
+
+  return getMockedConcept(
+    ['concept', 'thing', 'attribute'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedRelation = (options) => {
+  const extraProps = getExtraProps(options, {
+    local: { type: () => getMockedRelationType() },
+  });
+
+  return getMockedConcept(
+    ['concept', 'thing', 'relation'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedConceptMap = (concepts, explanationAnswers) => {
   const map = new Map();
   concepts.forEach((concept, index) => { map.set(index, concept); });
-  answer.map = () => map;
-  answer.explanation = () => explanation;
-  answer.queryPattern = () => '';
-
-  return answer;
+  const mock = {
+    map: () => map,
+    hasExplanation: () => !!explanationAnswers,
+    explanation: () => ({ getAnswers: () => Promise.resolve(explanationAnswers || []) }),
+    queryPattern: () => '',
+  };
+  return mock;
 };
 
-const mockedMetaType = {
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  isImplicit: () => Promise.resolve(false),
-  label: () => Promise.resolve('entity'),
-};
-
-const mockedRole = {
-  label: () => Promise.resolve('some-role'),
-};
-
-const mockedEntityType = {
-  id: 'ent-type',
-  baseType: 'ENTITY_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some-entity-type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('entity') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedRelationType = {
-  id: 'rel-type',
-  baseType: 'RELATION_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isRelationType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some-relation-type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('relation') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedAttributeType = {
-  id: 'attr-type',
-  baseType: 'ATTRIBUTE_TYPE',
-  isRole: () => false,
-  isType: () => true,
-  isThing: () => false,
-  label: () => Promise.resolve('some-attribute-type'),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  isImplicit: () => Promise.resolve(false),
-  sup: () => Promise.resolve({ label: () => Promise.resolve('attribute') }),
-  playing: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-  dataType: () => Promise.resolve('String'),
-};
-
-const mockedEntityInstance = {
-  id: 'ent-instance',
-  baseType: 'ENTITY',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isEntity: () => true,
-  isAttribute: () => false,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedEntityType),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedRelationInstance = {
-  id: 'rel-instance',
-  baseType: 'RELATION',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isAttribute: () => false,
-  isEntity: () => false,
-  isRelation: () => true,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedRelationType),
-  attributes: () => Promise.resolve({ collect: () => Promise.resolve([]) }),
-};
-
-const mockedAttributeInstance = {
-  id: 'attr-instance',
-  baseType: 'ATTRIBUTE',
-  isRole: () => false,
-  isType: () => false,
-  isThing: () => true,
-  isAttribute: () => true,
-  isInferred: () => Promise.resolve(false),
-  type: () => Promise.resolve(mockedAttributeType),
-  value: () => Promise.resolve('some value'),
-};
-
-export {
-  getMockedGraknTx,
-  getMockedExplanation,
-  getMockedAnswer,
-  mockedMetaType,
-  mockedRole,
-  mockedEntityType,
-  mockedRelationType,
-  mockedAttributeType,
-  mockedEntityInstance,
-  mockedRelationInstance,
-  mockedAttributeInstance,
+export const getMockedTransaction = (answers, customFuncs) => {
+  let mocked = {
+    query: () => ({
+      collect: () => Promise.resolve(answers),
+      collectConcepts: () => Promise.resolve(answers.map((answer, index) => answer.map().get(index))),
+    }),
+    commit: () => Promise.resolve(),
+    close: () => Promise.resolve(),
+    isOpen: () => Promise.resolve(true),
+  };
+  if (customFuncs) mocked = { ...mocked, ...customFuncs };
+  return mocked;
 };

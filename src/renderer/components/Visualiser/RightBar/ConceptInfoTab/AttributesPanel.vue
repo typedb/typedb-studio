@@ -69,9 +69,10 @@
 
         const attributes = nodes[0].attributes;
 
-        this.attributes = Object.values(attributes).sort((a, b) => ((a.type > b.type) ? 1 : -1)).map(a => Object.assign(a, { href: this.validURL(a.value) }));
-
-        this.showAttributesPanel = true;
+        if (attributes) {
+          this.attributes = Object.values(attributes).sort((a, b) => ((a.type > b.type) ? 1 : -1)).map(a => Object.assign(a, { href: this.validURL(a.value) }));
+          this.showAttributesPanel = true;
+        }
       },
       toggleContent() {
         this.showAttributesPanel = !this.showAttributesPanel;

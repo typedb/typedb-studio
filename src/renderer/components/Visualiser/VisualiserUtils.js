@@ -39,41 +39,16 @@ export function limitQuery(query) {
   return limitedQuery;
 }
 
-
-export function buildExplanationQuery(answer, queryPattern) {
-  let query = 'match ';
-  let attributeQuery = null;
-  Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
-    if (concept.isAttribute()) {
-      const attributeRegex = queryPattern.match(/(?:has )(\S+)/);
-      if (attributeRegex) { // if attribute is only an attribute of a concept
-        attributeQuery = `has ${attributeRegex[1]} $${graqlVar};`;
-      } else { // attribute plays a role player in a relation
-        let attributeType = queryPattern.match(/\(([^)]+)\)/)[0].split(',').filter(y => y.includes(graqlVar));
-        attributeType = attributeType[0].slice(1, attributeType[0].indexOf(':'));
-        attributeQuery = `has ${attributeType} $${graqlVar};`;
-      }
-    } else if (concept.isEntity()) {
-      query += `$${graqlVar} id ${concept.id}; `;
-    } else if (concept.isRelation()) {
-      query += `$${graqlVar} id ${concept.id}; `;
-    }
-  });
-  return { query, attributeQuery };
-}
-
 export function computeAttributes(nodes, graknTx) {
   return Promise.all(nodes.map(async (node) => {
     const attributes = (await (await graknTx.query(`match $x id ${node.id}; $x has attribute $y; get $y;`)).collectConcepts());
     node.attributes = await Promise.all(attributes.map(async (concept) => {
       const attribute = {};
       if (concept.isType()) {
-        await concept.label().then((label) => { attribute.type = label; });
+        attribute.type = concept.label();
       } else {
-        await Promise.all([
-          concept.type().then(type => type.label()).then((label) => { attribute.type = label; }),
-          concept.value().then((value) => { attribute.value = value; }),
-        ]);
+        attribute.type = concept.type().label();
+        attribute.value = concept.value();
       }
       return attribute;
     }));
@@ -82,9 +57,9 @@ export function computeAttributes(nodes, graknTx) {
 }
 
 export async function loadMetaTypeInstances(graknTx) {
-// Fetch types
-  const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
+  // Fetch types
   const rels = await (await graknTx.query('match $x sub relation; get;')).collectConcepts();
+  const entities = await (await graknTx.query('match $x sub entity; get;')).collectConcepts();
   const attributes = await (await graknTx.query('match $x sub attribute; get;')).collectConcepts();
   const roles = await (await graknTx.query('match $x sub role; get;')).collectConcepts();
 
@@ -133,23 +108,6 @@ export function addResetGraphListener(dispatch, action) {
   // Reset canvas when metaKey(CtrlOrCmd) + G are pressed
     if ((e.keyCode === LETTER_G_KEYCODE) && e.metaKey) { dispatch(action); }
   });
-}
-
-/**
- * Given a Grakn Answer, this function returns the query that needs to be run in order
- * to obtain a visual explanation of the inferred concept
- * @param {Object} answer Grakn Answer which contains the explanation that needs to be loaded
- */
-export function mapAnswerToExplanationQuery(answer) {
-  const queryPattern = answer.explanation().queryPattern();
-  let query = buildExplanationQuery(answer, queryPattern).query;
-  if (queryPattern.includes('has')) {
-    query = query.slice(0, -2);
-    query += `, ${buildExplanationQuery(answer, queryPattern).attributeQuery} get;`;
-  } else {
-    query += `$r ${queryPattern.slice(1, -1).match(/\((.*?;)/)[0]} get $r; offset 0; limit 1;`;
-  }
-  return query;
 }
 
 /**
