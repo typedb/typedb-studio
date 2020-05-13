@@ -51,7 +51,7 @@
         "@blueprintjs/table": "^3.1.1",
         "codemirror": "^5.38.0",
         "electron-store": "^1.3.0",
-        "grakn-client": "https://repo.grakn.ai/repository/npm-snapshot-group/grakn-client/-/grakn-client-0.0.0-0879c5e5d18a5a02a4fe485bfe5056c0d74b939f.tgz",
+        "grakn-client": "1.7.0",
         "grpc": "^1.18.0",
         "hex-to-hsl": "^1.0.2",
         "image-data-uri": "^1.1.1",
@@ -165,5 +165,5 @@
         "prebuild": "node version.js",
         "unit": "node ./node_modules/jest/bin/jest.js ./test/unit"
     },
-    "version": "1.2.7"
+    "version": "1.2.8"
 }
