@@ -13,6 +13,6 @@ exports.default = async function notarizing(context) {
     appBundleId: 'com.graknlabs.workbase',
     appPath: `${appOutDir}/${appName}.app`,
     appleId: process.env.APPLEID,
-    appleIdPassword: process.env.APPLE_CODE_SIGNING_PASSWORD,
+    appleIdPassword: process.env.APPLEID_PASSWORD,
   });
 };
