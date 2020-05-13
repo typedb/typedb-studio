@@ -5,7 +5,7 @@ directories:
   output: build
   buildResources: build
 dmg:
-  # sign: false
+  sign: false
   contents:
     - path: /Applications
       type: link
@@ -24,7 +24,7 @@ linux:
   target: tar.gz
 mac:
   hardenedRuntime: true
-  gatekeeperAssess: false
+  # gatekeeperAssess: false
   artifactName: 'grakn-workbase-${version}-mac.${ext}'
   icon: assets/icons/icon.icns
   target: dmg
