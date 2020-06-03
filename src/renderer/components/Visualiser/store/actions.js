@@ -117,10 +117,7 @@ export default {
       validateQuery(query);
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
-      const t0 = performance.now();
-      const result = await (await graknTx.query('match $x isa gene-disease-association-order-2; get;  offset 0; limit 10;')).collect();
-      const t1 = performance.now();
-      console.log('graknTx.query: ', t1 - t0);
+      const result = await (await graknTx.query(query)).collect();
       if (!result.length) {
         commit('loadingQuery', false);
         return null;
@@ -140,27 +137,18 @@ export default {
         const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
         const shouldLimit = true;
 
-        const t2 = performance.now();
         const instancesData = await CDB.buildInstances(result, query);
-        const t3 = performance.now();
-        console.log('CDB.buildInstances: ', t3 - t2);
 
         nodes.push(...instancesData.nodes);
         edges.push(...instancesData.edges);
 
-        const t4 = performance.now();
         const typesData = await CDB.buildTypes(result);
-        const t5 = performance.now();
-        console.log('CDB.buildTypes: ', t5 - t4);
 
         nodes.push(...typesData.nodes);
         edges.push(...typesData.edges);
 
         if (shouldLoadRPs) {
-          const t6 = performance.now();
           const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, graknTx);
-          const t7 = performance.now();
-          console.log('CDB.buildRPInstances: ', t7 - t6);
           nodes.push(...rpData.nodes);
           edges.push(...rpData.edges);
         }

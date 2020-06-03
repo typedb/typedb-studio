@@ -511,163 +511,52 @@ const buildNeighbours = async (targetConcept, answers) => {
  * @param {*} shouldLimit whether or not the roleplayers should be limited. false, when called to buildRPInstances for explanations
  * @param {*} graknTx
  */
-// eslint-disable-next-line no-unused-vars
 const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
-  let edges = [];
-  const nodes = [];
+  const getRolePlayersData = () => {
+    const promises = [];
+    const edges = [];
+    const nodes = [];
 
-  const data = answers.map((answer) => {
-    const { explanation, queryPattern } = answer;
-    const graqlVars = Array.from(answer.map().keys());
-    const relations = Array.from(answer.map().values()).filter(instance => instance.isRelation() && shouldVisualiseInstance(instance)).map((relation, i) => (
-      { instance: relation, graqlVar: graqlVars[i] }
-    ));
-    return {
-      relations,
-      explanation,
-      queryPattern,
-    };
-  });
-  console.log(data);
-  debugger;
+    answers.forEach((answer) => {
+      Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
+        if (concept.isRelation() && shouldVisualiseInstance(concept)) {
+          const relation = concept;
 
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < data.length; i++) {
-    const answerData = data[i];
-    // eslint-disable-next-line no-plusplus
-    for (let j = 0; j < answerData.relations.length; j++) {
-      const relation = answerData.relations[j].instance;
-      const rolePlayersMap = await relation.asRemote(graknTx).rolePlayersMap();
-      // eslint-disable-next-line no-loop-func
-      for (let k = 0; k < rolePlayersMap.size; k += 1) {
-        debugger;
-        const [role, players] = Array.from(rolePlayersMap.entries())[k];
-        // eslint-disable-next-line no-unused-vars
-        const edgeLabel = await role.label();
-        // eslint-disable-next-line no-loop-func
-        for (let m = 0; m < players.length; m += 1) {
-          const player = players[m];
-          console.log('player: ', player);
-          player.label = await (await player.type()).label();
-          edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
-          nodes.push(getInstanceNode(player, answerData.graqlVars, answerData.explanation, answerData.queryPattern));
-          debugger;
+          promises.push(new Promise((resolve) => {
+            relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
+              Array.from(rolePlayersMap.entries()).forEach(([role, players], i) => {
+                if (shouldLimit) players.slice(0, QuerySettings.getNeighboursLimit());
+
+                role.label().then((edgeLabel) => {
+                  players.forEach((player) => {
+                    player.type().then(type => type.label().then((playerLabel) => {
+                      player.label = playerLabel;
+                      edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
+                      nodes.push(getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern));
+
+                      if (i === rolePlayersMap.size - 1) resolve({ edges, nodes });
+                    }));
+                  });
+                });
+              });
+            });
+          }));
         }
-      }
-    }
-  }
+      });
+    });
 
-  // const rolePlayersMaps = await Promise.all(data.map(item => item.relations).map(relation => relation.instance.asRemote(graknTx).rolePlayersMap()));
-  // debugger;
+    return promises;
+  };
 
-  // rolePlayersMaps.forEach((map, i) => {
-  //   const roles = Array.from(map.keys());
-  //   data[i].roles = roles;
-
-  //   const players = Array.from(map.values()).reduce(collect, []);
-  //   data[i].players = players;
-  // });
-
-  // debugger;
-
-  // data.forEach((item) => {
-  //   item.roles.forEach((role, i) => {
-  //     item.players[i].type().then((type) => {
-  //       type.label().then((label) => {
-  //         item.players[i].label = label;
-  //         debugger;
-  //         edges.push(getEdge(item.relations[i], item.players[i], edgeTypes.instance.RELATES, role.label()));
-  //         nodes.push(getInstanceNode(item.players[i], item.graqlVars[i], item.explanation, item.queryPattern));
-  //       });
-  //     });
-  //   });
-  // });
-
-  // debugger;
-
-  // const relationsWithVars = answers.map(answer =>
-  //   Array.from(answer.map().entries()).filter(([, instance]) => instance.isRelation() && shouldVisualiseInstance(instance)),
-  // ).reduce(collect, []);
-  // console.log(relationsWithVars);
-  // debugger;
-
-  // const rolePlayersMaps = await Promise.all(relationsWithVars.map(([, relation]) => relation.asRemote(graknTx).rolePlayersMap()));
-  // console.log(rolePlayersMaps);
-  // debugger;
-
-  // Array.from(rolePlayersMaps.entries()).filter(([, player]) => shouldVisualiseInstance(player)).forEach(([role, player], i) => {
-  //   const edgeLabel = role.label();
-  //   edges.push(getEdge(relationsWithVars[i][1], rp, edgeTypes.instance.RELATES, edgeLabel));
-  //   nodes.push(getInstanceNode(player, relationsWithVars[i][0], answers.explanation, answer.queryPattern));
-  // });
-
-  // await Promise.all(answers.forEach((answer) => {
-  //   const relationMaps = Array.from(answer.map().entries()).filter(([, instance]) => instance.isRelation() && shouldVisualiseInstance(instance));
-  //   debugger;
-  //   return relationMaps.map(async ([graqlVar, relation]) => {
-  //     const rolePlayers = Array.from((await relation.rolePlayersMap()).entries());
-  //     console.log('rolePlayers', rolePlayers);
-  //     debugger;
-  //     return rolePlayers.map(async ([role, players]) => {
-  //       const edgeLabel = await role.label();
-  //       debugger;
-  //       return players.map(async (player) => {
-  //         player.label = await (await player.type()).label();
-  //         edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
-  //         nodes.push(getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern));
-  //         debugger;
-  //       });
-  //     });
-  //   });
-  // }));
-
-  // for (let i = 0; i < answers.length; i += 1) {
-  //   const answer = answers[i];
-  //   const answersGroup = Array.from(answer.map().entries());
-
-  //   for (let j = 0; j < answersGroup.length; j += 1) {
-  //     const [graqlVar, instance] = answersGroup[j];
-
-  //     if (instance.isRelation() && shouldVisualiseInstance(instance)) {
-  //       const relationSup = await instance.type().asRemote(graknTx).sup();
-  //       const isRelationSubtyped = await relationSup.label() !== 'relation';
-
-  //       let queryToGetRPs;
-  //       if (isRelationSubtyped) { // getting the most granular role
-  //         queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $b sub $rl; $b != $rl; }; get $rp, $rl; offset 0; `;
-  //       } else { // getting all roles except the role metatype
-  //         queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $rl type role; }; get $rp, $rl; offset 0; `;
-  //       }
-  //       if (shouldLimit) queryToGetRPs += `limit ${QuerySettings.getNeighboursLimit()};`;
-
-  //       const t1 = performance.now();
-  //       console.log(queryToGetRPs);
-  //       const answers = await (await graknTx.query(queryToGetRPs)).collect();
-  //       const t2 = performance.now();
-  //       console.log('buildRPInstances: graknTx.query: ', t2 - t1);
-
-  //       for (let k = 0; k < answers.length; k += 1) {
-  //         const rolesAndRps = Array.from(answers[k].map().values());
-  //         const role = rolesAndRps.filter(x => x.isRole())[0];
-  //         const roleplayers = rolesAndRps.filter(x => !x.isRole());
-  //         const edgeLabel = role.label();
-
-  //         for (let l = 0; l < roleplayers.length; l += 1) {
-  //           const rp = roleplayers[l];
-  //           if (rp.isThing() && shouldVisualiseInstance(rp)) {
-  //             edges.push(getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
-  //             nodes.push(getInstanceNode(rp, graqlVar, answer.explanation, answer.queryPattern));
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
+  const data = (await Promise.all(getRolePlayersData())).reduce((accumulator, item) => {
+    accumulator.edges.push(...item.edges);
+    accumulator.nodes.push(...item.nodes);
+    return accumulator;
+  }, { edges: [], nodes: [] });
 
   // exclude any edges that have already been produced by this module (i.e. currentData)
-  if (currentData) edges = edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
-  debugger;
-  return { nodes, edges };
+  if (currentData) data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
+  return data;
 };
 
 export default {
