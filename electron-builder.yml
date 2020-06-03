@@ -24,7 +24,6 @@ linux:
   target: tar.gz
 mac:
   hardenedRuntime: true
-  # gatekeeperAssess: false
   artifactName: 'grakn-workbase-${version}-mac.${ext}'
   icon: assets/icons/icon.icns
   target: dmg
