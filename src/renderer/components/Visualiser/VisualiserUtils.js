@@ -42,21 +42,28 @@ export function limitQuery(query) {
 export async function computeAttributes(nodes, graknTx) {
   const concepts = await Promise.all(nodes.map(node => graknTx.getConcept(node.id)));
   const attrIerators = await Promise.all(concepts.map(concept => concept.attributes()));
-  const attrGroups = await Promise.all(attrIerators.map(a => a.collect()));
+  const attrGroups = await Promise.all(attrIerators.map(iter => iter.collect()));
 
-  return attrGroups.map((attrGroup, i) => {
-    nodes[i].attributes = attrGroup.map((attr) => {
+  return Promise.all(attrGroups.map(async (attrGroup, i) => {
+    nodes[i].attributes = await Promise.all(attrGroup.map(attr => new Promise((resolve) => {
       const attribute = {};
       if (attr.isType()) {
-        attr.label().then((label) => { attribute.type = label; });
+        attr.label().then((label) => {
+          attribute.type = label;
+          resolve(attribute);
+        });
       } else {
-        attr.type().then(type => type.label()).then((label) => { attribute.type = label; });
-        attr.value().then((value) => { attribute.value = value; });
+        attr.type().then(type => type.label()).then((label) => {
+          attribute.type = label;
+          attr.value().then((value) => {
+            attribute.value = value;
+            resolve(attribute);
+          });
+        });
       }
-      return attribute;
-    });
+    })));
     return nodes[i];
-  });
+  }));
 }
 
 export async function loadMetaTypeInstances(graknTx) {
