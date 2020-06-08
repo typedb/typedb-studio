@@ -35,14 +35,14 @@ describe('Query Settings', () => {
 
   test('Neighbours Limit setting is applied', async () => {
     await selectKeyspace('gene', app);
-    await changeSetting({ loadRoleplayers: true, neighboursLimit: 2 }, app);
+    await changeSetting({ loadRoleplayers: true, neighboursLimit: 2, queryLimit: 1 }, app);
     await runQuery('match $x isa parentship; get;', app);
     assert.equal(await app.client.getText('.no-of-entities'), 'entities: 2');
   });
 
   test('Load Neighbours enabled is applied', async () => {
     await selectKeyspace('gene', app);
-    await changeSetting({ neighboursLimit: 1, loadRoleplayers: true }, app);
+    await changeSetting({ neighboursLimit: 1, loadRoleplayers: true, queryLimit: 1 }, app);
     await runQuery('match $x isa parentship; get;', app);
     assert.equal(await app.client.getText('.no-of-entities'), 'entities: 1');
   });

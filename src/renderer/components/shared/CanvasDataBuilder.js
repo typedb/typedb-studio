@@ -524,17 +524,16 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 
           promises.push(new Promise((resolve) => {
             relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
-              Array.from(rolePlayersMap.entries()).forEach(([role, players], i) => {
-                if (shouldLimit) players.slice(0, QuerySettings.getNeighboursLimit());
-
+              let rpEntries = Array.from(rolePlayersMap.entries());
+              if (shouldLimit) rpEntries = rpEntries.slice(0, QuerySettings.getNeighboursLimit());
+              rpEntries.forEach(([role, players], i) => {
                 role.label().then((edgeLabel) => {
                   players.forEach((player) => {
                     player.type().then(type => type.label().then((playerLabel) => {
                       player.label = playerLabel;
                       edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
                       nodes.push(getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern));
-
-                      if (i === rolePlayersMap.size - 1) resolve({ edges, nodes });
+                      if (i === rpEntries.length - 1) resolve({ edges, nodes });
                     }));
                   });
                 });
