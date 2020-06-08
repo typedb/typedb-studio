@@ -138,12 +138,10 @@ export default {
         const shouldLimit = true;
 
         const instancesData = await CDB.buildInstances(result, query);
-
         nodes.push(...instancesData.nodes);
         edges.push(...instancesData.edges);
 
         const typesData = await CDB.buildTypes(result);
-
         nodes.push(...typesData.nodes);
         edges.push(...typesData.edges);
 

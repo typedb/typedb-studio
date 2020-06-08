@@ -41,8 +41,8 @@ export function limitQuery(query) {
 
 export async function computeAttributes(nodes, graknTx) {
   const concepts = await Promise.all(nodes.map(node => graknTx.getConcept(node.id)));
-  const attrIerators = await Promise.all(concepts.map(concept => concept.attributes()));
-  const attrGroups = await Promise.all(attrIerators.map(iter => iter.collect()));
+  const attrIters = await Promise.all(concepts.map(concept => concept.attributes()));
+  const attrGroups = await Promise.all(attrIters.map(iter => iter.collect()));
 
   return Promise.all(attrGroups.map(async (attrGroup, i) => {
     nodes[i].attributes = await Promise.all(attrGroup.map(attr => new Promise((resolve) => {
