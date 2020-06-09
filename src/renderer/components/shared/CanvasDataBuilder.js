@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
-import NodeSettings from '../Visualiser/RightBar/SettingsTab/DisplaySettings';
+import DisplaySettings from '../Visualiser/RightBar/SettingsTab/DisplaySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
 import store from '../../store';
 
@@ -105,10 +105,10 @@ const getEdge = (from, to, edgeType, label) => {
 
 const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   let label = baseLabel;
-  const selectedAttrs = NodeSettings.getTypeLabels(type);
+  const selectedAttrs = DisplaySettings.getTypeLabels(type);
+
   if (selectedAttrs.length) {
     const allAttrs = await (await convertToRemote(instance).attributes()).collect();
-
     const promises = allAttrs.map(async attr => new Promise((resolve) => {
       attr.type().then((type) => {
         type.label().then((label) => {
@@ -175,8 +175,8 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
       break;
     }
     case ATTRIBUTE_INSTANCE: {
-      node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
       node.value = instance.value();
+      node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
       node.offset = 0;
       break;
     }
@@ -524,7 +524,8 @@ const buildNeighbours = async (targetConcept, answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern));
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern))))
+    .reduce(collect, []);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept)))).reduce(collect, []);
 
   return { nodes, edges };

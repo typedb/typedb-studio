@@ -19,6 +19,10 @@ jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
   getRolePlayersStatus: () => true,
 }));
 
+jest.mock('@/components/Visualiser/RightBar/SettingsTab/DisplaySettings', () => ({
+  getTypeLabels: () => ['attribute-type'],
+}));
+
 jest.mock('@/components/shared/PersistentStorage', () => ({}));
 
 global.graknTx = getMockedTransaction([]);
@@ -125,6 +129,22 @@ describe('building instances', () => {
       options: { hideArrow: true, hideLabel: true },
       to: 'entity-id',
     });
+  });
+
+  test('when graql answer contains an entity and one of its attributes has been selected in the DisplaySettings', async () => {
+    const attribute = getMockedAttribute();
+    const entity = getMockedEntity({
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attribute.asRemote()]) }),
+        },
+      },
+    });
+
+    const answer = getMockedConceptMap([entity]);
+
+    const { nodes } = await CDB.buildInstances([answer]);
+    expect(nodes[0].label).toEqual('entity-type: entity-id\nattribute-type: attribute-value');
   });
 
   test('when graql answer contains an explanation', async () => {
