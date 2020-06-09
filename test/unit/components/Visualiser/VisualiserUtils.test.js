@@ -96,7 +96,6 @@ describe('limit Query', () => {
 describe('Compute Attributes', () => {
   test('attach attributes to type', async () => {
     const attributeType = getMockedAttributeType({
-      isRemote: true,
       extraProps: {
         remote: {
           label: () => Promise.resolve('attribute-type'),
