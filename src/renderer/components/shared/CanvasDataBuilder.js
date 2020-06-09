@@ -250,7 +250,7 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
  * only the instances stored within the answers are processed.
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
-const buildInstancesFromAnswers = async (answers) => {
+const buildInstances = async (answers) => {
   let data = answers.map((answerGroup) => {
     const { explanation, queryPattern } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
@@ -530,6 +530,22 @@ const buildNeighbours = async (targetConcept, answers) => {
   return { nodes, edges };
 };
 
+const getNodesWithUpdatedLabel = async (nodes, type) => {
+  const targetNodes = nodes.filter(x => x.type === type);
+  const updatedLabels = await Promise.all(targetNodes.map(async (node) => {
+    const instance = await global.graknTx[store.getters.activeTab].getConcept(node.id);
+    const baseLabel = node.label.split('\n')[0];
+    return getNodeLabelWithAttrs(baseLabel, type, instance);
+  }));
+
+  const updatedNodes = targetNodes.map((node, i) => {
+    node.label = updatedLabels[i];
+    return node;
+  });
+
+  return updatedNodes;
+};
+
 /**
  * Produces and returns nodes and edges for the roleplayers of relation instances.
  * this function is only called when the user has chosen to enable "Load Roleplayers" query settings and set "Neighbours Limit" to higher than 0
@@ -590,7 +606,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 };
 
 export default {
-  buildInstancesFromAnswers,
+  buildInstances,
   buildTypes,
   buildType,
   buildRPInstances,
@@ -599,6 +615,7 @@ export default {
   getTypeRelatesEdges,
   getTypeAttributeEdges,
   buildNeighbours,
+  getNodesWithUpdatedLabel,
   // ideally the following functions should be private functions
   // of this module. However, this can be the case only when this
   // module becomes the only place that contains the logic for

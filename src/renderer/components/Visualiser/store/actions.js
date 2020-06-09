@@ -73,8 +73,7 @@ export default {
   },
 
   async [UPDATE_NODES_LABEL]({ state, dispatch, rootState }, type) {
-    const nodes = await Promise.all(state.visFacade.getAllNodes().filter(x => x.type === type).map(x => global.graknTx[rootState.activeTab].getConcept(x.id)));
-    const updatedNodes = await VisualiserGraphBuilder.prepareNodes(nodes);
+    const updatedNodes = await CDB.getNodesWithUpdatedLabel(state.visFacade.getAllNodes(), type);
     state.visFacade.updateNode(updatedNodes);
   },
 
