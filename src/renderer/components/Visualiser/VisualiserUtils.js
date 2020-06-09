@@ -39,20 +39,38 @@ export function limitQuery(query) {
   return limitedQuery;
 }
 
-export function computeAttributes(nodes, graknTx) {
-  return Promise.all(nodes.map(async (node) => {
-    const attributes = (await (await graknTx.query(`match $x id ${node.id}; $x has attribute $y; get $y;`)).collectConcepts());
-    node.attributes = await Promise.all(attributes.map(async (concept) => {
+/**
+ * for each node, retrieves the label and value for all the node's attributes and adds them to
+ * `attributes` property of the node. the `attributes` property of the node is read to list the
+ * attributes' label and value in the sidebar for the selected node.
+ * @param {*} nodes nodes that are currently visualised in the graph
+ * @param {*} graknTx
+ * @return array of node objects, where each object includes the `attributes` property
+ */
+export async function computeAttributes(nodes, graknTx) {
+  const concepts = await Promise.all(nodes.map(node => graknTx.getConcept(node.id)));
+  const attrIters = await Promise.all(concepts.map(concept => concept.attributes()));
+  const attrGroups = await Promise.all(attrIters.map(iter => iter.collect()));
+
+  return Promise.all(attrGroups.map(async (attrGroup, i) => {
+    nodes[i].attributes = await Promise.all(attrGroup.map(attr => new Promise((resolve) => {
       const attribute = {};
-      if (concept.isType()) {
-        attribute.type = concept.label();
+      if (attr.isType()) {
+        attr.label().then((label) => {
+          attribute.type = label;
+          resolve(attribute);
+        });
       } else {
-        attribute.type = concept.type().label();
-        attribute.value = concept.value();
+        attr.type().then(type => type.label()).then((label) => {
+          attribute.type = label;
+          attr.value().then((value) => {
+            attribute.value = value;
+            resolve(attribute);
+          });
+        });
       }
-      return attribute;
-    }));
-    return node;
+    })));
+    return nodes[i];
   }));
 }
 

@@ -512,52 +512,50 @@ const buildNeighbours = async (targetConcept, answers) => {
  * @param {*} graknTx
  */
 const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
-  let edges = [];
-  const nodes = [];
+  const getRolePlayersData = () => {
+    const promises = [];
+    const edges = [];
+    const nodes = [];
 
-  for (let i = 0; i < answers.length; i += 1) {
-    const answer = answers[i];
-    const answersGroup = Array.from(answer.map().entries());
+    answers.forEach((answer) => {
+      Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
+        if (concept.isRelation() && shouldVisualiseInstance(concept)) {
+          const relation = concept;
 
-    for (let j = 0; j < answersGroup.length; j += 1) {
-      const [graqlVar, instance] = answersGroup[j];
-
-      if (instance.isRelation() && shouldVisualiseInstance(instance)) {
-        const relationSup = await instance.type().asRemote(graknTx).sup();
-        const isRelationSubtyped = await relationSup.label() !== 'relation';
-
-        let queryToGetRPs;
-        if (isRelationSubtyped) { // getting the most granular role
-          queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $b sub $rl; $b != $rl; }; get $rp, $rl; offset 0; `;
-        } else { // getting all roles except the role metatype
-          queryToGetRPs = `match $r id ${instance.id}; $r($rl: $rp); not { $rl type role; }; get $rp, $rl; offset 0; `;
+          promises.push(new Promise((resolve) => {
+            relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
+              let rpEntries = Array.from(rolePlayersMap.entries());
+              if (shouldLimit) rpEntries = rpEntries.slice(0, QuerySettings.getNeighboursLimit());
+              rpEntries.forEach(([role, players], i) => {
+                role.label().then((edgeLabel) => {
+                  players.forEach((player) => {
+                    player.type().then(type => type.label().then((playerLabel) => {
+                      player.label = playerLabel;
+                      edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
+                      nodes.push(getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern));
+                      if (i === rpEntries.length - 1) resolve({ edges, nodes });
+                    }));
+                  });
+                });
+              });
+            });
+          }));
         }
-        if (shouldLimit) queryToGetRPs += `limit ${QuerySettings.getNeighboursLimit()};`;
+      });
+    });
 
-        const answers = await (await graknTx.query(queryToGetRPs)).collect();
+    return promises;
+  };
 
-        for (let k = 0; k < answers.length; k += 1) {
-          const rolesAndRps = Array.from(answers[k].map().values());
-          const role = rolesAndRps.filter(x => x.isRole())[0];
-          const roleplayers = rolesAndRps.filter(x => !x.isRole());
-          const edgeLabel = role.label();
-
-          for (let l = 0; l < roleplayers.length; l += 1) {
-            const rp = roleplayers[l];
-            if (rp.isThing() && shouldVisualiseInstance(rp)) {
-              edges.push(getEdge(instance, rp, edgeTypes.instance.RELATES, edgeLabel));
-              nodes.push(getInstanceNode(rp, graqlVar, answer.explanation, answer.queryPattern));
-            }
-          }
-        }
-      }
-    }
-  }
+  const data = (await Promise.all(getRolePlayersData())).reduce((accumulator, item) => {
+    accumulator.edges.push(...item.edges);
+    accumulator.nodes.push(...item.nodes);
+    return accumulator;
+  }, { edges: [], nodes: [] });
 
   // exclude any edges that have already been produced by this module (i.e. currentData)
-  if (currentData) edges = edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
-
-  return { nodes, edges };
+  if (currentData) data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
+  return data;
 };
 
 export default {

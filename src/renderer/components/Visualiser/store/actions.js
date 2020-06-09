@@ -118,7 +118,6 @@ export default {
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
       const result = await (await graknTx.query(query)).collect();
-
       if (!result.length) {
         commit('loadingQuery', false);
         return null;
@@ -138,7 +137,7 @@ export default {
         const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
         const shouldLimit = true;
 
-        const instancesData = await CDB.buildInstances(result);
+        const instancesData = await CDB.buildInstances(result, query);
         nodes.push(...instancesData.nodes);
         edges.push(...instancesData.edges);
 

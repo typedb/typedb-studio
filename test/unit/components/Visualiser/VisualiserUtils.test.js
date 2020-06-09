@@ -95,9 +95,16 @@ describe('limit Query', () => {
 
 describe('Compute Attributes', () => {
   test('attach attributes to type', async () => {
-    const attributeType = getMockedAttributeType();
+    const attributeType = getMockedAttributeType({
+      extraProps: {
+        remote: {
+          label: () => Promise.resolve('attribute-type'),
+        },
+      },
+    });
 
     const entityType = getMockedEntityType({
+      isRemote: true,
       extraProps: {
         remote: {
           attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType.asRemote()]) }),
@@ -106,27 +113,37 @@ describe('Compute Attributes', () => {
     });
 
     const answer = getMockedConceptMap([attributeType]);
-    const graknTx = getMockedTransaction([answer]);
+    const graknTx = getMockedTransaction([answer], {
+      getConcept: () => Promise.resolve(entityType),
+    });
 
     const nodes = await computeAttributes([entityType], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
-
     const attrType = nodes[0].attributes[0];
     expect(attrType.type).toBe('attribute-type');
   });
 
   test('attach attributes to thing', async () => {
-    const attribute = getMockedAttribute();
-    const entity = getMockedEntity({
+    const attribute = getMockedAttribute({
       extraProps: {
         remote: {
-          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attribute]) }),
+          type: () => Promise.resolve({ label: () => Promise.resolve('attribute-type') }),
+        },
+      },
+    });
+    const entity = getMockedEntity({
+      isRemote: true,
+      extraProps: {
+        remote: {
+          attributes: () => Promise.resolve({ collect: () => Promise.resolve([attribute.asRemote()]) }),
         },
       },
     });
 
     const answer = getMockedConceptMap([attribute]);
-    const graknTx = getMockedTransaction([answer]);
+    const graknTx = getMockedTransaction([answer], {
+      getConcept: () => Promise.resolve(entity),
+    });
 
     const nodes = await computeAttributes([entity], graknTx);
     expect(nodes[0].attributes).toHaveLength(1);
