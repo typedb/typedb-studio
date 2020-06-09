@@ -96,7 +96,6 @@ describe('limit Query', () => {
 describe('Compute Attributes', () => {
   test('attach attributes to type', async () => {
     const attributeType = getMockedAttributeType({
-      isRemote: true,
       extraProps: {
         remote: {
           label: () => Promise.resolve('attribute-type'),
@@ -105,6 +104,7 @@ describe('Compute Attributes', () => {
     });
 
     const entityType = getMockedEntityType({
+      isRemote: true,
       extraProps: {
         remote: {
           attributes: () => Promise.resolve({ collect: () => Promise.resolve([attributeType.asRemote()]) }),
@@ -117,12 +117,10 @@ describe('Compute Attributes', () => {
       getConcept: () => Promise.resolve(entityType),
     });
 
-    computeAttributes([entityType], graknTx).then((nodes) => {
-      expect(nodes[0].attributes).toHaveLength(1);
-
-      const attrType = nodes[0].attributes[0];
-      expect(attrType.type).toBe('attribute-type');
-    });
+    const nodes = await computeAttributes([entityType], graknTx);
+    expect(nodes[0].attributes).toHaveLength(1);
+    const attrType = nodes[0].attributes[0];
+    expect(attrType.type).toBe('attribute-type');
   });
 
   test('attach attributes to thing', async () => {
