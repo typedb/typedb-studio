@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import QuerySettings from '../Visualiser/RightBar/SettingsTab/QuerySettings';
+import NodeSettings from '../Visualiser/RightBar/SettingsTab/DisplaySettings';
 import { META_LABELS, baseTypes } from './SharedUtils';
 import store from '../../store';
 
@@ -38,6 +39,7 @@ const getConceptLabel = (concept) => {
   else if (concept.isThing()) label = concept.type().label();
   return label;
 };
+
 
 const shouldVisualiseInstance = (instance) => {
   let shouldSkip = false;
@@ -101,6 +103,29 @@ const getEdge = (from, to, edgeType, label) => {
   return edge;
 };
 
+const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
+  let label = baseLabel;
+  const selectedAttrs = NodeSettings.getTypeLabels(type);
+  if (selectedAttrs.length) {
+    const allAttrs = await (await convertToRemote(instance).attributes()).collect();
+
+    const promises = allAttrs.map(async attr => new Promise((resolve) => {
+      attr.type().then((type) => {
+        type.label().then((label) => {
+          attr.value().then((value) => {
+            resolve({ label, value });
+          });
+        });
+      });
+    }));
+    const allAttrsData = await Promise.all(promises);
+    const selectedAttrsData = allAttrsData.filter(attrData => selectedAttrs.includes(attrData.label));
+    label += selectedAttrsData.map(attrData => `\n${attrData.label}: ${attrData.value}`).join();
+  }
+
+  return label;
+};
+
 /**
  * produces and returns the common node object for a concept instance
  * most node properties are available on the instance, but graqlVar and explanation
@@ -117,7 +142,7 @@ const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) 
   node.attrOffset = 0;
   node.type = getConceptLabel(instance);
   node.isInferred = instance.isInferred();
-  node.attributes = instance.attributes;
+  node.attributes = convertToRemote(instance).attributes;
   if (node.isInferred) {
     node.explanation = explanation;
     node.queryPattern = queryPattern();
@@ -132,11 +157,11 @@ const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) 
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const getInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
+const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
   const node = buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
-      node.label = `${node.type}: ${node.id}`;
+      node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
       node.offset = 0;
       break;
     }
@@ -150,8 +175,8 @@ const getInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
       break;
     }
     case ATTRIBUTE_INSTANCE: {
+      node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
       node.value = instance.value();
-      node.label = `${node.type}: ${node.value}`;
       node.offset = 0;
       break;
     }
@@ -225,7 +250,7 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
  * only the instances stored within the answers are processed.
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
-const buildInstances = async (answers) => {
+const buildInstancesFromAnswers = async (answers) => {
   let data = answers.map((answerGroup) => {
     const { explanation, queryPattern } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
@@ -244,7 +269,8 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern));
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern))))
+    .reduce(collect, []);
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
 
@@ -528,12 +554,17 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
               if (shouldLimit) rpEntries = rpEntries.slice(0, QuerySettings.getNeighboursLimit());
               rpEntries.forEach(([role, players], i) => {
                 role.label().then((edgeLabel) => {
-                  players.forEach((player) => {
+                  players.forEach((player, j) => {
                     player.type().then(type => type.label().then((playerLabel) => {
                       player.label = playerLabel;
-                      edges.push(getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel));
-                      nodes.push(getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern));
-                      if (i === rpEntries.length - 1) resolve({ edges, nodes });
+                      const edge = getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel);
+                      getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern).then((node) => {
+                        edges.push(edge);
+                        nodes.push(node);
+                        const isLastRole = i === rpEntries.length - 1;
+                        const isLastPlayer = j === players.length - 1;
+                        if (isLastRole && isLastPlayer) resolve({ edges, nodes });
+                      });
                     }));
                   });
                 });
@@ -559,7 +590,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 };
 
 export default {
-  buildInstances,
+  buildInstancesFromAnswers,
   buildTypes,
   buildType,
   buildRPInstances,

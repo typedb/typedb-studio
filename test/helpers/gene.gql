@@ -337,19 +337,19 @@ then { (mother: $p, daughter: $c) isa parentship; };
 
 
 grandParents1 sub rule,
-when { ($p, son: $gc) isa parentship; (father: $gp, $p) isa parentship; },
+when { $par1 ($p, son: $gc) isa parentship; $par2 (father: $gp, $p) isa parentship; },
 then { (grandfather: $gp, grandson: $gc) isa grandparentship; };
 
 grandParents2 sub rule,
-when { ($p, daughter: $gc) isa parentship; (father: $gp, $p) isa parentship; },
+when { $par1 ($p, daughter: $gc) isa parentship; $par2 (father: $gp, $p) isa parentship; },
 then { (grandfather: $gp, granddaughter: $gc) isa grandparentship; };
 
 grandParents3 sub rule,
-when { ($p, daughter: $gc) isa parentship; (mother: $gp, $p) isa parentship; },
+when { $par1 ($p, daughter: $gc) isa parentship; $par2 (mother: $gp, $p) isa parentship; },
 then { (grandmother: $gp, granddaughter: $gc) isa grandparentship; };
 
 grandParents4 sub rule,
-when { ($p, son: $gc) isa parentship; (mother: $gp, $p) isa parentship; },
+when { $par1 ($p, son: $gc) isa parentship; $par2 (mother: $gp, $p) isa parentship; },
 then { (grandmother: $gp, grandson: $gc) isa grandparentship; };
 
 
