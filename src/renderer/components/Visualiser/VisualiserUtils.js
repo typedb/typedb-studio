@@ -39,6 +39,14 @@ export function limitQuery(query) {
   return limitedQuery;
 }
 
+/**
+ * for each node, retrieves the label and value for all the node's attributes and adds them to
+ * `attributes` property of the node. the `attributes` property of the node is read to list the
+ * attributes' label and value in the sidebar for the selected node.
+ * @param {*} nodes nodes that are currently visualised in the graph
+ * @param {*} graknTx
+ * @return array of node objects, where each object includes the `attributes` property
+ */
 export async function computeAttributes(nodes, graknTx) {
   const concepts = await Promise.all(nodes.map(node => graknTx.getConcept(node.id)));
   const attrIters = await Promise.all(concepts.map(concept => concept.attributes()));
