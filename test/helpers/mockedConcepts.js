@@ -251,6 +251,7 @@ export const getMockedEntity = (options) => {
 export const getMockedAttribute = (options) => {
   const extraProps = getExtraProps(options, {
     local: { type: () => getMockedAttributeType() },
+    remote: { type: () => Promise.resolve(getMockedAttributeType().asRemote()) },
   });
 
   return getMockedConcept(
