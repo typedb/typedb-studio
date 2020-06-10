@@ -601,8 +601,15 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
     return accumulator;
   }, { edges: [], nodes: [] });
 
-  // exclude any edges that have already been produced by this module (i.e. currentData)
-  if (currentData) data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
+  // deduplicate nodes and edges as multiple relations may share the same roleplayers, especially for highly interconnected datasets
+  data.nodes = data.nodes.filter((node, index, self) => index === self.findIndex(t => t.id === node.id));
+  data.edges = data.edges.filter((edge, index, self) => index === self.findIndex(t => t.id === edge.id));
+
+  // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
+  if (currentData) {
+    data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
+    data.nodes = data.nodes.filter(nNode => !currentData.nodes.some(cNode => cNode.id === nNode.id));
+  }
   return data;
 };
 
