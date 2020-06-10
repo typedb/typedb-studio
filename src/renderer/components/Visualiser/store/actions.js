@@ -73,7 +73,8 @@ export default {
   },
 
   async [UPDATE_NODES_LABEL]({ state, dispatch, rootState }, type) {
-    const updatedNodes = await CDB.getNodesWithUpdatedLabel(state.visFacade.getAllNodes(), type);
+    const nodesToUpdate = state.visFacade.getAllNodes().filter(x => x.type === type);
+    const updatedNodes = await CDB.updateNodesLabel(nodesToUpdate);
     state.visFacade.updateNode(updatedNodes);
   },
 

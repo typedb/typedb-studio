@@ -531,15 +531,15 @@ const buildNeighbours = async (targetConcept, answers) => {
   return { nodes, edges };
 };
 
-const getNodesWithUpdatedLabel = async (nodes, type) => {
-  const targetNodes = nodes.filter(x => x.type === type);
-  const updatedLabels = await Promise.all(targetNodes.map(async (node) => {
+
+const updateNodesLabel = async (nodes) => {
+  const updatedLabels = await Promise.all(nodes.map(async (node) => {
     const instance = await global.graknTx[store.getters.activeTab].getConcept(node.id);
     const baseLabel = node.label.split('\n')[0];
-    return getNodeLabelWithAttrs(baseLabel, type, instance);
+    return getNodeLabelWithAttrs(baseLabel, node.type, instance);
   }));
 
-  const updatedNodes = targetNodes.map((node, i) => {
+  const updatedNodes = nodes.map((node, i) => {
     node.label = updatedLabels[i];
     return node;
   });
@@ -616,7 +616,7 @@ export default {
   getTypeRelatesEdges,
   getTypeAttributeEdges,
   buildNeighbours,
-  getNodesWithUpdatedLabel,
+  updateNodesLabel,
   // ideally the following functions should be private functions
   // of this module. However, this can be the case only when this
   // module becomes the only place that contains the logic for
