@@ -107,7 +107,7 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   let label = baseLabel;
   const selectedAttrs = DisplaySettings.getTypeLabels(type);
 
-  if (selectedAttrs.length) {
+  if (selectedAttrs.length > 0) {
     const allAttrs = await (await convertToRemote(instance).attributes()).collect();
     const promises = allAttrs.map(async attr => new Promise((resolve) => {
       attr.type().then((type) => {
