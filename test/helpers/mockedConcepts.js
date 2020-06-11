@@ -73,7 +73,7 @@ const methods = {
     },
     remote: {
       label: () => Promise.resolve('attribute-type'),
-      valueType: () => Promise.resolve('String'),
+      valueType: () => Promise.resolve('string'),
     },
   },
   relationType: {
@@ -120,11 +120,11 @@ const methods = {
       isEntity: () => true,
     },
     local: {
-      valueType: () => 'String',
+      valueType: () => 'string',
       value: () => 'attribute-value',
     },
     remote: {
-      valueType: () => Promise.resolve('String'),
+      valueType: () => Promise.resolve('string'),
       value: () => Promise.resolve('attribute-value'),
       owners: () => Promise.resolve({ collect: Promise.resolve([]) }),
     },
@@ -136,7 +136,7 @@ const methods = {
       isEntity: () => true,
     },
     local: {
-      valueType: () => 'String',
+      valueType: () => 'string',
       value: () => 'relation-value',
     },
     remote: {
