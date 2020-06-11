@@ -3,7 +3,7 @@
         <div>
             <div class="vis-tabs noselect">
               <div v-for="(tabTitle, tab) in tabs" :key="tab">
-                <div :class="(tab === currentTab) ? 'tab current-tab' : 'tab'">
+                <div :id="`tab-${tab}`" :class="(tab === currentTab) ? 'tab current-tab' : 'tab'">
                   <div class="tab-content">
                     <template v-if="tabToRename !== tab">
                       <div @click="toggleTab(tab)" @dblclick="renameTab(tab)" class="tab-title">{{ tabTitle || `Tab ${tab}` }}</div>
@@ -12,8 +12,8 @@
 
                     <template v-else>
                       <input ref="renameTabInput" class="input-small rename-tab-input" v-model="newTabName">
-                      <div @click="cancelRename" class="close-tab-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
-                      <div  @click="saveName(tab)" class="close-tab-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
+                      <div @click="cancelRename" class="cancel-tab-rename-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
+                      <div  @click="saveName(tab)" class="save-tab-rename-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
                     </template>
                   </div>
                 </div>
@@ -23,7 +23,7 @@
 
               <div v-for="tab in Object.keys(tabs)" :key="tab">
                 <keep-alive>
-                  <component v-if="currentTab == tab" :is="visTab" :tabId="tab" :key="tab"></component>
+                  <component v-if="currentTab === tab" :is="visTab" :tabId="tab" :key="tab"></component>
                 </keep-alive>
               </div>
 
@@ -95,7 +95,7 @@ export default {
   components: { VisTab },
   data() {
     return {
-      currentTab: 1,
+      currentTab: '1',
       tabs: { 1: undefined },
       visTab: 'VisTab',
       LETTER_T_KEYCODE: 84,
@@ -133,7 +133,7 @@ export default {
       this.setActiveTab(`tab-${tab}`);
     },
     newTab() {
-      const newTabId = Math.max(...Object.keys(this.tabs)) + 1; // Get max tab id and increment it for new tab id
+      const newTabId = `${Math.max(...Object.keys(this.tabs)) + 1}`; // Get max tab id and increment it for new tab id
       this.tabs[newTabId] = undefined;
       this.currentTab = newTabId;
       this.setActiveTab(`tab-${newTabId}`);

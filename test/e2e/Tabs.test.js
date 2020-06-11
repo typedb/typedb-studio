@@ -1,7 +1,6 @@
 import assert from 'assert';
 import { startApp, stopApp } from './helpers/hooks';
-// import { selectKeyspace, runQuery, clickOnNode } from './helpers/actions';
-// import { getNodePosition } from './helpers/canvas';
+import { selectKeyspace } from './helpers/actions';
 import { loadKeyspace, deleteKeyspace } from './helpers/utils';
 
 jest.setTimeout(100000);
@@ -29,15 +28,46 @@ afterAll(async () => {
 describe('Tabs', () => {
   test('add a new tab', async () => {
     await app.client.click('.new-tab-btn');
-    const tabs = await app.client.elements('.tab');
-    assert.equal(tabs.length, 2);
-    // await selectKeyspace('gene', app);
-    // await runQuery('match $x isa person; $r($x) isa parentship; get $x; offset 0; limit 1;', app);
-    // const targetNodeCoordinates = await getNodePosition({ by: 'var', value: 'x' }, app);
-    // await clickOnNode(targetNodeCoordinates, app);
-    // await assert.doesNotReject(
-    //   async () => waitUntil(async () => app.client.isExisting('.role-btn-text') && app.client.isExisting('.relation-item')),
-    //   undefined, 'relation panel items did not appear',
-    // );
+    assert.equal(await app.client.isExisting('#tab-2'), true);
+    const newTabClass = await app.client.getAttribute('#tab-2', 'class');
+    assert.equal(newTabClass.indexOf('current-tab') > -1, true);
+  });
+
+  test('only tab is not closable', async () => {
+    const closeButtons = (await app.client.elements('.close-tab-btn')).value;
+    assert.equal(closeButtons.length, 0);
+  });
+
+  test('closing current tab sets first tab as active', async () => {
+    await app.client.click('.new-tab-btn');
+    await app.client.click('#tab-2 .close-tab-btn');
+    const firstTabClass = await app.client.getAttribute('#tab-1', 'class');
+    assert.equal(firstTabClass.indexOf('current-tab') > -1, true);
+  });
+
+  test('closing a tab retains the state of other tabs', async () => {
+    await app.client.click('.new-tab-btn');
+    await selectKeyspace('gene', app);
+    await app.client.click('#tab-1 .close-tab-btn');
+    assert.equal(await app.client.getText('.keyspaces'), 'gene');
+  });
+
+  test('rename a tab', async () => {
+    const newTitle = 'new tab title';
+    await app.client.doubleClick('#tab-1 .tab-title');
+    await app.client.keys(newTitle);
+    await app.client.click('#tab-1 .save-tab-rename-btn');
+    const updatedTabTitle = await app.client.getText('#tab-1 .tab-title');
+    const truncatedNewTtitle = 'new tab ti...';
+    assert.equal(updatedTabTitle, truncatedNewTtitle);
+  });
+
+  test('cancel tab rename', async () => {
+    const originalTabTitle = await app.client.getText('#tab-1 .tab-title');
+    await app.client.doubleClick('#tab-1 .tab-title');
+    await app.client.keys('new tab title');
+    await app.client.click('#tab-1 .cancel-tab-rename-btn');
+    const tabTitleAfterCancel = await app.client.getText('#tab-1 .tab-title');
+    assert.equal(originalTabTitle, tabTitleAfterCancel);
   });
 });
