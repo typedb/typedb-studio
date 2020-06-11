@@ -36,7 +36,6 @@ export function limitQuery(query) {
     }
   }
 
-  limitedQuery = limitedQuery.replace(/\s+/g, ' ').trim();
   return limitedQuery;
 }
 
