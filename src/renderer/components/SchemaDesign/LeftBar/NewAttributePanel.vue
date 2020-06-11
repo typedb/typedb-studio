@@ -24,12 +24,12 @@
         <div class="row">
           <div class="data-type-options">
             <div class="list-label">data type</div>
-            <div v-if="superType === 'attribute'" class="btn data-type-btn" :class="(showDataTypeList) ? 'type-list-shown' : ''" @click="toggleDataList"><div class="type-btn-text" >{{dataType}}</div><div class="type-btn-caret"><vue-icon className="vue-icon" icon="caret-down"></vue-icon></div></div>
-            <div v-else class="inherited-data-type">{{dataType}}</div>
+            <div v-if="superType === 'attribute'" class="btn data-type-btn" :class="(showDataTypeList) ? 'type-list-shown' : ''" @click="toggleDataList"><div class="type-btn-text" >{{valueType}}</div><div class="type-btn-caret"><vue-icon className="vue-icon" icon="caret-down"></vue-icon></div></div>
+            <div v-else class="inherited-data-type">{{valueType}}</div>
 
             <div class="data-type-list" v-show="showDataTypeList">
-                <ul v-for="type in dataTypes" :key=type>
-                    <li class="type-item" @click="selectDataType(type)" :class="[(type === dataType) ? 'type-item-selected' : '']">{{type}}</li>
+                <ul v-for="type in valueTypes" :key=type>
+                    <li class="type-item" @click="selectDataType(type)" :class="[(type === valueType) ? 'type-item-selected' : '']">{{type}}</li>
                 </ul>
             </div>
           </div> 
@@ -303,10 +303,6 @@
     border: 1px solid var(--button-hover-border-color) !important;
   }
 
-  .override-datatype{
-    background-color: var(--gray-2) !important;
-  }
-
   .type-item {
     align-items: center;
     padding: 2px;
@@ -375,8 +371,8 @@
         superTypes: [],
         superType: undefined,
         showDataTypeList: false,
-        dataTypes: ['string', 'long', 'double', 'boolean', 'date'],
-        dataType: undefined,
+        valueTypes: ['string', 'long', 'double', 'boolean', 'datetime'],
+        valueType: undefined,
         showSpinner: false,
         toggledAttributeTypes: [],
         toggledRoleTypes: [],
@@ -415,7 +411,7 @@
         if (val !== 'attribute') { // if super type is not 'attribute' set data type of super type
           const graknTx = await this[OPEN_GRAKN_TX]();
           const attributeType = await graknTx.getSchemaConcept(val);
-          this.dataType = (await attributeType.dataType()).toLowerCase();
+          this.valueType = (await attributeType.valueType()).toLowerCase();
           this.showDataTypeList = false;
 
           const sup = await graknTx.getSchemaConcept(val);
@@ -423,7 +419,7 @@
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));
           graknTx.close();
         } else {
-          this.dataType = this.dataTypes[0];
+          this.valueType = this.valueTypes[0];
 
           this.hasAttributes = this.metaTypeInstances.attributes;
           this.supAttributes = [];
@@ -437,7 +433,7 @@
         } else {
           this.showSpinner = true;
           this[DEFINE_ATTRIBUTE_TYPE]({
-            attributeLabel: this.attributeLabel, superType: this.superType, dataType: this.dataType, attributeTypes: this.toggledAttributeTypes, roleTypes: this.toggledRoleTypes,
+            attributeLabel: this.attributeLabel, superType: this.superType, valueType: this.valueType, attributeTypes: this.toggledAttributeTypes, roleTypes: this.toggledRoleTypes,
           })
             .then(() => {
               this.showSpinner = false;
@@ -456,7 +452,7 @@
         this.showAttributeTypeList = false;
       },
       selectDataType(type) {
-        this.dataType = type;
+        this.valueType = type;
         this.showDataTypeList = false;
       },
       resetPanel() {
@@ -465,7 +461,7 @@
         this.showDataTypeList = false;
         this.superTypes = ['attribute', ...this.metaTypeInstances.attributes];
         this.superType = this.superTypes[0];
-        this.dataType = this.dataTypes[0];
+        this.valueType = this.valueTypes[0];
         this.toggledAttributeTypes = [];
         this.toggledRoleTypes = [];
         this.showHasPanel = false;
