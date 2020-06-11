@@ -1,4 +1,4 @@
-import { dataType } from 'grakn-client';
+import { valueType } from 'grakn-client';
 
 let tx;
 
@@ -6,14 +6,14 @@ function SchemaHandler(graknTx) {
   tx = graknTx;
 }
 
-function toGraknDatatype(dataTypeParam) {
-  switch (dataTypeParam) {
-    case 'string': return dataType.STRING;
-    case 'date': return dataType.DATE;
-    case 'boolean': return dataType.BOOLEAN;
-    case 'long': return dataType.LONG;
-    case 'double': return dataType.DOUBLE;
-    default: throw new Error(`Datatype not recognised. Received [${dataTypeParam}]`);
+function toGraknDatatype(valueTypeParam) {
+  switch (valueTypeParam) {
+    case 'string': return valueType.STRING;
+    case 'date': return valueType.DATE;
+    case 'boolean': return valueType.BOOLEAN;
+    case 'long': return valueType.LONG;
+    case 'double': return valueType.DOUBLE;
+    default: throw new Error(`Datatype not recognised. Received [${valueTypeParam}]`);
   }
 }
 
@@ -37,8 +37,8 @@ SchemaHandler.prototype.defineRelationType = async function define({ relationLab
   return type;
 };
 
-SchemaHandler.prototype.defineAttributeType = async function define({ attributeLabel, superType, dataType }) {
-  const type = await tx.putAttributeType(attributeLabel, toGraknDatatype(dataType));
+SchemaHandler.prototype.defineAttributeType = async function define({ attributeLabel, superType, valueType }) {
+  const type = await tx.putAttributeType(attributeLabel, toGraknDatatype(valueType));
   const directSuper = await tx.getSchemaConcept(superType);
   await type.sup(directSuper);
 };
