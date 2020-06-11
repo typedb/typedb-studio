@@ -4,18 +4,18 @@
             <div class="vis-tabs noselect">
               <div v-for="(tabTitle, tab) in tabs" :key="tab">
                 <div :class="(tab === currentTab) ? 'tab current-tab' : 'tab'">
+                  <div class="tab-content">
+                    <template v-if="tabToRename !== tab">
+                      <div @click="toggleTab(tab)" @dblclick="renameTab(tab)" class="tab-title">{{ tabTitle || `Tab ${tab}` }}</div>
+                      <div v-if="Object.keys(tabs).length > 1" @click="closeTab(tab)" class="close-tab-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
+                    </template>
 
-                  <div class="tab-content" v-if="tabToRename !== tab">
-                    <div @click="toggleTab(tab)" @dblclick="renameTab(tab)" class="tab-title">{{ tabTitle || `Tab ${tab}` }}</div>
-                    <div v-if="Object.keys(tabs).length > 1" @click="closeTab(tab)" class="close-tab-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
+                    <template v-else>
+                      <input ref="renameTabInput" class="input-small rename-tab-input" v-model="newTabName">
+                      <div @click="cancelRename" class="close-tab-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
+                      <div  @click="saveName(tab)" class="close-tab-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
+                    </template>
                   </div>
-                  
-                  <div v-else class="tab-content">
-                    <input ref="renameTabInput" class="input-small rename-tab-input" v-model="newTabName">
-                    <div @click="cancelRename" class="close-tab-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
-                    <div  @click="saveName(tab)" class="close-tab-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
-                  </div>
-
                 </div>
               </div>
               <button v-if="Object.keys(tabs).length < 10" @click="newTab" class='btn new-tab-btn'><vue-icon icon="plus" className="vue-icon"></vue-icon></button>
