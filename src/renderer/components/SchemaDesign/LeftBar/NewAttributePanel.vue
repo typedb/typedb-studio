@@ -303,10 +303,6 @@
     border: 1px solid var(--button-hover-border-color) !important;
   }
 
-  .override-datatype{
-    background-color: var(--gray-2) !important;
-  }
-
   .type-item {
     align-items: center;
     padding: 2px;
