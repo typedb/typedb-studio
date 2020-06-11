@@ -17,11 +17,9 @@ const methods = {
     },
     local: {
       label: () => 'thing',
-      isImplicit: () => false,
     },
     remote: {
       label: () => Promise.resolve('thing'),
-      isImplicit: () => Promise.resolve(false),
     },
   },
   type: {

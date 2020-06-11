@@ -27,7 +27,7 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relations = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
+  metaTypeInstances.relations = await Promise.all(rels.map(async type => type.label()))
     .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
@@ -35,7 +35,7 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'attribute')
       .concat()
       .sort());
-  metaTypeInstances.roles = await Promise.all(roles.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
+  metaTypeInstances.roles = await Promise.all(roles.map(async type => type.label()))
     .then(labels => labels.filter(l => l && l !== 'role')
       .concat()
       .sort());
@@ -57,7 +57,7 @@ export async function computeRoles(nodes, graknTx) {
   return Promise.all(nodes.map(async (node) => {
     const concept = await graknTx.getSchemaConcept(node.label);
     const roles = await (await concept.playing()).collect();
-    node.roles = await Promise.all(roles.map(async concept => ((await concept.isImplicit()) ? null : concept.label()))).then(nodes => nodes.filter(x => x));
+    node.roles = await Promise.all(roles.map(concept => concept.label())).then(nodes => nodes.filter(x => x));
     return node;
   }));
 }
