@@ -9,7 +9,7 @@ function SchemaHandler(graknTx) {
 function toGraknDatatype(valueTypeParam) {
   switch (valueTypeParam) {
     case 'string': return valueType.STRING;
-    case 'date': return valueType.DATE;
+    case 'datetime': return valueType.DATETIME;
     case 'boolean': return valueType.BOOLEAN;
     case 'long': return valueType.LONG;
     case 'double': return valueType.DOUBLE;

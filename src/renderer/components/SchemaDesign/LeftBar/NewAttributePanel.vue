@@ -375,7 +375,7 @@
         superTypes: [],
         superType: undefined,
         showDataTypeList: false,
-        valueTypes: ['string', 'long', 'double', 'boolean', 'date'],
+        valueTypes: ['string', 'long', 'double', 'boolean', 'datetime'],
         valueType: undefined,
         showSpinner: false,
         toggledAttributeTypes: [],
