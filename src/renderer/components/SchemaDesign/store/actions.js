@@ -136,7 +136,7 @@ export default {
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
     let nodes = await computeAttributes([node], graknTx);
-    nodes = await computeRoles(nodes);
+    nodes = await computeRoles(nodes, graknTx);
     state.visFacade.updateNode(nodes);
     graknTx.close();
   },
@@ -177,7 +177,7 @@ export default {
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
     let nodes = await computeAttributes([node], graknTx);
-    nodes = await computeRoles(nodes);
+    nodes = await computeRoles(nodes, graknTx);
     state.visFacade.updateNode(nodes);
     graknTx.close();
   },
@@ -353,7 +353,7 @@ export default {
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
     nodes = await computeAttributes(nodes, graknTx);
-    nodes = await computeRoles(nodes);
+    nodes = await computeRoles(nodes, graknTx);
     state.visFacade.updateNode(nodes);
     graknTx.close();
   },
