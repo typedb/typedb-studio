@@ -8,7 +8,7 @@
     <div class="center">
         <div class="center-wrapper" v-bind:style="[!currentKeyspace ? {opacity: 0.5} : {opacity: 1}]">
             <div class="column" v-bind:style="[(editorLinesNumber === 1) ? {'margin-bottom': '10px'} : {'margin-bottom': '0px'}]">
-                <div class="row">
+                <div @click="!currentKeyspace ? $emit('keyspace-not-selected') : null" class="row">
                     <tool-tip class="editor-tooltip" :isOpen="showEditorToolTip" msg="Type a query" arrowPosition="top" v-on:close-tooltip="showEditorToolTip = false"></tool-tip>
                     <textarea id="graqlEditor" ref="graqlEditor" rows="3"></textarea>
                     <div v-if="showEditorTab" class="editor-tab">
