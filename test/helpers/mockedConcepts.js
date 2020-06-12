@@ -17,11 +17,9 @@ const methods = {
     },
     local: {
       label: () => 'thing',
-      isImplicit: () => false,
     },
     remote: {
       label: () => Promise.resolve('thing'),
-      isImplicit: () => Promise.resolve(false),
     },
   },
   type: {
@@ -75,7 +73,7 @@ const methods = {
     },
     remote: {
       label: () => Promise.resolve('attribute-type'),
-      dataType: () => Promise.resolve('String'),
+      valueType: () => Promise.resolve('string'),
     },
   },
   relationType: {
@@ -122,11 +120,11 @@ const methods = {
       isEntity: () => true,
     },
     local: {
-      dataType: () => 'String',
+      valueType: () => 'string',
       value: () => 'attribute-value',
     },
     remote: {
-      dataType: () => Promise.resolve('String'),
+      valueType: () => Promise.resolve('string'),
       value: () => Promise.resolve('attribute-value'),
       owners: () => Promise.resolve({ collect: Promise.resolve([]) }),
     },
@@ -138,7 +136,7 @@ const methods = {
       isEntity: () => true,
     },
     local: {
-      dataType: () => 'String',
+      valueType: () => 'string',
       value: () => 'relation-value',
     },
     remote: {

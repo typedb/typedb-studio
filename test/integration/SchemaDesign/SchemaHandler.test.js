@@ -44,7 +44,7 @@ describe('Actions', () => {
     let graknTx = await graknSession.transaction().write();
     const schemaHandler = new SchemaHandler(graknTx);
 
-    await schemaHandler.defineAttributeType({ attributeLabel: 'name', dataType: 'string' });
+    await schemaHandler.defineAttributeType({ attributeLabel: 'name', valueType: 'string' });
     await graknTx.commit();
 
     graknTx = await graknSession.transaction().write();

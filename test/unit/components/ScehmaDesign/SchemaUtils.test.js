@@ -22,7 +22,7 @@ describe('Schema Utils', () => {
 
     const nodes = await computeAttributes([entityType], graknTx);
     expect(nodes[0].attributes[0].type).toBe('attribute-type');
-    expect(nodes[0].attributes[0].dataType).toBe('String');
+    expect(nodes[0].attributes[0].valueType).toBe('string');
   });
 
   test('Compute Roles', async () => {

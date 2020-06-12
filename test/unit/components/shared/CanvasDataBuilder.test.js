@@ -165,22 +165,6 @@ describe('building instances', () => {
     const explAnswers = await nodes[0].explanation().getAnswers();
     expect(explAnswers[0].map().get(0)).toEqual(explConcept);
   });
-
-  test('when graql answer contains an implicit instance', async () => {
-    const attribute = getMockedAttribute({
-      extraProps: {
-        local: {
-          type: () => getMockedAttributeType({
-            extraProps: { local: { isImplicit: () => true } },
-          }),
-        },
-      },
-    });
-    const answer = getMockedConceptMap([attribute]);
-    const { nodes, edges } = await CDB.buildInstances([answer]);
-    expect(nodes).toHaveLength(0);
-    expect(edges).toHaveLength(0);
-  });
 });
 
 describe('building types', () => {
@@ -406,21 +390,6 @@ describe('building types', () => {
     const answer = getMockedConceptMap([metaType]);
 
     const { nodes, edges } = await CDB.buildTypes([answer]);
-    expect(nodes).toHaveLength(0);
-    expect(edges).toHaveLength(0);
-  });
-
-  test('when graql answer contains an implicit type', async () => {
-    const relationType = getMockedRelationType({
-      extraProps: {
-        local: { isImplicit: () => true },
-      },
-    });
-
-    const answer = getMockedConceptMap([relationType]);
-
-    const { nodes, edges } = await CDB.buildTypes([answer]);
-
     expect(nodes).toHaveLength(0);
     expect(edges).toHaveLength(0);
   });
