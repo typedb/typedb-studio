@@ -31,8 +31,8 @@ import CDB from '../../shared/CanvasDataBuilder';
 import { META_LABELS } from '../../shared/SharedUtils';
 
 export default {
-  async [OPEN_GRAKN_TX]({ state, commit }) {
-    const graknTx = await state.graknSession.transaction().write();
+  async [OPEN_GRAKN_TX]({ commit }) {
+    const graknTx = await global.graknSession.transaction().write();
     if (!global.graknTx) global.graknTx = {};
     global.graknTx.schemaDesign = graknTx;
     commit('setSchemaHandler', new SchemaHandler(graknTx));
@@ -43,7 +43,8 @@ export default {
     if (keyspace !== state.currentKeyspace) {
       dispatch(CANVAS_RESET);
       commit('currentKeyspace', keyspace);
-      await commit('graknSession', await global.grakn.session(keyspace));
+      if (global.graknSession) await global.graknSession.close();
+      global.graknSession = await global.grakn.session(keyspace);
       dispatch(UPDATE_METATYPE_INSTANCES);
       dispatch(LOAD_SCHEMA);
     }
