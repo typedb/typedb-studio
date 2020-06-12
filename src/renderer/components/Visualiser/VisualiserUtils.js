@@ -87,7 +87,7 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relations = await Promise.all(rels.map(type => type.label()))
+  metaTypeInstances.relations = await Promise.all(rels.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
     .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
@@ -95,7 +95,7 @@ export async function loadMetaTypeInstances(graknTx) {
     .then(labels => labels.filter(l => l !== 'attribute')
       .concat()
       .sort());
-  metaTypeInstances.roles = await Promise.all(roles.map(type => type.label()))
+  metaTypeInstances.roles = await Promise.all(roles.map(async type => ((!await type.isImplicit()) ? type.label() : null)))
     .then(labels => labels.filter(l => l && l !== 'role')
       .concat()
       .sort());
@@ -129,6 +129,27 @@ export function addResetGraphListener(dispatch, action) {
 }
 
 /**
+ * Checks if a ConceptMap inside the provided Answer contains at least one implicit concept
+ * @param {Object} answer ConceptMap Answer to be inspected
+ * @return {Boolean}
+ */
+async function answerContainsImplicitType(answer) {
+  const concepts = Array.from(answer.map().values());
+  return Promise.all(concepts.map(async concept => ((concept.isThing()) ? (await concept.type()).isImplicit() : concept.isImplicit())))
+    .then(a => a.includes(true));
+}
+
+/**
+ * Filters out Answers that contained inferred concepts in their ConceptMap
+ * @param {Object[]} answers array of ConceptMap Answers to be inspected
+ * @return {Object[]} filtered array of Answers
+ */
+export async function filterMaps(answers) { // Filter out ConceptMaps that contain implicit relations
+  return Promise.all(answers.map(async x => ((await answerContainsImplicitType(x)) ? null : x)))
+    .then(maps => maps.filter(map => map));
+}
+
+/**
  * Executes query to load neighbours of given node and filters our all the answers that contain implicit concepts, given that we
  * don't want to show implicit concepts (relations to attributes) to the user, for now.
  * @param {Object} node VisJs node of which we want to load the neighbours
@@ -138,5 +159,11 @@ export function addResetGraphListener(dispatch, action) {
 export async function getFilteredNeighbourAnswers(node, graknTx, limit) {
   const query = getNeighboursQuery(node, limit);
   const resultAnswers = await (await graknTx.query(query)).collect();
+  const filteredResult = await filterMaps(resultAnswers);
+  if (resultAnswers.length !== filteredResult.length) {
+    const offsetDiff = resultAnswers.length - filteredResult.length;
+    node.offset += QuerySettings.getNeighboursLimit();
+    return filteredResult.concat(await getFilteredNeighbourAnswers(node, graknTx, offsetDiff));
+  }
   return resultAnswers;
 }

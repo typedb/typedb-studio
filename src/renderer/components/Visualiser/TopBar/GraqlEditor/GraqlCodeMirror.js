@@ -7,7 +7,7 @@ CodeMirror.defineSimpleMode('graql', {
   start: [
     { regex: /#.*/, token: 'comment' },
     { regex: /".*?"/, token: 'string' },
-    { regex: /(match|isa|isa!|sub|sub!|has|id|type|limit|offset|sort|asc|desc|get|compute|path|from|to)(?![-a-zA-Z_0-9])/, // eslint-disable-line max-len
+    { regex: /(match|insert|delete|select|isa|sub|plays|relates|datatype|abstract|has|value|id|of|limit|offset|order|by|compute|from|to|in|aggregate|label|get|using|where)(?![-a-zA-Z_0-9])/, // eslint-disable-line max-len
       token: 'keyword' },
     { regex: /true|false/, token: 'number' },
     { regex: /\$[-a-zA-Z_0-9]+/, token: 'variable' },

@@ -40,9 +40,16 @@ const getConceptLabel = (concept) => {
   return label;
 };
 
+const shouldVisualiseInstance = (instance) => {
+  let shouldSkip = false;
+  if (instance.type().isImplicit()) shouldSkip = true;
+  return !shouldSkip;
+};
+
 const shouldVisualiseType = (type) => {
   let shouldSkip = false;
-  if (META_LABELS.has(getConceptLabel(type))) shouldSkip = true;
+  if (type.isImplicit()) shouldSkip = true;
+  else if (META_LABELS.has(getConceptLabel(type))) shouldSkip = true;
   return !shouldSkip;
 };
 
@@ -253,7 +260,7 @@ const buildInstances = async (answers) => {
     }));
   }).reduce(collect, []);
 
-  const shouldVisualiseVals = data.map(item => item.concept.isThing());
+  const shouldVisualiseVals = data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept));
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
     return item;
@@ -507,7 +514,7 @@ const buildNeighbours = async (targetConcept, answers) => {
     }));
   }).reduce(collect, []);
 
-  const shouldVisualiseVals = data.map(item => item.concept.isThing());
+  const shouldVisualiseVals = data.map(item => item.concept.isThing() && shouldVisualiseInstance(item.concept));
 
   data = data.map((item, index) => {
     item.shouldVisualise = shouldVisualiseVals[index];
@@ -554,7 +561,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 
     answers.forEach((answer) => {
       Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
-        if (concept.isRelation()) {
+        if (concept.isRelation() && shouldVisualiseInstance(concept)) {
           const relation = concept;
 
           promises.push(new Promise((resolve) => {
