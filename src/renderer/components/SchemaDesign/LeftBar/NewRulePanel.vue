@@ -137,7 +137,7 @@
         } else {
           this.showSpinner = true;
 
-          this[DEFINE_RULE]({ ruleLabel: this.ruleLabel, when: `{${this.when}}`, then: `{${this.then}}` })
+          this[DEFINE_RULE]({ ruleLabel: this.ruleLabel, when: `{${this.when}};`, then: `{${this.then}};` })
             .then(() => {
               this.showSpinner = false;
               this.$notifyInfo(`Rule, ${this.ruleLabel}, has been defined`);
