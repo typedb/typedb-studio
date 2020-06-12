@@ -5,6 +5,7 @@ function getMockEntityType() {
     id: '0000',
     label: () => Promise.resolve('person'),
     instances: () => Promise.resolve({ next: () => Promise.resolve(getMockEntity1()) }), // eslint-disable-line no-use-before-define
+    isImplicit: () => Promise.resolve(false),
     attributes: () => Promise.resolve({ next: () => Promise.resolve(getMockAttributeType()), collect: () => Promise.resolve([getMockAttributeType()]) }), // eslint-disable-line no-use-before-define
     playing: () => Promise.resolve({ next: () => Promise.resolve(getMockRoleType1()), collect: () => Promise.resolve([getMockRoleType1(), getMockRoleType2()]) }), // eslint-disable-line no-use-before-define
     isType: () => true,
@@ -16,6 +17,7 @@ function getMockRoleType1() {
   return {
     baseType: 'Role_TYPE',
     label: () => Promise.resolve('child'),
+    isImplicit: () => Promise.resolve(false),
   };
 }
 
@@ -23,6 +25,7 @@ function getMockRoleType2() {
   return {
     baseType: '',
     label: () => Promise.resolve('@has'),
+    isImplicit: () => Promise.resolve(true),
   };
 }
 
@@ -31,8 +34,9 @@ function getMockAttributeType() {
     baseType: 'ATTRIBUTE_TYPE',
     id: '1111',
     label: () => Promise.resolve('name'),
+    isImplicit: () => Promise.resolve(false),
     isType: () => true,
-    valueType: () => Promise.resolve('String'),
+    dataType: () => Promise.resolve('String'),
   };
 }
 
@@ -41,6 +45,7 @@ function getMockRelationType() {
     baseType: 'RELATION_TYPE',
     id: '2222',
     label: () => Promise.resolve('parentship'),
+    isImplicit: () => Promise.resolve(false),
   };
 }
 
@@ -48,6 +53,7 @@ function getMockImplicitRelationType() {
   return {
     baseType: 'RELATION_TYPE',
     id: '2222',
+    isImplicit: () => Promise.resolve(true),
     isThing: () => false,
   };
 }

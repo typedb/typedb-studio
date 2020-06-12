@@ -12,7 +12,7 @@
 
                 <div v-for="(value, index) in attributes" :key="index">
                     <div class="content-item">
-                        <div class="label">{{value.type}}: {{value.valueType}}</div>
+                        <div class="label">{{value.type}}: {{value.dataType}}</div>
                         <div class="btn right-bar-btn reset-setting-btn" @click="removeAttributeType(value.type, index)"><vue-icon icon="trash" className="vue-icon" iconSize="12"></vue-icon></div>
                     </div>
                 </div>
