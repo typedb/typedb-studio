@@ -30,7 +30,7 @@ export function limitQuery(query) {
     if (!(offsetRegex.test(query)) && !limitRegex.test(query)) {
       limitedQuery = `${query} offset 0; limit ${QuerySettings.getQueryLimit()};`;
     } else if (!(offsetRegex.test(query))) {
-      limitedQuery = `${query.match(limitRegex)[1]} offset 0; ${query.match(limitRegex)[3]}`;
+      limitedQuery = `${query.match(limitRegex)[1]}offset 0; ${query.match(limitRegex)[3]}`;
     } else if (!(limitRegex.test(query))) {
       limitedQuery = `${query} limit ${QuerySettings.getQueryLimit()};`;
     }
