@@ -407,17 +407,6 @@ const getTypeEdges = async (type, existingNodeIds) => {
 };
 
 /**
- * produces and returns nodes and edges for the given concept type
- * @param {Concept} type guaranteed to be a concept type
- * @param {String} graqlVar the Graql variable (as written in the original query) which holds the concept
- */
-const buildType = async (type, graqlVar = '') => {
-  const node = getTypeNode(type, graqlVar);
-  const edges = await getTypeEdges(type, [node.id]);
-  return { node, edges };
-};
-
-/**
  * produces and returns nodes and edges for the given answers
  * only the types stored within the answers are processed
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
@@ -616,12 +605,9 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 export default {
   buildInstances,
   buildTypes,
-  buildType,
   buildRPInstances,
+  getTypeNode,
   getTypeEdges,
-  getTypeSubEdge,
-  getTypeRelatesEdges,
-  getTypeAttributeEdges,
   buildNeighbours,
   updateNodesLabel,
   // ideally the following functions should be private functions

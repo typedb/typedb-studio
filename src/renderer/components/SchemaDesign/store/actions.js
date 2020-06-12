@@ -130,7 +130,8 @@ export default {
     const concept = await graknTx.getSchemaConcept(payload.entityLabel);
     concept.label = payload.entityLabel;
 
-    const { node, edges } = await CDB.buildType(concept);
+    const node = CDB.getTypeNode(concept);
+    const edges = await CDB.getTypeEdges(concept, [node.id, ...state.visFacade.getAllNodes().map(n => n.id)]);
 
     state.visFacade.addToCanvas({ nodes: [node], edges });
 
@@ -171,7 +172,8 @@ export default {
     const concept = await graknTx.getSchemaConcept(payload.attributeLabel);
     concept.label = payload.attributeLabel;
 
-    const { node, edges } = await CDB.buildType(concept);
+    const node = CDB.getTypeNode(concept);
+    const edges = await CDB.getTypeEdges(concept, [node.id, ...state.visFacade.getAllNodes().map(n => n.id)]);
 
     state.visFacade.addToCanvas({ nodes: [node], edges });
 
@@ -201,7 +203,7 @@ export default {
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
 
     const ownerConcept = await graknTx.getSchemaConcept(node.label);
-    const edges = await CDB.getTypeAttributeEdges(ownerConcept);
+    const edges = await CDB.getTypeEdges(ownerConcept, state.visFacade.getAllNodes().map(n => n.id));
 
     state.visFacade.addToCanvas({ nodes: [], edges });
 
@@ -231,7 +233,7 @@ export default {
       const relationTypes = await (await (await graknTx.getSchemaConcept(roleType)).relations()).collect();
       node.roles = [...node.roles, roleType];
 
-      return Promise.all(relationTypes.map(async relType => CDB.getTypeRelatesEdges(relType)));
+      return Promise.all(relationTypes.map(async relType => CDB.getTypeEdges(relType, state.visFacade.getAllNodes().map(n => n.id))));
     })).then(edges => edges.flatMap(x => x));
 
     state.visFacade.addToCanvas({ nodes: [], edges: edges.flatMap(x => x) });
@@ -342,17 +344,13 @@ export default {
     const concept = await graknTx.getSchemaConcept(payload.relationLabel);
     concept.label = payload.relationLabel;
 
-    let nodes = [];
-    const edges = [];
-    const typeData = await CDB.buildType(concept);
-    nodes.push(typeData.node);
-    edges.push(...typeData.edges);
+    const node = CDB.getTypeNode(concept);
+    const edges = await CDB.getTypeEdges(concept, [node.id, ...state.visFacade.getAllNodes().map(n => n.id)]);
 
-
-    state.visFacade.addToCanvas({ nodes, edges });
+    state.visFacade.addToCanvas({ nodes: [node], edges });
 
     // attach attributes and roles to visnode and update on graph to render the right bar attributes
-    nodes = await computeAttributes(nodes, graknTx);
+    let nodes = await computeAttributes([node], graknTx);
     nodes = await computeRoles(nodes, graknTx);
     state.visFacade.updateNode(nodes);
     graknTx.close();
