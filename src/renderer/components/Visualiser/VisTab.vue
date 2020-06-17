@@ -93,7 +93,7 @@ export default {
   },
 
   beforeDestroy() {
-    if (global.graknTx[`tab-${this.tabId}`]) global.graknTx[`tab-${this.tabId}`].close();
+    if (global.graknTx && global.graknTx[`tab-${this.tabId}`]) global.graknTx[`tab-${this.tabId}`].close();
     /* eslint-disable no-prototype-builtins */
     if (this.$store.state.hasOwnProperty(`tab-${this.tabId}`)) this.$store.unregisterModule(`tab-${this.tabId}`);
   },

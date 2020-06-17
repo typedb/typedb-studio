@@ -61,7 +61,7 @@ describe('actions', () => {
     await store.dispatch(`schema-design/${CURRENT_KEYSPACE_CHANGED}`, 'gene');
 
     expect(store.state['schema-design'].currentKeyspace).toBe('gene');
-    expect(store.state['schema-design'].graknSession).toBeDefined();
+    expect(global.graknSession).toBeDefined();
   });
 
   test('OPEN_GRAKN_TX', async () => {

@@ -5,9 +5,6 @@ export default {
   loadingSchema(state, isRunning) {
     state.loadingSchema = isRunning;
   },
-  graknSession(state, session) {
-    state.graknSession = session;
-  },
   setVisFacade(state, facade) {
     state.visFacade = Object.freeze(facade); // Freeze it so that Vue does not attach watchers to its properties
   },
