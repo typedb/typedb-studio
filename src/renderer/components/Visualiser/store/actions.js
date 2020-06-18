@@ -225,9 +225,11 @@ export default {
 
       const explanation = await node.explanation();
 
-      const when = await (await explanation.getRule()).getWhen();
-      const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
+
       let isRelUnassigned = false;
+      const rule = await explanation.getRule();
+      const when = rule && await rule.getWhen();
+      const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
       let relMatches = relRegex.exec(when);
       while (relMatches) {
         if (!relMatches[1].includes('$')) {
