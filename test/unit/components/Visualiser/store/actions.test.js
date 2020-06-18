@@ -15,7 +15,7 @@ import {
   EXPLAIN_CONCEPT,
 } from '@/components/shared/StoresActions';
 import VisualiserGraphBuilder from '@/components/Visualiser/VisualiserGraphBuilder';
-import CanvasDataBuilder from '@/components/shared/CanvasDataBuilder';
+import CDB from '@/components/shared/CanvasDataBuilder';
 import actions from '@/components/Visualiser/store/actions';
 import mutations from '@/components/Visualiser/store/mutations';
 import getters from '@/components/Visualiser/store/getters';
@@ -30,6 +30,8 @@ import {
 } from '@/components/Visualiser/VisualiserUtils';
 import VisualiserCanvasEventsHandler from '@/components/Visualiser/VisualiserCanvasEventsHandler';
 import MockConcepts from '../../../../helpers/MockConcepts';
+import { getMockedRelation, getMockedTransaction } from '../../../../helpers/mockedConcepts';
+
 jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   prepareNodes: jest.fn(),
   buildFromConceptMap: jest.fn().mockImplementation(() => Promise.resolve({ nodes: [MockConcepts.getMockEntity1()], edges: [{ from: 1234, to: 4321, label: 'son' }] })),
@@ -58,6 +60,8 @@ jest.mock('@/components/Visualiser/VisualiserCanvasEventsHandler', () => ({
 jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
   getRolePlayersStatus: jest.fn(),
 }));
+
+global.graknTx = getMockedTransaction([]);
 
 Vue.use(Vuex);
 
@@ -237,8 +241,8 @@ describe('actions', () => {
       expect(validateQuery).toHaveBeenCalled();
       // expect(loadingQuery.mock.calls).toHaveLength(2);
       expect(QuerySettings.getRolePlayersStatus).toHaveBeenCalled();
-      expect(CanvasDataBuilder.buildInstances).toHaveBeenCalled();
-      expect(CanvasDataBuilder.buildRPInstances).toHaveBeenCalled();
+      expect(CDB.buildInstances).toHaveBeenCalled();
+      expect(CDB.buildRPInstances).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(store.state.visFacade.fitGraphToWindow).toHaveBeenCalled();
       expect(computeAttributes).toHaveBeenCalled();
@@ -284,8 +288,8 @@ describe('actions', () => {
     store.dispatch(LOAD_ATTRIBUTES, { visNode: mockVisNode, neighboursLimit: 1 }).then(() => {
       expect(store.state.visFacade.updateNode).toHaveBeenCalled();
       expect(QuerySettings.getRolePlayersStatus).toHaveBeenCalled();
-      expect(CanvasDataBuilder.buildInstances).toHaveBeenCalled();
-      expect(CanvasDataBuilder.buildRPInstances).toHaveBeenCalled();
+      expect(CDB.buildInstances).toHaveBeenCalled();
+      expect(CDB.buildRPInstances).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(computeAttributes).toHaveBeenCalled();
       expect(loadingQuery.mock.calls).toHaveLength(1);
@@ -322,6 +326,39 @@ describe('actions', () => {
       expect(store.state.visStyle.computeExplanationEdgeStyle).toHaveBeenCalled();
       expect(store.state.visFacade.updateEdge).toHaveBeenCalled();
     });
+  });
+
+  test("EXPLAIN_CONCEPT with unassigned relations in rule's when body", async () => {
+    const explanation = () => Promise.resolve({
+      getRule: () => Promise.resolve({
+        getWhen: () => Promise.resolve('{ $r ($a) isa some-relation; ($b) isa another-relation; }'),
+      }),
+    });
+    const relation = getMockedRelation({
+      extraProps: {
+        local: {
+          isInferred: () => true,
+        },
+      },
+    });
+    const relationNode = await CDB.getInstanceNode(relation, '0', explanation, () => '');
+
+    const setGlobalErrorMsg = jest.fn();
+    const store = new Vuex.Store({
+      state: {
+        visFacade: {
+          getAllNodes: jest.fn().mockImplementation(() => [relationNode]),
+        },
+        selectedNodes: [relationNode],
+        globalErrorMsg: '',
+      },
+      actions,
+      mutations: { setGlobalErrorMsg },
+      getters: { selectedNode: getters.selectedNode },
+    });
+
+    await store.dispatch(EXPLAIN_CONCEPT);
+    expect(setGlobalErrorMsg.mock.calls).toHaveLength(1);
   });
 });
 

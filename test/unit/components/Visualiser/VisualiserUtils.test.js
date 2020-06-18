@@ -1,7 +1,6 @@
 import {
   limitQuery,
   computeAttributes,
-  filterMaps,
   validateQuery,
 } from '@/components/Visualiser/VisualiserUtils.js';
 
@@ -12,7 +11,6 @@ import {
   getMockedTransaction,
   getMockedEntity,
   getMockedAttribute,
-  getMockedRelation,
 } from '../../../helpers/mockedConcepts';
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
@@ -150,26 +148,6 @@ describe('Compute Attributes', () => {
 
     expect(nodes[0].attributes[0].type).toBe('attribute-type');
     expect(nodes[0].attributes[0].value).toBe('attribute-value');
-  });
-});
-
-describe('Filters out Answers that contain inferred concepts in their ConceptMap', () => {
-  test('contains implicit type', async () => {
-    const implicitRelation = getMockedRelation({ extraProps: { local: { isImplicit: () => true } } });
-    const nonImplicitRelation = getMockedRelation();
-
-    const answer = getMockedConceptMap([nonImplicitRelation, implicitRelation]);
-
-    const nonImplicitOnlyAnswer = await filterMaps([answer]);
-    expect(nonImplicitOnlyAnswer).toHaveLength(1);
-  });
-
-  test('does not contains implicit type', async () => {
-    const nonImplicitRelation = getMockedRelation();
-    const answer = getMockedConceptMap([nonImplicitRelation]);
-
-    const nonImplicitOnlyAnswer = await filterMaps([answer]);
-    expect(nonImplicitOnlyAnswer).toHaveLength(1);
   });
 });
 

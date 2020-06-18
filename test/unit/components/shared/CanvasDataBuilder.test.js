@@ -167,22 +167,6 @@ describe('building instances', () => {
   });
 });
 
-test('when graql answer contains an implicit instance', async () => {
-  const attribute = getMockedAttribute({
-    extraProps: {
-      local: {
-        type: () => getMockedAttributeType({
-          extraProps: { local: { isImplicit: () => true } },
-        }),
-      },
-    },
-  });
-  const answer = getMockedConceptMap([attribute]);
-  const { nodes, edges } = await CDB.buildInstances([answer]);
-  expect(nodes).toHaveLength(0);
-  expect(edges).toHaveLength(0);
-});
-
 describe('building types', () => {
   test('when graql answer contains a subtype of a meta type', async () => {
     const entityType = getMockedEntityType({
@@ -409,21 +393,6 @@ describe('building types', () => {
     expect(nodes).toHaveLength(0);
     expect(edges).toHaveLength(0);
   });
-});
-
-test('when graql answer contains an implicit type', async () => {
-  const relationType = getMockedRelationType({
-    extraProps: {
-      local: { isImplicit: () => true },
-    },
-  });
-
-  const answer = getMockedConceptMap([relationType]);
-
-  const { nodes, edges } = await CDB.buildTypes([answer]);
-
-  expect(nodes).toHaveLength(0);
-  expect(edges).toHaveLength(0);
 });
 
 describe('building neighbours', () => {
