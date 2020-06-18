@@ -602,6 +602,7 @@ export default {
   getTypeEdges,
   buildNeighbours,
   updateNodesLabel,
+  getInstanceNode,
   // ideally the following functions should be private functions
   // of this module. However, this can be the case only when this
   // module becomes the only place that contains the logic for

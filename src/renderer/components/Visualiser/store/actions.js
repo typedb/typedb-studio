@@ -226,7 +226,16 @@ export default {
       const explanation = await node.explanation();
 
       const when = await (await explanation.getRule()).getWhen();
-      const isRelUnassigned = !when.match(/(\$[^\s]*|;|{)(\s*?\(.*?\))/)[1].includes('$');
+      const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
+      let isRelUnassigned = false;
+      let relMatches = relRegex.exec(when);
+      while (relMatches) {
+        if (!relMatches[1].includes('$')) {
+          isRelUnassigned = true;
+          break;
+        }
+        relMatches = relRegex.exec(when);
+      }
 
       if (isRelUnassigned) {
         commit(
