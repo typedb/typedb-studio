@@ -34,7 +34,7 @@ commands:
 
   install-linux-dependencies:
     steps:
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libasound2 libgconf-2-4 -y
       - run: Xvfb :99 & export DISPLAY=:99
 
   run-bazel-rbe:
