@@ -154,22 +154,15 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     case RELATION_INSTANCE: {
       node.label = '';
-      if (QuerySettings.getRolePlayersStatus()) {
-        node.offset = QuerySettings.getNeighboursLimit();
-      } else {
-        node.offset = 0;
-      }
       break;
     }
     case ATTRIBUTE_INSTANCE: {
       node.value = instance.value();
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     default:
@@ -536,6 +529,8 @@ const updateNodesLabel = async (nodes) => {
  * @param {*} graknTx
  */
 const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
+  const targetRelationIds = [];
+
   const getRolePlayersData = () => {
     const promises = [];
     const edges = [];
@@ -545,6 +540,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
       Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
         if (concept.isRelation()) {
           const relation = concept;
+          targetRelationIds.push(relation.id);
 
           promises.push(new Promise((resolve) => {
             relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
@@ -586,11 +582,19 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
   data.nodes = data.nodes.filter((node, index, self) => index === self.findIndex(t => t.id === node.id));
   data.edges = data.edges.filter((edge, index, self) => index === self.findIndex(t => t.id === edge.id));
 
-  // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
   if (currentData) {
+    // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
     data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
     data.nodes = data.nodes.filter(nNode => !currentData.nodes.some(cNode => cNode.id === nNode.id));
+
+    // update the offset property of target relations
+    const targetRelationNodes = currentData.nodes.filter(node => targetRelationIds.includes(node.id)).map((relNode) => {
+      relNode.offset = QuerySettings.getNeighboursLimit();
+      return relNode;
+    });
+    data.nodes.push(...targetRelationNodes);
   }
+
   return data;
 };
 
