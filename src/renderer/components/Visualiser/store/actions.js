@@ -220,9 +220,6 @@ export default {
       const graknTx = global.graknTx[rootState.activeTab];
 
       const node = getters.selectedNode;
-      const queryPattern = node.queryPattern;
-      const queryPatternVariales = Array.from(new Set(queryPattern.match(/\$[^\s|)|;|,]*/g))).map(x => x.substring(1));
-
       const explanation = await node.explanation();
 
       const isRelUnassigned = (when) => {
@@ -254,6 +251,9 @@ export default {
       if (isRelUnassigned(when)) {
         displayErrorUnassignedRelation();
       } else {
+        const queryPattern = node.queryPattern;
+        const queryPatternVariales = Array.from(new Set(queryPattern.match(/\$[^\s|)|;|,]*/g))).map(x => x.substring(1));
+
         const explanationAnswers = explanation.getAnswers();
         const explanationPromises = [];
         const explanationResult = [];

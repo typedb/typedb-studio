@@ -328,9 +328,9 @@ describe('actions', () => {
     });
   });
 
-  test("EXPLAIN_CONCEPT with unassigned relations in rule's when body", async () => {
+  test.only("EXPLAIN_CONCEPT with unassigned relations in rule's when body", async () => {
     const explanation = () => Promise.resolve({
-      getRule: () => Promise.resolve({
+      getRule: () => ({
         getWhen: () => Promise.resolve('{ $r ($a) isa some-relation; ($b) isa another-relation; }'),
       }),
     });
