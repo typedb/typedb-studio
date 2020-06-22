@@ -225,25 +225,34 @@ export default {
 
       const explanation = await node.explanation();
 
+      const isRelUnassigned = (when) => {
+        let isRelUnassigned = false;
+        const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
+        let relMatches = relRegex.exec(when);
 
-      let isRelUnassigned = false;
-      const rule = await explanation.getRule();
-      const when = rule && await rule.getWhen();
-      const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
-      let relMatches = relRegex.exec(when);
-      while (relMatches) {
-        if (!relMatches[1].includes('$')) {
-          isRelUnassigned = true;
-          break;
+        while (relMatches) {
+          if (!relMatches[1].includes('$')) {
+            isRelUnassigned = true;
+            break;
+          }
+          relMatches = relRegex.exec(when);
         }
-        relMatches = relRegex.exec(when);
-      }
 
-      if (isRelUnassigned) {
+        return isRelUnassigned;
+      };
+
+      const displayErrorUnassignedRelation = () => {
         commit(
           'setGlobalErrorMsg',
           'The rule `when` definition for this inferred concept contains at least one unassigned relation. At the moment explanation cannot be provided for such a rule.',
         );
+      };
+
+      const rule = explanation.getRule();
+      const when = rule && await rule.getWhen();
+
+      if (isRelUnassigned(when)) {
+        displayErrorUnassignedRelation();
       } else {
         const explanationAnswers = explanation.getAnswers();
         const explanationPromises = [];
@@ -260,26 +269,33 @@ export default {
           }
         });
 
-        (await Promise.all(explanationPromises)).map(expl => expl.getAnswers()).reduce(collect, []).forEach((expl) => {
-          explanationResult.push(expl);
-        });
+        const explanations = await Promise.all(explanationPromises);
+        const explanationsWhens = await Promise.all(explanations.map(explanation => explanation.getRule().getWhen()));
 
-        if (explanationResult.length > 0) {
-          const data = await CDB.buildInstances(explanationResult);
-          const rpData = await CDB.buildRPInstances(explanationResult, data, false, graknTx);
-          data.nodes.push(...rpData.nodes);
-          data.edges.push(...rpData.edges);
-
-          state.visFacade.addToCanvas(data);
-          commit('updateCanvasData');
-          const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
-
-          state.visFacade.updateNode(nodesWithAttributes);
-          const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
-          state.visFacade.updateEdge(styledEdges);
-          commit('loadingQuery', false);
+        if (explanationsWhens.some(when => isRelUnassigned(when))) {
+          displayErrorUnassignedRelation();
         } else {
-          commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
+          explanations.map(expl => expl.getAnswers()).reduce(collect, []).forEach((expl) => {
+            explanationResult.push(expl);
+          });
+
+          if (explanationResult.length > 0) {
+            const data = await CDB.buildInstances(explanationResult);
+            const rpData = await CDB.buildRPInstances(explanationResult, data, false, graknTx);
+            data.nodes.push(...rpData.nodes);
+            data.edges.push(...rpData.edges);
+
+            state.visFacade.addToCanvas(data);
+            commit('updateCanvasData');
+            const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
+
+            state.visFacade.updateNode(nodesWithAttributes);
+            const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
+            state.visFacade.updateEdge(styledEdges);
+            commit('loadingQuery', false);
+          } else {
+            commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
+          }
         }
       }
     } catch (e) {
