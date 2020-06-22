@@ -132,6 +132,7 @@ const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) 
   node.baseType = instance.baseType;
   node.var = graqlVar;
   node.attrOffset = 0;
+  node.offset = 0;
   node.type = getConceptLabel(instance);
   node.isInferred = instance.isInferred();
   node.attributes = convertToRemote(instance).attributes;

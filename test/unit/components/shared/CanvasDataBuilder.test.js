@@ -112,7 +112,7 @@ describe('building instances', () => {
 
     const relationNode = nodes.find(node => node.baseType === 'RELATION');
     expect(relationNode.label).toEqual('');
-    expect(relationNode.offset).toEqual(2);
+    expect(relationNode.offset).toEqual(0);
 
     const entityNode = nodes.find(node => node.baseType === 'ENTITY');
     expect(entityNode.label).toEqual('entity-type: entity-id');
@@ -445,7 +445,7 @@ describe('building neighbours', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     const node = neighboursData.nodes[0];
-    expect(node).toMatchObject({ baseType: 'RELATION', id: 'relation-id', offset: 2, var: 0, type: 'relation-type', label: '' });
+    expect(node).toMatchObject({ baseType: 'RELATION', id: 'relation-id', offset: 0, var: 0, type: 'relation-type', label: '' });
 
     expect(neighboursData.edges).toHaveLength(1);
     const edge = neighboursData.edges[0];
