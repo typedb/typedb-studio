@@ -59,8 +59,7 @@ commands:
 
 jobs:
   test-linux:
-    machine:
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - install-linux-dependencies
