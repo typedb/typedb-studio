@@ -123,6 +123,7 @@
         position: relative;
         display: flex;
         flex-direction: row;
+        overflow: scroll;
     }
 
 
@@ -188,6 +189,10 @@
             const cm = GraqlCodeMirror.getCodeMirror(queryInput);
             cm.setValue(this.favQueries[parseInt(queryInput.value, 10)].value);
             cm.setOption('readOnly', 'nocursor');
+            // for some reason, CodeMirror adds an anonymous <div> inside the auto generated .CodeMirror-scroll element.
+            // this <div> has a height of 50px (!) which distorts the GraqlEditor by allowing scroll when it shouldn't
+            // we're setting the height of this seemingly useless <div> to 0
+            queryInput.nextElementSibling.getElementsByClassName('CodeMirror-scroll')[0].children[1].style.height = 0;
             this.codeMirror.push(cm);
           }
         });
