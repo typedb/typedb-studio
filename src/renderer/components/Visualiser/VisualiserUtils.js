@@ -117,7 +117,7 @@ export function validateQuery(query) {
     || /^((.|\n)*)(group\b.*;)$/.test(trimmedQuery)
     || (/^compute/.test(trimmedQuery) && !(/^compute path/.test(trimmedQuery)))
   ) {
-    throw new Error('Only match get and compute path queries are supported by workbase for now.');
+    throw new Error('At the moment, only `match get` and `compute path` queries are supported.');
   }
 }
 
