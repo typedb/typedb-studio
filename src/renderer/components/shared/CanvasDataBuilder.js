@@ -126,14 +126,14 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) => {
+const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
   const node = {};
   node.id = instance.id;
   node.baseType = instance.baseType;
   node.var = graqlVar;
   node.attrOffset = 0;
   node.type = getConceptLabel(instance);
-  node.isInferred = instance.isInferred();
+  node.isInferred = await convertToRemote(instance).isInferred();
   node.attributes = convertToRemote(instance).attributes;
   if (node.isInferred) {
     node.explanation = explanation;
@@ -150,7 +150,7 @@ const buildCommonInstanceNode = (instance, graqlVar, explanation, queryPattern) 
  * @param {ConceptMap[]} explanation
  */
 const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
-  const node = buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
+  const node = await buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
