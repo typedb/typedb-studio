@@ -278,7 +278,6 @@ export const getMockedConceptMap = (concepts, explanationAnswers) => {
     map: () => map,
     hasExplanation: () => !!explanationAnswers,
     explanation: () => ({ getAnswers: () => Promise.resolve(explanationAnswers || []) }),
-    queryPattern: () => '',
   };
   return mock;
 };
