@@ -370,6 +370,15 @@ input::-webkit-inner-spin-button {
   justify-content: center;
 }
 
+/* code mirror */
+
+/* for some reason, CodeMirror adds an anonymous <div> inside the auto generated .CodeMirror-scroll element.
+this <div> has a height of 50px (!) which distorts the GraqlEditor by allowing scroll when it shouldn't.
+we're setting this height of this seeminly useless <div> to 0 */
+.CodeMirror-sizer + div {
+  height: 0 !important;
+}
+
 /* fav queries */
 
 .fav-query-center *{

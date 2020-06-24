@@ -252,11 +252,6 @@ export default {
 
       this.initialEditorHeight = $('.CodeMirror').height();
 
-      // for some reason, CodeMirror adds an anonymous <div> inside the auto generated .CodeMirror-scroll element.
-      // this <div> has a height of 50px (!) which distorts the GraqlEditor by allowing scroll when it shouldn't
-      // we're setting this height of this seeminly useless <div> to 0
-      document.getElementsByClassName('CodeMirror-scroll')[0].children[1].style.height = 0;
-
       this.codeMirror.on('change', (codeMirrorObj) => {
         this.setCurrentQuery(codeMirrorObj.getValue());
         this.editorLinesNumber = codeMirrorObj.lineCount();
