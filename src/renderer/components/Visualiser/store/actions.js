@@ -217,11 +217,6 @@ export default {
   },
   async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
     try {
-      const graknTx = global.graknTx[rootState.activeTab];
-
-      const node = getters.selectedNode;
-      const explanation = await node.explanation();
-
       const isRelUnassigned = (when) => {
         let isRelUnassigned = false;
         const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
@@ -238,65 +233,53 @@ export default {
         return isRelUnassigned;
       };
 
-      const displayErrorUnassignedRelation = () => {
-        commit(
-          'setGlobalErrorMsg',
-          'The rule `when` definition for this inferred concept contains at least one unassigned relation. At the moment explanation cannot be provided for such a rule.',
-        );
-      };
+      const errorUnassigneRels = ruleLabel => (
+        // eslint-disable-next-line max-len
+        `The 'when' body of the rule [${ruleLabel}] contains at least one unassigned relation. To see the full explanation for this concept, please redefine the rule with relation variables.`
+      );
 
-      const rule = explanation.getRule();
-      const when = rule && await rule.getWhen();
+      const graknTx = global.graknTx[rootState.activeTab];
+      const node = getters.selectedNode;
+      const originalExpl = await node.explanation();
+      const rule = originalExpl.getRule();
+      const isExplJoin = !rule;
+      let finalExplAnswers;
 
-      if (isRelUnassigned(when)) {
-        displayErrorUnassignedRelation();
+      if (!isExplJoin) {
+        const when = await rule.getWhen();
+        const label = await rule.label();
+        if (isRelUnassigned(when)) throw Error(errorUnassigneRels(label));
+
+        finalExplAnswers = originalExpl.getAnswers();
       } else {
-        const queryPattern = node.queryPattern;
-        const queryPatternVariales = Array.from(new Set(queryPattern.match(/\$[^\s|)|;|,]*/g))).map(x => x.substring(1));
-
-        const explanationAnswers = explanation.getAnswers();
-        const explanationPromises = [];
-        const explanationResult = [];
-
-        explanationAnswers.forEach((answer) => {
-          const answerVariabes = Array.from(answer.map().keys());
-
-          const isJointExplanation = answerVariabes.every(variable => queryPatternVariales.includes(variable));
-          if (answer.hasExplanation() && isJointExplanation) {
-            explanationPromises.push(answer.explanation());
-          } else if (!isJointExplanation) {
-            explanationResult.push(answer);
-          }
+        const ruleExpl = await Promise.all(originalExpl.getAnswers().map(answer => (answer.hasExplanation() ? answer.explanation() : null)).filter(x => x));
+        const ruleDetails = await Promise.all(ruleExpl.map((explanation) => {
+          const rule = explanation.getRule();
+          return Promise.all([rule.label(), rule.getWhen()]);
+        }));
+        ruleDetails.forEach(([label, when]) => {
+          if (isRelUnassigned(when)) throw Error(errorUnassigneRels(label));
         });
 
-        const explanations = await Promise.all(explanationPromises);
-        const explanationsWhens = await Promise.all(explanations.map(explanation => explanation.getRule().getWhen()));
+        finalExplAnswers = ruleExpl.map(expl => expl.getAnswers()).reduce(collect, []);
+      }
 
-        if (explanationsWhens.some(when => isRelUnassigned(when))) {
-          displayErrorUnassignedRelation();
-        } else {
-          explanations.map(expl => expl.getAnswers()).reduce(collect, []).forEach((expl) => {
-            explanationResult.push(expl);
-          });
+      if (finalExplAnswers.length > 0) {
+        const data = await CDB.buildInstances(finalExplAnswers);
+        const rpData = await CDB.buildRPInstances(finalExplAnswers, data, false, graknTx);
+        data.nodes.push(...rpData.nodes);
+        data.edges.push(...rpData.edges);
 
-          if (explanationResult.length > 0) {
-            const data = await CDB.buildInstances(explanationResult);
-            const rpData = await CDB.buildRPInstances(explanationResult, data, false, graknTx);
-            data.nodes.push(...rpData.nodes);
-            data.edges.push(...rpData.edges);
+        state.visFacade.addToCanvas(data);
+        commit('updateCanvasData');
+        const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
 
-            state.visFacade.addToCanvas(data);
-            commit('updateCanvasData');
-            const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
-
-            state.visFacade.updateNode(nodesWithAttributes);
-            const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
-            state.visFacade.updateEdge(styledEdges);
-            commit('loadingQuery', false);
-          } else {
-            commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
-          }
-        }
+        state.visFacade.updateNode(nodesWithAttributes);
+        const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
+        state.visFacade.updateEdge(styledEdges);
+        commit('loadingQuery', false);
+      } else {
+        commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
       }
     } catch (e) {
       await reopenTransaction(rootState, commit);
