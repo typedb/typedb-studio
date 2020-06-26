@@ -136,6 +136,13 @@ graknlabs_graql()
 load("@graknlabs_graql//dependencies/maven:artifacts.bzl", graknlabs_graql_artifacts = "artifacts")
 
 ##############################################################
+# Load @graknlabs_protocol from (@graknlabs_grakn_core) #
+##############################################################
+load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl", "graknlabs_protocol")
+graknlabs_protocol()
+load("@graknlabs_protocol//dependencies/maven:artifacts.bzl", graknlabs_protocol_artifacts = "artifacts")
+
+##############################################################
 # Load @graknlabs_grabl_tracing from (@graknlabs_grakn_core) #
 ##############################################################
 load("@graknlabs_grakn_core//dependencies/graknlabs:dependencies.bzl", "graknlabs_grabl_tracing")
@@ -166,6 +173,15 @@ yarn_install(
 
 load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
 install_bazel_dependencies()
+
+###############
+# Load @maven #
+###############
+maven(
+    graknlabs_graql_artifacts +
+    graknlabs_protocol_artifacts +
+    graknlabs_client_java_artifacts
+)
 
 # ###########################
 # # Grakn Labs Dependencies #
