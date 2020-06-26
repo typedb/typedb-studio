@@ -22,14 +22,14 @@ orbs:
 commands:
   install-bazel-linux:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/lolski/build-tools/refactor/tool/bazelinstall/linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
       - run: bash ./linux.sh && rm ./linux.sh
-      - run: curl -OL https://raw.githubusercontent.com/lolski/build-tools/refactor/tool/bazelinstall/rbe.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/rbe.sh
       - run: bash ./rbe.sh && rm ./rbe.sh
 
   install-bazel-mac:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/lolski/build-tools/refactor/tool/bazelinstall/mac.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/mac.sh
       - run: bash ./mac.sh && rm ./mac.sh
 
   install-linux-dependencies:
