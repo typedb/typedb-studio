@@ -22,6 +22,17 @@ const methods = {
       label: () => Promise.resolve('thing'),
     },
   },
+  rule: {
+    static: {
+      isRule: () => true,
+    },
+    local: {
+      label: () => 'rule',
+    },
+    remote: {
+      label: () => Promise.resolve('rule'),
+    },
+  },
   type: {
     static: {
       isType: () => true,
@@ -145,14 +156,20 @@ const methods = {
   },
 };
 
-const getExtraProps = (mockerOptions, agentDefinedProps) => {
+/**
+ * produces the props that will complete (or override) the defaults
+ * @param {*} userOptions // options provided by the end user (the test)
+ * @param {*} helperProps // options provided by the helper
+ * @returns acummilation of the given props, with userProps being superior
+ */
+const getExtraProps = (userOptions, helperProps) => {
   const extraProps = { remote: {}, local: {} };
 
-  if (agentDefinedProps && agentDefinedProps.remote) extraProps.remote = { ...extraProps.remote, ...agentDefinedProps.remote };
-  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.remote) extraProps.remote = { ...extraProps.remote, ...mockerOptions.extraProps.remote };
+  if (helperProps && helperProps.remote) extraProps.remote = { ...extraProps.remote, ...helperProps.remote };
+  if (userOptions && userOptions.extraProps && userOptions.extraProps.remote) extraProps.remote = { ...extraProps.remote, ...userOptions.extraProps.remote };
 
-  if (agentDefinedProps && agentDefinedProps.local) extraProps.local = { ...extraProps, ...agentDefinedProps.local };
-  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.local) extraProps.local = { ...extraProps.local, ...mockerOptions.extraProps.local };
+  if (helperProps && helperProps.local) extraProps.local = { ...extraProps, ...helperProps.local };
+  if (userOptions && userOptions.extraProps && userOptions.extraProps.local) extraProps.local = { ...extraProps.local, ...userOptions.extraProps.local };
 
   return extraProps;
 };
@@ -218,6 +235,16 @@ export const getMockedRelationType = (options) => {
 
   return getMockedConcept(
     ['concept', 'type', 'relationType'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
+export const getMockedRule = (options) => {
+  const extraProps = getExtraProps(options);
+
+  return getMockedConcept(
+    ['concept', 'rule'],
     extraProps,
     options && options.isRemote,
   );

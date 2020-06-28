@@ -215,6 +215,7 @@ export default {
       throw e;
     }
   },
+  // eslint-disable-next-line consistent-return
   async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
     try {
       const isRelUnassigned = (when) => {
@@ -248,7 +249,10 @@ export default {
       if (!isExplJoin) {
         const when = await rule.getWhen();
         const label = await rule.label();
-        if (isRelUnassigned(when)) throw Error(errorUnassigneRels(label));
+        if (isRelUnassigned(when)) {
+          commit('setGlobalErrorMsg', errorUnassigneRels(label));
+          return false;
+        }
 
         finalExplAnswers = originalExpl.getAnswers();
       } else {
@@ -257,9 +261,12 @@ export default {
           const rule = explanation.getRule();
           return Promise.all([rule.label(), rule.getWhen()]);
         }));
-        ruleDetails.forEach(([label, when]) => {
-          if (isRelUnassigned(when)) throw Error(errorUnassigneRels(label));
-        });
+
+        const violatingRule = ruleDetails.find(([, when]) => isRelUnassigned(when));
+        if (violatingRule) {
+          commit('setGlobalErrorMsg', errorUnassigneRels(violatingRule.label));
+          return false;
+        }
 
         finalExplAnswers = ruleExpl.map(expl => expl.getAnswers()).reduce(collect, []);
       }
