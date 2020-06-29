@@ -1,24 +1,6 @@
 import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 const LETTER_G_KEYCODE = 71;
 
-
-function getNeighboursQuery(node, neighboursLimit) {
-  switch (node.baseType) {
-    case 'ENTITY_TYPE':
-    case 'ATTRIBUTE_TYPE':
-    case 'RELATION_TYPE':
-      return `match $x id ${node.id}; $y isa $x; get $y; offset ${node.offset}; limit ${neighboursLimit};`;
-    case 'ENTITY':
-      return `match $x id ${node.id}; $r ($x, $y); get $r, $y; offset ${node.offset}; limit ${neighboursLimit};`;
-    case 'ATTRIBUTE':
-      return `match $x has attribute $y; $y id ${node.id}; get $x; offset ${node.offset}; limit ${neighboursLimit};`;
-    case 'RELATION':
-      return `match $r id ${node.id}; $r ($x, $y); get $x; offset ${node.offset}; limit ${node.offset + neighboursLimit};`;
-    default:
-      throw new Error(`Unrecognised baseType of thing: ${node.baseType}`);
-  }
-}
-
 export function limitQuery(query) {
   const getRegex = /^((.|\n)*;)\s*(get;|get\s*.\w*;)/;
   let limitedQuery = query;
@@ -129,14 +111,88 @@ export function addResetGraphListener(dispatch, action) {
 }
 
 /**
- * Executes query to load neighbours of given node and filters our all the answers that contain implicit concepts, given that we
- * don't want to show implicit concepts (relations to attributes) to the user, for now.
- * @param {Object} node VisJs node of which we want to load the neighbours
+ * produces an array of ConceptMap answers containing the neighbours of the given targetNode
+ * identified neighbours:
+ * 1) differ based on the baseType of targetNode
+ * 2) are not already visualised
+ * 3) are no more than the user-specified NeighboursLimit
+ * @param {Object} targetNode the node for which we want to load the neighbours
+ * @param {Array} currentEdges the edges that are currently visualised
  * @param {Object} graknTx Grakn transaction used to execute query
- * @param {Number} limit Limit of neighbours to load
  */
-export async function getFilteredNeighbourAnswers(node, graknTx, limit) {
-  const query = getNeighboursQuery(node, limit);
-  const resultAnswers = await (await graknTx.query(query)).collect();
-  return resultAnswers;
+export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
+  const neighbourAnswers = [];
+  const neighboursLimit = QuerySettings.getNeighboursLimit();
+
+  switch (targetNode.baseType) {
+    case 'ENTITY_TYPE':
+    case 'ATTRIBUTE_TYPE':
+    case 'RELATION_TYPE': {
+      const targetTypeId = targetNode.id;
+      const query = `match $target-type id ${targetTypeId}; $neighbour-instance isa $target-type; get $neighbour-instance;`;
+      const iter = await graknTx.query(query);
+
+      let answer = await iter.next();
+      while (answer && neighbourAnswers.length !== neighboursLimit) {
+        const neighbourInstanceId = answer.map().get('neighbour-instance').id;
+        const edgeId = `${targetTypeId}-${neighbourInstanceId}-isa`;
+        if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        // eslint-disable-next-line no-await-in-loop
+        answer = await iter.next();
+      }
+      break;
+    }
+    case 'ENTITY': {
+      const targetEntId = targetNode.id;
+      const query = `match $target-entity id ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get;`;
+      const iter = await graknTx.query(query);
+      let answer = await iter.next();
+      while (answer && neighbourAnswers.length !== neighboursLimit) {
+        const targetEntRoleLabel = answer.map().get('target-entity-role').label();
+        if (targetEntRoleLabel !== 'role') {
+          const neighbourRelId = answer.map().get('neighbour-relation').id;
+          const edgeId = `${neighbourRelId}-${targetEntId}-${targetEntRoleLabel}`;
+          if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        answer = await iter.next();
+      }
+      break;
+    }
+    case 'ATTRIBUTE': {
+      const targetAttrId = targetNode.id;
+      const query = `match $neighbour-owner has attribute $target-attribute; $target-attribute id ${targetAttrId}; get $neighbour-owner;`;
+      const iter = await graknTx.query(query);
+      let answer = await iter.next();
+      while (answer && neighbourAnswers.length !== neighboursLimit) {
+        const neighbourOwnerId = answer.map().get('neighbour-owner').id;
+        const edgeId = `${neighbourOwnerId}-${targetAttrId}-has`;
+        if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        // eslint-disable-next-line no-await-in-loop
+        answer = await iter.next();
+      }
+      break;
+    }
+    case 'RELATION': {
+      const targetRelId = targetNode.id;
+      const query = `match $target-relation id ${targetRelId}; $target-relation ($neighbour-role: $neighbour-player); get $neighbour-player, $neighbour-role;`;
+      const iter = await graknTx.query(query);
+      let answer = await iter.next();
+      while (answer && neighbourAnswers.length !== neighboursLimit) {
+        const neighbourRoleLabel = answer.map().get('neighbour-role').label();
+        if (neighbourRoleLabel !== 'role') {
+          const neighbourRoleId = answer.map().get('neighbour-player').id;
+          const edgeId = `${targetRelId}-${neighbourRoleId}-${neighbourRoleLabel}`;
+          if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        answer = await iter.next();
+      }
+      break;
+    }
+    default:
+      throw new Error(`Unrecognised baseType of thing: ${targetNode.baseType}`);
+  }
+
+  return neighbourAnswers;
 }

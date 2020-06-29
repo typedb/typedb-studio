@@ -19,7 +19,7 @@ import {
   loadMetaTypeInstances,
   validateQuery,
   computeAttributes,
-  getFilteredNeighbourAnswers,
+  getNeighbourAnswers,
 } from '../VisualiserUtils';
 import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
@@ -88,11 +88,26 @@ export default {
     try {
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
-      const filteredResult = await getFilteredNeighbourAnswers(visNode, graknTx, neighboursLimit);
+
+      const currentData = {
+        nodes: state.visFacade.getAllNodes(),
+        edges: state.visFacade.getEdge(),
+      };
+
+      const neighbourAnswers = await getNeighbourAnswers(visNode, state.visFacade.getEdge(), graknTx);
       const targetConcept = await graknTx.getConcept(visNode.id);
-      const data = await CDB.buildNeighbours(targetConcept, filteredResult, graknTx);
-      visNode.offset += neighboursLimit;
-      state.visFacade.updateNode(visNode);
+      const data = await CDB.buildNeighbours(targetConcept, neighbourAnswers);
+
+      currentData.nodes.push(...data.nodes);
+      currentData.edges.push(...data.edges);
+
+      const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
+      if (shouldLoadRPs) {
+        const rpData = await CDB.buildRPInstances(neighbourAnswers, currentData, true, graknTx);
+        data.nodes.push(...rpData.nodes);
+        data.edges.push(...rpData.edges);
+      }
+
       state.visFacade.addToCanvas(data);
       if (data.nodes.length) state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');

@@ -2,7 +2,10 @@ import {
   limitQuery,
   computeAttributes,
   validateQuery,
+  getNeighbourAnswers,
 } from '@/components/Visualiser/VisualiserUtils.js';
+
+import CDB from '@/components/shared/CanvasDataBuilder';
 
 import {
   getMockedEntityType,
@@ -10,8 +13,13 @@ import {
   getMockedConceptMap,
   getMockedTransaction,
   getMockedEntity,
+  getMockedRelation,
   getMockedAttribute,
+  getMockedTransactionLazy,
+  getMockedRole,
 } from '../../../helpers/mockedConcepts';
+
+global.graknTx = getMockedTransaction([]);
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
 
@@ -235,5 +243,127 @@ describe('Validate Query', () => {
     expect(() => {
       validateQuery(query);
     }).toThrow();
+  });
+});
+
+describe('Neihbour Answers', () => {
+  test('when target node is a type', async () => {
+    const entityType = getMockedEntityType();
+    const targetNode = CDB.getTypeNode(entityType, '');
+    const entity = getMockedEntity();
+    const neighbourAnswer = getMockedConceptMap([entity], ['neighbour-instance']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].map().get('neighbour-instance')).toEqual(entity);
+  });
+
+  test('when target node is a type and its only neighbour is already visualised', async () => {
+    const entityType = getMockedEntityType();
+    const targetNode = CDB.getTypeNode(entityType, '');
+    const entity = getMockedEntity();
+    const neighbourAnswer = getMockedConceptMap([entity], ['neighbour-instance']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [{ id: 'entity-type-id-entity-id-isa' }];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(0);
+  });
+
+  test('when target node is an entity instance', async () => {
+    const entity = getMockedEntity();
+    const targetNode = await CDB.getInstanceNode(entity, '');
+    const relation = getMockedRelation();
+    const role = getMockedRole({
+      extraProps: {
+        local: {
+          label: () => 'some-role',
+        },
+      },
+    });
+    const neighbourAnswer = getMockedConceptMap([relation, role], ['neighbour-relation', 'target-entity-role']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].map().get('neighbour-relation')).toEqual(relation);
+  });
+
+  test('when target node is an entity instance and its only neighbour is already visualised', async () => {
+    const entity = getMockedEntity();
+    const targetNode = await CDB.getInstanceNode(entity, '');
+    const relation = getMockedRelation();
+    const role = getMockedRole({
+      extraProps: {
+        local: {
+          label: () => 'some-role',
+        },
+      },
+    });
+    const neighbourAnswer = getMockedConceptMap([relation, role], ['neighbour-relation', 'target-entity-role']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [{ id: 'relation-id-entity-id-some-role' }];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(0);
+  });
+
+  test('when target node is an attribute instance', async () => {
+    const attribute = getMockedAttribute();
+    const targetNode = await CDB.getInstanceNode(attribute, '');
+    const entity = getMockedEntity();
+    const neighbourAnswer = getMockedConceptMap([entity], ['neighbour-owner']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].map().get('neighbour-owner')).toEqual(entity);
+  });
+
+  test('when target node is an attribute instance and its only neighbour is already visualised', async () => {
+    const attribute = getMockedAttribute();
+    const targetNode = await CDB.getInstanceNode(attribute, '');
+    const entity = getMockedEntity();
+    const neighbourAnswer = getMockedConceptMap([entity], ['neighbour-owner']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [{ id: 'entity-id-attribute-id-has' }];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(0);
+  });
+
+  test('when target node is a relation instance', async () => {
+    const relation = getMockedRelation();
+    const targetNode = await CDB.getInstanceNode(relation, '');
+    const entity = getMockedEntity();
+    const role = getMockedRole({
+      extraProps: {
+        local: {
+          label: () => 'some-role',
+        },
+      },
+    });
+    const neighbourAnswer = getMockedConceptMap([entity, role], ['neighbour-player', 'neighbour-role']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].map().get('neighbour-player')).toEqual(entity);
+  });
+
+  test('when target node is a relation instance and its only neighbour is already visualised', async () => {
+    const relation = getMockedRelation();
+    const targetNode = await CDB.getInstanceNode(relation, '');
+    const entity = getMockedEntity();
+    const role = getMockedRole({
+      extraProps: {
+        local: {
+          label: () => 'some-role',
+        },
+      },
+    });
+    const neighbourAnswer = getMockedConceptMap([entity, role], ['neighbour-player', 'neighbour-role']);
+    const graknTx = getMockedTransactionLazy([neighbourAnswer]);
+    const currentEdges = [{ id: 'relation-id-entity-id-some-role' }];
+    const answers = await getNeighbourAnswers(targetNode, currentEdges, graknTx);
+    expect(answers).toHaveLength(0);
   });
 });

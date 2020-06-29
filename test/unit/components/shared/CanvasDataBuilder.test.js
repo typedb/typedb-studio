@@ -66,12 +66,10 @@ describe('building instances', () => {
 
     const entityNode = nodes.find(node => node.baseType === 'ENTITY');
     expect(entityNode.label).toEqual('entity-type: entity-id');
-    expect(entityNode.offset).toEqual(0);
 
     const attributeNode = nodes.find(node => node.baseType === 'ATTRIBUTE');
     expect(attributeNode.value).toEqual('attribute-value');
     expect(attributeNode.label).toEqual('attribute-type: attribute-value');
-    expect(attributeNode.offset).toEqual(0);
 
     expect(edges).toHaveLength(1);
     const edge = edges[0];
@@ -112,11 +110,9 @@ describe('building instances', () => {
 
     const relationNode = nodes.find(node => node.baseType === 'RELATION');
     expect(relationNode.label).toEqual('');
-    expect(relationNode.offset).toEqual(0);
 
     const entityNode = nodes.find(node => node.baseType === 'ENTITY');
     expect(entityNode.label).toEqual('entity-type: entity-id');
-    expect(entityNode.offset).toEqual(0);
 
     expect(edges).toHaveLength(1);
     const edge = edges[0];
@@ -190,7 +186,6 @@ describe('building types', () => {
     expect(node).toHaveProperty('baseType');
     expect(node).toHaveProperty('var');
     expect(node).toHaveProperty('attrOffset');
-    expect(node).toHaveProperty('offset');
     expect(node).toHaveProperty('attributes');
     expect(node).toHaveProperty('playing');
     expect(node).not.toHaveProperty('explanation');
@@ -410,7 +405,6 @@ describe('building neighbours', () => {
     expect(node).toMatchObject({
       baseType: 'ENTITY',
       id: 'entity-id',
-      offset: 0,
       var: 0,
       label: 'entity-type: entity-id',
       type: 'entity-type',
@@ -445,7 +439,7 @@ describe('building neighbours', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     const node = neighboursData.nodes[0];
-    expect(node).toMatchObject({ baseType: 'RELATION', id: 'relation-id', offset: 0, var: 0, type: 'relation-type', label: '' });
+    expect(node).toMatchObject({ baseType: 'RELATION', id: 'relation-id', var: 0, type: 'relation-type', label: '' });
 
     expect(neighboursData.edges).toHaveLength(1);
     const edge = neighboursData.edges[0];
@@ -469,7 +463,7 @@ describe('building neighbours', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     const node = neighboursData.nodes[0];
-    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'entity-id', offset: 0, var: 0, type: 'entity-type', label: 'entity-type: entity-id' });
+    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'entity-id', var: 0, type: 'entity-type', label: 'entity-type: entity-id' });
 
     expect(neighboursData.edges).toHaveLength(1);
     const edge = neighboursData.edges[0];
@@ -500,7 +494,7 @@ describe('building neighbours', () => {
 
     expect(neighboursData.nodes).toHaveLength(1);
     const node = neighboursData.nodes[0];
-    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'entity-id', offset: 0, var: 0, type: 'entity-type', label: 'entity-type: entity-id' });
+    expect(node).toMatchObject({ baseType: 'ENTITY', id: 'entity-id', var: 0, type: 'entity-type', label: 'entity-type: entity-id' });
 
     expect(neighboursData.edges).toHaveLength(1);
     const edge = neighboursData.edges[0];
