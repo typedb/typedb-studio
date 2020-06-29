@@ -22,6 +22,6 @@ load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
 deploy_brew(
     name = "deploy-brew",
     type = "cask",
-    deployment_properties = "@graknlabs_build_tools//:deployment.properties",
+    deployment_properties = "@graknlabs_dependencies//distribution:deployment.properties",
     formula = "//config/brew:grakn-workbase.rb",
 )

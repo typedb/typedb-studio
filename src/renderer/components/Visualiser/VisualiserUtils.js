@@ -88,18 +88,18 @@ export function validateQuery(query) {
   const trimmedQuery = query.trim();
   if (
     /^insert/.test(trimmedQuery)
-    || /^(.*;)\s*(insert\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(delete\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(count\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(sum\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(max\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(min\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(mean\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(median\b.*;)$/.test(trimmedQuery)
-    || /^(.*;)\s*(group\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(insert\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(delete\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(count\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(sum\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(max\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(min\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(mean\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(median\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)(group\b.*;)$/.test(trimmedQuery)
     || (/^compute/.test(trimmedQuery) && !(/^compute path/.test(trimmedQuery)))
   ) {
-    throw new Error('Only match get and compute path queries are supported by workbase for now.');
+    throw new Error('At the moment, only `match get` and `compute path` queries are supported.');
   }
 }
 
