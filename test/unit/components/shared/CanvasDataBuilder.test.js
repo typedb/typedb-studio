@@ -154,11 +154,11 @@ describe('building instances', () => {
     });
     const explConcept = getMockedAttribute({ isRemote: true });
     const explAnswer = getMockedConceptMap([explConcept]);
-    const answer = getMockedConceptMap([entity], [explAnswer]);
+    const answer = getMockedConceptMap([entity], [], [explAnswer]);
 
     const { nodes } = await CDB.buildInstances([answer]);
 
-    const explAnswers = await nodes[0].explanation().getAnswers();
+    const explAnswers = (await nodes[0].explanation()).getAnswers();
     expect(explAnswers[0].map().get(0)).toEqual(explConcept);
   });
 });

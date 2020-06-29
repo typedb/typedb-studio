@@ -271,9 +271,9 @@ export const getMockedRelation = (options) => {
   );
 };
 
-export const getMockedConceptMap = (concepts, vars = undefined, explanationAnswers) => {
+export const getMockedConceptMap = (concepts, vars = [], explanationAnswers) => {
   const map = new Map();
-  if (vars) {
+  if (vars.length) {
     concepts.forEach((concept, index) => { map.set(vars[index], concept); });
   } else {
     concepts.forEach((concept, index) => { map.set(index, concept); });
@@ -281,7 +281,7 @@ export const getMockedConceptMap = (concepts, vars = undefined, explanationAnswe
   const mock = {
     map: () => map,
     hasExplanation: () => !!explanationAnswers,
-    explanation: () => ({ getAnswers: () => Promise.resolve(explanationAnswers || []) }),
+    explanation: () => ({ getAnswers: () => explanationAnswers || [] }),
     queryPattern: () => '',
   };
   return mock;

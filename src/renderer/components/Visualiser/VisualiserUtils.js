@@ -121,8 +121,10 @@ export function addResetGraphListener(dispatch, action) {
  * @param {Object} graknTx Grakn transaction used to execute query
  */
 export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
-  const neighbourAnswers = [];
+  const answers = [];
   const neighboursLimit = QuerySettings.getNeighboursLimit();
+
+  const isEdgeAlreadyVisualised = edgeId => currentEdges.some(currEdge => currEdge.id === edgeId);
 
   switch (targetNode.baseType) {
     case 'ENTITY_TYPE':
@@ -133,10 +135,12 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
       const iter = await graknTx.query(query);
 
       let answer = await iter.next();
-      while (answer && neighbourAnswers.length !== neighboursLimit) {
+      while (answer && answers.length !== neighboursLimit) {
         const neighbourInstanceId = answer.map().get('neighbour-instance').id;
         const edgeId = `${targetTypeId}-${neighbourInstanceId}-isa`;
-        if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        if (!isEdgeAlreadyVisualised(edgeId)) {
+          answers.push(answer);
+        }
         // eslint-disable-next-line no-await-in-loop
         answer = await iter.next();
       }
@@ -144,15 +148,17 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     }
     case 'ENTITY': {
       const targetEntId = targetNode.id;
-      const query = `match $target-entity id ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get;`;
+      const query = `match $target-entity id ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get $neighbour-relation, $target-entity-role;`;
       const iter = await graknTx.query(query);
       let answer = await iter.next();
-      while (answer && neighbourAnswers.length !== neighboursLimit) {
+      while (answer && answers.length !== neighboursLimit) {
         const targetEntRoleLabel = answer.map().get('target-entity-role').label();
         if (targetEntRoleLabel !== 'role') {
           const neighbourRelId = answer.map().get('neighbour-relation').id;
           const edgeId = `${neighbourRelId}-${targetEntId}-${targetEntRoleLabel}`;
-          if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+          if (!isEdgeAlreadyVisualised(edgeId)) {
+            answers.push(answer);
+          }
         }
         // eslint-disable-next-line no-await-in-loop
         answer = await iter.next();
@@ -164,10 +170,12 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
       const query = `match $neighbour-owner has attribute $target-attribute; $target-attribute id ${targetAttrId}; get $neighbour-owner;`;
       const iter = await graknTx.query(query);
       let answer = await iter.next();
-      while (answer && neighbourAnswers.length !== neighboursLimit) {
+      while (answer && answers.length !== neighboursLimit) {
         const neighbourOwnerId = answer.map().get('neighbour-owner').id;
         const edgeId = `${neighbourOwnerId}-${targetAttrId}-has`;
-        if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+        if (!isEdgeAlreadyVisualised(edgeId)) {
+          answers.push(answer);
+        }
         // eslint-disable-next-line no-await-in-loop
         answer = await iter.next();
       }
@@ -175,15 +183,17 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     }
     case 'RELATION': {
       const targetRelId = targetNode.id;
-      const query = `match $target-relation id ${targetRelId}; $target-relation ($neighbour-role: $neighbour-player); get $neighbour-player, $neighbour-role;`;
+      const query = `match $target-relation ($neighbour-role: $neighbour-player); $target-relation id ${targetRelId}; get $neighbour-player, $neighbour-role;`;
       const iter = await graknTx.query(query);
       let answer = await iter.next();
-      while (answer && neighbourAnswers.length !== neighboursLimit) {
+      while (answer && answers.length !== neighboursLimit) {
         const neighbourRoleLabel = answer.map().get('neighbour-role').label();
         if (neighbourRoleLabel !== 'role') {
           const neighbourRoleId = answer.map().get('neighbour-player').id;
           const edgeId = `${targetRelId}-${neighbourRoleId}-${neighbourRoleLabel}`;
-          if (!currentEdges.some(currEdge => currEdge.id === edgeId)) neighbourAnswers.push(answer);
+          if (!isEdgeAlreadyVisualised(edgeId)) {
+            answers.push(answer);
+          }
         }
         // eslint-disable-next-line no-await-in-loop
         answer = await iter.next();
@@ -194,5 +204,5 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
       throw new Error(`Unrecognised baseType of thing: ${targetNode.baseType}`);
   }
 
-  return neighbourAnswers;
+  return answers;
 }
