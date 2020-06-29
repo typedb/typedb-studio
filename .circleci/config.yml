@@ -20,38 +20,38 @@ version: 2.1
 orbs:
   win: circleci/windows@2.0.0
 commands:
-  install-bazel-linux-rbe:
+  install-bazel-linux:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-linux.sh
-      - run: bash ./install-bazel-linux.sh && rm ./install-bazel-linux.sh
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-rbe.sh
-      - run: bash ./install-bazel-rbe.sh && rm ./install-bazel-rbe.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
+      - run: bash ./linux.sh && rm ./linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/rbe.sh
+      - run: bash ./rbe.sh && rm ./rbe.sh
 
   install-bazel-mac:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-mac.sh
-      - run: bash ./install-bazel-mac.sh && rm ./install-bazel-mac.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/mac.sh
+      - run: bash ./mac.sh && rm ./mac.sh
 
   install-linux-dependencies:
     steps:
       - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
       - run: Xvfb :99 & export DISPLAY=:99
 
-  run-bazel-rbe:
+  run-bazel:
     parameters:
       command:
         type: string
     steps:
-      - run: bazel run @graknlabs_build_tools//ci:run-bazel-rbe -- << parameters.command >>
+      - run: bazel run @graknlabs_dependencies//tool/bazelrun:rbe -- << parameters.command >>
 
-  run-grakn-server-linux:
+  run-grakn-linux:
     steps:
-      - run-bazel-rbe:
+      - run-bazel:
           command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
       - run: mkdir -p dist && tar -xvzf bazel-bin/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
 
-  run-grakn-server-mac:
+  run-grakn-mac:
     steps:
       - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
       - run: unzip bazel-bin/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
@@ -63,9 +63,9 @@ jobs:
     working_directory: ~/workbase
     steps:
       - install-linux-dependencies
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
-      - run-grakn-server-linux
+      - run-grakn-linux
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
@@ -78,7 +78,7 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run-grakn-server-mac
+      - run-grakn-mac
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
@@ -88,7 +88,7 @@ jobs:
     machine: true
     working_directory: ~/workbase
     steps:
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run build
@@ -160,20 +160,20 @@ jobs:
   release-approval:
     machine: true
     steps:
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
       - run: |
           export RELEASE_APPROVAL_USERNAME=$REPO_GITHUB_USERNAME
           export RELEASE_APPROVAL_TOKEN=$REPO_GITHUB_TOKEN
-          bazel run @graknlabs_build_tools//ci:release-approval
+          bazel run @graknlabs_dependencies//tools/release:approval
 
   release-validate:
     machine: true
     steps:
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
       - run: |
-          bazel run @graknlabs_build_tools//ci:release-validate-deps -- \
+          bazel run @graknlabs_dependencies//tools/release:validate-deps -- \
             graknlabs_client_nodejs
 
   deploy-github:
@@ -182,12 +182,12 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/distribution
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
       - run: |
           pip install certifi
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-          bazel run @graknlabs_build_tools//ci:release-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
+          bazel run @graknlabs_dependencies//tools/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
@@ -203,7 +203,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/distribution
-      - install-bazel-linux-rbe
+      - install-bazel-linux
       - checkout
       - run: cp ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg ~/workbase/
       - run:
