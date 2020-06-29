@@ -219,86 +219,83 @@ jobs:
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
 
 workflows:
-  temporary:
+  workbase:
     jobs:
-      - assemble-windows
-  # workbase:
-  #   jobs:
-  #     - test-linux:
-  #         filters:
-  #           branches:
-  #             ignore: workbase-release-branch
-  #     - test-mac:
-  #         filters:
-  #           branches:
-  #             ignore: workbase-release-branch
-  #     - assemble-linux:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - test-linux
-  #           - test-mac
-  #     - assemble-mac:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - test-linux
-  #           - test-mac
-  #     - assemble-windows:
-  #         filters:
-  #           branches:
-  #             only: master
-  #     - cache-distribution:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - assemble-linux
-  #           - assemble-mac
-  #           - assemble-windows
-  #     - release-approval:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - cache-distribution
+      - test-linux:
+          filters:
+            branches:
+              ignore: workbase-release-branch
+      - test-mac:
+          filters:
+            branches:
+              ignore: workbase-release-branch
+      - assemble-linux:
+          filters:
+            branches:
+              only: master
+          requires:
+            - test-linux
+            - test-mac
+      - assemble-mac:
+          filters:
+            branches:
+              only: master
+          requires:
+            - test-linux
+            - test-mac
+      - assemble-windows:
+          filters:
+            branches:
+              only: master
+      - cache-distribution:
+          filters:
+            branches:
+              only: master
+          requires:
+            - assemble-linux
+            - assemble-mac
+            - assemble-windows
+      - release-approval:
+          filters:
+            branches:
+              only: master
+          requires:
+            - cache-distribution
 
-  # workbase-release:
-  #   jobs:
-  #     - release-validate:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #     - cache-distribution:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - release-validate
-  #     - deploy-github:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - cache-distribution
-  #     - deploy-approval:
-  #         type: approval
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-github
-  #     - deploy-brew:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-approval
-  #     - release-cleanup:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-brew
+  workbase-release:
+    jobs:
+      - release-validate:
+          filters:
+            branches:
+              only: workbase-release-branch
+      - cache-distribution:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - release-validate
+      - deploy-github:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - cache-distribution
+      - deploy-approval:
+          type: approval
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-github
+      - deploy-brew:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-approval
+      - release-cleanup:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-brew
