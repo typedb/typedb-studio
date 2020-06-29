@@ -133,7 +133,7 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPat
   node.var = graqlVar;
   node.attrOffset = 0;
   node.type = getConceptLabel(instance);
-  node.isInferred = await convertToRemote(instance).isInferred();
+  node.isInferred = await instance.isInferred();
   node.attributes = convertToRemote(instance).attributes;
   if (node.isInferred) {
     node.explanation = explanation;
