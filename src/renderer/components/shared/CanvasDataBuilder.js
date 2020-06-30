@@ -149,7 +149,7 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
  * @param {ConceptMap[]} explanation
  */
 const getInstanceNode = async (instance, graqlVar, explanation) => {
-  const node = buildCommonInstanceNode(instance, graqlVar, explanation);
+  const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
