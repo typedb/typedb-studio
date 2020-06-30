@@ -154,22 +154,15 @@ const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) =>
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     case RELATION_INSTANCE: {
       node.label = '';
-      if (QuerySettings.getRolePlayersStatus()) {
-        node.offset = QuerySettings.getNeighboursLimit();
-      } else {
-        node.offset = 0;
-      }
       break;
     }
     case ATTRIBUTE_INSTANCE: {
       node.value = instance.value();
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     default:
@@ -284,7 +277,6 @@ const getTypeNode = (type, graqlVar) => {
       node.baseType = type.baseType;
       node.var = graqlVar;
       node.attrOffset = 0;
-      node.offset = 0;
       node.label = getConceptLabel(type);
       node.attributes = type.attributes;
       node.playing = type.playing;
@@ -445,7 +437,7 @@ const getNeighbourNode = (concept, graqlVar, explanation, queryPattern) => {
  * @param {*} targetNode the node whose neighbour edges are to be produced
  * @param {*} graknTx
  */
-const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
+const getNeighbourEdges = async (neighbourConcept, targetConcept, existingNodeIds) => {
   const edges = [];
 
   switch (targetConcept.baseType) {
@@ -476,7 +468,9 @@ const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
     default:
       throw new Error(`Instance type [${targetConcept.baseType}] is not recoganised`);
   }
-  return edges.reduce(collect, []);
+
+  // exclude any edges that connect nodes which do not exist
+  return edges.reduce(collect, []).filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -507,7 +501,10 @@ const buildNeighbours = async (targetConcept, answers) => {
 
   const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern))))
     .reduce(collect, []);
-  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept)))).reduce(collect, []);
+
+  const nodeIds = nodes.map(node => node.id);
+  nodeIds.push(targetConcept.id);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -536,6 +533,8 @@ const updateNodesLabel = async (nodes) => {
  * @param {*} graknTx
  */
 const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
+  const targetRelationIds = [];
+
   const getRolePlayersData = () => {
     const promises = [];
     const edges = [];
@@ -545,6 +544,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
       Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
         if (concept.isRelation()) {
           const relation = concept;
+          targetRelationIds.push(relation.id);
 
           promises.push(new Promise((resolve) => {
             relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
@@ -586,11 +586,12 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
   data.nodes = data.nodes.filter((node, index, self) => index === self.findIndex(t => t.id === node.id));
   data.edges = data.edges.filter((edge, index, self) => index === self.findIndex(t => t.id === edge.id));
 
-  // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
   if (currentData) {
+    // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
     data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
     data.nodes = data.nodes.filter(nNode => !currentData.nodes.some(cNode => cNode.id === nNode.id));
   }
+
   return data;
 };
 
