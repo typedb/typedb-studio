@@ -34,7 +34,7 @@ commands:
 
   install-linux-dependencies:
     steps:
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libasound2 libgconf-2-4 -y
       - run: Xvfb :99 & export DISPLAY=:99
 
   run-bazel:
@@ -59,7 +59,8 @@ commands:
 
 jobs:
   test-linux:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     working_directory: ~/workbase
     steps:
       - install-linux-dependencies
@@ -85,7 +86,8 @@ jobs:
       - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-mac/ bazel run @nodejs//:bin/yarn run e2e
 
   assemble-linux:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     working_directory: ~/workbase
     steps:
       - install-bazel-linux
@@ -131,7 +133,8 @@ jobs:
             - ./*
 
   cache-distribution:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -158,7 +161,8 @@ jobs:
             - ./*
 
   release-approval:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     steps:
       - install-bazel-linux
       - checkout
@@ -168,7 +172,8 @@ jobs:
           bazel run @graknlabs_dependencies//tool/release:approval
 
   release-validate:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     steps:
       - install-bazel-linux
       - checkout
@@ -177,7 +182,8 @@ jobs:
             graknlabs_client_nodejs
 
   deploy-github:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -198,7 +204,8 @@ jobs:
               -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
 
   deploy-brew:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -213,7 +220,8 @@ jobs:
             bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   release-cleanup:
-    machine: true
+    machine: 
+      image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
