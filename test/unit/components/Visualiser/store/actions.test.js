@@ -212,7 +212,6 @@ describe('actions', () => {
     store.dispatch(LOAD_NEIGHBOURS, { visNode: mockVisNode, neighboursLimit: 1 }).then(() => {
       expect(loadingQuery.mock.calls).toHaveLength(2);
       expect(getNeighboursData).toHaveBeenCalled();
-      expect(mockVisNode.offset).toBe(1);
       expect(store.state.visFacade.updateNode).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(store.state.visFacade.fitGraphToWindow).toHaveBeenCalled();

@@ -298,13 +298,17 @@ export const getMockedRelation = (options) => {
   );
 };
 
-export const getMockedConceptMap = (concepts, explanationAnswers) => {
+export const getMockedConceptMap = (concepts, vars = [], explanationAnswers) => {
   const map = new Map();
-  concepts.forEach((concept, index) => { map.set(index, concept); });
+  if (vars.length) {
+    concepts.forEach((concept, index) => { map.set(vars[index], concept); });
+  } else {
+    concepts.forEach((concept, index) => { map.set(index, concept); });
+  }
   const mock = {
     map: () => map,
     hasExplanation: () => !!explanationAnswers,
-    explanation: () => ({ getAnswers: () => Promise.resolve(explanationAnswers || []) }),
+    explanation: () => ({ getAnswers: () => explanationAnswers || [] }),
   };
   return mock;
 };
@@ -319,6 +323,32 @@ export const getMockedTransaction = (answers, customFuncs) => {
     close: () => Promise.resolve(),
     isOpen: () => Promise.resolve(true),
   };
+  if (customFuncs) mocked = { ...mocked, ...customFuncs };
+  return mocked;
+};
+
+export const getMockedTransactionLazy = (answers, customFuncs) => {
+  const queryIterator = (end) => {
+    if (!end) return null;
+    let next = 0;
+    const iterator = {
+      async next() {
+        if (next < end) {
+          next += 1;
+          return Promise.resolve(answers[next - 1]);
+        }
+        return Promise.resolve(null);
+      },
+    };
+    return iterator;
+  };
+
+  const iterator = queryIterator(answers.length);
+
+  let mocked = {
+    query: () => Promise.resolve(iterator),
+  };
+
   if (customFuncs) mocked = { ...mocked, ...customFuncs };
   return mocked;
 };

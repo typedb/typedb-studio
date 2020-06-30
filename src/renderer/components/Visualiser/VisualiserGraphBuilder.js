@@ -96,7 +96,6 @@ async function prepareNodes(concepts) {
       default:
         break;
     }
-    concept.offset = 0;
     concept.attrOffset = 0;
     nodes.push(concept);
   }));
@@ -104,14 +103,11 @@ async function prepareNodes(concepts) {
   return nodes;
 }
 
-async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
+async function loadRolePlayers(relation) {
   const nodes = [];
   const edges = [];
   let roleplayers = await relation.rolePlayersMap();
   roleplayers = Array.from(roleplayers.entries());
-  if (limitRolePlayers) {
-    roleplayers = roleplayers.slice(offset, limit + offset);
-  }
 
   // Build array of promises
   const promises = Array.from(roleplayers, async ([role, setOfThings]) => {
@@ -130,7 +126,6 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
         default:
           throw new Error(`Unrecognised baseType of thing: ${thing.baseType}`);
       }
-      thing.offset = 0;
       thing.attrOffset = 0;
 
       nodes.push(thing);
@@ -140,8 +135,8 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
   return Promise.all(promises).then((() => ({ nodes, edges })));
 }
 
-async function relationsRolePlayers(relations, limitRolePlayers, limit) {
-  const results = await Promise.all(relations.map(rel => loadRolePlayers(rel, limitRolePlayers, limit, rel.offset)));
+async function relationsRolePlayers(relations) {
+  const results = await Promise.all(relations.map(rel => loadRolePlayers(rel)));
   return {
     nodes: results.flatMap(x => x.nodes),
     edges: results.flatMap(x => x.edges),
