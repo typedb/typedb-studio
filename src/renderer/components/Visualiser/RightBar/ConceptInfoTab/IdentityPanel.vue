@@ -62,7 +62,7 @@
         return {
           id: node.id,
           type: node.type,
-          baseType: (node.isInferred) ? `INFERRED_${node.baseType}` : node.baseType,
+          baseType: (node.isInferred === true) ? `INFERRED_${node.baseType}` : node.baseType,
         };
       },
     },
