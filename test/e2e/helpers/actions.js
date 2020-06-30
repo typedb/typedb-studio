@@ -72,15 +72,11 @@ export const waitForNotificationWithMsgToDisappear = async (expectedMsg, app) =>
 };
 
 export const doubleClickOnNode = async (coordinates, app) => {
-  // bring focus to the node by right clicking on it once
-  await app.client.rightClick('#graph-div', coordinates.x, coordinates.y);
   await app.client.click('#graph-div', coordinates.x, coordinates.y);
   await app.client.click('#graph-div', coordinates.x, coordinates.y);
 };
 
 export const clickOnNode = async (coordinates, app) => {
-  // bring focus to the node by right clicking on it once
-  await app.client.rightClick('#graph-div', coordinates.x, coordinates.y);
   await app.client.click('#graph-div', coordinates.x, coordinates.y);
 };
 
