@@ -91,10 +91,10 @@ export default {
 
       const currentData = {
         nodes: state.visFacade.getAllNodes(),
-        edges: state.visFacade.getEdge(),
+        edges: state.visFacade.getAllEdges(),
       };
 
-      const neighbourAnswers = await getNeighbourAnswers(visNode, state.visFacade.getEdge(), graknTx);
+      const neighbourAnswers = await getNeighbourAnswers(visNode, currentData.edges, graknTx);
       const targetConcept = await graknTx.getConcept(visNode.id);
       const data = await CDB.buildNeighbours(targetConcept, neighbourAnswers);
 
