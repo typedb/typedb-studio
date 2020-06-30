@@ -36,7 +36,6 @@ const expectCommonPropsOnInstanceNode = (node) => {
   expect(node).toHaveProperty('isInferred');
   if (node.isInferred) {
     expect(node).toHaveProperty('explanation');
-    expect(node).toHaveProperty('queryPattern');
   }
   expect(node).toHaveProperty('attributes');
 };
