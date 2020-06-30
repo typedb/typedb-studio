@@ -34,7 +34,7 @@
         return (this.selectedNodes);
       },
       enableExplain() {
-        return (this.selectedNodes && this.selectedNodes[0].isInferred);
+        return (this.selectedNodes && this.selectedNodes[0].isInferred === true);
       },
       enableShortestPath() {
         return (this.selectedNodes && this.selectedNodes.length === 2);
