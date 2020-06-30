@@ -22,19 +22,19 @@ orbs:
 commands:
   install-bazel-linux-rbe:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-linux.sh
-      - run: bash ./install-bazel-linux.sh && rm ./install-bazel-linux.sh
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-rbe.sh
-      - run: bash ./install-bazel-rbe.sh && rm ./install-bazel-rbe.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
+      - run: bash ./linux.sh && rm ./linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/rbe.sh
+      - run: bash ./rbe.sh && rm ./rbe.sh
 
   install-bazel-mac:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/build-tools/master/ci/install-bazel-mac.sh
-      - run: bash ./install-bazel-mac.sh && rm ./install-bazel-mac.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/mac.sh
+      - run: bash ./mac.sh && rm ./mac.sh
 
   install-linux-dependencies:
     steps:
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libasound2 libgconf-2-4 -y
+      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libnss3 libasound2 libgconf-2-4 -y
       - run: Xvfb :99 & export DISPLAY=:99
 
   run-bazel-rbe:
@@ -59,8 +59,7 @@ commands:
 
 jobs:
   test-linux:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - install-linux-dependencies
@@ -86,8 +85,7 @@ jobs:
       - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-mac/ bazel run @nodejs//:bin/yarn run e2e
 
   assemble-linux:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - install-bazel-linux-rbe
@@ -133,8 +131,7 @@ jobs:
             - ./*
 
   cache-distribution:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -161,8 +158,7 @@ jobs:
             - ./*
 
   release-approval:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     steps:
       - install-bazel-linux-rbe
       - checkout
@@ -172,8 +168,7 @@ jobs:
           bazel run @graknlabs_build_tools//ci:release-approval
 
   release-validate:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     steps:
       - install-bazel-linux-rbe
       - checkout
@@ -182,8 +177,7 @@ jobs:
             graknlabs_client_nodejs
 
   deploy-github:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -204,8 +198,7 @@ jobs:
               -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
 
   deploy-brew:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     working_directory: ~/workbase
     steps:
       - attach_workspace:
@@ -220,8 +213,7 @@ jobs:
             bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   release-cleanup:
-    machine: 
-      image: ubuntu-1604:201903-01
+    machine: true
     steps:
       - checkout
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
@@ -240,25 +232,25 @@ workflows:
       - assemble-linux:
           filters:
             branches:
-              only: master
+              only: 1.3.2
           requires:
             - test-linux
             - test-mac
       - assemble-mac:
           filters:
             branches:
-              only: master
+              only: 1.3.2
           requires:
             - test-linux
             - test-mac
       - assemble-windows:
           filters:
             branches:
-              only: master
+              only: 1.3.2
       - cache-distribution:
           filters:
             branches:
-              only: master
+              only: 1.3.2
           requires:
             - assemble-linux
             - assemble-mac
@@ -266,7 +258,7 @@ workflows:
       - release-approval:
           filters:
             branches:
-              only: master
+              only: 1.3.2
           requires:
             - cache-distribution
 

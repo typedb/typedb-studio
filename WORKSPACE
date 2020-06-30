@@ -40,7 +40,7 @@ bazel_toolchain()
 load("@graknlabs_build_tools//bazel:dependencies.bzl", "bazel_rules_python")
 bazel_rules_python()
 
-load("@rules_python//python:pip.bzl", "pip_repositories", "pip3_import")
+load("@io_bazel_rules_python//python:pip.bzl", "pip_repositories", "pip_import")
 pip_repositories()
 
 pip_import(
