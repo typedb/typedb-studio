@@ -22,6 +22,17 @@ const methods = {
       label: () => Promise.resolve('thing'),
     },
   },
+  rule: {
+    static: {
+      isRule: () => true,
+    },
+    local: {
+      label: () => 'rule',
+    },
+    remote: {
+      label: () => Promise.resolve('rule'),
+    },
+  },
   type: {
     static: {
       isType: () => true,
@@ -145,14 +156,20 @@ const methods = {
   },
 };
 
-const getExtraProps = (mockerOptions, agentDefinedProps) => {
+/**
+ * produces the props that will complete (or override) the defaults
+ * @param {*} userOptions // options provided by the end user (the test)
+ * @param {*} helperProps // options provided by the helper
+ * @returns acummilation of the given props, with userProps being superior
+ */
+const getExtraProps = (userOptions, helperProps) => {
   const extraProps = { remote: {}, local: {} };
 
-  if (agentDefinedProps && agentDefinedProps.remote) extraProps.remote = { ...extraProps.remote, ...agentDefinedProps.remote };
-  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.remote) extraProps.remote = { ...extraProps.remote, ...mockerOptions.extraProps.remote };
+  if (helperProps && helperProps.remote) extraProps.remote = { ...extraProps.remote, ...helperProps.remote };
+  if (userOptions && userOptions.extraProps && userOptions.extraProps.remote) extraProps.remote = { ...extraProps.remote, ...userOptions.extraProps.remote };
 
-  if (agentDefinedProps && agentDefinedProps.local) extraProps.local = { ...extraProps, ...agentDefinedProps.local };
-  if (mockerOptions && mockerOptions.extraProps && mockerOptions.extraProps.local) extraProps.local = { ...extraProps.local, ...mockerOptions.extraProps.local };
+  if (helperProps && helperProps.local) extraProps.local = { ...extraProps, ...helperProps.local };
+  if (userOptions && userOptions.extraProps && userOptions.extraProps.local) extraProps.local = { ...extraProps.local, ...userOptions.extraProps.local };
 
   return extraProps;
 };
@@ -223,6 +240,16 @@ export const getMockedRelationType = (options) => {
   );
 };
 
+export const getMockedRule = (options) => {
+  const extraProps = getExtraProps(options);
+
+  return getMockedConcept(
+    ['concept', 'rule'],
+    extraProps,
+    options && options.isRemote,
+  );
+};
+
 export const getMockedRole = (options) => {
   const extraProps = getExtraProps(options);
 
@@ -271,14 +298,17 @@ export const getMockedRelation = (options) => {
   );
 };
 
-export const getMockedConceptMap = (concepts, explanationAnswers) => {
+export const getMockedConceptMap = (concepts, vars = [], explanationAnswers) => {
   const map = new Map();
-  concepts.forEach((concept, index) => { map.set(index, concept); });
+  if (vars.length) {
+    concepts.forEach((concept, index) => { map.set(vars[index], concept); });
+  } else {
+    concepts.forEach((concept, index) => { map.set(index, concept); });
+  }
   const mock = {
     map: () => map,
     hasExplanation: () => !!explanationAnswers,
-    explanation: () => ({ getAnswers: () => Promise.resolve(explanationAnswers || []) }),
-    queryPattern: () => '',
+    explanation: () => ({ getAnswers: () => explanationAnswers || [] }),
   };
   return mock;
 };
@@ -293,6 +323,32 @@ export const getMockedTransaction = (answers, customFuncs) => {
     close: () => Promise.resolve(),
     isOpen: () => Promise.resolve(true),
   };
+  if (customFuncs) mocked = { ...mocked, ...customFuncs };
+  return mocked;
+};
+
+export const getMockedTransactionLazy = (answers, customFuncs) => {
+  const queryIterator = (end) => {
+    if (!end) return null;
+    let next = 0;
+    const iterator = {
+      async next() {
+        if (next < end) {
+          next += 1;
+          return Promise.resolve(answers[next - 1]);
+        }
+        return Promise.resolve(null);
+      },
+    };
+    return iterator;
+  };
+
+  const iterator = queryIterator(answers.length);
+
+  let mocked = {
+    query: () => Promise.resolve(iterator),
+  };
+
   if (customFuncs) mocked = { ...mocked, ...customFuncs };
   return mocked;
 };

@@ -2,39 +2,6 @@ import Style from './Style';
 import NodeSettings from './RightBar/SettingsTab/DisplaySettings';
 import CDB from '../shared/CanvasDataBuilder';
 
-// Map graql variables and explanations to each concept
-function attachExplanation(result) {
-  return result.map((x) => {
-    const keys = Array.from(x.map().keys());
-
-    if (x.explanation() && x.explanation().queryPattern() === '') { // if explantion is formed from a conjuction go one level deeper and attach explanations for each answer individually
-      return Array.from(x.explanation().answers()).map((ans) => {
-        const exp = ans.explanation();
-        const concepts = [];
-
-        ans.map().forEach((concept, key) => {
-          if (keys.includes(key)) { // only return those concepts which were asked for since the explanation.map() contains all the concepts in the query. e.g. (match $x isa person; $y isa company; get $x; => only $x should be returned)
-            concept.explanation = exp;
-            concept.graqlVar = key;
-            concepts.push(concept);
-          }
-        });
-        return concepts;
-      }).flatMap(x => x);
-    }
-
-    // else explanation of query respose is same for all concepts in map
-    const exp = x.explanation();
-    const key = x.map().keys().next().value;
-
-    return Array.from(x.map().values()).flatMap((concept) => {
-      concept.explanation = exp;
-      concept.graqlVar = key;
-      return concept;
-    });
-  }).flatMap(x => x);
-}
-
 function buildValue(array) {
   if (!array) return '';
   return array.join(', ');
@@ -129,7 +96,6 @@ async function prepareNodes(concepts) {
       default:
         break;
     }
-    concept.offset = 0;
     concept.attrOffset = 0;
     nodes.push(concept);
   }));
@@ -137,14 +103,11 @@ async function prepareNodes(concepts) {
   return nodes;
 }
 
-async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
+async function loadRolePlayers(relation) {
   const nodes = [];
   const edges = [];
   let roleplayers = await relation.rolePlayersMap();
   roleplayers = Array.from(roleplayers.entries());
-  if (limitRolePlayers) {
-    roleplayers = roleplayers.slice(offset, limit + offset);
-  }
 
   // Build array of promises
   const promises = Array.from(roleplayers, async ([role, setOfThings]) => {
@@ -163,7 +126,6 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
         default:
           throw new Error(`Unrecognised baseType of thing: ${thing.baseType}`);
       }
-      thing.offset = 0;
       thing.attrOffset = 0;
 
       nodes.push(thing);
@@ -173,8 +135,8 @@ async function loadRolePlayers(relation, limitRolePlayers, limit, offset) {
   return Promise.all(promises).then((() => ({ nodes, edges })));
 }
 
-async function relationsRolePlayers(relations, limitRolePlayers, limit) {
-  const results = await Promise.all(relations.map(rel => loadRolePlayers(rel, limitRolePlayers, limit, rel.offset)));
+async function relationsRolePlayers(relations) {
+  const results = await Promise.all(relations.map(rel => loadRolePlayers(rel)));
   return {
     nodes: results.flatMap(x => x.nodes),
     edges: results.flatMap(x => x.edges),
@@ -201,5 +163,4 @@ export default {
   buildFromConceptList,
   prepareNodes,
   relationsRolePlayers,
-  attachExplanation,
 };

@@ -126,7 +126,7 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
+const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   const node = {};
   node.id = instance.id;
   node.baseType = instance.baseType;
@@ -137,7 +137,6 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPat
   node.attributes = convertToRemote(instance).attributes;
   if (node.isInferred) {
     node.explanation = explanation;
-    node.queryPattern = queryPattern();
   }
 
   return node;
@@ -149,27 +148,20 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation, queryPat
  * @param {String} graqlVar
  * @param {ConceptMap[]} explanation
  */
-const getInstanceNode = async (instance, graqlVar, explanation, queryPattern) => {
-  const node = await buildCommonInstanceNode(instance, graqlVar, explanation, queryPattern);
+const getInstanceNode = async (instance, graqlVar, explanation) => {
+  const node = buildCommonInstanceNode(instance, graqlVar, explanation);
   switch (instance.baseType) {
     case ENTITY_INSTANCE: {
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.id}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     case RELATION_INSTANCE: {
       node.label = '';
-      if (QuerySettings.getRolePlayersStatus()) {
-        node.offset = QuerySettings.getNeighboursLimit();
-      } else {
-        node.offset = 0;
-      }
       break;
     }
     case ATTRIBUTE_INSTANCE: {
       node.value = instance.value();
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
-      node.offset = 0;
       break;
     }
     default:
@@ -244,12 +236,11 @@ const getInstanceEdges = async (instance, existingNodeIds) => {
  */
 const buildInstances = async (answers) => {
   let data = answers.map((answerGroup) => {
-    const { explanation, queryPattern } = answerGroup;
+    const { explanation } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
       graqlVar,
       concept,
       explanation,
-      queryPattern,
     }));
   }).reduce(collect, []);
 
@@ -261,7 +252,7 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation, item.queryPattern))))
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation))))
     .reduce(collect, []);
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
@@ -284,7 +275,6 @@ const getTypeNode = (type, graqlVar) => {
       node.baseType = type.baseType;
       node.var = graqlVar;
       node.attrOffset = 0;
-      node.offset = 0;
       node.label = getConceptLabel(type);
       node.attributes = type.attributes;
       node.playing = type.playing;
@@ -429,12 +419,12 @@ const buildTypes = async (answers) => {
  * @param {*} graqlVar
  * @param {*} explanation
  */
-const getNeighbourNode = (concept, graqlVar, explanation, queryPattern) => {
+const getNeighbourNode = (concept, graqlVar, explanation) => {
   let node;
   if (concept.isType()) {
     node = getTypeNode(concept, graqlVar);
   } else if (concept.isThing()) {
-    node = getInstanceNode(concept, graqlVar, explanation, queryPattern);
+    node = getInstanceNode(concept, graqlVar, explanation);
   }
   return node;
 };
@@ -445,7 +435,7 @@ const getNeighbourNode = (concept, graqlVar, explanation, queryPattern) => {
  * @param {*} targetNode the node whose neighbour edges are to be produced
  * @param {*} graknTx
  */
-const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
+const getNeighbourEdges = async (neighbourConcept, targetConcept, existingNodeIds) => {
   const edges = [];
 
   switch (targetConcept.baseType) {
@@ -476,7 +466,9 @@ const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
     default:
       throw new Error(`Instance type [${targetConcept.baseType}] is not recoganised`);
   }
-  return edges.reduce(collect, []);
+
+  // exclude any edges that connect nodes which do not exist
+  return edges.reduce(collect, []).filter(edge => existingNodeIds.includes(edge.from) && existingNodeIds.includes(edge.to));
 };
 
 /**
@@ -487,12 +479,11 @@ const getNeighbourEdges = async (neighbourConcept, targetConcept) => {
  */
 const buildNeighbours = async (targetConcept, answers) => {
   let data = answers.map((answerGroup) => {
-    const { explanation, queryPattern } = answerGroup;
+    const { explanation } = answerGroup;
     return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
       graqlVar,
       concept,
       explanation,
-      queryPattern,
     }));
   }).reduce(collect, []);
 
@@ -505,9 +496,12 @@ const buildNeighbours = async (targetConcept, answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation, item.queryPattern))))
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation))))
     .reduce(collect, []);
-  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept)))).reduce(collect, []);
+
+  const nodeIds = nodes.map(node => node.id);
+  nodeIds.push(targetConcept.id);
+  const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
 };
@@ -536,6 +530,8 @@ const updateNodesLabel = async (nodes) => {
  * @param {*} graknTx
  */
 const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
+  const targetRelationIds = [];
+
   const getRolePlayersData = () => {
     const promises = [];
     const edges = [];
@@ -545,6 +541,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
       Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
         if (concept.isRelation()) {
           const relation = concept;
+          targetRelationIds.push(relation.id);
 
           promises.push(new Promise((resolve) => {
             relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
@@ -556,7 +553,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
                     player.type().then(type => type.label().then((playerLabel) => {
                       player.label = playerLabel;
                       const edge = getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel);
-                      getInstanceNode(player, graqlVar, answer.explanation, answer.queryPattern).then((node) => {
+                      getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
                         edges.push(edge);
                         nodes.push(node);
                         const isLastRole = i === rpEntries.length - 1;
@@ -586,11 +583,12 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
   data.nodes = data.nodes.filter((node, index, self) => index === self.findIndex(t => t.id === node.id));
   data.edges = data.edges.filter((edge, index, self) => index === self.findIndex(t => t.id === edge.id));
 
-  // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
   if (currentData) {
+    // exclude any nodes and edges that have already been constructed and visualised (i.e. currentData)
     data.edges = data.edges.filter(nEdge => !currentData.edges.some(cEdge => cEdge.id === nEdge.id));
     data.nodes = data.nodes.filter(nNode => !currentData.nodes.some(cNode => cNode.id === nNode.id));
   }
+
   return data;
 };
 

@@ -30,7 +30,7 @@ import {
 } from '@/components/Visualiser/VisualiserUtils';
 import VisualiserCanvasEventsHandler from '@/components/Visualiser/VisualiserCanvasEventsHandler';
 import MockConcepts from '../../../../helpers/MockConcepts';
-import { getMockedRelation, getMockedTransaction } from '../../../../helpers/mockedConcepts';
+import { getMockedRelation, getMockedTransaction, getMockedRule } from '../../../../helpers/mockedConcepts';
 
 jest.mock('@/components/Visualiser/VisualiserGraphBuilder', () => ({
   prepareNodes: jest.fn(),
@@ -212,7 +212,6 @@ describe('actions', () => {
     store.dispatch(LOAD_NEIGHBOURS, { visNode: mockVisNode, neighboursLimit: 1 }).then(() => {
       expect(loadingQuery.mock.calls).toHaveLength(2);
       expect(getNeighboursData).toHaveBeenCalled();
-      expect(mockVisNode.offset).toBe(1);
       expect(store.state.visFacade.updateNode).toHaveBeenCalled();
       expect(store.state.visFacade.addToCanvas).toHaveBeenCalled();
       expect(store.state.visFacade.fitGraphToWindow).toHaveBeenCalled();
@@ -330,8 +329,13 @@ describe('actions', () => {
 
   test("EXPLAIN_CONCEPT with unassigned relations in rule's when body", async () => {
     const explanation = () => Promise.resolve({
-      getRule: () => Promise.resolve({
-        getWhen: () => Promise.resolve('{ $r ($a) isa some-relation; ($b) isa another-relation; }'),
+
+      getRule: () => getMockedRule({ isRemote: true,
+        extraProps: {
+          remote: {
+            getWhen: () => Promise.resolve('{ $r ($a) isa some-relation; ($b) isa another-relation; }'),
+          },
+        },
       }),
     });
     const relation = getMockedRelation({
