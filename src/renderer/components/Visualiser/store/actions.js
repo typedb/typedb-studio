@@ -233,6 +233,9 @@ export default {
   // eslint-disable-next-line consistent-return
   async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
     try {
+      const node = getters.selectedNode;
+      const graknTx = global.graknTx[rootState.activeTab];
+
       const isRelUnassigned = (when) => {
         let isRelUnassigned = false;
         const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
@@ -254,8 +257,8 @@ export default {
         `The 'when' body of the rule [${ruleLabel}] contains at least one unassigned relation. To see the full explanation for this concept, please redefine the rule with relation variables.`
       );
 
-      const graknTx = global.graknTx[rootState.activeTab];
-      const node = getters.selectedNode;
+      const isTargetExplAnswer = answer => Array.from(answer.map().values()).map(concept => concept.id).some(id => id === node.id);
+
       const originalExpl = await node.explanation();
       const rule = originalExpl.getRule();
       const isExplJoin = !rule;
@@ -271,7 +274,7 @@ export default {
 
         finalExplAnswers = originalExpl.getAnswers();
       } else {
-        const ruleExpl = await Promise.all(originalExpl.getAnswers().map(answer => (answer.hasExplanation() ? answer.explanation() : null)).filter(x => x));
+        const ruleExpl = await Promise.all(originalExpl.getAnswers().filter(answer => answer.hasExplanation() && isTargetExplAnswer(answer)).map(answer => answer.explanation()));
         const ruleDetails = await Promise.all(ruleExpl.map((explanation) => {
           const rule = explanation.getRule();
           return Promise.all([rule.label(), rule.getWhen()]);
@@ -285,6 +288,7 @@ export default {
 
         finalExplAnswers = ruleExpl.map(expl => expl.getAnswers()).reduce(collect, []);
       }
+
 
       if (finalExplAnswers.length > 0) {
         const data = await CDB.buildInstances(finalExplAnswers);
