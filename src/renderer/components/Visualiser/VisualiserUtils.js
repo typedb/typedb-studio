@@ -88,15 +88,15 @@ export function validateQuery(query) {
   const trimmedQuery = query.trim();
   if (
     /^insert/.test(trimmedQuery)
-    || /^((.|\n)*)(insert\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(delete\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(count\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(sum\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(max\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(min\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(mean\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(median\b.*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)(group\b.*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')insert(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')delete(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')count(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')sum(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')max(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')min(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')mean(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')median(?!"|').*;)$/.test(trimmedQuery)
+    || /^((.|\n)*)((?<!"|')group(?!"|').*;)$/.test(trimmedQuery)
     || (/^compute/.test(trimmedQuery) && !(/^compute path/.test(trimmedQuery)))
   ) {
     throw new Error('At the moment, only `match get` and `compute path` queries are supported.');
