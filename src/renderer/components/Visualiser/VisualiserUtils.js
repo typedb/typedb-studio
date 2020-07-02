@@ -6,7 +6,7 @@ export function limitQuery(query) {
   let limitedQuery = query;
 
   if (getRegex.test(query)) {
-    const limitRegex = /^((.|\n)*;.*)(limit\b.*?;).*/;
+    const limitRegex = /^((.|\n)*)(limit\b.*?;).*/;
     const offsetRegex = /.*;\s*(offset\b.*?;).*/;
 
     if (!(offsetRegex.test(query)) && !limitRegex.test(query)) {
@@ -86,19 +86,8 @@ export async function loadMetaTypeInstances(graknTx) {
 
 export function validateQuery(query) {
   const trimmedQuery = query.trim();
-  if (
-    /^insert/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')insert(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')delete(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')count(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')sum(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')max(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')min(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')mean(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')median(?!"|').*;)$/.test(trimmedQuery)
-    || /^((.|\n)*)((?<!"|')group(?!"|').*;)$/.test(trimmedQuery)
-    || (/^compute/.test(trimmedQuery) && !(/^compute path/.test(trimmedQuery)))
-  ) {
+  const supportedQueryRgx = /(get[^;]*?;\s*offset\s+\d+\s*;\s*limit\s+\d+\s*;$)|(^compute path\b)/;
+  if (!supportedQueryRgx.test(trimmedQuery)) {
     throw new Error('At the moment, only `match get` and `compute path` queries are supported.');
   }
 }
