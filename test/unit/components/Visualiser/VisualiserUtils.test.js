@@ -161,102 +161,73 @@ describe('Compute Attributes', () => {
 
 describe('Validate Query', () => {
   test('match get', async () => {
-    const query = 'match $p isa person; get;';
+    const query = 'match $p isa person; get; offset 0; limit 1;';
     expect(() => { validateQuery(query); }).not.toThrow();
-
-    const multilineQuery = 'match\n$p isa person;\nget;';
-    expect(() => { validateQuery(multilineQuery); }).not.toThrow();
   });
+
   test('compute path', async () => {
     const query = 'compute path from V229424, to V446496;';
     expect(() => { validateQuery(query); }).not.toThrow();
-
-    const multilineQuery = 'compute path\nfrom V229424,\nto V446496;';
-    expect(() => { validateQuery(multilineQuery); }).not.toThrow();
   });
+
   test('insert', async () => {
-    const query = 'insert $x isa emotion; $x "like";';
+    const query = 'insert $x isa emotion;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'insert\n$x isa emotion; $x "like";';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('match insert', async () => {
-    const query = 'match $x ias person, has name "John"; $y isa person, has name "Mary"; insert $r (child: $x, parent: $y) isa parentship;';
+    const query = 'match $x isa person; $y isa person; insert $r (child: $x, parent: $y) isa parentship;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$x ias person, has name "John";\n$y isa person, has name "Mary";\ninsert $r (child: $x, parent: $y) isa parentship;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('match delete', async () => {
-    const query = 'match $p isa person, has email "raphael.santos@gmail.com"; delete $p;';
+    const query = 'match $p isa person; delete $p;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$p isa person, has email "raphael.santos@gmail.com";\ndelete $p;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('count', async () => {
-    const query = 'match $sce isa school-course-enrollment, has score $sco; $sco > 7.0; get; count;';
+    const query = 'match $sce isa school-course-enrollment, has score $sco; get; count;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$sce isa school-course-enrollment, has score $sco; $sco > 7.0;\nget; count;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('sum', async () => {
-    const query = 'match $org isa organisation, has name $orn; $orn "Medicely"; ($org) isa employment, has salary $sal; get $sal; sum $sal;';
+    const query = 'match $org isa organisation; ($org) isa employment, has salary $sal; get $sal; sum $sal;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$org isa organisation, has name $orn; $orn "Medicely"; ($org) isa employment, has salary $sal;\nget $sal; sum $sal;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('max', async () => {
     const query = 'match $sch isa school, has ranking $ran; get $ran; max $ran;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$sch isa school, has ranking $ran;\nget $ran; max $ran;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('min', async () => {
-    const query = 'match ($per) isa marriage; ($per) isa employment, has salary $sal; get $sal; min $sal;';
+    const query = 'match ($per) isa employment, has salary $sal; get $sal; min $sal;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n($per) isa marriage; ($per) isa employment, has salary $sal;\nget $sal; min $sal;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('mean', async () => {
     const query = 'match $emp isa employment, has salary $sal; get $sal; mean $sal;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$emp isa employment, has salary $sal;\nget $sal; mean $sal;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('median', async () => {
     const query = 'match ($per) isa school-course-enrollment, has score $sco; get $sco; median $sco;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n($per) isa school-course-enrollment, has score $sco;\nget $sco; median $sco;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('group', async () => {
-    const query = 'match $per isa person; $scc isa school-course, has title $tit; (student: $per, enrolled-course: $scc) isa school-course-enrollment; get; group $tit;';
+    const query = 'match $per isa person; $scc isa school-course, has title $tit; get; group $tit;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$per isa person; $scc isa school-course, has title $tit; (student: $per, enrolled-course: $scc) isa school-course-enrollment;\nget; group $tit;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('group count', async () => {
-    const query = 'match $per isa person; $scc isa school-course, has title $tit; (student: $per, enrolled-course: $scc) isa school-course-enrollment; get; group $tit; count;';
+    const query = 'match $per isa person; $scc isa school-course, has title $tit; get; group $tit; count;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'match\n$per isa person; $scc isa school-course, has title $tit;\nget; group $tit; count;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
+
   test('compute', async () => {
     const query = 'compute count in person;';
     expect(() => { validateQuery(query); }).toThrow();
-
-    const multilineQuery = 'compute count in person;';
-    expect(() => { validateQuery(multilineQuery); }).toThrow();
   });
 });
 

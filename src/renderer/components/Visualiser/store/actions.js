@@ -130,6 +130,7 @@ export default {
       commit('setGlobalErrorMsg', '');
       const query = state.currentQuery;
       validateQuery(query);
+
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
       const result = await (await graknTx.query(query, { explain: true })).collect();
