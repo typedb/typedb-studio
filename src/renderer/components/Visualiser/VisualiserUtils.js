@@ -2,7 +2,7 @@ import QuerySettings from './RightBar/SettingsTab/QuerySettings';
 const LETTER_G_KEYCODE = 71;
 
 export function limitQuery(query) {
-  const getRegex = /^((.|\n)*;)\s*(get;|get\s*.\w*;)/;
+  const getRegex = /^((.|\n)*;)\s*(get;|get(\s+\$[^\s]+)+?;)/;
   let limitedQuery = query;
 
   if (getRegex.test(query)) {
