@@ -2,7 +2,7 @@
     <div class="top-bar-container">
         <div class="left">
             <router-link to="/develop/data"><button class="btn"><vue-icon icon="eye-open" className="vue-icon"></vue-icon></button></router-link>
-            <img src="static/img/logo-text.png" class="grakn-icon">
+            <img src="static/img/grakn-workbase-logo.png" class="grakn-icon">
         </div>
 
         <div class="center">
