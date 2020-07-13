@@ -38,6 +38,18 @@ describe('limit Query', () => {
     expect(limited).toBe('match $x isa person; get; offset 0; limit 10;');
   });
 
+  test('add offset and limit to a query with single get variable', () => {
+    const query = 'match $x isa person; get $x;';
+    const limited = limitQuery(query);
+    expect(limited).toBe('match $x isa person; get $x; offset 0; limit 10;');
+  });
+
+  test('add offset and limit to a query with multiple get variables', () => {
+    const query = 'match $x isa person, has age $a; get $x, $a;';
+    const limited = limitQuery(query);
+    expect(limited).toBe('match $x isa person, has age $a; get $x, $a; offset 0; limit 10;');
+  });
+
   test('add offset to query already containing limit', () => {
     const query = 'match $x isa person; get; limit 40;';
     const limited = limitQuery(query);
