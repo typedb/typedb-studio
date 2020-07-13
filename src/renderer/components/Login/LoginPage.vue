@@ -2,14 +2,12 @@
   <transition name="slide-fade" appear>
     <div class="wrapper noselect" v-if="showLoginPage">
       <div class="login-header">
-        <img src="static/img/logo-text.png" class="icon">
-        <div v-if="showConnectionPanel" class="workbase3">WORKBASE</div>
-        <div v-else class="workbase2">WORKBASE FOR KGMS</div>
+        <img src="static/img/grakn-workbase-logo.png" class="logo">
       </div>
 
       <div class="login-panel" v-if="showLoginPanel">
         <div class="header">
-          Log In
+          Connection to Grakn KGMS
         </div>
         <div class="row">
           <div class="column-1">
@@ -141,31 +139,16 @@
       opacity: 0;
   }
 
-  .icon {
-    width: 250px;
+  .logo {
+    width: 100%;
     margin-top: 50px;
   }
 
   .login-header {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    width: 400px;
-  }
-
-   .workbase3 {
-    right: 30%;
-    font-size: 150%;
-    color: #00eca2;
-    margin-left: 170px;
-  }
-
-
-  .workbase2 {
-    right: 30%;
-    font-size: 150%;
-    color: #00eca2;
-    margin-left: 90px;
+    align-items: flex-end;
+    width: 384px;
   }
 
   .wrapper{
