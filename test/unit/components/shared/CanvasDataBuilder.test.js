@@ -1,4 +1,5 @@
 import CDB from '@/components/shared/CanvasDataBuilder';
+import { getTypeLabels } from '@/components/Visualiser/RightBar/SettingsTab/DisplaySettings';
 
 import {
   getMockedEntity,
@@ -20,7 +21,7 @@ jest.mock('@/components/Visualiser/RightBar/SettingsTab/QuerySettings', () => ({
 }));
 
 jest.mock('@/components/Visualiser/RightBar/SettingsTab/DisplaySettings', () => ({
-  getTypeLabels: () => ['attribute-type'],
+  getTypeLabels: jest.fn(() => []),
 }));
 
 jest.mock('@/components/shared/PersistentStorage', () => ({}));
@@ -127,6 +128,8 @@ describe('building instances', () => {
   });
 
   test('when graql answer contains an entity and one of its attributes has been selected in the DisplaySettings', async () => {
+    getTypeLabels.mockImplementation(() => ['attribute-type']);
+
     const attribute = getMockedAttribute();
     const entity = getMockedEntity({
       extraProps: {
@@ -140,6 +143,7 @@ describe('building instances', () => {
 
     const { nodes } = await CDB.buildInstances([answer]);
     expect(nodes[0].label).toEqual('entity-type: entity-id\nattribute-type: attribute-value');
+    getTypeLabels.mockImplementation(() => []);
   });
 
   test('when graql answer contains an explanation', async () => {
