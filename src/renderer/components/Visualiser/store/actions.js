@@ -290,12 +290,14 @@ export default {
         finalExplAnswers = ruleExpl.map(expl => expl.getAnswers()).reduce(collect, []);
       }
 
-
       if (finalExplAnswers.length > 0) {
         const data = await CDB.buildInstances(finalExplAnswers);
         const rpData = await CDB.buildRPInstances(finalExplAnswers, data, false, graknTx);
         data.nodes.push(...rpData.nodes);
         data.edges.push(...rpData.edges);
+
+        // this is to avoid overriding the explanation object of nodes that are already visualised
+        data.nodes = data.nodes.filter(node => !state.visFacade.getNode().some(currNode => currNode.id === node.id));
 
         state.visFacade.addToCanvas(data);
         commit('updateCanvasData');
