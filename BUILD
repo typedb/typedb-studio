@@ -15,3 +15,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
+
+load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_extractor")
+
+deploy_brew(
+    name = "deploy-brew",
+    type = "cask",
+    deployment_properties = "@graknlabs_dependencies//distribution:deployment.properties",
+    formula = "//config/brew:grakn-workbase.rb",
+)
+
+artifact_extractor(
+    name = "grakn-extractor",
+    artifact = "@graknlabs_grakn_core_artifact//file",
+)

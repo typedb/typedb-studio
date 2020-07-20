@@ -44,18 +44,11 @@ commands:
     steps:
       - run: bazel run @graknlabs_dependencies//tool/bazelrun:rbe -- << parameters.command >>
 
-  run-grakn-linux:
+  run-grakn:
     steps:
       - run-bazel:
-          command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
-      - run: mkdir -p dist && tar -xvzf bazel-bin/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
+          command: bazel run //:grakn-extractor -- dist/grakn-core-all-linux
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
-
-  run-grakn-mac:
-    steps:
-      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
-      - run: unzip bazel-bin/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
-      - run: nohup ./dist/grakn-core-all-mac/grakn server start
 
 jobs:
   test-linux:
@@ -66,7 +59,7 @@ jobs:
       - install-linux-dependencies
       - install-bazel-linux
       - checkout
-      - run-grakn-linux
+      - run-grakn
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
@@ -79,11 +72,11 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run-grakn-mac
+      - run-grakn
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
-      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-mac/ bazel run @nodejs//:bin/yarn run e2e
+      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
 
   assemble-linux:
     machine: 

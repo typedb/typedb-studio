@@ -16,12 +16,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
+def graknlabs_dependencies():
+    git_repository(
+        name = "graknlabs_dependencies",
+        remote = "https://github.com/graknlabs/dependencies",
+        commit = "504561c1343b12cfb08cd65c25155045da0b709e", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_build_tools
+    )
 
-deploy_brew(
-    name = "deploy-brew",
-    type = "cask",
-    deployment_properties = "@graknlabs_dependencies//distribution:deployment.properties",
-    formula = "//config/brew:grakn-workbase.rb",
-)
+def graknlabs_client_nodejs():
+    git_repository(
+        name = "graknlabs_client_nodejs",
+        remote = "https://github.com/graknlabs/client-nodejs",
+        commit = "27d9b6e45e9f2a243df357a6c46b48a6b94e842a", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_client_nodejs
+    )
