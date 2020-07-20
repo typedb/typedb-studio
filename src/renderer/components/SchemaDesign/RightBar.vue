@@ -28,7 +28,7 @@
   .content {
     width: 201px;
     max-height: calc(100% - #{$navHeight});
-    overflow-y: scroll;
+    overflow-y: auto;
   }
 
   .right-bar-container {

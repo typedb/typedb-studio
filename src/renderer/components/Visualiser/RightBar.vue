@@ -78,7 +78,7 @@
 
         .content {
           max-height: calc(100% - #{$navHeight});
-          overflow-y: scroll;
+          overflow-y: auto;
         }
     }
 
