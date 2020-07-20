@@ -112,9 +112,8 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
     }));
     const allAttrsData = await Promise.all(promises);
     const selectedAttrsData = allAttrsData.filter(attrData => selectedAttrs.includes(attrData.label));
-    label += selectedAttrsData.map(attrData => `\n${attrData.label}: ${attrData.value}`).join();
+    label += selectedAttrsData.map(attrData => `\n${attrData.label}: ${attrData.value}`).join('');
   }
-
   return label;
 };
 
@@ -518,6 +517,7 @@ const updateNodesLabel = async (nodes) => {
     node.label = updatedLabels[i];
     return node;
   });
+  debugger;
 
   return updatedNodes;
 };
