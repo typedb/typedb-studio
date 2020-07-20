@@ -6,7 +6,7 @@ CodeMirror.defineSimpleMode('graql', {
   // The start state contains the rules that are intially used
   start: [
     { regex: /#.*/, token: 'comment' },
-    { regex: /".*?"/, token: 'string' },
+    { regex: /(".*?")|('.*?')/, token: 'string' },
     { regex: /(match|isa|isa!|sub|sub!|has|id|type|limit|offset|sort|asc|desc|get|compute|path|from|to)(?![-a-zA-Z_0-9])/, // eslint-disable-line max-len
       token: 'keyword' },
     { regex: /true|false/, token: 'number' },
