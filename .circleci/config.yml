@@ -47,15 +47,8 @@ commands:
   run-grakn-linux:
     steps:
       - run-bazel:
-          command: bazel build @graknlabs_grakn_core//:assemble-linux-targz
-      - run: mkdir -p dist && tar -xvzf bazel-bin/external/graknlabs_grakn_core/grakn-core-all-linux.tar.gz -C ./dist/
+          command: bazel run //agents/test:grakn-extractor -- dist/grakn-core-all-linux
       - run: nohup ./dist/grakn-core-all-linux/grakn server start
-
-  run-grakn-mac:
-    steps:
-      - run: bazel build @graknlabs_grakn_core//:assemble-mac-zip
-      - run: unzip bazel-bin/external/graknlabs_grakn_core/grakn-core-all-mac.zip -d ./dist/
-      - run: nohup ./dist/grakn-core-all-mac/grakn server start
 
 jobs:
   test-linux:
@@ -79,7 +72,7 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run-grakn-mac
+      - run-grakn-linux
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
