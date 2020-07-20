@@ -44,7 +44,7 @@ commands:
     steps:
       - run: bazel run @graknlabs_dependencies//tool/bazelrun:rbe -- << parameters.command >>
 
-  run-grakn-linux:
+  run-grakn:
     steps:
       - run-bazel:
           command: bazel run //:grakn-extractor -- dist/grakn-core-all-linux
@@ -59,7 +59,7 @@ jobs:
       - install-linux-dependencies
       - install-bazel-linux
       - checkout
-      - run-grakn-linux
+      - run-grakn
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
@@ -72,7 +72,7 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run-grakn-linux
+      - run-grakn
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run unit
       - run: bazel run @nodejs//:bin/yarn run integration
