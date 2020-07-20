@@ -101,6 +101,7 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
 
   if (selectedAttrs.length > 0) {
     const allAttrs = await (await convertToRemote(instance).attributes()).collect();
+
     const promises = allAttrs.map(async attr => new Promise((resolve) => {
       attr.type().then((type) => {
         type.label().then((label) => {
@@ -110,8 +111,13 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
         });
       });
     }));
+
     const allAttrsData = await Promise.all(promises);
-    const selectedAttrsData = allAttrsData.filter(attrData => selectedAttrs.includes(attrData.label));
+    const allAttrsMap = {};
+    allAttrsData.forEach((attrData) => { allAttrsMap[attrData.label] = attrData.value; });
+
+    // eslint-disable-next-line no-prototype-builtins
+    const selectedAttrsData = selectedAttrs.map(attrLabel => ({ label: attrLabel, value: allAttrsMap.hasOwnProperty(attrLabel) ? allAttrsMap[attrLabel] : '' }));
     label += selectedAttrsData.map(attrData => `\n${attrData.label}: ${attrData.value}`).join('');
   }
   return label;
@@ -517,7 +523,6 @@ const updateNodesLabel = async (nodes) => {
     node.label = updatedLabels[i];
     return node;
   });
-  debugger;
 
   return updatedNodes;
 };
