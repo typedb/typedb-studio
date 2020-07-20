@@ -232,25 +232,25 @@ workflows:
       - assemble-linux:
           filters:
             branches:
-              only: 1.3.4
+              only: 1.3.5
           requires:
             - test-linux
             - test-mac
       - assemble-mac:
           filters:
             branches:
-              only: 1.3.4
+              only: 1.3.5
           requires:
             - test-linux
             - test-mac
       - assemble-windows:
           filters:
             branches:
-              only: 1.3.4
+              only: 1.3.5
       - cache-distribution:
           filters:
             branches:
-              only: 1.3.4
+              only: 1.3.5
           requires:
             - assemble-linux
             - assemble-mac
@@ -258,7 +258,7 @@ workflows:
       - release-approval:
           filters:
             branches:
-              only: 1.3.4
+              only: 1.3.5
           requires:
             - cache-distribution
 
