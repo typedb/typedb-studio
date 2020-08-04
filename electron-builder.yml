@@ -21,7 +21,9 @@ linux:
   artifactName: 'grakn-workbase-${version}-linux.${ext}'
   category: Development
   icon: assets/icons
-  target: tar.gz
+  target:
+    - tar.gz
+    - appimage
 mac:
   hardenedRuntime: true
   artifactName: 'grakn-workbase-${version}-mac.${ext}'

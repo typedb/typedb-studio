@@ -87,7 +87,7 @@ jobs:
       - checkout
       - run: bazel run @nodejs//:bin/yarn install
       - run: bazel run @nodejs//:bin/yarn run build
-      - run: mkdir -p ~/distribution && mv ./build/*.tar.gz ~/distribution/grakn-workbase-linux-$(cat VERSION).tar.gz
+      - run: mkdir -p ~/distribution && for ext in tar.gz AppImage; do mv ./build/*.$ext ~/distribution/grakn-workbase-linux-$(cat VERSION).$ext; done
       - persist_to_workspace:
           root: ~/distribution
           paths:
