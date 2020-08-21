@@ -6,6 +6,8 @@ workspace(name = "graknlabs_workbase")
 load("//dependencies/graknlabs:repositories.bzl", "graknlabs_dependencies")
 graknlabs_dependencies()
 
+load("@graknlabs_dependencies//dependencies/maven:artifacts.bzl", graknlabs_dependencies_artifacts = "artifacts")
+
 # Load Antlr
 load("@graknlabs_dependencies//builder/antlr:deps.bzl", antlr_deps = "deps")
 antlr_deps()
@@ -13,9 +15,7 @@ load("@rules_antlr//antlr:deps.bzl", "antlr_dependencies")
 antlr_dependencies()
 
 # Load Bazel
-load("@graknlabs_dependencies//builder/bazel:deps.bzl","bazel_common", "bazel_deps", "bazel_toolchain")
-bazel_common()
-bazel_deps()
+load("@graknlabs_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
 bazel_toolchain()
 
 # Load gRPC
@@ -48,6 +48,18 @@ pip3_import(
 load("@graknlabs_dependencies_ci_pip//:requirements.bzl",
 graknlabs_dependencies_ci_pip_install = "pip_install")
 graknlabs_dependencies_ci_pip_install()
+
+# Load Java
+load("@graknlabs_dependencies//builder/java:deps.bzl", java_deps = "deps")
+java_deps()
+load("@graknlabs_dependencies//library/maven:rules.bzl", "maven")
+
+# Load Kotlin
+load("@graknlabs_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
+kotlin_deps()
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
+kotlin_repositories()
+kt_register_toolchains()
 
 # Load Docker
 load("@graknlabs_dependencies//distribution/docker:deps.bzl", docker_deps = "deps")
@@ -124,3 +136,14 @@ yarn_install(
 
 load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
 install_bazel_dependencies()
+
+###############
+# Load @maven #
+###############
+maven(graknlabs_dependencies_artifacts)
+
+###############################################
+# Create @graknlabs_workbase_workspace_refs #
+###############################################
+load("@graknlabs_bazel_distribution//common:rules.bzl", "workspace_refs")
+workspace_refs(name = "graknlabs_workbase_workspace_refs")

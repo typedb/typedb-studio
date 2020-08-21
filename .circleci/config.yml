@@ -170,9 +170,7 @@ jobs:
     steps:
       - install-bazel-linux
       - checkout
-      - run: |
-          bazel run @graknlabs_dependencies//tool/release:validate-deps -- \
-            graknlabs_client_nodejs
+      - run: bazel test //:release-validate-deps --test_output=streamed
 
   deploy-github:
     machine: 

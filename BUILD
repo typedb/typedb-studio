@@ -19,6 +19,7 @@
 
 load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_extractor")
+load("@graknlabs_dependencies//tool/release:rules.bzl", "release_validate_deps")
 
 deploy_brew(
     name = "deploy-brew",
@@ -30,4 +31,14 @@ deploy_brew(
 artifact_extractor(
     name = "grakn-extractor",
     artifact = "@graknlabs_grakn_core_artifact//file",
+)
+
+release_validate_deps(
+    name = "release-validate-deps",
+    refs = "@graknlabs_workbase_workspace_refs//:refs.json",
+    tagged_deps = [
+        "graknlabs_grakn_core",
+        "graknlabs_client_nodejs",
+    ],
+    tags = ["manual"]  # in order for bazel test //... to not fail
 )
