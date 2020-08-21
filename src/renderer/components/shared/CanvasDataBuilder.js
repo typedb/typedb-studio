@@ -165,7 +165,7 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
       break;
     }
     case ATTRIBUTE_INSTANCE: {
-      node.value = await instance.value();
+      node.value = await convertToRemote(instance).value();
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
       break;
     }
