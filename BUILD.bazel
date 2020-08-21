@@ -34,6 +34,14 @@ artifact_extractor(
     artifact = "@graknlabs_grakn_core_artifact//file",
 )
 
+genrule(
+    name = "grakn-artifact-windows-extractor",
+    srcs = ["@graknlabs_grakn_core_artifact_windows//file"],
+    cmd_bat = "echo unzip $< -d bazel-bin\dist\ > $@",
+    outs = ["extractor.bat"],
+    executable = True,
+)
+
 release_validate_deps(
     name = "release-validate-deps",
     refs = "@graknlabs_workbase_workspace_refs//:refs.json",
