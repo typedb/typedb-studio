@@ -16,6 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+# NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` created by `yarn run build`
 
 load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_extractor")
