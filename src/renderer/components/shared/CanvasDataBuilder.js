@@ -97,6 +97,8 @@ const getEdge = (from, to, edgeType, label) => {
 
 const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   let label = baseLabel;
+  if (instance.baseType === RELATION_INSTANCE) return label;
+
   const selectedAttrs = DisplaySettings.getTypeLabels(type);
 
   if (selectedAttrs.length > 0) {
