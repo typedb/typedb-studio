@@ -22,7 +22,7 @@ REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
 REM build grakn-core-all-windows archive
-bazel build @graknlabs_grakn_core//:assemble-windows-zip || GOTO :error
+bazel build @graknlabs_grakn_core_artifact//:assemble-windows-zip || GOTO :error
 
 REM unpack and start Grakn server
 unzip bazel-bin\external\graknlabs_grakn_core\grakn-core-all-windows.zip -d bazel-bin\dist\ || GOTO :error
