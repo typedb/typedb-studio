@@ -36,10 +36,16 @@ artifact_extractor(
 
 genrule(
     name = "grakn-artifact-windows-extractor",
-    srcs = ["@graknlabs_grakn_core_artifact_windows//file"],
-    cmd_bat = "echo unzip $< -d bazel-bin\dist\ > $@",
-    outs = ["extractor.bat"],
-    executable = True,
+    cmd = "echo unzip \$$1 -d \$$BUILD_WORKSPACE_DIRECTORY/dist/ > $@",
+    # cmd = "echo pwd > $@",
+    outs = ["extractor.sh"],
+)
+
+sh_binary(
+    name = "extractor",
+    srcs = [":grakn-artifact-windows-extractor"],
+    data = ["@graknlabs_grakn_core_artifact_windows//file"],
+    args = ["$(location @graknlabs_grakn_core_artifact_windows//file)"],
 )
 
 release_validate_deps(
