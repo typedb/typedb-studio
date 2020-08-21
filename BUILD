@@ -40,5 +40,5 @@ release_validate_deps(
         "graknlabs_grakn_core",
         "graknlabs_client_nodejs",
     ],
-    tags = ["manual"]  # in order for bazel test //... to not fail
+    tags = ["manual"]  # avoids running this target when executing bazel test //...
 )
