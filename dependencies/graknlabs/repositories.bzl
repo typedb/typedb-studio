@@ -23,7 +23,6 @@ def graknlabs_dependencies():
         name = "graknlabs_dependencies",
         remote = "https://github.com/graknlabs/dependencies",
         commit = "cf2b6f22d7e6c6a2454c64e498c8b8df70aff3f1", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_build_tools
-    )
 
 def graknlabs_client_nodejs():
     git_repository(

@@ -97,6 +97,8 @@ const getEdge = (from, to, edgeType, label) => {
 
 const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   let label = baseLabel;
+  if (instance.baseType === RELATION_INSTANCE) return label;
+
   const selectedAttrs = DisplaySettings.getTypeLabels(type);
 
   if (selectedAttrs.length > 0) {
@@ -165,7 +167,7 @@ const getInstanceNode = async (instance, graqlVar, explanation) => {
       break;
     }
     case ATTRIBUTE_INSTANCE: {
-      node.value = instance.value();
+      node.value = await convertToRemote(instance).value();
       node.label = await getNodeLabelWithAttrs(`${node.type}: ${node.value}`, node.type, instance);
       break;
     }
@@ -552,18 +554,19 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
             relation.asRemote(graknTx).rolePlayersMap().then((rolePlayersMap) => {
               let rpEntries = Array.from(rolePlayersMap.entries());
               if (shouldLimit) rpEntries = rpEntries.slice(0, QuerySettings.getNeighboursLimit());
-              rpEntries.forEach(([role, players], i) => {
+
+              let processedEntriesCount = 0;
+              rpEntries.forEach(([role, players]) => {
                 role.label().then((edgeLabel) => {
-                  players.forEach((player, j) => {
+                  players.forEach((player) => {
                     player.type().then(type => type.label().then((playerLabel) => {
                       player.label = playerLabel;
                       const edge = getEdge(relation, player, edgeTypes.instance.RELATES, edgeLabel);
                       getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
                         edges.push(edge);
                         nodes.push(node);
-                        const isLastRole = i === rpEntries.length - 1;
-                        const isLastPlayer = j === players.length - 1;
-                        if (isLastRole && isLastPlayer) resolve({ edges, nodes });
+                        processedEntriesCount += 1;
+                        if (processedEntriesCount === rpEntries.length) resolve({ edges, nodes });
                       });
                     }));
                   });
