@@ -224,77 +224,77 @@ workflows:
           filters:
             branches:
               ignore: workbase-release-branch
-      # - test-mac:
-      #     filters:
-      #       branches:
-      #         ignore: workbase-release-branch
-      # - assemble-linux:
-      #     filters:
-      #       branches:
-      #         only: 1.3.6
-          # requires:
-          #   - test-linux
-          #   - test-mac
-  #     - assemble-mac:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - test-linux
-  #           - test-mac
+      - test-mac:
+          filters:
+            branches:
+              ignore: workbase-release-branch
+      - assemble-linux:
+          filters:
+            branches:
+              only: master
+          requires:
+            - test-linux
+            - test-mac
+      - assemble-mac:
+          filters:
+            branches:
+              only: master
+          requires:
+            - test-linux
+            - test-mac
       - assemble-windows:
           filters:
             branches:
-              only: 1.3.6
-  #     - cache-distribution:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - assemble-linux
-  #           - assemble-mac
-  #           - assemble-windows
-  #     - release-approval:
-  #         filters:
-  #           branches:
-  #             only: master
-  #         requires:
-  #           - cache-distribution
+              only: master
+      - cache-distribution:
+          filters:
+            branches:
+              only: master
+          requires:
+            - assemble-linux
+            - assemble-mac
+            - assemble-windows
+      - release-approval:
+          filters:
+            branches:
+              only: master
+          requires:
+            - cache-distribution
 
-  # workbase-release:
-  #   jobs:
-  #     - release-validate:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #     - cache-distribution:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - release-validate
-  #     - deploy-github:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - cache-distribution
-  #     - deploy-approval:
-  #         type: approval
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-github
-  #     - deploy-brew:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-approval
-  #     - release-cleanup:
-  #         filters:
-  #           branches:
-  #             only: workbase-release-branch
-  #         requires:
-  #           - deploy-brew
+  workbase-release:
+    jobs:
+      - release-validate:
+          filters:
+            branches:
+              only: workbase-release-branch
+      - cache-distribution:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - release-validate
+      - deploy-github:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - cache-distribution
+      - deploy-approval:
+          type: approval
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-github
+      - deploy-brew:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-approval
+      - release-cleanup:
+          filters:
+            branches:
+              only: workbase-release-branch
+          requires:
+            - deploy-brew
