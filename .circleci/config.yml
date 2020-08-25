@@ -220,10 +220,10 @@ jobs:
 workflows:
   workbase:
     jobs:
-      # - test-linux:
-      #     filters:
-      #       branches:
-      #         ignore: workbase-release-branch
+      - test-linux:
+          filters:
+            branches:
+              ignore: workbase-release-branch
       # - test-mac:
       #     filters:
       #       branches:
