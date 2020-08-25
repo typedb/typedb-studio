@@ -21,12 +21,11 @@ REM needs to be called such that software installed
 REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
-REM build grakn-core-all-windows archive
-bazel build @graknlabs_grakn_core_artifact//:assemble-windows-zip || GOTO :error
+REM extract the grakn-core-all-windows artifact
+bazel run //:grakn-extractor-windows -- dist/grakn-core-all-windows || GOTO :error
 
-REM unpack and start Grakn server
-unzip bazel-bin\external\graknlabs_grakn_core\grakn-core-all-windows.zip -d bazel-bin\dist\ || GOTO :error
-PUSHD bazel-bin\dist\grakn-core-all-windows\
+REM start Grakn server
+PUSHD \dist\grakn-core-all-windows\
 CALL grakn.bat server start || GOTO :error
 POPD
 
