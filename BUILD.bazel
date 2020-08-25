@@ -34,18 +34,9 @@ artifact_extractor(
     artifact = "@graknlabs_grakn_core_artifact//file",
 )
 
-genrule(
-    name = "grakn-artifact-windows-extractor",
-    cmd = "echo unzip \$$1 -d \$$BUILD_WORKSPACE_DIRECTORY/dist/ > $@",
-    # cmd = "echo pwd > $@",
-    outs = ["extractor.sh"],
-)
-
-sh_binary(
-    name = "extractor",
-    srcs = [":grakn-artifact-windows-extractor"],
-    data = ["@graknlabs_grakn_core_artifact_windows//file"],
-    args = ["$(location @graknlabs_grakn_core_artifact_windows//file)"],
+artifact_extractor(
+    name = "grakn-extractor-windows",
+    artifact = "@graknlabs_grakn_core_artifact_windows//file",
 )
 
 release_validate_deps(
