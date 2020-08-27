@@ -28,6 +28,7 @@ mklink C:\Python37\python3.exe C:\Python37\python.exe
 set PATH=%PATH%;C:\Python37
 set PATH=%PATH%;C:\Windows\SysWOW64\WindowsPowerShell\v1.0
 set PATH=%PATH%;C:\Windows\System32
+set PATH=%PATH%;C:\Program Files\Java\jdk1.8.0_221\bin
 
 REM install runtime dependency for the build
 C:\Python37\python.exe -m pip install wheel
