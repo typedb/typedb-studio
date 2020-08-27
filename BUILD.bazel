@@ -34,6 +34,12 @@ artifact_extractor(
     artifact = "@graknlabs_grakn_core_artifact//file",
 )
 
+artifact_extractor(
+    name = "grakn-extractor-windows",
+    artifact = "@graknlabs_grakn_core_artifact_windows//file",
+    executor = "cmd"
+)
+
 release_validate_deps(
     name = "release-validate-deps",
     refs = "@graknlabs_workbase_workspace_refs//:refs.json",

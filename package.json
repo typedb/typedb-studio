@@ -161,7 +161,7 @@
         "pack:main": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.main.config.js",
         "pack:renderer": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/webpack/bin/webpack.js --progress --colors --config .electron-vue/webpack.renderer.config.js",
         "postbuild": "git checkout HEAD version.js",
-        "postinstall": "bash ./install-node-electron.sh",
+        "postinstall": "./install-node-electron.sh",
         "prebuild": "node version.js",
         "unit": "node ./node_modules/jest/bin/jest.js ./test/unit"
     },
