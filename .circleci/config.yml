@@ -119,7 +119,6 @@ jobs:
     steps:
       - checkout
       - run: .circleci\windows\prepare.bat && .circleci\windows\assemble.bat
-      # - run: .circleci\windows\assemble.bat
       - persist_to_workspace:
           root: distribution
           paths:

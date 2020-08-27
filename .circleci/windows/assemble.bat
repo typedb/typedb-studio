@@ -19,14 +19,13 @@ REM
 
 REM needs to be called such that software installed
 REM by Chocolatey in prepare.bat is accessible
-CALL refreshenv
 
 REM extract the grakn-core-all-windows artifact
 bazel run //:grakn-extractor-windows --enable_runfiles=yes -- dist/grakn-core-all-windows || GOTO :error
 
 REM start Grakn server
-PUSHD \dist\grakn-core-all-windows\
-CALL .\grakn.bat server start || GOTO :error
+PUSHD dist\grakn-core-all-windows\
+CALL grakn.bat server start || GOTO :error
 POPD
 
 REM run unit tests

@@ -23,7 +23,7 @@ if not exist "%DEST_PATH%" mkdir %DEST_PATH%
 mkdir temp-artifact-extracted
 7z x -otemp-artifact-extracted {artifact_location}
 robocopy temp-artifact-extracted\\{artifact_unpacked_name} %DEST_PATH% /E /MOVE
-rmdir temp-artifact-extracted
+rmdir /S /Q temp-artifact-extracted
 
 """
 
@@ -104,7 +104,7 @@ def _artifact_extractor_impl(ctx):
     runfiles = ctx.runfiles(files = [artifact_file])
     return [DefaultInfo(executable = script, runfiles = runfiles)]
 
-_artifact_extractor = rule(
+artifact_extractor = rule(
     implementation = _artifact_extractor_impl,
     attrs = {
         "artifact": attr.label(
