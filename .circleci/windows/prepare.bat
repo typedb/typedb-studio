@@ -22,6 +22,7 @@ choco uninstall openjdk --limit-output --yes --no-progress
 
 REM install dependencies needed for build
 choco install .circleci\windows\dependencies.config  --limit-output --yes --no-progress
+refreshenv
 
 REM create a symlink python3.exe and make it available in %PATH%
 mklink C:\Python37\python3.exe C:\Python37\python.exe
