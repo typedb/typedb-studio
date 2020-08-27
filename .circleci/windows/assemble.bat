@@ -26,7 +26,7 @@ bazel run //:grakn-extractor-windows --enable_runfiles=yes -- dist/grakn-core-al
 
 REM start Grakn server
 PUSHD \dist\grakn-core-all-windows\
-CALL grakn.bat server start || GOTO :error
+CALL .\grakn.bat server start || GOTO :error
 POPD
 
 REM run unit tests

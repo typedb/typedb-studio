@@ -170,7 +170,7 @@ jobs:
     steps:
       - install-bazel-linux
       - checkout
-      - run: bazel test //:release-validate-deps --test_output=streamed
+      - run: bazel test //:release-validate-deps
 
   deploy-github:
     machine: 
