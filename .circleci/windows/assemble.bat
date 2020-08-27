@@ -22,7 +22,7 @@ REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
 REM extract the grakn-core-all-windows artifact
-bazel run //:grakn-extractor-windows -- dist/grakn-core-all-windows || GOTO :error
+bazel run //:grakn-extractor-windows --enable_runfiles=yes -- dist/grakn-core-all-windows || GOTO :error
 
 REM start Grakn server
 PUSHD \dist\grakn-core-all-windows\
