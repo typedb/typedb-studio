@@ -20,7 +20,6 @@
 
 load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_extractor")
-# load("//:artifact-extractor.bzl", "artifact_extractor")
 load("@graknlabs_dependencies//tool/release:rules.bzl", "release_validate_deps")
 
 deploy_brew(
