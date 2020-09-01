@@ -163,14 +163,6 @@ jobs:
           export RELEASE_APPROVAL_TOKEN=$REPO_GITHUB_TOKEN
           bazel run @graknlabs_dependencies//tool/release:approval
 
-  release-validate:
-    machine: 
-      image: ubuntu-1604:201903-01
-    steps:
-      - install-bazel-linux
-      - checkout
-      - run: bazel test //:release-validate-deps --test_output=streamed
-
   deploy-github:
     machine: 
       image: ubuntu-1604:201903-01
@@ -262,16 +254,10 @@ workflows:
 
   workbase-release:
     jobs:
-      - release-validate:
-          filters:
-            branches:
-              only: workbase-release-branch
       - cache-distribution:
           filters:
             branches:
               only: workbase-release-branch
-          requires:
-            - release-validate
       - deploy-github:
           filters:
             branches:
