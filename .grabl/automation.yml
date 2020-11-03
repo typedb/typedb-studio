@@ -1,0 +1,54 @@
+build:
+  correctness:
+    test-linux:
+      machine: graknlabs-ubuntu-20.04
+      type: foreground
+      script: |
+        bazel run //:grakn-extractor -- dist/grakn-core-all-linux
+        nohup ./dist/grakn-core-all-linux/grakn server start
+        bazel run @nodejs//:bin/yarn install
+        bazel run @nodejs//:bin/yarn run unit
+        bazel run @nodejs//:bin/yarn run integration
+        bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
+    assemble-linux:
+      machine: graknlabs-ubuntu-20.04
+      type: foreground
+      script: |
+        bazel run @nodejs//:bin/yarn install
+        bazel run @nodejs//:bin/yarn run build
+        
+  execution:
+    - test-linux
+    - assemble-linux
+
+release:
+  filter:
+    owner: graknlabs
+    branch: master
+  validation:
+    validate-dependencies:
+      machine: graknlabs-ubuntu-20.04
+      type: foreground
+      script: |
+        bazel test //:release-validate-deps --test_output=streamed        
+  deployment:
+    deploy-github:
+      machine: graknlabs-ubuntu-20.04
+      type: foreground
+      script: |
+        pip install certifi
+        export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
+        bazel run @graknlabs_dependencies//tool/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
+        wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
+        tar -xf ghr_v0.12.1_linux_amd64.tar.gz
+        ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+          -r ${CIRCLE_PROJECT_REPONAME} -n "Grakn Workbase $(cat VERSION)" -b "$(cat ./RELEASE_TEMPLATE.md)" \
+          -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
+    deploy-brew:
+      machine: graknlabs-ubuntu-20.04
+      type: foreground
+      script: |
+        export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
+            export DEPLOY_BREW_CHECKSUM=$(sha256sum grakn-workbase-mac-$(cat VERSION).dmg | awk '{print $1}')
+            bazel run --define version=$(cat VERSION) //:deploy-brew -- release
+        
