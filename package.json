@@ -56,7 +56,7 @@
         "hex-to-hsl": "^1.0.2",
         "image-data-uri": "^1.1.1",
         "jquery": "^3.2.1",
-        "prismjs": "^1.21.0",
+        "prismjs": "^1.23.0",
         "react": "^16.4.2",
         "react-dom": "^16.4.2",
         "react-transition-group": "^2.4.0",
