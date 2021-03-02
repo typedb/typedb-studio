@@ -1,6 +1,5 @@
 #
-# GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2019 Grakn Labs Ltd
+# Copyright (C) 2021 Grakn Labs
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,36 +15,93 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` created by `yarn run build`
+# NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` expected by electron-builder
 
-load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
-load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_extractor")
+load("@graknlabs_dependencies//distribution:deployment.bzl", "deployment")
 load("@graknlabs_dependencies//tool/release:rules.bzl", "release_validate_deps")
+load("@graknlabs_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@graknlabs_bazel_distribution//github:rules.bzl", "deploy_github")
+load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@rules_pkg//:pkg.bzl", "pkg_zip")
+
+
+pkg_zip(
+    name = "mac-zip",
+    srcs = ["dist_electron/grakn-workbase.dmg"]
+)
+
+deploy_github(
+    name = "deploy-github-mac",
+    organisation = 'graknlabs',
+    repository = 'workbase',
+    title = "Grakn Workbase",
+    title_append_version = True,
+    release_description = "//:RELEASE_TEMPLATE.md",
+    archive = ":mac-zip",
+    version_file = ":VERSION",
+    draft = False
+)
+
+pkg_zip(
+    name = "windows-zip",
+    srcs = ["dist_electron/grakn-workbase.exe"]
+)
+
+deploy_github(
+    name = "deploy-github-windows",
+    organisation = 'graknlabs',
+    repository = 'workbase',
+    title = "Grakn Workbase",
+    title_append_version = True,
+    release_description = "//:RELEASE_TEMPLATE.md",
+    archive = ":windows-zip",
+    version_file = ":VERSION",
+    draft = False
+)
+
+pkg_zip(
+    name = "linux-zip",
+    srcs = ["dist_electron/grakn-workbase.AppImage"]
+)
+
+deploy_github(
+    name = "deploy-github-linux",
+    organisation = 'graknlabs',
+    repository = 'workbase',
+    title = "Grakn Workbase",
+    title_append_version = True,
+    release_description = "//:RELEASE_TEMPLATE.md",
+    archive = ":linux-zip",
+    version_file = ":VERSION",
+    draft = False
+)
+
+py_binary(
+    name = "wait-for-release",
+    srcs = [".grabl/wait-for-release.py"],
+)
 
 deploy_brew(
     name = "deploy-brew",
-    type = "cask",
-    deployment_properties = "@graknlabs_dependencies//distribution:deployment.properties",
+    snapshot = deployment['brew.snapshot'],
+    release = deployment['brew.release'],
     formula = "//config/brew:grakn-workbase.rb",
+    checksum = "//:checksum-mac",
+    version_file = "//:VERSION"
 )
 
-artifact_extractor(
-    name = "grakn-extractor",
-    artifact = "@graknlabs_grakn_core_artifact//file",
-)
-
-artifact_extractor(
-    name = "grakn-extractor-windows",
-    artifact = "@graknlabs_grakn_core_artifact_windows//file",
-    executor = "cmd"
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*", ".grabl/*", ".circleci/*"]),
+    exclude = glob([".circleci/windows/*", "build/**", "public/**", "grakn-client/**", "package.json", "package-lock.json"]),
+    license_type = "agpl",
 )
 
 release_validate_deps(
     name = "release-validate-deps",
     refs = "@graknlabs_workbase_workspace_refs//:refs.json",
     tagged_deps = [
-        "graknlabs_grakn_core",
-        "graknlabs_client_nodejs",
+        "@graknlabs_common",
     ],
     tags = ["manual"]  # avoids running this target when executing bazel test //...
 )

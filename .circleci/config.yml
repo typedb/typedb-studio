@@ -1,6 +1,5 @@
 #
-# GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2019 Grakn Labs Ltd
+# Copyright (C) 2021 Grakn Labs
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -20,280 +19,68 @@ version: 2.1
 orbs:
   win: circleci/windows@2.0.0
 commands:
-  install-bazel-linux:
-    steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
-      - run: bash ./linux.sh && rm ./linux.sh
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/rbe.sh
-      - run: bash ./rbe.sh && rm ./rbe.sh
 
   install-bazel-mac:
     steps:
       - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/mac.sh
       - run: bash ./mac.sh && rm ./mac.sh
 
-  install-linux-dependencies:
-    steps:
-      - run: sudo apt install xvfb libxtst6 libxss1 libgtk2.0-0 libasound2 libgconf-2-4 -y
-      - run: Xvfb :99 & export DISPLAY=:99
-
   run-bazel:
     parameters:
       command:
         type: string
     steps:
-      - run: bazel run @graknlabs_dependencies//tool/bazelrun:rbe -- << parameters.command >>
-
-  run-grakn:
-    steps:
-      - run-bazel:
-          command: bazel run //:grakn-extractor -- dist/grakn-core-all-linux
-      - run: nohup ./dist/grakn-core-all-linux/grakn server start
+      - run:
+          command: bazel run @graknlabs_dependencies//tool/bazelrun:rbe -- << parameters.command >>
+          no_output_timeout: 120m
 
 jobs:
-  test-linux:
-    machine: 
-      image: ubuntu-1604:201903-01
-    working_directory: ~/workbase
-    steps:
-      - install-linux-dependencies
-      - install-bazel-linux
-      - checkout
-      - run-grakn
-      - run: bazel run @nodejs//:bin/yarn install
-      - run: bazel run @nodejs//:bin/yarn run unit
-      - run: bazel run @nodejs//:bin/yarn run integration
-      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
-
-  test-mac:
+  deploy-mac:
     macos:
       xcode: "10.2.1"
-    working_directory: ~/workbase
-    steps:
-      - checkout
-      - install-bazel-mac
-      - run-grakn
-      - run: bazel run @nodejs//:bin/yarn install
-      - run: bazel run @nodejs//:bin/yarn run unit
-      - run: bazel run @nodejs//:bin/yarn run integration
-      - run: bazel run @nodejs//:bin/yarn run pack && GRAKN_PATH=./dist/grakn-core-all-linux/ bazel run @nodejs//:bin/yarn run e2e
-
-  assemble-linux:
-    machine: 
-      image: ubuntu-1604:201903-01
-    working_directory: ~/workbase
-    steps:
-      - install-bazel-linux
-      - checkout
-      - run: bazel run @nodejs//:bin/yarn install
-      - run: bazel run @nodejs//:bin/yarn run build
-      - run: mkdir -p ~/distribution && for ext in tar.gz AppImage; do mv ./build/*.$ext ~/distribution/grakn-workbase-linux-$(cat VERSION).$ext; done
-      - persist_to_workspace:
-          root: ~/distribution
-          paths:
-            - ./*
-
-  assemble-mac:
-    macos:
-      xcode: "10.2.1"
-    working_directory: ~/workbase
+    working_directory: ~/grakn
     steps:
       - install-bazel-mac
       - checkout
-      - run: bazel run @nodejs//:bin/yarn install
+      - run: brew install nvm
+      - run: mkdir ~/.nvm
+      - run: echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bash_profile
+      - run: echo '[ -s "$(brew --prefix)/opt/nvm/nvm.sh" ] && . "$(brew --prefix)/opt/nvm/nvm.sh"' >> ~/.bash_profile
+      - run: nvm install 15.11.0
+      - run: nvm use 15.11.0
+      - run: npm install
       - run: |
-          export CSC_LINK="$APPLE_CODE_SIGNING_CERTIFICATE_URL"
-          export CSC_KEY_PASSWORD="$APPLE_CODE_SIGNING_PASSWORD"
-          bazel run @nodejs//:bin/yarn run build
-      - run: mkdir -p ~/distribution && mv ./build/*.dmg ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg
-      - persist_to_workspace:
-          root: ~/distribution
-          paths:
-            - ./*
-
-  assemble-windows:
-    executor:
-        name: win/default
-        shell: cmd.exe
-    working_directory: ~/workbase
-    steps:
-      - checkout
-      - run: .circleci\windows\prepare.bat && .circleci\windows\assemble.bat
-      - persist_to_workspace:
-          root: distribution
-          paths:
-            - ./*
-
-  cache-distribution:
-    machine: 
-      image: ubuntu-1604:201903-01
-    working_directory: ~/workbase
-    steps:
-      - attach_workspace:
-          at: ~/distribution
-      - restore_cache:
-          key: distribution-{{ .Environment.CIRCLE_SHA1 }}
+          export CSC_LINK=$APPLE_CODE_SIGNING_CERTIFICATE_URL
+          export CSC_KEY_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD
+          npm run build
       - run: |
-          if [ "$(ls -A ~/cache)" ]; then
-            ls ~/cache/
-            mkdir -p ~/distribution
-            cp ~/cache/* ~/distribution/
-          else
-            ls ~/distribution
-            mkdir -p ~/cache
-            cp ~/distribution/* ~/cache/
-          fi
-      - save_cache:
-          key: distribution-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - ~/cache
-      - persist_to_workspace:
-          root: ~/distribution
-          paths:
-            - ./*
-
-  release-approval:
-    machine: 
-      image: ubuntu-1604:201903-01
-    steps:
-      - install-bazel-linux
-      - checkout
-      - run: |
-          export RELEASE_APPROVAL_USERNAME=$REPO_GITHUB_USERNAME
-          export RELEASE_APPROVAL_TOKEN=$REPO_GITHUB_TOKEN
-          bazel run @graknlabs_dependencies//tool/release:approval
-
-  release-validate:
-    machine: 
-      image: ubuntu-1604:201903-01
-    steps:
-      - install-bazel-linux
-      - checkout
-      - run: bazel test //:release-validate-deps --test_output=streamed
-
-  deploy-github:
-    machine: 
-      image: ubuntu-1604:201903-01
-    working_directory: ~/workbase
-    steps:
-      - attach_workspace:
-          at: ~/distribution
-      - install-bazel-linux
-      - checkout
-      - run: |
-          pip install certifi
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
           bazel run @graknlabs_dependencies//tool/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
-      - run:
-          name: "Publish Draft Release on GitHub"
-          command: |
-            wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
-            tar -xf ghr_v0.12.1_linux_amd64.tar.gz
-            ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
-              -r ${CIRCLE_PROJECT_REPONAME} -n "Grakn Workbase $(cat VERSION)" -b "$(cat ./RELEASE_TEMPLATE.md)" \
-              -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/distribution/
+          export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
+          bazel run //:deploy-github-mac $CIRCLE_SHA1
 
-  deploy-brew:
-    machine: 
-      image: ubuntu-1604:201903-01
-    working_directory: ~/workbase
-    steps:
-      - attach_workspace:
-          at: ~/distribution
-      - install-bazel-linux
-      - checkout
-      - run: cp ~/distribution/grakn-workbase-mac-$(cat VERSION).dmg ~/workbase/
-      - run:
-          command: |
-            export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
-            export DEPLOY_BREW_CHECKSUM=$(sha256sum grakn-workbase-mac-$(cat VERSION).dmg | awk '{print $1}')
-            bazel run --define version=$(cat VERSION) //:deploy-brew -- release
-
-  release-cleanup:
-    machine: 
-      image: ubuntu-1604:201903-01
+  deploy-windows:
+    executor:
+      name: win/default
+      shell: cmd.exe
+    working_directory: ~/grakn
     steps:
       - checkout
-      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
+      - run: .circleci\windows\prepare.bat
+      - run: nvm install 15.11.0
+      - run: nvm use 15.11.0
+      - run: npm install
+      - run: npm run build
+      - run: .circleci\windows\deploy.bat
 
 workflows:
-  workbase:
+  grakn-core:
     jobs:
-      - test-linux:
+      - deploy-mac:
           filters:
             branches:
-              ignore: workbase-release-branch
-      - test-mac:
+              only: workbase-release-mac-windows-branch
+      - deploy-windows:
           filters:
             branches:
-              ignore: workbase-release-branch
-      - assemble-linux:
-          filters:
-            branches:
-              only: master
-          requires:
-            - test-linux
-            - test-mac
-      - assemble-mac:
-          filters:
-            branches:
-              only: master
-          requires:
-            - test-linux
-            - test-mac
-      - assemble-windows:
-          filters:
-            branches:
-              only: master
-      - cache-distribution:
-          filters:
-            branches:
-              only: master
-          requires:
-            - assemble-linux
-            - assemble-mac
-            - assemble-windows
-      - release-approval:
-          filters:
-            branches:
-              only: master
-          requires:
-            - cache-distribution
-
-  workbase-release:
-    jobs:
-      - release-validate:
-          filters:
-            branches:
-              only: workbase-release-branch
-      - cache-distribution:
-          filters:
-            branches:
-              only: workbase-release-branch
-          requires:
-            - release-validate
-      - deploy-github:
-          filters:
-            branches:
-              only: workbase-release-branch
-          requires:
-            - cache-distribution
-      - deploy-approval:
-          type: approval
-          filters:
-            branches:
-              only: workbase-release-branch
-          requires:
-            - deploy-github
-      - deploy-brew:
-          filters:
-            branches:
-              only: workbase-release-branch
-          requires:
-            - deploy-approval
-      - release-cleanup:
-          filters:
-            branches:
-              only: workbase-release-branch
-          requires:
-            - deploy-brew
+              only: workbase-release-mac-windows-branch

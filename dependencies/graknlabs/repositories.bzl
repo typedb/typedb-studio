@@ -1,6 +1,5 @@
 #
-# GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2019 Grakn Labs Ltd
+# Copyright (C) 2021 Grakn Labs
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -22,12 +21,12 @@ def graknlabs_dependencies():
     git_repository(
         name = "graknlabs_dependencies",
         remote = "https://github.com/graknlabs/dependencies",
-        commit = "add78872a538e8b930c0a4cd4f40f069610ac67b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_build_tools
+        commit = "b48639739ee779b6dada78ba2ef1f1dcdcf4debc", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_build_tools
     )
 
-def graknlabs_client_nodejs():
+def graknlabs_common():
     git_repository(
-        name = "graknlabs_client_nodejs",
-        remote = "https://github.com/graknlabs/client-nodejs",
-        tag = "1.8.0", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_client_nodejs
+        name = "graknlabs_common",
+        remote = "https://github.com/graknlabs/common",
+        tag = "2.0.0-alpha-9", # sync-marker: do not remove this comment, this is used for sync-dependencies by @graknlabs_client_nodejs
     )
