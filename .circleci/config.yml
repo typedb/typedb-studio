@@ -20,6 +20,13 @@ orbs:
   win: circleci/windows@2.0.0
 commands:
 
+  install-bazel-linux-rbe:
+    steps:
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
+      - run: bash ./linux.sh && rm ./linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/rbe.sh
+      - run: bash ./rbe.sh && rm ./rbe.sh
+
   install-bazel-mac:
     steps:
       - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/mac.sh
@@ -59,7 +66,7 @@ jobs:
           export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
           bazel run //:deploy-github-mac $CIRCLE_SHA1
 
-  deploy-windows:
+  build-windows:
     executor:
       name: win/default
       shell: cmd.exe
@@ -71,7 +78,26 @@ jobs:
       - run: nvm use 15.11.0
       - run: npm install
       - run: npm run build
-      - run: .circleci\windows\deploy.bat
+      - persist_to_workspace:
+          root: ./dist_electron/
+          paths:
+            - ./*
+
+  deploy-windows:
+    machine:
+      image: ubuntu-2004:202101-01
+    working_directory: ~/workbase
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./dist_electron/
+      - install-bazel-linux-rbe
+      - run: |
+          export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
+          export VERSION=$(cat VERSION)
+          bazel run @graknlabs_dependencies//tool/release:create-notes -- workbase $VERSION ./RELEASE_TEMPLATE.md
+          export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
+          bazel run //:deploy-github-windows $CIRCLE_SHA1
 
 workflows:
   grakn-core:
@@ -80,7 +106,13 @@ workflows:
           filters:
             branches:
               only: workbase-release-mac-windows-branch
+      - build-windows:
+          filters:
+            branches:
+              only: workbase-release-mac-windows-branch
       - deploy-windows:
+          requires:
+            - build-windows
           filters:
             branches:
               only: workbase-release-mac-windows-branch
