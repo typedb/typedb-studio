@@ -1,6 +1,5 @@
 #
-# GRAKN.AI - THE KNOWLEDGE GRAPH
-# Copyright (C) 2019 Grakn Labs Ltd
+# Copyright (C) 2021 Grakn Labs
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,18 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "artifact_file")
+load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "native_artifact_files")
+load("@graknlabs_dependencies//distribution:deployment.bzl", "deployment")
 
-def graknlabs_grakn_core_artifact():
-    artifact_file(
+def graknlabs_grakn_core_artifacts():
+    native_artifact_files(
         name = "graknlabs_grakn_core_artifact",
         group_name = "graknlabs_grakn_core",
-        artifact_name = "grakn-core-all-linux-{version}.tar.gz",
-        tag = "1.8.1",
-    )
-    artifact_file(
-        name = "graknlabs_grakn_core_artifact_windows",
-        group_name = "graknlabs_grakn_core",
-        artifact_name = "grakn-core-all-windows-{version}.zip",
-        tag = "1.8.1",
+        artifact_name = "grakn-core-server-{platform}-{version}.{ext}",
+        tag_source = deployment["artifact.release"],
+        commit_source = deployment["artifact.snapshot"],
+        tag = "2.0.0-alpha-8",
     )
