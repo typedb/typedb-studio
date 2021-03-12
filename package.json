@@ -1,9 +1,11 @@
 {
   "name": "grakn-workbase",
-  "version": "2.0.0",
   "description": "IDE to perform knowledge engineering at scale and control everything in your Grakn knowledge graph, from development to production.",
   "author": "Grakn Labs",
   "scripts": {
+    "prebuild": "run-script-os",
+    "prebuild:win32": "set /p VERSION=<VERSION && npm version %VERSION% --allow-same-version --no-git-tag-version",
+    "prebuild:default": "npm version $(cat VERSION) --allow-same-version --no-git-tag-version",
     "build": "vue-cli-service electron:build",
     "serve": "vue-cli-service electron:serve",
     "test:unit": "vue-cli-service test:unit",
@@ -42,6 +44,7 @@
     "electron-devtools-installer": "^3.1.0",
     "electron-notarize": "^1.0.0",
     "node-sass": "^4.12.0",
+    "run-script-os": "^1.1.5",
     "sass-loader": "^8.0.2",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.6",
     "vue-template-compiler": "^2.6.11"
@@ -54,5 +57,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/graknlabs/workbase.git"
-  }
+  },
+  "version": "2.0.0"
 }
