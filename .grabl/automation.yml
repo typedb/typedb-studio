@@ -68,7 +68,7 @@ release:
       image: graknlabs-ubuntu-20.04
       dependencies: [deploy-github-mac-windows]
       command: |
-        wget "https://github.com/${GRABL_OWNER}/${GRABL_REPO}/releases/download/${cat VERSION}/grakn-workbase.dmg"
+        wget https://github.com/$GRABL_OWNER/$GRABL_REPO/releases/download/$(cat VERSION)/grakn-workbase.dmg
         export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
         export DEPLOY_BREW_CHECKSUM=$(sha256sum grakn-workbase.dmg | awk '{print $1}')
         bazel run --define version=$(cat VERSION) //:deploy-brew -- release
