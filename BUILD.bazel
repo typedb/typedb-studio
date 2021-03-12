@@ -32,7 +32,7 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-mac",
-    organisation = 'lriuui0x0',
+    organisation = 'graknlabs',
     repository = 'workbase',
     title = "Grakn Workbase",
     title_append_version = True,
@@ -49,7 +49,7 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-windows",
-    organisation = 'lriuui0x0',
+    organisation = 'graknlabs',
     repository = 'workbase',
     title = "Grakn Workbase",
     title_append_version = True,
@@ -66,7 +66,7 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-linux",
-    organisation = 'lriuui0x0',
+    organisation = 'graknlabs',
     repository = 'workbase',
     title = "Grakn Workbase",
     title_append_version = True,
