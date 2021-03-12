@@ -20,8 +20,8 @@ REM needs to be called such that software installed
 REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
-setx RELEASE_NOTES_TOKEN %REPO_GITHUB_TOKEN%
-setx /p VERSION=<VERSION
+set RELEASE_NOTES_TOKEN %REPO_GITHUB_TOKEN%
+set /p VERSION=<VERSION
 bazel run @graknlabs_dependencies//tool/release:create-notes -- workbase %VERSION% ./RELEASE_TEMPLATE.md
-setx DEPLOY_GITHUB_TOKEN %REPO_GITHUB_TOKEN%
+set DEPLOY_GITHUB_TOKEN %REPO_GITHUB_TOKEN%
 bazel run //:deploy-github-windows %CIRCLE_SHA1%
