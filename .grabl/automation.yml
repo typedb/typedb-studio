@@ -35,8 +35,8 @@ build:
 
 release:
   filter:
-    owner: graknlabs
-    branch: master
+    owner: lriuui0x0
+    branch: 2.0
   validation:
     validate-dependencies:
       image: graknlabs-ubuntu-20.04
