@@ -40,7 +40,7 @@
               <input class="input" type="number" v-model="serverPort">
             </div>
             <div class="row flex-end">
-              <loading-button v-on:clicked="connect()" text="Connect" :loading="isLoading" className="btn login-btn"></loading-button>
+              <loading-button v-on:clicked="connect()" :text="isCluster ? 'Connect to Grakn Cluster' : 'Connect to Grakn Core'" :loading="isLoading" className="btn login-btn"></loading-button>
             </div>
           </div>
         </div>

@@ -509,7 +509,7 @@
       async defineRelationType() {
         if (this.relationLabel === '') {
           this.$notifyError('Cannot define Relation Type without Relation Label');
-        } else if (this.superType === 'relation' && !this.newRoles[0].length && !this.toggledRoleTypes.length) {
+        } else if (this.superType === 'relation' && !this.newRoles.length && !this.toggledRoleTypes.length) {
           this.$notifyError('Cannot define Relation Type without at least one related role');
         } else {
           let overrideError = false;
