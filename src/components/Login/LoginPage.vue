@@ -183,9 +183,10 @@ export default {
     },
   },
   created() {
-    window.addEventListener('keyup', (e) => {
-      if (e.keyCode === 13 && !e.shiftKey && this.serverHost && this.serverPort) this.connect();
-    });
+    // TODO: Figure out why this code causes ENTER key to destroy the whole visualiser window
+    // window.addEventListener('keyup', (e) => {
+    //   if (e.keyCode === 13 && !e.shiftKey && this.serverHost && this.serverPort) this.connect();
+    // });
   },
   mounted() {
     this.$nextTick(() => {
