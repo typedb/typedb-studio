@@ -359,6 +359,7 @@
           const superType = await tx.concepts().getEntityType(val);
           this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel()).collect();
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));
+          tx.close();
         } else {
           this.hasAttributes = this.metaTypeInstances.attributes;
           this.supAttributes = [];
