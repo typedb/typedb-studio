@@ -118,7 +118,7 @@
         this.currentTab = tab;
       },
       typeSelected(type) {
-        this.setCurrentQuery(`match $x isa ${type}; get;`);
+        this.setCurrentQuery(`match $x isa ${type};`);
       },
     },
   };
