@@ -45,6 +45,11 @@ import { SessionType, TransactionType } from "grakn-client/GraknClient";
 
 export default {
   async [OPEN_GRAKN_TX]({ commit }) {
+    if (global.graknSession && global.graknSession.type() === SessionType.DATA) {
+        const database = global.graknSession.database().name();
+        global.graknSession.close();
+        global.graknSession = await global.grakn.session(database, SessionType.SCHEMA);
+    }
     const tx = await global.graknSession.transaction(TransactionType.WRITE);
     if (!global.graknTx) global.graknTx = {};
     global.graknTx.schemaDesign = tx;
