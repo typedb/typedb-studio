@@ -28,7 +28,7 @@ module.exports = {
             builderOptions: {
                 appId: 'com.graknlabs.workbase',
                 productName: 'Grakn Workbase',
-                artifactName: 'grakn-workbase.${ext}',
+                artifactName: 'grakn-workbase-${os}-${version}.${ext}',
                 win: {
                     publish: null,
                 },

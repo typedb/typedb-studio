@@ -27,7 +27,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 pkg_zip(
     name = "mac-zip",
-    srcs = ["dist_electron/grakn-workbase.dmg"]
+    srcs = glob(["dist_electron/*.dmg"]),
 )
 
 deploy_github(
@@ -44,7 +44,7 @@ deploy_github(
 
 pkg_zip(
     name = "windows-zip",
-    srcs = ["dist_electron/grakn-workbase.exe"]
+    srcs = glob(["dist_electron/*.exe"]),
 )
 
 deploy_github(
@@ -61,7 +61,7 @@ deploy_github(
 
 pkg_zip(
     name = "linux-zip",
-    srcs = ["dist_electron/grakn-workbase.AppImage"]
+    srcs = glob(["dist_electron/*.AppImage"]),
 )
 
 deploy_github(
@@ -93,7 +93,7 @@ deploy_brew(
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*", ".grabl/*", ".circleci/*"]),
-    exclude = glob([".circleci/windows/*", "build/**", "public/**", "grakn-client/**", "package.json", "package-lock.json"]),
+    exclude = glob([".circleci/windows/*", "build/**", "public/**", "grakn-client/**", "package.json", "package-lock.json", "dist_electron/**/*"]),
     license_type = "agpl",
 )
 
