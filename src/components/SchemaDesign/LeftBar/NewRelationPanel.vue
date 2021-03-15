@@ -56,14 +56,20 @@
           </div>
         </div>
 
-        <div class="row" v-if="!superRelatipnshipTypeRoles.length">
-          <div class="relates-list">
+        <div class="row">
+          <div class="relates-list" v-if="newRoles.length">
             <ul class="relates" :class="(index > 0) ? 'margin-top' : ''" v-for="(role, index) in newRoles" :key=index>
               <div class="relates-label">relates</div>
               <input class="input-small label-input role-label-input" v-model="newRoles[index]" placeholder="Role Label">
-                <div class="btn small-btn" v-if="newRoles.length - 1 === index" @click="addNewRole"><vue-icon icon="plus" class="vue-icon" iconSize="12"></vue-icon></div>
-                <div class="btn small-btn" v-if="newRoles.length > 1" @click="removeRole(index)"><vue-icon icon="minus" class="vue-icon" iconSize="12"></vue-icon></div>
+              <div class="btn small-btn" @click="addNewRole"><vue-icon icon="plus" class="vue-icon" iconSize="12"></vue-icon></div>
+              <div class="btn small-btn" @click="removeRole(index)"><vue-icon icon="minus" class="vue-icon" iconSize="12"></vue-icon></div>
             </ul>
+          </div>
+          <div v-else>
+            <div class="relates">
+              <div class="relates-more-label">relates more roles...</div>
+              <div class="btn small-btn" @click="addNewRole"><vue-icon icon="plus" class="vue-icon" iconSize="12"></vue-icon></div>
+            </div>
           </div>
         </div>
 
@@ -240,6 +246,10 @@
 
   .relates-label {
     margin-right: 5px;
+  }
+
+  .relates-more-label {
+    margin-right: 183.5px;
   }
 
   .relates {
@@ -514,17 +524,13 @@
             this.showSpinner = true;
 
             // collect all roles to be defined and related
-            const defineRoles = this.newRoles.map(role => ({ label: role, superType: 'role' }))
-              .concat(this.overridenRoles.map(role => ((role.override) ? { label: role.label, superType: role.superType } : null))).filter(r => r);
-
-            // collect all roles which are already defined but only need to be related
-            const relateRoles = this.overridenRoles.map(role => ((!role.override) ? role.label : null)).filter(r => r);
+            const defineRoles = this.newRoles.map(role => ({ label: role, overridden: null }))
+              .concat(this.overridenRoles.filter(role => role.override).map(role => ({ label: role.label, overridden: role.superType })));
 
             this[DEFINE_RELATION_TYPE]({
               relationLabel: this.relationLabel,
               superType: this.superType,
               defineRoles,
-              relateRoles,
               attributeTypes: this.toggledAttributeTypes,
               roleTypes: this.toggledRoleTypes,
             })

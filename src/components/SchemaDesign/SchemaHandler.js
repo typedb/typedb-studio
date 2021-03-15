@@ -91,9 +91,9 @@ SchemaHandler.prototype.deletePlaysRole = async function deletePlaysRole(schemaL
   return type.asRemote(tx).unsetPlays(role);
 };
 
-SchemaHandler.prototype.addRelatesRole = async function addRelatesRole(schemaLabel, roleLabel) {
+SchemaHandler.prototype.addRelatesRole = async function addRelatesRole(schemaLabel, roleLabel, overridden) {
   const relationType = await tx.concepts().getRelationType(schemaLabel);
-  return relationType.asRemote(tx).setRelates(roleLabel);
+  return relationType.asRemote(tx).setRelates(roleLabel, overridden);
 };
 
 SchemaHandler.prototype.deleteRelatesRole = async function deleteRelatesRole(schemaLabel, roleLabel) {
