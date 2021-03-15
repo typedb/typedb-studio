@@ -37,15 +37,11 @@ export const deleteDatabase = async (context, name) => global.grakn.databases().
   .then(db => db.delete())
   .then(() => context.dispatch('loadDatabases'));
 
-export const login = (context, credentials) =>
-  context.dispatch('initGrakn', credentials).then(() => {
-    context.commit('setCredentials', credentials);
-    context.commit('userLogged', true);
-  });
-
-export const initGrakn = (context, credentials) => {
-  global.grakn = new GraknClient.core(ServerSettings.getServerUri(), /* credentials */);
-  context.dispatch('loadDatabases', credentials);
+export const initGrakn = (context, isCluster) => {
+  global.grakn = isCluster ?
+      new GraknClient.cluster([ServerSettings.getServerUri()]) :
+      new GraknClient.core(ServerSettings.getServerUri());
+  context.dispatch('loadDatabases');
 };
 
 export const logout = async (context) => {

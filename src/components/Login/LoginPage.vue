@@ -22,40 +22,10 @@
         <img src="img/grakn-workbase-logo.png" class="logo">
       </div>
 
-      <div class="login-panel" v-if="showLoginPanel">
+      <div class="login-panel">
         <div class="header">
-          Connection to Grakn Cluster
-        </div>
-        <div class="row">
-          <div class="column-1">
-            <div class="row">
-              <h1 class="label">Host:</h1>
-              <input class="input left-input" v-model="serverHost">
-            </div>
-            <div class="row">
-              <h1 class="label">Username:</h1>
-              <input class="input left-input" v-model="username">
-            </div>
-          </div>
-          <div class="column-1">
-            <div class="row">
-              <h1 class="label">Port:</h1>
-              <input class="input" type="number" v-model="serverPort">
-            </div>
-            <div class="row">
-              <h1 class="label">Password:</h1>
-              <input class="input" type="password" v-model="password">
-            </div>
-            <div class="row flex-end">
-              <loading-button v-on:clicked="loginToCluster()" text="Login" :loading="isLoading" className="btn login-btn"></loading-button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="login-panel" v-if="showConnectionPanel">
-        <div class="header">
-          Connection
+          <div class="header-item" :class="isCluster ? '' : 'header-item-selected'" @click="chooseCore">Grakn Core</div>
+          <div class="header-item" :class="isCluster ? 'header-item-selected' : ''" @click="chooseCluster">Grakn Cluster</div>
         </div>
         <div class="row">
           <div class="column-2">
@@ -70,7 +40,7 @@
               <input class="input" type="number" v-model="serverPort">
             </div>
             <div class="row flex-end">
-              <loading-button v-on:clicked="connectToCore()" text="Connect" :loading="isLoading" className="btn login-btn"></loading-button>
+              <loading-button v-on:clicked="connect()" text="Connect" :loading="isLoading" className="btn login-btn"></loading-button>
             </div>
           </div>
         </div>
@@ -120,12 +90,24 @@
   }
 
   .header {
-    background-color: var(--gray-1);
     height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: var(--container-darkest-border);
+  }
+
+  .header-item {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    height: 100%;
+    padding-top: 5px;
+    background-color: var(--gray-1);
+  }
+
+  .header-item-selected {
+    background-color: var(--gray-2);
   }
 
   .label {
@@ -177,21 +159,19 @@
 
 </style>
 <script>
-import storage from '@/components/shared/PersistentStorage';
 import ServerSettings from '@/components/ServerSettings';
 
 export default {
   name: 'LoginPage',
   data() {
     return {
-      username: '',
-      password: '',
       isLoading: false,
       serverHost: ServerSettings.getServerHost(),
       serverPort: ServerSettings.getServerPort(),
+      username: '',
+      password: '',
       showLoginPage: true,
-      showLoginPanel: false,
-      showConnectionPanel: true,
+      isCluster: false,
     };
   },
   watch: {
@@ -204,7 +184,7 @@ export default {
   },
   created() {
     window.addEventListener('keyup', (e) => {
-      if (e.keyCode === 13 && !e.shiftKey && this.username.length && this.password.length) this.loginToCluster();
+      if (e.keyCode === 13 && !e.shiftKey && this.serverHost && this.serverPort) this.connect();
     });
   },
   mounted() {
@@ -214,15 +194,17 @@ export default {
     });
   },
   methods: {
-    async loginToCluster() {
-      this.$toasted.clear();
-      this.$store.dispatch('login', { username: this.username, password: this.password });
-      storage.set('user-credentials', JSON.stringify({ username: this.username, password: this.password }));
-      this.$router.push('develop/data');
+    chooseCore() {
+      this.isCluster = false;
     },
-    async connectToCore() {
+
+    chooseCluster() {
+      this.isCluster = true;
+    },
+
+    async connect() {
       this.$toasted.clear();
-      this.$store.dispatch('initGrakn');
+      this.$store.dispatch('initGrakn', this.isCluster);
       this.$router.push('develop/data');
     },
   },
