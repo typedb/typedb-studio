@@ -182,17 +182,15 @@ export default {
       ServerSettings.setServerPort(newVal);
     },
   },
-  created() {
-    // TODO: Figure out why this code causes ENTER key to destroy the whole visualiser window
-    // window.addEventListener('keyup', (e) => {
-    //   if (e.keyCode === 13 && !e.shiftKey && this.serverHost && this.serverPort) this.connect();
-    // });
-  },
   mounted() {
     this.$nextTick(() => {
       this.serverHost = ServerSettings.getServerHost();
       this.serverPort = ServerSettings.getServerPort();
     });
+    window.addEventListener('keyup', this.connectEnterListener);
+  },
+  beforeDestroy() {
+    window.removeEventListener('keyup', this.connectEnterListener);
   },
   methods: {
     chooseCore() {
@@ -208,6 +206,10 @@ export default {
       this.$store.dispatch('initGrakn', this.isCluster);
       this.$router.push('develop/data');
     },
+
+    connectEnterListener(e) {
+      if (e.key === 'Enter' && !e.shiftKey && this.serverHost && this.serverPort) this.connect();
+    }
   },
 };
 </script>
