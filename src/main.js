@@ -68,7 +68,7 @@ store.commit('loadLocalCredentials', SERVER_AUTHENTICATED);
 
 // Before loading a new route check if the user is authorised
 router.beforeEach((to, from, next) => {
-  if (to.path === '/develop/data') {
+  if (from.path === '/schema/design') {
     if (global.graknTx && global.graknTx.schemaDesign) global.graknTx.schemaDesign.close();
     if (global.graknSession && global.graknSession.type() === SessionType.SCHEMA) global.graknSession.close();
   }
