@@ -18,7 +18,7 @@
 <template>
   <transition name="slide-fade" appear>
         <div class="wrapper">
-            <app-bar v-if="showAppBar"></app-bar>
+            <app-bar v-if="showAppBar" class="app-bar"></app-bar>
             <div class="main-wrapper">
                 <div class="content">
                     <keep-alive>
@@ -43,12 +43,16 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    flex: 1;
 }
+
+.app-bar {
+    flex-grow: 0;
+}
+
 .main-wrapper {
     display: flex;
     flex-direction: row;
-    height: 100vh;
+    flex-grow: 1;
 }
 
 .content {
