@@ -381,7 +381,9 @@ export default {
     } else if (payload.baseType === 'ATTRIBUTE_TYPE') {
       const nodes = state.visFacade.getAllNodes();
       await Promise.all(nodes.map(async (node) => {
-        await state.schemaHandler.deleteAttribute(node.typeLabel, payload.typeLabel);
+        if (node.attributes.some(x => x.typeLabel === payload.typeLabel)) {
+          await state.schemaHandler.deleteAttribute(node.typeLabel, payload.typeLabel);
+        }
         node.attributes = node.attributes.filter((x => x.typeLabel !== payload.typeLabel));
       }));
       state.visFacade.updateNode(nodes);
