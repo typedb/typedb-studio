@@ -20,6 +20,7 @@
 load("@graknlabs_dependencies//distribution:deployment.bzl", "deployment")
 load("@graknlabs_dependencies//tool/release:rules.bzl", "release_validate_deps")
 load("@graknlabs_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@graknlabs_bazel_distribution//common:rules.bzl", "checksum")
 load("@graknlabs_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@graknlabs_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
@@ -79,6 +80,11 @@ deploy_github(
 py_binary(
     name = "wait-for-release",
     srcs = [".grabl/wait-for-release.py"],
+)
+
+checksum(
+    name = "checksum-mac",
+    archive = ":mac-zip",
 )
 
 deploy_brew(
