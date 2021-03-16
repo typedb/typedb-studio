@@ -32,6 +32,7 @@ import VueSwitch from './components/UIElements/VueSwitch.vue';
 // Modules
 import { routes } from './routes';
 import CustomPlugins from './customPlugins';
+import { SessionType, TransactionType } from "grakn-client/GraknClient";
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
 
@@ -67,6 +68,10 @@ store.commit('loadLocalCredentials', SERVER_AUTHENTICATED);
 
 // Before loading a new route check if the user is authorised
 router.beforeEach((to, from, next) => {
+  if (from.path === '/schema/design') {
+    if (global.graknTx && global.graknTx.schemaDesign) global.graknTx.schemaDesign.close();
+    if (global.graknSession && global.graknSession.type() === SessionType.SCHEMA) global.graknSession.close();
+  }
   if (to.path === '/login') next();
   if (store.getters.isAuthorised) next();
   else next('/login');

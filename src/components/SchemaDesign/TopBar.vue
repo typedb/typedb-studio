@@ -23,6 +23,7 @@
         </div>
 
         <div class="center">
+            While Workbase is in schema design mode, the database will be unavailable for data write operations.
         </div>
 
         <div class="right">
