@@ -26,7 +26,7 @@ export const loadDatabases = async (context) => {
     context.commit('setDatabases', resp);
   } catch (e) {
     context.commit('setIsGraknRunning', false);
-    console.log('Failed to load databases', e);
+    console.error('Failed to load databases', e);
   }
 };
 
@@ -39,10 +39,15 @@ export const deleteDatabase = async (context, name) => global.grakn.databases().
   .then(() => context.dispatch('loadDatabases'));
 
 export const initGrakn = async (context, isCluster) => {
-  global.grakn = isCluster ?
-      await new GraknClient.cluster([ServerSettings.getServerUri()]) :
-      new GraknClient.core(ServerSettings.getServerUri());
-  context.dispatch('loadDatabases');
+  try {
+    global.grakn = isCluster ?
+        await new GraknClient.cluster([ServerSettings.getServerUri()]) :
+        new GraknClient.core(ServerSettings.getServerUri());
+    context.dispatch('loadDatabases');
+  } catch (e) {
+    context.commit('setIsGraknRunning', false);
+    console.error('Failed to initialise grakn client', e);
+  }
 };
 
 export const logout = async (context) => {
