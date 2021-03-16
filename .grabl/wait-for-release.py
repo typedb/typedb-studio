@@ -16,9 +16,10 @@
 #
 
 import sys
-import os
 import requests
 import time
+import datetime
+import dateutil.parser
 
 if len(sys.argv) <= 1:
     raise ValueError('Owner not specified.')
@@ -34,19 +35,16 @@ tag = sys.argv[3]
 
 assets = sys.argv[4:]
 
-if not os.getenv('REPO_GITHUB_TOKEN'):
-    raise ValueError('REPO_GITHUB_TOKEN environment variable not set.')
-token = os.getenv('REPO_GITHUB_TOKEN')
-
+startTime = datetime.datetime.now(datetime.timezone.utc)
 waitTime = 10
 while True:
     print('checking release...')
-    res = requests.get(f'https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}', headers={'Authorization': f'token {token}'})
+    res = requests.get(f'https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}')
     if res.status_code == 200:
         release = res.json()
         success = True
         for asset in assets:
-            found = any(map(lambda x: x['name'] == asset, release['assets']))
+            found = any(map(lambda x: x['name'] == asset and startTime < dateutil.parser.isoparse(x['created_at']), release['assets']))
             if not found:
                 print(f'{asset} hasn\'t been released, waiting for {waitTime}s...')
                 success = False
