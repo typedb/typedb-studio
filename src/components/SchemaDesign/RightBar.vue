@@ -39,7 +39,6 @@
 </template>
 
 <style scoped lang="scss">
-  $footerHeight: 23px;
   $navHeight: 30px;
 
   .content {
@@ -51,7 +50,7 @@
   .right-bar-container {
     background-color: var(--gray-3);
     border-left: var(--container-darkest-border);
-    height: calc(100% - #{$footerHeight});
+    height: 100%;
     position: relative;
     right: 0px;
     top: 0px;
