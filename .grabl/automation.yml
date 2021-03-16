@@ -47,7 +47,7 @@ release:
       command: |
         git checkout -b workbase-release-mac-windows-branch
         git push -f origin workbase-release-mac-windows-branch
-        pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip3 install requests
+        pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip3 install requests python-dateutil
         bazel run //:wait-for-release -- $GRABL_OWNER $GRABL_REPO $(cat VERSION) grakn-workbase-mac-$(cat VERSION).dmg grakn-workbase-win-$(cat VERSION).exe
     deploy-github-linux:
       image: graknlabs-ubuntu-20.04
