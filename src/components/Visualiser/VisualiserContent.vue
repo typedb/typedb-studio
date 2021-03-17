@@ -30,7 +30,7 @@
                     <template v-else>
                       <input ref="renameTabInput" class="input-small rename-tab-input" v-model="newTabName">
                       <div @click="cancelRename" class="cancel-tab-rename-btn"><vue-icon className="tab-icon" icon="cross" iconSize="13"></vue-icon></div>
-                      <div  @click="saveName(tab)" class="save-tab-rename-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
+                      <div @click="saveName(tab)" class="save-tab-rename-btn"><vue-icon className="tab-icon" icon="tick" iconSize="13"></vue-icon></div>
                     </template>
                   </div>
                 </div>
