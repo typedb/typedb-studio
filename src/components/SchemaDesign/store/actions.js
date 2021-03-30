@@ -41,7 +41,8 @@ import SchemaHandler from '../SchemaHandler';
 import { computeAttributes, computeRoles, loadMetaTypeInstances, updateNodePositions, } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
-import { SessionType, TransactionType } from "grakn-client/GraknClient";
+import { SessionType } from "grakn-client/api/GraknSession";
+import { TransactionType } from "grakn-client/api/GraknTransaction";
 
 export default {
   async [OPEN_GRAKN_TX]({ commit }) {
@@ -373,10 +374,10 @@ export default {
         const rolePlayers = await role.asRemote(tx).getPlayers().collect();
 
         await Promise.all(rolePlayers.map(async (player) => {
-          await state.schemaHandler.deletePlaysRole(player.getLabel(), type.getLabel(), role.getLabel());
+          await state.schemaHandler.deletePlaysRole(player.getLabel().name(), type.getLabel().name(), role.getLabel().name());
         }));
 
-        await state.schemaHandler.deleteRelatesRole(type.getLabel(), role.getLabel());
+        await state.schemaHandler.deleteRelatesRole(type.getLabel().name(), role.getLabel().name());
       }));
     } else if (payload.baseType === 'ATTRIBUTE_TYPE') {
       const nodes = state.visFacade.getAllNodes();

@@ -430,7 +430,7 @@
           const superType = await tx.concepts().getAttributeType(val);
           this.valueType = superType.getValueType().toLowerCase();
           this.showDataTypeList = false;
-          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel()).collect();
+          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel().name()).collect();
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));
           tx.close();
         } else {

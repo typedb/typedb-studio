@@ -51,10 +51,10 @@ export async function computeAttributes(nodes, tx) {
   for (const node of nodes) {
     if (node.iid) {
       const ownedAttrs = await (await tx.concepts().getThing(node.iid)).asRemote(tx).getHas().collect();
-      node.attributes = ownedAttrs.map(attr => { return { typeLabel: attr.getType().getLabel(), value: attr.getValue() } });
+      node.attributes = ownedAttrs.map(attr => { return { typeLabel: attr.getType().getLabel().name(), value: attr.getValue() } });
     } else if (node.typeLabel) {
       const ownedAttrTypes = await (await tx.concepts().getThingType(node.typeLabel)).asRemote(tx).getOwns().collect();
-      node.attributes = ownedAttrTypes.map(attr => { return { typeLabel: attr.getLabel() }; });
+      node.attributes = ownedAttrTypes.map(attr => { return { typeLabel: attr.getLabel().name() }; });
     } else {
       throw "Node does not have a Label or an IID";
     }
@@ -71,19 +71,19 @@ export async function loadMetaTypeInstances(graknTx) {
 
   // Get types labels
   const metaTypeInstances = {};
-  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel()))
+  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relations = await Promise.all(rels.map(type => type.getLabel()))
+  metaTypeInstances.relations = await Promise.all(rels.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
-  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel()))
+  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'attribute')
       .concat()
       .sort());
-  metaTypeInstances.roles = await Promise.all(roles.map(type => type.getScopedLabel()))
+  metaTypeInstances.roles = await Promise.all(roles.map(type => type.getLabel().scopedName()))
     .then(labels => labels.filter(l => l && l !== 'relation:role')
       .concat()
       .sort());
@@ -147,7 +147,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
       const iter = graknTx.query().match(query);
       let answer = await iter.next();
       while (answer && answers.length !== neighboursLimit) {
-        const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel();
+        const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel().name();
         if (targetEntRoleLabel !== 'role') {
           const neighbourRelId = answer.map().get('neighbour-relation').getIID();
           const edgeId = `${neighbourRelId}-${targetEntId}-${targetEntRoleLabel}`;
@@ -182,7 +182,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
       const iter = graknTx.query().match(query);
       let answer = await iter.next();
       while (answer && answers.length !== neighboursLimit) {
-        const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel();
+        const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel().name();
         if (neighbourRoleLabel !== 'role') {
           const neighbourRoleId = answer.map().get('neighbour-player').getIID();
           const edgeId = `${targetRelId}-${neighbourRoleId}-${neighbourRoleLabel}`;

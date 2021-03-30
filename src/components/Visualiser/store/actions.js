@@ -45,7 +45,8 @@ import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
 import { reopenTransaction } from '../../shared/SharedUtils';
-import { SessionType, TransactionType } from "grakn-client/GraknClient";
+import { SessionType } from "grakn-client/api/GraknSession";
+import { TransactionType } from "grakn-client/api/GraknTransaction";
 import { GraknOptions } from "grakn-client/api/GraknOptions";
 
 
@@ -154,7 +155,7 @@ export default {
 
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
-      const options = new GraknOptions({ explain: false });
+      const options = GraknOptions.core({ explain: false });
       const result = await graknTx.query().match(query, options).collect();
       if (!result.length) {
         commit('loadingQuery', false);

@@ -154,7 +154,7 @@
 
         const type = await tx.concepts().getThingType(this.currentType);
 
-        this.nodeAttributes = await Promise.all((await type.asRemote(tx).getOwns().collect()).map(type => type.getLabel()));
+        this.nodeAttributes = await Promise.all((await type.asRemote(tx).getOwns().collect()).map(type => type.getLabel().name()));
         this.nodeAttributes.sort();
         this.currentTypeSavedAttributes = DisplaySettings.getTypeLabels(this.currentType);
 

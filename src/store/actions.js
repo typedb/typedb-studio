@@ -41,8 +41,8 @@ export const deleteDatabase = async (context, name) => global.grakn.databases().
 export const initGrakn = async (context, isCluster) => {
   try {
     global.grakn = isCluster ?
-        await new GraknClient.cluster([ServerSettings.getServerUri()]) :
-        new GraknClient.core(ServerSettings.getServerUri());
+        await GraknClient.cluster([ServerSettings.getServerUri()]) :
+        GraknClient.core(ServerSettings.getServerUri());
     context.dispatch('loadDatabases');
   } catch (e) {
     context.commit('setIsGraknRunning', false);

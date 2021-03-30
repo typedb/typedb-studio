@@ -41,19 +41,19 @@ export async function loadMetaTypeInstances(graknTx) {
 
   // Get types labels
   const metaTypeInstances = {};
-  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel()))
+  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relations = await Promise.all(rels.map(async type => type.getLabel()))
+  metaTypeInstances.relations = await Promise.all(rels.map(async type => type.getLabel().name()))
     .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
-  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel()))
+  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'attribute')
       .concat()
       .sort());
-  metaTypeInstances.roles = await Promise.all(roles.map(async type => type.getScopedLabel()))
+  metaTypeInstances.roles = await Promise.all(roles.map(async type => type.getLabel().scopedName()))
     .then(labels => labels.filter(l => l && l !== 'relation:role')
       .concat()
       .sort());
@@ -65,7 +65,7 @@ export async function computeAttributes(nodes, tx) {
   return Promise.all(nodes.map(async (node) => {
     const concept = await tx.concepts().getThingType(node.typeLabel);
     const attributes = await concept.asRemote(tx).getOwns().collect();
-    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.getLabel(), valueType: await concept.getValueType() })));
+    node.attributes = await Promise.all(attributes.map(async concept => ({ type: await concept.getLabel().name(), valueType: await concept.getValueType() })));
     return node;
   }));
 }
@@ -75,7 +75,7 @@ export async function computeRoles(nodes, tx) {
   return Promise.all(nodes.map(async (node) => {
     const concept = await tx.concepts().getThingType(node.typeLabel);
     const roles = await concept.asRemote(tx).getPlays().collect();
-    node.roles = await Promise.all(roles.map(concept => concept.getScopedLabel()));
+    node.roles = await Promise.all(roles.map(concept => concept.getLabel().scopedName()));
     return node;
   }));
 }

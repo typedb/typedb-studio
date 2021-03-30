@@ -62,7 +62,7 @@ SchemaHandler.prototype.defineRule = async function define(ruleLabel, when, then
 SchemaHandler.prototype.deleteType = async function deleteType(schemaLabel) {
   const type = await tx.concepts().getThingType(schemaLabel);
   await type.asRemote(tx).delete();
-  return type.getLabel();
+  return type.getLabel().name();
 };
 
 SchemaHandler.prototype.addAttribute = async function addAttribute(schemaLabel, attributeLabel) {

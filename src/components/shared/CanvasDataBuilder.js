@@ -43,9 +43,9 @@ const getConceptIdentifier = (concept) => {
   if (concept.isThing()) {
     return concept.getIID();
   } else if (concept.isRoleType()) {
-    return concept.getScopedLabel();
+    return concept.getLabel().scopedName();
   } else if (concept.isType()) {
-    return concept.getLabel();
+    return concept.getLabel().name();
   } else {
     throw "Unrecognised concept type: " + concept;
   }
@@ -84,8 +84,8 @@ const getTypeBaseType = (type) => {
 
 const getTypeLabel = (type) => {
   let label;
-  if (type.isRoleType()) label = type.getScopedLabel();
-  else label = type.getLabel();
+  if (type.isRoleType()) label = type.getLabel().scopedName();
+  else label = type.getLabel().name();
   return label;
 };
 
@@ -153,7 +153,7 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   if (selectedAttrs.length > 0) {
     const allAttrs = await convertToRemote(instance).getHas().collect();
 
-    const allAttrsData = allAttrs.map( attr => ({ label: attr.getType().getLabel(), value: attr.getValue() }));
+    const allAttrsData = allAttrs.map( attr => ({ label: attr.getType().getLabel().name(), value: attr.getValue() }));
     const allAttrsMap = {};
     allAttrsData.forEach((attrData) => { allAttrsMap[attrData.label] = attrData.value; });
 
@@ -241,7 +241,7 @@ const getInstanceRelatesEdges = async (relation) => {
 
   const edges = (await Promise.all(
     rpMapEntries.map(([role, players]) =>
-      Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel()),
+      Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel().name()),
     )))
   ).reduce(collect, []);
   return [edges];
@@ -385,7 +385,7 @@ const getTypePlayEdges = async (type) => {
   const playRoles = await convertToRemote(type).getPlays().collect();
   return (await Promise.all(playRoles.map(role =>
     convertToRemote(role).getRelationTypes().collect().then(relations =>
-      relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, role.getLabel())))
+      relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, role.getLabel().name())))
   ))).reduce(collect, []);
 };
 
@@ -397,7 +397,7 @@ const getTypeRelatesEdges = async (type) => {
   const roles = await convertToRemote(type).getRelates().collect();
   return (await Promise.all(roles.map(role =>
     convertToRemote(role).getPlayers().collect().then(players =>
-      players.map(player => getEdge(type, player, edgeTypes.type.RELATES, role.getLabel())))
+      players.map(player => getEdge(type, player, edgeTypes.type.RELATES, role.getLabel().name())))
   ))).reduce(collect, []);
 };
 
@@ -530,7 +530,7 @@ const buildNeighbours = async (targetConcept, answers) => {
     .reduce(collect, []);
 
   const nodeIds = nodes.map(node => node.id);
-  nodeIds.push(targetConcept.isThing() ? targetConcept.getIID() : targetConcept.getLabel());
+  nodeIds.push(targetConcept.isThing() ? targetConcept.getIID() : targetConcept.getLabel().name());
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
@@ -585,8 +585,8 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
               let processedEntriesCount = 0;
               rpEntries.forEach(([role, players]) => {
                 players.forEach((player) => {
-                  player.label = player.getType().getLabel();
-                  const edge = getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel());
+                  player.label = player.getType().getLabel().name();
+                  const edge = getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel().name());
                   getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
                     edges.push(edge);
                     nodes.push(node);

@@ -181,7 +181,7 @@ import TypesContainer from '../TypesContainer';
 import ErrorContainer from '../ErrorContainer';
 import AddFavQuery from '../FavQueries/AddFavQuery';
 import ToolTip from '../../../UIElements/ToolTip';
-import { TransactionType } from "grakn-client/GraknClient";
+import { TransactionType } from "grakn-client/api/GraknTransaction";
 
 
 export default {

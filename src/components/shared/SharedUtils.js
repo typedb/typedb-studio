@@ -16,7 +16,7 @@
  *
  */
 
-import { TransactionType } from "grakn-client/GraknClient";
+import { TransactionType } from "grakn-client/api/GraknTransaction";
 
 export const META_LABELS = new Set(['entity', 'relation', 'attribute', 'relation:role', 'thing']);
 
