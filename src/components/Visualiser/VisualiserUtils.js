@@ -127,9 +127,9 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'RELATION_TYPE': {
       const targetTypeLabel = targetNode.id;
       const query = `match $target-type type ${targetTypeLabel}; $neighbour-instance isa $target-type; get $neighbour-instance;`;
-      const iter = graknTx.query().match(query);
+      const iter = graknTx.query().match(query).iterator();
 
-      let answer = await iter.next();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourInstanceId = answer.map().get('neighbour-instance').getIID();
         const edgeId = `${targetTypeLabel}-${neighbourInstanceId}-isa`;
@@ -137,15 +137,15 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           answers.push(answer);
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'ENTITY': {
       const targetEntId = targetNode.id;
       const query = `match $target-entity iid ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get $neighbour-relation, $target-entity-role;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel().name();
         if (targetEntRoleLabel !== 'role') {
@@ -156,15 +156,15 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           }
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'ATTRIBUTE': {
       const targetAttrId = targetNode.id;
       const query = `match $neighbour-owner has attribute $target-attribute; $target-attribute iid ${targetAttrId}; get $neighbour-owner;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourOwnerId = answer.map().get('neighbour-owner').getIID();
         const edgeId = `${neighbourOwnerId}-${targetAttrId}-has`;
@@ -172,15 +172,15 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           answers.push(answer);
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'RELATION': {
       const targetRelId = targetNode.id;
       const query = `match $target-relation ($neighbour-role: $neighbour-player); $target-relation iid ${targetRelId}; get $neighbour-player, $neighbour-role;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel().name();
         if (neighbourRoleLabel !== 'role') {
@@ -191,7 +191,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           }
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
