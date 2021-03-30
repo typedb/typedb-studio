@@ -46,7 +46,7 @@ import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
 import { reopenTransaction } from '../../shared/SharedUtils';
 import { SessionType, TransactionType } from "grakn-client/GraknClient";
-import { GraknOptions } from "grakn-client/GraknOptions";
+import { GraknOptions } from "grakn-client/api/GraknOptions";
 
 
 const collect = (array, current) => array.concat(current);

@@ -16,7 +16,7 @@
  *
  */
 
-import { AttributeType } from "grakn-client/concept/type/AttributeType";
+import { AttributeType } from "grakn-client/api/concept/type/AttributeType";
 const { ValueType } = AttributeType;
 
 let tx;
