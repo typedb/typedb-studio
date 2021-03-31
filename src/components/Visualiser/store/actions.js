@@ -155,7 +155,7 @@ export default {
 
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
-      const options = GraknOptions.core({ explain: false });
+      const options = GraknOptions.core({ explain: true });
       const result = await graknTx.query().match(query, options).collect();
       if (!result.length) {
         commit('loadingQuery', false);
@@ -177,7 +177,7 @@ export default {
         const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
         const shouldLimit = true;
 
-        const instancesData = await CDB.buildInstances(result, query);
+        const instancesData = await CDB.buildInstances(result);
         nodes.push(...instancesData.nodes);
         edges.push(...instancesData.edges);
 
@@ -278,62 +278,24 @@ export default {
       const node = getters.selectedNode;
       const graknTx = global.graknTx[rootState.activeTab];
 
-      const isRelUnassigned = (when) => {
-        let isRelUnassigned = false;
-        const relRegex = /(\$[^\s]*|;|{)(\s*?\(.*?\))/g;
-        let relMatches = relRegex.exec(when);
-
-        while (relMatches) {
-          if (!relMatches[1].includes('$')) {
-            isRelUnassigned = true;
-            break;
-          }
-          relMatches = relRegex.exec(when);
-        }
-
-        return isRelUnassigned;
-      };
-
-      const errorUnassigneRels = ruleLabel => (
-        // eslint-disable-next-line max-len
-        `The 'when' body of the rule [${ruleLabel}] contains at least one unassigned relation. To see the full explanation for this concept, please redefine the rule with relation variables.`
-      );
-
-      const isTargetExplAnswer = answer => Array.from(answer.map().values()).map(concept => concept.id).some(id => id === node.id);
-
-      const originalExpl = await node.explanation();
-      const rule = originalExpl.getRule();
-      const isExplJoin = !rule;
-      let finalExplAnswers;
-
-      if (!isExplJoin) {
-        const when = await rule.getWhen();
-        const label = await rule.label();
-        if (isRelUnassigned(when)) {
-          commit('setGlobalErrorMsg', errorUnassigneRels(label));
-          return false;
-        }
-
-        finalExplAnswers = originalExpl.getAnswers();
-      } else {
-        const ruleExpl = await Promise.all(originalExpl.getAnswers().filter(answer => answer.hasExplanation() && isTargetExplAnswer(answer)).map(answer => answer.explanation()));
-        const ruleDetails = await Promise.all(ruleExpl.map((explanation) => {
-          const rule = explanation.getRule();
-          return Promise.all([rule.label(), rule.getWhen()]);
-        }));
-
-        const violatingRule = ruleDetails.find(([, when]) => isRelUnassigned(when));
-        if (violatingRule) {
-          commit('setGlobalErrorMsg', errorUnassigneRels(violatingRule.label));
-          return false;
-        }
-
-        finalExplAnswers = ruleExpl.map(expl => expl.getAnswers()).reduce(collect, []);
+      if (!node.explainable) {
+          return;
       }
+      if (!node.explanations) {
+        node.explanations = graknTx.query().explain(node.explainable).iterator();
+        state.visFacade.updateNode(node);
+      }
+      const explanationNext = await node.explanations.next();
+      if (explanationNext.done) {
+          node.explanations = null;
+          node.explanationExhausted = true;
+          state.visFacade.updateNode(node);
+      } else {
+        const explanation = explanationNext.value;
+        const answers = [explanation.whenAnswer()];
 
-      if (finalExplAnswers.length > 0) {
-        const data = await CDB.buildInstances(finalExplAnswers);
-        const rpData = await CDB.buildRPInstances(finalExplAnswers, data, false, graknTx);
+        const data = await CDB.buildInstances(answers);
+        const rpData = await CDB.buildRPInstances(answers, data, false, graknTx);
         data.nodes.push(...rpData.nodes);
         data.edges.push(...rpData.edges);
 
@@ -348,8 +310,6 @@ export default {
         const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
         state.visFacade.updateEdge(styledEdges);
         commit('loadingQuery', false);
-      } else {
-        commit('setGlobalErrorMsg', 'The transaction has been refreshed since the loading of this node and, as a result, the explaination is incomplete.');
       }
     } catch (e) {
       await reopenTransaction(rootState, commit);
