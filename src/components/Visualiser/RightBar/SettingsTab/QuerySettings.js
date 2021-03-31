@@ -39,6 +39,7 @@ function setQueryLimit(value) {
 // -------------- Relation Settings ------------ //
 
 const DEFAULT_ROLE_PLAYERS = true;
+const DEFAULT_REASONING = false;
 
 function setRolePlayersStatus(status) {
   storage.set('load_role_players', status);
@@ -51,6 +52,19 @@ function getRolePlayersStatus() {
     return DEFAULT_ROLE_PLAYERS;
   }
   return rolePlayers;
+}
+
+function setReasoning(status) {
+  storage.set('reasoning', status);
+}
+
+function getReasoning() {
+  const reasoning = storage.get('reasoning');
+  if (reasoning == null) {
+    this.setReasoning(DEFAULT_REASONING);
+    return DEFAULT_REASONING;
+  }
+  return reasoning;
 }
 
 // -------------- Neighbor Settings ------------ //
@@ -79,4 +93,6 @@ export default {
   getRolePlayersStatus,
   setNeighboursLimit,
   getNeighboursLimit,
+  setReasoning,
+  getReasoning,
 };

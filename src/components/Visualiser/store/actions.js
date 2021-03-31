@@ -29,6 +29,7 @@ import {
   DELETE_SELECTED_NODES,
   LOAD_NEIGHBOURS,
   LOAD_ATTRIBUTES,
+  REOPEN_GLOBAL_GRAKN_TX,
 } from '@/components/shared/StoresActions';
 import logger from '@/logger';
 
@@ -44,13 +45,10 @@ import QuerySettings from '../RightBar/SettingsTab/QuerySettings';
 import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
-import { reopenTransaction } from '../../shared/SharedUtils';
+import { getTransactionOptions, reopenTransaction } from '../../shared/SharedUtils';
 import { SessionType } from "grakn-client/api/GraknSession";
 import { TransactionType } from "grakn-client/api/GraknTransaction";
 import { GraknOptions } from "grakn-client/api/GraknOptions";
-
-
-const collect = (array, current) => array.concat(current);
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -76,7 +74,7 @@ export default {
       // eslint-disable-next-line no-prototype-builtins
       if (!global.graknTx) global.graknTx = {};
       if (global.graknTx[rootState.activeTab]) global.graknTx[rootState.activeTab].close();
-      global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ);
+      global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
       dispatch(UPDATE_METATYPE_INSTANCES);
     }
   },
@@ -155,8 +153,7 @@ export default {
 
       commit('loadingQuery', true);
       const graknTx = global.graknTx[rootState.activeTab];
-      const options = GraknOptions.core({ explain: true });
-      const result = await graknTx.query().match(query, options).collect();
+      const result = await graknTx.query().match(query).collect();
       if (!result.length) {
         commit('loadingQuery', false);
         return null;
@@ -325,5 +322,12 @@ export default {
       state.visFacade.deleteNode(node);
     });
     commit('selectedNodes', null);
+  },
+
+  async [REOPEN_GLOBAL_GRAKN_TX]({ rootState }) {
+    if (global.graknTx[rootState.activeTab]) {
+      global.graknTx[rootState.activeTab].close();
+    }
+    global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
   },
 };

@@ -36,6 +36,10 @@
                 <h1 class="panel-label">Load Roleplayers:</h1>
                 <div class="panel-value load-roleplayers-switch"><vue-switch :isToggled="loadRolePlayers" v-on:toggled="updateLoadRoleplayers"></vue-switch></div>
             </div>
+            <div class="panel-content-item">
+                <h1 class="panel-label">Reasoning:</h1>
+                <div class="panel-value reasoning-switch"><vue-switch :isToggled="reasoning" v-on:toggled="updateReasoning"></vue-switch></div>
+            </div>
         </div>
         </div>
     </div>
@@ -44,6 +48,12 @@
 <script>
 
   import QueryUtils from './QuerySettings';
+  import { REOPEN_GLOBAL_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { createNamespacedHelpers } from 'vuex';
+  import getters from "../../../Visualiser/store/getters";
+  import state from "../../../Visualiser/store/tabState";
+  import mutations from "../../../Visualiser/store/mutations";
+  import actions from "../../../Visualiser/store/actions";
 
   export default {
 
@@ -54,6 +64,19 @@
         queryLimit: QueryUtils.getQueryLimit(),
         neighboursLimit: QueryUtils.getNeighboursLimit(),
         loadRolePlayers: QueryUtils.getRolePlayersStatus(),
+        reasoning: QueryUtils.getReasoning(),
+      };
+    },
+    beforeCreate() {
+      if (!this.$store.state.hasOwnProperty('query-settings')) {
+        this.$store.registerModule('query-settings', { namespaced: true, getters, state, mutations, actions });
+      }
+      const { mapActions } = createNamespacedHelpers('query-settings');
+
+      // methods
+      this.$options.methods = {
+          ...(this.$options.methods || {}),
+          ...mapActions([REOPEN_GLOBAL_GRAKN_TX]),
       };
     },
     watch: {
@@ -70,6 +93,10 @@
       },
       updateLoadRoleplayers(newVal) {
         QueryUtils.setRolePlayersStatus(newVal);
+      },
+      updateReasoning(newVal) {
+        QueryUtils.setReasoning(newVal);
+        this[REOPEN_GLOBAL_GRAKN_TX]().catch((err) => { this.$notifyError(err, 'Failed to reopen transaction'); });
       },
     },
   };

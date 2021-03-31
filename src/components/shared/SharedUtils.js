@@ -16,7 +16,9 @@
  *
  */
 
+import { GraknOptions } from "grakn-client/api/GraknOptions";
 import { TransactionType } from "grakn-client/api/GraknTransaction";
+import QueryUtils from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 
 export const META_LABELS = new Set(['entity', 'relation', 'attribute', 'relation:role', 'thing']);
 
@@ -35,7 +37,14 @@ export const reopenTransaction = async (state, commit) => {
   const graknTx = global.graknTx[state.activeTab];
   const isGraknTxOpen = await graknTx.isOpen();
   if (!isGraknTxOpen) { // graknTx has been invalidated because of an error and so it's closed now
-    global.graknTx[state.activeTab] = await global.graknSession.transaction(TransactionType.READ);
+    global.graknTx[state.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
     commit('setGlobalErrorMsg', 'The transaction was refreshed and, as a result, the explanation of currently displayed inferred nodes may be incomplete.');
   }
+};
+
+export const getTransactionOptions = () => {
+  return GraknOptions.core({
+    infer: QueryUtils.getReasoning(),
+    explain: true,
+  });
 };
