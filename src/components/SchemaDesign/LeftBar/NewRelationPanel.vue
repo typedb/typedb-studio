@@ -475,10 +475,10 @@
           const tx = await this[OPEN_GRAKN_TX]();
           const superType = await tx.concepts().getRelationType(val);
 
-          this.superRelatipnshipTypeRoles = await superType.asRemote(tx).getRelates().map(role => role.getLabel()).collect();
+          this.superRelatipnshipTypeRoles = await superType.asRemote(tx).getRelates().map(role => role.getLabel().name()).collect();
           this.overridenRoles.push(...this.superRelatipnshipTypeRoles.map(role => ({ label: role, override: false })));
 
-          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel()).collect();
+          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel().name()).collect();
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));
           tx.close();
         } else {

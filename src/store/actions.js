@@ -16,7 +16,7 @@
  *
  */
 
-import { GraknClient } from 'grakn-client/GraknClient';
+import { Grakn } from 'grakn-client/Grakn';
 import ServerSettings from '@/components/ServerSettings';
 
 export const loadDatabases = async (context) => {
@@ -41,8 +41,8 @@ export const deleteDatabase = async (context, name) => global.grakn.databases().
 export const initGrakn = async (context, isCluster) => {
   try {
     global.grakn = isCluster ?
-        await new GraknClient.cluster([ServerSettings.getServerUri()]) :
-        new GraknClient.core(ServerSettings.getServerUri());
+        await Grakn.clusterClient([ServerSettings.getServerUri()]) :
+        Grakn.coreClient(ServerSettings.getServerUri());
     context.dispatch('loadDatabases');
   } catch (e) {
     context.commit('setIsGraknRunning', false);

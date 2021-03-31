@@ -43,9 +43,9 @@ const getConceptIdentifier = (concept) => {
   if (concept.isThing()) {
     return concept.getIID();
   } else if (concept.isRoleType()) {
-    return concept.getScopedLabel();
+    return concept.getLabel().scopedName();
   } else if (concept.isType()) {
-    return concept.getLabel();
+    return concept.getLabel().name();
   } else {
     throw "Unrecognised concept type: " + concept;
   }
@@ -84,8 +84,8 @@ const getTypeBaseType = (type) => {
 
 const getTypeLabel = (type) => {
   let label;
-  if (type.isRoleType()) label = type.getScopedLabel();
-  else label = type.getLabel();
+  if (type.isRoleType()) label = type.getLabel().scopedName();
+  else label = type.getLabel().name();
   return label;
 };
 
@@ -153,7 +153,7 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
   if (selectedAttrs.length > 0) {
     const allAttrs = await convertToRemote(instance).getHas().collect();
 
-    const allAttrsData = allAttrs.map( attr => ({ label: attr.getType().getLabel(), value: attr.getValue() }));
+    const allAttrsData = allAttrs.map( attr => ({ label: attr.getType().getLabel().name(), value: attr.getValue() }));
     const allAttrsMap = {};
     allAttrsData.forEach((attrData) => { allAttrsMap[attrData.label] = attrData.value; });
 
@@ -170,9 +170,9 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
  * need to be passed to here for the ConceptMap that contained the instance
  * @param {Thing} instance guaranteed to be a concept instance
  * @param {String} graqlVar
- * @param {ConceptMap[]} explanation
+ * @param {Explainable} explainable
  */
-const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
+const buildCommonInstanceNode = async (instance, graqlVar, explainable) => {
   const node = {};
   node.id = instance.getIID();
   node.iid = instance.getIID();
@@ -182,9 +182,7 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
   node.typeLabel = getTypeLabel(instance.getType());
   node.isInferred = await convertToRemote(instance).isInferred();
   node.attributes = await convertToRemote(instance).getHas();
-  if (node.isInferred) {
-    node.explanation = explanation;
-  }
+  node.explainable = explainable;
 
   return node;
 };
@@ -193,10 +191,10 @@ const buildCommonInstanceNode = async (instance, graqlVar, explanation) => {
  * produces and returns the node for the given concept instance based on is basetype
  * @param {Thing} instance guaranteed to be a concept instance
  * @param {String} graqlVar
- * @param {ConceptMap[]} explanation
+ * @param {Explainable} explainable
  */
-const getInstanceNode = async (instance, graqlVar, explanation) => {
-  const node = await buildCommonInstanceNode(instance, graqlVar, explanation);
+const getInstanceNode = async (instance, graqlVar, explainable) => {
+  const node = await buildCommonInstanceNode(instance, graqlVar, explainable);
   const baseType = getThingBaseType(instance);
   switch (baseType) {
     case ENTITY_INSTANCE: {
@@ -239,11 +237,13 @@ const getInstanceRelatesEdges = async (relation) => {
   const rpMap = await convertToRemote(relation).getPlayersByRoleType();
   const rpMapEntries = Array.from(rpMap.entries());
 
-  const edges = (await Promise.all(
-    rpMapEntries.map(([role, players]) =>
-      Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel()),
-    )))
-  ).reduce(collect, []);
+  const edges = rpMapEntries.map(([role, players]) => {
+    if (!role.isRoot()) {
+      return Array.from(players.values()).reduce(collect, []).map(player => getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel().name()))
+    } else {
+      return [];
+    }
+  }).reduce(collect, []);
   return [edges];
 };
 
@@ -285,12 +285,11 @@ const getInstanceEdges = async (thing, existingNodeIds) => {
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
 const buildInstances = async (answers) => {
-  let data = answers.map((answerGroup) => {
-    const { explanation } = answerGroup;
-    return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
+  let data = answers.map((answer) => {
+    return Array.from(answer.map().entries()).map(([graqlVar, concept]) => ({
       graqlVar,
       concept,
-      explanation,
+      explainable: answer.explainables().relations().get(graqlVar),
     }));
   }).reduce(collect, []);
 
@@ -302,7 +301,7 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explanation))))
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explainable))))
     .reduce(collect, []);
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
@@ -385,7 +384,7 @@ const getTypePlayEdges = async (type) => {
   const playRoles = await convertToRemote(type).getPlays().collect();
   return (await Promise.all(playRoles.map(role =>
     convertToRemote(role).getRelationTypes().collect().then(relations =>
-      relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, role.getLabel())))
+      relations.map(relation => getEdge(relation, type, edgeTypes.type.PLAYS, role.getLabel().name())))
   ))).reduce(collect, []);
 };
 
@@ -397,7 +396,7 @@ const getTypeRelatesEdges = async (type) => {
   const roles = await convertToRemote(type).getRelates().collect();
   return (await Promise.all(roles.map(role =>
     convertToRemote(role).getPlayers().collect().then(players =>
-      players.map(player => getEdge(type, player, edgeTypes.type.RELATES, role.getLabel())))
+      players.map(player => getEdge(type, player, edgeTypes.type.RELATES, role.getLabel().name())))
   ))).reduce(collect, []);
 };
 
@@ -530,7 +529,7 @@ const buildNeighbours = async (targetConcept, answers) => {
     .reduce(collect, []);
 
   const nodeIds = nodes.map(node => node.id);
-  nodeIds.push(targetConcept.isThing() ? targetConcept.getIID() : targetConcept.getLabel());
+  nodeIds.push(targetConcept.isThing() ? targetConcept.getIID() : targetConcept.getLabel().name());
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourEdges(item.concept, targetConcept, nodeIds)))).reduce(collect, []);
 
   return { nodes, edges };
@@ -584,16 +583,18 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
 
               let processedEntriesCount = 0;
               rpEntries.forEach(([role, players]) => {
-                players.forEach((player) => {
-                  player.label = player.getType().getLabel();
-                  const edge = getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel());
-                  getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
-                    edges.push(edge);
-                    nodes.push(node);
-                    processedEntriesCount += 1;
-                    if (processedEntriesCount === rpEntries.length) resolve({ edges, nodes });
+                if (!role.isRoot()) {
+                  players.forEach((player) => {
+                    player.label = player.getType().getLabel().name();
+                    const edge = getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel().name());
+                    getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
+                      edges.push(edge);
+                      nodes.push(node);
+                      processedEntriesCount += 1;
+                      if (processedEntriesCount === rpEntries.length) resolve({ edges, nodes });
+                    });
                   });
-                });
+                }
               });
             });
           }));

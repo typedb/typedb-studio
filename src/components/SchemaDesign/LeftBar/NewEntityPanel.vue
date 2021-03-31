@@ -357,7 +357,7 @@
         if (val !== 'entity') { // if sup-typing an entity do not show inherited attributes in has panel to avoid duplicated attributes
           const tx = await this[OPEN_GRAKN_TX]();
           const superType = await tx.concepts().getEntityType(val);
-          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel()).collect();
+          this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel().name()).collect();
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));
           tx.close();
         } else {

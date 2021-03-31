@@ -168,7 +168,7 @@
           let roles;
           if (node.iid) {
               const thing = await tx.concepts().getThing(node.iid);
-              roles = await thing.asRemote(tx).getPlays().collect();
+              roles = await thing.asRemote(tx).getPlaying().collect();
           } else if (node.typeLabel) {
               const thingType = await tx.concepts().getThingType(node.typeLabel);
               roles = await thingType.asRemote(tx).getPlays().collect();
@@ -178,11 +178,11 @@
           // Map roles to their respective relations and an empty array of other role players in that relation
           // Role => { relation, otherRolePlayers = [] }
           for (const role of roles) {
-              const roleLabel = role.getScopedLabel();
+              const roleLabel = role.getLabel().scopedName();
               if (!(roleLabel in this.relations)) {
                   this.relations.set(roleLabel, new Map());
                   (await role.asRemote(tx).getRelationTypes().collect()).forEach((x) => {
-                      this.relations.set(roleLabel, { relation: x.getLabel(), otherRolePlayers: [] });
+                      this.relations.set(roleLabel, { relation: x.getLabel().name(), otherRolePlayers: [] });
                   });
               }
           }
@@ -200,7 +200,7 @@
 
           if (node.iid) {
             concept = await tx.concepts().getThing(node.iid);
-            roles = await concept.asRemote(tx).getPlays().collect();
+            roles = await concept.asRemote(tx).getPlaying().collect();
           } else if (node.typeLabel) {
             concept = await tx.concepts().getThingType(node.typeLabel);
             roles = await concept.asRemote(tx).getPlays().collect();
@@ -209,7 +209,7 @@
           }
 
           // Get role concept of selected current role
-          const role = roles.find(r => r.getScopedLabel() === this.currentRole);
+          const role = roles.find(r => r.getLabel().scopedName() === this.currentRole);
 
           // For every relation, map relations to their respective rolePlayer and the role it plays
           if (node.iid) {
@@ -219,9 +219,9 @@
                   const rolePlayers = Array.from((await relation.asRemote(tx).getPlayersByRoleType()).entries());
                   await Promise.all(Array.from(rolePlayers, async ([role, setOfThings]) => {
                       // Do not include the current role
-                      if (role.getScopedLabel() !== this.currentRole) {
+                      if (role.getLabel().scopedName() !== this.currentRole) {
                           Array.from(setOfThings.values()).forEach((thing) => {
-                              this.relations.get(this.currentRole).otherRolePlayers.push({ role: role.getLabel(), player: `${thing.getType().getLabel()}: ${thing.getIID()}` });
+                              this.relations.get(this.currentRole).otherRolePlayers.push({ role: role.getLabel().name(), player: `${thing.getType().getLabel()}: ${thing.getIID()}` });
                           });
                       }
                   }));
@@ -231,10 +231,10 @@
               const roles = await relationType.asRemote(tx).getRelates().collect();
               roles[0].asRemote(tx).getPlayers();
               await Promise.all(roles.map(async role => {
-                  if (role.getScopedLabel() !== this.currentRole) {
+                  if (role.getLabel().scopedName() !== this.currentRole) {
                       const thingTypes = await role.asRemote(tx).getPlayers().collect();
                       thingTypes.forEach(thingType => {
-                          this.relations.get(this.currentRole).otherRolePlayers.push({ role: role.getLabel(), player: `${thingType.getLabel()}` });
+                          this.relations.get(this.currentRole).otherRolePlayers.push({ role: role.getLabel().name(), player: `${thingType.getLabel()}` });
                       });
                   }
               }));

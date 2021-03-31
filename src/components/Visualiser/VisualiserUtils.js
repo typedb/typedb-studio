@@ -51,10 +51,10 @@ export async function computeAttributes(nodes, tx) {
   for (const node of nodes) {
     if (node.iid) {
       const ownedAttrs = await (await tx.concepts().getThing(node.iid)).asRemote(tx).getHas().collect();
-      node.attributes = ownedAttrs.map(attr => { return { typeLabel: attr.getType().getLabel(), value: attr.getValue() } });
+      node.attributes = ownedAttrs.map(attr => { return { typeLabel: attr.getType().getLabel().name(), value: attr.getValue() } });
     } else if (node.typeLabel) {
       const ownedAttrTypes = await (await tx.concepts().getThingType(node.typeLabel)).asRemote(tx).getOwns().collect();
-      node.attributes = ownedAttrTypes.map(attr => { return { typeLabel: attr.getLabel() }; });
+      node.attributes = ownedAttrTypes.map(attr => { return { typeLabel: attr.getLabel().name() }; });
     } else {
       throw "Node does not have a Label or an IID";
     }
@@ -71,19 +71,19 @@ export async function loadMetaTypeInstances(graknTx) {
 
   // Get types labels
   const metaTypeInstances = {};
-  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel()))
+  metaTypeInstances.entities = await Promise.all(entities.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'entity')
       .concat()
       .sort());
-  metaTypeInstances.relations = await Promise.all(rels.map(type => type.getLabel()))
+  metaTypeInstances.relations = await Promise.all(rels.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l && l !== 'relation')
       .concat()
       .sort());
-  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel()))
+  metaTypeInstances.attributes = await Promise.all(attributes.map(type => type.getLabel().name()))
     .then(labels => labels.filter(l => l !== 'attribute')
       .concat()
       .sort());
-  metaTypeInstances.roles = await Promise.all(roles.map(type => type.getScopedLabel()))
+  metaTypeInstances.roles = await Promise.all(roles.map(type => type.getLabel().scopedName()))
     .then(labels => labels.filter(l => l && l !== 'relation:role')
       .concat()
       .sort());
@@ -127,9 +127,9 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'RELATION_TYPE': {
       const targetTypeLabel = targetNode.id;
       const query = `match $target-type type ${targetTypeLabel}; $neighbour-instance isa $target-type; get $neighbour-instance;`;
-      const iter = graknTx.query().match(query);
+      const iter = graknTx.query().match(query).iterator();
 
-      let answer = await iter.next();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourInstanceId = answer.map().get('neighbour-instance').getIID();
         const edgeId = `${targetTypeLabel}-${neighbourInstanceId}-isa`;
@@ -137,17 +137,17 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           answers.push(answer);
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'ENTITY': {
       const targetEntId = targetNode.id;
       const query = `match $target-entity iid ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get $neighbour-relation, $target-entity-role;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
-        const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel();
+        const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel().name();
         if (targetEntRoleLabel !== 'role') {
           const neighbourRelId = answer.map().get('neighbour-relation').getIID();
           const edgeId = `${neighbourRelId}-${targetEntId}-${targetEntRoleLabel}`;
@@ -156,15 +156,15 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           }
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'ATTRIBUTE': {
       const targetAttrId = targetNode.id;
       const query = `match $neighbour-owner has attribute $target-attribute; $target-attribute iid ${targetAttrId}; get $neighbour-owner;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourOwnerId = answer.map().get('neighbour-owner').getIID();
         const edgeId = `${neighbourOwnerId}-${targetAttrId}-has`;
@@ -172,17 +172,17 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           answers.push(answer);
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }
     case 'RELATION': {
       const targetRelId = targetNode.id;
       const query = `match $target-relation ($neighbour-role: $neighbour-player); $target-relation iid ${targetRelId}; get $neighbour-player, $neighbour-role;`;
-      const iter = graknTx.query().match(query);
-      let answer = await iter.next();
+      const iter = graknTx.query().match(query).iterator();
+      let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
-        const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel();
+        const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel().name();
         if (neighbourRoleLabel !== 'role') {
           const neighbourRoleId = answer.map().get('neighbour-player').getIID();
           const edgeId = `${targetRelId}-${neighbourRoleId}-${neighbourRoleLabel}`;
@@ -191,7 +191,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
           }
         }
         // eslint-disable-next-line no-await-in-loop
-        answer = await iter.next();
+        answer = (await iter.next()).value;
       }
       break;
     }

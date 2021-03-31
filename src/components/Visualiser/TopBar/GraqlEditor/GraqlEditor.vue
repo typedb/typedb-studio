@@ -181,7 +181,8 @@ import TypesContainer from '../TypesContainer';
 import ErrorContainer from '../ErrorContainer';
 import AddFavQuery from '../FavQueries/AddFavQuery';
 import ToolTip from '../../../UIElements/ToolTip';
-import { TransactionType } from "grakn-client/GraknClient";
+import { TransactionType } from "grakn-client/api/GraknTransaction";
+import { getTransactionOptions } from "../../../shared/SharedUtils";
 
 
 export default {
@@ -314,7 +315,7 @@ export default {
       else if (this.showSpinner) this.$notifyInfo('Please wait for action to complete');
       else {
         this[CANVAS_RESET]();
-        global.graknTx[this.$store.getters.activeTab] = await global.graknSession.transaction(TransactionType.READ);
+        global.graknTx[this.$store.getters.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
       }
     },
     toggleAddFavQuery() {

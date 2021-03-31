@@ -32,7 +32,7 @@ import VueSwitch from './components/UIElements/VueSwitch.vue';
 // Modules
 import { routes } from './routes';
 import CustomPlugins from './customPlugins';
-import { SessionType, TransactionType } from "grakn-client/GraknClient";
+import { SessionType } from "grakn-client/api/GraknSession";
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
 
