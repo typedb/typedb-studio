@@ -48,7 +48,6 @@ import CDB from '../../shared/CanvasDataBuilder';
 import { getTransactionOptions, reopenTransaction } from '../../shared/SharedUtils';
 import { SessionType } from "grakn-client/api/GraknSession";
 import { TransactionType } from "grakn-client/api/GraknTransaction";
-import { GraknOptions } from "grakn-client/api/GraknOptions";
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -324,10 +323,15 @@ export default {
     commit('selectedNodes', null);
   },
 
-  async [REOPEN_GLOBAL_GRAKN_TX]({ rootState }) {
-    if (global.graknTx[rootState.activeTab]) {
-      global.graknTx[rootState.activeTab].close();
+  async [REOPEN_GLOBAL_GRAKN_TX]({ rootState, commit }) {
+    if (global.graknSession && global.graknTx) {
+      if (global.graknTx[rootState.activeTab]) {
+        global.graknTx[rootState.activeTab].close();
+      }
+      global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
+      rootState[rootState.activeTab].visFacade.resetCanvas();
+      commit('selectedNodes', null);
+      commit('updateCanvasData');
     }
-    global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
   },
 };
