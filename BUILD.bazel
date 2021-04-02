@@ -93,7 +93,8 @@ deploy_brew(
     release = deployment['brew.release'],
     formula = "//config/brew:grakn-workbase.rb",
     checksum = "//:checksum-mac",
-    version_file = "//:VERSION"
+    version_file = "//:VERSION",
+    type = "cask",
 )
 
 checkstyle_test(
