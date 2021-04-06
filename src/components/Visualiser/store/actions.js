@@ -288,7 +288,7 @@ export default {
           state.visFacade.updateNode(node);
       } else {
         const explanation = explanationNext.value;
-        const answers = [explanation.whenAnswer()];
+        const answers = [explanation.condition()];
 
         const data = await CDB.buildInstances(answers);
         const rpData = await CDB.buildRPInstances(answers, data, false, graknTx);
