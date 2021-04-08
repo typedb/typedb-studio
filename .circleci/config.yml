@@ -61,10 +61,15 @@ jobs:
           export CSC_KEY_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD
           npm run build
       - run: |
+          echo "Creating release notes..."
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
           bazel run @graknlabs_dependencies//tool/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
           export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
+          echo "Deploying to GitHub..."
           bazel run //:deploy-github-mac $CIRCLE_SHA1
+          echo "Deploying to Homebrew..."
+          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
+          bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   build-windows:
     executor:
