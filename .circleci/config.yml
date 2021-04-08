@@ -42,7 +42,7 @@ commands:
           no_output_timeout: 120m
 
 jobs:
-  deploy-mac:
+  deploy-mac-and-brew:
     macos:
       xcode: "10.2.1"
     working_directory: ~/grakn
@@ -106,7 +106,7 @@ jobs:
 workflows:
   grakn-core:
     jobs:
-      - deploy-mac:
+      - deploy-mac-and-brew:
           filters:
             branches:
               only: workbase-release-mac-windows-branch
