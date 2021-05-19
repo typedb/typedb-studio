@@ -22,7 +22,7 @@
     "electron-store": "^7.0.2",
     "jquery": "^3.6.0",
     "typedb-client": "https://repo.vaticle.com/repository/npm-snapshot/typedb-client/-/typedb-client-0.0.0-93ce554d7733b4ad0f42167b8967b609d803f739.tgz",
-    "underscore": "^1.12.0",
+    "underscore": "^1.12.1",
     "vis": "^4.21.0-EOL",
     "vue": "^2.6.11",
     "vue-color": "^2.8.1",
