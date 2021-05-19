@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -150,7 +150,7 @@
   import { createNamespacedHelpers } from 'vuex';
 
   import FavQueriesSettings from './FavQueriesSettings';
-  import GraqlCodeMirror from '../GraqlEditor/GraqlCodeMirror';
+  import TypeQLCodeMirror from '../TypeQLEditor/TypeQLCodeMirror';
 
 
   export default {
@@ -203,7 +203,7 @@
         const savedQueries = this.$refs.favQuery;
         savedQueries.forEach((queryInput) => {
           if (queryInput.style.display !== 'none') { // Do not re-render inputs which already have been converted to code mirrors
-            const cm = GraqlCodeMirror.getCodeMirror(queryInput);
+            const cm = TypeQLCodeMirror.getCodeMirror(queryInput);
             cm.setValue(this.favQueries[parseInt(queryInput.value, 10)].value);
             cm.setOption('readOnly', 'nocursor');
             this.codeMirror.push(cm);

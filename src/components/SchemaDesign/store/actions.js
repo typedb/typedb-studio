@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -31,7 +31,7 @@ import {
   DELETE_SCHEMA_CONCEPT,
   INITIALISE_VISUALISER,
   LOAD_SCHEMA,
-  OPEN_GRAKN_TX,
+  OPEN_TYPEDB_TX,
   REFRESH_SELECTED_NODE,
   UPDATE_METATYPE_INSTANCES,
 } from '@/components/shared/StoresActions';
@@ -41,19 +41,19 @@ import SchemaHandler from '../SchemaHandler';
 import { computeAttributes, computeRoles, loadMetaTypeInstances, updateNodePositions, } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
-import { SessionType } from "grakn-client/api/GraknSession";
-import { TransactionType } from "grakn-client/api/GraknTransaction";
+import { SessionType } from "typedb-client/api/TypeDBSession";
+import { TransactionType } from "typedb-client/api/TypeDBTransaction";
 
 export default {
-  async [OPEN_GRAKN_TX]({ commit }) {
-    if (global.graknSession && global.graknSession.type() === SessionType.DATA) {
-        const database = global.graknSession.database().name();
-        global.graknSession.close();
-        global.graknSession = await global.grakn.session(database, SessionType.SCHEMA);
+  async [OPEN_TYPEDB_TX]({ commit }) {
+    if (global.typeDBSession && global.typeDBSession.type() === SessionType.DATA) {
+        const database = global.typeDBSession.database().name();
+        global.typeDBSession.close();
+        global.typeDBSession = await global.typedb.session(database, SessionType.SCHEMA);
     }
-    const tx = await global.graknSession.transaction(TransactionType.WRITE);
-    if (!global.graknTx) global.graknTx = {};
-    global.graknTx.schemaDesign = tx;
+    const tx = await global.typeDBSession.transaction(TransactionType.WRITE);
+    if (!global.typeDBTx) global.typeDBTx = {};
+    global.typeDBTx.schemaDesign = tx;
     commit('setSchemaHandler', new SchemaHandler(tx));
     return tx;
   },
@@ -62,15 +62,15 @@ export default {
     if (database !== state.currentDatabase) {
       dispatch(CANVAS_RESET);
       commit('currentDatabase', database);
-      if (global.graknSession) await global.graknSession.close();
-      global.graknSession = await global.grakn.session(database, SessionType.SCHEMA);
+      if (global.typeDBSession) await global.typeDBSession.close();
+      global.typeDBSession = await global.typedb.session(database, SessionType.SCHEMA);
       dispatch(UPDATE_METATYPE_INSTANCES);
       dispatch(LOAD_SCHEMA);
     }
   },
 
   async [UPDATE_METATYPE_INSTANCES]({ dispatch, commit }) {
-    const tx = await dispatch(OPEN_GRAKN_TX);
+    const tx = await dispatch(OPEN_TYPEDB_TX);
     const metaTypeInstances = await loadMetaTypeInstances(tx);
     tx.close();
     commit('metaTypeInstances', metaTypeInstances);
@@ -88,7 +88,7 @@ export default {
   },
 
   async [LOAD_SCHEMA]({ state, commit, dispatch }) {
-    const tx = await dispatch(OPEN_GRAKN_TX);
+    const tx = await dispatch(OPEN_TYPEDB_TX);
 
     try {
       if (!state.visFacade) return;
@@ -121,7 +121,7 @@ export default {
   },
 
   async [DEFINE_ENTITY_TYPE]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     // define entity type
     await state.schemaHandler.defineEntityType(payload.entityLabel, payload.superType);
@@ -146,7 +146,7 @@ export default {
 
     await dispatch(UPDATE_METATYPE_INSTANCES);
 
-    tx = await dispatch(OPEN_GRAKN_TX);
+    tx = await dispatch(OPEN_TYPEDB_TX);
 
     const concept = await tx.concepts().getEntityType(payload.entityLabel);
 
@@ -163,7 +163,7 @@ export default {
   },
 
   async [DEFINE_ATTRIBUTE_TYPE]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     // define attribute type
     await state.schemaHandler.defineAttributeType(payload.attributeLabel, payload.superType, payload.valueType);
@@ -188,7 +188,7 @@ export default {
 
     await dispatch(UPDATE_METATYPE_INSTANCES);
 
-    tx = await dispatch(OPEN_GRAKN_TX);
+    tx = await dispatch(OPEN_TYPEDB_TX);
 
     const concept = await tx.concepts().getAttributeType(payload.attributeLabel);
 
@@ -205,7 +205,7 @@ export default {
   },
 
   async [ADD_OWNS]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     // add attribute types to schema concept
     await Promise.all(payload.attributeTypes.map(async (attributeType) => {
@@ -218,7 +218,7 @@ export default {
         logger.error(e.stack);
         throw e;
       });
-    tx = await dispatch(OPEN_GRAKN_TX);
+    tx = await dispatch(OPEN_TYPEDB_TX);
 
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
     await Promise.all(payload.attributeTypes.map(async (attributeType) => {
@@ -236,7 +236,7 @@ export default {
   },
 
   async [DELETE_OWNS]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     await state.schemaHandler.deleteAttribute(payload.schemaLabel, payload.attributeLabel);
 
@@ -262,7 +262,7 @@ export default {
   },
 
   async [ADD_PLAYS]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     // add role types to schema concept
     await Promise.all(payload.roleTypes.map(async (roleType) => {
@@ -276,7 +276,7 @@ export default {
           logger.error(e.stack);
           throw e;
         });
-    tx = await dispatch(OPEN_GRAKN_TX);
+    tx = await dispatch(OPEN_TYPEDB_TX);
 
     const node = state.visFacade.getNode(state.selectedNodes[0].id);
 
@@ -293,7 +293,7 @@ export default {
   },
 
   async [DELETE_PLAYS]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
 
     const [relationLabel, roleLabel] = payload.roleLabel.split(':');
     await state.schemaHandler.deletePlaysRole(payload.schemaLabel, relationLabel, roleLabel);
@@ -319,7 +319,7 @@ export default {
   },
 
   async [DEFINE_RELATION_TYPE]({ state, dispatch }, payload) {
-    let tx = await dispatch(OPEN_GRAKN_TX);
+    let tx = await dispatch(OPEN_TYPEDB_TX);
     await state.schemaHandler.defineRelationType(payload.relationLabel, payload.superType);
 
     // define and relate roles to relation type
@@ -347,7 +347,7 @@ export default {
 
     await dispatch(UPDATE_METATYPE_INSTANCES);
 
-    tx = await dispatch(OPEN_GRAKN_TX);
+    tx = await dispatch(OPEN_TYPEDB_TX);
 
     const concept = await tx.concepts().getRelationType(payload.relationLabel);
 
@@ -364,7 +364,7 @@ export default {
   },
 
   async [DELETE_SCHEMA_CONCEPT]({ state, dispatch, commit }, payload) {
-    const tx = await dispatch(OPEN_GRAKN_TX);
+    const tx = await dispatch(OPEN_TYPEDB_TX);
 
     const type = await tx.concepts().getThingType(payload.typeLabel);
 
@@ -411,7 +411,7 @@ export default {
   },
 
   async [DEFINE_RULE]({ state, dispatch }, payload) {
-    const tx = await dispatch(OPEN_GRAKN_TX);
+    const tx = await dispatch(OPEN_TYPEDB_TX);
 
     // define rule
     await state.schemaHandler.defineRule(payload.ruleLabel, payload.when, payload.then);

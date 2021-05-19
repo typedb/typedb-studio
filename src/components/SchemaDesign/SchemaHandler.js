@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,16 +16,16 @@
  *
  */
 
-import { AttributeType } from "grakn-client/api/concept/type/AttributeType";
+import { AttributeType } from "typedb-client/api/concept/type/AttributeType";
 const { ValueType } = AttributeType;
 
 let tx;
 
-function SchemaHandler(graknTx) {
-  tx = graknTx;
+function SchemaHandler(typeDBTx) {
+  tx = typeDBTx;
 }
 
-function toGraknDatatype(valueTypeParam) {
+function toTypeDBDatatype(valueTypeParam) {
   switch (valueTypeParam) {
     case 'string': return ValueType.STRING;
     case 'datetime': return ValueType.DATETIME;
@@ -50,7 +50,7 @@ SchemaHandler.prototype.defineRelationType = async function define(relationLabel
 };
 
 SchemaHandler.prototype.defineAttributeType = async function define(attributeLabel, superType, valueType) {
-  const type = await tx.concepts().putAttributeType(attributeLabel, toGraknDatatype(valueType));
+  const type = await tx.concepts().putAttributeType(attributeLabel, toTypeDBDatatype(valueType));
   const directSuper = await tx.concepts().getAttributeType(superType);
   await type.asRemote(tx).setSupertype(directSuper);
 };

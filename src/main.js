@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ import VueSwitch from './components/UIElements/VueSwitch.vue';
 // Modules
 import { routes } from './routes';
 import CustomPlugins from './customPlugins';
-import { SessionType } from "grakn-client/api/GraknSession";
+import { SessionType } from "typedb-client/api/TypeDBSession";
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
 
@@ -69,8 +69,8 @@ store.commit('loadLocalCredentials', SERVER_AUTHENTICATED);
 // Before loading a new route check if the user is authorised
 router.beforeEach((to, from, next) => {
   if (from.path === '/design/schema') {
-    if (global.graknTx && global.graknTx.schemaDesign) global.graknTx.schemaDesign.close();
-    if (global.graknSession && global.graknSession.type() === SessionType.SCHEMA) global.graknSession.close();
+    if (global.typeDBTx && global.typeDBTx.schemaDesign) global.typeDBTx.schemaDesign.close();
+    if (global.typeDBSession && global.typeDBSession.type() === SessionType.SCHEMA) global.typeDBSession.close();
   }
   if (to.path === '/login') next();
   if (store.getters.isAuthorised) next();
@@ -86,8 +86,8 @@ new Vue({
   router,
   store,
   created: initialiseStore,
-}).$mount('#grakn-app');
+}).$mount('#typedb-app');
 
 window.addEventListener('beforeunload', () => {
-  global.grakn.close();
+  global.typedb.close();
 });

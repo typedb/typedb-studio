@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -36,7 +36,7 @@ function buildApplicationMenu() {
   const applicationSubmenu = [];
   // The about window only works on Mac out-of-the-box - will need to implement custom for Windows/Linux
   if (process.platform === 'darwin') {
-    applicationSubmenu.push({ label: 'About Grakn Workbase', selector: 'orderFrontStandardAboutPanel:' });
+    applicationSubmenu.push({ label: 'About TypeDB Workbase', selector: 'orderFrontStandardAboutPanel:' });
     applicationSubmenu.push({ type: 'separator' });
   }
   applicationSubmenu.push({ label: 'Quit', accelerator: 'Command+Q', click() { app.quit(); } });

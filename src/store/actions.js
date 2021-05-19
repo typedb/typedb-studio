@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,37 +16,37 @@
  *
  */
 
-import { Grakn } from 'grakn-client/Grakn';
+import { TypeDB } from 'typedb-client/TypeDB';
 import ServerSettings from '@/components/ServerSettings';
 
 export const loadDatabases = async (context) => {
   try {
-    const resp = (await global.grakn.databases().all()).map(db => db.name());
-    context.commit('setIsGraknRunning', true);
+    const resp = (await global.typedb.databases().all()).map(db => db.name());
+    context.commit('setIsTypeDBRunning', true);
     context.commit('setDatabases', resp);
   } catch (e) {
-    context.commit('setIsGraknRunning', false);
+    context.commit('setIsTypeDBRunning', false);
     console.error('Failed to load databases', e);
   }
 };
 
 export const createDatabase = async (context, name) => {
-  await global.grakn.databases().create(name).then(() => { context.dispatch('loadDatabases'); });
+  await global.typedb.databases().create(name).then(() => { context.dispatch('loadDatabases'); });
 };
 
-export const deleteDatabase = async (context, name) => global.grakn.databases().get(name)
+export const deleteDatabase = async (context, name) => global.typedb.databases().get(name)
   .then(db => db.delete())
   .then(() => context.dispatch('loadDatabases'));
 
-export const initGrakn = async (context, isCluster) => {
+export const initTypeDB = async (context, isCluster) => {
   try {
-    global.grakn = isCluster ?
-        await Grakn.clusterClient([ServerSettings.getServerUri()]) :
-        Grakn.coreClient(ServerSettings.getServerUri());
+    global.typedb = isCluster ?
+        await TypeDB.clusterClient([ServerSettings.getServerUri()]) :
+        TypeDB.coreClient(ServerSettings.getServerUri());
     context.dispatch('loadDatabases');
   } catch (e) {
-    context.commit('setIsGraknRunning', false);
-    console.error('Failed to initialise grakn client', e);
+    context.commit('setIsTypeDBRunning', false);
+    console.error('Failed to initialise typedb client', e);
   }
 };
 
@@ -54,5 +54,5 @@ export const logout = async (context) => {
   context.commit('setCredentials', undefined);
   context.commit('setDatabases', undefined);
   context.commit('userLogged', false);
-  // Need to notify all the other states that they need to invalidate GraknClient
+  // Need to notify all the other states that they need to invalidate TypeDBClient
 };

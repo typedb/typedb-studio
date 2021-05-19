@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -216,10 +216,10 @@ export default {
     });
   },
   created() {
-    this.connectionTest = (this.isGraknRunning) ? 'Valid' : 'Invalid';
+    this.connectionTest = (this.isTypeDBRunning) ? 'Valid' : 'Invalid';
   },
   computed: {
-    ...mapGetters(['isGraknRunning', 'allDatabases', 'userLogged']),
+    ...mapGetters(['isTypeDBRunning', 'allDatabases', 'userLogged']),
   },
   watch: {
     serverHost(newVal) {
@@ -230,14 +230,14 @@ export default {
       this.connectionTest = 'Test';
       Settings.setServerPort(newVal);
     },
-    isGraknRunning(newVal) {
+    isTypeDBRunning(newVal) {
       this.connectionTest = (newVal) ? 'Valid' : 'Invalid';
     },
   },
   methods: {
     testConnection() {
       this.connectionTest = 'testing';
-      this.$store.dispatch('initGrakn');
+      this.$store.dispatch('initTypeDB');
     },
     addNewDatabase() {
       if (!this.databaseName.length) return;

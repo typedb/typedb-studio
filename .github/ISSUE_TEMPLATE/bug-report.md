@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug here, or visit discuss.grakn.ai for troubleshooting discussions
+about: Report a bug here, or visit forum.vaticle.com for troubleshooting discussions
 labels: bug
 ---
 
@@ -12,8 +12,8 @@ Please replace every line in curly brackets ( { like this } ) with appropriate a
 
 ## Environment
 
-1. Grakn version: { e.g. Grakn Core 2.0.0, Grakn Cluster 2.0.0 }
-2. OS of Grakn server: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4, Google Cloud }
+1. TypeDB version: { e.g. TypeDB 2.0.0, TypeDB Cluster 2.0.0 }
+2. OS of TypeDB server: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4, Google Cloud }
 3. Workbase version: { e.g. 1.1, 1.2 }
 4. OS of Workbase: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4 }
 5. Other environment details:

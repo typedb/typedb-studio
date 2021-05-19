@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@
         </div>
 
         <div v-if="showBottomBarContent" class="content">
-            <textarea class="graql-editor" id="graqlEditor" ref="consoleEditor" rows="3" placeholder=">>"></textarea>
+            <textarea class="typeql-editor" id="typeQLEditor" ref="consoleEditor" rows="3" placeholder=">>"></textarea>
             <ul id="output">
 
             </ul>
@@ -74,7 +74,7 @@
 </style>
 
 <script>
-import GraqlCodeMirror from './TopBar/GraqlEditor/GraqlCodeMirror';
+import TypeQLCodeMirror from './TopBar/TypeQLEditor/TypeQLCodeMirror';
 import ConsoleUtils from './BottomBar/ConsoleUtils';
 
 export default {
@@ -90,7 +90,7 @@ export default {
     showBottomBarContent(val) {
       this.$nextTick(() => {
         if (val) {
-          this.codeMirror = GraqlCodeMirror.getCodeMirror(this.$refs.consoleEditor);
+          this.codeMirror = TypeQLCodeMirror.getCodeMirror(this.$refs.consoleEditor);
           this.codeMirror.setOption('extraKeys', {
             Enter: this.runConsoleQuery,
             'Shift-Enter': 'newlineAndIndent',

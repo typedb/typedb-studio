@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -164,7 +164,7 @@
       async loadRolesAndRelations() {
         if (this.selectedNodes && this.selectedNodes.length) {
           const node = this.selectedNodes[0];
-          const tx = global.graknTx[this.$store.getters.activeTab];
+          const tx = global.typeDBTx[this.$store.getters.activeTab];
           let roles;
           if (node.iid) {
               const thing = await tx.concepts().getThing(node.iid);
@@ -194,7 +194,7 @@
         if (this.currentRole && this.selectedNodes && this.selectedNodes.length) {
           if (this.relations.get(this.currentRole) && this.relations.get(this.currentRole).otherRolePlayers.length) return;
           const node = this.selectedNodes[0];
-          const tx = global.graknTx[this.$store.getters.activeTab];
+          const tx = global.typeDBTx[this.$store.getters.activeTab];
           let concept;
           let roles;
 

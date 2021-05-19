@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,5 +21,5 @@ export const isAuthorised = state => (!state.isAuthenticated || state.credential
 export const landingPage = state => state.landingPage;
 export const userLogged = state => state.userLogged;
 export const credentials = state => state.credentials;
-export const isGraknRunning = state => state.isGraknRunning;
+export const isTypeDBRunning = state => state.isTypeDBRunning;
 export const activeTab = state => state.activeTab;

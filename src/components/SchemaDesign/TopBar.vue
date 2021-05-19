@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -19,7 +19,7 @@
     <div class="top-bar-container">
         <div class="left">
             <router-link to="/develop/data"><button class="btn"><vue-icon icon="eye-open" className="vue-icon"></vue-icon></button></router-link>
-            <img src="img/grakn-workbase-logo.png" class="grakn-icon">
+            <img src="img/typedb-workbase-logo.png" class="typedb-icon">
         </div>
 
         <div class="center">
@@ -65,7 +65,7 @@
                                   supported by Chrome and Opera */
     }
 
-    .grakn-icon {
+    .typedb-icon {
         height: 25px;
         margin: 5px;
     }

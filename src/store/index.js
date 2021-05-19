@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -34,14 +34,14 @@ export default new Vuex.Store({
     isAuthenticated: undefined,
     landingPage: undefined,
     userLogged: false,
-    isGraknRunning: undefined,
+    isTypeDBRunning: undefined,
     activeTab: undefined,
   },
   actions,
   getters,
   mutations: {
-    setIsGraknRunning(state, isGraknRunning) {
-      state.isGraknRunning = isGraknRunning;
+    setIsTypeDBRunning(state, isTypeDBRunning) {
+      state.isTypeDBRunning = isTypeDBRunning;
     },
     setDatabases(state, list) {
       state.databases = list;

@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -308,7 +308,7 @@
 
 <script>
   import logger from '@/logger';
-  import { DEFINE_ENTITY_TYPE, OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { DEFINE_ENTITY_TYPE, OPEN_TYPEDB_TX } from '@/components/shared/StoresActions';
   import { createNamespacedHelpers } from 'vuex';
 
   export default {
@@ -340,7 +340,7 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([DEFINE_ENTITY_TYPE, OPEN_GRAKN_TX]),
+        ...mapActions([DEFINE_ENTITY_TYPE, OPEN_TYPEDB_TX]),
       };
     },
     watch: {
@@ -355,7 +355,7 @@
       },
       async superType(val) {
         if (val !== 'entity') { // if sup-typing an entity do not show inherited attributes in has panel to avoid duplicated attributes
-          const tx = await this[OPEN_GRAKN_TX]();
+          const tx = await this[OPEN_TYPEDB_TX]();
           const superType = await tx.concepts().getEntityType(val);
           this.supAttributes = await superType.asRemote(tx).getOwns().map(x => x.getLabel().name()).collect();
           this.hasAttributes = this.hasAttributes.filter(x => !this.supAttributes.includes(x));

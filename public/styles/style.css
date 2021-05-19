@@ -29,11 +29,11 @@
   --green-1: #008438;
   --green-2: #00b85c;
   --green-3: #00dd76;
-  --green-4: #00eca1; /* grakn green */
+  --green-4: #00eca1; /* typedb green */
   --green-5: #b7f7d7;
 
   /* purple */
-  --purple-1: #5600E8; /* grakn purple */
+  --purple-1: #5600E8; /* typedb purple */
   --purple-2: #6300EE;
   --purple-3: #803FF2;
   --purple-4: #9A66F4;
@@ -373,7 +373,7 @@ input::-webkit-inner-spin-button {
 /* code mirror */
 
 /* for some reason, CodeMirror adds an anonymous <div> inside the auto generated .CodeMirror-scroll element.
-this <div> has a height of 50px (!) which distorts the GraqlEditor by allowing scroll when it shouldn't.
+this <div> has a height of 50px (!) which distorts the TypeQLEditor by allowing scroll when it shouldn't.
 we're setting this height of this seeminly useless <div> to 0 */
 .CodeMirror-sizer + div {
   height: 0 !important;

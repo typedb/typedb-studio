@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -30,7 +30,7 @@ export const REFRESH_SELECTED_NODE = 'refresh-selected-node';
 export const DEFINE_RULE = 'define-rule';
 export const ADD_PLAYS = 'add-plays';
 export const DELETE_PLAYS = 'delete-plays';
-export const OPEN_GRAKN_TX = 'open-grakn-tx';
+export const OPEN_TYPEDB_TX = 'open-typedb-tx';
 
 
 // Visualiser store actions
@@ -41,7 +41,7 @@ export const UPDATE_NODES_COLOUR = 'update-nodes-colour';
 export const DELETE_SELECTED_NODES = 'delete-selected-nodes';
 export const LOAD_NEIGHBOURS = 'load-neighbours';
 export const LOAD_ATTRIBUTES = 'load-attributes';
-export const REOPEN_GLOBAL_GRAKN_TX = 'reopen-global-grakn-tx';
+export const REOPEN_GLOBAL_TYPEDB_TX = 'reopen-global-typedb-tx';
 
 
 // Common actions shared by the two canvas stores (SchemaDesign && DataManagement)

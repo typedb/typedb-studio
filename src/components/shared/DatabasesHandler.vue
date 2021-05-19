@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -148,7 +148,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['allDatabases', 'isGraknRunning']),
+    ...mapGetters(['allDatabases', 'isTypeDBRunning']),
     databaseList() {
       return this.allDatabases.filter(database => database.toLowerCase().includes(this.searchedDatabase.toLowerCase()));
     },
@@ -165,9 +165,9 @@ export default {
       // If user deletes current database from Databases page, set new current database to null
       if (val && !val.includes(this.currentDatabase)) { this[CURRENT_DATABASE_CHANGED](null); }
     },
-    isGraknRunning(val) {
+    isTypeDBRunning(val) {
       if (!val) {
-        this.$notifyInfo('It was not possible to retrieve databases <br> - make sure Grakn is running <br> - check that host and port in connection settings are correct');
+        this.$notifyInfo('It was not possible to retrieve databases <br> - make sure TypeDB is running <br> - check that host and port in connection settings are correct');
       }
     },
     // showDatabaseList(show) {

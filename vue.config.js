@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -26,9 +26,9 @@ module.exports = {
         electronBuilder: {
             nodeIntegration: true,
             builderOptions: {
-                appId: 'com.graknlabs.workbase',
-                productName: 'Grakn Workbase',
-                artifactName: 'grakn-workbase-${os}-${version}.${ext}',
+                appId: 'com.vaticle.workbase',
+                productName: 'TypeDB Workbase',
+                artifactName: 'typedb-workbase-${os}-${version}.${ext}',
                 win: {
                     publish: null,
                 },

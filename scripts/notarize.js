@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -28,7 +28,7 @@ exports.default = async function notarizing(context) {
 
     console.log(`Notarizing using APPLEID ${process.env.APPLEID}`);
     const result = await notarize({
-        appBundleId: 'com.graknlabs.workbase',
+        appBundleId: 'com.vaticle.workbase',
         appPath: `${appOutDir}/${appName}.app`,
         appleId: process.env.APPLEID,
         appleIdPassword: process.env.APPLEID_PASSWORD,

@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -26,7 +26,7 @@
             </div>
             <div class="right">
                 <div class="line">
-                    <!-- <input class="grakn-input search" placeholder="search for nodes"> -->
+                    <!-- <input class="typedb-input search" placeholder="search for nodes"> -->
                 </div>
                 <databases-handler :localStore="localStore" :toolTipShown="toolTipShown" v-on:toggle-tool-tip="toggleToolTip">></databases-handler>
             </div>

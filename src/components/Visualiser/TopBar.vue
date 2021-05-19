@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -19,11 +19,11 @@
     <div class="top-bar-container">
         <div class="left">
 <!--            <router-link to="/design/schema"><button class="btn"><vue-icon icon="diagram-tree" className="vue-icon"></vue-icon></button></router-link>-->
-            <img src="img/grakn-workbase-logo.png" class="grakn-icon">
+            <img src="img/typedb-workbase-logo.png" class="typedb-icon">
         </div>
 
         <div class="center">
-            <graql-editor :tabId="tabId" v-on:database-not-selected="showDatabaseToolTip = true"></graql-editor>
+            <typeql-editor :tabId="tabId" v-on:database-not-selected="showDatabaseToolTip = true"></typeql-editor>
         </div>
 
         <div class="right">
@@ -65,7 +65,7 @@
                                   supported by Chrome and Opera */
     }
 
-    .grakn-icon {
+    .typedb-icon {
         height: 25px;
         margin: 5px;
     }
@@ -93,10 +93,10 @@
 
 <script>
     import DatabasesHandler from '../shared/DatabasesHandler.vue';
-    import GraqlEditor from './TopBar/GraqlEditor/GraqlEditor.vue';
+    import TypeQLEditor from './TopBar/TypeQLEditor/TypeQLEditor.vue';
 
     export default {
-      components: { DatabasesHandler, GraqlEditor },
+      components: { DatabasesHandler, TypeQLEditor },
       props: ['tabId'],
       data() {
         return {

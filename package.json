@@ -1,7 +1,7 @@
 {
-  "name": "grakn-workbase",
-  "description": "IDE to perform knowledge engineering at scale and control everything in your Grakn knowledge graph, from development to production.",
-  "author": "Grakn Labs",
+  "name": "typedb-workbase",
+  "description": "IDE to perform knowledge engineering at scale and control everything in your TypeDB database, from development to production.",
+  "author": "Vaticle",
   "scripts": {
     "prebuild": "run-script-os",
     "prebuild:win32": "cmd /V /C \"set /p VERSION=<VERSION && npm version !VERSION! --allow-same-version --no-git-tag-version\"",
@@ -20,8 +20,8 @@
     "codemirror": "^5.59.4",
     "core-js": "^3.6.5",
     "electron-store": "^7.0.2",
-    "grakn-client": "2.0.1",
     "jquery": "^3.6.0",
+    "typedb-client": "https://repo.vaticle.com/repository/npm-snapshot/typedb-client/-/typedb-client-0.0.0-93ce554d7733b4ad0f42167b8967b609d803f739.tgz",
     "underscore": "^1.12.0",
     "vis": "^4.21.0-EOL",
     "vue": "^2.6.11",
@@ -50,13 +50,13 @@
     "vue-template-compiler": "^2.6.11"
   },
   "bugs": {
-    "url": "https://github.com/graknlabs/workbase/issues"
+    "url": "https://github.com/vaticle/typedb-workbase/issues"
   },
-  "homepage": "https://github.com/graknlabs/workbase#readme",
+  "homepage": "https://github.com/vaticle/typedb-workbase#readme",
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/graknlabs/workbase.git"
+    "url": "https://github.com/vaticle/typedb-workbase.git"
   },
   "version": "2.0.0-alpha-3"
 }

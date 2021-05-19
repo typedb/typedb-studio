@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,7 +19,7 @@
 import Store from 'electron-store';
 import { version } from '../../../package.json';
 
-// Config file in Mac system in: ~/Library/Application Support/grakn-workbase/config.json
+// Config file in Mac system in: ~/Library/Application Support/typedb-workbase/config.json
 const storage = new Store()
 
 // Store current project version in persistent storage

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -32,12 +32,12 @@ export function updateNodePositions(nodes) {
   return nodes;
 }
 
-export async function loadMetaTypeInstances(graknTx) {
+export async function loadMetaTypeInstances(typeDBTx) {
   // Fetch types
-  const rels = (await (await graknTx.query().match('match $x sub relation;')).collect()).map(cm => cm.get("x"));
-  const entities = (await (await graknTx.query().match('match $x sub entity;')).collect()).map(cm => cm.get("x"));
-  const attributes = (await (await graknTx.query().match('match $x sub attribute;')).collect()).map(cm => cm.get("x"));
-  const roles = (await (await graknTx.query().match('match $x sub relation:role;')).collect()).map(cm => cm.get("x"));
+  const rels = (await (await typeDBTx.query().match('match $x sub relation;')).collect()).map(cm => cm.get("x"));
+  const entities = (await (await typeDBTx.query().match('match $x sub entity;')).collect()).map(cm => cm.get("x"));
+  const attributes = (await (await typeDBTx.query().match('match $x sub attribute;')).collect()).map(cm => cm.get("x"));
+  const roles = (await (await typeDBTx.query().match('match $x sub relation:role;')).collect()).map(cm => cm.get("x"));
 
   // Get types labels
   const metaTypeInstances = {};

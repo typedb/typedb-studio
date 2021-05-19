@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -17,7 +17,7 @@
 
 <!--suppress ALL -->
 <template>
-    <div class="graqlEditor-container">
+    <div class="typeQLEditor-container">
         <div class="left">
             <button @click="toggleFavQueriesList" class="btn fav-queries-container-btn"><vue-icon icon="star" className="vue-icon"></vue-icon></button>
             <button @click="toggleTypesContainer" class="btn types-container-btn"><vue-icon icon="locate" className="vue-icon"></vue-icon></button>
@@ -27,7 +27,7 @@
             <div class="column" v-bind:style="[(editorLinesNumber === 1) ? {'margin-bottom': '10px'} : {'margin-bottom': '0px'}]">
                 <div @click="!currentDatabase ? $emit('database-not-selected') : null" class="row">
                     <tool-tip class="editor-tooltip" :isOpen="showEditorToolTip" msg="Type a query" arrowPosition="top" v-on:close-tooltip="showEditorToolTip = false"></tool-tip>
-                    <textarea id="graqlEditor" ref="graqlEditor" rows="3"></textarea>
+                    <textarea id="typeQLEditor" ref="typeQLEditor" rows="3"></textarea>
                     <div v-if="showEditorTab" class="editor-tab">
                         <div @click="clearEditor" class="clear-editor"><vue-icon icon="cross" iconSize="10" className="tab-icon"></vue-icon></div>
                         <div @click="toggleAddFavQuery"><vue-icon icon="star" iconSize="10" className="tab-icon add-fav-query-btn"></vue-icon></div>
@@ -159,7 +159,7 @@
         display: inline-flex;
     }
 
-    .graqlEditor-container {
+    .typeQLEditor-container {
         display: flex;
         flex-direction: row;
         flex: 3;
@@ -173,7 +173,7 @@ import { createNamespacedHelpers } from 'vuex';
 import $ from 'jquery';
 import Spinner from '@/components/UIElements/Spinner.vue';
 import { RUN_CURRENT_QUERY, CANVAS_RESET } from '@/components/shared/StoresActions';
-import GraqlCodeMirror from './GraqlCodeMirror';
+import TypeQLCodeMirror from './TypeQLCodeMirror';
 import FavQueriesSettings from '../FavQueries/FavQueriesSettings';
 import { limitQuery } from '../../VisualiserUtils';
 import FavQueriesList from '../FavQueries/FavQueriesList';
@@ -181,12 +181,12 @@ import TypesContainer from '../TypesContainer';
 import ErrorContainer from '../ErrorContainer';
 import AddFavQuery from '../FavQueries/AddFavQuery';
 import ToolTip from '../../../UIElements/ToolTip';
-import { TransactionType } from "grakn-client/api/GraknTransaction";
+import { TransactionType } from "typedb-client/api/TypeDBTransaction";
 import { getTransactionOptions } from "../../../shared/SharedUtils";
 
 
 export default {
-  name: 'GraqlEditor',
+  name: 'TypeQLEditor',
   components: {
     ToolTip,
     AddFavQuery,
@@ -257,9 +257,9 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
-      this.codeMirror = GraqlCodeMirror.getCodeMirror(this.$refs.graqlEditor);
+      this.codeMirror = TypeQLCodeMirror.getCodeMirror(this.$refs.typeQLEditor);
       this.codeMirror.setOption('readOnly', 'nocursor');
-      this.history = GraqlCodeMirror.createGraqlEditorHistory(this.codeMirror);
+      this.history = TypeQLCodeMirror.createTypeQLEditorHistory(this.codeMirror);
       this.codeMirror.setOption('extraKeys', {
         Enter: this.runQuery,
         'Shift-Enter': 'newlineAndIndent',
@@ -270,7 +270,7 @@ export default {
       this.initialEditorHeight = $('.CodeMirror').height();
 
       // for some reason, CodeMirror adds an anonymous <div> inside the auto generated .CodeMirror-scroll element.
-      // this <div> has a height of 50px (!) which distorts the GraqlEditor by allowing scroll when it shouldn't
+      // this <div> has a height of 50px (!) which distorts the TypeQLEditor by allowing scroll when it shouldn't
       // we're setting the height of this seemingly useless <div> to 0
       document.getElementsByClassName('CodeMirror-scroll')[0].children[1].style.height = 0;
 
@@ -288,7 +288,7 @@ export default {
     runQuery(event) {
       if (!this.currentDatabase) this.$emit('database-not-selected');
       else if (!this.currentQuery.length) {
-        if (event.stopPropagation) event.stopPropagation(); // to prevent event propogation to graql editor tooltip
+        if (event.stopPropagation) event.stopPropagation(); // to prevent event propogation to typeql editor tooltip
         this.showEditorToolTip = true;
       } else {
         this.showFavQueriesList = false;
@@ -315,7 +315,7 @@ export default {
       else if (this.showSpinner) this.$notifyInfo('Please wait for action to complete');
       else {
         this[CANVAS_RESET]();
-        global.graknTx[this.$store.getters.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
+        global.typeDBTx[this.$store.getters.activeTab] = await global.typeDBSession.transaction(TransactionType.READ, getTransactionOptions());
       }
     },
     toggleAddFavQuery() {

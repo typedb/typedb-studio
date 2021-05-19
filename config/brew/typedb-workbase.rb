@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Grakn Labs
+# Copyright (C) 2021 Vaticle
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -15,15 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@graknlabs_dependencies//distribution/artifact:rules.bzl", "native_artifact_files")
-load("@graknlabs_dependencies//distribution:deployment.bzl", "deployment")
+cask 'typedb-workbase' do
+  version '{version}'
+  sha256 '{sha256}'
 
-def graknlabs_grakn_core_artifacts():
-    native_artifact_files(
-        name = "graknlabs_grakn_core_artifact",
-        group_name = "graknlabs_grakn_core",
-        artifact_name = "grakn-core-server-{platform}-{version}.{ext}",
-        tag_source = deployment["artifact.release"],
-        commit_source = deployment["artifact.snapshot"],
-        tag = "2.0.0-alpha-8",
-    )
+  url "https://github.com/vaticle/typedb-workbase/releases/download/{version}/typedb-workbase-mac-{version}.dmg"
+  name 'TypeDB Workbase'
+  homepage 'https://vaticle.com'
+
+  app "TypeDB Workbase.app"
+
+end

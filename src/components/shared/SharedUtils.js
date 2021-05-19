@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,8 +16,8 @@
  *
  */
 
-import { GraknOptions } from "grakn-client/api/GraknOptions";
-import { TransactionType } from "grakn-client/api/GraknTransaction";
+import { TypeDBOptions } from "typedb-client/api/TypeDBOptions";
+import { TransactionType } from "typedb-client/api/TypeDBTransaction";
 import QueryUtils from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 
 export const META_LABELS = new Set(['entity', 'relation', 'attribute', 'relation:role', 'thing']);
@@ -34,16 +34,16 @@ export const baseTypes = {
 };
 
 export const reopenTransaction = async (state, commit) => {
-  const graknTx = global.graknTx[state.activeTab];
-  const isGraknTxOpen = await graknTx.isOpen();
-  if (!isGraknTxOpen) { // graknTx has been invalidated because of an error and so it's closed now
-    global.graknTx[state.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
+  const typeDBTx = global.typeDBTx[state.activeTab];
+  const isTypeDBTxOpen = await typeDBTx.isOpen();
+  if (!isTypeDBTxOpen) { // typeDBTx has been invalidated because of an error and so it's closed now
+    global.typeDBTx[state.activeTab] = await global.typeDBSession.transaction(TransactionType.READ, getTransactionOptions());
     commit('setGlobalErrorMsg', 'The transaction was refreshed and, as a result, the explanation of currently displayed inferred nodes may be incomplete.');
   }
 };
 
 export const getTransactionOptions = () => {
-  return GraknOptions.core({
+  return TypeDBOptions.core({
     infer: QueryUtils.getReasoning(),
     explain: true,
   });

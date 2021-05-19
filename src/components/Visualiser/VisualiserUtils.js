@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -62,12 +62,12 @@ export async function computeAttributes(nodes, tx) {
   return nodes;
 }
 
-export async function loadMetaTypeInstances(graknTx) {
+export async function loadMetaTypeInstances(typeDBTx) {
   // Fetch types
-  const rels = (await (await graknTx.query().match('match $x sub relation;')).collect()).map(cm => cm.get("x"));
-  const entities = (await (await graknTx.query().match('match $x sub entity;')).collect()).map(cm => cm.get("x"));
-  const attributes = (await (await graknTx.query().match('match $x sub attribute;')).collect()).map(cm => cm.get("x"));
-  const roles = (await (await graknTx.query().match('match $x sub relation:role;')).collect()).map(cm => cm.get("x"));
+  const rels = (await (await typeDBTx.query().match('match $x sub relation;')).collect()).map(cm => cm.get("x"));
+  const entities = (await (await typeDBTx.query().match('match $x sub entity;')).collect()).map(cm => cm.get("x"));
+  const attributes = (await (await typeDBTx.query().match('match $x sub attribute;')).collect()).map(cm => cm.get("x"));
+  const roles = (await (await typeDBTx.query().match('match $x sub relation:role;')).collect()).map(cm => cm.get("x"));
 
   // Get types labels
   const metaTypeInstances = {};
@@ -113,9 +113,9 @@ export function addResetGraphListener(dispatch, action) {
  * 3) are no more than the user-specified NeighboursLimit
  * @param {Object} targetNode the node for which we want to load the neighbours
  * @param {Array} currentEdges the edges that are currently visualised
- * @param {Object} graknTx Grakn transaction used to execute query
+ * @param {Object} typeDBTx TypeDB transaction used to execute query
  */
-export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
+export async function getNeighbourAnswers(targetNode, currentEdges, typeDBTx) {
   const answers = [];
   const neighboursLimit = QuerySettings.getNeighboursLimit();
 
@@ -127,7 +127,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'RELATION_TYPE': {
       const targetTypeLabel = targetNode.id;
       const query = `match $target-type type ${targetTypeLabel}; $neighbour-instance isa $target-type; get $neighbour-instance;`;
-      const iter = graknTx.query().match(query).iterator();
+      const iter = typeDBTx.query().match(query).iterator();
 
       let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
@@ -144,7 +144,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'ENTITY': {
       const targetEntId = targetNode.id;
       const query = `match $target-entity iid ${targetEntId}; $neighbour-relation ($target-entity-role: $target-entity); get $neighbour-relation, $target-entity-role;`;
-      const iter = graknTx.query().match(query).iterator();
+      const iter = typeDBTx.query().match(query).iterator();
       let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const targetEntRoleLabel = answer.map().get('target-entity-role').getLabel().name();
@@ -163,7 +163,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'ATTRIBUTE': {
       const targetAttrId = targetNode.id;
       const query = `match $neighbour-owner has attribute $target-attribute; $target-attribute iid ${targetAttrId}; get $neighbour-owner;`;
-      const iter = graknTx.query().match(query).iterator();
+      const iter = typeDBTx.query().match(query).iterator();
       let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourOwnerId = answer.map().get('neighbour-owner').getIID();
@@ -179,7 +179,7 @@ export async function getNeighbourAnswers(targetNode, currentEdges, graknTx) {
     case 'RELATION': {
       const targetRelId = targetNode.id;
       const query = `match $target-relation ($neighbour-role: $neighbour-player); $target-relation iid ${targetRelId}; get $neighbour-player, $neighbour-role;`;
-      const iter = graknTx.query().match(query).iterator();
+      const iter = typeDBTx.query().match(query).iterator();
       let answer = (await iter.next()).value;
       while (answer && answers.length !== neighboursLimit) {
         const neighbourRoleLabel = answer.map().get('neighbour-role').getLabel().name();

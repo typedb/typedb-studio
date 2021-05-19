@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@ import {
   DELETE_SELECTED_NODES,
   LOAD_NEIGHBOURS,
   LOAD_ATTRIBUTES,
-  REOPEN_GLOBAL_GRAKN_TX,
+  REOPEN_GLOBAL_TYPEDB_TX,
 } from '@/components/shared/StoresActions';
 import logger from '@/logger';
 
@@ -46,8 +46,8 @@ import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
 import { getTransactionOptions, reopenTransaction } from '../../shared/SharedUtils';
-import { SessionType } from "grakn-client/api/GraknSession";
-import { TransactionType } from "grakn-client/api/GraknTransaction";
+import { SessionType } from "typedb-client/api/TypeDBSession";
+import { TransactionType } from "typedb-client/api/TypeDBTransaction";
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
@@ -68,20 +68,20 @@ export default {
       commit('setCurrentQuery', '');
       commit('currentDatabase', database);
 
-      if (global.graknSession) await global.graknSession.close();
-      global.graknSession = await global.grakn.session(database, SessionType.DATA);
+      if (global.typeDBSession) await global.typeDBSession.close();
+      global.typeDBSession = await global.typedb.session(database, SessionType.DATA);
       // eslint-disable-next-line no-prototype-builtins
-      if (!global.graknTx) global.graknTx = {};
-      if (global.graknTx[rootState.activeTab]) global.graknTx[rootState.activeTab].close();
-      global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
+      if (!global.typeDBTx) global.typeDBTx = {};
+      if (global.typeDBTx[rootState.activeTab]) global.typeDBTx[rootState.activeTab].close();
+      global.typeDBTx[rootState.activeTab] = await global.typeDBSession.transaction(TransactionType.READ, getTransactionOptions());
       dispatch(UPDATE_METATYPE_INSTANCES);
     }
   },
 
   async [UPDATE_METATYPE_INSTANCES]({ dispatch, commit, rootState }) {
     try {
-      const graknTx = global.graknTx[rootState.activeTab];
-      const metaTypeInstances = await loadMetaTypeInstances(graknTx);
+      const typeDBTx = global.typeDBTx[rootState.activeTab];
+      const metaTypeInstances = await loadMetaTypeInstances(typeDBTx);
       commit('metaTypeInstances', metaTypeInstances);
     } catch (e) {
       await reopenTransaction(rootState, commit);
@@ -106,15 +106,15 @@ export default {
   async [LOAD_NEIGHBOURS]({ state, commit, dispatch, rootState }, { visNode, neighboursLimit }) {
     try {
       commit('loadingQuery', true);
-      const graknTx = global.graknTx[rootState.activeTab];
+      const typeDBTx = global.typeDBTx[rootState.activeTab];
 
       const currentData = {
         nodes: state.visFacade.getAllNodes(),
         edges: state.visFacade.getAllEdges(),
       };
 
-      const neighbourAnswers = await getNeighbourAnswers(visNode, currentData.edges, graknTx);
-      const targetConcept = await getConcept(visNode, graknTx);
+      const neighbourAnswers = await getNeighbourAnswers(visNode, currentData.edges, typeDBTx);
+      const targetConcept = await getConcept(visNode, typeDBTx);
       const data = await CDB.buildNeighbours(targetConcept, neighbourAnswers);
 
       currentData.nodes.push(...data.nodes);
@@ -122,7 +122,7 @@ export default {
 
       const shouldLoadRPs = QuerySettings.getRolePlayersStatus();
       if (shouldLoadRPs) {
-        const rpData = await CDB.buildRPInstances(neighbourAnswers, currentData, true, graknTx);
+        const rpData = await CDB.buildRPInstances(neighbourAnswers, currentData, true, typeDBTx);
         data.nodes.push(...rpData.nodes);
         data.edges.push(...rpData.edges);
       }
@@ -132,7 +132,7 @@ export default {
       commit('updateCanvasData');
       const styledNodes = data.nodes.map(node => Object.assign(node, state.visStyle.computeNodeStyle(node)));
       state.visFacade.updateNode(styledNodes);
-      const nodesWithAttribtues = await computeAttributes(data.nodes, graknTx);
+      const nodesWithAttribtues = await computeAttributes(data.nodes, typeDBTx);
       state.visFacade.updateNode(nodesWithAttribtues);
       commit('loadingQuery', false);
     } catch (e) {
@@ -151,8 +151,8 @@ export default {
       validateQuery(query);
 
       commit('loadingQuery', true);
-      const graknTx = global.graknTx[rootState.activeTab];
-      const result = await graknTx.query().match(query).collect();
+      const typeDBTx = global.typeDBTx[rootState.activeTab];
+      const result = await typeDBTx.query().match(query).collect();
       if (!result.length) {
         commit('loadingQuery', false);
         return null;
@@ -182,14 +182,14 @@ export default {
         edges.push(...typesData.edges);
 
         if (shouldLoadRPs) {
-          const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, graknTx);
+          const rpData = await CDB.buildRPInstances(result, { nodes, edges }, shouldLimit, typeDBTx);
           nodes.push(...rpData.nodes);
           edges.push(...rpData.edges);
         }
       } else if (queryType === queryTypes.PATH) {
         // TBD - handle multiple paths
         const path = result[0];
-        const pathNodes = await Promise.all(path.list().map(id => graknTx.getConcept(id)));
+        const pathNodes = await Promise.all(path.list().map(id => typeDBTx.getConcept(id)));
         const pathData = await VisualiserGraphBuilder.buildFromConceptList(path, pathNodes);
         nodes.push(...pathData.nodes);
         edges.push(...pathData.edges);
@@ -199,7 +199,7 @@ export default {
       state.visFacade.fitGraphToWindow();
       commit('updateCanvasData');
 
-      nodes = await computeAttributes(nodes, graknTx);
+      nodes = await computeAttributes(nodes, typeDBTx);
 
       state.visFacade.updateNode(nodes);
 
@@ -216,7 +216,7 @@ export default {
   },
   async [LOAD_ATTRIBUTES]({ state, commit, rootState }, { visNode, neighboursLimit }) {
     try {
-      const graknTx = global.graknTx[rootState.activeTab];
+      const typeDBTx = global.typeDBTx[rootState.activeTab];
       commit('loadingQuery', true);
       if (!visNode.iid && !visNode.typeLabel) throw "Node does not have a Type Label or an IID";
       state.visFacade.updateNode({ id: visNode.id, attrOffset: visNode.attrOffset + neighboursLimit });
@@ -224,16 +224,16 @@ export default {
       let result;
       if (visNode.iid) {
         query = `match $x type ${visNode.typeLabel}, owns $y; get $y; limit 1;`;
-        const ownedAttrs = await graknTx.query().match(query).collect();
+        const ownedAttrs = await typeDBTx.query().match(query).collect();
         if (ownedAttrs.length) { // If no attributes are owned, this query errors because it's unsatisfiable.
           query = `match $x iid ${visNode.iid}, has attribute $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
-          result = await graknTx.query().match(query).collect();
+          result = await typeDBTx.query().match(query).collect();
         } else {
           result = [];
         }
       } else {
         query = `match $x type ${visNode.typeLabel}, owns $y; get $y; offset ${visNode.attrOffset}; limit ${neighboursLimit};`;
-        result = await graknTx.query().match(query).collect();
+        result = await typeDBTx.query().match(query).collect();
       }
 
       const data = await CDB.buildInstances(result);
@@ -241,19 +241,19 @@ export default {
       const shouldLimit = true;
 
       if (shouldLoadRPs) {
-        const rpData = await CDB.buildRPInstances(result, shouldLimit, graknTx);
+        const rpData = await CDB.buildRPInstances(result, shouldLimit, typeDBTx);
         data.nodes.push(...rpData.nodes);
         data.edges.push(...rpData.edges);
       }
       state.visFacade.addToCanvas(data);
-      data.nodes = await computeAttributes(data.nodes, graknTx);
+      data.nodes = await computeAttributes(data.nodes, typeDBTx);
       state.visFacade.updateNode(data.nodes);
       commit('loadingQuery', false);
 
       if (data) { // when attributes are found, construct edges and add to graph
         const edges = await Promise.all(data.nodes.map(async attr => {
-          let ownerConcept = await getConcept(visNode, graknTx);
-          let attrConcept = await getConcept(attr, graknTx);
+          let ownerConcept = await getConcept(visNode, typeDBTx);
+          let attrConcept = await getConcept(attr, typeDBTx);
           return CDB.getEdge(ownerConcept, attrConcept, CDB.edgeTypes.instance.HAS)
         }));
 
@@ -272,13 +272,13 @@ export default {
   async [EXPLAIN_CONCEPT]({ state, getters, commit, rootState }) {
     try {
       const node = getters.selectedNode;
-      const graknTx = global.graknTx[rootState.activeTab];
+      const typeDBTx = global.typeDBTx[rootState.activeTab];
 
       if (!node.explainable) {
           return;
       }
       if (!node.explanations) {
-        node.explanations = graknTx.query().explain(node.explainable).iterator();
+        node.explanations = typeDBTx.query().explain(node.explainable).iterator();
         state.visFacade.updateNode(node);
       }
       const explanationNext = await node.explanations.next();
@@ -291,7 +291,7 @@ export default {
         const answers = [explanation.condition()];
 
         const data = await CDB.buildInstances(answers);
-        const rpData = await CDB.buildRPInstances(answers, data, false, graknTx);
+        const rpData = await CDB.buildRPInstances(answers, data, false, typeDBTx);
         data.nodes.push(...rpData.nodes);
         data.edges.push(...rpData.edges);
 
@@ -300,7 +300,7 @@ export default {
 
         state.visFacade.addToCanvas(data);
         commit('updateCanvasData');
-        const nodesWithAttributes = await computeAttributes(data.nodes, graknTx);
+        const nodesWithAttributes = await computeAttributes(data.nodes, typeDBTx);
 
         state.visFacade.updateNode(nodesWithAttributes);
         const styledEdges = data.edges.map(edge => ({ ...edge, label: edge.hiddenLabel, ...state.visStyle.computeExplanationEdgeStyle() }));
@@ -323,12 +323,12 @@ export default {
     commit('selectedNodes', null);
   },
 
-  async [REOPEN_GLOBAL_GRAKN_TX]({ rootState, commit }) {
-    if (global.graknSession && global.graknTx) {
-      if (global.graknTx[rootState.activeTab]) {
-        global.graknTx[rootState.activeTab].close();
+  async [REOPEN_GLOBAL_TYPEDB_TX]({ rootState, commit }) {
+    if (global.typeDBSession && global.typeDBTx) {
+      if (global.typeDBTx[rootState.activeTab]) {
+        global.typeDBTx[rootState.activeTab].close();
       }
-      global.graknTx[rootState.activeTab] = await global.graknSession.transaction(TransactionType.READ, getTransactionOptions());
+      global.typeDBTx[rootState.activeTab] = await global.typeDBSession.transaction(TransactionType.READ, getTransactionOptions());
       rootState[rootState.activeTab].visFacade.resetCanvas();
       commit('selectedNodes', null);
       commit('updateCanvasData');

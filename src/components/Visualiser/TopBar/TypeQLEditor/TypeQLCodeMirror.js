@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,7 +20,7 @@ import CodeMirror from 'codemirror';
 import placeholder from 'codemirror/addon/display/placeholder'; // eslint-disable-line no-unused-vars
 import simpleMode from 'codemirror/addon/mode/simple'; // eslint-disable-line no-unused-vars
 
-CodeMirror.defineSimpleMode('graql', {
+CodeMirror.defineSimpleMode('typeql', {
   // The start state contains the rules that are intially used
   start: [
     { regex: /#.*/, token: 'comment' },
@@ -44,51 +44,51 @@ CodeMirror.defineSimpleMode('graql', {
   },
 });
 
-function GraqlEditorHistory(graqlCodeMirror) {
-  const codeMirror = graqlCodeMirror;
+function TypeQLEditorHistory(typeQLCodeMirror) {
+  const codeMirror = typeQLCodeMirror;
 
   let historyIndex = 0;
-  let graqlEditorHistory = [''];
+  let typeQLEditorHistory = [''];
 
   this.addToHistory = function addToHistory(query) {
-    if (graqlEditorHistory[graqlEditorHistory.length - 1] !== query) {
+    if (typeQLEditorHistory[typeQLEditorHistory.length - 1] !== query) {
       historyIndex += 1;
-      graqlEditorHistory.push(query);
+      typeQLEditorHistory.push(query);
     }
   };
 
   this.undo = function undo() {
     if (historyIndex > 0) {
       historyIndex -= 1;
-      codeMirror.setValue(graqlEditorHistory[historyIndex]);
+      codeMirror.setValue(typeQLEditorHistory[historyIndex]);
     }
   };
 
   this.redo = function redo() {
-    if (historyIndex < graqlEditorHistory.length - 1) {
+    if (historyIndex < typeQLEditorHistory.length - 1) {
       historyIndex += 1;
-      codeMirror.setValue(graqlEditorHistory[historyIndex]);
+      codeMirror.setValue(typeQLEditorHistory[historyIndex]);
     }
   };
 
   this.clearHistory = function clearHistory() {
     historyIndex = 0;
-    graqlEditorHistory = [''];
+    typeQLEditorHistory = [''];
   };
 }
 
-function createGraqlEditorHistory(codeMirror) {
-  return new GraqlEditorHistory(codeMirror);
+function createTypeQLEditorHistory(codeMirror) {
+  return new TypeQLEditorHistory(codeMirror);
 }
 
 function getCodeMirror(textArea) {
   return CodeMirror.fromTextArea(textArea, {
     lineNumbers: false,
     theme: 'dracula',
-    mode: 'graql',
+    mode: 'typeql',
     viewportMargin: Infinity,
     autofocus: true,
   });
 }
 
-export default { getCodeMirror, createGraqlEditorHistory };
+export default { getCodeMirror, createTypeQLEditorHistory };

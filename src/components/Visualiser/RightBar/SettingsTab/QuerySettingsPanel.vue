@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -48,7 +48,7 @@
 <script>
 
   import QueryUtils from './QuerySettings';
-  import { REOPEN_GLOBAL_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { REOPEN_GLOBAL_TYPEDB_TX } from '@/components/shared/StoresActions';
   import { createNamespacedHelpers } from 'vuex';
   import getters from "../../../Visualiser/store/getters";
   import state from "../../../Visualiser/store/tabState";
@@ -76,7 +76,7 @@
       // methods
       this.$options.methods = {
           ...(this.$options.methods || {}),
-          ...mapActions([REOPEN_GLOBAL_GRAKN_TX]),
+          ...mapActions([REOPEN_GLOBAL_TYPEDB_TX]),
       };
     },
     watch: {
@@ -96,7 +96,7 @@
       },
       updateReasoning(newVal) {
         QueryUtils.setReasoning(newVal);
-        this[REOPEN_GLOBAL_GRAKN_TX]().catch((err) => { this.$notifyError(err, 'Failed to reopen transaction'); });
+        this[REOPEN_GLOBAL_TYPEDB_TX]().catch((err) => { this.$notifyError(err, 'Failed to reopen transaction'); });
       },
     },
   };

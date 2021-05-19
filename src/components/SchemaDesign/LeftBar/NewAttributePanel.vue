@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -376,7 +376,7 @@
 
 <script>
   import logger from '@/logger';
-  import { DEFINE_ATTRIBUTE_TYPE, OPEN_GRAKN_TX } from '@/components/shared/StoresActions';
+  import { DEFINE_ATTRIBUTE_TYPE, OPEN_TYPEDB_TX } from '@/components/shared/StoresActions';
   import { createNamespacedHelpers } from 'vuex';
 
   export default {
@@ -411,7 +411,7 @@
       // methods
       this.$options.methods = {
         ...(this.$options.methods || {}),
-        ...mapActions([DEFINE_ATTRIBUTE_TYPE, OPEN_GRAKN_TX]),
+        ...mapActions([DEFINE_ATTRIBUTE_TYPE, OPEN_TYPEDB_TX]),
       };
     },
     watch: {
@@ -426,7 +426,7 @@
       },
       async superType(val) {
         if (val !== 'attribute') { // if super type is not 'attribute' set data type of super type
-          const tx = await this[OPEN_GRAKN_TX]();
+          const tx = await this[OPEN_TYPEDB_TX]();
           const superType = await tx.concepts().getAttributeType(val);
           this.valueType = superType.getValueType().toLowerCase();
           this.showDataTypeList = false;

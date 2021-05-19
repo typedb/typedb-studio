@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -110,7 +110,7 @@ export default {
   },
 
   beforeDestroy() {
-    if (global.graknTx && global.graknTx[`tab-${this.tabId}`]) global.graknTx[`tab-${this.tabId}`].close();
+    if (global.typeDBTx && global.typeDBTx[`tab-${this.tabId}`]) global.typeDBTx[`tab-${this.tabId}`].close();
     /* eslint-disable no-prototype-builtins */
     if (this.$store.state.hasOwnProperty(`tab-${this.tabId}`)) this.$store.unregisterModule(`tab-${this.tabId}`);
   },

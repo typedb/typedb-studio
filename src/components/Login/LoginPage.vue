@@ -1,5 +1,5 @@
 <!--
- Copyright (C) 2021 Grakn Labs
+ Copyright (C) 2021 Vaticle
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -19,13 +19,13 @@
   <transition name="slide-fade" appear>
     <div class="wrapper noselect" v-if="showLoginPage">
       <div class="login-header">
-        <img src="img/grakn-workbase-logo.png" class="logo">
+        <img src="img/typedb-workbase-logo.png" class="logo">
       </div>
 
       <div class="login-panel">
         <div class="header">
-          <div class="header-item" :class="isCluster ? '' : 'header-item-selected'" @click="chooseCore">Grakn Core</div>
-          <div class="header-item" :class="isCluster ? 'header-item-selected' : ''" @click="chooseCluster">Grakn Cluster</div>
+          <div class="header-item" :class="isCluster ? '' : 'header-item-selected'" @click="chooseCore">TypeDB</div>
+          <div class="header-item" :class="isCluster ? 'header-item-selected' : ''" @click="chooseCluster">TypeDB Cluster</div>
         </div>
         <div class="row">
           <div class="column-2">
@@ -40,7 +40,7 @@
               <input class="input" type="number" v-model="serverPort">
             </div>
             <div class="row flex-end">
-              <loading-button v-on:clicked="connect()" :text="isCluster ? 'Connect to Grakn Cluster' : 'Connect to Grakn Core'" :loading="isLoading" className="btn login-btn"></loading-button>
+              <loading-button v-on:clicked="connect()" :text="isCluster ? 'Connect to TypeDB Cluster' : 'Connect to TypeDB'" :loading="isLoading" className="btn login-btn"></loading-button>
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default {
 
     async connect() {
       this.$toasted.clear();
-      this.$store.dispatch('initGrakn', this.isCluster);
+      this.$store.dispatch('initTypeDB', this.isCluster);
       this.$router.push('develop/data');
     },
 

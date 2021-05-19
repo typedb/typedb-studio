@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Grakn Labs
+ * Copyright (C) 2021 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -26,7 +26,7 @@ import {router} from "../../main";
 
 const convertToRemote = (concept) => {
   if (concept.asRemote) {
-    const tx = router.history.current.path === "/design/schema" ? global.graknTx.schemaDesign : global.graknTx[store.getters.activeTab];
+    const tx = router.history.current.path === "/design/schema" ? global.typeDBTx.schemaDesign : global.typeDBTx[store.getters.activeTab];
     return concept.asRemote(tx);
   }
   return concept;
@@ -166,18 +166,18 @@ const getNodeLabelWithAttrs = async (baseLabel, type, instance) => {
 
 /**
  * produces and returns the common node object for a concept instance
- * most node properties are available on the instance, but graqlVar and explanation
+ * most node properties are available on the instance, but typeQLVar and explanation
  * need to be passed to here for the ConceptMap that contained the instance
  * @param {Thing} instance guaranteed to be a concept instance
- * @param {String} graqlVar
+ * @param {String} typeQLVar
  * @param {Explainable} explainable
  */
-const buildCommonInstanceNode = async (instance, graqlVar, explainable) => {
+const buildCommonInstanceNode = async (instance, typeQLVar, explainable) => {
   const node = {};
   node.id = instance.getIID();
   node.iid = instance.getIID();
   node.baseType = getThingBaseType(instance);
-  node.var = graqlVar;
+  node.var = typeQLVar;
   node.attrOffset = 0;
   node.typeLabel = getTypeLabel(instance.getType());
   node.isInferred = await convertToRemote(instance).isInferred();
@@ -190,11 +190,11 @@ const buildCommonInstanceNode = async (instance, graqlVar, explainable) => {
 /**
  * produces and returns the node for the given concept instance based on is basetype
  * @param {Thing} instance guaranteed to be a concept instance
- * @param {String} graqlVar
+ * @param {String} typeQLVar
  * @param {Explainable} explainable
  */
-const getInstanceNode = async (instance, graqlVar, explainable) => {
-  const node = await buildCommonInstanceNode(instance, graqlVar, explainable);
+const getInstanceNode = async (instance, typeQLVar, explainable) => {
+  const node = await buildCommonInstanceNode(instance, typeQLVar, explainable);
   const baseType = getThingBaseType(instance);
   switch (baseType) {
     case ENTITY_INSTANCE: {
@@ -286,10 +286,10 @@ const getInstanceEdges = async (thing, existingNodeIds) => {
  */
 const buildInstances = async (answers) => {
   let data = answers.map((answer) => {
-    return Array.from(answer.map().entries()).map(([graqlVar, concept]) => ({
-      graqlVar,
+    return Array.from(answer.map().entries()).map(([typeQLVar, concept]) => ({
+      typeQLVar,
       concept,
-      explainable: answer.explainables().relations().get(graqlVar),
+      explainable: answer.explainables().relations().get(typeQLVar),
     }));
   }).reduce(collect, []);
 
@@ -301,7 +301,7 @@ const buildInstances = async (answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.graqlVar, item.explainable))))
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceNode(item.concept, item.typeQLVar, item.explainable))))
     .reduce(collect, []);
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getInstanceEdges(item.concept, nodeIds)))).reduce(collect, []);
@@ -312,9 +312,9 @@ const buildInstances = async (answers) => {
 /**
  * produce and return the node for the given concept type based on its subtype
  * @param {Concept} type guaranteed to be a concept type
- * @param {String} graqlVar
+ * @param {String} typeQLVar
  */
-const getTypeNode = async (type, graqlVar) => {
+const getTypeNode = async (type, typeQLVar) => {
   const node = {};
   const baseType = getTypeBaseType(type);
   switch (baseType) {
@@ -326,7 +326,7 @@ const getTypeNode = async (type, graqlVar) => {
       node.id = getTypeLabel(type);
       node.label = getTypeLabel(type);
       node.baseType = baseType;
-      node.var = graqlVar;
+      node.var = typeQLVar;
       node.attrOffset = 0;
       node.typeLabel = getTypeLabel(type);
       node.attributes = await convertToRemote(type).getOwns().collect();
@@ -437,8 +437,8 @@ const getTypeEdges = async (type, existingNodeIds) => {
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  */
 const buildTypes = async (answers) => {
-  let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
-    graqlVar,
+  let data = answers.map(answerGroup => Array.from(answerGroup.map().entries()).map(([typeQLVar, concept]) => ({
+    typeQLVar,
     concept,
   }))).reduce(collect, []);
 
@@ -448,7 +448,7 @@ const buildTypes = async (answers) => {
     item.shouldVisualise = shouldVisualiseVals[index];
     return item;
   });
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.graqlVar)))).reduce(collect, []);
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeNode(item.concept, item.typeQLVar)))).reduce(collect, []);
   const nodeIds = nodes.map(node => node.id);
   const edges = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getTypeEdges(item.concept, nodeIds)))).reduce(collect, []);
 
@@ -458,15 +458,15 @@ const buildTypes = async (answers) => {
 /**
  * produces and returns the node for the given concept based on its type
  * @param {*} concept
- * @param {*} graqlVar
+ * @param {*} typeQLVar
  * @param {*} explanation
  */
-const getNeighbourNode = async (concept, graqlVar, explanation) => {
+const getNeighbourNode = async (concept, typeQLVar, explanation) => {
   let node;
   if (concept.isType()) {
-    node = await getTypeNode(concept, graqlVar);
+    node = await getTypeNode(concept, typeQLVar);
   } else if (concept.isThing()) {
-    node = await getInstanceNode(concept, graqlVar, explanation);
+    node = await getInstanceNode(concept, typeQLVar, explanation);
   }
   return node;
 };
@@ -475,7 +475,7 @@ const getNeighbourNode = async (concept, graqlVar, explanation) => {
  * Produces and returns the edges that connect the given targetNode with its neighbourNode
  * @param {*} neighbourConcept
  * @param {*} targetNode the node whose neighbour edges are to be produced
- * @param {*} graknTx
+ * @param {*} typeDBTx
  */
 const getNeighbourEdges = async (neighbourConcept, targetConcept, existingNodeIds) => {
   const edges = [];
@@ -504,13 +504,13 @@ const getNeighbourEdges = async (neighbourConcept, targetConcept, existingNodeId
  * Produces and returns nodes and edges for the neighbours of the given targetNode
  * @param {*} targetConcept the node that has been double clicked, whose neighbours are to be produced
  * @param {*} answers the untouched response of a transaction.query() that contains the neighbour concepts of targetNode
- * @param {*} graknTx
+ * @param {*} typeDBTx
  */
 const buildNeighbours = async (targetConcept, answers) => {
   let data = answers.map((answerGroup) => {
     const { explanation } = answerGroup;
-    return Array.from(answerGroup.map().entries()).map(([graqlVar, concept]) => ({
-      graqlVar,
+    return Array.from(answerGroup.map().entries()).map(([typeQLVar, concept]) => ({
+      typeQLVar,
       concept,
       explanation,
     }));
@@ -525,7 +525,7 @@ const buildNeighbours = async (targetConcept, answers) => {
 
   data = deduplicateConcepts(data);
 
-  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.graqlVar, item.explanation))))
+  const nodes = (await Promise.all(data.filter(item => item.shouldVisualise).map(item => getNeighbourNode(item.concept, item.typeQLVar, item.explanation))))
     .reduce(collect, []);
 
   const nodeIds = nodes.map(node => node.id);
@@ -539,7 +539,7 @@ const buildNeighbours = async (targetConcept, answers) => {
 const updateNodesLabel = async (nodes) => {
   const updatedLabels = await Promise.all(nodes.map(async (node) => {
     if (node.iid) {
-      const instance = await getConcept(node, global.graknTx[store.getters.activeTab]);
+      const instance = await getConcept(node, global.typeDBTx[store.getters.activeTab]);
       const baseLabel = node.label.split('\n')[0];
       return getNodeLabelWithAttrs(baseLabel, node.typeLabel, instance);
     } else {
@@ -560,9 +560,9 @@ const updateNodesLabel = async (nodes) => {
  * this function is only called when the user has chosen to enable "Load Roleplayers" query settings and set "Neighbours Limit" to higher than 0
  * @param {ConceptMap[]} answers the untouched response of a transaction.query()
  * @param {*} shouldLimit whether or not the roleplayers should be limited. false, when called to buildRPInstances for explanations
- * @param {*} graknTx
+ * @param {*} typeDBTx
  */
-const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
+const buildRPInstances = async (answers, currentData, shouldLimit, typeDBTx) => {
   const targetRelationIds = [];
 
   const getRolePlayersData = () => {
@@ -571,13 +571,13 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
     const nodes = [];
 
     answers.forEach((answer) => {
-      Array.from(answer.map().entries()).forEach(([graqlVar, concept]) => {
+      Array.from(answer.map().entries()).forEach(([typeQLVar, concept]) => {
         if (concept.isRelation()) {
           const relation = concept;
           targetRelationIds.push(relation.id);
 
           promises.push(new Promise((resolve) => {
-            relation.asRemote(graknTx).getPlayersByRoleType().then((rolePlayersMap) => {
+            relation.asRemote(typeDBTx).getPlayersByRoleType().then((rolePlayersMap) => {
               let rpEntries = Array.from(rolePlayersMap.entries());
               if (shouldLimit) rpEntries = rpEntries.slice(0, QuerySettings.getNeighboursLimit());
 
@@ -587,7 +587,7 @@ const buildRPInstances = async (answers, currentData, shouldLimit, graknTx) => {
                   players.forEach((player) => {
                     player.label = player.getType().getLabel().name();
                     const edge = getEdge(relation, player, edgeTypes.instance.RELATES, role.getLabel().name());
-                    getInstanceNode(player, graqlVar, answer.explanation).then((node) => {
+                    getInstanceNode(player, typeQLVar, answer.explanation).then((node) => {
                       edges.push(edge);
                       nodes.push(node);
                       processedEntriesCount += 1;
