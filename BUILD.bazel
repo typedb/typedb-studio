@@ -18,7 +18,6 @@
 # NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` expected by electron-builder
 
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
-load("@vaticle_dependencies//tool/release:rules.bzl", "release_validate_deps")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "checksum")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
