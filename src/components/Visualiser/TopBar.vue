@@ -96,7 +96,7 @@
     import TypeQLEditor from './TopBar/TypeQLEditor/TypeQLEditor.vue';
 
     export default {
-      components: { DatabasesHandler, TypeQLEditor },
+      components: { DatabasesHandler, TypeqlEditor: TypeQLEditor },
       props: ['tabId'],
       data() {
         return {
