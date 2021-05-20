@@ -1,7 +1,17 @@
 {
   "name": "typedb-workbase",
+  "version": "2.1.0",
   "description": "IDE to perform knowledge engineering at scale and control everything in your TypeDB database, from development to production.",
   "author": "Vaticle",
+  "bugs": {
+    "url": "https://github.com/vaticle/typedb-workbase/issues"
+  },
+  "homepage": "https://github.com/vaticle/typedb-workbase#readme",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vaticle/typedb-workbase.git"
+  },
   "scripts": {
     "prebuild": "run-script-os",
     "prebuild:win32": "cmd /V /C \"set /p VERSION=<VERSION && npm version !VERSION! --allow-same-version --no-git-tag-version\"",
@@ -21,7 +31,7 @@
     "core-js": "^3.6.5",
     "electron-store": "^7.0.2",
     "jquery": "^3.6.0",
-    "typedb-client": "https://repo.vaticle.com/repository/npm-snapshot/typedb-client/-/typedb-client-0.0.0-93ce554d7733b4ad0f42167b8967b609d803f739.tgz",
+    "typedb-client": "2.1.0",
     "underscore": "^1.12.0",
     "vis": "^4.21.0-EOL",
     "vue": "^2.6.11",
@@ -48,15 +58,5 @@
     "sass-loader": "^8.0.2",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.6",
     "vue-template-compiler": "^2.6.11"
-  },
-  "bugs": {
-    "url": "https://github.com/vaticle/typedb-workbase/issues"
-  },
-  "homepage": "https://github.com/vaticle/typedb-workbase#readme",
-  "license": "AGPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vaticle/typedb-workbase.git"
-  },
-  "version": "2.0.0-alpha-3"
+  }
 }

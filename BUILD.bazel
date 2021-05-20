@@ -33,7 +33,7 @@ pkg_zip(
 deploy_github(
     name = "deploy-github-mac",
     organisation = 'vaticle',
-    repository = 'workbase',
+    repository = 'typedb-workbase',
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
@@ -50,7 +50,7 @@ pkg_zip(
 deploy_github(
     name = "deploy-github-windows",
     organisation = 'vaticle',
-    repository = 'workbase',
+    repository = 'typedb-workbase',
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
@@ -67,7 +67,7 @@ pkg_zip(
 deploy_github(
     name = "deploy-github-linux",
     organisation = 'vaticle',
-    repository = 'workbase',
+    repository = 'typedb-workbase',
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",

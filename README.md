@@ -6,7 +6,7 @@
 
 ## TypeDB Workbase
 
-![TypeDB Workbase 1.0](https://user-images.githubusercontent.com/567679/45933937-7987bc00-bf8e-11e8-8b26-8fb020c77310.png)
+![TypeDB Workbase](https://user-images.githubusercontent.com/567679/45933937-7987bc00-bf8e-11e8-8b26-8fb020c77310.png)
 
 TypeDB Workbase is TypeDB's Integrated Development Environment to perform knowledge engineering. At the moment, Workbase provides two main functionalities: visualisation of the database, and modelling of the knowledge schema. 
 
