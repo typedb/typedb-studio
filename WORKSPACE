@@ -32,6 +32,10 @@ load("@vaticle_dependencies//builder/nodejs:deps.bzl", nodejs_deps = "deps")
 nodejs_deps()
 load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "npm_install")
 
+# Load //builder/java
+load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
+java_deps()
+
 # Load Python
 load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
 python_deps()
@@ -40,6 +44,9 @@ pip_install(
     name = "vaticle_dependencies_ci_pip",
     requirements = "@vaticle_dependencies//tool:requirements.txt",
 )
+
+# Load //tool/common
+load("@vaticle_dependencies//tool/common:deps.bzl", vaticle_dependencies_tool_maven_artifacts = "maven_artifacts")
 
 # Load Kotlin
 load("@vaticle_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
@@ -94,6 +101,14 @@ npm_install(
     package_json = "//:package.json",
     package_lock_json = "//:package-lock.json",
 )
+
+############################
+# Load @maven dependencies #
+############################
+
+load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
+maven(vaticle_dependencies_tool_maven_artifacts)
+
 
 ###############################################
 # Create @vaticle_typedb_workbase_workspace_refs #
