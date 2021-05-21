@@ -68,7 +68,7 @@ jobs:
           echo "Deploying to GitHub..."
           bazel run //:deploy-github-mac $CIRCLE_SHA1
           echo "Deploying to Homebrew..."
-          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN
+          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
           bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   build-windows:
