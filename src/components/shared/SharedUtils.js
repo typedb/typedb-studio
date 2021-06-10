@@ -16,8 +16,8 @@
  *
  */
 
-import { TypeDBOptions } from "typedb-client/api/TypeDBOptions";
-import { TransactionType } from "typedb-client/api/TypeDBTransaction";
+import { TypeDBOptions } from "typedb-client/api/connection/TypeDBOptions";
+import { TransactionType } from "typedb-client/api/connection/TypeDBTransaction";
 import QueryUtils from '../Visualiser/RightBar/SettingsTab/QuerySettings';
 
 export const META_LABELS = new Set(['entity', 'relation', 'attribute', 'relation:role', 'thing']);

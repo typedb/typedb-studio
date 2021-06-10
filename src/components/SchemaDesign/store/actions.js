@@ -41,8 +41,8 @@ import SchemaHandler from '../SchemaHandler';
 import { computeAttributes, computeRoles, loadMetaTypeInstances, updateNodePositions, } from '../SchemaUtils';
 import SchemaCanvasEventsHandler from '../SchemaCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
-import { SessionType } from "typedb-client/api/TypeDBSession";
-import { TransactionType } from "typedb-client/api/TypeDBTransaction";
+import { SessionType } from "typedb-client/api/connection/TypeDBSession";
+import { TransactionType } from "typedb-client/api/connection/TypeDBTransaction";
 
 export default {
   async [OPEN_TYPEDB_TX]({ commit }) {

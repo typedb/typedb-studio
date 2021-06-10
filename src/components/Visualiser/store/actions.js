@@ -46,8 +46,8 @@ import VisualiserGraphBuilder from '../VisualiserGraphBuilder';
 import VisualiserCanvasEventsHandler from '../VisualiserCanvasEventsHandler';
 import CDB from '../../shared/CanvasDataBuilder';
 import { getTransactionOptions, reopenTransaction } from '../../shared/SharedUtils';
-import { SessionType } from "typedb-client/api/TypeDBSession";
-import { TransactionType } from "typedb-client/api/TypeDBTransaction";
+import { SessionType } from "typedb-client/api/connection/TypeDBSession";
+import { TransactionType } from "typedb-client/api/connection/TypeDBTransaction";
 
 export default {
   [INITIALISE_VISUALISER]({ state, commit, dispatch }, { container, visFacade }) {
