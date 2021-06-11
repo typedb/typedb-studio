@@ -49,7 +49,7 @@
             </div>
             <div class="row" v-if="isCluster">
               <h1 class="label">Password:</h1>
-              <input class="input" v-model="password">
+              <input class="input" type="password" v-model="password">
             </div>
             <div class="row flex-end">
               <loading-button v-on:clicked="connect()" :text="isCluster ? 'Connect to TypeDB Cluster' : 'Connect to TypeDB'" :loading="isLoading" className="btn login-btn"></loading-button>

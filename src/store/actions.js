@@ -44,7 +44,9 @@ export const initTypeDB = async (context, isCluster) => {
     global.typedb = isCluster ?
         await TypeDB.clusterClient(
             [ServerSettings.getServerUri()],
-            new TypeDBCredential(ServerSettings.getUsername(), ServerSettings.getPassword(), ServerSettings.getRootCAPath()),
+            ServerSettings.getRootCAPath() ?
+                new TypeDBCredential(ServerSettings.getUsername(), ServerSettings.getPassword(), ServerSettings.getRootCAPath()) :
+                new TypeDBCredential(ServerSettings.getUsername(), ServerSettings.getPassword())
         ) :
         TypeDB.coreClient(ServerSettings.getServerUri());
     context.dispatch('loadDatabases');
