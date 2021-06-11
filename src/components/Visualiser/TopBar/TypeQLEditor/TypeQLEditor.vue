@@ -181,7 +181,7 @@ import TypesContainer from '../TypesContainer';
 import ErrorContainer from '../ErrorContainer';
 import AddFavQuery from '../FavQueries/AddFavQuery';
 import ToolTip from '../../../UIElements/ToolTip';
-import { TransactionType } from "typedb-client/api/TypeDBTransaction";
+import { TransactionType } from "typedb-client/api/connection/TypeDBTransaction";
 import { getTransactionOptions } from "../../../shared/SharedUtils";
 
 

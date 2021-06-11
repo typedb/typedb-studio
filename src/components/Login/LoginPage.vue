@@ -33,11 +33,23 @@
               <h1 class="label">Host:</h1>
               <input class="input left-input" v-model="serverHost">
             </div>
+            <div class="row" v-if="isCluster">
+              <h1 class="label">Username:</h1>
+              <input class="input left-input" v-model="username">
+            </div>
+            <div class="row" v-if="isCluster">
+              <h1 class="label">Root CA Path:</h1>
+              <input class="input left-input" v-model="certificatePath">
+            </div>
           </div>
           <div class="column-2">
             <div class="row">
               <h1 class="label">Port:</h1>
               <input class="input" type="number" v-model="serverPort">
+            </div>
+            <div class="row" v-if="isCluster">
+              <h1 class="label">Password:</h1>
+              <input class="input" v-model="password">
             </div>
             <div class="row flex-end">
               <loading-button v-on:clicked="connect()" :text="isCluster ? 'Connect to TypeDB Cluster' : 'Connect to TypeDB'" :loading="isLoading" className="btn login-btn"></loading-button>
@@ -122,6 +134,7 @@
     flex-direction: column;
     background-color: var(--gray-2);
     width: 384px;
+    height: 155px;
   }
 
   .btn-row {
@@ -168,8 +181,9 @@ export default {
       isLoading: false,
       serverHost: ServerSettings.getServerHost(),
       serverPort: ServerSettings.getServerPort(),
-      username: '',
-      password: '',
+      username: ServerSettings.getUsername(),
+      password: ServerSettings.getPassword(),
+      certificatePath: ServerSettings.getRootCAPath(),
       showLoginPage: true,
       isCluster: false,
     };
@@ -181,11 +195,23 @@ export default {
     serverPort(newVal) {
       ServerSettings.setServerPort(newVal);
     },
+    username(newVal) {
+      ServerSettings.setUsername(newVal);
+    },
+    password(newVal) {
+      ServerSettings.setPassword(newVal);
+    },
+    certificatePath(newVal) {
+      ServerSettings.setRootCAPath(newVal);
+    },
   },
   mounted() {
     this.$nextTick(() => {
       this.serverHost = ServerSettings.getServerHost();
       this.serverPort = ServerSettings.getServerPort();
+      this.username = ServerSettings.getUsername();
+      this.password = ServerSettings.getPassword();
+      this.certificatePath = ServerSettings.getRootCAPath();
     });
     window.addEventListener('keyup', this.connectEnterListener);
   },

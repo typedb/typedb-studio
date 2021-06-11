@@ -32,7 +32,7 @@ import VueSwitch from './components/UIElements/VueSwitch.vue';
 // Modules
 import { routes } from './routes';
 import CustomPlugins from './customPlugins';
-import { SessionType } from "typedb-client/api/TypeDBSession";
+import { SessionType } from "typedb-client/api/connection/TypeDBSession";
 
 Array.prototype.flatMap = function flat(lambda) { return Array.prototype.concat.apply([], this.map(lambda)); };
 

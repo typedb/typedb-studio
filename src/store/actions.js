@@ -17,6 +17,7 @@
  */
 
 import { TypeDB } from 'typedb-client/TypeDB';
+import { TypeDBCredential } from 'typedb-client/api/connection/TypeDBCredential';
 import ServerSettings from '@/components/ServerSettings';
 
 export const loadDatabases = async (context) => {
@@ -41,7 +42,10 @@ export const deleteDatabase = async (context, name) => global.typedb.databases()
 export const initTypeDB = async (context, isCluster) => {
   try {
     global.typedb = isCluster ?
-        await TypeDB.clusterClient([ServerSettings.getServerUri()]) :
+        await TypeDB.clusterClient(
+            [ServerSettings.getServerUri()],
+            new TypeDBCredential(ServerSettings.getUsername(), ServerSettings.getPassword(), ServerSettings.getRootCAPath()),
+        ) :
         TypeDB.coreClient(ServerSettings.getServerUri());
     context.dispatch('loadDatabases');
   } catch (e) {

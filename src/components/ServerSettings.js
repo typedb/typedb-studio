@@ -20,9 +20,14 @@ import storage from './shared/PersistentStorage';
 
 const SERVER_HOST = 'server-host';
 const SERVER_PORT = 'server-port';
+const USERNAME = 'username';
+const PASSWORD = 'password';
+const ROOT_CA_PATH = 'root-ca-path';
 
 const DEFAULT_SERVER_HOST = '127.0.0.1';
 const DEFAULT_SERVER_PORT = '1729';
+const DEFAULT_USERNAME = 'admin';
+const DEFAULT_PASSWORD = 'password';
 
 function getServerHost() {
   const host = storage.get(SERVER_HOST);
@@ -48,6 +53,38 @@ function setServerPort(port) {
   storage.set(SERVER_PORT, port);
 }
 
+function getUsername() {
+  const username = storage.get(USERNAME);
+  if (username) return username;
+
+  storage.set(USERNAME, DEFAULT_USERNAME);
+  return getUsername();
+}
+
+function setUsername(username) {
+  storage.set(USERNAME, username);
+}
+
+function getPassword() {
+  const password = storage.get(PASSWORD);
+  if (password) return password;
+
+  storage.set(PASSWORD, DEFAULT_PASSWORD);
+  return getPassword();
+}
+
+function setPassword(password) {
+  storage.set(PASSWORD, password);
+}
+
+function getRootCAPath() {
+  return storage.get(ROOT_CA_PATH);
+}
+
+function setRootCAPath(rootCAPath) {
+  storage.set(ROOT_CA_PATH, rootCAPath);
+}
+
 function getServerUri() {
   return `${this.getServerHost()}:${this.getServerPort()}`;
 }
@@ -57,5 +94,11 @@ export default {
   setServerHost,
   getServerPort,
   setServerPort,
+  getUsername,
+  setUsername,
+  getPassword,
+  setPassword,
+  getRootCAPath,
+  setRootCAPath,
   getServerUri,
 };
