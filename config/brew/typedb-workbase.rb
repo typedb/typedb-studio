@@ -15,6 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+# TODO: Rename workbase to studio
+
 cask 'typedb-workbase' do
   version '{version}'
   sha256 '{sha256}'

@@ -15,34 +15,38 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+# OSX files
 .DS_Store
-dist/
-build/*
-!build/icons
-!build/entitlements.mac.plist
-node_modules/
-npm-debug.log
-npm-debug.log.*
+
+# Windows files
 thumbs.db
+
+# Git
 !.gitkeep
-coverage
-.nyc_output
-.idea
-yarn-error.log
-bazel-*
-.ijwb
 
-/tests/e2e/logs/
-.env.local
-.env.*.local
-npm-debug.log*
-
+# IDE folders
 .vscode
+.idea
+.ijwb
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-#Electron-builder output
+# Bazel
+bazel-*
+
+# npm
+node_modules
+
+# electron-builder
 /dist_electron
+
+# Generated files
+local
+dist
+lib
+build/*
+!build/icons
+!build/entitlements.mac.plist

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` expected by electron-builder
+# NOTE: this file needs to be called `BUILD.bazel` to avoid conflicts with `build/` expected by electron-builder
 
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
@@ -98,8 +98,14 @@ deploy_brew(
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", ".grabl/*", ".circleci/*"]),
-    exclude = glob([".circleci/windows/*", "build/**", "public/**", "typedb-client/**", "package.json", "package-lock.json", "dist_electron/**/*"]),
+    include = glob(["*", ".grabl/*", ".circleci/**"]),
+    exclude = glob([
+        ".circleci/windows/dependencies.config",
+        "build/**",
+        "dist_electron/**/*",
+        "package.json",
+        "package-lock.json"
+    ]),
     license_type = "agpl",
 )
 

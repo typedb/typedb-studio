@@ -16,6 +16,8 @@
  *
  */
 
+// TODO: Convert this to a React entry point
+
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 

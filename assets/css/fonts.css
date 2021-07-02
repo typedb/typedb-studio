@@ -1,0 +1,33 @@
+/* Titillium Web */
+
+@font-face {
+    font-family: 'Titillium Web';
+    font-weight: 300;
+    src: url('../fonts/TitilliumWeb/TitilliumWeb-Light.ttf');
+}
+
+@font-face {
+    font-family: 'Titillium Web';
+    font-weight: 400;
+    src: url('../fonts/TitilliumWeb/TitilliumWeb-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Titillium Web';
+    font-weight: 600;
+    src: url('../fonts/TitilliumWeb/TitilliumWeb-SemiBold.ttf');
+}
+
+/* Ubuntu Mono */
+
+@font-face {
+    font-family: 'Ubuntu Mono';
+    font-weight: 400;
+    src: url('../fonts/UbuntuMono/UbuntuMono-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Ubuntu Mono';
+    font-weight: 700;
+    src: url('../fonts/UbuntuMono/UbuntuMono-Bold.ttf');
+}
