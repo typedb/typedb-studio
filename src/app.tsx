@@ -1,6 +1,8 @@
+import { ThemeProvider } from "@material-ui/core/styles";
 import React from "react";
 import {indexStyles} from "./index-styles";
 import { vaticleMuiTheme } from "./styles/theme";
+import { StudioRouter } from "./router";
 
 export const StudioApp: React.FC = () => {
     const classes = indexStyles();
@@ -8,7 +10,7 @@ export const StudioApp: React.FC = () => {
     return (
         <ThemeProvider theme={vaticleMuiTheme}>
             <div className={classes.root}>
-                <VaticleRouter/>
+                <StudioRouter/>
             </div>
         </ThemeProvider>
     );

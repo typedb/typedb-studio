@@ -1,23 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+    <meta charset="utf-8" />
     <title>TypeDB Studio</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <% if (htmlWebpackPlugin.options.nodeModules) { %>
-    <!-- Add `node_modules/` to global paths so `require` works properly in development -->
     <script>
-        require('module').globalPaths.push('<%= htmlWebpackPlugin.options.nodeModules.replace(/\\/g, '\\\\') %>')
+      (() => {
+        if (process?.env?.NODE_ENV !== 'development') {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = './dist/style.css';
+          // HACK: Writing the script path should be done with webpack
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+      })();
     </script>
-    <% } %>
 </head>
 <body>
 <div id="root"></div>
-<!-- Set `__static` path to static files in production -->
 <script>
-    if (process.env.NODE_ENV !== 'development') window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+  const scripts = [];
+
+  if (process.env.NODE_ENV === 'development') {
+    // Dynamically insert the DLL script in development env in the
+    // renderer process
+    scripts.push('../.erb/dll/renderer.dev.dll.js');
+
+    // Dynamically insert the bundled app script in the renderer process
+    const port = process.env.PORT || 1212;
+    scripts.push(`http://localhost:${port}/dist/renderer.dev.js`);
+  } else {
+    scripts.push('./dist/renderer.prod.js');
+  }
+
+  if (scripts.length) {
+    document.write(
+      scripts
+        .map((script) => `<script defer src="${script}"><\/script>`)
+        .join('')
+    );
+  }
 </script>
 </body>
 </html>

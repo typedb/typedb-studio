@@ -18,7 +18,7 @@ export default class MenuBuilder {
         }
 
         const template = process.platform === 'darwin' ? this.buildDarwinTemplate() : this.buildDefaultTemplate();
-        const menu = Menu.buildFromTemplate(template);
+        const menu = Menu.buildFromTemplate(template as MenuItemConstructorOptions[]);
         Menu.setApplicationMenu(menu);
 
         return menu;
@@ -39,17 +39,6 @@ export default class MenuBuilder {
         });
     }
 
-    applicationSubmenu(): MenuItemConstructorOptions[] {
-        const applicationSubmenu = [];
-        // The about window only works on Mac out-of-the-box - will need to implement custom for Windows/Linux
-        if (process.platform === 'darwin') {
-            applicationSubmenu.push({ label: 'About TypeDB Workbase', selector: 'orderFrontStandardAboutPanel:' });
-            applicationSubmenu.push({ type: 'separator' });
-        }
-        applicationSubmenu.push({ label: 'Quit', accelerator: 'Command+Q', click() { app.quit(); } });
-        return applicationSubmenu;
-    }
-
     helpSubmenu(): MenuItemConstructorOptions[] {
         return [{
             label: "TypeDB Studio on GitHub",
@@ -63,8 +52,8 @@ export default class MenuBuilder {
         },];
     }
 
-    buildDarwinTemplate(): MenuItemConstructorOptions[] {
-        const subMenuViewDev: MenuItemConstructorOptions = {
+    buildDarwinTemplate(): DarwinMenuItemConstructorOptions[] {
+        const subMenuViewDev: DarwinMenuItemConstructorOptions = {
             label: 'View',
             submenu: [
                 {
@@ -90,7 +79,7 @@ export default class MenuBuilder {
                 },
             ],
         };
-        const subMenuViewProd: MenuItemConstructorOptions = {
+        const subMenuViewProd: DarwinMenuItemConstructorOptions = {
             label: 'View',
             submenu: [
                 {
@@ -102,7 +91,7 @@ export default class MenuBuilder {
                 },
             ],
         };
-        const subMenuView = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true' ? subMenuViewDev : subMenuViewProd;
+        const subMenuView = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true' ? [subMenuViewDev] : [subMenuViewProd];
 
         return [{
             label: 'Application',

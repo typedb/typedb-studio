@@ -11,7 +11,8 @@ export const StudioRouter: React.FC = () => {
         <BrowserRouter>
             <Switch>
                 {/*<Route exact path={routes.login} component={LoginScreen}/>*/}
-                <Route exact path={routes.visualiser} component={VisualiserScreen}/>
+                {/*<Route exact path={routes.visualiser} component={VisualiserScreen}/>*/}
+                <Route path="/" component={() => <h1>Hello World</h1>}/>
                 {/*<Route component={ErrorScreen}/>*/}
             </Switch>
         </BrowserRouter>
