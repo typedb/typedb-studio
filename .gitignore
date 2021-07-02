@@ -47,6 +47,3 @@ node_modules
 local
 dist
 lib
-build/*
-!build/icons
-!build/entitlements.mac.plist

@@ -63,6 +63,7 @@ export const router = new VueRouter({
   routes,
 });
 
+// TODO: These need to be converted to electron-store
 // Set state variables in global store - this needs to happen before everything else
 store.commit('setAuthentication', SERVER_AUTHENTICATED);
 store.commit('setLandingPage', LANDING_PAGE);

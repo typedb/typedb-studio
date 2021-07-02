@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-workspace(name = "vaticle_typedb_workbase")
+workspace(name = "vaticle_typedb_studio")
 
 ################################
 # Load @vaticle_dependencies #
@@ -96,7 +96,7 @@ npm_install(
 )
 
 ###############################################
-# Create @vaticle_typedb_workbase_workspace_refs #
+# Create @vaticle_typedb_studio_workspace_refs #
 ###############################################
 load("@vaticle_bazel_distribution//common:rules.bzl", "workspace_refs")
-workspace_refs(name = "vaticle_typedb_workbase_workspace_refs")
+workspace_refs(name = "vaticle_typedb_studio_workspace_refs")

@@ -1,22 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <title>TypeDB Studio</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Page title -->
-    <title>TypeDB Workbase</title>
-
-
-    <!-- TypeDB style -->
-    <link rel="stylesheet" href="styles/blueprint-icons.css">
-    <link rel="stylesheet" href="styles/blueprint.css">
-    <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/codemirror.css">
-    <link rel="stylesheet" href="styles/dracula.css">
-
-
 
     <% if (htmlWebpackPlugin.options.nodeModules) { %>
     <!-- Add `node_modules/` to global paths so `require` works properly in development -->
@@ -25,15 +13,11 @@
     </script>
     <% } %>
 </head>
-<body class="dark">
-<div id="typedb-app">
-    <router-view></router-view>
-</div>
+<body>
+<div id="root"></div>
 <!-- Set `__static` path to static files in production -->
 <script>
     if (process.env.NODE_ENV !== 'development') window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 </script>
-
-<!-- webpack builds are automatically injected -->
 </body>
 </html>

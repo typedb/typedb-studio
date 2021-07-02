@@ -16,7 +16,7 @@ the fonts.
 DEFINITIONS
 "Font Software" refers to the set of files released by the Copyright
 Holder(s) under this licence and clearly marked as such. This may
-include source files, build scripts and documentation.
+include source files, build build.scripts and documentation.
 
 "Original Version" refers to the collection of Font Software components
 as received under this licence.
