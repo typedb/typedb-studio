@@ -64,7 +64,7 @@ jobs:
       - run: |
           echo "Creating release notes..."
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-          bazel run @vaticle_dependencies//tool/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
+          bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
           export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
           echo "Deploying to GitHub..."
           bazel run //:deploy-github-mac $CIRCLE_SHA1
@@ -93,7 +93,7 @@ jobs:
   deploy-windows:
     machine:
       image: ubuntu-2004:202101-01
-    working_directory: ~/workbase
+    working_directory: ~/typedb-workbase
     steps:
       - checkout
       - attach_workspace:
@@ -101,7 +101,7 @@ jobs:
       - install-bazel-linux-rbe
       - run: |
           export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-          bazel run @vaticle_dependencies//tool/release:create-notes -- workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
+          bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
           export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
           bazel run //:deploy-github-windows $CIRCLE_SHA1
 
@@ -111,14 +111,14 @@ workflows:
       - deploy-mac-and-brew:
           filters:
             branches:
-              only: workbase-release-mac-windows-branch
+              only: typedb-workbase-release-mac-windows-branch
       - build-windows:
           filters:
             branches:
-              only: workbase-release-mac-windows-branch
+              only: typedb-workbase-release-mac-windows-branch
       - deploy-windows:
           requires:
             - build-windows
           filters:
             branches:
-              only: workbase-release-mac-windows-branch
+              only: typedb-workbase-release-mac-windows-branch
