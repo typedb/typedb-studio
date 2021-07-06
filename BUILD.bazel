@@ -18,6 +18,7 @@
 # NOTE: this file needs to be called `BUILD.bzl` to avoid conflicts with `build/` expected by electron-builder
 
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
+load("@vaticle_dependencies//tool/release:rules.bzl", "release_validate_nodejs_deps")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "checksum")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
@@ -101,6 +102,12 @@ checkstyle_test(
     include = glob(["*", ".grabl/*", ".circleci/*"]),
     exclude = glob([".circleci/windows/*", "build/**", "public/**", "typedb-client/**", "package.json", "package-lock.json", "dist_electron/**/*"]),
     license_type = "agpl",
+)
+
+release_validate_nodejs_deps(
+    name = "release-validate-nodejs-deps",
+    package_json = "//:package.json",
+    tagged_deps = ["typedb-client"]
 )
 
 # CI targets that are not declared in any BUILD file, but are called externally
