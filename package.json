@@ -49,15 +49,15 @@
       "main.prod.js.map",
       "package.json"
     ],
-    "afterSign": "build/scripts/notarize.js",
+    "afterSign": ".erb/scripts/Notarize.js",
     "mac": {
       "target": [
         "dmg"
       ],
       "type": "distribution",
       "hardenedRuntime": true,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
       "gatekeeperAssess": false
     },
     "dmg": {

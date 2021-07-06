@@ -27,7 +27,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 pkg_zip(
     name = "mac-zip",
-    srcs = glob(["dist_electron/*.dmg"]),
+    srcs = glob(["release/*.dmg"]),
 )
 
 deploy_github(
@@ -44,7 +44,7 @@ deploy_github(
 
 pkg_zip(
     name = "windows-zip",
-    srcs = glob(["dist_electron/*.exe"]),
+    srcs = glob(["release/*.exe"]),
 )
 
 deploy_github(
@@ -61,7 +61,7 @@ deploy_github(
 
 pkg_zip(
     name = "linux-zip",
-    srcs = glob(["dist_electron/*.AppImage"]),
+    srcs = glob(["release/*.AppImage"]),
 )
 
 deploy_github(
@@ -102,9 +102,9 @@ checkstyle_test(
     exclude = glob([
         ".circleci/windows/dependencies.config",
         "build/**",
-        "dist_electron/**/*",
+        "release/**/*",
         "package.json",
-        "package-lock.json"
+        "yarn.lock",
     ]),
     license_type = "agpl",
 )
