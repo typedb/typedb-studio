@@ -9,5 +9,9 @@
     "postinstall": "yarn electron-rebuild"
   },
   "license": "AGPL-3.0",
+  "author": {
+    "name": "Vaticle",
+    "url": "https://vaticle.com"
+  },
   "dependencies": {}
 }

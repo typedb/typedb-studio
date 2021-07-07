@@ -2,10 +2,12 @@
  * Builds the DLL for development electron renderer process
  */
 
+// NOTE: Do NOT remove the fragment "babel" from the name of this file - Babel requires it
+
 import webpack from 'webpack';
 import path from 'path';
 import { merge } from 'webpack-merge';
-import baseConfig from './webpack.config.base';
+import baseConfig from './webpack.config';
 import { dependencies } from '../../package.json';
 import checkNodeEnv from '../scripts/check-node-env';
 
@@ -25,9 +27,9 @@ export default merge(baseConfig, {
   externals: ['fsevents', 'crypto-browserify'],
 
   /**
-   * Use `module` from `webpack.config.renderer.dev.js`
+   * Use `module` from `webpack.renderer.dev.js`
    */
-  module: require('./webpack.config.renderer.dev.babel').default.module,
+  module: require('./webpack.renderer.dev.babel').default.module,
 
   entry: {
     renderer: Object.keys(dependencies || {}),

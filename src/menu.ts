@@ -30,7 +30,7 @@ export default class MenuBuilder {
 
             Menu.buildFromTemplate([
                 {
-                    label: 'Inspect element',
+                    label: 'Inspect',
                     click: () => {
                         this.mainWindow.webContents.inspectElement(x, y);
                     },

@@ -2,12 +2,14 @@
  * Webpack config for production electron main process
  */
 
+// NOTE: Do NOT remove the fragment "babel" from the name of this file - Babel requires it
+
 import path from 'path';
 import webpack from 'webpack';
 import { merge } from 'webpack-merge';
 import TerserPlugin from 'terser-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-import baseConfig from './webpack.config.base';
+import baseConfig from './webpack.config';
 import checkNodeEnv from '../scripts/check-node-env';
 import deleteSourceMaps from '../scripts/delete-source-maps';
 
