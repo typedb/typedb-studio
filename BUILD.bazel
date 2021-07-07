@@ -17,6 +17,7 @@
 
 # NOTE: this file needs to be called `BUILD.bazel` to avoid conflicts with `build/` expected by electron-builder
 
+load("//:deployment.bzl", deployment_github = "deployment")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "checksum")
@@ -32,8 +33,8 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-mac",
-    organisation = 'vaticle',
-    repository = 'typedb-workbase',
+    organisation = deployment_github['github.organisation'],
+    repository = deployment_github['github.repository'],
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
@@ -49,8 +50,8 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-windows",
-    organisation = 'vaticle',
-    repository = 'typedb-workbase',
+    organisation = deployment_github['github.organisation'],
+    repository = deployment_github['github.repository'],
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
@@ -66,8 +67,8 @@ pkg_zip(
 
 deploy_github(
     name = "deploy-github-linux",
-    organisation = 'vaticle',
-    repository = 'typedb-workbase',
+    organisation = deployment_github['github.organisation'],
+    repository = deployment_github['github.repository'],
     title = "TypeDB Workbase",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
