@@ -23,7 +23,7 @@
   if (process.env.NODE_ENV === 'development') {
     // Dynamically insert the DLL script in development env in the
     // renderer process
-    scripts.push('../.erb/dll/renderer.dev.dll.js');
+    scripts.push('../build/dll/renderer.dev.dll.js');
 
     // Dynamically insert the bundled app script in the renderer process
     const port = process.env.PORT || 1212;
