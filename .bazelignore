@@ -17,3 +17,6 @@
 
 dll
 release
+dist
+main.prod.js
+yarn-error.log
