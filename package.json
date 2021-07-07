@@ -170,9 +170,6 @@
     "npm": ">=6.x",
     "yarn": ">=1.21.3"
   },
-  "collective": {
-    "url": "https://opencollective.com/electron-react-boilerplate-594"
-  },
   "browserslist": [],
   "renovate": {
     "extends": [
