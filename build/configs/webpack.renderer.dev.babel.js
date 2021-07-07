@@ -128,9 +128,6 @@ export default merge(baseConfig, {
             loader: 'style-loader',
           },
           {
-            loader: '@teamsupercell/typings-for-css-modules-loader',
-          },
-          {
             loader: 'css-loader',
             options: {
               modules: {

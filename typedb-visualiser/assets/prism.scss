@@ -1,0 +1,46 @@
+/* PrismJS 1.23.0 https://prismjs.com/download.html#themes=prism */
+
+$color-white: #DDDDDD;
+$color-blue: #7BA0FF;
+$color-yellow: #FFE4A7;
+$color-pink: #F28DD7;
+$color-aqua: #55EAE2;
+$color-orange: #FFA187;
+$color-red: #F66B65;
+$color-grey: #7F83AF;
+
+code[class*="language-"],
+pre[class*="language-"] {
+  color: $color-pink;
+}
+
+.token.comment {
+  color: $color-grey;
+}
+
+.token.constant,
+.token.super,
+.token.variable {
+  color: $color-yellow;
+}
+
+.token.class-name,
+.token.function {
+  color: $color-white;
+}
+
+.token.number,
+.token.string {
+  color: $color-aqua;
+}
+
+.token.operator,
+.token.keyword,
+.token.punctuation,
+.token.special {
+  color: $color-blue;
+}
+
+.token.error {
+  color: $color-red;
+}
