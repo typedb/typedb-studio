@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# NOTE: this file needs to be called `BUILD.bazel` to avoid conflicts with `build/` expected by electron-builder
+# NOTE: this file needs to be called `BUILD.bazel` to avoid conflicts with `build/`
 
 load("//:deployment.bzl", deployment_github = "deployment")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
