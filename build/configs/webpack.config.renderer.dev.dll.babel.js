@@ -7,9 +7,9 @@ import path from 'path';
 import { merge } from 'webpack-merge';
 import baseConfig from './webpack.config.base';
 import { dependencies } from '../../package.json';
-import CheckNodeEnv from '../scripts/CheckNodeEnv';
+import checkNodeEnv from '../scripts/check-node-env';
 
-CheckNodeEnv('development');
+checkNodeEnv('development');
 
 const dist = path.join(__dirname, '../dll');
 

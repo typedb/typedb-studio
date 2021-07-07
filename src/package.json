@@ -5,7 +5,7 @@
   "description": "IDE to perform knowledge engineering at scale and control everything in your TypeDB database, from development to production.",
   "main": "./main.prod.js",
   "scripts": {
-    "electron-rebuild": "node -r ../build/scripts/BabelRegister.js ../build/scripts/ElectronRebuild.js",
+    "electron-rebuild": "node -r ../build/scripts/babel-register.js ../build/scripts/electron-rebuild.js",
     "postinstall": "yarn electron-rebuild"
   },
   "license": "AGPL-3.0",

@@ -8,11 +8,11 @@ import { merge } from 'webpack-merge';
 import TerserPlugin from 'terser-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import baseConfig from './webpack.config.base';
-import CheckNodeEnv from '../scripts/CheckNodeEnv';
-import DeleteSourceMaps from '../scripts/DeleteSourceMaps';
+import checkNodeEnv from '../scripts/check-node-env';
+import deleteSourceMaps from '../scripts/delete-source-maps';
 
-CheckNodeEnv('production');
-DeleteSourceMaps();
+checkNodeEnv('production');
+deleteSourceMaps();
 
 const devtoolsConfig = process.env.DEBUG_PROD === 'true' ? {
   devtool: 'source-map'

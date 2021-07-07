@@ -17,9 +17,9 @@
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
     "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "package": "rm -rf src/dist && yarn build && electron-builder build --publish never",
-    "postinstall": "node -r @babel/register build/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./build/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
-    "start": "node -r @babel/register ./build/scripts/CheckPortInUse.js && yarn start:renderer",
-    "start:main": "cross-env NODE_ENV=development electron -r ./build/scripts/BabelRegister ./src/main.dev.ts",
+    "postinstall": "node -r @babel/register build/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./build/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
+    "start": "node -r @babel/register ./build/scripts/check-port-in-use.js && yarn start:renderer",
+    "start:main": "cross-env NODE_ENV=development electron -r ./build/scripts/babel-register ./src/main.dev.ts",
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./build/configs/webpack.config.renderer.dev.babel.js",
     "test": "jest"
   },
@@ -49,7 +49,7 @@
       "main.prod.js.map",
       "package.json"
     ],
-    "afterSign": "build/scripts/Notarize.js",
+    "afterSign": "build/scripts/notarize.js",
     "mac": {
       "target": [
         "dmg"
@@ -135,7 +135,7 @@
       "src/node_modules"
     ],
     "setupFiles": [
-      "./build/scripts/CheckBuildsExist.js"
+      "./build/scripts/check-builds-exist.js"
     ]
   },
   "devDependencies": {
