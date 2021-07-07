@@ -40,8 +40,8 @@
       ],
       "type": "distribution",
       "hardenedRuntime": true,
-      "entitlements": "assets/entitlements.mac.plist",
-      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "entitlements": "build/assets/entitlements.mac.plist",
+      "entitlementsInherit": "build/assets/entitlements.mac.plist",
       "gatekeeperAssess": false
     },
     "dmg": {
@@ -71,11 +71,11 @@
     },
     "directories": {
       "app": "src",
-      "buildResources": "assets",
+      "buildResources": "build/assets",
       "output": "release"
     },
     "extraResources": [
-      "./assets/**"
+      "./build/assets/**"
     ],
     "publish": {
       "provider": "github",
