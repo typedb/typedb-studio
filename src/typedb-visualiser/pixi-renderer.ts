@@ -5,13 +5,14 @@ import {
     arrowhead,
     diamondIncomingLineIntersect, Ellipse,
     ellipseIncomingLineIntersect,
-    midpoint,
+    midpoint, Point,
     Rect,
     rectIncomingLineIntersect
 } from "./geometry";
-import { ForceGraphEdge, ForceGraphVertex, stickyForceSimulation } from "./d3-force-simulation";
+import { dynamicForceSimulation, ForceGraphEdge, ForceGraphVertex } from "./d3-force-simulation";
 import { defaultColors, defaultStyles } from "./styles";
 import { TypeDBVisualiserData } from "./data";
+import { Viewport } from "pixi-viewport";
 
 const edgeLabelMetrics: {[label: string]: PIXI.TextMetrics} = {};
 const edgeLabelStyle: Partial<PIXI.ITextStyle> = {
@@ -145,14 +146,14 @@ export function edgeEndpoint(source: Renderer.Vertex, target: Renderer.Vertex): 
                 w: target.width + 8, h: target.height + 8
             };
             if (["entity", "entityType"].includes(target.encoding)) {
-                return rectIncomingLineIntersect(source, targetRect);
+                return rectIncomingLineIntersect(source as Point, targetRect);
             } else {
-                return diamondIncomingLineIntersect(source, targetRect);
+                return diamondIncomingLineIntersect(source as Point, targetRect);
             }
         case "attribute":
         case "attributeType":
             const targetEllipse: Ellipse = { x: target.x, y: target.y, hw: target.width / 2 + 2, hh: target.height / 2 + 2 };
-            return ellipseIncomingLineIntersect(source, targetEllipse);
+            return ellipseIncomingLineIntersect(source as Point, targetEllipse);
     }
 }
 
@@ -167,31 +168,30 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
     container.innerHTML = "";
     container.appendChild(app.view);
 
-    // TODO: We should reintroduce pixi-viewport when we stop using pixi.js-legacy
-    // const viewport = new Viewport({
-    //     screenWidth: width,
-    //     screenHeight: height,
-    //     worldWidth: width,
-    //     worldHeight: height,
-    //     passiveWheel: false,
-    //
-    //     interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
-    // });
+    const viewport = new Viewport({
+        screenWidth: width,
+        screenHeight: height,
+        worldWidth: width,
+        worldHeight: height,
+        passiveWheel: false,
 
-    // app.stage.addChild(viewport);
+        interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+    });
+
+    app.stage.addChild(viewport);
 
     // activate plugins
-    // viewport.drag({ factor: .33 })
-    //     .pinch({ factor: .5 })
-    //     .clampZoom({ minScale: .4, maxScale: 2.5 })
-    //     .wheel()
-    //     .decelerate();
+    viewport.drag({ factor: .5 })
+        .pinch({ factor: .5 })
+        .wheel({ percent: -.66 })
+        .clampZoom({ minScale: .25, maxScale: 2.5 })
+        .decelerate({ friction: .95 });
 
-    const simulation = stickyForceSimulation(vertices, edges, width, height);
+    const simulation = dynamicForceSimulation(vertices, edges, width, height);
     const ubuntuMono = new FontFaceObserver("Ubuntu Mono") as { load: () => Promise<any> };
 
     function onDragStart(this: any, evt: any) {
-        // viewport.plugins.pause('drag');
+        viewport.plugins.pause('drag');
         simulation.alphaTarget(0.3).restart();
         this.isDown = true;
         this.eventData = evt.data;
@@ -206,7 +206,7 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
         gfx.eventData = null;
         delete this.fx;
         delete this.fy;
-        // viewport.plugins.resume('drag');
+        viewport.plugins.resume('drag');
     }
 
     function onDragMove(this: any, gfx: any) {
@@ -237,11 +237,11 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
         vertex.gfx.interactive = true;
         vertex.gfx.buttonMode = true;
 
-        app.stage.addChild(vertex.gfx);
+        viewport.addChild(vertex.gfx);
     });
 
     const edgesGFX = new PIXI.Graphics();
-    app.stage.addChild(edgesGFX);
+    viewport.addChild(edgesGFX);
 
     const onTick = () => {
         vertices.forEach((vertex) => {

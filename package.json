@@ -110,6 +110,7 @@
     "electron-updater": "^4.3.4",
     "fontfaceobserver": "^2.1.0",
     "history": "^5.0.0",
+    "pixi-viewport": "^4.31.0",
     "pixi.js": "^6.0.4",
     "prismjs": "^1.24.1",
     "react": "^17.0.1",

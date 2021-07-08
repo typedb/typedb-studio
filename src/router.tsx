@@ -1,5 +1,6 @@
 import React from "react";
-import {BrowserRouter, Route, Switch} from "react-router-dom";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { WorkspaceScreen } from "./workspace/workspace-screen";
 
 export const routes = {
     login: "/login",
@@ -12,7 +13,7 @@ export const StudioRouter: React.FC = () => {
             <Switch>
                 {/*<Route exact path={routes.login} component={LoginScreen}/>*/}
                 {/*<Route exact path={routes.visualiser} component={VisualiserScreen}/>*/}
-                <Route path="/" component={() => <h1>Hello World</h1>}/>
+                <Route path="/" component={WorkspaceScreen}/>
                 {/*<Route component={ErrorScreen}/>*/}
             </Switch>
         </BrowserRouter>

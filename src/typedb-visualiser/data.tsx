@@ -8,8 +8,8 @@ export declare namespace TypeDBVisualiserData {
         id: number;
         label: string;
         encoding: VertexEncoding;
-        x: number;
-        y: number;
+        x?: number;
+        y?: number;
         width: number;
         height: number;
         color?: number;
