@@ -3,10 +3,10 @@ import ReactDOM from "react-dom";
 import "./assets/css/fonts.css";
 import "./assets/css/reset.css";
 import "./assets/css/base.scss";
-// import "./assets/css/prism.scss"; // TODO: grab these from typedb-visualiser
-// import {installPrismTypeQL} from "../common/typeql/prism-typeql";
+import "./typedb-visualiser/assets/prism.scss";
 import {StudioApp} from "./app";
+import { installPrismTypeQL } from "./typedb-visualiser";
 
-// installPrismTypeQL();
+installPrismTypeQL();
 
 ReactDOM.render(<StudioApp/>, document.getElementById('root'));
