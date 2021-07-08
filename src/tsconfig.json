@@ -22,10 +22,8 @@
     "allowJs": true
   },
   "exclude": [
-    "release",
-    "src/main.prod.js",
-    "src/renderer.prod.js",
-    "src/dist",
-    "build/dll"
+    "main.prod.js",
+    "renderer.prod.js",
+    "dist"
   ]
 }
