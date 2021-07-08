@@ -103,6 +103,7 @@
   "homepage": "https://github.com/vaticle/typedb-workbase#readme",
   "dependencies": {
     "@material-ui/core": "^4.11.0",
+    "clsx": "^1.1.1",
     "d3-force": "^3.0.0",
     "electron-debug": "^3.1.0",
     "electron-log": "^4.2.4",

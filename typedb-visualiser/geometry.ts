@@ -114,6 +114,9 @@ export function diamondIncomingLineIntersect(sourcePoint: Point, targetDiamond: 
     return lineIntersect(incomingLine, edgeToCheck);
 }
 
+/*
+ * Find intersection point of a line from `sourcePoint` to the centre of `targetEllipse`, with the edge of `targetEllipse`
+ */
 export function ellipseIncomingLineIntersect(sourcePoint: Point, targetEllipse: Ellipse): Point {
     let {x: px, y: py} = sourcePoint;
     const {x, y, hw: a, hh: b} = targetEllipse; // ellipse has centre (x,y) and semiaxes of lengths [a,b]

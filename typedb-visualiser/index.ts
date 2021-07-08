@@ -1,9 +1,9 @@
-export * from "./geometry";
-export * from "./prism-typeql";
-export * from "./typeql-data";
-export * from "./typeql-force-graph";
-export * from "./typeql-force-graph-pixijs-legacy";
-export * from "./typeql-styles";
-export * from "./typeql-visualiser";
+// Any exports placed here will become available via `import { } from "typeql-visualiser"`
 
-// TODO: Ideally we'd use code generation (eg via Rollup.js) or a checkstyle-like tool to ensure everything is exported
+export * from "./d3-force-simulation";
+export * from "./data";
+export { renderGraphPIXILegacy } from "./pixi-legacy-renderer";
+export { renderGraph } from "./pixi-renderer";
+export { installPrismTypeQL } from "./prism-typeql";
+export * from "./react-component";
+export * from "./styles";
