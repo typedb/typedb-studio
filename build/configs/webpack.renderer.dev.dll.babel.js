@@ -32,7 +32,10 @@ export default merge(baseConfig, {
   module: require('./webpack.renderer.dev.babel').default.module,
 
   entry: {
-    renderer: Object.keys(dependencies || {}),
+    renderer: [
+      ...Object.keys(dependencies || {}),
+      "typedb-client/TypeDB"
+    ].filter(key => key !== "typedb-client")
   },
 
   output: {

@@ -10,7 +10,7 @@ import {
     rectIncomingLineIntersect
 } from "./geometry";
 import { dynamicForceSimulation, ForceGraphEdge, ForceGraphVertex } from "./d3-force-simulation";
-import { defaultColors, defaultStyles } from "./styles";
+import { defaultStyles, TypeDBVisualiserTheme } from "./styles";
 import { TypeDBVisualiserData } from "./data";
 import { Viewport } from "pixi-viewport";
 
@@ -25,10 +25,10 @@ export declare namespace Renderer {
     export type Vertex = ForceGraphVertex & { gfx?: PIXI.Graphics };
 }
 
-export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Promise<any> }) {
+export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Promise<any> }, theme: TypeDBVisualiserTheme) {
     vertex.gfx = new PIXI.Graphics();
     vertex.gfx.lineStyle(0);
-    vertex.gfx.beginFill(defaultColors[vertex.encoding]);
+    vertex.gfx.beginFill(theme.colors[vertex.encoding]);
 
     switch (vertex.encoding) {
         case "entity":
@@ -65,27 +65,27 @@ export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Pr
     vertex.gfx.endFill();
 
     fontFace.load().then(() => {
-        renderVertexLabel(vertex, false);
+        renderVertexLabel(vertex, false, theme);
     }, () => {
-        renderVertexLabel(vertex, true);
+        renderVertexLabel(vertex, true, theme);
     });
 }
 
-export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: boolean) {
+export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
     const text1 = new PIXI.Text(vertex.label, {
         fontSize: defaultStyles.vertexLabel.fontSize,
         fontFamily: useFallbackFont ? defaultStyles.fontFamilyFallback : defaultStyles.fontFamily,
-        fill: defaultColors.vertexLabel,
+        fill: theme.colors.vertexLabel,
     });
     text1.anchor.set(0.5);
     text1.resolution = window.devicePixelRatio * 2;
     vertex.gfx.addChild(text1);
 }
 
-export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics) {
+export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics, theme: TypeDBVisualiserTheme) {
     const [source, target] = [edge.source as Renderer.Vertex, edge.target as Renderer.Vertex];
     const [lineSource, lineTarget] = [edgeEndpoint(target, source), edgeEndpoint(source, target)];
-    const edgeColor = edge.highlight ? defaultColors[edge.highlight] : defaultColors.edge;
+    const edgeColor = edge.highlight ? theme.colors[edge.highlight] : theme.colors.edge;
 
     if (lineSource && lineTarget) {
         const { label } = edge;
@@ -157,14 +157,14 @@ export function edgeEndpoint(source: Renderer.Vertex, target: Renderer.Vertex): 
     }
 }
 
-export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserData.Graph) {
+export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
     const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
 
     const app = new PIXI.Application({ width, height, antialias: !0,
-        backgroundColor: defaultColors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
+        backgroundColor: theme.colors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
     container.innerHTML = "";
     container.appendChild(app.view);
 
@@ -181,10 +181,10 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
     app.stage.addChild(viewport);
 
     // activate plugins
-    viewport.drag({ factor: .5 })
+    viewport.drag()
         .pinch({ factor: .5 })
         .wheel({ percent: -.66 })
-        .clampZoom({ minScale: .25, maxScale: 2.5 })
+        .clampZoom({ minScale: .1, maxScale: 3 })
         .decelerate({ friction: .95 });
 
     const simulation = dynamicForceSimulation(vertices, edges, width, height);
@@ -221,7 +221,7 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
     vertices.forEach((vertex) => {
         const boundDragMove = onDragMove.bind(vertex);
         const boundDragEnd = onDragEnd.bind(vertex);
-        renderVertex(vertex, ubuntuMono);
+        renderVertex(vertex, ubuntuMono, theme);
 
         vertex.gfx
             .on('click', (e: Event) => {
@@ -256,7 +256,7 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
         edgesGFX.clear();
         edgesGFX.removeChildren();
         edges.forEach((edge) => {
-            renderEdge(edge, edgesGFX);
+            renderEdge(edge, edgesGFX, theme);
         });
     }
 

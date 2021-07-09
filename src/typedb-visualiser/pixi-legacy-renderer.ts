@@ -4,16 +4,16 @@ import FontFaceObserver from "fontfaceobserver";
 import { TypeDBVisualiserData } from "./data";
 import { renderEdge, Renderer, renderVertex } from "./pixi-renderer";
 import { stickyForceSimulation } from "./d3-force-simulation";
-import { defaultColors } from "./styles";
+import { TypeDBVisualiserTheme } from "./styles";
 
-export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBVisualiserData.Graph) {
+export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
     const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
 
     const app = new PIXILegacy.Application({ width, height, antialias: !0,
-        backgroundColor: defaultColors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
+        backgroundColor: theme.colors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
     container.innerHTML = "";
     container.appendChild(app.view);
 
@@ -49,7 +49,7 @@ export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBV
     vertices.forEach((vertex) => {
         const boundDragMove = onDragMove.bind(vertex);
         const boundDragEnd = onDragEnd.bind(vertex);
-        renderVertex(vertex, ubuntuMono);
+        renderVertex(vertex, ubuntuMono, theme);
 
         vertex.gfx
             .on('click', (e: Event) => {
@@ -84,7 +84,7 @@ export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBV
         edgesGFX.clear();
         edgesGFX.removeChildren();
         edges.forEach((edge) => {
-            renderEdge(edge, edgesGFX);
+            renderEdge(edge, edgesGFX, theme);
         });
     }
 

@@ -1,10 +1,10 @@
-import { createMuiTheme } from '@material-ui/core/styles';
 import createSpacing from '@material-ui/core/styles/createSpacing';
+import { defaultTypeDBVisualiserTheme, typeDBVisualiserPalette, TypeDBVisualiserTheme } from "../typedb-visualiser";
+import createTheme from "@material-ui/core/styles/createTheme";
 
-// TODO: Copied from web-main
 export type SizeIndicator = 'smallest' | 'smaller' | 'small' | 'medium' | 'large' | 'larger' | 'largest';
 
-declare module '@material-ui/core/styles/createMuiTheme' {
+declare module '@material-ui/core/styles/createTheme' {
     interface Theme {
         vaticle: any;
     }
@@ -126,7 +126,7 @@ export const vaticleTheme = {
     }
 };
 
-export const vaticleMuiTheme = createMuiTheme({
+export const vaticleMuiTheme = createTheme({
     vaticle: vaticleTheme,
     typography: {
         fontFamily: "'Titillium Web', Geneva, Tahoma, sans-serif",
@@ -136,3 +136,132 @@ export const vaticleMuiTheme = createMuiTheme({
         },
     },
 });
+
+interface ButtonTheme {
+    border: string;
+    background: string;
+    color: string;
+
+    hover: {
+        border: string;
+        background: string;
+        color: string;
+    }
+
+    disabled: {
+        background: string;
+        border: string;
+        color: string;
+    }
+}
+
+interface ButtonThemes {
+    primary: ButtonTheme;
+    secondary: ButtonTheme;
+}
+
+const vaticleButtonThemes: ButtonThemes = {
+    primary: {
+        background: vaticleTheme.palette.green["1"],
+        border: "1px solid transparent",
+        color: vaticleTheme.palette.purple["3"],
+        hover: {
+            background: "#0B939F",
+            border: "1px solid transparent",
+            color: vaticleTheme.palette.purple["3"],
+        },
+        disabled: {
+            background: vaticleTheme.palette.purple["7"],
+            border: `1px solid ${vaticleTheme.palette.purple["7"]}`,
+            color: vaticleTheme.palette.purple["3"],
+        },
+    },
+    secondary: {
+        background: "transparent",
+        border: `1px solid ${vaticleTheme.palette.green["1"]}`,
+        color: vaticleTheme.palette.green["1"],
+        hover: {
+            background: vaticleTheme.palette.green["1"],
+            border: `1px solid ${vaticleTheme.palette.green["1"]}`,
+            color: vaticleTheme.palette.purple["3"],
+        },
+        disabled: {
+            background: "transparent",
+            border: `1px solid ${vaticleTheme.palette.purple["7"]}`,
+            color: vaticleTheme.palette.purple["7"],
+        },
+    },
+}
+
+interface TabsTheme {
+    background: string;
+    color: string;
+    outerBorderColor: string;
+    separatorColor: string;
+    hover: { background: string },
+    selected: {
+        background: string,
+        color: string,
+    },
+}
+
+export interface StudioTheme {
+    id: string;
+    background: string;
+    windowBackground: string;
+    textFieldBackground: string;
+    textFieldFocusOutline: string;
+    textColor: string;
+    button: ButtonThemes;
+    tabs: TabsTheme;
+    visualiser: TypeDBVisualiserTheme;
+}
+
+export const studioDarkTheme: StudioTheme = {
+    id: "studioDark",
+    background: vaticleTheme.palette.purple["1"],
+    windowBackground: vaticleTheme.palette.purple["4"],
+    textFieldBackground: vaticleTheme.palette.purple["3"],
+    textFieldFocusOutline: vaticleTheme.palette.green["1"],
+    textColor: "#FFF",
+    button: vaticleButtonThemes,
+    tabs: {
+        background: vaticleTheme.palette.purple["4"],
+        color: "#888DCA",
+        outerBorderColor: vaticleTheme.palette.purple["1"],
+        separatorColor: vaticleTheme.palette.purple["1"],
+        hover: { background: vaticleTheme.palette.purple["6"] },
+        selected: {
+            background: vaticleTheme.palette.purple["7"],
+            color: "#FFF",
+        },
+    },
+    visualiser: defaultTypeDBVisualiserTheme,
+}
+
+export const studioLightTheme: StudioTheme = {
+    id: "studioLight",
+    background: "#FBFBFB",
+    windowBackground: "#E4E4E4",
+    textFieldBackground: "#FBFBFB",
+    textFieldFocusOutline: vaticleTheme.palette.green["1"],
+    textColor: "#222",
+    button: vaticleButtonThemes,
+    tabs: {
+        background: "#E4E4E4",
+        color: "#222",
+        outerBorderColor: "#BBB",
+        separatorColor: "#DDD",
+        hover: { background: "#DDD" },
+        selected: {
+            background: "#FBFBFB",
+            color: "#111",
+        },
+    },
+    visualiser: {
+        colors: {
+            ...defaultTypeDBVisualiserTheme.colors,
+            background: typeDBVisualiserPalette.white,
+        },
+    },
+}
