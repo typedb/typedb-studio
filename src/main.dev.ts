@@ -9,7 +9,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, protocol, shell } from 'electron';
+import { app, BrowserWindow, protocol, screen, shell } from 'electron';
 // import { autoUpdater } from 'electron-updater';
 // import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -63,10 +63,12 @@ const createWindow = async () => {
         return path.join(RESOURCES_PATH, ...paths);
     };
 
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
     mainWindow = new BrowserWindow({
         show: false,
-        width: 1024,
-        height: 728,
+        width,
+        height,
         icon: getAssetPath('icon.png'),
         webPreferences: {
             nodeIntegration: true,

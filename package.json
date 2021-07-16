@@ -120,7 +120,7 @@
     "react-router-dom": "^5.2.0",
     "regenerator-runtime": "^0.13.5",
     "source-map-support": "^0.5.19",
-    "typedb-client": "^2.1.1"
+    "typedb-client": "2.2.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.14.5",

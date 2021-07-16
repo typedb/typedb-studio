@@ -8833,20 +8833,20 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typedb-client@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/typedb-client/-/typedb-client-2.1.1.tgz#0afe0f85f246bf9fc49c860dbdb685374a24595d"
-  integrity sha512-IgdnBkNGscMUv2+hn1oy78w4xZKLxY4tHf4Z+KVwIESbTe7aiZX/awsIo8gnaa0j8xpWfKiOHHFNfl/UPaskoQ==
+typedb-client@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/typedb-client/-/typedb-client-2.2.0.tgz#d7b5e4d253df06a130c1e0f7afb3688807b6b8fd"
+  integrity sha512-uuofElkDGKyxc17EgyQ5hIvFQf5jHHScvZVfJuEMSYMJ91OzdiW7enae3DDRmqivKuunF8zbeJLTqO3E0vLq8w==
   dependencies:
     "@grpc/grpc-js" "1.3.2"
     google-protobuf "3.14.0"
-    typedb-protocol "2.1.2"
+    typedb-protocol "2.2.0"
     uuid "8.3.2"
 
-typedb-protocol@2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/typedb-protocol/-/typedb-protocol-2.1.2.tgz#8e9c9fe5425c4b6c3a50caab189ab9ec53b96a78"
-  integrity sha512-ml4aF1Zxc0Mm3uqXTZPGwB1PVSPWTBlVQX83a6+HZpVxlH1ZLWZBoJ21KkAlgbAlKejtjKvnhCFHX+2W6Fvjuw==
+typedb-protocol@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/typedb-protocol/-/typedb-protocol-2.2.0.tgz#723532441414ab3db3fc699670121bd9678a01a3"
+  integrity sha512-7YINH6Sa6ZYcPpJmjr0wkf+32leZL+3hnEzKPawBhMZnScgkRaTBOhaRkoJL4lDSL23b2nylh5gGl7OxICV+WA==
   dependencies:
     "@grpc/grpc-js" "1.3.2"
 

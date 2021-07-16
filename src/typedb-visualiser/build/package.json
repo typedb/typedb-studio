@@ -1,6 +1,6 @@
 {
   "name": "typedb-visualiser",
-  "version": "0.0.12",
+  "version": "0.0.17",
   "main": "index.js",
   "module": "index.esm.js",
   "description": "TypeDB Visualiser",

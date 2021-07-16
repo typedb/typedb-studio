@@ -1,10 +1,10 @@
 import * as PIXILegacy from "pixi.js-legacy";
 // @ts-ignore
 import FontFaceObserver from "fontfaceobserver";
-import { TypeDBVisualiserData } from "./data";
-import { renderEdge, Renderer, renderVertex } from "./pixi-renderer";
-import { stickyForceSimulation } from "./d3-force-simulation";
-import { TypeDBVisualiserTheme } from "./styles";
+import { TypeDBVisualiserData } from "../data";
+import { stickyForceSimulation } from "../d3-force-simulation";
+import { TypeDBVisualiserTheme } from "../styles";
+import { renderEdge, Renderer, renderVertex } from "./renderer-common";
 
 export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
@@ -12,8 +12,7 @@ export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBV
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
 
-    const app = new PIXILegacy.Application({ width, height, antialias: !0,
-        backgroundColor: theme.colors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
+    const app = new PIXILegacy.Application({ width, height, antialias: !0, backgroundAlpha: 0, resolution: window.devicePixelRatio });
     container.innerHTML = "";
     container.appendChild(app.view);
 

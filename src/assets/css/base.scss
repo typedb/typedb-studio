@@ -19,11 +19,15 @@ html, body {
   * {
     box-sizing: border-box;
   }
+
+  > div { // #root
+    height: 100%;
+    width: 100%;
+  }
 }
 
-#root {
-  height: 100%;
-  width: 100%;
+a {
+  cursor: pointer;
 }
 
 strong {

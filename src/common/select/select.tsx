@@ -1,3 +1,4 @@
+import MenuItem from "@material-ui/core/MenuItem";
 import InputBase from "@material-ui/core/InputBase";
 import { ClassProps } from "../class-props";
 import React from "react";
@@ -19,14 +20,15 @@ interface StudioSelectProps<TItem extends string | number> extends ClassProps {
 }
 
 export function StudioSelect<TItem extends string | number>({children, className, label, value, setValue, variant}: React.PropsWithChildren<StudioSelectProps<TItem>>): JSX.Element {
-    const classes = selectStyles();
+    const classes = selectStyles({ theme: themeState.use()[0] });
 
     const inputElement = React.createElement(studioSelectInput(variant, themeState.use()[0]));
 
     return (
         <FormControl variant="outlined" className={className}>
-            <Select native label={label} value={value} onChange={(e) => setValue(e.target.value as TItem)}
+            <Select label={label} value={value} onChange={(e) => setValue(e.target.value as TItem)}
                     className={classes.select} input={inputElement}
+                    MenuProps={{classes: {paper: classes.paper}}}
                     IconComponent={() => <ExpandMoreIcon style={{fontSize: 14, fill: "#FFF", position: "absolute", right: 8, pointerEvents: "none"}}/>}>
                 {children}
             </Select>
@@ -44,19 +46,19 @@ const studioSelectInput: (variant: "outlined" | "filled", theme: StudioTheme) =>
             borderRadius: 5,
             position: 'relative',
             border: `1px solid ${variant === "outlined" ? "rgba(255,255,255,.2)" : "transparent"}`,
-            backgroundColor: variant === "outlined" ? "transparent" : theme.textFieldBackground,
+            backgroundColor: variant === "outlined" ? "transparent" : theme.textField.background,
             color: theme.textColor,
             fontSize: 16,
-            padding: '10px 26px 10px 12px',
+            padding: '11px 26px 11px 12px',
             transition: muiTheme.transitions.create(['border-color', 'box-shadow']),
 
             '&:focus': {
                 borderRadius: 5,
-                borderColor: theme.textFieldFocusOutline,
+                borderColor: theme.textField.focus.borderColor,
             },
 
             "& option": {
-                backgroundColor: `${theme.textFieldBackground} !important`,
+                backgroundColor: `${theme.textField.background} !important`,
                 color: theme.textColor,
 
                 "&[disabled]": {
@@ -71,4 +73,4 @@ interface StudioSelectOptionProps {
     value: string;
 }
 
-export const StudioSelectOption: React.FC<StudioSelectOptionProps> = ({value}) => <option value={value}>{value}</option>;
+export const StudioSelectOption: React.FC<StudioSelectOptionProps> = ({value}) => <MenuItem value={value}>{value}</MenuItem>;

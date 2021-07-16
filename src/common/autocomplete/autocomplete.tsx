@@ -1,20 +1,37 @@
 import * as React from "react";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
+import { themeState } from "../../state/typedb-client";
+import { StudioTextField } from "../input/text-field";
+import { autocompleteStyles } from "./autocomplete-styles";
 
 export interface StudioAutocompleteProps<TItem extends string> {
     label: string;
     value: TItem;
-    setValue: (value: TItem) => void;
+    onChange: (e: any, value: string) => void;
+    onBlur: (e: any) => void;
+    invalid?: boolean;
     options: string[];
 }
 
-export function StudioAutocomplete<TItem extends string>({label, value, setValue, options}: React.PropsWithChildren<StudioAutocompleteProps<TItem>>): JSX.Element {
+const StudioPopper = (props: any) => {
+    const { className, anchorEl, style, ...rest } = props
+    const bound = anchorEl.getBoundingClientRect()
+    return <div {...rest} style={{
+        position: 'absolute',
+        zIndex: 9999,
+        width: bound.width,
+        marginTop: 40,
+    }} />
+}
+
+export function StudioAutocomplete<TItem extends string>({label, value, onChange, onBlur, invalid, options}: React.PropsWithChildren<StudioAutocompleteProps<TItem>>): JSX.Element {
+    const classes = autocompleteStyles({ theme: themeState.use()[0] });
+
     return (
-        <Autocomplete freeSolo options={options} value={value} onChange={(_, val) => setValue(val as TItem)}
-            renderInput={(params) => (
-                <TextField {...params} label={label} margin="normal" variant="outlined" />
-            )}
+        <Autocomplete freeSolo options={options} value={value} blurOnSelect={true} onChange={onChange} onBlur={onBlur}
+                      renderInput={(params) => (
+                <StudioTextField {...params} label={label} value={value} invalid={invalid} />
+            )} PopperComponent={StudioPopper} classes={{clearIndicator: classes.clearIndicator, paper: classes.paper}}
         />
     );
 }

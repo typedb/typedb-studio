@@ -1,22 +1,21 @@
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import { StudioTheme } from "../styles/theme";
-
-type ThemeProps = { theme: StudioTheme };
+import { contentMargin } from "../styles/studio-styles";
+import { ThemeProps } from "../styles/theme";
 
 export const loginStyles = makeStyles({
+    backdrop: {
+        height: "100%",
+        width: "100%",
+        background: (props: ThemeProps) => props.theme.windowBackdrop,
+    },
+
     form: {
         background: (props: ThemeProps) => props.theme.windowBackground,
         color: (props: ThemeProps) => props.theme.textColor,
         display: "flex",
         flexDirection: "column",
-
-        "@media(min-width: 1200px)": {
-            width: 880,
-        },
-
-        "@media(max-width: 767px)": {
-            alignItems: "center",
-        },
+        width: "100%",
+        padding: "32px 24px",
     },
 
     formRow: {
@@ -25,32 +24,16 @@ export const loginStyles = makeStyles({
         alignItems: "flex-start",
 
         "&:not(:first-child)": {
-            marginTop: 30,
+            marginTop: contentMargin,
         },
 
         "& > *": {
-            width: 375,
+            width: 270,
 
             "@media(min-width: 768px)": {
                 "&:not(:first-child)": {
                     marginLeft: 30,
                 },
-            },
-
-            "@media (min-width: 768px) and (max-width: 1199px)": {
-                maxWidth: "40vw",
-            },
-
-            "@media(max-width: 767px)": {
-                maxWidth: "calc(100vw - 100px)",
-            },
-        },
-
-        "@media(max-width: 767px)": {
-            flexDirection: "column",
-
-            "& > *:not(:first-child)": {
-                marginTop: 30,
             },
         },
     },
@@ -60,7 +43,7 @@ export const loginStyles = makeStyles({
         flexDirection: "column",
 
         "& > * + *": {
-            marginTop: 30,
+            marginTop: contentMargin,
         },
     },
 
@@ -73,25 +56,33 @@ export const loginStyles = makeStyles({
         display: "grid",
         justifyContent: "center",
         gridTemplateColumns: "repeat(auto-fit, 160px)",
-        gap: "24px 32px",
+        marginTop: contentMargin,
+        gap: `${contentMargin} 32px`,
+    },
+
+    loginTabs: {
+        width: 500,
+        marginLeft: "auto",
+        marginRight: "auto",
+        paddingTop: "25vh",
+        alignSelf: "center",
     },
 
     tabs: {
-        flex: 1,
         display: "flex",
         flexDirection: "column",
-        border: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
     },
 
     tabGroup: {
         height: 32,
+        border: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
     },
 
     tab: {
         background: (props: ThemeProps) => props.theme.tabs.background,
         color: (props: ThemeProps) => props.theme.tabs.color,
 
-        "&:not(:first-child)": {
+        "&:not(:last-child)": {
             borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.separatorColor}`,
         },
 
@@ -107,7 +98,8 @@ export const loginStyles = makeStyles({
 
     tabContent: {
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
+        width: "100%",
+        borderLeft: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
+        borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
     },
 });

@@ -29,9 +29,8 @@ Learn how to [connect Workbase to the TypeDB Server](http://docs.vaticle.com/doc
   - `npm` >= 6.4.1
   - `node` >= 10.0
   - `yarn` >= 1.17
-2. Run `yarn install`
-3. Run `yarn build`
-Outputs to `build/typedb-workbase-{version}-{mac|linux|windows}.{dmg|tar.gz|exe}`.
+2. Run `yarn`
+3. Run `yarn package`
+Outputs to `release/typedb-studio-{version}-{mac.dmg|linux.AppImage|windows.exe}`.
 
-To run TypeDB Workbase in development mode, run `yarn dev`.
-To run the unit, integration and end-to-end tests, run `yarn unit`, `yarn integration` and `yarn e2e` respectively.
+To run TypeDB Workbase in development mode, run `yarn start`.
