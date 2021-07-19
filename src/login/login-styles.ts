@@ -22,6 +22,7 @@ export const loginStyles = makeStyles({
         display: "flex",
         justifyContent: "space-around",
         alignItems: "flex-start",
+        position: "relative",
 
         "&:not(:first-child)": {
             marginTop: contentMargin,
@@ -101,5 +102,11 @@ export const loginStyles = makeStyles({
         width: "100%",
         borderLeft: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
         borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
+    },
+
+    buttonBesideTextField: {
+        position: "absolute",
+        width: 42,
+        marginLeft: 360,
     },
 });

@@ -16,6 +16,7 @@ export const textFieldStyles = makeStyles({
 
         "& input": {
             padding: "12px 6px !important",
+            height: 20,
         },
 
         "& input + fieldset, & textarea + fieldset": {

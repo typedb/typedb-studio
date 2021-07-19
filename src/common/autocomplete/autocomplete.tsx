@@ -7,8 +7,8 @@ import { autocompleteStyles } from "./autocomplete-styles";
 export interface StudioAutocompleteProps<TItem extends string> {
     label: string;
     value: TItem;
-    onChange: (e: any, value: string) => void;
-    onBlur: (e: any) => void;
+    onChange: (e: object, value: string) => void;
+    onBlur: (e: React.FocusEvent<HTMLElement>) => void;
     invalid?: boolean;
     options: string[];
 }
