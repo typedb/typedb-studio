@@ -31,11 +31,11 @@ export default merge(baseConfig, {
    */
   module: require('./webpack.renderer.dev.babel').default.module,
 
+  // If any of our dependencies don't have an "index.js" file, they must be added to the exclude list in entry.renderer
   entry: {
     renderer: [
       ...Object.keys(dependencies || {}),
-      "typedb-client/TypeDB"
-    ].filter(key => key !== "typedb-client")
+    ].filter(key => ![].includes(key))
   },
 
   output: {

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { SplitPane } from "react-collapse-pane";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
 import { workspaceStyles } from "./workspace-styles";
-import { SessionType } from "typedb-client/api/connection/TypeDBSession";
-import { Type } from "typedb-client/api/concept/type/Type";
+import { SessionType, TransactionType, Type } from "typedb-client";
 import { databaseState, themeState, typeDBClientState } from "../state/typedb-client";
 import TypeDBVisualiser from "../typedb-visualiser/react/TypeDBVisualiser";
-import { TransactionType } from "typedb-client/api/connection/TypeDBTransaction";
+import { Controlled as CodeMirror, IControlledCodeMirror } from "react-codemirror2";
 
 export const WorkspaceScreen: React.FC = () => {
-    console.log("Rendering workspace screen")
+    const classes = workspaceStyles({ theme: themeState.use()[0] });
+
     const client = typeDBClientState.use()[0];
     const db = databaseState.use()[0];
+    const [code, setCode] = React.useState("match $x sub thing;");
     const [data, setData] = useState<TypeDBVisualiserData.Graph>({vertices: [], edges: []});
 
     useEffect(() => {
@@ -46,5 +48,19 @@ export const WorkspaceScreen: React.FC = () => {
         loadSchema();
     }, []);
 
-    return client ? <TypeDBVisualiser data={data} className={workspaceStyles().visualiser} theme={themeState.use()[0].visualiser}/> : <h1>Hello World</h1>;
+    const onBeforeCodeChange: IControlledCodeMirror["onBeforeChange"] = (_editor, _data, value) => {
+        setCode(value);
+    };
+
+    return (
+        <div>
+            <div className={classes.appBar}></div>
+            <SplitPane split="horizontal" initialSizes={[1, 2]}>
+                <div className={classes.codeEditor}>
+                    <CodeMirror onBeforeChange={onBeforeCodeChange} value={code} options={{mode: "typeql"}}/>
+                </div>
+                <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+            </SplitPane>
+        </div>
+    );
 }

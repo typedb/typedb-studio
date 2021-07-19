@@ -91,7 +91,7 @@ export default class MenuBuilder {
                 },
             ],
         };
-        const subMenuView = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true' ? [subMenuViewDev] : [subMenuViewProd];
+        const subMenuView = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true' ? subMenuViewDev : subMenuViewProd;
 
         return [{
             label: 'Application',
@@ -117,10 +117,7 @@ export default class MenuBuilder {
                 { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
                 { label: 'Select All', accelerator: 'Command+A', selector: 'selectAll:' },
             ],
-        }, {
-            label: "View",
-            submenu: subMenuView,
-        }, {
+        }, subMenuView, {
             label: "Window",
             submenu: [
                 { label: 'Minimize', accelerator: 'Command+M', selector: 'performMiniaturize:' },
