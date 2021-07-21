@@ -2,20 +2,19 @@ import React from "react";
 import { HashRouter, Redirect, Route, Switch } from "react-router-dom";
 import { WorkspaceScreen } from "./workspace/workspace-screen";
 import { LoginScreen } from "./login/login-screen";
-import { typeDBClientState } from "./state/typedb-client";
+import { databaseState } from "./state/typedb-client";
 
 export const routes = {
     workspace: "/workspace",
 }
 
 export const StudioRouter: React.FC = () => {
-    const client = typeDBClientState.use()[0];
-    console.log("In StudioRouter");
+    const db = databaseState.use()[0];
     return (
         <HashRouter>
             <Switch>
                 {/*{<Route path="/" component={() => <h1>Hello World</h1>}/>}*/}
-                <Route exact path={routes.workspace} render={() => client ? <WorkspaceScreen/> : <Redirect to="/"/>}/>
+                <Route exact path={routes.workspace} render={() => db ? <WorkspaceScreen/> : <Redirect to="/"/>}/>
                 <Route path="/" component={LoginScreen}/>
                 {/*<Route component={ErrorScreen}/>*/}
             </Switch>

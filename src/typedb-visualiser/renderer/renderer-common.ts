@@ -25,11 +25,13 @@ const edgeLabelStyle: Partial<PIXI.ITextStyle> = {
 export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Promise<any> }, theme: TypeDBVisualiserTheme) {
     vertex.gfx = new PIXI.Graphics();
     vertex.gfx.lineStyle(0);
-    vertex.gfx.beginFill(theme.colors[vertex.encoding]);
+    const colors = theme.colors.numeric;
+    vertex.gfx.beginFill(colors[vertex.encoding]);
 
     switch (vertex.encoding) {
         case "entity":
         case "entityType":
+        case "thingType":
             vertex.gfx.drawRoundedRect(-vertex.width / 2, -vertex.height / 2, vertex.width, vertex.height, 3);
             vertex.gfx.hitArea = new PIXI.RoundedRectangle(-vertex.width / 2, -vertex.height / 2, vertex.width, vertex.height, 3);
             break;
@@ -69,10 +71,11 @@ export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Pr
 }
 
 export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
+    const colors = theme.colors.numeric;
     const text1 = new PIXI.Text(vertex.label, {
         fontSize: defaultStyles.vertexLabel.fontSize,
         fontFamily: useFallbackFont ? defaultStyles.fontFamilyFallback : defaultStyles.fontFamily,
-        fill: theme.colors.vertexLabel,
+        fill: colors.vertexLabel,
     });
     text1.anchor.set(0.5);
     text1.resolution = window.devicePixelRatio * 2;
@@ -82,7 +85,8 @@ export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: bool
 export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics, theme: TypeDBVisualiserTheme) {
     const [source, target] = [edge.source as Renderer.Vertex, edge.target as Renderer.Vertex];
     const [lineSource, lineTarget] = [edgeEndpoint(target, source), edgeEndpoint(source, target)];
-    const edgeColor = edge.highlight ? theme.colors[edge.highlight] : theme.colors.edge;
+    const colors = theme.colors.numeric;
+    const edgeColor = edge.highlight ? colors[edge.highlight] : colors.edge;
 
     if (lineSource && lineTarget) {
         const { label } = edge;
@@ -138,11 +142,12 @@ export function edgeEndpoint(source: Renderer.Vertex, target: Renderer.Vertex): 
         case "relation":
         case "entityType":
         case "relationType":
+        case "thingType":
             const targetRect: Rect = {
                 x: target.x - target.width / 2 - 4, y: target.y - target.height / 2 - 4,
                 w: target.width + 8, h: target.height + 8
             };
-            if (["entity", "entityType"].includes(target.encoding)) {
+            if (["entity", "entityType", "thingType"].includes(target.encoding)) {
                 return rectIncomingLineIntersect(source as Point, targetRect);
             } else {
                 return diamondIncomingLineIntersect(source as Point, targetRect);

@@ -105,6 +105,7 @@
     "@material-ui/core": "^4.12.1",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
+    "brace": "^0.11.1",
     "clsx": "1.1.1",
     "codemirror": "^5.62.0",
     "d3-force": "3.0.0",
@@ -117,13 +118,14 @@
     "pixi.js": "6.0.4",
     "prismjs": "1.24.1",
     "react": "17.0.1",
+    "react-ace": "^9.4.1",
     "react-codemirror2": "^7.2.1",
     "react-collapse-pane": "2.0.1",
     "react-dom": "17.0.1",
     "react-router-dom": "5.2.0",
     "regenerator-runtime": "0.13.7",
     "source-map-support": "0.5.19",
-    "typedb-client": "2.2.0"
+    "typedb-client": "https://repo.vaticle.com/repository/npm-snapshot/typedb-client/-/typedb-client-0.0.0-2fc88d5c19e277866c5034350041169bdc307094.tgz"
   },
   "devDependencies": {
     "@babel/cli": "7.14.5",

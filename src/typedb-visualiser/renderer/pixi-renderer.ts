@@ -7,16 +7,24 @@ import { TypeDBVisualiserData } from "../data";
 import { Viewport } from "pixi-viewport";
 import { renderEdge, Renderer, renderVertex } from "./renderer-common";
 
-export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
-    const [width, height] = [container.offsetWidth, container.offsetHeight];
-    const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
-    const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
-    let dragged = false;
+export interface RenderingStage {
+    renderer: PIXI.Renderer;
+    viewport: Viewport;
+}
 
-    const app = new PIXI.Application({ width, height, antialias: !0,
-        backgroundColor: theme.colors.background, backgroundAlpha: 0, resolution: window.devicePixelRatio });
+export function setupStage(container: HTMLElement): RenderingStage {
+    const [width, height] = [container.offsetWidth, container.offsetHeight];
+
+    const renderer = new PIXI.Renderer({ width, height, antialias: !0, backgroundAlpha: 0, resolution: window.devicePixelRatio });
     container.innerHTML = "";
-    container.appendChild(app.view);
+    container.appendChild(renderer.view);
+    const stage = new PIXI.Container();
+
+    const ticker = new PIXI.Ticker();
+    ticker.add(() => {
+        renderer.render(stage);
+    }, PIXI.UPDATE_PRIORITY.LOW);
+    ticker.start();
 
     const viewport = new Viewport({
         screenWidth: width,
@@ -25,10 +33,9 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
         worldHeight: height,
         passiveWheel: false,
 
-        interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+        interaction: renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
     });
-
-    app.stage.addChild(viewport);
+    stage.addChild(viewport);
 
     // activate plugins
     viewport.drag()
@@ -36,6 +43,16 @@ export function renderGraph(container: HTMLElement, graphData: TypeDBVisualiserD
         .wheel({ percent: -.66 })
         .clampZoom({ minScale: .1, maxScale: 3 })
         .decelerate({ friction: .95 });
+
+    return { renderer, viewport };
+}
+
+export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
+    viewport.removeChildren();
+    const [width, height] = [viewport.screenWidth, viewport.screenHeight];
+    const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
+    const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
+    let dragged = false;
 
     const simulation = dynamicForceSimulation(vertices, edges, width, height);
     const ubuntuMono = new FontFaceObserver("Ubuntu Mono") as { load: () => Promise<any> };

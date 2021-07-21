@@ -1,14 +1,15 @@
 import clsx from "clsx";
+import { ipcRenderer } from "electron";
 import React, { useContext, useState } from "react";
-import { TypeDB, Database, TypeDBClientError } from "typedb-client";
 import { SnackbarContext } from "../app";
 import { StudioIconButton } from "../common/button/icon-button";
+import { ConnectRequest, LoadDatabasesResponse } from "../ipc/event-args";
 import { loginStyles } from "./login-styles";
 import { StudioButton } from "../common/button/button";
 import { StudioTabItem, StudioTabs } from "../common/tabs/tabs";
 import { StudioAutocomplete } from "../common/autocomplete/autocomplete";
 import { StudioSelect } from "../common/select/select";
-import { databaseState, themeState, typeDBClientState } from "../state/typedb-client";
+import { databaseState, themeState } from "../state/typedb-client";
 import { useHistory } from "react-router-dom";
 
 export const LoginScreen: React.FC = () => {
@@ -44,7 +45,8 @@ export const TypeDBLoginTab: React.FC = () => {
 
     const [db, setDB] = useState(DATABASE);
     const [dbSelected, setDBSelected] = useState(false);
-    const [dbList, setDBList] = useState<Database[]>([]);
+    const [dbList, setDBList] = React.useState<string[]>([]);
+
     const [currentAddress, setCurrentAddress] = useState("");
     const [addressValidity, setAddressValidity] = useState<AddressValidity>("unknown");
     const { setSnackbar } = useContext(SnackbarContext);
@@ -68,37 +70,37 @@ export const TypeDBLoginTab: React.FC = () => {
         loadDatabases(e.target.value);
     };
 
-    const loadDatabases = async (address: string) => {
+    const loadDatabases = (address: string) => {
         if (!address || address === currentAddress) return;
         setCurrentAddress(address);
         setDBSelected(false);
         setDB(LOADING_DATABASES);
         setDBList([]);
         setAddressValidity("unknown");
-        try {
-            const client = TypeDB.coreClient(address);
-            typeDBClientState.set(client);
-            const dbs = await client.databases.all();
-            setDBList(dbs);
-            if (dbs) {
-                setDB(dbs[0].name);
-                setDBSelected(true);
-            } else setDB(NO_DATABASES);
-            setAddressValidity("valid");
-        } catch (e: any) {
-            setDB(FAILED_TO_LOAD_DATABASES);
-            let errorMessage: string = e.toString();
-            // TODO: This check is not nice and should be fixed in typedb-client
-            if (e instanceof TypeDBClientError && e.errorMessage) errorMessage = e.errorMessage.toString();
-            if (errorMessage.startsWith("Error: ")) errorMessage = errorMessage.substring(7); // Most gRPC errors
-            setAddressValidity("invalid");
-            setSnackbar({
-                open: true,
-                variant: "error",
-                message: errorMessage,
-            });
-        }
+        const req: ConnectRequest = { address };
+        ipcRenderer.send("connect-request", req);
     }
+
+    React.useEffect(() => {
+        ipcRenderer.on("connect-response", () => {
+            ipcRenderer.send("load-databases-request", {});
+        });
+
+        ipcRenderer.on("load-databases-response", ((_event, res: LoadDatabasesResponse) => {
+            if (res.success) {
+                setDBList(res.databases);
+                if (res.databases) {
+                    setDB(res.databases[0]);
+                    setDBSelected(true);
+                } else setDB(NO_DATABASES);
+                setAddressValidity("valid");
+            } else {
+                setDB(FAILED_TO_LOAD_DATABASES);
+                setAddressValidity("invalid");
+                setSnackbar({ open: true, variant: "error", message: res.error });
+            }
+        }));
+    }, []);
 
     return (
         <form className={classes.form}>
@@ -113,7 +115,7 @@ export const TypeDBLoginTab: React.FC = () => {
                     <option disabled hidden value={LOADING_DATABASES}>{LOADING_DATABASES}</option>
                     <option disabled hidden value={NO_DATABASES}>{NO_DATABASES}</option>
                     <option disabled hidden value={FAILED_TO_LOAD_DATABASES}>{FAILED_TO_LOAD_DATABASES}</option>
-                    {dbList.map(db => <option value={db.name}>{db.name}</option>)}
+                    {dbList.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
 
                 <StudioIconButton size="small" className={classes.buttonBesideTextField}

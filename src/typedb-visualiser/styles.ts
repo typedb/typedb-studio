@@ -1,49 +1,59 @@
-const palette = {
-    red: 0xF66B65,
-    gold: 0xEBC53D,
-    yellow: 0xFFE4A7,
-    green: 0x02DAC9,
-    skyBlue: 0x92E4FC,
-    blue: 0x7BA0FF,
-    pink: 0xFFA9E8,
-    purple: 0xE69CFF,
-    deepPurple: 0x0E053F,
-    black: 0x09022F,
-    white: 0xFFFFFF,
+const palette: {[key: string]: string} = {
+    red: "#F66B65",
+    gold: "#EBC53D",
+    yellow: "#FFE4A7",
+    green: "#02DAC9",
+    skyBlue: "#92E4FC",
+    blue: "#7BA0FF",
+    pink: "#FFA9E8",
+    purple: "#E69CFF",
+    deepPurple: "#0E053F",
+    black: "#09022F",
+    white: "#FFFFFF",
 }
 export const typeDBVisualiserPalette = palette;
 
+type ColorKey = "background" | "thingType" | "entityType" | "relationType" | "attributeType" | "entity" | "relation"
+    | "attribute" | "edge" | "inferred" | "error" | "vertexLabel";
+
 export interface TypeDBVisualiserTheme {
     colors: {
-        background: number;
-        entityType: number;
-        relationType: number;
-        attributeType: number;
-        entity: number;
-        relation: number;
-        attribute: number;
-        edge: number;
-        inferred: number;
-        error: number;
-        vertexLabel: number;
+        numeric: {[key in ColorKey]: number};
+        hex: {[key in ColorKey]: string};
     }
+}
+
+type ColorMapping = {[key in ColorKey]: string};
+
+const defaultColorMapping: ColorMapping = {
+    background: palette.deepPurple,
+    thingType: palette.pink,
+    entityType: palette.pink,
+    relationType: palette.yellow,
+    attributeType: palette.blue,
+    entity: palette.purple,
+    relation: palette.gold,
+    attribute: palette.skyBlue,
+    edge: palette.blue,
+    inferred: palette.green,
+    error: palette.red,
+    vertexLabel: palette.black,
 }
 
 const defaultTheme: TypeDBVisualiserTheme = {
     colors: {
-        background: palette.deepPurple,
-        entityType: palette.pink,
-        relationType: palette.yellow,
-        attributeType: palette.blue,
-        entity: palette.purple,
-        relation: palette.gold,
-        attribute: palette.skyBlue,
-        edge: palette.blue,
-        inferred: palette.green,
-        error: palette.red,
-        vertexLabel: palette.black,
+        numeric: Object.entries(defaultColorMapping).reduce((current, [nextKey, nextValue]) => {
+            current[nextKey as ColorKey] = Number(`0x${nextValue.slice(1)}`);
+            return current;
+        }, {} as {[key in ColorKey]: number}),
+
+        hex: Object.entries(defaultColorMapping).reduce((current, [nextKey, nextValue]) => {
+            current[nextKey as ColorKey] = nextValue;
+            return current;
+        }, {} as {[key in ColorKey]: string}),
     }
-};
+}
+
 export const defaultTypeDBVisualiserTheme = defaultTheme;
 
 export const defaultStyles = {

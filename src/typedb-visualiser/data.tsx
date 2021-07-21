@@ -15,7 +15,7 @@ export declare namespace TypeDBVisualiserData {
         color?: number;
     }
 
-    export type VertexEncoding = "entityType" | "relationType" | "attributeType" | "entity" | "relation" | "attribute";
+    export type VertexEncoding = "entityType" | "relationType" | "attributeType" | "thingType" | "entity" | "relation" | "attribute";
 
     export interface Edge {
         source: number;

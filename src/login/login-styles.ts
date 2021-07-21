@@ -31,10 +31,8 @@ export const loginStyles = makeStyles({
         "& > *": {
             width: 270,
 
-            "@media(min-width: 768px)": {
-                "&:not(:first-child)": {
-                    marginLeft: 30,
-                },
+            "&:not(:first-child)": {
+                marginLeft: 30,
             },
         },
     },
@@ -107,6 +105,6 @@ export const loginStyles = makeStyles({
     buttonBesideTextField: {
         position: "absolute",
         width: 42,
-        marginLeft: 360,
+        marginLeft: "360px !important",
     },
 });
