@@ -9,10 +9,13 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, protocol, screen, shell } from 'electron';
+import { app, BrowserWindow, protocol, screen, shell, ipcMain } from 'electron';
+import { SessionType, TransactionType, TypeDB, TypeDBClient, TypeDBSession } from "typedb-client";
+import { ConceptData, ConceptMapData, ConnectRequest, ConnectResponse, LoadDatabasesResponse, MatchQueryRequest, MatchQueryResponse } from "./ipc/event-args";
 // import { autoUpdater } from 'electron-updater';
 // import log from 'electron-log';
 import MenuBuilder from './menu';
+import { TypeDBVisualiserData } from "./typedb-visualiser";
 
 // export default class AppUpdater {
 //     constructor() {
@@ -140,3 +143,82 @@ if (isDevelopment) {
         });
     }
 }
+
+let client: TypeDBClient;
+
+function processError(e: any): string {
+    let errorMessage: string = e.toString();
+    if (e instanceof Error) errorMessage = e.message;
+    if (errorMessage.startsWith("Error: ")) errorMessage = errorMessage.substring(7); // Most gRPC errors
+    return errorMessage;
+}
+
+// TODO: Concurrent requests may cause issues
+ipcMain.on("connect-request", ((event, req: ConnectRequest) => {
+    let res: ConnectResponse;
+    try {
+        client = TypeDB.coreClient(req.address);
+        res = { success: true };
+    } catch (e: any) {
+        const errorMessage = processError(e);
+        res = { success: false, error: errorMessage };
+    }
+    event.sender.send("connect-response", res);
+}));
+
+ipcMain.on("load-databases-request", (async (event, _req: {}) => {
+    let res: LoadDatabasesResponse;
+    try {
+        const dbs = await client.databases.all();
+        res = { success: true, databases: dbs.map(db => db.name) };
+    } catch (e: any) {
+        const errorMessage = processError(e);
+        res = { success: false, error: errorMessage };
+    }
+    event.sender.send("load-databases-response", res);
+}));
+
+ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
+    let res: MatchQueryResponse;
+    let session: TypeDBSession;
+    try {
+        session = await client.session(req.db, SessionType.DATA);
+        const tx = await session.transaction(TransactionType.READ);
+        const answers = await tx.query.match(req.query).collect(); // TODO: Add support for streaming responses
+        const answersData = answers.map(cm => {
+            const answerData: Partial<ConceptMapData> = {};
+            for (const [varName, concept] of cm.map.entries()) {
+                let encoding: TypeDBVisualiserData.VertexEncoding;
+                if (concept.isEntity()) encoding = "entity";
+                else if (concept.isRelation()) encoding = "relation";
+                else if (concept.isAttribute()) encoding = "attribute";
+                else if (concept.isEntityType()) encoding = "entityType";
+                else if (concept.isRelationType()) encoding = "relationType";
+                else if (concept.isAttributeType()) encoding = "attributeType"; // TODO: RoleType is missing
+                else encoding = "thingType";
+
+                const conceptData: ConceptData = { encoding };
+                if (concept.isThing()) {
+                    const thing = concept.asThing();
+                    conceptData.iid = thing.iid;
+                    conceptData.type = thing.type.label.name;
+
+                    if (thing.isAttribute()) conceptData.value = thing.asAttribute().value;
+                } else {
+                    const type = concept.asType();
+                    conceptData.label = type.label.name;
+                }
+
+                answerData[varName] = conceptData;
+            }
+            return answerData;
+        });
+        res = { success: true, answers: answersData };
+    } catch (e: any) {
+        const errorMessage = processError(e);
+        res = { success: false, error: errorMessage };
+    } finally {
+        session?.close();
+    }
+    event.sender.send("match-query-response", res);
+}));
