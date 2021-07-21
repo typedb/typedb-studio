@@ -21,21 +21,39 @@ export const StudioSnackbar: React.FC<StudioSnackbarProps> = ({variant, message,
         if (reason !== "clickaway") setOpen(false);
     }
 
+    const paragraphs = message.split("\n\n").map(paragraph => paragraph.split("\n"));
+    const prefixMatches = paragraphs[0][0].match(/^\[[A-Z]{3}[0-9]+][^:]*:/);
+    const messageElem = (
+        <>
+            {prefixMatches ? (
+                <>
+                    <h5>{prefixMatches[0].slice(0, prefixMatches[0].length - 1)}</h5>
+                    <p>
+                        {paragraphs[0][0].slice(prefixMatches[0].length)}
+                        {paragraphs[0].slice(1).map(line => <><br/>{line}</>)}
+                    </p>
+                </>
+            ) : <p>{paragraphs[0].map(line => <><br/>{line}</>)}</p>}
+
+            {paragraphs.slice(1).map(paragraph => (
+                <p>
+                    {paragraph[0]}
+                    {paragraph.slice(1).map(line => <><br/>{line}</>)}
+                </p>
+            ))}
+        </>
+    );
+
     return (
         <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={open} autoHideDuration={6000}
-                  onClose={handleClose} classes={{
-            root: clsx(classes.root, variant === "success" && classes.success, variant === "error" && classes.error),
-            anchorOriginTopRight: classes.topRight,
-        }}
+                  onClose={handleClose}
+                  classes={{ root: clsx(classes.root, variant === "success" && classes.success, variant === "error" && classes.error) }}
+                  ContentProps={{ classes: { root: classes.content, message: classes.message } }}
+                  message={messageElem}
                   action={
-                      <>
-                          <p><span className={classes.status}>{variant === "success" ? "Success: " : "Error: "}</span>{message}</p>
-                          <div className={classes.filler}/>
-                          <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose} className={classes.close}>
-                              <CloseIcon fontSize="small" />
-                          </IconButton>
-                      </>
-                  }
+                  <IconButton size="small" aria-label="close" color="inherit" onClick={() => setOpen(false)} className={classes.close}>
+                      <CloseIcon fontSize="small" />
+                  </IconButton>}
         />
     );
 }

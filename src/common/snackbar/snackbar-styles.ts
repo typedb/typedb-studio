@@ -15,10 +15,6 @@ export const snackbarStyles = makeStyles({
         },
     },
 
-    topRight: {
-        marginTop: 80,
-    },
-
     success: {
         "& > *": {
             backgroundColor: vaticleTheme.palette.green["1"],
@@ -31,8 +27,17 @@ export const snackbarStyles = makeStyles({
         },
     },
 
-    status: {
-        fontWeight: 600,
+    content: {
+        display: "flex",
+        alignItems: "flex-start",
+    },
+
+    message: {
+        flex: 1,
+
+        "& p:not(:first-child)": {
+            marginTop: 8,
+        },
     },
 
     close: {
