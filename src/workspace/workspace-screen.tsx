@@ -53,10 +53,12 @@ export const WorkspaceScreen: React.FC = () => {
     const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
     const [timeQuery, setTimeQuery] = React.useState(false);
 
-    const tabs: StudioTabItem[] = [{
-        name: "Query1.tql",
-        key: "0",
-    }];
+    const tabs: StudioTabItem[] = [{ name: "Query1.tql", key: "0" }];
+    const resultsTabs: StudioTabItem[] = [
+        { name: "Log", key: "0" },
+        { name: "Graph", key: "1" },
+        { name: "Table", key: "2" },
+    ];
 
     async function runQuery() {
         const req: MatchQueryRequest = { db, query: code };
@@ -77,6 +79,7 @@ export const WorkspaceScreen: React.FC = () => {
 
     const aceEditorRef = React.useRef<AceEditor>(null);
     const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const [selectedResultsTabIndex, setSelectedResultsTabIndex] = React.useState(1);
 
     React.useEffect(() => {
         const customMode = new AceTypeQL();
@@ -146,7 +149,18 @@ export const WorkspaceScreen: React.FC = () => {
                         </div>
                     </div>
                     <div className={classes.resultsPane}>
-                        <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+                        <StudioTabs selectedIndex={selectedResultsTabIndex} setSelectedIndex={setSelectedResultsTabIndex}
+                                    items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
+                            <StudioTabPanel index={0} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
+                                Food for beavers goes here
+                            </StudioTabPanel>
+                            <StudioTabPanel index={1} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
+                                <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+                            </StudioTabPanel>
+                            <StudioTabPanel index={2} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
+                                Food for humans goes here
+                            </StudioTabPanel>
+                        </StudioTabs>
                         <div className={classes.statusBar}>
                             {principalStatus}
                             <div className={classes.filler}/>

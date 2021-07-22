@@ -40,8 +40,8 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedI
     };
 
     return (
-        <div className={clsx(ownClasses.root, classes.root)}>
-            <Tabs value={selectedIndex} onChange={handleChange} classes={{root: clsx(ownClasses.tabGroup, classes.tabGroup), indicator: ownClasses.indicator}}>
+        <div className={clsx(ownClasses.root, classes?.root)}>
+            <Tabs value={selectedIndex} onChange={handleChange} classes={{root: clsx(ownClasses.tabGroup, classes?.tabGroup), indicator: ownClasses.indicator}}>
                 {items.map((item) => <StudioTab ownClasses={ownClasses} label={item.name} classes={classes} showCloseButton={showCloseButton} />)}
                 {showAddButton && <StudioIconButton size="smaller" onClick={(e) => e.preventDefault()}
                                                     classes={{root: ownClasses.addButton}}>+</StudioIconButton>}
@@ -73,8 +73,8 @@ export const StudioTab: React.FC<StudioTabProps> = ({label, selected, first, las
     );
 
     return (
-        <Tab {...props} label={labelElement} classes={{root: clsx(ownClasses.tab, classes.tab)}} className={clsx(first && classes.first,
-            last && classes.last, selected && ownClasses.tabSelected, selected && classes.tabSelected, showCloseButton && ownClasses.withCloseButton)}/>
+        <Tab {...props} label={labelElement} classes={{root: clsx(ownClasses.tab, classes?.tab)}} className={clsx(first && classes?.first,
+            last && classes?.last, selected && ownClasses.tabSelected, selected && classes?.tabSelected, showCloseButton && ownClasses.withCloseButton)}/>
     );
 }
 

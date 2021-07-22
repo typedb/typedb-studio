@@ -67,10 +67,27 @@ export const workspaceStyles = makeStyles({
         height: "100%",
     },
 
-    visualiser: {
+    resultsTabs: {
         height: "calc(100% - 28px)",
-        width: "100%",
+    },
+
+    resultsTabGroup: {
+        height: 36,
+    },
+
+    resultsTab: {
+        height: 36,
+        paddingBottom: 4,
+    },
+
+    resultsTabPanel: {
+        height: "100%",
         background: (props: ThemeProps) => props.theme.visualiser.colors.hex.background,
+    },
+
+    visualiser: {
+        height: "100%",
+        width: "100%",
     },
 
     statusBar: {
