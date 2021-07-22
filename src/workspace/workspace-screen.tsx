@@ -1,9 +1,14 @@
+import { faFolderOpen } from "@fortawesome/free-solid-svg-icons/faFolderOpen";
+import { faPlay } from "@fortawesome/free-solid-svg-icons/faPlay";
+import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ipcRenderer } from "electron";
 import React from "react";
 import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
 import { SnackbarContext } from "../app";
 import { StudioButton } from "../common/button/button";
+import { StudioIconButton } from "../common/button/icon-button";
 import { StudioSelect } from "../common/select/select";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
@@ -122,14 +127,22 @@ export const WorkspaceScreen: React.FC = () => {
                     <div className={classes.editorPane}>
                         <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs}
                                     classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}
-                                    showAddButton>
+                                    showCloseButton showAddButton>
                             <StudioTabPanel index={0} selectedIndex={selectedIndex} className={classes.editorTabPanel}>
                                 <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code}
                                            onChange={newValue => setCode(newValue)} width="100%" height="100%"/>
                             </StudioTabPanel>
                         </StudioTabs>
                         <div className={classes.actionsBar}>
-                            <StudioButton size="small" type="primary" onClick={runQuery}>▶️ Run</StudioButton>
+                            <StudioIconButton size="small" onClick={() => null}>
+                                <FontAwesomeIcon icon={faFolderOpen}/>
+                            </StudioIconButton>
+                            <StudioIconButton size="small" onClick={() => null}>
+                                <FontAwesomeIcon icon={faSave}/>
+                            </StudioIconButton>
+                            <StudioButton size="small" type="primary" onClick={runQuery}>
+                                <span style={{marginRight: 5}}>Run</span> <FontAwesomeIcon icon={faPlay}/>
+                            </StudioButton>
                         </div>
                     </div>
                     <div className={classes.resultsPane}>

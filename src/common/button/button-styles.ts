@@ -48,23 +48,21 @@ type IconButtonStyleProps = ThemeProps & Pick<StudioIconButtonProps, "size">;
 
 // TODO: merge these constants into one
 const iconButtonFontSizes: {[key in SizeIndicator]?: number} = {
-    medium: 21,
-    small: 18,
+    medium: 22,
+    small: 20,
+    smaller: 18,
 }
 
 const iconButtonSizes: {[key in SizeIndicator]?: number} = {
     medium: 42,
-    small: 28,
+    small: 36,
+    smaller: 28,
 }
 
 const iconButtonBorderRadii: {[key in SizeIndicator]?: number} = {
-    small: 4,
+    smaller: 4,
+    small: 5,
     medium: 5,
-}
-
-const iconButtonPaddings: {[key in SizeIndicator]?: string} = {
-    small: "0 8px 2px",
-    medium: "4px 12px 8px",
 }
 
 export const iconButtonStyles = makeStyles({
@@ -77,6 +75,5 @@ export const iconButtonStyles = makeStyles({
         borderRadius: (props: IconButtonStyleProps) => iconButtonBorderRadii[props.size],
         fontSize: (props: IconButtonStyleProps) => iconButtonFontSizes[props.size],
         fontWeight: 400,
-        padding: (props: IconButtonStyleProps) => iconButtonPaddings[props.size],
     },
 });

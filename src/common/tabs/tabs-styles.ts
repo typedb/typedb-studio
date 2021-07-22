@@ -88,7 +88,7 @@ export const tabsStyles = makeStyles({
         borderBottomColor: (_props: ThemeProps) => "transparent",
         height: 29,
         width: 29,
-        paddingBottom: 4,
+        padding: "0 8px 4px",
 
         "&:hover": {
             background: (props: ThemeProps) => `${props.theme.tabs.hover.background} !important`,

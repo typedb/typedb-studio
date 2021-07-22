@@ -57,6 +57,10 @@ export const workspaceStyles = makeStyles({
         display: "flex",
         alignItems: "center",
         padding: "0 24px",
+
+        "& > * + *": {
+            marginLeft: 8,
+        },
     },
 
     resultsPane: {

@@ -80,5 +80,6 @@ export const loginStyles = makeStyles({
         width: 42,
         marginTop: 1,
         marginLeft: "360px !important",
+        padding: "4px 12px 8px",
     },
 });

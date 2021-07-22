@@ -28,10 +28,11 @@ export interface StudioTabsProps {
     setSelectedIndex: (value: number) => void;
     classes?: StudioTabsClasses;
     items: StudioTabItem[];
+    showCloseButton?: boolean;
     showAddButton?: boolean;
 }
 
-export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedIndex, setSelectedIndex, showAddButton, children}) => {
+export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedIndex, setSelectedIndex, showCloseButton, showAddButton, children}) => {
     const ownClasses = tabsStyles({ theme: themeState.use()[0] });
 
     const handleChange = (_event: React.ChangeEvent<{}>, newIndex: number) => {
@@ -41,8 +42,8 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedI
     return (
         <div className={clsx(ownClasses.root, classes.root)}>
             <Tabs value={selectedIndex} onChange={handleChange} classes={{root: clsx(ownClasses.tabGroup, classes.tabGroup), indicator: ownClasses.indicator}}>
-                {items.map((item) => <StudioTab ownClasses={ownClasses} label={item.name} classes={classes} showCloseButton />)}
-                {showAddButton && <StudioIconButton size="small" onClick={(e) => e.preventDefault()}
+                {items.map((item) => <StudioTab ownClasses={ownClasses} label={item.name} classes={classes} showCloseButton={showCloseButton} />)}
+                {showAddButton && <StudioIconButton size="smaller" onClick={(e) => e.preventDefault()}
                                                     classes={{root: ownClasses.addButton}}>+</StudioIconButton>}
             </Tabs>
             {children}
