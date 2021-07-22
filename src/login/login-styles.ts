@@ -10,7 +10,7 @@ export const loginStyles = makeStyles({
     },
 
     form: {
-        background: (props: ThemeProps) => props.theme.windowBackground,
+        background: (props: ThemeProps) => props.theme.background,
         color: (props: ThemeProps) => props.theme.textColor,
         display: "flex",
         flexDirection: "column",
@@ -59,7 +59,7 @@ export const loginStyles = makeStyles({
         gap: `${contentMargin} 32px`,
     },
 
-    loginTabs: {
+    tabs: {
         width: 500,
         marginLeft: "auto",
         marginRight: "auto",
@@ -67,39 +67,12 @@ export const loginStyles = makeStyles({
         alignSelf: "center",
     },
 
-    tabs: {
-        display: "flex",
-        flexDirection: "column",
-    },
-
     tabGroup: {
-        height: 32,
-        border: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
+        height: 34,
     },
 
     tab: {
-        background: (props: ThemeProps) => props.theme.tabs.background,
-        color: (props: ThemeProps) => props.theme.tabs.color,
-
-        "&:not(:last-child)": {
-            borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.separatorColor}`,
-        },
-
-        "&:hover": {
-            background: (props: ThemeProps) => props.theme.tabs.hover.background,
-        },
-    },
-
-    tabSelected: {
-        background: (props: ThemeProps) => `${props.theme.tabs.selected.background} !important`,
-        color: (props: ThemeProps) => `${props.theme.tabs.selected.color} !important`,
-    },
-
-    tabContent: {
-        flex: 1,
-        width: "100%",
-        borderLeft: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
-        borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.outerBorderColor}`,
+        height: 32,
     },
 
     buttonBesideTextField: {

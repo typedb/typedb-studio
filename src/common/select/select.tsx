@@ -1,7 +1,7 @@
 import MenuItem from "@material-ui/core/MenuItem";
 import InputBase from "@material-ui/core/InputBase";
 import { ClassProps } from "../class-props";
-import React from "react";
+import React, { ChangeEvent } from "react";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -10,16 +10,17 @@ import { Theme } from "@material-ui/core/styles/createTheme";
 import createStyles from "@material-ui/core/styles/createStyles";
 import { selectStyles } from "./select-styles";
 import { StudioTheme } from "../../styles/theme";
-import { themeState } from "../../state/typedb-client";
+import { themeState } from "../../state/state";
 
 interface StudioSelectProps<TItem extends string | number> extends ClassProps {
-    label: string;
+    label?: string;
     value: TItem;
     setValue: (value: TItem) => void;
     variant: "outlined" | "filled";
+    onOpen?: (event: ChangeEvent<{}>) => void;
 }
 
-export function StudioSelect<TItem extends string | number>({children, className, label, value, setValue, variant}: React.PropsWithChildren<StudioSelectProps<TItem>>): JSX.Element {
+export function StudioSelect<TItem extends string | number>({children, className, label, value, setValue, variant, onOpen}: React.PropsWithChildren<StudioSelectProps<TItem>>): JSX.Element {
     const classes = selectStyles({ theme: themeState.use()[0] });
 
     const inputElement = React.createElement(studioSelectInput(variant, themeState.use()[0]));
@@ -27,7 +28,7 @@ export function StudioSelect<TItem extends string | number>({children, className
     return (
         <FormControl variant="outlined" className={className}>
             <Select label={label} value={value} onChange={(e) => setValue(e.target.value as TItem)}
-                    className={classes.select} input={inputElement}
+                    className={classes.select} input={inputElement} onOpen={onOpen}
                     MenuProps={{classes: {paper: classes.paper}}}
                     IconComponent={() => <ExpandMoreIcon style={{fontSize: 14, fill: "#FFF", position: "absolute", right: 8, pointerEvents: "none"}}/>}>
                 {children}

@@ -1,34 +1,39 @@
-import clsx from "clsx";
 import { ipcRenderer } from "electron";
-import React, { useContext, useState } from "react";
-import { SnackbarContext } from "../app";
-import { StudioIconButton } from "../common/button/icon-button";
-import { ConnectRequest, LoadDatabasesResponse } from "../ipc/event-args";
-import { loginStyles } from "./login-styles";
-import { StudioButton } from "../common/button/button";
-import { StudioTabItem, StudioTabs } from "../common/tabs/tabs";
-import { StudioAutocomplete } from "../common/autocomplete/autocomplete";
-import { StudioSelect } from "../common/select/select";
-import { databaseState, themeState } from "../state/typedb-client";
+import React from "react";
 import { useHistory } from "react-router-dom";
+import { SnackbarContext } from "../app";
+import { StudioAutocomplete } from "../common/autocomplete/autocomplete";
+import { StudioButton } from "../common/button/button";
+import { StudioIconButton } from "../common/button/icon-button";
+import { StudioSelect } from "../common/select/select";
+import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
+import { ConnectRequest, LoadDatabasesResponse } from "../ipc/event-args";
+import { databaseState, dbServerState, themeState } from "../state/state";
+import { studioStyles } from "../styles/studio-styles";
+import { loginStyles } from "./login-styles";
 
 export const LoginScreen: React.FC = () => {
-    const classes = loginStyles({ theme: themeState.use()[0] });
+    const theme = themeState.use()[0];
+    const classes = Object.assign({}, studioStyles({ theme }), loginStyles({ theme }));
 
     const tabs: StudioTabItem[] = [{
         name: "TypeDB",
         key: "TypeDB",
-        content: TypeDBLoginTab,
+        content: TypeDBClusterLoginTab,
     }, {
         name: "TypeDB Cluster",
         key: "TypeDB Cluster",
         content: TypeDBClusterLoginTab,
     }];
-    
+
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+
     return (
         <div className={classes.backdrop}>
-            <StudioTabs items={tabs} classes={{root: clsx(classes.tabs, classes.loginTabs), tabGroup: classes.tabGroup,
-                tabItem: classes.tab, selected: classes.tabSelected, tabContent: classes.tabContent}}/>
+            <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs} classes={{ root: classes.tabs, tabGroup: classes.tabGroup, tab: classes.tab }}>
+                <StudioTabPanel index={0} selectedIndex={selectedIndex}><TypeDBLoginTab/></StudioTabPanel>
+                <StudioTabPanel index={1} selectedIndex={selectedIndex}><TypeDBClusterLoginTab/></StudioTabPanel>
+            </StudioTabs>
         </div>
     );
 }
@@ -43,13 +48,11 @@ type AddressValidity = "valid" | "invalid" | "unknown";
 export const TypeDBLoginTab: React.FC = () => {
     const classes = loginStyles({ theme: themeState.use()[0] });
 
-    const [db, setDB] = useState(DATABASE);
-    const [dbSelected, setDBSelected] = useState(false);
-    const [dbList, setDBList] = React.useState<string[]>([]);
-
-    const [currentAddress, setCurrentAddress] = useState("");
-    const [addressValidity, setAddressValidity] = useState<AddressValidity>("unknown");
-    const { setSnackbar } = useContext(SnackbarContext);
+    const [db, setDB] = React.useState(DATABASE);
+    const [dbServer, setDBServer] = dbServerState.use();
+    const [dbSelected, setDBSelected] = React.useState(false);
+    const [addressValidity, setAddressValidity] = React.useState<AddressValidity>("unknown");
+    const { setSnackbar } = React.useContext(SnackbarContext);
     const routerHistory = useHistory();
 
     const submit = () => {
@@ -71,11 +74,10 @@ export const TypeDBLoginTab: React.FC = () => {
     };
 
     const loadDatabases = (address: string) => {
-        if (!address || address === currentAddress) return;
-        setCurrentAddress(address);
+        if (!address || address === dbServer.address) return;
+        setDBServer({ address, dbs: [] });
         setDBSelected(false);
         setDB(LOADING_DATABASES);
-        setDBList([]);
         setAddressValidity("unknown");
         const req: ConnectRequest = { address };
         ipcRenderer.send("connect-request", req);
@@ -88,7 +90,7 @@ export const TypeDBLoginTab: React.FC = () => {
 
         ipcRenderer.on("load-databases-response", ((_event, res: LoadDatabasesResponse) => {
             if (res.success) {
-                setDBList(res.databases);
+                setDBServer({ ...dbServer, dbs: res.databases });
                 if (res.databases) {
                     setDB(res.databases[0]);
                     setDBSelected(true);
@@ -106,7 +108,8 @@ export const TypeDBLoginTab: React.FC = () => {
         <form className={classes.form}>
             <div className={classes.formRow}>
                 <StudioAutocomplete label="Server address" value="" onChange={onAddressInputChange}
-                                    onBlur={onAddressInputBlur} invalid={addressValidity === "invalid"} options={["127.0.0.1:1729"]}/>
+                                    onBlur={onAddressInputBlur} invalid={addressValidity === "invalid"}
+                                    options={["127.0.0.1:1729"]}/>
             </div>
 
             <div className={classes.formRow}>
@@ -115,15 +118,17 @@ export const TypeDBLoginTab: React.FC = () => {
                     <option disabled hidden value={LOADING_DATABASES}>{LOADING_DATABASES}</option>
                     <option disabled hidden value={NO_DATABASES}>{NO_DATABASES}</option>
                     <option disabled hidden value={FAILED_TO_LOAD_DATABASES}>{FAILED_TO_LOAD_DATABASES}</option>
-                    {dbList.map(db => <option value={db}>{db}</option>)}
+                    {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
 
                 <StudioIconButton size="small" className={classes.buttonBesideTextField}
-                                  disabled={addressValidity !== "valid"} onClick={(e) => e.preventDefault()}>+</StudioIconButton>
+                                  disabled={addressValidity !== "valid"}
+                                  onClick={(e) => e.preventDefault()}>+</StudioIconButton>
             </div>
 
             <div className={classes.actionList}>
-                <StudioButton size="small" type="primary" onClick={submit} disabled={!dbSelected}>Connect to TypeDB</StudioButton>
+                <StudioButton size="small" type="primary" onClick={submit} disabled={!dbSelected}>Connect to
+                    TypeDB</StudioButton>
             </div>
         </form>
     );

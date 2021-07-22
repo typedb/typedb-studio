@@ -4,12 +4,15 @@ import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
 import { SnackbarContext } from "../app";
 import { StudioButton } from "../common/button/button";
+import { StudioSelect } from "../common/select/select";
+import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
 import { MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
 import { AceTypeQL } from "./ace-typeql";
 import { workspaceStyles } from "./workspace-styles";
-import { databaseState, themeState } from "../state/typedb-client";
+import { databaseState, dbServerState, themeState } from "../state/state";
 import TypeDBVisualiser from "../typedb-visualiser/react/TypeDBVisualiser";
 
 import "./ace-theme-studio-dark";
@@ -29,9 +32,11 @@ function msToTime(duration: number) {
 }
 
 export const WorkspaceScreen: React.FC = () => {
-    const classes = workspaceStyles({ theme: themeState.use()[0] });
+    const theme = themeState.use()[0];
+    const classes = Object.assign({}, studioStyles({ theme }), workspaceStyles({ theme }));
 
-    const db = databaseState.use()[0];
+    const [db, setDB] = databaseState.use();
+    const [dbServer, setDBServer] = dbServerState.use();
     const [code, setCode] = React.useState("match $x sub thing;\noffset 0;\nlimit 1000;\n");
     const [data, setData] = React.useState<TypeDBVisualiserData.Graph>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
@@ -40,6 +45,14 @@ export const WorkspaceScreen: React.FC = () => {
     const [queryRunning, setQueryRunning] = React.useState(false);
     const [queryRunTime, setQueryRunTime] = React.useState<string>(null);
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
+    const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
+    const [timeQuery, setTimeQuery] = React.useState(false);
+
+    const tabs: StudioTabItem[] = [{
+        name: "Query1.tql",
+        key: "0",
+        content: () => <h1>Hello World</h1>
+    }];
 
     async function runQuery() {
         const req: MatchQueryRequest = { db, query: code };
@@ -52,12 +65,26 @@ export const WorkspaceScreen: React.FC = () => {
 
     useInterval(() => {
         if (queryRunning) setQueryRunTime(msToTime(Date.now() - queryStartTime));
-    }, 20);
+        else if (timeQuery) {
+            setQueryRunTime(msToTime(queryEndTime - queryStartTime));
+            setTimeQuery(false);
+        }
+    }, 40);
+
+    const aceEditorRef = React.useRef<AceEditor>(null);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+    React.useEffect(() => {
+        const customMode = new AceTypeQL();
+        aceEditorRef.current.editor.getSession().setMode(customMode as any);
+    }, []);
 
     React.useEffect(() => {
         ipcRenderer.on("match-query-response", ((_event, res: MatchQueryResponse) => {
             setPrincipalStatus("Ready");
             setQueryRunning(false);
+            setTimeQuery(true);
+            setQueryEndTime(Date.now());
             if (res.success) {
                 setAnswerCount(res.answers.length);
                 const vertices: TypeDBVisualiserData.Vertex[] = [];
@@ -84,20 +111,22 @@ export const WorkspaceScreen: React.FC = () => {
         }));
     }, []);
 
-    const aceEditorRef = React.useRef<AceEditor>(null);
-
-    React.useEffect(() => {
-        const customMode = new AceTypeQL();
-        aceEditorRef.current.editor.getSession().setMode(customMode as any);
-    }, []);
-
     return (
         <>
-            <div className={classes.appBar}></div>
+            <div className={classes.appBar}>
+                <StudioSelect value={db} setValue={setDB} variant="filled">
+                    {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
+                </StudioSelect>
+            </div>
             <div className={classes.querySplitPane}>
                 <SplitPane split="horizontal" initialSizes={[4, 7]}>
                     <div className={classes.editorPane}>
-                        <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code} onChange={newValue => setCode(newValue)} width="100%" height="calc(100% - 48px)"/>
+                        <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs} classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}>
+                            <StudioTabPanel index={0} selectedIndex={selectedIndex} className={classes.editorTabPanel}>
+                                <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code}
+                                           onChange={newValue => setCode(newValue)} width="100%" height="100%"/>
+                            </StudioTabPanel>
+                        </StudioTabs>
                         <div className={classes.actionsBar}>
                             <StudioButton size="small" type="primary" onClick={runQuery}>▶️ Run</StudioButton>
                         </div>

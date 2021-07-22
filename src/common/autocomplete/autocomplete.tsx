@@ -1,6 +1,6 @@
 import * as React from "react";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { themeState } from "../../state/typedb-client";
+import { themeState } from "../../state/state";
 import { StudioTextField } from "../input/text-field";
 import { autocompleteStyles } from "./autocomplete-styles";
 

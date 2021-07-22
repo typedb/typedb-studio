@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 import TextField from "@material-ui/core/TextField";
-import { themeState } from "../../state/typedb-client";
+import { themeState } from "../../state/state";
 import { textFieldStyles } from "./input-styles";
 
 interface StudioTextFieldProps {

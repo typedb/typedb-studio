@@ -14,7 +14,7 @@ export class StateHook<TValue> {
         this._observers.forEach(update => update(value));
     }
 
-    use(): [TValue, Function] {
+    use(): [TValue, (value: TValue) => void] {
         const [state, setState] = useState(this._value);
 
         useEffect(() => {
@@ -25,6 +25,8 @@ export class StateHook<TValue> {
             };
         }, []);
 
-        return [state, this.set];
+        return [state, (value) => {
+            this.set(value);
+        }];
     }
 }

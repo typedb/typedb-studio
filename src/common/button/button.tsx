@@ -3,7 +3,7 @@ import React from "react";
 import { ClassProps } from "../class-props";
 import { buttonStyles } from "./button-styles";
 import clsx from "clsx";
-import { themeState } from "../../state/typedb-client";
+import { themeState } from "../../state/state";
 
 export interface StudioButtonProps extends ClassProps {
     type: "primary" | "secondary";

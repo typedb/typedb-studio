@@ -2,7 +2,7 @@ import React from "react";
 import { HashRouter, Redirect, Route, Switch } from "react-router-dom";
 import { WorkspaceScreen } from "./workspace/workspace-screen";
 import { LoginScreen } from "./login/login-screen";
-import { databaseState } from "./state/typedb-client";
+import { databaseState } from "./state/state";
 
 export const routes = {
     workspace: "/workspace",

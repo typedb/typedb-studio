@@ -15,7 +15,9 @@ export const workspaceStyles = makeStyles({
 
     appBar: {
         height: 48,
-        background: (props: ThemeProps) => props.theme.windowBackground,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 24px",
     },
 
     querySplitPane: {
@@ -25,6 +27,27 @@ export const workspaceStyles = makeStyles({
 
     editorPane: {
         height: "100%",
+    },
+
+    editorTabs: {
+        width: "100%",
+        height: "calc(100% - 48px)", // TODO: replace these annoying calcs with flexbox where possible
+    },
+
+    editorTabGroup: {
+        height: 30,
+    },
+
+    editorTab: {
+        flex: "0 !important",
+        borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.separatorColor}`,
+        padding: "4px 8px",
+        fontSize: 14,
+        lineHeight: "20px",
+    },
+
+    editorTabPanel: {
+        height: "calc(100% - 30px)",
     },
 
     actionsBar: {

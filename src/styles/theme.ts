@@ -214,6 +214,7 @@ interface TabsTheme {
     selected: {
         background: string,
         color: string,
+        indicatorColor: string,
     },
 }
 
@@ -221,7 +222,6 @@ export interface StudioTheme {
     id: string;
     background: string;
     windowBackdrop: string;
-    windowBackground: string;
     textField: TextFieldTheme;
     selectOption: SelectOptionTheme;
     textColor: string;
@@ -234,9 +234,8 @@ export type ThemeProps = { theme: StudioTheme };
 
 export const studioDarkTheme: StudioTheme = {
     id: "studioDark",
-    background: vaticleTheme.palette.purple["1"],
+    background: vaticleTheme.palette.purple["4"],
     windowBackdrop: vaticleTheme.palette.purple["1"],
-    windowBackground: vaticleTheme.palette.purple["4"],
     textField: {
         background: vaticleTheme.palette.purple["3"],
         borderColor: "transparent",
@@ -258,6 +257,7 @@ export const studioDarkTheme: StudioTheme = {
         selected: {
             background: vaticleTheme.palette.purple["6"],
             color: "#FFF",
+            indicatorColor: vaticleTheme.palette.purple["8"],
         },
     },
     visualiser: defaultTypeDBVisualiserTheme,
@@ -265,9 +265,8 @@ export const studioDarkTheme: StudioTheme = {
 
 export const studioLightTheme: StudioTheme = {
     id: "studioLight",
-    background: "#FBFBFB",
+    background: "#E4E4E4",
     windowBackdrop: "#F0F0F0",
-    windowBackground: "#E4E4E4",
     textField: {
         background: "#FBFBFB",
         borderColor: "transparent",
@@ -289,12 +288,19 @@ export const studioLightTheme: StudioTheme = {
         selected: {
             background: "#FBFBFB",
             color: "#111",
+            indicatorColor: "#AAA",
         },
     },
     visualiser: {
         colors: {
-            ...defaultTypeDBVisualiserTheme.colors,
-            background: typeDBVisualiserPalette.white,
+            numeric: {
+                ...defaultTypeDBVisualiserTheme.colors.numeric,
+                background: Number(`0x${typeDBVisualiserPalette.white.slice(1)}`),
+            },
+            hex: {
+                ...defaultTypeDBVisualiserTheme.colors.hex,
+                background: typeDBVisualiserPalette.white,
+            },
         },
     },
 }
