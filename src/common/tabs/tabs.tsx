@@ -1,14 +1,16 @@
+import IconButton from "@material-ui/core/IconButton";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
+import CloseIcon from "@material-ui/icons/Close";
 import React from "react";
 import clsx from "clsx";
 import { themeState } from "../../state/state";
+import { StudioIconButton } from "../button/icon-button";
 import { tabsStyles } from "./tabs-styles";
 
 export interface StudioTabItem {
     key: string;
     name: string;
-    content: React.FC;
 }
 
 export interface StudioTabsClasses {
@@ -26,12 +28,11 @@ export interface StudioTabsProps {
     setSelectedIndex: (value: number) => void;
     classes?: StudioTabsClasses;
     items: StudioTabItem[];
+    showAddButton?: boolean;
 }
 
-export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedIndex, setSelectedIndex, children}) => {
+export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedIndex, setSelectedIndex, showAddButton, children}) => {
     const ownClasses = tabsStyles({ theme: themeState.use()[0] });
-    // const [selectedItem, setSelectedItem] = useState(items[0]);
-    // const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     const handleChange = (_event: React.ChangeEvent<{}>, newIndex: number) => {
         setSelectedIndex(newIndex);
@@ -40,13 +41,11 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({classes, items, selectedI
     return (
         <div className={clsx(ownClasses.root, classes.root)}>
             <Tabs value={selectedIndex} onChange={handleChange} classes={{root: clsx(ownClasses.tabGroup, classes.tabGroup), indicator: ownClasses.indicator}}>
-                {items.map((item) => <StudioTab ownClasses={ownClasses} label={item.name} classes={classes}/>)}
+                {items.map((item) => <StudioTab ownClasses={ownClasses} label={item.name} classes={classes} showCloseButton />)}
+                {showAddButton && <StudioIconButton size="small" onClick={(e) => e.preventDefault()}
+                                                    classes={{root: ownClasses.addButton}}>+</StudioIconButton>}
             </Tabs>
             {children}
-            {/*{items.map((item, idx) =>*/}
-            {/*<TabPanel selectedIndex={selectedIndex} index={idx} className={clsx(ownClasses.tabPanel, classes.tabPanel)}>*/}
-            {/*    <item.content/>*/}
-            {/*</TabPanel>)}*/}
         </div>
     );
 }
@@ -58,17 +57,23 @@ interface StudioTabProps {
     last?: boolean;
     ownClasses: any;
     classes?: StudioTabsClasses;
-    setSelectedItem?: (value: StudioTabItem) => void;
+    showCloseButton?: boolean;
+    onClose?: () => any;
 }
 
-export const StudioTab: React.FC<StudioTabProps> = ({label, selected, first, last, ownClasses, classes, ...props}) => {
-    // const selectTab = () => {
-    //     setSelectedItem(item);
-    // }
+export const StudioTab: React.FC<StudioTabProps> = ({label, selected, first, last, ownClasses, classes, showCloseButton, onClose, ...props}) => {
+    const labelElement = (
+        <div className={ownClasses.tabLabel}>
+            {label}
+            {showCloseButton && <IconButton aria-label="close" color="inherit" onClick={onClose} className={ownClasses.close}>
+                <CloseIcon className={ownClasses.closeIcon}/>
+            </IconButton>}
+        </div>
+    );
 
     return (
-        <Tab {...props} label={label} classes={{root: clsx(ownClasses.tab, classes.tab)}} className={clsx(first && classes.first,
-            last && classes.last, selected && ownClasses.tabSelected, selected && classes.tabSelected)}/>
+        <Tab {...props} label={labelElement} classes={{root: clsx(ownClasses.tab, classes.tab)}} className={clsx(first && classes.first,
+            last && classes.last, selected && ownClasses.tabSelected, selected && classes.tabSelected, showCloseButton && ownClasses.withCloseButton)}/>
     );
 }
 

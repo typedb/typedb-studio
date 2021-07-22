@@ -16,15 +16,10 @@ export const LoginScreen: React.FC = () => {
     const theme = themeState.use()[0];
     const classes = Object.assign({}, studioStyles({ theme }), loginStyles({ theme }));
 
-    const tabs: StudioTabItem[] = [{
-        name: "TypeDB",
-        key: "TypeDB",
-        content: TypeDBClusterLoginTab,
-    }, {
-        name: "TypeDB Cluster",
-        key: "TypeDB Cluster",
-        content: TypeDBClusterLoginTab,
-    }];
+    const tabs: StudioTabItem[] = [
+        { name: "TypeDB", key: "TypeDB" },
+        { name: "TypeDB Cluster", key: "TypeDB Cluster" },
+    ];
 
     const [selectedIndex, setSelectedIndex] = React.useState(0);
 
@@ -121,7 +116,7 @@ export const TypeDBLoginTab: React.FC = () => {
                     {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
 
-                <StudioIconButton size="small" className={classes.buttonBesideTextField}
+                <StudioIconButton size="medium" classes={{root: classes.buttonBesideTextField}}
                                   disabled={addressValidity !== "valid"}
                                   onClick={(e) => e.preventDefault()}>+</StudioIconButton>
             </div>

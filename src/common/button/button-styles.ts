@@ -1,8 +1,9 @@
 import { StudioButtonProps } from "./button";
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import { StudioTheme, vaticleTheme } from "../../styles/theme";
+import { SizeIndicator, ThemeProps, vaticleTheme } from "../../styles/theme";
+import { StudioIconButtonProps } from "./icon-button";
 
-type ButtonStyleProps = {theme: StudioTheme} & Pick<StudioButtonProps, 'size' | 'type'>;
+type ButtonStyleProps = ThemeProps & Pick<StudioButtonProps, 'size' | 'type'>;
 
 const commonButtonStyles = {
     disable: {
@@ -43,17 +44,39 @@ export const buttonStyles = makeStyles({
     },
 });
 
+type IconButtonStyleProps = ThemeProps & Pick<StudioIconButtonProps, "size">;
+
+// TODO: merge these constants into one
+const iconButtonFontSizes: {[key in SizeIndicator]?: number} = {
+    medium: 21,
+    small: 18,
+}
+
+const iconButtonSizes: {[key in SizeIndicator]?: number} = {
+    medium: 42,
+    small: 28,
+}
+
+const iconButtonBorderRadii: {[key in SizeIndicator]?: number} = {
+    small: 4,
+    medium: 5,
+}
+
+const iconButtonPaddings: {[key in SizeIndicator]?: string} = {
+    small: "0 8px 2px",
+    medium: "4px 12px 8px",
+}
+
 export const iconButtonStyles = makeStyles({
     disable: commonButtonStyles.disable,
 
     root: {
         ...commonButtonStyles.root,
-        height: 42,
-        width: 42,
-        marginTop: 1,
-        borderRadius: 5,
-        fontSize: (props: ButtonStyleProps) => vaticleTheme.typography.fontSize[props.size] * 1.5,
+        height: (props: IconButtonStyleProps) => iconButtonSizes[props.size],
+        width: (props: IconButtonStyleProps) => iconButtonSizes[props.size],
+        borderRadius: (props: IconButtonStyleProps) => iconButtonBorderRadii[props.size],
+        fontSize: (props: IconButtonStyleProps) => iconButtonFontSizes[props.size],
         fontWeight: 400,
-        padding: "4px 12px 8px",
+        padding: (props: IconButtonStyleProps) => iconButtonPaddings[props.size],
     },
 });

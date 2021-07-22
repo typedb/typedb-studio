@@ -72,12 +72,13 @@ export const loginStyles = makeStyles({
     },
 
     tab: {
-        height: 32,
+        height: 34,
     },
 
     buttonBesideTextField: {
         position: "absolute",
         width: 42,
+        marginTop: 1,
         marginLeft: "360px !important",
     },
 });

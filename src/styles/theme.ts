@@ -208,7 +208,6 @@ const vaticleButtonThemes: ButtonThemes = {
 interface TabsTheme {
     background: string;
     color: string;
-    outerBorderColor: string;
     separatorColor: string;
     hover: { background: string },
     selected: {
@@ -221,6 +220,7 @@ interface TabsTheme {
 export interface StudioTheme {
     id: string;
     background: string;
+    panelSeparatorColor: string;
     windowBackdrop: string;
     textField: TextFieldTheme;
     selectOption: SelectOptionTheme;
@@ -235,6 +235,7 @@ export type ThemeProps = { theme: StudioTheme };
 export const studioDarkTheme: StudioTheme = {
     id: "studioDark",
     background: vaticleTheme.palette.purple["4"],
+    panelSeparatorColor: vaticleTheme.palette.purple["1"],
     windowBackdrop: vaticleTheme.palette.purple["1"],
     textField: {
         background: vaticleTheme.palette.purple["3"],
@@ -251,7 +252,6 @@ export const studioDarkTheme: StudioTheme = {
     tabs: {
         background: vaticleTheme.palette.purple["3"],
         color: "#888DCA",
-        outerBorderColor: vaticleTheme.palette.purple["1"],
         separatorColor: vaticleTheme.palette.purple["1"],
         hover: { background: vaticleTheme.palette.purple["2"] },
         selected: {
@@ -266,6 +266,7 @@ export const studioDarkTheme: StudioTheme = {
 export const studioLightTheme: StudioTheme = {
     id: "studioLight",
     background: "#E4E4E4",
+    panelSeparatorColor: "#BBB",
     windowBackdrop: "#F0F0F0",
     textField: {
         background: "#FBFBFB",
@@ -282,7 +283,6 @@ export const studioLightTheme: StudioTheme = {
     tabs: {
         background: "#E4E4E4",
         color: "#222",
-        outerBorderColor: "#BBB",
         separatorColor: "#DDD",
         hover: { background: "#DDD" },
         selected: {

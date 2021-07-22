@@ -1,21 +1,25 @@
-import { SizeIndicator } from "../../styles/theme";
-import React from "react";
-import { ClassProps } from "../class-props";
-import { iconButtonStyles } from "./button-styles";
 import clsx from "clsx";
+import React from "react";
 import { themeState } from "../../state/state";
+import { SizeIndicator } from "../../styles/theme";
+import { iconButtonStyles } from "./button-styles";
 
-export interface StudioIconButtonProps extends ClassProps {
+export interface StudioIconButtonClasses {
+    root?: string;
+}
+
+export interface StudioIconButtonProps {
     size: SizeIndicator;
     disabled?: boolean;
     onClick: React.MouseEventHandler;
+    classes?: StudioIconButtonClasses;
 }
 
-export const StudioIconButton: React.FC<StudioIconButtonProps> = ({ children, className, size, onClick, disabled }) => {
-    const classes = iconButtonStyles({ size, type: "secondary", theme: themeState.use()[0] });
+export const StudioIconButton: React.FC<StudioIconButtonProps> = ({ children, classes, size, onClick, disabled }) => {
+    const ownClasses = iconButtonStyles({ size, type: "secondary", theme: themeState.use()[0] });
 
     return (
-        <button className={clsx(classes.root, disabled && classes.disable, className)} onClick={onClick}>
+        <button className={clsx(ownClasses.root, classes?.root, disabled && ownClasses.disable)} onClick={onClick}>
             {children}
         </button>
     );

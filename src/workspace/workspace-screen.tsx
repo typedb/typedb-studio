@@ -51,7 +51,6 @@ export const WorkspaceScreen: React.FC = () => {
     const tabs: StudioTabItem[] = [{
         name: "Query1.tql",
         key: "0",
-        content: () => <h1>Hello World</h1>
     }];
 
     async function runQuery() {
@@ -121,7 +120,9 @@ export const WorkspaceScreen: React.FC = () => {
             <div className={classes.querySplitPane}>
                 <SplitPane split="horizontal" initialSizes={[4, 7]}>
                     <div className={classes.editorPane}>
-                        <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs} classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}>
+                        <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs}
+                                    classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}
+                                    showAddButton>
                             <StudioTabPanel index={0} selectedIndex={selectedIndex} className={classes.editorTabPanel}>
                                 <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code}
                                            onChange={newValue => setCode(newValue)} width="100%" height="100%"/>
