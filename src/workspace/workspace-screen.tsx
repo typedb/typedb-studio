@@ -1,11 +1,16 @@
+import { faCog } from "@fortawesome/free-solid-svg-icons/faCog";
 import { faDatabase } from "@fortawesome/free-solid-svg-icons/faDatabase";
 import { faFolderOpen } from "@fortawesome/free-solid-svg-icons/faFolderOpen";
 import { faPlay } from "@fortawesome/free-solid-svg-icons/faPlay";
+import { faProjectDiagram } from "@fortawesome/free-solid-svg-icons/faProjectDiagram";
 import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
+import { faShapes } from "@fortawesome/free-solid-svg-icons/faShapes";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons/faSignOutAlt";
+import { faUserShield } from "@fortawesome/free-solid-svg-icons/faUserShield";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import IconButton from "@material-ui/core/IconButton";
-import { ipcRenderer } from "electron";
+import clsx from "clsx";
+import { ipcRenderer, IpcRendererEvent } from "electron";
 import React from "react";
 import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
@@ -14,6 +19,7 @@ import { SnackbarContext } from "../app";
 import { StudioButton } from "../common/button/button";
 import { StudioIconButton } from "../common/button/icon-button";
 import { StudioSelect } from "../common/select/select";
+import { StudioTable } from "../common/table/table";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
 import { MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
@@ -51,7 +57,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [data, setData] = React.useState<TypeDBVisualiserData.Graph>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
     const [principalStatus, setPrincipalStatus] = React.useState("Ready");
-    const [answerCount, setAnswerCount] = React.useState<number>(null);
+    const [queryResult, setQueryResult] = React.useState<string>(null);
     const [queryRunning, setQueryRunning] = React.useState(false);
     const [queryRunTime, setQueryRunTime] = React.useState<string>(null);
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
@@ -59,11 +65,21 @@ export const WorkspaceScreen: React.FC = () => {
     const [timeQuery, setTimeQuery] = React.useState(false);
     const routerHistory = useHistory();
 
-    const tabs: StudioTabItem[] = [{ name: "Query1.tql", key: "0" }];
+    const tabs: StudioTabItem[] = [{ label: "Query1.tql", key: "0" }];
     const resultsTabs: StudioTabItem[] = [
-        { name: "Log", key: "0" },
-        { name: "Graph", key: "1" },
-        { name: "Table", key: "2" },
+        { label: "Log", key: "0" },
+        { label: "Graph", key: "1" },
+        { label: "Table", key: "2" },
+    ];
+
+    const leftSidebar: StudioTabItem[] = [
+        { label: "Permissions", key: "Permissions", icon: <FontAwesomeIcon icon={faUserShield} style={{marginLeft: 3}}/> },
+        { label: "Schema Explorer", key: "Schema Explorer", icon: <FontAwesomeIcon icon={faShapes}/> },
+    ];
+
+    const rightSidebar: StudioTabItem[] = [
+        { label: "Settings", key: "Settings", icon: <FontAwesomeIcon icon={faCog} style={{marginRight: 3}}/> },
+        { label: "Graph Explorer", key: "Graph Explorer", icon: <FontAwesomeIcon icon={faProjectDiagram}/> },
     ];
 
     const runQuery = async () => {
@@ -97,13 +113,13 @@ export const WorkspaceScreen: React.FC = () => {
     }, []);
 
     React.useEffect(() => {
-        ipcRenderer.on("match-query-response", ((_event, res: MatchQueryResponse) => {
+        const onMatchQueryResponse = (_event: IpcRendererEvent, res: MatchQueryResponse) => {
             setPrincipalStatus("Ready");
             setQueryRunning(false);
             setTimeQuery(true);
             setQueryEndTime(Date.now());
             if (res.success) {
-                setAnswerCount(res.answers.length);
+                setQueryResult(`${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`);
                 const vertices: TypeDBVisualiserData.Vertex[] = [];
                 let nextID = 1;
                 for (const conceptMap of res.answers) {
@@ -122,11 +138,23 @@ export const WorkspaceScreen: React.FC = () => {
                 }
                 setData({vertices, edges: []});
             } else {
-                setAnswerCount(null);
+                setQueryResult("Error executing query");
                 setSnackbar({ open: true, variant: "error", message: res.error });
             }
-        }));
+        };
+
+        ipcRenderer.on("match-query-response", onMatchQueryResponse);
+        return () => {
+            ipcRenderer.removeListener("match-query-response", onMatchQueryResponse);
+        };
     }, []);
+
+    const computeWorkspaceSplitPaneInitialWidths = () => {
+        const workspacePaneWidth = window.innerWidth - 56;
+        const graphExplorerInitialWidth = 200;
+        const queryPaneInitialWidth = workspacePaneWidth - 200;
+        return [queryPaneInitialWidth, graphExplorerInitialWidth];
+    }
 
     return (
         <>
@@ -140,49 +168,94 @@ export const WorkspaceScreen: React.FC = () => {
                     <FontAwesomeIcon icon={faSignOutAlt}/>
                 </IconButton>
             </div>
-            <div className={classes.querySplitPane}>
-                <SplitPane split="horizontal" initialSizes={[4, 7]}>
-                    <div className={classes.editorPane}>
-                        <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs}
-                                    classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}
-                                    showCloseButton showAddButton>
-                            <StudioTabPanel index={0} selectedIndex={selectedIndex} className={classes.editorTabPanel}>
-                                <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code}
-                                           onChange={newValue => setCode(newValue)} width="100%" height="100%"/>
-                            </StudioTabPanel>
-                        </StudioTabs>
-                        <div className={classes.actionsBar}>
-                            <StudioIconButton size="small" onClick={() => null}>
-                                <FontAwesomeIcon icon={faFolderOpen}/>
-                            </StudioIconButton>
-                            <StudioIconButton size="small" onClick={() => null}>
-                                <FontAwesomeIcon icon={faSave}/>
-                            </StudioIconButton>
-                            <StudioButton size="small" type="primary" onClick={runQuery}>
-                                <span style={{marginRight: 5}}>Run</span> <FontAwesomeIcon icon={faPlay}/>
-                            </StudioButton>
+            <div className={classes.workspaceView}>
+                <div className={classes.leftSidebar}>
+                    <StudioTabs orientation="bottomToTop" items={leftSidebar} classes={{tab: classes.sidebarTab}}/>
+                </div>
+                <div className={classes.workspaceSplitPane}>
+                    <SplitPane split="vertical" initialSizes={computeWorkspaceSplitPaneInitialWidths()} minSizes={[undefined, 180]}>
+                        <div className={classes.querySplitPane}>
+                            <SplitPane split="horizontal" initialSizes={[3, 7]}>
+                                <div className={classes.editorPane}>
+                                    <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs}
+                                                classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}
+                                                showCloseButton showAddButton>
+                                        <StudioTabPanel index={0} selectedIndex={selectedIndex} className={classes.editorTabPanel}>
+                                            <AceEditor ref={aceEditorRef} mode="text" theme="studio-dark" fontSize={"1rem"} value={code}
+                                                       onChange={newValue => setCode(newValue)} width="100%" height="100%"/>
+                                        </StudioTabPanel>
+                                    </StudioTabs>
+                                </div>
+                                <div className={classes.resultsPane}>
+                                    <div className={classes.actionsBar}>
+                                        <StudioIconButton size="small" onClick={() => null}>
+                                            <FontAwesomeIcon icon={faFolderOpen}/>
+                                        </StudioIconButton>
+                                        <StudioIconButton size="small" onClick={() => null}>
+                                            <FontAwesomeIcon icon={faSave}/>
+                                        </StudioIconButton>
+                                        <StudioButton size="small" type="primary" onClick={runQuery}>
+                                            <span style={{marginRight: 5}}>Run</span> <FontAwesomeIcon icon={faPlay}/>
+                                        </StudioButton>
+                                    </div>
+                                    <StudioTabs selectedIndex={selectedResultsTabIndex} setSelectedIndex={setSelectedResultsTabIndex}
+                                                items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
+                                        <StudioTabPanel index={0} selectedIndex={selectedResultsTabIndex} className={clsx(classes.resultsTabPanel, classes.resultsLogPanel)}>
+                                            Food for beavers goes here
+                                        </StudioTabPanel>
+                                        <StudioTabPanel index={1} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
+                                            <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+                                        </StudioTabPanel>
+                                        <StudioTabPanel index={2} selectedIndex={selectedResultsTabIndex} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
+                                            Food for humans goes here
+                                        </StudioTabPanel>
+                                    </StudioTabs>
+                                </div>
+                            </SplitPane>
                         </div>
-                    </div>
-                    <div className={classes.resultsPane}>
-                        <StudioTabs selectedIndex={selectedResultsTabIndex} setSelectedIndex={setSelectedResultsTabIndex}
-                                    items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
-                            <StudioTabPanel index={0} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
-                                Food for beavers goes here
-                            </StudioTabPanel>
-                            <StudioTabPanel index={1} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
-                                <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
-                            </StudioTabPanel>
-                            <StudioTabPanel index={2} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
-                                Food for humans goes here
-                            </StudioTabPanel>
-                        </StudioTabs>
-                        <div className={classes.statusBar}>
-                            {principalStatus}
-                            <div className={classes.filler}/>
-                            {answerCount != null ? <>{answerCount} answer{answerCount !== 1 && "s"} | {queryRunTime}</> : queryRunTime != null ? queryRunTime : ""}
+                        <div className={classes.sidebarWindowGroup}>
+                            <SplitPane split="horizontal" initialSizes={[1, 3]}>
+                                <div>
+                                    <div className={classes.sidebarWindowHeader}>
+                                        Query Settings
+                                    </div>
+                                    <div className={classes.querySettingsBody}>
+                                        Fast mode is <strong>enabled.</strong> Queries will run in less time than it takes you to say "Neo4j sucks".
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className={classes.sidebarWindowHeader}>
+                                        Graph Explorer
+                                    </div>
+                                    <div className={classes.graphExplorerBody}>
+                                        <StudioTable headings={["Property", "Value"]} minCellWidth={50} className={classes.graphExplorerTable}>
+                                            <tr>
+                                                <td><span>Type</span></td>
+                                                <td><span>person</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><span>Encoding</span></td>
+                                                <td><span>entity</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><span>Internal ID</span></td>
+                                                <td><span>123b548m5656vbc4nb430gh3453d</span></td>
+                                            </tr>
+                                        </StudioTable>
+                                    </div>
+                                </div>
+                            </SplitPane>
                         </div>
-                    </div>
-                </SplitPane>
+                    </SplitPane>
+                </div>
+                <div className={classes.rightSidebar}>
+                    <StudioTabs orientation="topToBottom" items={rightSidebar} classes={{tab: classes.sidebarTab}}/>
+                </div>
+            </div>
+            <div className={classes.statusBar}>
+                {principalStatus}
+                <div className={classes.filler}/>
+                {queryResult != null ? <>{queryResult} | {queryRunTime}</> : queryRunTime != null ? queryRunTime : ""}
             </div>
         </>
     );

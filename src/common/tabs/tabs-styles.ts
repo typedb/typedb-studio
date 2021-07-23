@@ -1,6 +1,18 @@
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import { ThemeProps } from "../../styles/theme";
 
+export type StudioTabsOrientation = "normal" | "bottomToTop" | "topToBottom";
+
+export interface TabsStyleProps extends ThemeProps {
+    orientation: StudioTabsOrientation;
+}
+
+const tabPaddings: {[orientation in StudioTabsOrientation]: string} = {
+    normal: "0 8px 2px",
+    bottomToTop: "10px 2px 6px 0",
+    topToBottom: "10px 0 6px 2px",
+};
+
 export const tabsStyles = makeStyles({
     root: {
         display: "flex",
@@ -10,7 +22,6 @@ export const tabsStyles = makeStyles({
     tabGroup: {
         minHeight: "0 !important",
         display: "flex",
-        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
     },
 
     tab: {
@@ -21,15 +32,15 @@ export const tabsStyles = makeStyles({
         alignItems: "center",
         transition: "background-color 150ms ease",
         userSelect: "none",
-        padding: "0 10px 2px",
+        padding: (props: TabsStyleProps) => tabPaddings[props.orientation],
         minHeight: "unset",
         minWidth: "unset",
         overflow: "visible",
         opacity: 1,
         textTransform: "none",
         position: "relative",
-        background: (props: ThemeProps) => props.theme.tabs.background,
-        color: (props: ThemeProps) => props.theme.tabs.color,
+        background: (props: TabsStyleProps) => props.theme.tabs.background,
+        color: (props: TabsStyleProps) => props.theme.tabs.color,
 
         // This structure is used to avoid modifying the width of the tab
         "&:after": {
@@ -40,12 +51,12 @@ export const tabsStyles = makeStyles({
             right: -1,
             bottom: 0,
             left: 0,
-            borderRight: (props: ThemeProps) => `1px solid ${props.theme.tabs.separatorColor}`,
+            borderRight: (props: TabsStyleProps) => `1px solid ${props.theme.tabs.separatorColor}`,
             pointerEvents: "none",
         },
 
         "&:hover": {
-            background: (props: ThemeProps) => props.theme.tabs.hover.background,
+            background: (props: TabsStyleProps) => props.theme.tabs.hover.background,
         },
 
         "&$withCloseButton": {
@@ -55,18 +66,36 @@ export const tabsStyles = makeStyles({
 
     withCloseButton: {},
 
-    tabLabel: {
+    tabContent: {
         display: "flex",
         alignItems: "center",
+        flexDirection: (props: TabsStyleProps) => props.orientation === "normal" ? "row" : "column-reverse",
+
+        "& > * + *": {
+            marginLeft: (props: TabsStyleProps) => props.orientation === "normal" ? 2 : undefined,
+        },
+
+        "& > :not(:last-child)": {
+            marginTop: (props: TabsStyleProps) => props.orientation !== "normal" ? 6 : undefined,
+        },
+    },
+
+    tabLabel: {
+        writingMode: (props: TabsStyleProps) => props.orientation === "normal" ? "horizontal-tb" : "vertical-rl",
+        transform: (props: TabsStyleProps) => props.orientation === "bottomToTop" ? "rotate(180deg)" : undefined,
     },
 
     tabSelected: {
-        background: (props: ThemeProps) => `${props.theme.tabs.selected.background} !important`,
-        color: (props: ThemeProps) => `${props.theme.tabs.selected.color} !important`,
+        background: (props: TabsStyleProps) => `${props.theme.tabs.selected.background} !important`,
+        color: (props: TabsStyleProps) => `${props.theme.tabs.selected.color} !important`,
+    },
+
+    flexContainer: {
+        flexDirection: (props: TabsStyleProps) => props.orientation === "normal" ? "row" : "column",
     },
 
     indicator: {
-        background: (props: ThemeProps) => props.theme.tabs.selected.indicatorColor,
+        background: (props: TabsStyleProps) => props.theme.tabs.selected.indicatorColor,
     },
 
     close: {
@@ -81,18 +110,18 @@ export const tabsStyles = makeStyles({
     },
 
     addButton: {
-        background: (props: ThemeProps) => props.theme.tabs.background,
-        color: (props: ThemeProps) => `${props.theme.tabs.color}`,
-        borderColor: (props: ThemeProps) => props.theme.tabs.separatorColor,
-        borderRadius: 0,
-        borderBottomColor: (_props: ThemeProps) => "transparent",
+        background: (props: TabsStyleProps) => props.theme.tabs.background,
+        color: (props: TabsStyleProps) => `${props.theme.tabs.color}`,
+        borderColor: (props: TabsStyleProps) => props.theme.tabs.separatorColor,
+        borderRadius: 2,
+        borderBottomColor: (_props: TabsStyleProps) => "transparent",
         height: 29,
         width: 29,
         padding: "0 8px 4px",
 
         "&:hover": {
-            background: (props: ThemeProps) => `${props.theme.tabs.hover.background} !important`,
-            color: (props: ThemeProps) => `${props.theme.button.secondary.color} !important`,
+            background: (props: TabsStyleProps) => `${props.theme.tabs.hover.background} !important`,
+            color: (props: TabsStyleProps) => `${props.theme.button.secondary.color} !important`,
             borderBottomStyle: "solid",
         },
     },
@@ -100,7 +129,7 @@ export const tabsStyles = makeStyles({
     tabPanel: {
         flex: 1,
         width: "100%",
-        borderLeft: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
-        borderRight: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+        borderLeft: (props: TabsStyleProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+        borderRight: (props: TabsStyleProps) => `1px solid ${props.theme.panelSeparatorColor}`,
     },
 });

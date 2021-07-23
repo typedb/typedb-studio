@@ -172,6 +172,13 @@ interface ButtonThemes {
     secondary: ButtonTheme;
 }
 
+interface TableTheme {
+    color: string,
+    headerColor: string,
+    oddRowBackground: string,
+    evenRowBackground: string,
+}
+
 const vaticleButtonThemes: ButtonThemes = {
     primary: {
         background: vaticleTheme.palette.green["1"],
@@ -227,6 +234,7 @@ export interface StudioTheme {
     textColor: string;
     button: ButtonThemes;
     tabs: TabsTheme;
+    table: TableTheme;
     visualiser: TypeDBVisualiserTheme;
 }
 
@@ -259,6 +267,12 @@ export const studioDarkTheme: StudioTheme = {
             color: "#FFF",
             indicatorColor: vaticleTheme.palette.purple["8"],
         },
+    },
+    table: {
+        color: "#FFF",
+        headerColor: vaticleTheme.palette.green["1"],
+        oddRowBackground: vaticleTheme.palette.purple["2"],
+        evenRowBackground: vaticleTheme.palette.purple["1"],
     },
     visualiser: defaultTypeDBVisualiserTheme,
 }

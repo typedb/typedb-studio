@@ -45,7 +45,7 @@ export const StudioSnackbar: React.FC<StudioSnackbarProps> = ({variant, message,
     );
 
     return (
-        <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={open} autoHideDuration={6000}
+        <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={open} autoHideDuration={8000}
                   onClose={handleClose}
                   classes={{ root: clsx(classes.root, variant === "success" && classes.success, variant === "error" && classes.error) }}
                   ContentProps={{ classes: { root: classes.content, message: classes.message } }}

@@ -1,4 +1,5 @@
 import makeStyles from "@material-ui/core/styles/makeStyles";
+import { TabsStyleProps } from "../common/tabs/tabs-styles";
 import { contentMargin } from "../styles/studio-styles";
 import { ThemeProps } from "../styles/theme";
 
@@ -69,6 +70,7 @@ export const loginStyles = makeStyles({
 
     tabGroup: {
         height: 34,
+        borderBottom: (props: TabsStyleProps) => `1px solid ${props.theme.panelSeparatorColor}`,
     },
 
     tab: {

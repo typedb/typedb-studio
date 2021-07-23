@@ -25,9 +25,39 @@ export const workspaceStyles = makeStyles({
         },
     },
 
+    workspaceView: {
+        width: "100vw",
+        height: "calc(100% - 76px)",
+        display: "flex",
+    },
+
+    workspaceSplitPane: {
+        flex: 1,
+        position: "relative",
+    },
+
+    leftSidebar: {
+        borderRight: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+    },
+
+    rightSidebar: {
+        borderLeft: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+    },
+
+    sidebarTab: {
+        fontSize: 14,
+        background: (props: ThemeProps) => `${props.theme.tabs.selected.background} !important`,
+        color: (props: ThemeProps) => `${props.theme.tabs.selected.color} !important`,
+        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+
+        "&:hover": {
+            background: (props: ThemeProps) => `${props.theme.tabs.hover.background} !important`,
+        },
+    },
+
     querySplitPane: {
         position: "relative",
-        height: "calc(100vh - 48px)",
+        height: "calc(100vh - 76px)",
     },
 
     editorPane: {
@@ -35,13 +65,12 @@ export const workspaceStyles = makeStyles({
     },
 
     editorTabs: {
-        width: "100%",
-        height: "calc(100% - 48px)", // TODO: replace these annoying calcs with flexbox where possible
-        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+        height: "100%", // TODO: replace these annoying calcs with flexbox where possible
     },
 
     editorTabGroup: {
         height: 30,
+        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
     },
 
     editorTab: {
@@ -60,7 +89,8 @@ export const workspaceStyles = makeStyles({
         height: 48,
         display: "flex",
         alignItems: "center",
-        padding: "0 24px",
+        padding: "0 8px",
+        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
 
         "& > * + *": {
             marginLeft: 8,
@@ -77,6 +107,7 @@ export const workspaceStyles = makeStyles({
 
     resultsTabGroup: {
         height: 34,
+        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
     },
 
     resultsTab: {
@@ -84,13 +115,54 @@ export const workspaceStyles = makeStyles({
     },
 
     resultsTabPanel: {
-        height: "calc(100% - 34px)",
+        height: "calc(100% - 54px)",
         background: (props: ThemeProps) => props.theme.visualiser.colors.hex.background,
+    },
+
+    resultsLogPanel: {
+        padding: 8,
+    },
+
+    resultsTablePanel: {
+        padding: 8,
     },
 
     visualiser: {
         height: "100%",
-        width: "100%",
+    },
+
+    sidebarWindowGroup: {
+        height: "100%",
+        position: "relative",
+        fontSize: 14,
+    },
+
+    sidebarWindowHeader: {
+        height: 30,
+        lineHeight: "30px",
+        userSelect: "none",
+        background: (props: ThemeProps) => props.theme.tabs.selected.background,
+        color: (props: ThemeProps) => props.theme.tabs.selected.color,
+        borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
+        padding: "0 8px",
+    },
+
+    querySettingsBody: {
+        padding: 8,
+        lineHeight: "16px",
+    },
+
+    graphExplorerBody: {
+        lineHeight: "16px",
+    },
+
+    graphExplorerTable: {
+        lineHeight: "20px",
+        userSelect: "none",
+
+        "& tr td:first-child": {
+            fontWeight: 600,
+        },
     },
 
     statusBar: {

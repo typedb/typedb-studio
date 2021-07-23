@@ -17,8 +17,8 @@ export const LoginScreen: React.FC = () => {
     const classes = Object.assign({}, studioStyles({ theme }), loginStyles({ theme }));
 
     const tabs: StudioTabItem[] = [
-        { name: "TypeDB", key: "TypeDB" },
-        { name: "TypeDB Cluster", key: "TypeDB Cluster" },
+        { label: "TypeDB", key: "TypeDB" },
+        { label: "TypeDB Cluster", key: "TypeDB Cluster" },
     ];
 
     const [selectedIndex, setSelectedIndex] = React.useState(0);
