@@ -18,7 +18,11 @@ export const workspaceStyles = makeStyles({
         borderBottom: (props: ThemeProps) => `1px solid ${props.theme.panelSeparatorColor}`,
         display: "flex",
         alignItems: "center",
-        padding: "0 24px",
+        padding: "0 16px",
+
+        "& > * + *": {
+            marginLeft: 8,
+        },
     },
 
     querySplitPane: {
@@ -72,16 +76,15 @@ export const workspaceStyles = makeStyles({
     },
 
     resultsTabGroup: {
-        height: 36,
+        height: 34,
     },
 
     resultsTab: {
-        height: 36,
-        paddingBottom: 4,
+        height: 34,
     },
 
     resultsTabPanel: {
-        height: "100%",
+        height: "calc(100% - 34px)",
         background: (props: ThemeProps) => props.theme.visualiser.colors.hex.background,
     },
 

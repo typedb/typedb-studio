@@ -6,6 +6,7 @@ import { databaseState } from "./state/state";
 
 export const routes = {
     workspace: "/workspace",
+    login: "/",
 }
 
 export const StudioRouter: React.FC = () => {

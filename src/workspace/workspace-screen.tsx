@@ -1,11 +1,15 @@
+import { faDatabase } from "@fortawesome/free-solid-svg-icons/faDatabase";
 import { faFolderOpen } from "@fortawesome/free-solid-svg-icons/faFolderOpen";
 import { faPlay } from "@fortawesome/free-solid-svg-icons/faPlay";
 import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
+import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons/faSignOutAlt";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import IconButton from "@material-ui/core/IconButton";
 import { ipcRenderer } from "electron";
 import React from "react";
 import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
+import { useHistory } from "react-router-dom";
 import { SnackbarContext } from "../app";
 import { StudioButton } from "../common/button/button";
 import { StudioIconButton } from "../common/button/icon-button";
@@ -13,6 +17,7 @@ import { StudioSelect } from "../common/select/select";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
 import { MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
 import { AceTypeQL } from "./ace-typeql";
@@ -52,6 +57,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
     const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
     const [timeQuery, setTimeQuery] = React.useState(false);
+    const routerHistory = useHistory();
 
     const tabs: StudioTabItem[] = [{ name: "Query1.tql", key: "0" }];
     const resultsTabs: StudioTabItem[] = [
@@ -60,14 +66,18 @@ export const WorkspaceScreen: React.FC = () => {
         { name: "Table", key: "2" },
     ];
 
-    async function runQuery() {
+    const runQuery = async () => {
         const req: MatchQueryRequest = { db, query: code };
         ipcRenderer.send("match-query-request", req);
         setPrincipalStatus("Running Match query...");
         setQueryRunning(true);
         setQueryStartTime(Date.now());
         setQueryRunTime("00:00.000");
-    }
+    };
+
+    const signOut = () => {
+        routerHistory.push(routes.login);
+    };
 
     useInterval(() => {
         if (queryRunning) setQueryRunTime(msToTime(Date.now() - queryStartTime));
@@ -121,9 +131,14 @@ export const WorkspaceScreen: React.FC = () => {
     return (
         <>
             <div className={classes.appBar}>
+                <FontAwesomeIcon icon={faDatabase}/>
                 <StudioSelect value={db} setValue={setDB} variant="filled">
                     {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
+                <div className={classes.filler}/>
+                <IconButton size="small" aria-label="sign-out" color="inherit" onClick={signOut}>
+                    <FontAwesomeIcon icon={faSignOutAlt}/>
+                </IconButton>
             </div>
             <div className={classes.querySplitPane}>
                 <SplitPane split="horizontal" initialSizes={[4, 7]}>
