@@ -41,7 +41,7 @@ export function setupStage(container: HTMLElement): RenderingStage {
     viewport.drag()
         .pinch({ factor: 1 })
         .wheel({ percent: -.5 })
-        .clampZoom({ minScale: .1, maxScale: 3 })
+        .clampZoom({ minScale: .01, maxScale: 3 })
         .decelerate({ friction: .95 });
 
     return { renderer, viewport };
