@@ -47,7 +47,7 @@ function msToTime(duration: number) {
     return (hours !== "00" ? hours + ":" : "") + minutes + ":" + seconds + "." + milliseconds;
 }
 
-type GraphNode = ConceptData & {id: number};
+type GraphNode = ConceptData & {nodeID: number};
 
 export const WorkspaceScreen: React.FC = () => {
     const theme = themeState.use()[0];
@@ -126,21 +126,39 @@ export const WorkspaceScreen: React.FC = () => {
                 const edges: TypeDBVisualiserData.Edge[] = [];
 
                 let nextID = 1;
-                const typeIDs: {[label: string]: number} = {};
-                const thingIDs: {[iid: string]: number} = {};
+                const typeNodeIDs: {[label: string]: number} = {};
+                const thingNodeIDs: {[iid: string]: number} = {};
                 // TODO: deduplicate answers
                 for (const conceptMap of res.answers) {
                     for (const varName in conceptMap) {
                         if (!conceptMap.hasOwnProperty(varName)) continue;
                         const concept = conceptMap[varName] as GraphNode;
-                        concept.id = nextID;
-                        if (concept.iid) thingIDs[concept.iid] = nextID;
-                        else typeIDs[concept.label] = nextID;
+
+                        if (concept.iid) {
+                            const thingNodeID = thingNodeIDs[concept.iid];
+                            if (thingNodeID == null) {
+                                concept.nodeID = nextID;
+                                thingNodeIDs[concept.iid] = nextID;
+                            } else {
+                                concept.nodeID = thingNodeID;
+                                continue;
+                            }
+                        } else {
+                            const typeNodeID = typeNodeIDs[concept.label];
+                            if (typeNodeID == null) {
+                                concept.nodeID = nextID;
+                                typeNodeIDs[concept.label] = nextID;
+                            } else {
+                                concept.nodeID = typeNodeID;
+                                continue;
+                            }
+                        }
+
                         vertices.push({
                             id: nextID,
                             width: 110,
                             height: concept.encoding === "relationType" ? 60 : 40,
-                            label: concept.value ? `${concept.type}:${concept.value}` : (concept.label || concept.type),
+                            label: concept.value != null ? `${concept.type}:${concept.value.toString().slice(0, 100)}` : (concept.label || concept.type),
                             encoding: concept.encoding,
                         });
                         nextID++;
@@ -154,31 +172,39 @@ export const WorkspaceScreen: React.FC = () => {
 
                         if (concept.playsTypes) {
                             for (const roleType of concept.playsTypes) {
-                                const relationTypeID = typeIDs[roleType.relation];
-                                if (relationTypeID != null) {
-                                    edges.push({
-                                        source: relationTypeID,
-                                        target: concept.id,
-                                        label: roleType.role,
-                                    });
+                                const relationTypeNodeID = typeNodeIDs[roleType.relation];
+                                if (relationTypeNodeID != null) {
+                                    edges.push({ source: relationTypeNodeID, target: concept.nodeID, label: roleType.role });
                                 }
                             }
                         }
 
                         if (concept.ownsLabels) {
                             for (const attributeTypeLabel of concept.ownsLabels) {
-                                const attributeTypeID = typeIDs[attributeTypeLabel];
-                                if (attributeTypeID != null) {
-                                    edges.push({
-                                        source: concept.id,
-                                        target: attributeTypeID,
-                                        label: "owns",
-                                    });
+                                const attributeTypeNodeID = typeNodeIDs[attributeTypeLabel];
+                                if (attributeTypeNodeID != null) {
+                                    edges.push({ source: concept.nodeID, target: attributeTypeNodeID, label: "owns" });
                                 }
                             }
                         }
 
-                        // TODO: instance edges
+                        if (concept.playerInstances) {
+                            for (const rolePlayer of concept.playerInstances) {
+                                const rolePlayerNodeID = thingNodeIDs[rolePlayer.iid];
+                                if (rolePlayerNodeID != null) {
+                                    edges.push({ source: concept.nodeID, target: rolePlayerNodeID, label: rolePlayer.role });
+                                }
+                            }
+                        }
+
+                        if (concept.ownerIIDs) {
+                            for (const ownerIID of concept.ownerIIDs) {
+                                const ownerNodeID = thingNodeIDs[ownerIID];
+                                if (ownerNodeID != null) {
+                                    edges.push({ source: ownerNodeID, target: concept.nodeID, label: "has" });
+                                }
+                            }
+                        }
                     }
                 }
 
