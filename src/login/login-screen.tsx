@@ -4,7 +4,6 @@ import { useHistory } from "react-router-dom";
 import { SnackbarContext } from "../app";
 import { StudioAutocomplete } from "../common/autocomplete/autocomplete";
 import { StudioButton } from "../common/button/button";
-import { StudioIconButton } from "../common/button/icon-button";
 import { StudioSelect } from "../common/select/select";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { ConnectRequest, LoadDatabasesResponse } from "../ipc/event-args";
@@ -115,10 +114,6 @@ export const TypeDBLoginTab: React.FC = () => {
                     <option disabled hidden value={FAILED_TO_LOAD_DATABASES}>{FAILED_TO_LOAD_DATABASES}</option>
                     {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
-
-                <StudioIconButton size="medium" classes={{root: classes.buttonBesideTextField}}
-                                  disabled={addressValidity !== "valid"}
-                                  onClick={(e) => e.preventDefault()}>+</StudioIconButton>
             </div>
 
             <div className={classes.actionList}>
