@@ -44,8 +44,10 @@ export const StudioTable: React.FC<StudioTableProps> = ({ headings, minCellWidth
     }, [activeIndex, columns, minCellWidth]);
 
     const removeListeners = React.useCallback(() => {
-        wrapperRef.current.removeEventListener('mousemove', mouseMove);
-        wrapperRef.current.removeEventListener('mouseup', removeListeners);
+        if (wrapperRef.current) {
+            wrapperRef.current.removeEventListener('mousemove', mouseMove);
+            wrapperRef.current.removeEventListener('mouseup', removeListeners);
+        }
     }, [mouseMove]);
 
     const mouseUp = React.useCallback(() => {
