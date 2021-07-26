@@ -5,7 +5,7 @@ import { dynamicForceSimulation } from "../d3-force-simulation";
 import { TypeDBVisualiserTheme } from "../styles";
 import { TypeDBVisualiserData } from "../data";
 import { Viewport } from "pixi-viewport";
-import { renderEdge, Renderer, renderVertex } from "./renderer-common";
+import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./renderer-common";
 
 export interface RenderingStage {
     renderer: PIXI.Renderer;
@@ -126,6 +126,11 @@ export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.
             renderEdge(edge, edgesGFX, theme);
         });
     }
+
+    edges.forEach(async (edge) => {
+        await renderEdgeLabel(edge, ubuntuMono, theme);
+        viewport.addChild(edge.labelGFX);
+    });
 
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.
     simulation.on("tick", onTick);

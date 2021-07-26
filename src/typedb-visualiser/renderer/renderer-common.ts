@@ -1,18 +1,11 @@
 import { ForceGraphEdge, ForceGraphVertex } from "../d3-force-simulation";
 import * as PIXI from "pixi.js";
 import { defaultStyles, TypeDBVisualiserTheme } from "../styles";
-import {
-    arrowhead,
-    diamondIncomingLineIntersect,
-    Ellipse, ellipseIncomingLineIntersect,
-    midpoint,
-    Point,
-    Rect,
-    rectIncomingLineIntersect
-} from "../geometry";
+import { arrowhead, diamondIncomingLineIntersect, Ellipse, ellipseIncomingLineIntersect, midpoint, Point, Rect,
+    rectIncomingLineIntersect } from "../geometry";
 
 export declare namespace Renderer {
-    export type Edge = ForceGraphEdge & { gfx?: PIXI.Graphics };
+    export type Edge = ForceGraphEdge & { labelGFX?: PIXI.Text };
     export type Vertex = ForceGraphVertex & { gfx?: PIXI.Graphics };
 }
 
@@ -91,26 +84,14 @@ export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics, theme: 
     if (lineSource && lineTarget) {
         const { label } = edge;
         edgesGFX.lineStyle(1, edgeColor);
-        // Draw edge label
         const centrePoint = midpoint({ from: lineSource, to: lineTarget });
-        const edgeLabel = new PIXI.Text(label, edgeLabelStyle);
-        edgeLabel.style.fill = edgeColor
-        edgeLabel.resolution = window.devicePixelRatio * 2;
-        edgeLabel.anchor.set(0.5);
-        edgeLabel.position.set(centrePoint.x, centrePoint.y);
-        edgesGFX.addChild(edgeLabel);
-
-        // Draw line parts
-        if (!edgeLabelMetrics[edge.label]) {
-            const linkLabel = new PIXI.Text(edge.label, edgeLabelStyle);
-            edgeLabelMetrics[edge.label] = PIXI.TextMetrics.measureText(edge.label, linkLabel.style as any);
-        }
         const labelRect: Rect = {
             x: centrePoint.x - edgeLabelMetrics[label].width / 2 - 2,
             y: centrePoint.y - edgeLabelMetrics[label].height / 2 - 2,
             w: edgeLabelMetrics[label].width + 4,
             h: edgeLabelMetrics[label].height + 4,
         };
+        if (edge.labelGFX) edge.labelGFX.position.set(centrePoint.x, centrePoint.y);
         edgesGFX.moveTo(lineSource.x, lineSource.y);
         const linePart1Target = rectIncomingLineIntersect(lineSource, labelRect);
         if (linePart1Target) edgesGFX.lineTo(linePart1Target.x, linePart1Target.y);
@@ -131,6 +112,29 @@ export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics, theme: 
             edgesGFX.endFill();
         }
     }
+}
+
+export async function renderEdgeLabel(edge: Renderer.Edge, fontFace: { load: () => Promise<any> }, theme: TypeDBVisualiserTheme) {
+    if (!edgeLabelMetrics[edge.label]) {
+        const linkLabel = new PIXI.Text(edge.label, edgeLabelStyle);
+        edgeLabelMetrics[edge.label] = PIXI.TextMetrics.measureText(edge.label, linkLabel.style as any);
+    }
+
+    let fontFamily = defaultStyles.fontFamily;
+    try {
+        await fontFace.load();
+    } catch (e) {
+        fontFamily = defaultStyles.fontFamilyFallback;
+    }
+
+    const text1 = new PIXI.Text(edge.label, {
+        fontSize: defaultStyles.edgeLabel.fontSize,
+        fontFamily,
+        fill: edge.highlight ? theme.colors.numeric[edge.highlight] : theme.colors.numeric.edge,
+    });
+    text1.anchor.set(0.5);
+    text1.resolution = window.devicePixelRatio * 2;
+    edge.labelGFX = text1;
 }
 
 /*

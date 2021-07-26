@@ -184,8 +184,10 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
     try {
         session = await client.session(req.db, SessionType.DATA);
         const tx = await session.transaction(TransactionType.READ);
-        const answers = await tx.query.match(req.query).collect(); // TODO: Add support for streaming responses
-        const answersData = answers.map(cm => {
+        const answerStream = tx.query.match(req.query);
+        const answersData: ConceptMapData[] = [];
+        const connectedConceptPromises: Promise<void>[] = [];
+        for await (const cm of answerStream) {
             const answerData: Partial<ConceptMapData> = {};
             for (const [varName, concept] of cm.map.entries()) {
                 let encoding: TypeDBVisualiserData.VertexEncoding;
@@ -198,21 +200,53 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                 else encoding = "thingType";
 
                 const conceptData: ConceptData = { encoding };
+
                 if (concept.isThing()) {
                     const thing = concept.asThing();
                     conceptData.iid = thing.iid;
                     conceptData.type = thing.type.label.name;
 
-                    if (thing.isAttribute()) conceptData.value = thing.asAttribute().value;
+                    if (thing.isRelation()) {
+                        const playersPromise = thing.asRelation().asRemote(tx).getPlayersByRoleType().then((playersMap) => {
+                            conceptData.playerInstances = [];
+                            for (const [role, things] of playersMap.entries()) {
+                                for (const thing of things) {
+                                    conceptData.playerInstances.push({iid: thing.iid, role: role.label.name});
+                                }
+                            }
+                        });
+                        connectedConceptPromises.push(playersPromise);
+                    } else if (thing.isAttribute()) {
+                        const attribute = thing.asAttribute();
+                        conceptData.value = attribute.value;
+
+                        const ownersPromise = attribute.asRemote(tx).getOwners().collect().then(owners => {
+                            conceptData.ownerIIDs = owners.map(owner => owner.iid);
+                        });
+                        connectedConceptPromises.push(ownersPromise);
+                    }
                 } else {
                     const type = concept.asType();
                     conceptData.label = type.label.name;
+
+                    if (type.isThingType()) {
+                        const remoteThingType = type.asThingType().asRemote(tx);
+                        const playsPromise = remoteThingType.getPlays().collect().then(roles => {
+                            conceptData.playsTypes = roles.map(role => ({relation: role.label.scope, role: role.label.name}));
+                        });
+                        const ownsPromise = remoteThingType.getOwns().collect().then(attributes => {
+                            conceptData.ownsLabels = attributes.map(attribute => attribute.label.name);
+                        })
+                        connectedConceptPromises.push(playsPromise, ownsPromise);
+                    }
                 }
 
                 answerData[varName] = conceptData;
             }
-            return answerData;
-        });
+            answersData.push(answerData);
+        }
+        await Promise.all(connectedConceptPromises);
+        // TODO: Add support for streaming responses
         res = { success: true, answers: answersData };
     } catch (e: any) {
         const errorMessage = processError(e);

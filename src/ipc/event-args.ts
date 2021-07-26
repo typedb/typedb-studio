@@ -20,12 +20,26 @@ export interface MatchQueryRequest {
     query: string;
 }
 
+export interface RolePlayerInstanceData {
+    iid: string;
+    role: string;
+}
+
+export interface RoleTypeData {
+    relation: string;
+    role: string;
+}
+
 export interface ConceptData {
     encoding: TypeDBVisualiserData.VertexEncoding;
     iid?: string;
     type?: string;
     value?: boolean | number | string | Date;
     label?: string;
+    playerInstances?: RolePlayerInstanceData[];
+    ownerIIDs?: string[];
+    playsTypes?: RoleTypeData[];
+    ownsLabels?: string[];
 }
 
 export type ConceptMapData = {[varName: string]: ConceptData};

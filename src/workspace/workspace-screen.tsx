@@ -22,7 +22,7 @@ import { StudioSelect } from "../common/select/select";
 import { StudioTable } from "../common/table/table";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
-import { MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { ConceptData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
@@ -46,6 +46,8 @@ function msToTime(duration: number) {
 
     return (hours !== "00" ? hours + ":" : "") + minutes + ":" + seconds + "." + milliseconds;
 }
+
+type GraphNode = ConceptData & {id: number};
 
 export const WorkspaceScreen: React.FC = () => {
     const theme = themeState.use()[0];
@@ -121,22 +123,67 @@ export const WorkspaceScreen: React.FC = () => {
             if (res.success) {
                 setQueryResult(`${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`);
                 const vertices: TypeDBVisualiserData.Vertex[] = [];
+                const edges: TypeDBVisualiserData.Edge[] = [];
+
                 let nextID = 1;
+                const typeIDs: {[label: string]: number} = {};
+                const thingIDs: {[iid: string]: number} = {};
+                // TODO: deduplicate answers
                 for (const conceptMap of res.answers) {
                     for (const varName in conceptMap) {
                         if (!conceptMap.hasOwnProperty(varName)) continue;
-                        const concept = conceptMap[varName];
+                        const concept = conceptMap[varName] as GraphNode;
+                        concept.id = nextID;
+                        if (concept.iid) thingIDs[concept.iid] = nextID;
+                        else typeIDs[concept.label] = nextID;
                         vertices.push({
                             id: nextID,
-                            width: 150,
-                            height: concept.encoding === "relationType" ? 75 : 60,
+                            width: 110,
+                            height: concept.encoding === "relationType" ? 60 : 40,
                             label: concept.value ? `${concept.type}:${concept.value}` : (concept.label || concept.type),
                             encoding: concept.encoding,
                         });
                         nextID++;
                     }
                 }
-                setData({vertices, edges: []});
+
+                for (const conceptMap of res.answers) {
+                    for (const varName in conceptMap) {
+                        if (!conceptMap.hasOwnProperty(varName)) continue;
+                        const concept = conceptMap[varName] as GraphNode;
+
+                        if (concept.playsTypes) {
+                            for (const roleType of concept.playsTypes) {
+                                const relationTypeID = typeIDs[roleType.relation];
+                                if (relationTypeID != null) {
+                                    edges.push({
+                                        source: relationTypeID,
+                                        target: concept.id,
+                                        label: roleType.role,
+                                    });
+                                }
+                            }
+                        }
+
+                        if (concept.ownsLabels) {
+                            for (const attributeTypeLabel of concept.ownsLabels) {
+                                console.log(typeIDs);
+                                const attributeTypeID = typeIDs[attributeTypeLabel];
+                                if (attributeTypeID != null) {
+                                    edges.push({
+                                        source: concept.id,
+                                        target: attributeTypeID,
+                                        label: "owns",
+                                    });
+                                }
+                            }
+                        }
+
+                        // TODO: instance edges
+                    }
+                }
+
+                setData({vertices, edges });
             } else {
                 setQueryResult("Error executing query");
                 setSnackbar({ open: true, variant: "error", message: res.error });
@@ -175,7 +222,7 @@ export const WorkspaceScreen: React.FC = () => {
                 <div className={classes.workspaceSplitPane}>
                     <SplitPane split="vertical" initialSizes={computeWorkspaceSplitPaneInitialWidths()} minSizes={[undefined, 180]}>
                         <div className={classes.querySplitPane}>
-                            <SplitPane split="horizontal" initialSizes={[3, 7]}>
+                            <SplitPane split="horizontal" initialSizes={[1, 3]}>
                                 <div className={classes.editorPane}>
                                     <StudioTabs selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} items={tabs}
                                                 classes={{ root: classes.editorTabs, tabGroup: classes.editorTabGroup, tab: classes.editorTab }}

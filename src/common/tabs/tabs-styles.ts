@@ -35,6 +35,7 @@ export const tabsStyles = makeStyles({
         padding: (props: TabsStyleProps) => tabPaddings[props.orientation],
         minHeight: "unset",
         minWidth: "unset",
+        maxWidth: "unset",
         overflow: "visible",
         opacity: 1,
         textTransform: "none",

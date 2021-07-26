@@ -4,7 +4,7 @@ import FontFaceObserver from "fontfaceobserver";
 import { TypeDBVisualiserData } from "../data";
 import { stickyForceSimulation } from "../d3-force-simulation";
 import { TypeDBVisualiserTheme } from "../styles";
-import { renderEdge, Renderer, renderVertex } from "./renderer-common";
+import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./renderer-common";
 
 export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
@@ -86,6 +86,11 @@ export function renderGraphPIXILegacy(container: HTMLElement, graphData: TypeDBV
             renderEdge(edge, edgesGFX, theme);
         });
     }
+
+    edges.forEach(async (edge) => {
+        await renderEdgeLabel(edge, ubuntuMono, theme);
+        app.stage.addChild(edge.labelGFX);
+    });
 
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.
     simulation.on("tick", onTick);

@@ -28,6 +28,7 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, className, theme}) =
         let destroyFn;
 
         if (htmlElementRef.current) {
+            console.log(data);
             const { destroy } = renderGraph(viewport, data, theme || defaultTypeDBVisualiserTheme);
             destroyFn = destroy;
         }
