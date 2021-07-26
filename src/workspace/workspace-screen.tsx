@@ -30,6 +30,7 @@ import { AceTypeQL } from "./ace-typeql";
 import { workspaceStyles } from "./workspace-styles";
 import { databaseState, dbServerState, themeState } from "../state/state";
 import TypeDBVisualiser from "../typedb-visualiser/react/TypeDBVisualiser";
+import moment from "moment";
 
 import "./ace-theme-studio-dark";
 
@@ -91,6 +92,7 @@ export const WorkspaceScreen: React.FC = () => {
         setQueryRunning(true);
         setQueryStartTime(Date.now());
         setQueryRunTime("00:00.000");
+        addLogEntry(code);
     };
 
     const signOut = () => {
@@ -114,6 +116,14 @@ export const WorkspaceScreen: React.FC = () => {
         aceEditorRef.current.editor.getSession().setMode(customMode as any);
     }, []);
 
+    const formatLogDate = (date: Date) => moment(date).format("DD-MM-YY HH:mm:ss.SSS");
+    const [resultsLog, setResultsLog] = React.useState(`${formatLogDate(new Date())} - Connected to database '${databaseState.use()[0]}'`);
+    const addLogEntry = (entry: string) => {
+        const lines = entry.split("\n");
+        const formattedLines = [lines[0]].concat(lines.slice(1).map(line => " ".repeat(24) + line));
+        setResultsLog(resultsLog + `\n\n${formatLogDate(new Date())} - ${formattedLines.join("\n").trim()}`);
+    }
+
     React.useEffect(() => {
         const onMatchQueryResponse = (_event: IpcRendererEvent, res: MatchQueryResponse) => {
             setPrincipalStatus("Ready");
@@ -121,14 +131,16 @@ export const WorkspaceScreen: React.FC = () => {
             setTimeQuery(true);
             setQueryEndTime(Date.now());
             if (res.success) {
-                setQueryResult(`${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`);
+                const answerCountString = `${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`;
+                setQueryResult(answerCountString);
+                addLogEntry(answerCountString);
                 const vertices: TypeDBVisualiserData.Vertex[] = [];
                 const edges: TypeDBVisualiserData.Edge[] = [];
 
                 let nextID = 1;
                 const typeNodeIDs: {[label: string]: number} = {};
                 const thingNodeIDs: {[iid: string]: number} = {};
-                // TODO: deduplicate answers
+
                 for (const conceptMap of res.answers) {
                     for (const varName in conceptMap) {
                         if (!conceptMap.hasOwnProperty(varName)) continue;
@@ -212,6 +224,7 @@ export const WorkspaceScreen: React.FC = () => {
             } else {
                 setQueryResult("Error executing query");
                 setSnackbar({ open: true, variant: "error", message: res.error });
+                addLogEntry(res.error);
             }
         };
 
@@ -219,7 +232,7 @@ export const WorkspaceScreen: React.FC = () => {
         return () => {
             ipcRenderer.removeListener("match-query-response", onMatchQueryResponse);
         };
-    }, []);
+    }, [resultsLog]);
 
     const computeWorkspaceSplitPaneInitialWidths = () => {
         const workspacePaneWidth = window.innerWidth - 56;
@@ -273,7 +286,7 @@ export const WorkspaceScreen: React.FC = () => {
                                     <StudioTabs selectedIndex={selectedResultsTabIndex} setSelectedIndex={setSelectedResultsTabIndex}
                                                 items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
                                         <StudioTabPanel index={0} selectedIndex={selectedResultsTabIndex} className={clsx(classes.resultsTabPanel, classes.resultsLogPanel)}>
-                                            Food for beavers goes here
+                                            <pre>{resultsLog}</pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
                                             <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>

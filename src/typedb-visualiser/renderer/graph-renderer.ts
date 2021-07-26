@@ -21,6 +21,7 @@ export function renderVertex(vertex: Renderer.Vertex, fontFace: { load: () => Pr
     const colors = theme.colors.numeric;
     vertex.gfx.beginFill(colors[vertex.encoding]);
 
+    // TODO: Maybe, instead of repeating this work for each vertex, we should do it once and create a shared image to reuse
     switch (vertex.encoding) {
         case "entity":
         case "entityType":
