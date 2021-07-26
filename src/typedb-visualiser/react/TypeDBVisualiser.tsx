@@ -2,7 +2,7 @@ import { Viewport } from "pixi-viewport";
 import React from "react";
 import { TypeDBVisualiserData } from "../data";
 import { defaultTypeDBVisualiserTheme, TypeDBVisualiserTheme } from "../styles";
-import { renderGraph, setupStage } from "../renderer/pixi-renderer";
+import { renderToViewport, setupStage } from "../renderer/viewport";
 
 export interface VisualiserProps {
     data?: TypeDBVisualiserData.Graph;
@@ -28,8 +28,7 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, className, theme}) =
         let destroyFn;
 
         if (htmlElementRef.current) {
-            console.log(data);
-            const { destroy } = renderGraph(viewport, data, theme || defaultTypeDBVisualiserTheme);
+            const { destroy } = renderToViewport(viewport, data, theme || defaultTypeDBVisualiserTheme);
             destroyFn = destroy;
         }
 

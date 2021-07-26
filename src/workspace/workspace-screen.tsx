@@ -167,7 +167,6 @@ export const WorkspaceScreen: React.FC = () => {
 
                         if (concept.ownsLabels) {
                             for (const attributeTypeLabel of concept.ownsLabels) {
-                                console.log(typeIDs);
                                 const attributeTypeID = typeIDs[attributeTypeLabel];
                                 if (attributeTypeID != null) {
                                     edges.push({
@@ -267,7 +266,7 @@ export const WorkspaceScreen: React.FC = () => {
                                         Query Settings
                                     </div>
                                     <div className={classes.querySettingsBody}>
-                                        Fast mode is <strong>enabled.</strong> Queries will run in less time than it takes you to say "Neo4j sucks".
+                                        Fast mode is <strong>enabled.</strong> Queries will run in less time than Neo4j takes to boot up.
                                     </div>
                                 </div>
                                 <div>

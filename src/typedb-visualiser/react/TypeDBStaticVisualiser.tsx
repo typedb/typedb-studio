@@ -1,7 +1,7 @@
 import React from "react";
 import { TypeDBVisualiserData } from "../data";
 import { defaultTypeDBVisualiserTheme } from "../styles";
-import { renderGraphPIXILegacy } from "../renderer/pixi-legacy-renderer";
+import { renderToFixedContainer } from "../renderer/fixed-container";
 
 export interface StaticVisualiserProps {
     data: TypeDBVisualiserData.Graph;
@@ -15,7 +15,7 @@ const TypeDBStaticVisualiser: React.FC<StaticVisualiserProps> = ({data, classNam
         let destroyFn;
 
         if (graphPaneRef.current) {
-            const { destroy } = renderGraphPIXILegacy(graphPaneRef.current, data, defaultTypeDBVisualiserTheme);
+            const { destroy } = renderToFixedContainer(graphPaneRef.current, data, defaultTypeDBVisualiserTheme);
             destroyFn = destroy;
         }
 

@@ -1,64 +1,25 @@
 import * as PIXI from "pixi.js";
 // @ts-ignore
 import FontFaceObserver from "fontfaceobserver";
-import { dynamicForceSimulation } from "../d3-force-simulation";
-import { TypeDBVisualiserTheme } from "../styles";
 import { TypeDBVisualiserData } from "../data";
-import { Viewport } from "pixi-viewport";
-import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./renderer-common";
+import { stickyForceSimulation } from "../d3-force-simulation";
+import { TypeDBVisualiserTheme } from "../styles";
+import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer";
 
-export interface RenderingStage {
-    renderer: PIXI.Renderer;
-    viewport: Viewport;
-}
-
-export function setupStage(container: HTMLElement): RenderingStage {
+export function renderToFixedContainer(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
-
-    const renderer = new PIXI.Renderer({ width, height, antialias: !0, backgroundAlpha: 0, resolution: window.devicePixelRatio });
-    container.innerHTML = "";
-    container.appendChild(renderer.view);
-    const stage = new PIXI.Container();
-
-    const ticker = new PIXI.Ticker();
-    ticker.add(() => {
-        renderer.render(stage);
-    }, PIXI.UPDATE_PRIORITY.LOW);
-    ticker.start();
-
-    const viewport = new Viewport({
-        screenWidth: width,
-        screenHeight: height,
-        worldWidth: width,
-        worldHeight: height,
-        passiveWheel: false,
-
-        interaction: renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
-    });
-    stage.addChild(viewport);
-
-    // activate plugins
-    viewport.drag()
-        .pinch({ factor: .5 })
-        .wheel({ percent: -.66 })
-        .clampZoom({ minScale: .1, maxScale: 3 })
-        .decelerate({ friction: .95 });
-
-    return { renderer, viewport };
-}
-
-export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
-    viewport.removeChildren();
-    const [width, height] = [viewport.screenWidth, viewport.screenHeight];
     const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
 
-    const simulation = dynamicForceSimulation(vertices, edges, width, height);
+    const app = new PIXI.Application({ width, height, antialias: !0, backgroundAlpha: 0, resolution: window.devicePixelRatio });
+    container.innerHTML = "";
+    container.appendChild(app.view);
+
+    const simulation = stickyForceSimulation(vertices, edges, width, height);
     const ubuntuMono = new FontFaceObserver("Ubuntu Mono") as { load: () => Promise<any> };
 
     function onDragStart(this: any, evt: any) {
-        viewport.plugins.pause('drag');
         simulation.alphaTarget(0.3).restart();
         this.isDown = true;
         this.eventData = evt.data;
@@ -67,13 +28,13 @@ export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.
     }
 
     function onDragEnd(this: any, gfx: any) {
+        simulation.alphaTarget(0);
         gfx.alpha = 1;
         gfx.dragging = false;
         gfx.isOver = false;
         gfx.eventData = null;
         delete this.fx;
         delete this.fy;
-        viewport.plugins.resume('drag');
     }
 
     function onDragMove(this: any, gfx: any) {
@@ -104,11 +65,11 @@ export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.
         vertex.gfx.interactive = true;
         vertex.gfx.buttonMode = true;
 
-        viewport.addChild(vertex.gfx);
+        app.stage.addChild(vertex.gfx);
     });
 
     const edgesGFX = new PIXI.Graphics();
-    viewport.addChild(edgesGFX);
+    app.stage.addChild(edgesGFX);
 
     const onTick = () => {
         vertices.forEach((vertex) => {
@@ -129,7 +90,7 @@ export function renderGraph(viewport: Viewport, graphData: TypeDBVisualiserData.
 
     edges.forEach(async (edge) => {
         await renderEdgeLabel(edge, ubuntuMono, theme);
-        viewport.addChild(edge.labelGFX);
+        app.stage.addChild(edge.labelGFX);
     });
 
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.

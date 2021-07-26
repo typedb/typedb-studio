@@ -1,6 +1,6 @@
 {
   "name": "typedb-visualiser",
-  "version": "0.0.17",
+  "version": "0.0.20",
   "main": "index.js",
   "module": "index.esm.js",
   "description": "TypeDB Visualiser",
@@ -32,13 +32,11 @@
   },
   "peerDependencies": {
     "pixi-viewport": "^4.30.2",
-    "pixi.js-legacy": "^6.0.4",
     "prismjs": "^1.24.1",
     "react": "^16.13.1"
   },
   "peerDependenciesMeta": {
     "pixi-viewport": { "optional": true },
-    "pixi.js-legacy": { "optional": true },
     "prismjs": { "optional": true },
     "react": { "optional": true }
   }
