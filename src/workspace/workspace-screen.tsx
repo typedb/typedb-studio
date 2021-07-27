@@ -248,6 +248,15 @@ export const WorkspaceScreen: React.FC = () => {
                 <StudioSelect value={db} setValue={setDB} variant="filled">
                     {dbServer.dbs.map(db => <option value={db}>{db}</option>)}
                 </StudioSelect>
+                <StudioIconButton size="smaller" onClick={() => null}>
+                    <FontAwesomeIcon icon={faFolderOpen}/>
+                </StudioIconButton>
+                <StudioIconButton size="smaller" onClick={() => null}>
+                    <FontAwesomeIcon icon={faSave}/>
+                </StudioIconButton>
+                <StudioIconButton size="smaller" onClick={runQuery}>
+                    <FontAwesomeIcon icon={faPlay}/>
+                </StudioIconButton>
                 <div className={classes.filler}/>
                 <IconButton size="small" aria-label="sign-out" color="inherit" onClick={signOut}>
                     <FontAwesomeIcon icon={faSignOutAlt}/>
@@ -272,26 +281,15 @@ export const WorkspaceScreen: React.FC = () => {
                                     </StudioTabs>
                                 </div>
                                 <div className={classes.resultsPane}>
-                                    <div className={classes.actionsBar}>
-                                        <StudioIconButton size="small" onClick={() => null}>
-                                            <FontAwesomeIcon icon={faFolderOpen}/>
-                                        </StudioIconButton>
-                                        <StudioIconButton size="small" onClick={() => null}>
-                                            <FontAwesomeIcon icon={faSave}/>
-                                        </StudioIconButton>
-                                        <StudioButton size="small" type="primary" onClick={runQuery}>
-                                            <span style={{marginRight: 5}}>Run</span> <FontAwesomeIcon icon={faPlay}/>
-                                        </StudioButton>
-                                    </div>
-                                    <StudioTabs selectedIndex={selectedResultsTabIndex} setSelectedIndex={setSelectedResultsTabIndex}
+                                    <StudioTabs selectedIndex={selectedResultsTab} setSelectedIndex={switchResultsTab}
                                                 items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
-                                        <StudioTabPanel index={0} selectedIndex={selectedResultsTabIndex} className={clsx(classes.resultsTabPanel, classes.resultsLogPanel)}>
+                                        <StudioTabPanel index={0} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsLogPanel)}>
                                             <pre>{resultsLog}</pre>
                                         </StudioTabPanel>
-                                        <StudioTabPanel index={1} selectedIndex={selectedResultsTabIndex} className={classes.resultsTabPanel}>
-                                            <TypeDBVisualiser data={data} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+                                        <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
+                                            <TypeDBVisualiser data={visualiserData} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
                                         </StudioTabPanel>
-                                        <StudioTabPanel index={2} selectedIndex={selectedResultsTabIndex} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
+                                        <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             Food for humans goes here
                                         </StudioTabPanel>
                                     </StudioTabs>

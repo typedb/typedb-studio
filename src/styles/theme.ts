@@ -197,16 +197,16 @@ const vaticleButtonThemes: ButtonThemes = {
     },
     secondary: {
         background: "transparent",
-        border: `1px solid ${vaticleTheme.palette.green["1"]}`,
-        color: vaticleTheme.palette.green["1"],
+        border: `1px solid transparent`,
+        color: "#FFF",
         hover: {
-            background: vaticleTheme.palette.green["1"],
-            border: `1px solid ${vaticleTheme.palette.green["1"]}`,
-            color: vaticleTheme.palette.purple["3"],
+            background: "transparent",
+            border: `1px solid transparent`,
+            color: vaticleTheme.palette.green["1"],
         },
         disabled: {
             background: "transparent",
-            border: `1px solid ${vaticleTheme.palette.purple["7"]}`,
+            border: `1px solid transparent`,
             color: vaticleTheme.palette.purple["7"],
         },
     },
@@ -304,6 +304,12 @@ export const studioLightTheme: StudioTheme = {
             color: "#111",
             indicatorColor: "#AAA",
         },
+    },
+    table: {
+        color: "#222",
+        headerColor: vaticleTheme.palette.green["1"],
+        oddRowBackground: "#F0F0F0",
+        evenRowBackground: "#FBFBFB",
     },
     visualiser: {
         colors: {
