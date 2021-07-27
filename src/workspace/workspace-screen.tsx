@@ -16,7 +16,6 @@ import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
 import { useHistory } from "react-router-dom";
 import { SnackbarContext } from "../app";
-import { StudioButton } from "../common/button/button";
 import { StudioIconButton } from "../common/button/icon-button";
 import { StudioSelect } from "../common/select/select";
 import { StudioTable } from "../common/table/table";
@@ -26,6 +25,7 @@ import { ConceptData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
+import { uuidv4 } from "../util/uuid";
 import { AceTypeQL } from "./ace-typeql";
 import { workspaceStyles } from "./workspace-styles";
 import { databaseState, dbServerState, themeState } from "../state/state";
@@ -50,6 +50,12 @@ function msToTime(duration: number) {
 
 type GraphNode = ConceptData & {nodeID: number};
 
+enum ResultsTab {
+    LOG,
+    GRAPH,
+    TABLE,
+}
+
 export const WorkspaceScreen: React.FC = () => {
     const theme = themeState.use()[0];
     const classes = Object.assign({}, studioStyles({ theme }), workspaceStyles({ theme }));
@@ -57,7 +63,8 @@ export const WorkspaceScreen: React.FC = () => {
     const [db, setDB] = databaseState.use();
     const [dbServer, setDBServer] = dbServerState.use();
     const [code, setCode] = React.useState("match $x sub thing;\noffset 0;\nlimit 1000;\n");
-    const [data, setData] = React.useState<TypeDBVisualiserData.Graph>(null);
+    const [answerGraph, setAnswerGraph] = React.useState<TypeDBVisualiserData.Graph>(null);
+    const [visualiserData, setVisualiserData] = React.useState<TypeDBVisualiserData.Graph>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
     const [principalStatus, setPrincipalStatus] = React.useState("Ready");
     const [queryResult, setQueryResult] = React.useState<string>(null);
@@ -109,7 +116,14 @@ export const WorkspaceScreen: React.FC = () => {
 
     const aceEditorRef = React.useRef<AceEditor>(null);
     const [selectedIndex, setSelectedIndex] = React.useState(0);
-    const [selectedResultsTabIndex, setSelectedResultsTabIndex] = React.useState(1);
+    const [selectedResultsTab, setSelectedResultsTab] = React.useState(ResultsTab.GRAPH);
+
+    const switchResultsTab = (tab: ResultsTab) => {
+        setSelectedResultsTab(tab);
+        if (tab === ResultsTab.GRAPH) {
+            setVisualiserData(answerGraph);
+        }
+    }
 
     React.useEffect(() => {
         const customMode = new AceTypeQL();
@@ -220,7 +234,26 @@ export const WorkspaceScreen: React.FC = () => {
                     }
                 }
 
-                setData({vertices, edges });
+                setAnswerGraph({ vertices, edges });
+                const simulationID = uuidv4();
+                // TODO: We should also skip the Concept API calls on the backend if the Graph tab is inactive
+                // TODO: PoC - delete when redundant
+                // if (selectedResultsTab === ResultsTab.GRAPH) {
+                //     setVisualiserData({ simulationID, vertices: vertices.slice(0, 50), edges: [] });
+                //     setTimeout(() => {
+                //         setVisualiserData({ simulationID, vertices, edges: [] });
+                //     }, 1000);
+                //     setTimeout(() => {
+                //         setVisualiserData({ simulationID, vertices, edges });
+                //     }, 2000);
+                // } else {
+                //     setVisualiserData({ simulationID, vertices: [], edges: [] });
+                // }
+                if (selectedResultsTab === ResultsTab.GRAPH) {
+                    setVisualiserData({simulationID, vertices, edges});
+                } else {
+                    setVisualiserData({simulationID, vertices: [], edges: []});
+                }
             } else {
                 setQueryResult("Error executing query");
                 setSnackbar({ open: true, variant: "error", message: res.error });
@@ -232,7 +265,7 @@ export const WorkspaceScreen: React.FC = () => {
         return () => {
             ipcRenderer.removeListener("match-query-response", onMatchQueryResponse);
         };
-    }, [resultsLog]);
+    }, [resultsLog, selectedResultsTab]);
 
     const computeWorkspaceSplitPaneInitialWidths = () => {
         const workspacePaneWidth = window.innerWidth - 56;

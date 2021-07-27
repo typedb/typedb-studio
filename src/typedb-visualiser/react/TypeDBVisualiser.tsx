@@ -2,7 +2,7 @@ import { Viewport } from "pixi-viewport";
 import React from "react";
 import { TypeDBVisualiserData } from "../data";
 import { defaultTypeDBVisualiserTheme, TypeDBVisualiserTheme } from "../styles";
-import { renderToViewport, setupStage } from "../renderer/viewport";
+import { renderToViewport, setupStage, TypeDBGraphSimulation } from "../renderer/viewport";
 
 export interface VisualiserProps {
     data?: TypeDBVisualiserData.Graph;
@@ -10,8 +10,9 @@ export interface VisualiserProps {
     className?: string;
 }
 
-const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, className, theme}) => {
+const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, className, }) => {
     const htmlElementRef: React.MutableRefObject<HTMLDivElement> = React.useRef(null);
+    const simulationRef: React.MutableRefObject<TypeDBGraphSimulation> = React.useRef(null);
     const [viewport, setViewport] = React.useState<Viewport>(null);
 
     React.useEffect(() => {
@@ -25,11 +26,22 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, className, theme}) =
             return;
         }
 
+        if (simulationRef.current && simulationRef.current.simulation.id === data.simulationID) {
+            const currentVertexIDs = new Set(simulationRef.current.simulation.nodes().map(x => x.id));
+            const newVertices = data.vertices.filter(x => !currentVertexIDs.has(x.id));
+            simulationRef.current.add({
+                vertices: newVertices,
+                edges: data.edges,
+            });
+            return simulationRef.current.destroy;
+        }
+
         let destroyFn;
 
         if (htmlElementRef.current) {
-            const { destroy } = renderToViewport(viewport, data, theme || defaultTypeDBVisualiserTheme);
-            destroyFn = destroy;
+            const simulation = renderToViewport(viewport, data, theme || defaultTypeDBVisualiserTheme);
+            destroyFn = simulation.destroy;
+            simulationRef.current = simulation;
         }
 
         return destroyFn;

@@ -102,7 +102,7 @@ export const workspaceStyles = makeStyles({
     },
 
     resultsTabs: {
-        height: "calc(100% - 28px)",
+        height: "100%",
     },
 
     resultsTabGroup: {
@@ -115,7 +115,7 @@ export const workspaceStyles = makeStyles({
     },
 
     resultsTabPanel: {
-        height: "calc(100% - 54px)",
+        height: "calc(100% - 34px)",
         background: (props: ThemeProps) => props.theme.visualiser.colors.hex.background,
     },
 

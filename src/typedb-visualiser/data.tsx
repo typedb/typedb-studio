@@ -1,5 +1,6 @@
 export declare namespace TypeDBVisualiserData {
     export interface Graph {
+        simulationID?: string;
         vertices: Vertex[];
         edges: Edge[];
     }
