@@ -2,11 +2,11 @@ import * as d3 from "d3-force";
 import * as PIXI from "pixi.js";
 // @ts-ignore
 import FontFaceObserver from "fontfaceobserver";
-import { dynamicForceSimulation, ForceGraphEdge, ForceGraphVertex } from "../d3-force-simulation";
+import { dynamicForceSimulation, ForceGraphSimulation, ForceGraphVertex } from "../d3-force-simulation";
 import { TypeDBVisualiserTheme } from "../styles";
 import { TypeDBVisualiserData } from "../data";
 import { Viewport } from "pixi-viewport";
-import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer";
+import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer-common";
 
 export interface RenderingStage {
     renderer: PIXI.Renderer;
@@ -49,7 +49,7 @@ export function setupStage(container: HTMLElement): RenderingStage {
 }
 
 export interface TypeDBGraphSimulation {
-    simulation: d3.Simulation<ForceGraphVertex, ForceGraphEdge>;
+    simulation: ForceGraphSimulation;
     add: (newObjects: { vertices: TypeDBVisualiserData.Vertex[], edges: TypeDBVisualiserData.Edge[] }) => void;
     destroy: () => void;
     clear: () => void;
@@ -57,7 +57,7 @@ export interface TypeDBGraphSimulation {
 
 // TODO: The purpose of this file isn't clear.
 // TODO: Too much of this code is shared with fixed-container.ts, a refactor is required
-export function renderToViewport(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme): TypeDBGraphSimulation {
+export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme, onVertexClick: (vertex: ForceGraphVertex) => any): TypeDBGraphSimulation {
     console.log("renderToViewport called")
     viewport.removeChildren();
     const [width, height] = [viewport.screenWidth, viewport.screenHeight];
@@ -71,7 +71,10 @@ export function renderToViewport(viewport: Viewport, graphData: TypeDBVisualiser
 
     function onDragStart(this: any, evt: any) {
         viewport.plugins.pause('drag');
-        simulation.alphaTarget(0.15).restart();
+        // TODO: we should do this on the first movement, not on drag start
+        const vertexGFX = evt.currentTarget as Renderer.VertexGFX;
+        if (onVertexClick) onVertexClick(vertexGFX.vertex);
+        simulation.alphaTarget(0.1).restart();
         this.isDown = true;
         this.eventData = evt.data;
         this.alpha = 0.75;
@@ -114,6 +117,7 @@ export function renderToViewport(viewport: Viewport, graphData: TypeDBVisualiser
             .on('mousemove', () => boundDragMove(vertex.gfx));
         vertex.gfx.interactive = true;
         vertex.gfx.buttonMode = true;
+        vertex.gfx.vertex = vertex;
 
         viewport.addChild(vertex.gfx);
     }

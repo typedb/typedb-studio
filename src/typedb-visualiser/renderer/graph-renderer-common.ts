@@ -6,7 +6,8 @@ import { arrowhead, diamondIncomingLineIntersect, Ellipse, ellipseIncomingLineIn
 
 export declare namespace Renderer {
     export type Edge = ForceGraphEdge & { labelGFX?: PIXI.Text };
-    export type Vertex = ForceGraphVertex & { gfx?: PIXI.Graphics };
+    export type VertexGFX = PIXI.Graphics & { vertex?: Vertex };
+    export type Vertex = ForceGraphVertex & { gfx?: VertexGFX };
 }
 
 const edgeLabelMetrics: {[label: string]: PIXI.TextMetrics} = {};

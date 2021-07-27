@@ -4,9 +4,9 @@ import FontFaceObserver from "fontfaceobserver";
 import { TypeDBVisualiserData } from "../data";
 import { stickyForceSimulation } from "../d3-force-simulation";
 import { TypeDBVisualiserTheme } from "../styles";
-import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer";
+import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer-common";
 
-export function renderToFixedContainer(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
+export function renderStaticGraph(container: HTMLElement, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme) {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
     const edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));

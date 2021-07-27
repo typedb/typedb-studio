@@ -1,16 +1,18 @@
 import { Viewport } from "pixi-viewport";
 import React from "react";
+import { ForceGraphVertex } from "../d3-force-simulation";
 import { TypeDBVisualiserData } from "../data";
 import { defaultTypeDBVisualiserTheme, TypeDBVisualiserTheme } from "../styles";
-import { renderToViewport, setupStage, TypeDBGraphSimulation } from "../renderer/viewport";
+import { renderDynamicGraph, setupStage, TypeDBGraphSimulation } from "../renderer/dynamic-renderer";
 
 export interface VisualiserProps {
     data?: TypeDBVisualiserData.Graph;
     theme?: TypeDBVisualiserTheme;
+    onVertexClick?: (vertex: ForceGraphVertex) => any;
     className?: string;
 }
 
-const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, className, }) => {
+const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, onVertexClick, className }) => {
     const htmlElementRef: React.MutableRefObject<HTMLDivElement> = React.useRef(null);
     const simulationRef: React.MutableRefObject<TypeDBGraphSimulation> = React.useRef(null);
     const [viewport, setViewport] = React.useState<Viewport>(null);
@@ -39,7 +41,7 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, className, })
         let destroyFn;
 
         if (htmlElementRef.current) {
-            const simulation = renderToViewport(viewport, data, theme || defaultTypeDBVisualiserTheme);
+            const simulation = renderDynamicGraph(viewport, data, theme || defaultTypeDBVisualiserTheme, onVertexClick);
             destroyFn = simulation.destroy;
             simulationRef.current = simulation;
         }

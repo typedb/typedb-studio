@@ -16,15 +16,17 @@ import AceEditor from "react-ace";
 import { SplitPane } from "react-collapse-pane";
 import { useHistory } from "react-router-dom";
 import { SnackbarContext } from "../app";
+import { StudioButton } from "../common/button/button";
 import { StudioIconButton } from "../common/button/icon-button";
 import { StudioSelect } from "../common/select/select";
 import { StudioTable } from "../common/table/table";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
-import { ConceptData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
+import { ForceGraphVertex } from "../typedb-visualiser/d3-force-simulation";
 import { uuidv4 } from "../util/uuid";
 import { AceTypeQL } from "./ace-typeql";
 import { workspaceStyles } from "./workspace-styles";
@@ -65,6 +67,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [code, setCode] = React.useState("match $x sub thing;\noffset 0;\nlimit 1000;\n");
     const [answerGraph, setAnswerGraph] = React.useState<TypeDBVisualiserData.Graph>(null);
     const [visualiserData, setVisualiserData] = React.useState<TypeDBVisualiserData.Graph>(null);
+    const [rawAnswers, setRawAnswers] = React.useState<ConceptMapData[]>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
     const [principalStatus, setPrincipalStatus] = React.useState("Ready");
     const [queryResult, setQueryResult] = React.useState<string>(null);
@@ -73,6 +76,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
     const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
     const [timeQuery, setTimeQuery] = React.useState(false);
+    const [selectedVertex, setSelectedVertex] = React.useState<ForceGraphVertex>(null);
     const routerHistory = useHistory();
 
     const tabs: StudioTabItem[] = [{ label: "Query1.tql", key: "0" }];
@@ -145,6 +149,7 @@ export const WorkspaceScreen: React.FC = () => {
             setTimeQuery(true);
             setQueryEndTime(Date.now());
             if (res.success) {
+                setRawAnswers(res.answers);
                 const answerCountString = `${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`;
                 setQueryResult(answerCountString);
                 addLogEntry(answerCountString);
@@ -274,6 +279,34 @@ export const WorkspaceScreen: React.FC = () => {
         return [queryPaneInitialWidth, graphExplorerInitialWidth];
     }
 
+    const loadConnectedAttributes = () => {
+        let nextID = 10000; // TODO: compute from existing graph data
+        const { vertices, edges } = answerGraph;
+
+        for (const conceptMap of rawAnswers) {
+            for (const varName in conceptMap) {
+                if (!conceptMap.hasOwnProperty(varName)) continue;
+                const concept = conceptMap[varName] as GraphNode;
+                if (concept.label !== selectedVertex.label) continue;
+                for (const attributeTypeLabel of concept.ownsLabels) {
+                    // TODO: don't add if already in graph
+                    vertices.push({
+                        id: nextID,
+                        width: 110,
+                        height: 40,
+                        label: attributeTypeLabel,
+                        encoding: "attributeType",
+                    });
+                    edges.push({ source: concept.nodeID, target: nextID, label: "owns" });
+                    nextID++;
+                }
+                // TODO: THIS CODE IS HORRIBLE AND MUST BE IMPROVED ASAP
+                setAnswerGraph({ vertices, edges });
+                setVisualiserData({ simulationID: visualiserData.simulationID, vertices, edges });
+            }
+        }
+    }
+
     return (
         <>
             <div className={classes.appBar}>
@@ -320,7 +353,7 @@ export const WorkspaceScreen: React.FC = () => {
                                             <pre>{resultsLog}</pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
-                                            <TypeDBVisualiser data={visualiserData} className={classes.visualiser} theme={themeState.use()[0].visualiser}/>
+                                            <TypeDBVisualiser data={visualiserData} className={classes.visualiser} theme={themeState.use()[0].visualiser} onVertexClick={setSelectedVertex}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             Food for humans goes here
@@ -344,20 +377,21 @@ export const WorkspaceScreen: React.FC = () => {
                                         Graph Explorer
                                     </div>
                                     <div className={classes.graphExplorerBody}>
-                                        <StudioTable headings={["Property", "Value"]} minCellWidth={50} className={classes.graphExplorerTable}>
-                                            <tr>
-                                                <td><span>Type</span></td>
-                                                <td><span>person</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td><span>Encoding</span></td>
-                                                <td><span>entity</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td><span>Internal ID</span></td>
-                                                <td><span>123b548m5656vbc4nb430gh3453d</span></td>
-                                            </tr>
-                                        </StudioTable>
+                                        {!selectedVertex && <p>Select a vertex from the graph to inspect it.</p>}
+                                        {selectedVertex &&
+                                        <>
+                                            <StudioTable headings={["Property", "Value"]} minCellWidth={50} className={classes.graphExplorerTable}>
+                                                <tr>
+                                                    <td><span>Label</span></td>
+                                                    <td><span>{selectedVertex.label}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span>Encoding</span></td>
+                                                    <td><span>{selectedVertex.encoding}</span></td>
+                                                </tr>
+                                            </StudioTable>
+                                            <StudioButton size="smaller" type="primary" onClick={loadConnectedAttributes}>Load attribute ownerships</StudioButton>
+                                        </>}
                                     </div>
                                 </div>
                             </SplitPane>
