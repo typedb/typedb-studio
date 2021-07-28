@@ -15,7 +15,7 @@ export class CustomHighlightRules extends getAceInstance().require("ace/mode/tex
                 regex: /".*?"/,
                 token: 'string'
             }, {
-                regex: /((?:(?![-a-zA-Z_0-9]|\$).)|^|\s)(as|sub|sub!|has|owns|@key|abstract|relates|plays|value|match|isa|isa!|contains|regex|val|via|iid|label|define|undefine|get|insert|delete|aggregate|std|median|mean|max|min|sum|count|group|where|from|to|in|of|limit|offset|sort|asc|desc|when|then|commit)(?![-a-zA-Z_0-9])/,
+                regex: /((?:(?![-a-zA-Z_0-9]|\$).)|^|\s)(as|sub|sub!|has|owns|@key|abstract|relates|plays|value|match|isa|isa!|contains|regex|val|via|iid|label|define|undefine|get|insert|delete|aggregate|std|median|mean|max|min|sum|count|group|where|from|to|in|of|limit|offset|sort|asc|desc|when|then)(?![-a-zA-Z_0-9])/,
                 token: 'keyword',
                 lookbehind: true
             }, {

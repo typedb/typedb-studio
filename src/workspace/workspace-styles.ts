@@ -119,16 +119,30 @@ export const workspaceStyles = makeStyles({
         background: (props: ThemeProps) => props.theme.visualiser.colors.hex.background,
     },
 
-    resultsLogPanel: {
+    resultsTablePanel: {
+        height: "100%",
+        width: "100%",
+        overflow: "scroll",
         padding: 8,
     },
 
-    resultsTablePanel: {
+    resultsLog: {
+        height: "100%",
+        overflow: "scroll",
         padding: 8,
     },
 
     visualiser: {
         height: "100%",
+    },
+
+    resultsTable: {
+        fontSize: 14,
+        lineHeight: "20px",
+
+        "& thead th:first-child": {
+            background: (props: ThemeProps) => props.theme.table.evenRowBackground,
+        },
     },
 
     sidebarWindowGroup: {
@@ -158,7 +172,6 @@ export const workspaceStyles = makeStyles({
 
     graphExplorerTable: {
         lineHeight: "20px",
-        userSelect: "none",
 
         "& tr td:first-child": {
             fontWeight: 600,

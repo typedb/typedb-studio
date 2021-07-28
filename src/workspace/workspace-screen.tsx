@@ -25,14 +25,14 @@ import { useInterval } from "../common/use-interval";
 import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
-import { TypeDBVisualiserData } from "../typedb-visualiser";
-import { ForceGraphVertex } from "../typedb-visualiser/d3-force-simulation";
+import { TypeDBVisualiserData, ForceGraphVertex } from "../typedb-visualiser";
 import { uuidv4 } from "../util/uuid";
 import { AceTypeQL } from "./ace-typeql";
 import { workspaceStyles } from "./workspace-styles";
 import { databaseState, dbServerState, themeState } from "../state/state";
 import TypeDBVisualiser from "../typedb-visualiser/react/TypeDBVisualiser";
 import moment from "moment";
+import CSS from "csstype";
 
 import "./ace-theme-studio-dark";
 
@@ -58,6 +58,12 @@ enum ResultsTab {
     TABLE,
 }
 
+interface AnswerTable {
+    headings: string[];
+    rows: string[][];
+    initialGridTemplateColumns: CSS.Property.GridTemplateColumns;
+}
+
 export const WorkspaceScreen: React.FC = () => {
     const theme = themeState.use()[0];
     const classes = Object.assign({}, studioStyles({ theme }), workspaceStyles({ theme }));
@@ -68,6 +74,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [answerGraph, setAnswerGraph] = React.useState<TypeDBVisualiserData.Graph>(null);
     const [visualiserData, setVisualiserData] = React.useState<TypeDBVisualiserData.Graph>(null);
     const [rawAnswers, setRawAnswers] = React.useState<ConceptMapData[]>(null);
+    const [answerTable, setAnswerTable] = React.useState<AnswerTable>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
     const [principalStatus, setPrincipalStatus] = React.useState("Ready");
     const [queryResult, setQueryResult] = React.useState<string>(null);
@@ -259,6 +266,19 @@ export const WorkspaceScreen: React.FC = () => {
                 } else {
                     setVisualiserData({simulationID, vertices: [], edges: []});
                 }
+
+                if (res.answers) {
+                    const headings = Object.keys(res.answers[0]);
+                    const rows = res.answers.map(answer => {
+                        const concepts = Object.values(answer);
+                        return concepts.map(concept => {
+                            return concept.value != null ? `${concept.type}:${concept.value}` : (concept.label || concept.type);
+                        });
+                    });
+                    setAnswerTable({ headings, rows, initialGridTemplateColumns: `40px ${"200px ".repeat(headings.length)}`.trim() });
+                } else {
+                    setAnswerTable(null); // We don't know what the column headings are if there are no answers
+                }
             } else {
                 setQueryResult("Error executing query");
                 setSnackbar({ open: true, variant: "error", message: res.error });
@@ -349,14 +369,23 @@ export const WorkspaceScreen: React.FC = () => {
                                 <div className={classes.resultsPane}>
                                     <StudioTabs selectedIndex={selectedResultsTab} setSelectedIndex={switchResultsTab}
                                                 items={resultsTabs} classes={{root: classes.resultsTabs, tabGroup: classes.resultsTabGroup, tab: classes.resultsTab}}>
-                                        <StudioTabPanel index={0} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsLogPanel)}>
-                                            <pre>{resultsLog}</pre>
+                                        <StudioTabPanel index={0} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
+                                            <pre className={classes.resultsLog}><div>{resultsLog}</div></pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
                                             <TypeDBVisualiser data={visualiserData} className={classes.visualiser} theme={themeState.use()[0].visualiser} onVertexClick={setSelectedVertex}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
-                                            Food for humans goes here
+                                            {answerTable &&
+                                            <StudioTable headings={[""].concat(answerTable.headings)} minCellWidth={40} sizing="resizable"
+                                                         initialGridTemplateColumns={answerTable.initialGridTemplateColumns} className={classes.resultsTable}>
+                                                {answerTable.rows.map((row, idx) => (
+                                                    <tr>
+                                                        <th>{idx + 1}</th>
+                                                        {row.map(cell => <td><span>{cell}</span></td>)}
+                                                    </tr>
+                                                ))}
+                                            </StudioTable>}
                                         </StudioTabPanel>
                                     </StudioTabs>
                                 </div>
@@ -377,10 +406,11 @@ export const WorkspaceScreen: React.FC = () => {
                                         Graph Explorer
                                     </div>
                                     <div className={classes.graphExplorerBody}>
-                                        {!selectedVertex && <p>Select a vertex from the graph to inspect it.</p>}
+                                        {!selectedVertex && <p style={{padding: 8}}>Select a vertex from the graph to inspect it.</p>}
                                         {selectedVertex &&
                                         <>
-                                            <StudioTable headings={["Property", "Value"]} minCellWidth={50} className={classes.graphExplorerTable}>
+                                            <StudioTable headings={["Property", "Value"]} minCellWidth={50} sizing="fixed"
+                                                         initialGridTemplateColumns="minmax(80px, 1fr) minmax(80px, 2fr)" className={classes.graphExplorerTable}>
                                                 <tr>
                                                     <td><span>Label</span></td>
                                                     <td><span>{selectedVertex.label}</span></td>

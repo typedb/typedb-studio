@@ -3,7 +3,6 @@ import { ThemeProps } from "../../styles/theme";
 
 export const tableStyles = makeStyles({
     wrapper: {
-        marginBottom: 25,
         overflow: "hidden", /* Clips any scrollbars that appear */
     },
 
@@ -11,7 +10,7 @@ export const tableStyles = makeStyles({
         width: "100%",
         overflow: "auto", /* Allow scrolling within the table */
         display: "grid",
-        gridTemplateColumns: "minmax(80px, 1fr) minmax(80px, 2fr)",
+        userSelect: "none", // NOTE: This is because of weird behaviour when the cursor is over the resizer
 
         "& thead, & tbody, & tr": {
             display: "contents",
