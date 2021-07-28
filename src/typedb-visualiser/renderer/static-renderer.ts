@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js";
+import * as PIXI from "pixi.js-legacy";
 // @ts-ignore
 import FontFaceObserver from "fontfaceobserver";
 import { TypeDBVisualiserData } from "../data";
