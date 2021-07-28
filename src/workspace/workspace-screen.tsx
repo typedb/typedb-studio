@@ -192,11 +192,15 @@ export const WorkspaceScreen: React.FC = () => {
                             }
                         }
 
+                        const label = concept.value != null
+                            ? `${concept.type}:${concept.value instanceof Date ? moment(concept.value).format("DD-MM-YY HH:mm:ss") : concept.value.toString().slice(0, 100)}`
+                            : (concept.label || concept.type);
+
                         vertices.push({
                             id: nextID,
                             width: 110,
                             height: concept.encoding === "relationType" ? 60 : 40,
-                            label: concept.value != null ? `${concept.type}:${concept.value.toString().slice(0, 100)}` : (concept.label || concept.type),
+                            label,
                             encoding: concept.encoding,
                         });
                         nextID++;
@@ -272,7 +276,10 @@ export const WorkspaceScreen: React.FC = () => {
                     const rows = res.answers.map(answer => {
                         const concepts = Object.values(answer);
                         return concepts.map(concept => {
-                            return concept.value != null ? `${concept.type}:${concept.value}` : (concept.label || concept.type);
+                            // TODO: duplicated code
+                            return concept.value != null
+                                ? `${concept.type}:${concept.value instanceof Date ? moment(concept.value).format("DD-MM-YY HH:mm:ss") : concept.value.toString().slice(0, 100)}`
+                                : (concept.label || concept.type);
                         });
                     });
                     setAnswerTable({ headings, rows, initialGridTemplateColumns: `40px ${"200px ".repeat(headings.length)}`.trim() });
