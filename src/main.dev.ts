@@ -11,7 +11,7 @@ import 'regenerator-runtime/runtime';
 import path from 'path';
 import { app, BrowserWindow, protocol, screen, shell, ipcMain } from 'electron';
 import { SessionType, TransactionType, TypeDB, TypeDBClient, TypeDBSession } from "typedb-client";
-import { ConceptData, ConceptMapData, ConnectRequest, ConnectResponse, LoadDatabasesResponse, MatchQueryRequest, MatchQueryResponse } from "./ipc/event-args";
+import { ConceptData, ConceptMapData, ConnectRequest, IPCResponse, LoadDatabasesResponse, MatchQueryRequest, MatchQueryResponse } from "./ipc/event-args";
 // import { autoUpdater } from 'electron-updater';
 // import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -154,8 +154,9 @@ function processError(e: any): string {
 }
 
 // TODO: Concurrent requests may cause issues
+// TODO: This string typing for API method names is really fragile
 ipcMain.on("connect-request", ((event, req: ConnectRequest) => {
-    let res: ConnectResponse;
+    let res: IPCResponse;
     try {
         client = TypeDB.coreClient(req.address);
         res = { success: true };
@@ -178,12 +179,14 @@ ipcMain.on("load-databases-request", (async (event, _req: {}) => {
     event.sender.send("load-databases-response", res);
 }));
 
+// TODO: Add support for concurrent sessions
+let currentSession: TypeDBSession;
+
 ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
     let res: MatchQueryResponse;
-    let session: TypeDBSession;
     try {
-        session = await client.session(req.db, SessionType.DATA);
-        const tx = await session.transaction(TransactionType.READ);
+        currentSession = await client.session(req.db, SessionType.DATA);
+        const tx = await currentSession.transaction(TransactionType.READ);
         const answerStream = tx.query.match(req.query);
         const answersData: ConceptMapData[] = [];
         const connectedConceptPromises: Promise<void>[] = [];
@@ -248,11 +251,26 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
         await Promise.all(connectedConceptPromises);
         // TODO: Add support for streaming responses
         res = { success: true, answers: answersData };
+        event.sender.send("match-query-response", res);
     } catch (e: any) {
         const errorMessage = processError(e);
         res = { success: false, error: errorMessage };
+        event.sender.send("match-query-response", res);
     } finally {
-        session?.close();
+        await currentSession?.close();
+        console.log(`currentSession.isOpen() = ${currentSession.isOpen()}`);
+        currentSession = null;
     }
-    event.sender.send("match-query-response", res);
+}));
+
+ipcMain.on("cancel-query-request", (async (event) => {
+    let res: IPCResponse;
+    try {
+        await currentSession?.close();
+        res = { success: true };
+    } catch (e: any) {
+        const errorMessage = processError(e);
+        res = { success: false, error: errorMessage };
+    }
+    event.sender.send("cancel-query-response", res);
 }));

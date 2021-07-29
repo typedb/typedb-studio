@@ -6,6 +6,7 @@ import { faProjectDiagram } from "@fortawesome/free-solid-svg-icons/faProjectDia
 import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
 import { faShapes } from "@fortawesome/free-solid-svg-icons/faShapes";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons/faSignOutAlt";
+import { faStop } from "@fortawesome/free-solid-svg-icons/faStop";
 import { faUserShield } from "@fortawesome/free-solid-svg-icons/faUserShield";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import IconButton from "@material-ui/core/IconButton";
@@ -85,6 +86,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
     const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
     const [timeQuery, setTimeQuery] = React.useState(false);
+    const [queryCancelled, setQueryCancelled] = React.useState(false);
     const [selectedVertex, setSelectedVertex] = React.useState<ForceGraphVertex>(null);
     const routerHistory = useHistory();
 
@@ -111,7 +113,7 @@ export const WorkspaceScreen: React.FC = () => {
         { label: "Graph Explorer", key: "Graph Explorer", icon: <FontAwesomeIcon icon={faProjectDiagram}/> },
     ];
 
-    const runQuery = async () => {
+    const runQuery = () => {
         const req: MatchQueryRequest = { db, query: code };
         ipcRenderer.send("match-query-request", req);
         setPrincipalStatus("Running Match query...");
@@ -119,7 +121,25 @@ export const WorkspaceScreen: React.FC = () => {
         setQueryStartTime(Date.now());
         setQueryRunTime("00:00.000");
         setRenderRunTime(null);
+        setQueryCancelled(false);
         addLogEntry(code);
+    };
+
+    const cancelQuery = () => {
+        if (!queryRunning) return; // resolves race condition between resolving onClick and processing query response
+        ipcRenderer.send("cancel-query-request");
+        setPrincipalStatus("Ready");
+        setQueryRunning(false);
+        setQueryEndTime(Date.now());
+        setTimeQuery(true);
+        setQueryCancelled(true);
+        setQueryResult("Cancelled");
+        addLogEntry("Query cancelled by user");
+    };
+
+    const runOrCancelQuery = () => {
+        if (!queryRunning) runQuery();
+        else cancelQuery();
     };
 
     const signOut = () => {
@@ -160,6 +180,9 @@ export const WorkspaceScreen: React.FC = () => {
 
     React.useEffect(() => {
         const onMatchQueryResponse = (_event: IpcRendererEvent, res: MatchQueryResponse) => {
+            // TODO: Concurrent responses may produce odd behaviour - can we correlate the event in the response
+            //  to the one we sent in the request somehow?
+            if (queryCancelled) return;
             setPrincipalStatus("Ready");
             setQueryRunning(false);
             setTimeQuery(true);
@@ -307,7 +330,7 @@ export const WorkspaceScreen: React.FC = () => {
         return () => {
             ipcRenderer.removeListener("match-query-response", onMatchQueryResponse);
         };
-    }, [resultsLog, selectedResultsTab]);
+    }, [resultsLog, selectedResultsTab, queryCancelled]);
 
     const onRenderDone = () => {
         setRenderRunTime(msToTime(Date.now() - queryEndTime));
@@ -361,8 +384,8 @@ export const WorkspaceScreen: React.FC = () => {
                 <StudioIconButton size="smaller" onClick={() => null}>
                     <FontAwesomeIcon icon={faSave}/>
                 </StudioIconButton>
-                <StudioIconButton size="smaller" onClick={runQuery}>
-                    <FontAwesomeIcon icon={faPlay}/>
+                <StudioIconButton size="smaller" onClick={runOrCancelQuery} classes={{root: queryRunning && classes.stopIcon}}>
+                    <FontAwesomeIcon icon={queryRunning ? faStop : faPlay}/>
                 </StudioIconButton>
                 <div className={classes.filler}/>
                 <IconButton size="small" aria-label="sign-out" color="inherit" onClick={signOut}>

@@ -9,8 +9,6 @@ export interface ConnectRequest {
     address: string;
 }
 
-export interface ConnectResponse extends IPCResponse {}
-
 export interface LoadDatabasesResponse extends IPCResponse {
     databases?: string[];
 }

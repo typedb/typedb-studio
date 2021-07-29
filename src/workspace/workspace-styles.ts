@@ -1,5 +1,5 @@
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import { ThemeProps } from "../styles/theme";
+import { ThemeProps, vaticleTheme } from "../styles/theme";
 
 export const workspaceStyles = makeStyles({
     filler: {
@@ -22,6 +22,12 @@ export const workspaceStyles = makeStyles({
 
         "& > * + *": {
             marginLeft: 8,
+        },
+    },
+
+    stopIcon: {
+        "&:hover": {
+            color: `${vaticleTheme.palette.red["1"]} !important`,
         },
     },
 
