@@ -61,6 +61,9 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
     console.log("renderToViewport called")
     viewport.removeChildren();
     const [width, height] = [viewport.screenWidth, viewport.screenHeight];
+    const nodeRadius = 120; // TODO: this should equal the link force
+    const nodeDensity = width * height / (nodeRadius * nodeRadius * Math.PI);
+    viewport.scaled = Math.max(0.01, Math.min(1, Math.sqrt(nodeDensity / graphData.vertices.length)));
     let edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
@@ -99,10 +102,10 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
         }
     }
 
-    function addVertex(vertex: Renderer.Vertex) {
+    function addVertex(vertex: Renderer.Vertex, useFallbackFont: boolean) {
         const boundDragMove = onDragMove.bind(vertex);
         const boundDragEnd = onDragEnd.bind(vertex);
-        renderVertex(vertex, ubuntuMono, theme);
+        renderVertex(vertex, useFallbackFont, theme);
 
         vertex.gfx
             .on('click', (e: Event) => {
@@ -122,10 +125,27 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
         viewport.addChild(vertex.gfx);
     }
 
-    vertices.forEach(v => addVertex(v));
+    function addEdgeLabel(edge: Renderer.Edge, useFallbackFont: boolean) {
+        renderEdgeLabel(edge, useFallbackFont, theme);
+        viewport.addChild(edge.labelGFX);
+    }
 
     const edgesGFX = new PIXI.Graphics();
-    viewport.addChild(edgesGFX);
+    renderGraphElements();
+
+    async function renderGraphElements() {
+        let useFallbackFont = false;
+        try {
+            await ubuntuMono.load();
+        } catch (e: any) {
+            useFallbackFont = true;
+        }
+
+        viewport.addChild(edgesGFX);
+        edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+        vertices.forEach(v => addVertex(v, useFallbackFont));
+        console.log(viewport.children);
+    }
 
     const onTick = () => {
         vertices.forEach((vertex) => {
@@ -144,19 +164,12 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
         });
     }
 
-    async function addEdgeLabel(edge: Renderer.Edge) {
-        await renderEdgeLabel(edge, ubuntuMono, theme);
-        viewport.addChild(edge.labelGFX);
-    }
-
-    edges.forEach(addEdgeLabel);
-
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.
     simulation.on("tick", onTick);
 
     return {
         simulation,
-        add: (newObject => {
+        add: (async (newObject) => {
             console.log(newObject.vertices);
             const [newVertices, newEdges] = [newObject.vertices, newObject.edges];
             vertices.push(...newVertices);
@@ -165,9 +178,16 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
             edges = newEdges;
             simulation.force("link", d3.forceLink(edges).id((d: any) => d.id).distance(120));
 
-            newVertices.forEach(addVertex);
+            let useFallbackFont = false;
+            try {
+                await ubuntuMono.load();
+            } catch (e: any) {
+                useFallbackFont = true;
+            }
+
             edgesGFX.clear();
-            edges.forEach(addEdgeLabel);
+            edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+            newVertices.forEach(v => addVertex(v, useFallbackFont));
             simulation.restart();
         }),
         destroy: () => {

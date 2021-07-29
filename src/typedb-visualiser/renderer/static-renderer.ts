@@ -46,30 +46,46 @@ export function renderStaticGraph(container: HTMLElement, graphData: TypeDBVisua
         }
     }
 
-    vertices.forEach((vertex) => {
-        const boundDragMove = onDragMove.bind(vertex);
-        const boundDragEnd = onDragEnd.bind(vertex);
-        renderVertex(vertex, ubuntuMono, theme);
-
-        vertex.gfx
-            .on('click', (e: Event) => {
-                if (!dragged) {
-                    e.stopPropagation();
-                }
-                dragged = false;
-            })
-            .on('mousedown', onDragStart)
-            .on('mouseup', () => boundDragEnd(vertex.gfx))
-            .on('mouseupoutside', () => boundDragEnd(vertex.gfx))
-            .on('mousemove', () => boundDragMove(vertex.gfx));
-        vertex.gfx.interactive = true;
-        vertex.gfx.buttonMode = true;
-
-        app.stage.addChild(vertex.gfx);
-    });
-
     const edgesGFX = new PIXI.Graphics();
-    app.stage.addChild(edgesGFX);
+    renderGraphElements();
+
+    async function renderGraphElements() {
+        let useFallbackFont = false;
+        try {
+            await ubuntuMono.load();
+        } catch (e: any) {
+            useFallbackFont = true;
+        }
+
+        app.stage.addChild(edgesGFX);
+
+        edges.forEach((edge) => {
+            renderEdgeLabel(edge, useFallbackFont, theme);
+            app.stage.addChild(edge.labelGFX);
+        });
+
+        vertices.forEach((vertex) => {
+            const boundDragMove = onDragMove.bind(vertex);
+            const boundDragEnd = onDragEnd.bind(vertex);
+            renderVertex(vertex, useFallbackFont, theme);
+
+            vertex.gfx
+                .on('click', (e: Event) => {
+                    if (!dragged) {
+                        e.stopPropagation();
+                    }
+                    dragged = false;
+                })
+                .on('mousedown', onDragStart)
+                .on('mouseup', () => boundDragEnd(vertex.gfx))
+                .on('mouseupoutside', () => boundDragEnd(vertex.gfx))
+                .on('mousemove', () => boundDragMove(vertex.gfx));
+            vertex.gfx.interactive = true;
+            vertex.gfx.buttonMode = true;
+
+            app.stage.addChild(vertex.gfx);
+        });
+    }
 
     const onTick = () => {
         vertices.forEach((vertex) => {
@@ -87,11 +103,6 @@ export function renderStaticGraph(container: HTMLElement, graphData: TypeDBVisua
             renderEdge(edge, edgesGFX, theme);
         });
     }
-
-    edges.forEach(async (edge) => {
-        await renderEdgeLabel(edge, ubuntuMono, theme);
-        app.stage.addChild(edge.labelGFX);
-    });
 
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.
     simulation.on("tick", onTick);
