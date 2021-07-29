@@ -13,7 +13,7 @@ export interface RenderingStage {
     viewport: Viewport;
 }
 
-export function setupStage(container: HTMLElement): RenderingStage {
+export function setupStage(container: HTMLElement, onZoom: (scale: number) => any): RenderingStage {
     const [width, height] = [container.offsetWidth, container.offsetHeight];
 
     const renderer = new PIXI.Renderer({ width, height, antialias: !0, backgroundAlpha: 0, resolution: window.devicePixelRatio });
@@ -45,6 +45,8 @@ export function setupStage(container: HTMLElement): RenderingStage {
         .clampZoom({ minScale: .01, maxScale: 3 })
         .decelerate({ friction: .95 });
 
+    viewport.on("zoomed", () => onZoom(viewport.scaled));
+
     return { renderer, viewport };
 }
 
@@ -57,12 +59,10 @@ export interface TypeDBGraphSimulation {
 
 // TODO: The purpose of this file isn't clear.
 // TODO: Too much of this code is shared with fixed-container.ts, a refactor is required
-export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme, onVertexClick: (vertex: ForceGraphVertex) => any): TypeDBGraphSimulation {
+export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme,
+                                   onVertexClick: (vertex: ForceGraphVertex) => any, onFirstTick: () => any): TypeDBGraphSimulation {
     console.log("renderToViewport called")
-    // viewport.removeChildren();
-    for (const child of viewport.children) {
-        child.destroy(true);
-    }
+    for (const child of viewport.children) child.destroy(true);
     viewport.removeChildren();
     const [width, height] = [viewport.screenWidth, viewport.screenHeight];
     // console.log([width, height]);
@@ -81,6 +81,7 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
     const simulation = dynamicForceSimulation(vertices, edges, width, height);
     simulation.id = graphData.simulationID;
     const ubuntuMono = new FontFaceObserver("Ubuntu Mono") as { load: () => Promise<any> };
+    let ticked = false;
 
     function onDragStart(this: any, evt: any) {
         viewport.plugins.pause('drag');
@@ -167,6 +168,11 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
     }
 
     const onTick = () => {
+        if (!ticked) {
+            if (onFirstTick) onFirstTick();
+            ticked = true;
+        }
+
         vertices.forEach((vertex) => {
             let { x, y, gfx } = vertex;
             gfx.position.set(x, y);

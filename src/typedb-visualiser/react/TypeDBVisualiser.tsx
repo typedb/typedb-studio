@@ -9,21 +9,26 @@ export interface VisualiserProps {
     data?: TypeDBVisualiserData.Graph;
     theme?: TypeDBVisualiserTheme;
     onVertexClick?: (vertex: ForceGraphVertex) => any;
+    onZoom?: (scale: number) => any;
+    onFirstTick?: () => any;
     className?: string;
 }
 
-const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, onVertexClick, className }) => {
+const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, onVertexClick, onZoom, onFirstTick, className }) => {
     const htmlElementRef: React.MutableRefObject<HTMLDivElement> = React.useRef(null);
     const simulationRef: React.MutableRefObject<TypeDBGraphSimulation> = React.useRef(null);
     const [viewport, setViewport] = React.useState<Viewport>(null);
 
     React.useEffect(() => {
+        // TODO: This is a bit of a hack - setupStage should be called on first render, but if we do that,
+        //       the viewport will have the wrong size because of SplitPane's resizing.
+        //       To fix this issue we need to resize the viewport when its container is resized
         if (!data) return;
 
         if (!htmlElementRef.current) throw new Error("Failed to start TypeDBVisualiser because its HTML container element could not be found");
 
         if (!viewport) {
-            const renderingStage = setupStage(htmlElementRef.current);
+            const renderingStage = setupStage(htmlElementRef.current, onZoom);
             setViewport(renderingStage.viewport);
             return;
         }
@@ -41,7 +46,7 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, onVertexClick
         let destroyFn;
 
         if (htmlElementRef.current) {
-            const simulation = renderDynamicGraph(viewport, data, theme || defaultTypeDBVisualiserTheme, onVertexClick);
+            const simulation = renderDynamicGraph(viewport, data, theme || defaultTypeDBVisualiserTheme, onVertexClick, onFirstTick);
             destroyFn = simulation.destroy;
             simulationRef.current = simulation;
         }

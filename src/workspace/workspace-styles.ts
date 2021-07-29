@@ -187,4 +187,8 @@ export const workspaceStyles = makeStyles({
         fontSize: 14,
         userSelect: "none",
     },
+
+    resultsStatus: {
+        marginLeft: 40,
+    },
 });
