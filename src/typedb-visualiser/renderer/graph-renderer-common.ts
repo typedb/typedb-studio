@@ -16,7 +16,7 @@ const edgeLabelStyle: Partial<PIXI.ITextStyle> = {
     fontFamily: defaultStyles.fontFamily,
 };
 
-export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
+export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme, noLabel?: boolean) {
     vertex.gfx = new PIXI.Graphics();
     vertex.gfx.lineStyle(0);
     const colors = theme.colors.numeric;
@@ -58,7 +58,9 @@ export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, 
     }
     vertex.gfx.endFill();
 
-    renderVertexLabel(vertex, useFallbackFont, theme);
+    if (!noLabel) {
+        renderVertexLabel(vertex, useFallbackFont, theme);
+    }
 }
 
 export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
@@ -112,12 +114,14 @@ export function renderEdge(edge: Renderer.Edge, edgesGFX: PIXI.Graphics, theme: 
     }
 }
 
-export function renderEdgeLabel(edge: Renderer.Edge, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
+export function computeEdgeLabelMetrics(edge: Renderer.Edge) {
     if (!edgeLabelMetrics[edge.label]) {
         const linkLabel = new PIXI.Text(edge.label, edgeLabelStyle);
         edgeLabelMetrics[edge.label] = PIXI.TextMetrics.measureText(edge.label, linkLabel.style as any);
     }
+}
 
+export function renderEdgeLabel(edge: Renderer.Edge, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
     const fontFamily = useFallbackFont ? defaultStyles.fontFamilyFallback : defaultStyles.fontFamily;
 
     const text1 = new PIXI.Text(edge.label, {

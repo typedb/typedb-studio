@@ -6,7 +6,7 @@ import { dynamicForceSimulation, ForceGraphSimulation, ForceGraphVertex } from "
 import { TypeDBVisualiserTheme } from "../styles";
 import { TypeDBVisualiserData } from "../data";
 import { Viewport } from "pixi-viewport";
-import { renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer-common";
+import { computeEdgeLabelMetrics, renderEdge, renderEdgeLabel, Renderer, renderVertex } from "./graph-renderer-common";
 
 export interface RenderingStage {
     renderer: PIXI.Renderer;
@@ -59,11 +59,21 @@ export interface TypeDBGraphSimulation {
 // TODO: Too much of this code is shared with fixed-container.ts, a refactor is required
 export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualiserData.Graph, theme: TypeDBVisualiserTheme, onVertexClick: (vertex: ForceGraphVertex) => any): TypeDBGraphSimulation {
     console.log("renderToViewport called")
+    // viewport.removeChildren();
+    for (const child of viewport.children) {
+        child.destroy(true);
+    }
     viewport.removeChildren();
     const [width, height] = [viewport.screenWidth, viewport.screenHeight];
-    const nodeRadius = 120; // TODO: this should equal the link force
-    const nodeDensity = width * height / (nodeRadius * nodeRadius * Math.PI);
-    viewport.scaled = Math.max(0.01, Math.min(1, Math.sqrt(nodeDensity / graphData.vertices.length)));
+    // console.log([width, height]);
+    // viewport.moveCenter(width / 2, height / 2);
+    // viewport.position.set(width / 2, height / 2);
+    // console.log([viewport.x, viewport.y]);
+    // const nodeRadius = 150; // TODO: this should equal the link force
+    // const nodeDensity = width * height / (nodeRadius * nodeRadius * Math.PI);
+    // TODO: this code autoscales the visualiser - but it's inconsistent to do that and not also auto-center it
+    //       and the centering code is not working!
+    // viewport.scale.set(Math.max(0.01, Math.min(1, Math.sqrt(nodeDensity / graphData.vertices.length))));
     let edges: Renderer.Edge[] = graphData.edges.map((d) => Object.assign({}, d));
     const vertices: Renderer.Vertex[] = graphData.vertices.map((d) => Object.assign({}, d));
     let dragged = false;
@@ -77,6 +87,12 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
         // TODO: we should do this on the first movement, not on drag start
         const vertexGFX = evt.currentTarget as Renderer.VertexGFX;
         if (onVertexClick) onVertexClick(vertexGFX.vertex);
+        // TODO: these checks should be merged into one once we're sure it's what we want to do
+        if (vertices.length + edges.length > 5000) {
+            simulation.force("link", null);
+            simulation.force("charge", null);
+            simulation.force("center", null);
+        }
         simulation.alphaTarget(0.1).restart();
         this.isDown = true;
         this.eventData = evt.data;
@@ -105,7 +121,8 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
     function addVertex(vertex: Renderer.Vertex, useFallbackFont: boolean) {
         const boundDragMove = onDragMove.bind(vertex);
         const boundDragEnd = onDragEnd.bind(vertex);
-        renderVertex(vertex, useFallbackFont, theme);
+        const noLabel = vertices.length + edges.length > 5000;
+        renderVertex(vertex, useFallbackFont, theme, noLabel);
 
         vertex.gfx
             .on('click', (e: Event) => {
@@ -142,9 +159,11 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
         }
 
         viewport.addChild(edgesGFX);
-        edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+        if (vertices.length + edges.length <= 5000) {
+            edges.forEach(computeEdgeLabelMetrics);
+            edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+        }
         vertices.forEach(v => addVertex(v, useFallbackFont));
-        console.log(viewport.children);
     }
 
     const onTick = () => {
@@ -159,9 +178,11 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
 
         edgesGFX.clear();
         edgesGFX.removeChildren();
-        edges.forEach((edge) => {
-            renderEdge(edge, edgesGFX, theme);
-        });
+        if (vertices.length + edges.length <= 5000) {
+            edges.forEach((edge) => {
+                renderEdge(edge, edgesGFX, theme);
+            });
+        }
     }
 
     // Listen for tick events to render the nodes as they update in your Canvas or SVG.
@@ -186,7 +207,9 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
             }
 
             edgesGFX.clear();
-            edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+            if (vertices.length + edges.length <= 5000) {
+                edges.forEach(edge => addEdgeLabel(edge, useFallbackFont));
+            }
             newVertices.forEach(v => addVertex(v, useFallbackFont));
             simulation.restart();
         }),
