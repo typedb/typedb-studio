@@ -77,14 +77,22 @@ export const WorkspaceScreen: React.FC = () => {
     const [answerTable, setAnswerTable] = React.useState<AnswerTable>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
     const [principalStatus, setPrincipalStatus] = React.useState("Ready");
+    const [zoom, setZoom] = React.useState("100");
     const [queryResult, setQueryResult] = React.useState<string>(null);
     const [queryRunning, setQueryRunning] = React.useState(false);
     const [queryRunTime, setQueryRunTime] = React.useState<string>(null);
+    const [renderRunTime, setRenderRunTime] = React.useState<string>(null);
     const [queryStartTime, setQueryStartTime] = React.useState<number>(null);
     const [queryEndTime, setQueryEndTime] = React.useState<number>(null);
     const [timeQuery, setTimeQuery] = React.useState(false);
     const [selectedVertex, setSelectedVertex] = React.useState<ForceGraphVertex>(null);
     const routerHistory = useHistory();
+
+    const updateZoom = (_scale: number) => {
+        // TODO: currently this causes a massive performance hit - maybe breaking down WorkspaceScreen into
+        //       sub-components would fix it?
+        // setZoom(`${(scale * 100).toPrecision(3)}`);
+    }
 
     const tabs: StudioTabItem[] = [{ label: "Query1.tql", key: "0" }];
     const resultsTabs: StudioTabItem[] = [
@@ -110,6 +118,7 @@ export const WorkspaceScreen: React.FC = () => {
         setQueryRunning(true);
         setQueryStartTime(Date.now());
         setQueryRunTime("00:00.000");
+        setRenderRunTime(null);
         addLogEntry(code);
     };
 
@@ -155,6 +164,7 @@ export const WorkspaceScreen: React.FC = () => {
             setQueryRunning(false);
             setTimeQuery(true);
             setQueryEndTime(Date.now());
+            setRenderRunTime("<<in progress>>");
             if (res.success) {
                 setRawAnswers(res.answers);
                 const answerCountString = `${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`;
@@ -192,14 +202,14 @@ export const WorkspaceScreen: React.FC = () => {
                             }
                         }
 
-                        const label = concept.value != null
-                            ? `${concept.type}:${concept.value instanceof Date ? moment(concept.value).format("DD-MM-YY HH:mm:ss") : concept.value.toString().slice(0, 100)}`
-                            : (concept.label || concept.type);
+                        const label = (concept.value != null
+                            ? `${concept.type}:${concept.value instanceof Date ? moment(concept.value).format("DD-MM-YY HH:mm:ss") : concept.value.toString()}`
+                            : (concept.label || concept.type)).slice(0, ["relation", "relationType"].includes(concept.encoding) ? 11 : 13);
 
                         vertices.push({
                             id: nextID,
-                            width: 110,
-                            height: concept.encoding === "relationType" ? 60 : 40,
+                            width: ["relationType", "relation"].includes(concept.encoding) ? 120 : 110,
+                            height: ["relationType", "relation"].includes(concept.encoding) ? 60 : 40,
                             label,
                             encoding: concept.encoding,
                         });
@@ -299,6 +309,10 @@ export const WorkspaceScreen: React.FC = () => {
         };
     }, [resultsLog, selectedResultsTab]);
 
+    const onRenderDone = () => {
+        setRenderRunTime(msToTime(Date.now() - queryEndTime));
+    }
+
     const computeWorkspaceSplitPaneInitialWidths = () => {
         const workspacePaneWidth = window.innerWidth - 56;
         const graphExplorerInitialWidth = 200;
@@ -380,7 +394,9 @@ export const WorkspaceScreen: React.FC = () => {
                                             <pre className={classes.resultsLog}><div>{resultsLog}</div></pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
-                                            <TypeDBVisualiser data={visualiserData} className={classes.visualiser} theme={themeState.use()[0].visualiser} onVertexClick={setSelectedVertex}/>
+                                            <TypeDBVisualiser data={visualiserData} className={classes.visualiser}
+                                                              theme={themeState.use()[0].visualiser} onVertexClick={setSelectedVertex}
+                                                              onZoom={updateZoom} onFirstTick={onRenderDone}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             {answerTable &&
@@ -442,7 +458,15 @@ export const WorkspaceScreen: React.FC = () => {
             <div className={classes.statusBar}>
                 {principalStatus}
                 <div className={classes.filler}/>
-                {queryResult != null ? <>{queryResult} | {queryRunTime}</> : queryRunTime != null ? queryRunTime : ""}
+                {/*{selectedResultsTab === ResultsTab.GRAPH &&*/}
+                {/*<span>*/}
+                {/*    Zoom: {zoom}%*/}
+                {/*</span>}*/}
+                {queryRunTime &&
+                <div className={classes.resultsStatus}>
+                    {queryResult != null ? <>{queryResult} | Query {queryRunTime}</> : <>Query {queryRunTime}</>}
+                    {renderRunTime && <> | Render {renderRunTime}</>}
+                </div>}
             </div>
         </>
     );
