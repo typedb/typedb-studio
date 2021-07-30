@@ -43,6 +43,9 @@ export interface ConceptData {
 export type ConceptMapData = {[varName: string]: ConceptData};
 
 export interface MatchQueryResponsePart extends IPCResponse {
-    answers?: ConceptMapData[];
+    graph?: TypeDBVisualiserData.Graph;
     done?: boolean;
+    answers?: ConceptMapData[];
+    types?: {[label: string]: ConceptData};
+    things?: {[iid: string]: ConceptData};
 }

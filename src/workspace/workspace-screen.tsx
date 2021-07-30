@@ -22,7 +22,7 @@ import { StudioSelect } from "../common/select/select";
 import { StudioTable } from "../common/table/table";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
-import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponsePart } from "../ipc/event-args";
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData, ForceGraphVertex } from "../typedb-visualiser";
@@ -219,7 +219,7 @@ export const WorkspaceScreen: React.FC = () => {
                                             <pre className={classes.resultsLog}><div>{resultsLog}</div></pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
-                                            <QueryVisualiser query={query?.text} db={db} theme={theme}/>
+                                            <QueryVisualiser query={query} db={db} theme={theme}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             {/*{answerTable &&*/}

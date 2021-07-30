@@ -38,6 +38,7 @@ const TypeDBVisualiser: React.FC<VisualiserProps> = ({data, theme, onVertexClick
             const currentEdgeIDs = new Set(simulationRef.current.simulation.edges.map(x => x.id));
             const newVertices = data.vertices.filter(x => !currentVertexIDs.has(x.id));
             const newEdges = data.edges.filter(x => !currentEdgeIDs.has(x.id));
+            console.log([newVertices, newEdges]);
             simulationRef.current.add({
                 vertices: newVertices,
                 edges: newEdges,

@@ -8,6 +8,7 @@
  */
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
+import moment from "moment";
 import path from 'path';
 import { app, BrowserWindow, protocol, screen, shell, ipcMain } from 'electron';
 import { SessionType, TransactionType, TypeDB, TypeDBClient, TypeDBSession } from "typedb-client";
@@ -16,6 +17,7 @@ import { ConceptData, ConceptMapData, ConnectRequest, IPCResponse, LoadDatabases
 // import log from 'electron-log';
 import MenuBuilder from './menu';
 import { TypeDBVisualiserData } from "./typedb-visualiser";
+import { uuidv4 } from "./util/uuid";
 
 // export default class AppUpdater {
 //     constructor() {
@@ -182,6 +184,12 @@ ipcMain.on("load-databases-request", (async (event, _req: {}) => {
 // TODO: Add support for concurrent sessions
 let currentSession: TypeDBSession;
 
+interface GraphElementIDRegistry {
+    nextID: number;
+    types: {[label: string]: number};
+    things: {[label: string]: number};
+}
+
 ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
     let answerDispatcher: ReturnType<typeof setInterval>;
     try {
@@ -189,16 +197,24 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
         const tx = await currentSession.transaction(TransactionType.READ);
         const answerStream = tx.query.match(req.query);
         const answerPromises: Promise<void>[] = [];
+        const graph: TypeDBVisualiserData.Graph = { simulationID: uuidv4(), vertices: [], edges: [] };
+        const elementIDs: GraphElementIDRegistry = { nextID: 1, things: {}, types: {} };
         const answerBucket: ConceptMapData[] = [];
+        const things: {[iid: string]: ConceptData} = {};
+        const types: {[label: string]: ConceptData} = {};
+        const incompleteThingEdges: {[iid: string]: TypeDBVisualiserData.Edge[]} = {};
+        const incompleteTypeEdges: {[label: string]: TypeDBVisualiserData.Edge[]} = {};
 
         answerDispatcher = setInterval(() => {
-            const res: MatchQueryResponsePart = { success: true, answers: answerBucket, done: false };
+            // TODO: maybe requesting ConceptMapData should be a separate request type / parameter?
+            // TODO: try sending Thing and Type maps
+            const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: false };
             event.sender.send("match-query-response-part", res);
             answerBucket.length = 0;
-        }, 500);
+        }, 50);
 
         for await (const cm of answerStream) {
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            // await new Promise((resolve) => setTimeout(resolve, 10));
             const answerData: Partial<ConceptMapData> = {};
             const connectedConceptPromises: Promise<void>[] = [];
             for (const [varName, concept] of cm.map.entries()) {
@@ -215,15 +231,44 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
 
                 if (concept.isThing()) {
                     const thing = concept.asThing();
+                    if (thing.iid in things) continue; // no point re-querying if we already know all about this Thing
+
+                    things[thing.iid] = conceptData;
                     conceptData.iid = thing.iid;
                     conceptData.type = thing.type.label.name;
+
+                    let label;
+                    if (thing.isAttribute()) {
+                        const attribute = thing.asAttribute();
+                        label = `${attribute.type.label.name}:${attribute.isDateTime() ? moment(attribute.asDateTime().value).format("DD-MM-YY HH:mm:ss") : attribute.value.toString()}`;
+                    } else {
+                        label = thing.type.label.name;
+                    }
+
+                    const thingVertex = {
+                        id: elementIDs.nextID++,
+                        width: thing.isRelation() ? 120 : 110,
+                        height: thing.isRelation() ? 60 : 40,
+                        label: label.slice(0, thing.isRelation() ? 11 : 13),
+                        encoding: conceptData.encoding,
+                    }
+                    elementIDs.things[thing.iid] = thingVertex.id;
+                    graph.vertices.push(thingVertex);
 
                     if (thing.isRelation()) {
                         const playersPromise = thing.asRelation().asRemote(tx).getPlayersByRoleType().then((playersMap) => {
                             conceptData.playerInstances = [];
-                            for (const [role, things] of playersMap.entries()) {
-                                for (const thing of things) {
-                                    conceptData.playerInstances.push({iid: thing.iid, role: role.label.name});
+                            for (const [role, players] of playersMap.entries()) {
+                                for (const player of players) {
+                                    // TODO: Maybe we don't need ConceptData.playerInstances anymore (and others)
+                                    conceptData.playerInstances.push({iid: player.iid, role: role.label.name});
+                                    const rolePlayerNodeID = elementIDs.things[player.iid];
+                                    const edge: TypeDBVisualiserData.Edge = { id: elementIDs.nextID++, source: thingVertex.id, target: rolePlayerNodeID, label: role.label.name };
+                                    if (rolePlayerNodeID != null) graph.edges.push(edge);
+                                    else {
+                                        if (!incompleteThingEdges[player.iid]) incompleteThingEdges[player.iid] = [];
+                                        incompleteThingEdges[player.iid].push(edge);
+                                    }
                                 }
                             }
                         });
@@ -233,23 +278,84 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                         conceptData.value = attribute.value;
 
                         const ownersPromise = attribute.asRemote(tx).getOwners().collect().then(owners => {
-                            conceptData.ownerIIDs = owners.map(owner => owner.iid);
+                            conceptData.ownerIIDs = [];
+                            for (const owner of owners) {
+                                conceptData.ownerIIDs.push(owner.iid);
+                                const ownerNodeID = elementIDs.things[owner.iid];
+                                const edge: TypeDBVisualiserData.Edge = { id: elementIDs.nextID++, source: ownerNodeID, target: thingVertex.id, label: "has" };
+                                if (ownerNodeID != null) graph.edges.push(edge);
+                                else {
+                                    if (!incompleteThingEdges[owner.iid]) incompleteThingEdges[owner.iid] = [];
+                                    incompleteThingEdges[owner.iid].push(edge);
+                                }
+                            }
                         });
                         connectedConceptPromises.push(ownersPromise);
                     }
+
+                    if (incompleteThingEdges[thing.iid]) {
+                        for (const incompleteThingEdge of incompleteThingEdges[thing.iid]) {
+                            if (incompleteThingEdge.source == null) incompleteThingEdge.source = thingVertex.id;
+                            else incompleteThingEdge.target = thingVertex.id;
+                            graph.edges.push(incompleteThingEdge);
+                        }
+                        delete incompleteThingEdges[thing.iid];
+                    }
                 } else {
                     const type = concept.asType();
+                    if (type.label.scopedName in types) continue;
+
+                    types[type.label.scopedName] = conceptData;
                     conceptData.label = type.label.name;
+
+                    const typeVertex = {
+                        id: elementIDs.nextID++,
+                        width: type.isRelationType() ? 120 : 110,
+                        height: type.isRelationType() ? 60 : 40,
+                        label: type.label.scopedName.slice(0, type.isRelationType() ? 11 : 13),
+                        encoding: conceptData.encoding,
+                    }
+                    elementIDs.types[type.label.scopedName] = typeVertex.id;
+                    graph.vertices.push(typeVertex);
 
                     if (type.isThingType()) {
                         const remoteThingType = type.asThingType().asRemote(tx);
-                        const playsPromise = remoteThingType.getPlays().collect().then(roles => {
-                            conceptData.playsTypes = roles.map(role => ({relation: role.label.scope, role: role.label.name}));
+                        const playsPromise = remoteThingType.getPlays().collect().then(roleTypes => {
+                            conceptData.playsTypes = [];
+                            for (const roleType of roleTypes) {
+                                conceptData.playsTypes.push({relation: roleType.label.scope, role: roleType.label.name});
+                                const relationTypeNodeID = elementIDs.types[roleType.label.scope];
+                                const edge: TypeDBVisualiserData.Edge = { id: elementIDs.nextID++, source: relationTypeNodeID, target: typeVertex.id, label: roleType.label.name };
+                                if (relationTypeNodeID != null) graph.edges.push(edge);
+                                else {
+                                    if (!incompleteTypeEdges[roleType.label.scope]) incompleteTypeEdges[roleType.label.scope] = [];
+                                    incompleteTypeEdges[roleType.label.scope].push(edge);
+                                }
+                            }
                         });
-                        const ownsPromise = remoteThingType.getOwns().collect().then(attributes => {
-                            conceptData.ownsLabels = attributes.map(attribute => attribute.label.name);
+                        const ownsPromise = remoteThingType.getOwns().collect().then(attributeTypes => {
+                            conceptData.ownsLabels = [];
+                            for (const attributeType of attributeTypes) {
+                                conceptData.ownsLabels.push(attributeType.label.name);
+                                const attributeTypeNodeID = elementIDs.types[attributeType.label.name];
+                                const edge: TypeDBVisualiserData.Edge = { id: elementIDs.nextID++, source: typeVertex.id, target: attributeTypeNodeID, label: "owns" };
+                                if (attributeTypeNodeID != null) graph.edges.push(edge);
+                                else {
+                                    if (!incompleteTypeEdges[attributeType.label.name]) incompleteTypeEdges[attributeType.label.name] = [];
+                                    incompleteTypeEdges[attributeType.label.name].push(edge);
+                                }
+                            }
                         });
                         connectedConceptPromises.push(playsPromise, ownsPromise);
+                    }
+
+                    if (incompleteTypeEdges[type.label.scopedName]) {
+                        for (const incompleteTypeEdge of incompleteTypeEdges[type.label.scopedName]) {
+                            if (incompleteTypeEdge.source == null) incompleteTypeEdge.source = typeVertex.id;
+                            else incompleteTypeEdge.target = typeVertex.id;
+                            graph.edges.push(incompleteTypeEdge);
+                        }
+                        delete incompleteTypeEdges[type.label.scopedName];
                     }
                 }
 
@@ -260,9 +366,13 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                 answerBucket.push(answerData);
             });
             answerPromises.push(answerPromise);
+
+            // const answerCountString = `${rawAnswers.length} answer${rawAnswers.length !== 1 ? "s" : ""}`;
+            // setQueryResult(answerCountString);
+            // if (res.done) addLogEntry(answerCountString);
         }
         await Promise.all(answerPromises);
-        const res: MatchQueryResponsePart = { success: true, answers: answerBucket, done: true };
+        const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: true };
         event.sender.send("match-query-response-part", res);
     } catch (e: any) {
         const errorMessage = processError(e);
