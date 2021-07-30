@@ -23,7 +23,7 @@ import { StudioSelect } from "../common/select/select";
 import { StudioTable } from "../common/table/table";
 import { StudioTabItem, StudioTabPanel, StudioTabs } from "../common/tabs/tabs";
 import { useInterval } from "../common/use-interval";
-import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponse } from "../ipc/event-args";
+import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponsePart } from "../ipc/event-args";
 import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData, ForceGraphVertex } from "../typedb-visualiser";
@@ -65,6 +65,12 @@ interface AnswerTable {
     initialGridTemplateColumns: CSS.Property.GridTemplateColumns;
 }
 
+interface GraphElementIDRegistry {
+    nextID: number;
+    types: {[label: string]: number};
+    things: {[label: string]: number};
+}
+
 export const WorkspaceScreen: React.FC = () => {
     const theme = themeState.use()[0];
     const classes = Object.assign({}, studioStyles({ theme }), workspaceStyles({ theme }));
@@ -88,6 +94,7 @@ export const WorkspaceScreen: React.FC = () => {
     const [timeQuery, setTimeQuery] = React.useState(false);
     const [queryCancelled, setQueryCancelled] = React.useState(false);
     const [selectedVertex, setSelectedVertex] = React.useState<ForceGraphVertex>(null);
+    const [graphElementIDs, setGraphElementIDs] = React.useState<GraphElementIDRegistry>(null);
     const routerHistory = useHistory();
 
     const updateZoom = (_scale: number) => {
@@ -120,8 +127,13 @@ export const WorkspaceScreen: React.FC = () => {
         setQueryRunning(true);
         setQueryStartTime(Date.now());
         setQueryRunTime("00:00.000");
-        setRenderRunTime(null);
+        // setRenderRunTime(null);
         setQueryCancelled(false);
+        setAnswerGraph({ simulationID: null, vertices: [], edges: [] });
+        setVisualiserData({ simulationID: null, vertices: [], edges: [] });
+        setGraphElementIDs({ nextID: 1, things: {}, types: {} });
+        setRawAnswers([]);
+        setAnswerTable(null);
         addLogEntry(code);
     };
 
@@ -133,7 +145,8 @@ export const WorkspaceScreen: React.FC = () => {
         setQueryEndTime(Date.now());
         setTimeQuery(true);
         setQueryCancelled(true);
-        setQueryResult("Cancelled");
+        const answerCountString = `${rawAnswers.length} answer${rawAnswers.length !== 1 ? "s" : ""}`;
+        setQueryResult(`${answerCountString} (interrupted)`);
         addLogEntry("Query cancelled by user");
     };
 
@@ -179,26 +192,28 @@ export const WorkspaceScreen: React.FC = () => {
     }
 
     React.useEffect(() => {
-        const onMatchQueryResponse = (_event: IpcRendererEvent, res: MatchQueryResponse) => {
+        const onReceiveMatchQueryResponsePart = (_event: IpcRendererEvent, res: MatchQueryResponsePart) => {
             // TODO: Concurrent responses may produce odd behaviour - can we correlate the event in the response
             //  to the one we sent in the request somehow?
             if (queryCancelled) return;
-            setPrincipalStatus("Ready");
-            setQueryRunning(false);
-            setTimeQuery(true);
-            setQueryEndTime(Date.now());
-            setRenderRunTime("<<in progress>>");
-            if (res.success) {
-                setRawAnswers(res.answers);
-                const answerCountString = `${res.answers.length} answer${res.answers.length !== 1 ? "s" : ""}`;
-                setQueryResult(answerCountString);
-                addLogEntry(answerCountString);
-                const vertices: TypeDBVisualiserData.Vertex[] = [];
-                const edges: TypeDBVisualiserData.Edge[] = [];
 
-                let nextID = 1;
-                const typeNodeIDs: {[label: string]: number} = {};
-                const thingNodeIDs: {[iid: string]: number} = {};
+            if (res.done) {
+                setPrincipalStatus("Ready");
+                setQueryRunning(false);
+                setTimeQuery(true);
+                setQueryEndTime(Date.now());
+            }
+
+            // setRenderRunTime("<<in progress>>");
+            if (res.success) {
+                rawAnswers.push(...res.answers);
+                setRawAnswers(rawAnswers);
+                const answerCountString = `${rawAnswers.length} answer${rawAnswers.length !== 1 ? "s" : ""}`;
+                setQueryResult(answerCountString);
+                if (res.done) addLogEntry(answerCountString);
+                const simulationID = visualiserData?.simulationID || uuidv4();
+                const vertices: TypeDBVisualiserData.Vertex[] = visualiserData?.vertices || [];
+                const edges: TypeDBVisualiserData.Edge[] = visualiserData?.edges || [];
 
                 for (const conceptMap of res.answers) {
                     for (const varName in conceptMap) {
@@ -206,19 +221,19 @@ export const WorkspaceScreen: React.FC = () => {
                         const concept = conceptMap[varName] as GraphNode;
 
                         if (concept.iid) {
-                            const thingNodeID = thingNodeIDs[concept.iid];
+                            const thingNodeID = graphElementIDs.things[concept.iid];
                             if (thingNodeID == null) {
-                                concept.nodeID = nextID;
-                                thingNodeIDs[concept.iid] = nextID;
+                                concept.nodeID = graphElementIDs.nextID;
+                                graphElementIDs.things[concept.iid] = graphElementIDs.nextID;
                             } else {
                                 concept.nodeID = thingNodeID;
                                 continue;
                             }
                         } else {
-                            const typeNodeID = typeNodeIDs[concept.label];
+                            const typeNodeID = graphElementIDs.types[concept.label];
                             if (typeNodeID == null) {
-                                concept.nodeID = nextID;
-                                typeNodeIDs[concept.label] = nextID;
+                                concept.nodeID = graphElementIDs.nextID;
+                                graphElementIDs.types[concept.label] = graphElementIDs.nextID;
                             } else {
                                 concept.nodeID = typeNodeID;
                                 continue;
@@ -230,61 +245,67 @@ export const WorkspaceScreen: React.FC = () => {
                             : (concept.label || concept.type)).slice(0, ["relation", "relationType"].includes(concept.encoding) ? 11 : 13);
 
                         vertices.push({
-                            id: nextID,
+                            id: graphElementIDs.nextID,
                             width: ["relationType", "relation"].includes(concept.encoding) ? 120 : 110,
                             height: ["relationType", "relation"].includes(concept.encoding) ? 60 : 40,
                             label,
                             encoding: concept.encoding,
                         });
-                        nextID++;
+                        graphElementIDs.nextID++;
                     }
                 }
 
-                for (const conceptMap of res.answers) {
+                for (const conceptMap of rawAnswers) {
                     for (const varName in conceptMap) {
                         if (!conceptMap.hasOwnProperty(varName)) continue;
                         const concept = conceptMap[varName] as GraphNode;
 
                         if (concept.playsTypes) {
                             for (const roleType of concept.playsTypes) {
-                                const relationTypeNodeID = typeNodeIDs[roleType.relation];
+                                const relationTypeNodeID = graphElementIDs.types[roleType.relation];
                                 if (relationTypeNodeID != null) {
-                                    edges.push({ source: relationTypeNodeID, target: concept.nodeID, label: roleType.role });
+                                    edges.push({ id: graphElementIDs.nextID, source: relationTypeNodeID, target: concept.nodeID, label: roleType.role });
+                                    graphElementIDs.nextID++;
                                 }
                             }
                         }
 
                         if (concept.ownsLabels) {
                             for (const attributeTypeLabel of concept.ownsLabels) {
-                                const attributeTypeNodeID = typeNodeIDs[attributeTypeLabel];
+                                const attributeTypeNodeID = graphElementIDs.types[attributeTypeLabel];
                                 if (attributeTypeNodeID != null) {
-                                    edges.push({ source: concept.nodeID, target: attributeTypeNodeID, label: "owns" });
+                                    edges.push({ id: graphElementIDs.nextID, source: concept.nodeID, target: attributeTypeNodeID, label: "owns" });
+                                    graphElementIDs.nextID++;
                                 }
                             }
                         }
 
                         if (concept.playerInstances) {
                             for (const rolePlayer of concept.playerInstances) {
-                                const rolePlayerNodeID = thingNodeIDs[rolePlayer.iid];
+                                const rolePlayerNodeID = graphElementIDs.things[rolePlayer.iid];
                                 if (rolePlayerNodeID != null) {
-                                    edges.push({ source: concept.nodeID, target: rolePlayerNodeID, label: rolePlayer.role });
+                                    edges.push({ id: graphElementIDs.nextID, source: concept.nodeID, target: rolePlayerNodeID, label: rolePlayer.role });
+                                    graphElementIDs.nextID++;
                                 }
                             }
                         }
 
                         if (concept.ownerIIDs) {
                             for (const ownerIID of concept.ownerIIDs) {
-                                const ownerNodeID = thingNodeIDs[ownerIID];
+                                const ownerNodeID = graphElementIDs.things[ownerIID];
                                 if (ownerNodeID != null) {
-                                    edges.push({ source: ownerNodeID, target: concept.nodeID, label: "has" });
+                                    edges.push({ id: graphElementIDs.nextID, source: ownerNodeID, target: concept.nodeID, label: "has" });
+                                    graphElementIDs.nextID++;
                                 }
                             }
                         }
                     }
                 }
 
-                setAnswerGraph({ vertices, edges });
-                const simulationID = uuidv4();
+                setGraphElementIDs(graphElementIDs);
+                // TODO: AnswerGraph and VisualiserData are not intuitive - they're usually the same unless the
+                //  graph tab is inactive
+                setAnswerGraph({ simulationID, vertices, edges });
                 // TODO: We should also skip the Concept API calls on the backend if the Graph tab is inactive
                 // TODO: PoC - delete when redundant
                 // if (selectedResultsTab === ResultsTab.GRAPH) {
@@ -301,12 +322,13 @@ export const WorkspaceScreen: React.FC = () => {
                 if (selectedResultsTab === ResultsTab.GRAPH) {
                     setVisualiserData({simulationID, vertices, edges});
                 } else {
-                    setVisualiserData({simulationID, vertices: [], edges: []});
+                    setVisualiserData({simulationID: null, vertices: [], edges: []});
                 }
 
-                if (res.answers) {
-                    const headings = Object.keys(res.answers[0]);
-                    const rows = res.answers.map(answer => {
+                // TODO: There must be a more efficient way of doing this
+                if (rawAnswers) {
+                    const headings = Object.keys(rawAnswers[0]);
+                    const rows = rawAnswers.map(answer => {
                         const concepts = Object.values(answer);
                         return concepts.map(concept => {
                             // TODO: duplicated code
@@ -315,6 +337,7 @@ export const WorkspaceScreen: React.FC = () => {
                                 : (concept.label || concept.type);
                         });
                     });
+                    // TODO: this setting of initialGridTemplateColumns is suspect
                     setAnswerTable({ headings, rows, initialGridTemplateColumns: `40px ${"200px ".repeat(headings.length)}`.trim() });
                 } else {
                     setAnswerTable(null); // We don't know what the column headings are if there are no answers
@@ -326,14 +349,14 @@ export const WorkspaceScreen: React.FC = () => {
             }
         };
 
-        ipcRenderer.on("match-query-response", onMatchQueryResponse);
+        ipcRenderer.on("match-query-response-part", onReceiveMatchQueryResponsePart);
         return () => {
-            ipcRenderer.removeListener("match-query-response", onMatchQueryResponse);
+            ipcRenderer.removeListener("match-query-response-part", onReceiveMatchQueryResponsePart);
         };
-    }, [resultsLog, selectedResultsTab, queryCancelled]);
+    }, [resultsLog, selectedResultsTab, queryCancelled, rawAnswers, graphElementIDs, visualiserData]);
 
     const onRenderDone = () => {
-        setRenderRunTime(msToTime(Date.now() - queryEndTime));
+        // setRenderRunTime(msToTime(Date.now() - queryEndTime));
     }
 
     const computeWorkspaceSplitPaneInitialWidths = () => {
@@ -344,8 +367,7 @@ export const WorkspaceScreen: React.FC = () => {
     }
 
     const loadConnectedAttributes = () => {
-        let nextID = 10000; // TODO: compute from existing graph data
-        const { vertices, edges } = answerGraph;
+        const { vertices, edges } = visualiserData;
 
         for (const conceptMap of rawAnswers) {
             for (const varName in conceptMap) {
@@ -355,18 +377,22 @@ export const WorkspaceScreen: React.FC = () => {
                 for (const attributeTypeLabel of concept.ownsLabels) {
                     // TODO: don't add if already in graph
                     vertices.push({
-                        id: nextID,
+                        id: graphElementIDs.nextID,
                         width: 110,
                         height: 40,
                         label: attributeTypeLabel,
                         encoding: "attributeType",
                     });
-                    edges.push({ source: concept.nodeID, target: nextID, label: "owns" });
-                    nextID++;
+                    graphElementIDs.types[attributeTypeLabel] = graphElementIDs.nextID;
+                    graphElementIDs.nextID++;
+                    edges.push({ id: graphElementIDs.nextID, source: concept.nodeID, target: graphElementIDs.nextID, label: "owns" });
+                    graphElementIDs.nextID++;
                 }
-                // TODO: THIS CODE IS HORRIBLE AND MUST BE IMPROVED ASAP
-                setAnswerGraph({ vertices, edges });
+                // TODO: answerGraph and visualiserData are usually identical unless the graph tab is not selected,
+                //  but this isn't intuitive at all
+                setAnswerGraph({ simulationID: visualiserData.simulationID, vertices, edges });
                 setVisualiserData({ simulationID: visualiserData.simulationID, vertices, edges });
+                setGraphElementIDs(graphElementIDs);
             }
         }
     }
@@ -488,7 +514,7 @@ export const WorkspaceScreen: React.FC = () => {
                 {queryRunTime &&
                 <div className={classes.resultsStatus}>
                     {queryResult != null ? <>{queryResult} | Query {queryRunTime}</> : <>Query {queryRunTime}</>}
-                    {renderRunTime && <> | Render {renderRunTime}</>}
+                    {/*{renderRunTime && <> | Render {renderRunTime}</>}*/}
                 </div>}
             </div>
         </>

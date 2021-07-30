@@ -42,6 +42,7 @@ export interface ConceptData {
 
 export type ConceptMapData = {[varName: string]: ConceptData};
 
-export interface MatchQueryResponse extends IPCResponse {
-    answers?: ConceptMapData[]; // TODO: Implement streaming behaviour
+export interface MatchQueryResponsePart extends IPCResponse {
+    answers?: ConceptMapData[];
+    done?: boolean;
 }

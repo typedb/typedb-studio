@@ -16,7 +16,7 @@ const edgeLabelStyle: Partial<PIXI.ITextStyle> = {
     fontFamily: defaultStyles.fontFamily,
 };
 
-export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme, noLabel?: boolean) {
+export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {
     vertex.gfx = new PIXI.Graphics();
     vertex.gfx.lineStyle(0);
     const colors = theme.colors.numeric;
@@ -58,9 +58,7 @@ export function renderVertex(vertex: Renderer.Vertex, useFallbackFont: boolean, 
     }
     vertex.gfx.endFill();
 
-    if (!noLabel) {
-        renderVertexLabel(vertex, useFallbackFont, theme);
-    }
+    renderVertexLabel(vertex, useFallbackFont, theme);
 }
 
 export function renderVertexLabel(vertex: Renderer.Vertex, useFallbackFont: boolean, theme: TypeDBVisualiserTheme) {

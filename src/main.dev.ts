@@ -11,7 +11,7 @@ import 'regenerator-runtime/runtime';
 import path from 'path';
 import { app, BrowserWindow, protocol, screen, shell, ipcMain } from 'electron';
 import { SessionType, TransactionType, TypeDB, TypeDBClient, TypeDBSession } from "typedb-client";
-import { ConceptData, ConceptMapData, ConnectRequest, IPCResponse, LoadDatabasesResponse, MatchQueryRequest, MatchQueryResponse } from "./ipc/event-args";
+import { ConceptData, ConceptMapData, ConnectRequest, IPCResponse, LoadDatabasesResponse, MatchQueryRequest, MatchQueryResponsePart } from "./ipc/event-args";
 // import { autoUpdater } from 'electron-updater';
 // import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -183,15 +183,24 @@ ipcMain.on("load-databases-request", (async (event, _req: {}) => {
 let currentSession: TypeDBSession;
 
 ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
-    let res: MatchQueryResponse;
+    let answerDispatcher: ReturnType<typeof setInterval>;
     try {
         currentSession = await client.session(req.db, SessionType.DATA);
         const tx = await currentSession.transaction(TransactionType.READ);
         const answerStream = tx.query.match(req.query);
-        const answersData: ConceptMapData[] = [];
-        const connectedConceptPromises: Promise<void>[] = [];
+        const answerPromises: Promise<void>[] = [];
+        const answerBucket: ConceptMapData[] = [];
+
+        answerDispatcher = setInterval(() => {
+            const res: MatchQueryResponsePart = { success: true, answers: answerBucket, done: false };
+            event.sender.send("match-query-response-part", res);
+            answerBucket.length = 0;
+        }, 500);
+
         for await (const cm of answerStream) {
+            await new Promise((resolve) => setTimeout(resolve, 10));
             const answerData: Partial<ConceptMapData> = {};
+            const connectedConceptPromises: Promise<void>[] = [];
             for (const [varName, concept] of cm.map.entries()) {
                 let encoding: TypeDBVisualiserData.VertexEncoding;
                 if (concept.isEntity()) encoding = "entity";
@@ -199,7 +208,7 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                 else if (concept.isAttribute()) encoding = "attribute";
                 else if (concept.isEntityType()) encoding = "entityType";
                 else if (concept.isRelationType()) encoding = "relationType";
-                else if (concept.isAttributeType()) encoding = "attributeType"; // TODO: RoleType is missing
+                else if (concept.isAttributeType()) encoding = "attributeType"; // TODO: Support RoleType variables
                 else encoding = "thingType";
 
                 const conceptData: ConceptData = { encoding };
@@ -239,26 +248,29 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                         });
                         const ownsPromise = remoteThingType.getOwns().collect().then(attributes => {
                             conceptData.ownsLabels = attributes.map(attribute => attribute.label.name);
-                        })
+                        });
                         connectedConceptPromises.push(playsPromise, ownsPromise);
                     }
                 }
 
                 answerData[varName] = conceptData;
             }
-            answersData.push(answerData);
+
+            const answerPromise = Promise.all(connectedConceptPromises).then(() => {
+                answerBucket.push(answerData);
+            });
+            answerPromises.push(answerPromise);
         }
-        await Promise.all(connectedConceptPromises);
-        // TODO: Add support for streaming responses
-        res = { success: true, answers: answersData };
-        event.sender.send("match-query-response", res);
+        await Promise.all(answerPromises);
+        const res: MatchQueryResponsePart = { success: true, answers: answerBucket, done: true };
+        event.sender.send("match-query-response-part", res);
     } catch (e: any) {
         const errorMessage = processError(e);
-        res = { success: false, error: errorMessage };
-        event.sender.send("match-query-response", res);
+        const res: MatchQueryResponsePart = { success: false, error: errorMessage };
+        event.sender.send("match-query-response-part", res);
     } finally {
+        clearInterval(answerDispatcher);
         await currentSession?.close();
-        console.log(`currentSession.isOpen() = ${currentSession.isOpen()}`);
         currentSession = null;
     }
 }));

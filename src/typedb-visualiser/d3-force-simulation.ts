@@ -7,14 +7,19 @@ import { TypeDBVisualiserData } from "./data";
 
 export type ForceGraphVertex = d3.SimulationNodeDatum & TypeDBVisualiserData.Vertex;
 export type ForceGraphEdge = d3.SimulationLinkDatum<ForceGraphVertex> & TypeDBVisualiserData.Edge;
-export type ForceGraphSimulation = d3.Simulation<ForceGraphVertex, ForceGraphEdge> & { id?: string };
+export type ForceGraphSimulation = d3.Simulation<ForceGraphVertex, ForceGraphEdge> & {
+    id?: string;
+    edges: ForceGraphEdge[];
+};
 
 export function dynamicForceSimulation(vertices: ForceGraphVertex[], edges: ForceGraphEdge[], width: number, height: number): ForceGraphSimulation {
-    return d3.forceSimulation<ForceGraphVertex, ForceGraphEdge>(vertices)
+    const simulation = d3.forceSimulation<ForceGraphVertex, ForceGraphEdge>(vertices)
         .force("link", d3.forceLink(edges).id((d: any) => d.id).distance(120))
         .force("charge", d3.forceManyBody().strength(-500)) // This adds repulsion (if it's negative) between nodes.
         .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide(80));
+        .force("collide", d3.forceCollide(80)) as ForceGraphSimulation;
+    simulation.edges = edges;
+    return simulation;
 }
 
 export function stickyForceSimulation(vertices: ForceGraphVertex[], edges: ForceGraphEdge[], width: number, height: number) {
