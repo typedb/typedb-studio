@@ -367,10 +367,6 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
                 answerBucket.push(answerData);
             });
             answerPromises.push(answerPromise);
-
-            // const answerCountString = `${rawAnswers.length} answer${rawAnswers.length !== 1 ? "s" : ""}`;
-            // setQueryResult(answerCountString);
-            // if (res.done) addLogEntry(answerCountString);
         }
         await Promise.all(answerPromises);
         const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: true, executionTime: Date.now() - startTime };

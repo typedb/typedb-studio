@@ -169,7 +169,6 @@ export function renderDynamicGraph(viewport: Viewport, graphData: TypeDBVisualis
     }
 
     const onTick = () => {
-        console.log(new Date().getMilliseconds())
         if (!ticked) {
             if (onFirstTick) onFirstTick();
             ticked = true;

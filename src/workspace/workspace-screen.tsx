@@ -32,8 +32,9 @@ import { workspaceStyles } from "./workspace-styles";
 import { databaseState, dbServerState, themeState } from "../state/state";
 import moment from "moment";
 import CSS from "csstype";
-
 import "./ace-theme-studio-dark";
+import { StudioCheckbox, StudioFormControlLabel } from "../common/input/checkbox";
+import { settings } from "@pixi/settings";
 
 function msToTime(duration: number) {
     let milliseconds: string | number = Math.floor(duration % 1000),
@@ -84,6 +85,30 @@ const rightSidebar: StudioTabItem[] = [
     { label: "Graph Explorer", key: "Graph Explorer", icon: <FontAwesomeIcon icon={faProjectDiagram}/> },
 ];
 
+function toGraphResultsStatusString(status: AnswerGraphStatus) {
+    return `Vertices: ${status.vertexCount} | Edges: ${status.edgeCount} | ${msToTime(status.queryRunTime)}`;
+}
+
+const OPTION_LONG_RUNNING_TRANSACTION = "LONG_RUNNING_TRANSACTION";
+const OPTION_ENABLE_REASONING = "ENABLE_REASONING";
+const OPTION_ENABLE_EXPLANATIONS = "ENABLE_EXPLANATIONS";
+const OPTION_MAKE_FUN_OF_NEO4J = "MAKE_FUN_OF_NEO4J";
+
+const NEO4J_WALKS_INTO_BAR =
+`Haikal: What are we?
+
+TypeDB: DATABASES!
+MongoDB: DATABASES!
+
+Haikal: What do we want?
+
+TypeDB: PERFORMANCE!
+MongoDB: PERFORMANCE!
+
+Haikal: When do we want it?
+
+Neo4j: DATABASES!`;
+
 export const WorkspaceScreen: React.FC = () => {
     console.log("WorkspaceScreen() called");
     const theme = themeState.use()[0];
@@ -96,6 +121,7 @@ export const WorkspaceScreen: React.FC = () => {
         vertexCount: null,
         edgeCount: null,
         queryRunTime: null,
+        done: false,
     });
     // const [answerGraph, setAnswerGraph] = React.useState<TypeDBVisualiserData.Graph>(null);
     // const [answerTable, setAnswerTable] = React.useState<AnswerTable>(null);
@@ -113,6 +139,16 @@ export const WorkspaceScreen: React.FC = () => {
     const [selectedVertex, setSelectedVertex] = React.useState<ForceGraphVertex>(null);
     const routerHistory = useHistory();
 
+    const onAnswerGraphStatus = (status: AnswerGraphStatus) => {
+        setAnswerGraphStatus(status);
+        if (status.done) {
+            addLogEntry(toGraphResultsStatusString(status));
+            if (querySettings.MAKE_FUN_OF_NEO4J) {
+                addLogEntry(NEO4J_WALKS_INTO_BAR);
+            }
+        }
+    };
+
     const updateZoom = (_scale: number) => {
         // TODO: currently this causes a massive performance hit - maybe breaking down WorkspaceScreen into
         //       sub-components would fix it?
@@ -121,7 +157,8 @@ export const WorkspaceScreen: React.FC = () => {
 
     const runQuery = () => {
         setQuery({ time: Date.now(), text: code });
-        setAnswerGraphStatus({ vertexCount: 0, edgeCount: 0, queryRunTime: 0 });
+        addLogEntry(code);
+        setAnswerGraphStatus({ vertexCount: 0, edgeCount: 0, queryRunTime: 0, done: false });
     };
 
     const cancelQuery = () => {
@@ -180,6 +217,26 @@ export const WorkspaceScreen: React.FC = () => {
         return [queryPaneInitialWidth, graphExplorerInitialWidth];
     }
 
+    const [querySettings, setQuerySettings] = React.useState({
+        LONG_RUNNING_TRANSACTION: false,
+        ENABLE_REASONING: false,
+        ENABLE_EXPLANATIONS: false,
+        MAKE_FUN_OF_NEO4J: false,
+    });
+
+    const toggleQuerySettingFlag = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newSettings = {...querySettings, [event.target.name]: event.target.checked};
+
+        if (querySettings.LONG_RUNNING_TRANSACTION && !newSettings.LONG_RUNNING_TRANSACTION) newSettings.ENABLE_EXPLANATIONS = false;
+        else if (querySettings.ENABLE_REASONING && !newSettings.ENABLE_REASONING) newSettings.ENABLE_EXPLANATIONS = false;
+        else if (!querySettings.ENABLE_EXPLANATIONS && newSettings.ENABLE_EXPLANATIONS) {
+            newSettings.LONG_RUNNING_TRANSACTION = true;
+            newSettings.ENABLE_REASONING = true;
+        }
+
+        setQuerySettings(newSettings);
+    };
+
     return (
         <>
             <div className={classes.appBar}>
@@ -225,7 +282,7 @@ export const WorkspaceScreen: React.FC = () => {
                                             <pre className={classes.resultsLog}><div>{resultsLog}</div></pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
-                                            <QueryVisualiser query={query} db={db} theme={theme} onStatus={setAnswerGraphStatus}/>
+                                            <QueryVisualiser query={query} db={db} theme={theme} onStatus={onAnswerGraphStatus}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             {/*{answerTable &&*/}
@@ -250,7 +307,22 @@ export const WorkspaceScreen: React.FC = () => {
                                         Query Settings
                                     </div>
                                     <div className={classes.querySettingsBody}>
-                                        Fast mode is <strong>enabled.</strong> Queries will run in less time than Neo4j takes to boot up.
+                                        <StudioFormControlLabel label="Long-running transaction"
+                                                                control={<StudioCheckbox checked={querySettings[OPTION_LONG_RUNNING_TRANSACTION]}
+                                                                                         onChange={toggleQuerySettingFlag}
+                                                                                         name={OPTION_LONG_RUNNING_TRANSACTION}/>}/>
+                                        <StudioFormControlLabel label="Enable reasoning"
+                                                                control={<StudioCheckbox checked={querySettings[OPTION_ENABLE_REASONING]}
+                                                                                         onChange={toggleQuerySettingFlag}
+                                                                                         name={OPTION_ENABLE_REASONING}/>}/>
+                                        <StudioFormControlLabel label="Enable explanations"
+                                                                control={<StudioCheckbox checked={querySettings[OPTION_ENABLE_EXPLANATIONS]}
+                                                                                         onChange={toggleQuerySettingFlag}
+                                                                                         name={OPTION_ENABLE_EXPLANATIONS}/>}/>
+                                        <StudioFormControlLabel label="Make fun of Neo4j"
+                                                                control={<StudioCheckbox checked={querySettings[OPTION_MAKE_FUN_OF_NEO4J]}
+                                                                                         onChange={toggleQuerySettingFlag}
+                                                                                         name={OPTION_MAKE_FUN_OF_NEO4J}/>}/>                             
                                     </div>
                                 </div>
                                 <div>
@@ -293,7 +365,7 @@ export const WorkspaceScreen: React.FC = () => {
                 {/*</span>}*/}
                 {answerGraphStatus.vertexCount != null &&
                 <div className={classes.resultsStatus}>
-                    Vertices: {answerGraphStatus.vertexCount} | Edges: {answerGraphStatus.edgeCount} | {msToTime(answerGraphStatus.queryRunTime)}
+                    {toGraphResultsStatusString(answerGraphStatus)}
                 </div>}
             </div>
         </>

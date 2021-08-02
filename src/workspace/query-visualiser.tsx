@@ -16,6 +16,7 @@ export interface AnswerGraphStatus {
     vertexCount: number;
     edgeCount: number;
     queryRunTime: number;
+    done: boolean;
 }
 
 export interface QueryVisualiserProps {
@@ -43,7 +44,6 @@ export const QueryVisualiser: React.FC<QueryVisualiserProps> = ({db, query, them
         setVisualiserData({ simulationID: null, vertices: [], edges: [] });
         // setRawAnswers([]);
         // setAnswerTable(null);
-        // addLogEntry(code);
     };
 
     React.useEffect(() => {
@@ -70,6 +70,7 @@ export const QueryVisualiser: React.FC<QueryVisualiserProps> = ({db, query, them
                     vertexCount: res.graph.vertices.length,
                     edgeCount: res.graph.edges.length,
                     queryRunTime: res.executionTime,
+                    done: res.done,
                 });
                 // TODO: There must be a more efficient way of doing this
                 // if (rawAnswers) {

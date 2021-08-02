@@ -46,11 +46,6 @@ export const loginStyles = makeStyles({
         },
     },
 
-    formControlLabel: {
-        marginRight: "0 !important",
-        textAlign: "start",
-    },
-
     actionList: {
         display: "grid",
         justifyContent: "center",
