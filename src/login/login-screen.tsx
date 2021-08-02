@@ -68,7 +68,7 @@ export const TypeDBLoginTab: React.FC = () => {
     };
 
     const loadDatabases = (address: string) => {
-        if (!address || address === dbServer.address) return;
+        if (!address) return;
         setDBServer({ address, dbs: [] });
         setDBSelected(false);
         setDB(LOADING_DATABASES);
