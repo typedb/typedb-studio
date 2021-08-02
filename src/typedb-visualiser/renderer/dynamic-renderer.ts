@@ -41,7 +41,7 @@ export function setupStage(container: HTMLElement, onZoom: (scale: number) => an
     // activate plugins
     viewport.drag()
         .pinch({ factor: 1 })
-        .wheel({ percent: -.5 })
+        .wheel() // NOTE: This wheel speed feels too fast with a Mac mouse and too slow with a Windows one - best to leave it as is
         .clampZoom({ minScale: .01, maxScale: 3 })
         .decelerate({ friction: .95 });
 
