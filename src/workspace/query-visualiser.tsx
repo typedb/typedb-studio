@@ -1,6 +1,6 @@
 import { ipcRenderer, IpcRendererEvent } from "electron";
 import React from "react";
-import { ConceptData, ConceptMapData, MatchQueryRequest, MatchQueryResponsePart } from "../ipc/event-args";
+import { MatchQueryRequest, MatchQueryResponsePart } from "../ipc/event-args";
 import { themeState } from "../state/state";
 import { StudioTheme } from "../styles/theme";
 import { TypeDBVisualiserData } from "../typedb-visualiser";
@@ -12,13 +12,20 @@ export interface QueryProps {
     text: string;
 }
 
+export interface AnswerGraphStatus {
+    vertexCount: number;
+    edgeCount: number;
+    queryRunTime: number;
+}
+
 export interface QueryVisualiserProps {
     db: string;
     query: QueryProps;
     theme: StudioTheme;
+    onStatus: (value: AnswerGraphStatus) => any;
 }
 
-export const QueryVisualiser: React.FC<QueryVisualiserProps> = ({db, query, theme}) => {
+export const QueryVisualiser: React.FC<QueryVisualiserProps> = ({db, query, theme, onStatus}) => {
     const classes = workspaceStyles({ theme });
     // const [rawAnswers, setRawAnswers] = React.useState<ConceptMapData[]>(null);
     const [visualiserData, setVisualiserData] = React.useState<TypeDBVisualiserData.Graph>(null);
@@ -59,6 +66,11 @@ export const QueryVisualiser: React.FC<QueryVisualiserProps> = ({db, query, them
             // setRenderRunTime("<<in progress>>");
             if (res.success) {
                 setVisualiserData(res.graph);
+                onStatus({
+                    vertexCount: res.graph.vertices.length,
+                    edgeCount: res.graph.edges.length,
+                    queryRunTime: res.executionTime,
+                });
                 // TODO: There must be a more efficient way of doing this
                 // if (rawAnswers) {
                 //     const headings = Object.keys(rawAnswers[0]);

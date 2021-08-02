@@ -48,4 +48,5 @@ export interface MatchQueryResponsePart extends IPCResponse {
     answers?: ConceptMapData[];
     types?: {[label: string]: ConceptData};
     things?: {[iid: string]: ConceptData};
+    executionTime?: number;
 }

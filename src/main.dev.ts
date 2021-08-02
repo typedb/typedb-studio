@@ -191,6 +191,7 @@ interface GraphElementIDRegistry {
 }
 
 ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
+    const startTime = Date.now();
     let answerDispatcher: ReturnType<typeof setInterval>;
     try {
         currentSession = await client.session(req.db, SessionType.DATA);
@@ -208,7 +209,7 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
         answerDispatcher = setInterval(() => {
             // TODO: maybe requesting ConceptMapData should be a separate request type / parameter?
             // TODO: try sending Thing and Type maps
-            const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: false };
+            const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: false, executionTime: Date.now() - startTime };
             event.sender.send("match-query-response-part", res);
             answerBucket.length = 0;
         }, 50);
@@ -372,11 +373,11 @@ ipcMain.on("match-query-request", (async (event, req: MatchQueryRequest) => {
             // if (res.done) addLogEntry(answerCountString);
         }
         await Promise.all(answerPromises);
-        const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: true };
+        const res: MatchQueryResponsePart = { success: true, graph, answers: answerBucket, done: true, executionTime: Date.now() - startTime };
         event.sender.send("match-query-response-part", res);
     } catch (e: any) {
         const errorMessage = processError(e);
-        const res: MatchQueryResponsePart = { success: false, error: errorMessage };
+        const res: MatchQueryResponsePart = { success: false, error: errorMessage, executionTime: Date.now() - startTime };
         event.sender.send("match-query-response-part", res);
     } finally {
         clearInterval(answerDispatcher);

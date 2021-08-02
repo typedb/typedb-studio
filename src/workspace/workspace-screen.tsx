@@ -27,7 +27,7 @@ import { routes } from "../router";
 import { studioStyles } from "../styles/studio-styles";
 import { TypeDBVisualiserData, ForceGraphVertex } from "../typedb-visualiser";
 import { CodeEditor } from "./code-editor";
-import { QueryVisualiser } from "./query-visualiser";
+import { AnswerGraphStatus, QueryVisualiser } from "./query-visualiser";
 import { workspaceStyles } from "./workspace-styles";
 import { databaseState, dbServerState, themeState } from "../state/state";
 import moment from "moment";
@@ -92,6 +92,11 @@ export const WorkspaceScreen: React.FC = () => {
     const [db, setDB] = databaseState.use();
     const [dbServer, setDBServer] = dbServerState.use();
     const [code, setCode] = React.useState("match $x sub thing;\noffset 0;\nlimit 1000;\n");
+    const [answerGraphStatus, setAnswerGraphStatus] = React.useState<AnswerGraphStatus>({
+        vertexCount: null,
+        edgeCount: null,
+        queryRunTime: null,
+    });
     // const [answerGraph, setAnswerGraph] = React.useState<TypeDBVisualiserData.Graph>(null);
     // const [answerTable, setAnswerTable] = React.useState<AnswerTable>(null);
     const { setSnackbar } = React.useContext(SnackbarContext);
@@ -116,6 +121,7 @@ export const WorkspaceScreen: React.FC = () => {
 
     const runQuery = () => {
         setQuery({ time: Date.now(), text: code });
+        setAnswerGraphStatus({ vertexCount: 0, edgeCount: 0, queryRunTime: 0 });
     };
 
     const cancelQuery = () => {
@@ -219,7 +225,7 @@ export const WorkspaceScreen: React.FC = () => {
                                             <pre className={classes.resultsLog}><div>{resultsLog}</div></pre>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={1} selectedIndex={selectedResultsTab} className={classes.resultsTabPanel}>
-                                            <QueryVisualiser query={query} db={db} theme={theme}/>
+                                            <QueryVisualiser query={query} db={db} theme={theme} onStatus={setAnswerGraphStatus}/>
                                         </StudioTabPanel>
                                         <StudioTabPanel index={2} selectedIndex={selectedResultsTab} className={clsx(classes.resultsTabPanel, classes.resultsTablePanel)}>
                                             {/*{answerTable &&*/}
@@ -285,9 +291,9 @@ export const WorkspaceScreen: React.FC = () => {
                 {/*<span>*/}
                 {/*    Zoom: {zoom}%*/}
                 {/*</span>}*/}
-                {queryRunTime &&
+                {answerGraphStatus.vertexCount != null &&
                 <div className={classes.resultsStatus}>
-                    {queryResult != null ? <>{queryResult} | {queryRunTime}</> : <>{queryRunTime}</>}
+                    Vertices: {answerGraphStatus.vertexCount} | Edges: {answerGraphStatus.edgeCount} | {msToTime(answerGraphStatus.queryRunTime)}
                 </div>}
             </div>
         </>
