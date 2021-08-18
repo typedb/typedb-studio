@@ -27,10 +27,10 @@ vaticle_dependencies()
 load("@vaticle_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
 bazel_toolchain()
 
-# Load //builder/nodejs
-load("@vaticle_dependencies//builder/nodejs:deps.bzl", nodejs_deps = "deps")
-nodejs_deps()
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "npm_install")
+# Load //builder/java
+load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
+java_deps()
+load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
 
 # Load Python
 load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
@@ -48,17 +48,21 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_reg
 kotlin_repositories()
 kt_register_toolchains()
 
+# Load Compose
+load("@vaticle_dependencies//builder/compose:deps.bzl", compose_deps = "deps")
+compose_deps()
+
 # Load Checkstyle
 load("@vaticle_dependencies//tool/checkstyle:deps.bzl", checkstyle_deps = "deps")
 checkstyle_deps()
 
-# Load Sonarcloud
-load("@vaticle_dependencies//tool/sonarcloud:deps.bzl", "sonarcloud_dependencies")
-sonarcloud_dependencies()
-
 # Load Unused Deps
 load("@vaticle_dependencies//tool/unuseddeps:deps.bzl", unuseddeps_deps = "deps")
 unuseddeps_deps()
+
+# Load //tool/common
+load("@vaticle_dependencies//tool/common:deps.bzl", "vaticle_dependencies_ci_pip",
+    vaticle_dependencies_tool_maven_artifacts = "maven_artifacts")
 
 #####################################################################
 # Load @vaticle_bazel_distribution from (@vaticle_dependencies) #
@@ -80,20 +84,33 @@ rules_pkg()
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 rules_pkg_dependencies()
 
-# Load artifacts
-load("//dependencies/vaticle:artifacts.bzl", "vaticle_typedb_artifacts")
-vaticle_typedb_artifacts()
+# Load maven artifacts
+load("//dependencies/maven:artifacts.bzl", vaticle_typedb_studio_artifacts = "artifacts")
 
 
-# Load package.json
-node_repositories(
-    preserve_symlinks = False,
+################################
+# Load @vaticle dependencies #
+################################
+
+# Load repositories
+load("//dependencies/vaticle:repositories.bzl", "vaticle_force_graph")
+vaticle_force_graph()
+
+# Load Maven
+load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_graph_artifacts = "artifacts")
+
+
+############################
+# Load @maven dependencies #
+############################
+maven(
+    vaticle_dependencies_tool_maven_artifacts +
+    vaticle_force_graph_artifacts +
+    vaticle_typedb_studio_artifacts,
+
+    fail_on_missing_checksum = False,
 )
-npm_install(
-    name = "npm",
-    package_json = "//:package.json",
-    package_lock_json = "//:package-lock.json",
-)
+
 
 ###############################################
 # Create @vaticle_typedb_studio_workspace_refs #

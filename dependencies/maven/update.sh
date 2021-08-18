@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #
 # Copyright (C) 2021 Vaticle
 #
@@ -15,21 +16,4 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-def vaticle_dependencies():
-#    git_repository(
-#        name = "vaticle_dependencies",
-#        remote = "https://github.com/vaticle/dependencies",
-#        commit = "515d6adf719cc7e78f9d313e6c97bce9f918b60b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
-#    )
-    native.local_repository(
-        name = "vaticle_dependencies",
-        path = "../dependencies",
-    )
-
-def vaticle_force_graph():
-    native.local_repository(
-        name = "vaticle_force_graph",
-        path = "../force-graph",
-    )
+bazel run @vaticle_dependencies//library/maven:update
