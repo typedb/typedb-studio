@@ -28,7 +28,7 @@ data class VisualiserTheme(
 ) {
     companion object {
         val DEFAULT = VisualiserTheme(
-            background = RED,
+            background = DEEP_PURPLE,
             vertex = mapOf(
                 Pair(THING_TYPE, PINK),
                 Pair(ENTITY_TYPE, PINK),
