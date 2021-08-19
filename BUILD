@@ -81,6 +81,10 @@ kt_jvm_binary(
     runtime_deps = [
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
     ],
+    resources = [
+        "//resources/fonts",
+    ],
+    resource_strip_prefix = "resources",
 )
 
 pkg_zip(

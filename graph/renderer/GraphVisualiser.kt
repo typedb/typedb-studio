@@ -1,6 +1,5 @@
 package com.vaticle.graph.renderer
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,27 +23,36 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vaticle.graph.TypeDBForceSimulation
+import com.vaticle.graph.VertexEncoding
 import java.lang.IllegalStateException
 
-@Preview
+import com.vaticle.graph.VertexEncoding.*
+import kotlin.math.sqrt
+
 @Composable
-fun GraphVisualiser() {
-    val graph = remember { Graph() }
+fun GraphVisualiser(theme: VisualiserTheme) {
+    val simulation = remember { TypeDBForceSimulation() }
     var running: Boolean by mutableStateOf(false)
     var canvasSize by mutableStateOf(Size(0F, 0F))
     var devicePixelRatio by mutableStateOf(1F)
-    with(LocalDensity.current) {
-        println("Updated devicePixelRatio to ${1.dp.toPx()}")
-        devicePixelRatio = 1.dp.toPx()
-    }
+    with(LocalDensity.current) { devicePixelRatio = 1.dp.toPx() }
+
+    val ubuntuMono = FontFamily(
+        Font(resource = "fonts/UbuntuMono/UbuntuMono-Regular.ttf", weight = FontWeight.W400, style = FontStyle.Normal)
+    )
 
     Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
         Button(modifier = Modifier.align(Alignment.Start), onClick = {
-            graph.simulation = graph.toForceSimulation(canvasSize, devicePixelRatio)
+            simulation.init(canvasSize, devicePixelRatio)
             running = true
         }) {
             Text("Run ▶️")
@@ -59,7 +67,7 @@ fun GraphVisualiser() {
 
                 drawRect(Color(0xFF0E053F), Offset.Zero, Size(canvasWidth, canvasHeight))
 
-                graph.edges.forEach {
+                simulation.graph.edges.forEach {
                     if (it.sourcePosition.x != 0F) drawLine(
                         Color(0xFF7BA0FF),
                         Offset(it.sourcePosition.x, it.sourcePosition.y),
@@ -68,23 +76,55 @@ fun GraphVisualiser() {
                     )
                 }
 
-                graph.vertices.forEach { v ->
-                    if (v.position.x == 0F) return@forEach;
-                    drawRoundRect(Color(0xFFFFA9E8), Offset(v.position.x, v.position.y), Size(v.width * devicePixelRatio, v.height * devicePixelRatio), CornerRadius(5F * devicePixelRatio))
+                val vertexColors: Map<VertexEncoding, Color> = theme.vertex.map { Pair(it.key, Color(it.value.argb)) }.toMap()
+
+                simulation.graph.vertices.forEach { v ->
+                    if (v.position.x == 0F) return@forEach
+                    val vertexColor = requireNotNull(vertexColors[v.encoding])
+                    val scaledWidth = v.width * devicePixelRatio
+                    val scaledHeight = v.height * devicePixelRatio
+                    val scaledCornerRadius = CornerRadius(5F * devicePixelRatio)
+                    when (v.encoding) {
+
+                        ENTITY_TYPE, THING_TYPE, ENTITY -> drawRoundRect(
+                            color = vertexColor,
+                            topLeft = Offset(v.position.x - scaledWidth / 2, v.position.y - scaledHeight / 2),
+                            size = Size(scaledWidth, scaledHeight),
+                            cornerRadius = scaledCornerRadius)
+
+                        RELATION_TYPE, RELATION -> {
+                            // We start with a square of width n and transform it into a rhombus
+                            val n: Float = (scaledHeight / sqrt(2.0)).toFloat()
+                            withTransform({
+                                scale(scaleX = v.width / v.height, scaleY = 1F, pivot = v.position)
+                                rotate(degrees = 45F, pivot = v.position)
+                            }) {
+                                drawRoundRect(
+                                    color = vertexColor,
+                                    topLeft = Offset(v.position.x - n / 2, v.position.y - n / 2),
+                                    size = Size(n, n),
+                                    cornerRadius = scaledCornerRadius)
+                            }
+                        }
+
+                        ATTRIBUTE_TYPE, ATTRIBUTE -> drawOval(
+                            color = vertexColor,
+                            topLeft = Offset(v.position.x - scaledWidth / 2, v.position.y - scaledHeight / 2),
+                            size = Size(scaledWidth, scaledHeight))
+                    }
                 }
             }
 
-            graph.vertices.forEach {
+            simulation.graph.vertices.forEach {
                 if (it.position.x != 0F) {
+                    val scaledX = (it.position.x.dp / devicePixelRatio) - it.width.dp / 2
+                    val scaledY = (it.position.y.dp / devicePixelRatio) - it.height.dp / 2
                     Column(
-                        modifier = Modifier
-                            .offset(x = it.position.x.dp / devicePixelRatio, y = it.position.y.dp / devicePixelRatio)
-                            .width(it.width.dp)
-                            .height(it.height.dp),
+                        modifier = Modifier.offset(scaledX, scaledY).width(it.width.dp).height(it.height.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = it.label, fontFamily = FontFamily.Monospace, textAlign = TextAlign.Center)
+                        Text(text = it.label, fontFamily = ubuntuMono, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -94,19 +134,26 @@ fun GraphVisualiser() {
     LaunchedEffect(devicePixelRatio) {
         while (true) {
             withFrameNanos {
-                // TODO: factor in the "average iteration time" to make this as smooth as possible
+                // TODO: adjust the simulation scale if the device pixel ratio has changed since it ran
+                // TODO: properties of the graph that involve the Simulation should be extracted to a separate class
                 if (!running
-                    || graph.simulation == null
-                    || System.nanoTime() - graph.previousTimeNanos < 1.667e7 // 16.67ms
-                    || graph.simulation!!.alpha() < graph.simulation!!.alphaMin()) { return@withFrameNanos }
-                graph.simulation!!.tick()
-                graph.vertices.forEach {
-                    val node = graph.simulation!!.nodes()[it.id]
+                    || System.nanoTime() - simulation.previousTimeNanos < 1.667e7 // 60 FPS
+                    || simulation.alpha() < simulation.alphaMin()) { return@withFrameNanos }
+
+                simulation.previousTimeNanos = System.nanoTime()
+                simulation.tick()
+
+                val vertexPositions: HashMap<Int, Offset> = HashMap()
+                simulation.graph.vertices.forEach {
+                    val node = simulation.nodes()[it.id]
                         ?: throw IllegalStateException("Received bad simulation data: no entry received for vertex ID ${it.id}!")
                     it.position = Offset(node.x().toFloat(), node.y().toFloat())
+                    vertexPositions[it.id] = it.position
                 }
-                graph.updateEdgePositions(devicePixelRatio)
-                graph.previousTimeNanos = System.nanoTime()
+                simulation.graph.edges.forEach {
+                    it.sourcePosition = vertexPositions[it.sourceID] as Offset
+                    it.targetPosition = vertexPositions[it.targetID] as Offset
+                }
             }
         }
     }
