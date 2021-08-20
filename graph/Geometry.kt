@@ -2,6 +2,8 @@ package com.vaticle.graph
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import kotlin.math.sqrt
 
 data class Line(val from: Offset, val to: Offset)
@@ -101,4 +103,23 @@ fun ellipseIncomingLineIntersect(sourcePoint: Offset, ellipse: Ellipse): Offset 
     val y0 = (a * b * py) / sqrt(a*a * py*py + b*b * px*px)
 
     return Offset(x0+x, y0+y)
+}
+
+fun arrowhead(from: Offset, to: Offset, arrowLength: Float, arrowWidth: Float): Path? {
+    // first compute normalised vector for the line
+    val d = to - from
+    val len = sqrt(d.x*d.x + d.y*d.y)
+
+    if (len == 0F) return null; // if length is 0 - can't render arrows
+
+    val n = d / len // normal vector in the direction of the line with length 1
+    val s = Offset(from.x + n.x * (len - arrowLength), from.y + n.y * (len - arrowLength)) // wingtip offsets from line
+    val top = Offset(-n.y, n.x) // orthogonal vector to the line vector
+
+    return Path().apply {
+        moveTo(to.x, to.y)
+        lineTo(s.x + top.x * arrowWidth, s.y + top.y * arrowWidth)
+        lineTo(s.x - top.x * arrowWidth, s.y - top.y * arrowWidth)
+        close()
+    }
 }

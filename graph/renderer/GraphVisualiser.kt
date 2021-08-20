@@ -35,6 +35,7 @@ import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaticle.graph.EdgeData
 import com.vaticle.graph.Ellipse
 import com.vaticle.graph.TypeDBForceSimulation
 import com.vaticle.graph.VertexData
@@ -42,6 +43,7 @@ import com.vaticle.graph.VertexEncoding
 import java.lang.IllegalStateException
 
 import com.vaticle.graph.VertexEncoding.*
+import com.vaticle.graph.arrowhead
 import com.vaticle.graph.diamondIncomingLineIntersect
 import com.vaticle.graph.ellipseIncomingLineIntersect
 import com.vaticle.graph.midpoint
@@ -75,72 +77,18 @@ fun GraphVisualiser(theme: VisualiserTheme) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 canvasSize = size / devicePixelRatio // This tells the simulation where its centre point should lie.
 
-                val verticesByID: HashMap<Int, VertexData> = HashMap()
-                simulation.graph.vertices.forEach { verticesByID[it.id] = it }
-
-                visibleEdges.forEach {
-                    val sourceVertex = requireNotNull(verticesByID[it.sourceID])
-                    val targetVertex = requireNotNull(verticesByID[it.targetID])
-                    val lineSource = edgeEndpoint(targetVertex, sourceVertex)
-                    val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
-
-                    if (lineSource != null && lineTarget != null) {
-                        val m: Offset = midpoint(it.sourcePosition, it.targetPosition)
-                        // TODO: This Size is an approximation - a Compose equivalent of TextMetrics would be more robust
-                        val labelRect = Rect(
-                            Offset(m.x - it.label.length * 4 - 2, m.y - 7 - 2),
-                            Size(it.label.length * 8F + 4, 14F + 4)
-                        )
-                        val linePart1Target = rectIncomingLineIntersect(lineSource, labelRect)
-                        if (linePart1Target != null) {
-                            drawLine(
-                                color = Color(theme.edge.argb),
-                                start = lineSource * devicePixelRatio,
-                                end = linePart1Target * devicePixelRatio,
-                                strokeWidth = devicePixelRatio
-                            )
-                        }
-                        val linePart2Source = rectIncomingLineIntersect(lineTarget, labelRect)
-                        if (linePart2Source != null) {
-                            drawLine(
-                                color = Color(theme.edge.argb),
-                                start = linePart2Source * devicePixelRatio,
-                                end = lineTarget * devicePixelRatio,
-                                strokeWidth = devicePixelRatio
-                            )
-                        }
-                    }
-                }
+                val verticesByID = simulation.graph.vertices.associateBy { it.id }
+                visibleEdges.forEach { drawEdge(it, verticesByID, theme, devicePixelRatio) }
             }
 
-            visibleEdges.forEach {
-                val m: Offset = midpoint(it.sourcePosition, it.targetPosition)
-                val rect = Rect(Offset(m.x - it.label.length * 4, m.y - 7), Size(it.label.length * 8F, 14F))
-                Column(
-                    modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = it.label, color = Color(theme.edge.argb), fontSize = 14.sp, fontFamily = ubuntuMono, textAlign = TextAlign.Center)
-                }
-            }
+            visibleEdges.forEach { drawEdgeLabel(it, theme, ubuntuMono) }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val vertexColors: Map<VertexEncoding, Color> = theme.vertex.map { Pair(it.key, Color(it.value.argb)) }.toMap()
-                visibleVertices.forEach { drawVertex(this, it, vertexColors, devicePixelRatio) }
+                visibleVertices.forEach { drawVertex(it, vertexColors, devicePixelRatio) }
             }
 
-            visibleVertices.forEach {
-                val x = it.position.x.dp - it.width.dp / 2
-                val y = it.position.y.dp - it.height.dp / 2
-                Column(
-                    modifier = Modifier.offset(x, y).width(it.width.dp).height(it.height.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = it.label, color = Color(theme.vertexLabel.argb), fontSize = 16.sp, fontFamily = ubuntuMono, textAlign = TextAlign.Center)
-                }
-            }
+            visibleVertices.forEach { drawVertexLabel(it, theme, ubuntuMono) }
         }
     }
 
@@ -155,23 +103,22 @@ fun GraphVisualiser(theme: VisualiserTheme) {
                 simulation.previousTimeNanos = System.nanoTime()
                 simulation.tick()
 
-                val vertexPositions: HashMap<Int, Offset> = HashMap()
                 simulation.graph.vertices.forEach {
                     val node = simulation.nodes()[it.id]
                         ?: throw IllegalStateException("Received bad simulation data: no entry received for vertex ID ${it.id}!")
                     it.position = Offset(node.x().toFloat(), node.y().toFloat())
-                    vertexPositions[it.id] = it.position
                 }
+                val verticesByID: Map<Int, VertexData> = simulation.graph.vertices.associateBy { it.id }
                 simulation.graph.edges.forEach {
-                    it.sourcePosition = vertexPositions[it.sourceID] as Offset
-                    it.targetPosition = vertexPositions[it.targetID] as Offset
+                    it.sourcePosition = verticesByID[it.sourceID]!!.position
+                    it.targetPosition = verticesByID[it.targetID]!!.position
                 }
             }
         }
     }
 }
 
-fun drawVertex(canvas: DrawScope, v: VertexData, vertexColors: Map<VertexEncoding, Color>, devicePixelRatio: Float) {
+private fun DrawScope.drawVertex(v: VertexData, vertexColors: Map<VertexEncoding, Color>, devicePixelRatio: Float) {
     val vertexColor = requireNotNull(vertexColors[v.encoding])
     val scaledPosition = v.position * devicePixelRatio
     val scaledWidth = v.width * devicePixelRatio
@@ -179,7 +126,7 @@ fun drawVertex(canvas: DrawScope, v: VertexData, vertexColors: Map<VertexEncodin
     val scaledCornerRadius = CornerRadius(5F * devicePixelRatio)
     when (v.encoding) {
 
-        ENTITY_TYPE, THING_TYPE, ENTITY -> canvas.drawRoundRect(
+        ENTITY_TYPE, THING_TYPE, ENTITY -> drawRoundRect(
             color = vertexColor,
             topLeft = Offset(scaledPosition.x - scaledWidth / 2, scaledPosition.y - scaledHeight / 2),
             size = Size(scaledWidth, scaledHeight),
@@ -188,7 +135,7 @@ fun drawVertex(canvas: DrawScope, v: VertexData, vertexColors: Map<VertexEncodin
         RELATION_TYPE, RELATION -> {
             // We start with a square of width n and transform it into a rhombus
             val n: Float = (scaledHeight / sqrt(2.0)).toFloat()
-            canvas.withTransform({
+            withTransform({
                 scale(scaleX = v.width / v.height, scaleY = 1F, pivot = scaledPosition)
                 rotate(degrees = 45F, pivot = scaledPosition)
             }) {
@@ -200,17 +147,76 @@ fun drawVertex(canvas: DrawScope, v: VertexData, vertexColors: Map<VertexEncodin
             }
         }
 
-        ATTRIBUTE_TYPE, ATTRIBUTE -> canvas.drawOval(
+        ATTRIBUTE_TYPE, ATTRIBUTE -> drawOval(
             color = vertexColor,
             topLeft = Offset(scaledPosition.x - scaledWidth / 2, scaledPosition.y - scaledHeight / 2),
             size = Size(scaledWidth, scaledHeight))
     }
 }
 
+@Composable
+private fun drawVertexLabel(v: VertexData, theme: VisualiserTheme, fontFamily: FontFamily) {
+    val x = v.position.x.dp - v.width.dp / 2
+    val y = v.position.y.dp - v.height.dp / 2
+    Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = v.label, color = Color(theme.vertexLabel.argb), fontSize = 16.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+    }
+}
+
+private fun DrawScope.drawEdge(edge: EdgeData, verticesByID: Map<Int, VertexData>, theme: VisualiserTheme, devicePixelRatio: Float) {
+    val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
+    val targetVertex = requireNotNull(verticesByID[edge.targetID])
+    val lineSource = edgeEndpoint(targetVertex, sourceVertex)
+    val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
+
+    if (lineSource != null && lineTarget != null) {
+        val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
+        // TODO: This Size is an approximation - a Compose equivalent of TextMetrics would be more robust
+        val labelRect = Rect(
+            Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
+            Size(edge.label.length * 8F + 4, 14F + 4)
+        )
+        val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
+        if (linePart1Target != null) {
+            drawLine(
+                start = lineSource * devicePixelRatio, end = linePart1Target * devicePixelRatio,
+                color = Color(theme.edge.argb), strokeWidth = devicePixelRatio
+            )
+        }
+        val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
+        if (linePart2Source != null) {
+            drawLine(
+                start = linePart2Source * devicePixelRatio, end = lineTarget * devicePixelRatio,
+                color = Color(theme.edge.argb), strokeWidth = devicePixelRatio
+            )
+
+            val arrow = arrowhead(
+                from = lineSource * devicePixelRatio, to = lineTarget * devicePixelRatio,
+                arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
+            )
+            if (arrow != null) drawPath(path = arrow, color = Color(theme.edge.argb))
+        }
+    }
+}
+
+@Composable
+private fun drawEdgeLabel(edge: EdgeData, theme: VisualiserTheme, fontFamily: FontFamily) {
+    val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
+    val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
+    Column(
+        modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = edge.label, color = Color(theme.edge.argb), fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+    }
+}
+
 /**
  * Find the endpoint of an edge drawn from `source` to `target`
  */
-fun edgeEndpoint(source: VertexData, target: VertexData): Offset? {
+private fun edgeEndpoint(source: VertexData, target: VertexData): Offset? {
     return when (target.encoding) {
         ENTITY, RELATION, ENTITY_TYPE, RELATION_TYPE, THING_TYPE -> {
             val targetRect = Rect(Offset(target.position.x - target.width / 2 - 4, target.position.y - target.height / 2 - 4), Size(target.width + 8, target.height + 8))
@@ -221,7 +227,7 @@ fun edgeEndpoint(source: VertexData, target: VertexData): Offset? {
         }
         ATTRIBUTE, ATTRIBUTE_TYPE -> {
             val targetEllipse = Ellipse(target.position.x, target.position.y, target.width / 2 + 2, target.height / 2 + 2)
-            ellipseIncomingLineIntersect(source.position, targetEllipse);
+            ellipseIncomingLineIntersect(source.position, targetEllipse)
         }
     }
 }
