@@ -48,6 +48,21 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_reg
 kotlin_repositories()
 kt_register_toolchains()
 
+# Load //builder/antlr (required by typedb_client_java > typeql_lang_java)
+load("@vaticle_dependencies//builder/antlr:deps.bzl", antlr_deps = "deps", "antlr_version")
+antlr_deps()
+
+load("@rules_antlr//antlr:lang.bzl", "JAVA")
+load("@rules_antlr//antlr:repositories.bzl", "rules_antlr_dependencies")
+rules_antlr_dependencies(antlr_version, JAVA)
+
+# Load //builder/grpc (required by typedb_client_java)
+load("@vaticle_dependencies//builder/grpc:deps.bzl", grpc_deps = "deps")
+grpc_deps()
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl",
+com_github_grpc_grpc_deps = "grpc_deps")
+com_github_grpc_grpc_deps()
+
 # Load Compose
 load("@vaticle_dependencies//builder/compose:deps.bzl", compose_deps = "deps")
 compose_deps()
@@ -93,10 +108,24 @@ load("//dependencies/maven:artifacts.bzl", vaticle_typedb_studio_artifacts = "ar
 ################################
 
 # Load repositories
-load("//dependencies/vaticle:repositories.bzl", "vaticle_force_graph")
+load("//dependencies/vaticle:repositories.bzl", "vaticle_force_graph", "vaticle_typedb_client_java")
 vaticle_force_graph()
+vaticle_typedb_client_java()
+
+load("@vaticle_typedb_client_java//dependencies/vaticle:repositories.bzl", "vaticle_typedb_common", "vaticle_factory_tracing", "vaticle_typedb_protocol", "vaticle_typeql_lang_java")
+vaticle_typedb_common()
+vaticle_typeql_lang_java()
+vaticle_factory_tracing()
+vaticle_typedb_protocol()
+
+load("@vaticle_typeql_lang_java//dependencies/vaticle:repositories.bzl", "vaticle_typeql")
+vaticle_typeql()
 
 # Load Maven
+load("@vaticle_typeql_lang_java//dependencies/maven:artifacts.bzl", vaticle_typeql_lang_java_artifacts = "artifacts")
+load("@vaticle_typedb_client_java//dependencies/maven:artifacts.bzl", vaticle_typedb_client_java_artifacts = "artifacts")
+load("@vaticle_typedb_common//dependencies/maven:artifacts.bzl", vaticle_typedb_common_artifacts = "artifacts")
+load("@vaticle_factory_tracing//dependencies/maven:artifacts.bzl", vaticle_factory_tracing_artifacts = "artifacts")
 load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_graph_artifacts = "artifacts")
 
 
@@ -105,6 +134,10 @@ load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_gra
 ############################
 maven(
     vaticle_dependencies_tool_maven_artifacts +
+    vaticle_typeql_lang_java_artifacts +
+    vaticle_typedb_client_java_artifacts +
+    vaticle_typedb_common_artifacts +
+    vaticle_factory_tracing_artifacts +
     vaticle_force_graph_artifacts +
     vaticle_typedb_studio_artifacts,
 

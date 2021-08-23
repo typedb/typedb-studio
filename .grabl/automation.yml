@@ -17,6 +17,9 @@
 
 config:
   version-candidate: VERSION
+  dependencies:
+    dependencies: [build]
+    typedb-client-java: [build, release]
 
 build:
   correctness:

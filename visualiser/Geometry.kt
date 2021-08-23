@@ -1,4 +1,4 @@
-package com.vaticle.graph
+package com.vaticle.typedb.studio.visualiser
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect

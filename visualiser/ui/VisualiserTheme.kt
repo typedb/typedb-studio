@@ -1,8 +1,8 @@
-package com.vaticle.graph.renderer
+package com.vaticle.typedb.studio.visualiser.ui
 
-import com.vaticle.graph.VertexEncoding
-import com.vaticle.graph.VertexEncoding.*
-import com.vaticle.graph.renderer.VisualiserColor.*
+import com.vaticle.typedb.studio.db.VertexEncoding
+import com.vaticle.typedb.studio.db.VertexEncoding.*
+import com.vaticle.typedb.studio.visualiser.ui.VisualiserColor.*
 
 enum class VisualiserColor(val argb: Long) {
     RED(0xFFF66B65),

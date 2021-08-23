@@ -24,15 +24,17 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "checksum")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
 # TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
 kt_jvm_binary(
     name = "main",
-    srcs = ["main.kt"],
-    main_class = "com.vaticle.MainKt",
+    srcs = glob(["*.kt"]),
+    main_class = "com.vaticle.typedb.studio.MainKt",
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//graph/renderer",
+        "//db",
+        "//visualiser/ui",
 
         # Maven
         "@maven//:org_jetbrains_skiko_skiko_jvm_0_3_9",
@@ -82,9 +84,15 @@ kt_jvm_binary(
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
     ],
     resources = [
+        "//resources",
         "//resources/fonts",
     ],
     resource_strip_prefix = "resources",
+)
+
+define_kt_toolchain(
+    name = "studio_kt_toolchain",
+    jvm_target = "11",
 )
 
 pkg_zip(
