@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.db.DB
 import com.vaticle.typedb.studio.db.GraphData
@@ -80,14 +82,16 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, snackbarHostState: Snackbar
         Font(resource = "fonts/UbuntuMono/UbuntuMono-Regular.ttf", weight = FontWeight.W400, style = FontStyle.Normal)
     )
 
-    Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
-        Button(modifier = Modifier.align(Alignment.Start), onClick = {
-            simulation.init()
-            visualiser.dataStream = db.matchQuery("grabl", "match \$x sub thing;")
-            viewportOffset = -canvasSize.center
-            running = true
-        }) {
-            Text("Run ▶️")
+    Column(Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().background(Color.White).align(Alignment.Start).zIndex(10F)) {
+            Button(onClick = {
+                simulation.init()
+                visualiser.dataStream = db.matchQuery("grabl", "match \$x sub thing;")
+                viewportOffset = -canvasSize.center
+                running = true
+            }) {
+                Text("Run ▶️")
+            }
         }
 
         Box(modifier = Modifier.fillMaxSize().background(Color(theme.background.argb))) {
