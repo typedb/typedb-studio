@@ -2,6 +2,13 @@ package com.vaticle.typedb.studio.visualiser.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,11 +36,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -62,22 +72,22 @@ import com.vaticle.typedb.studio.visualiser.midpoint
 import com.vaticle.typedb.studio.visualiser.rectIncomingLineIntersect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.awt.MouseInfo
+import java.awt.Point
 import java.util.concurrent.CompletionException
 import kotlin.math.sqrt
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow,
+fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devicePixelRatio: Float, titleBarHeight: Float,
     snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope) {
 
     val visualiser = remember { TypeDBVisualiserState() }
     val simulation: TypeDBForceSimulation = visualiser.simulation;
     val data: GraphState = simulation.data
     var running by remember { mutableStateOf(false) }
-    var viewportScale by remember { mutableStateOf(.05F) }
+    var viewportScale by remember { mutableStateOf(1F) }
     var viewportOffset by remember { mutableStateOf(Offset.Zero) }
-    var devicePixelRatio by remember { mutableStateOf(1F) }
-    with(LocalDensity.current) { devicePixelRatio = 1.dp.toPx() }
 
 //    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
 //        viewportScale *= zoomChange
@@ -100,11 +110,15 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow,
         var canvasPositionOnScreen by remember { mutableStateOf(Offset.Zero) }
 
         Box(modifier = Modifier.fillMaxWidth()
+            .onGloballyPositioned { coordinates ->
+//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) + Offset(window.x.toFloat(), window.y.toFloat())
+//                println("'Run' button: coordinatesLocal=${coordinates.localToWindow(Offset.Zero)}")
+            }
             .background(Color.White).align(Alignment.Start).zIndex(10F)) {
             Button(onClick = {
                 simulation.init()
-                visualiser.dataStream = db.matchQuery("grabl", "match \$x isa thing; offset 0; limit 4000;")
-//                viewportOffset = -canvasSize.center
+                visualiser.dataStream = db.matchQuery("grabl", "match \$x isa thing; offset 0; limit 1000000;")
+                viewportOffset = canvasSize.center
                 running = true
             }) {
                 Text("Run ▶️")
@@ -112,30 +126,56 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow,
         }
 
         Box(modifier = Modifier.fillMaxSize()
-//            .pointerInput(keys = emptyArray(), block = {
-//                detectVerticalDragGestures { change, dragAmount ->
-//                    println("change=$change,dragAmount=$dragAmount")
-//                }
+            .pointerInput(keys = emptyArray(), block = {
+                detectDragGestures { _, dragAmount ->
+                    viewportOffset += dragAmount / (viewportScale * devicePixelRatio)
+                }
 //                detectTransformGestures { centroid, pan, zoom, rotation ->
 //                    println("centroid=$centroid,pan=$pan,zoom=$zoom,rotation=$rotation")
 //                }
-//            })
-//            .onGloballyPositioned { coordinates ->
-//                val titleBarHeight = window.height - canvasSize.height
-//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) + Offset(window.x.toFloat(), window.y + titleBarHeight)
-//            }
-//            .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
-//                val newViewportScale = viewportScale * (1 + (delta * 0.0006F / devicePixelRatio))
-//
-//                println("viewportScale=$viewportScale,${MouseInfo.getPointerInfo().location}")
-//                delta
-//            })
+            })
+            .onGloballyPositioned { coordinates ->
+                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
+//                println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
+            }
+            .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                val zoomFactor = 1 + (delta * 0.0006F / devicePixelRatio)
+                val newViewportScale = viewportScale * zoomFactor
+                // TODO: make the transform origin be where the mouse pointer is :-(
+//                val pointerLocationOnScreen: Point = MouseInfo.getPointerInfo().location
+//                val pointer = Offset(pointerLocationOnScreen.x.toFloat(), pointerLocationOnScreen.y.toFloat()) - canvasPositionOnScreen
+//                val transformOrigin = Offset(canvasSize.width - pointer.x, canvasSize.height - pointer.y)
+//                val transformOrigin = (pointer - Offset(canvasSize.width / 2, canvasSize.height / 2)) / viewportScale
+
+//                println("viewportScale=$viewportScale,viewportOffset=$viewportOffset,cursorPosition=${cursorPosition},canvasCenter=${canvasSize.center}")
+//                val newX = transformOrigin.x * (zoomFactor - 1) + (zoomFactor * viewportOffset.x)
+//                val newY = transformOrigin.y * (zoomFactor - 1) + (zoomFactor * viewportOffset.y)
+//                val newX = transformOrigin.x - zoomFactor*(transformOrigin.x - viewportOffset.x)
+//                val newY = transformOrigin.y - zoomFactor*(transformOrigin.y - viewportOffset.y)
+//                val newX = ((2 * viewportOffset.x) / zoomFactor) * ((viewportOffset.x - pointer.x) / (canvasSize.width / zoomFactor))
+//                val newY = ((2 * viewportOffset.y) / zoomFactor) * ((viewportOffset.y - pointer.y) / (canvasSize.height / zoomFactor))
+                println("newViewportScale=$newViewportScale")
+//                val newX = pointer.x + (viewportOffset.x - pointer.x) / zoomFactor
+//                val newY = pointer.y + (viewportOffset.y - pointer.y) / zoomFactor
+//                val newX = transformOrigin.x + (transformOrigin.x - viewportOffset.x) / zoomFactor
+//                val newY = transformOrigin.y + (transformOrigin.y - viewportOffset.y) / zoomFactor
+//                val newX = viewportOffset.x + (transformOrigin.x - viewportOffset.x)*((zoomFactor - 1) / zoomFactor)
+//                val newY = viewportOffset.y + (transformOrigin.y - viewportOffset.y)*((zoomFactor - 1) / zoomFactor)
+//                val newX = viewportOffset.x - transformOrigin.x * (1 / zoomFactor - 1)
+//                val newY = viewportOffset.y - transformOrigin.y * (1 / zoomFactor - 1)
+//                val newX = viewportOffset.x * (1 + ((2 * transformOrigin.x) / canvasSize.width) * (1 / zoomFactor - 1))
+//                val newY = viewportOffset.y * (1 + ((2 * transformOrigin.y) / canvasSize.width) * (1 / zoomFactor - 1))
+//                viewportOffset = Offset(newX, newY)
+                viewportScale = newViewportScale
+                delta
+            })
             .background(Color(theme.background.argb))) {
 
             Box(modifier = Modifier.fillMaxSize()
                 .graphicsLayer(
                     scaleX = viewportScale, scaleY = viewportScale,
-                    translationX = viewportOffset.x, translationY = viewportOffset.y)
+                    translationX = viewportOffset.x * viewportScale * devicePixelRatio,
+                    translationY = viewportOffset.y * viewportScale * devicePixelRatio)
             ) {
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -145,14 +185,13 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow,
                     if (data.edges.size <= 1000 && viewportScale > 0.2) {
                         data.edges.forEach { drawEdgeSegments(it, verticesByID, theme, Offset.Zero, devicePixelRatio) }
                     } else {
-                        data.edges.forEach { drawSolidEdge(it, verticesByID, theme, viewportOffset, devicePixelRatio) }
+                        data.edges.forEach { drawSolidEdge(it, verticesByID, theme, Offset.Zero, devicePixelRatio) }
                     }
                 }
 
                 if (data.edges.size <= 1000 && viewportScale > 0.2) data.edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, Offset.Zero) }
 
-                Canvas(
-                    modifier = Modifier.fillMaxSize()
+                Canvas(modifier = Modifier.fillMaxSize()
 //                .swipeable(state = swipeableState, anchors = anchors, orientation = Orientation.Vertical)
 //                        .transformable(state = transformableState)
                 ) {
