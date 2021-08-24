@@ -27,7 +27,7 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         force("charge", ManyBodyForce(nodes().values, -500.0))
         alpha(1.0)
         alphaTarget(0.0)
-        alphaMin(0.005)
+        alphaMin(0.01)
 
         lastTickStartNanos = 0
     }

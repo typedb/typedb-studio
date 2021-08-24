@@ -2,23 +2,14 @@ package com.vaticle.typedb.studio
 
 import VaticleSnackbarHost
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Snackbar
-import androidx.compose.material.SnackbarData
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
-import androidx.compose.material.Text
 import androidx.compose.material.Typography
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +40,7 @@ fun main() = application {
             Scaffold {
                 val snackbarCoroutineScope = rememberCoroutineScope()
                 val snackbarHostState = SnackbarHostState()
-                TypeDBVisualiser(db = dbClient, theme = VisualiserTheme.DEFAULT, snackbarHostState, snackbarCoroutineScope)
+                TypeDBVisualiser(db = dbClient, theme = VisualiserTheme.DEFAULT, window, snackbarHostState, snackbarCoroutineScope)
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                     VaticleSnackbarHost(snackbarHostState)
                 }

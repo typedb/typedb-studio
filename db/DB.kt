@@ -62,8 +62,8 @@ class DB {
                                     encoding = encoding,
                                     label = label.substring(
                                         0, when {
-                                            thing.isRelation -> 11
-                                            else -> 13
+                                            thing.isRelation -> 11.coerceAtMost(label.length)
+                                            else -> 13.coerceAtMost(label.length)
                                         }
                                     ),
                                     width = when {
@@ -151,7 +151,6 @@ class DB {
                                     val remoteThingType = type.asThingType().asRemote(tx)
                                     val playsTask = CompletableFuture.supplyAsync {
                                         val plays = remoteThingType.plays.collect(Collectors.toList())
-                                        println(plays)
                                         remoteThingType.plays.parallel().forEach { roleType ->
                                             val relationTypeNodeID = elementIDs.types[roleType.label.scope().get()]
                                             if (relationTypeNodeID != null) {

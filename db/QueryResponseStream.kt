@@ -23,7 +23,6 @@ class QueryResponseStream(@Volatile var completed: Boolean = false) {
     fun putError(exception: Exception) {
         if (this.completed) return
         this.exception = exception
-        println("Putting Exception to QueryResponseStream")
         completed = true
     }
 

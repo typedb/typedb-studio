@@ -90,11 +90,6 @@ kt_jvm_binary(
     resource_strip_prefix = "resources",
 )
 
-define_kt_toolchain(
-    name = "studio_kt_toolchain",
-    jvm_target = "11",
-)
-
 pkg_zip(
     name = "mac-zip",
     srcs = glob(["release/*.dmg"]),
