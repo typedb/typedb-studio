@@ -1,8 +1,6 @@
 package com.vaticle.typedb.studio.db
 
-import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.connection.TypeDBClient
 import com.vaticle.typedb.client.api.connection.TypeDBSession
 import com.vaticle.typedb.client.api.connection.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction.Type.READ
@@ -12,16 +10,21 @@ import java.util.concurrent.CompletableFuture
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 
-class DB {
+class DB(dbServer: DBServer, private val dbName: String) {
 
-    private var client: TypeDBClient = TypeDB.coreClient(TypeDB.DEFAULT_ADDRESS)
+    val name: String
+    get() {
+        return dbName
+    }
 
-    fun matchQuery(db: String, query: String): QueryResponseStream {
+    private val client = dbServer.client
+
+    fun matchQuery(query: String): QueryResponseStream {
         val responseStream = QueryResponseStream()
         val answerTasks: MutableList<CompletableFuture<Unit>> = mutableListOf()
         var session: TypeDBSession? = null
         try {
-            session = client.session(db, DATA)
+            session = client.session(dbName, DATA)
             val tx = session.transaction(READ)
             val answerStream = tx.query().match(query)
             val elementIDs = GraphElementIDRegistry()

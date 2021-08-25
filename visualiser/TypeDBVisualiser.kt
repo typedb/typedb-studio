@@ -1,4 +1,4 @@
-package com.vaticle.typedb.studio.visualiser.ui
+package com.vaticle.typedb.studio.visualiser
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -55,21 +55,12 @@ import androidx.compose.ui.zIndex
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.db.DB
 import com.vaticle.typedb.studio.db.GraphData
+import com.vaticle.typedb.studio.db.QueryResponseStream
 import com.vaticle.typedb.studio.db.VertexEncoding
-import com.vaticle.typedb.studio.visualiser.EdgeState
-import com.vaticle.typedb.studio.visualiser.Ellipse
-import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
-import com.vaticle.typedb.studio.visualiser.TypeDBVisualiserState
-import com.vaticle.typedb.studio.visualiser.VertexState
 import java.lang.IllegalStateException
 
 import com.vaticle.typedb.studio.db.VertexEncoding.*
-import com.vaticle.typedb.studio.visualiser.GraphState
-import com.vaticle.typedb.studio.visualiser.arrowhead
-import com.vaticle.typedb.studio.visualiser.diamondIncomingLineIntersect
-import com.vaticle.typedb.studio.visualiser.ellipseIncomingLineIntersect
-import com.vaticle.typedb.studio.visualiser.midpoint
-import com.vaticle.typedb.studio.visualiser.rectIncomingLineIntersect
+import com.vaticle.typedb.studio.navigation.TypeDBVisualiserState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.MouseInfo
@@ -77,13 +68,12 @@ import java.awt.Point
 import java.util.concurrent.CompletionException
 import kotlin.math.sqrt
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devicePixelRatio: Float, titleBarHeight: Float,
-    snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope) {
+fun TypeDBVisualiser(visualiser: TypeDBVisualiserState, theme: VisualiserTheme, window: ComposeWindow, devicePixelRatio: Float, titleBarHeight: Float,
+                     snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope) {
 
-    val visualiser = remember { TypeDBVisualiserState() }
-    val simulation: TypeDBForceSimulation = visualiser.simulation;
+    var dataStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
+    val simulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
     val data: GraphState = simulation.data
     var running by remember { mutableStateOf(false) }
     var viewportScale by remember { mutableStateOf(1F) }
@@ -98,7 +88,6 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
 //        println(value)
 //        true
 //    })
-    val anchors = mapOf(0F to 100, 1000F to 1000, 2000F to 2000)
 
     val ubuntuMono = FontFamily(
         Font(resource = "fonts/UbuntuMono/UbuntuMono-Regular.ttf", weight = FontWeight.W400, style = FontStyle.Normal)
@@ -107,17 +96,17 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
     Column(Modifier.fillMaxSize()) {
 
         var canvasSize by remember { mutableStateOf(Size.Zero) }
-        var canvasPositionOnScreen by remember { mutableStateOf(Offset.Zero) }
+//        var canvasPositionOnScreen by remember { mutableStateOf(Offset.Zero) }
 
         Box(modifier = Modifier.fillMaxWidth()
-            .onGloballyPositioned { coordinates ->
-//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) + Offset(window.x.toFloat(), window.y.toFloat())
-//                println("'Run' button: coordinatesLocal=${coordinates.localToWindow(Offset.Zero)}")
-            }
-            .background(Color.White).align(Alignment.Start).zIndex(10F)) {
+//            .onGloballyPositioned { coordinates ->
+////                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) + Offset(window.x.toFloat(), window.y.toFloat())
+////                println("'Run' button: coordinatesLocal=${coordinates.localToWindow(Offset.Zero)}")
+//            }
+            .background(Color(0xFF0E053F)).align(Alignment.Start).zIndex(10F)) {
             Button(onClick = {
                 simulation.init()
-                visualiser.dataStream = db.matchQuery("grabl", "match \$x isa thing; offset 0; limit 1000000;")
+                dataStream = visualiser.db.matchQuery("match \$x isa thing; offset 0; limit 4000;")
                 viewportOffset = canvasSize.center
                 running = true
             }) {
@@ -134,10 +123,10 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
 //                    println("centroid=$centroid,pan=$pan,zoom=$zoom,rotation=$rotation")
 //                }
             })
-            .onGloballyPositioned { coordinates ->
-                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
-//                println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
-            }
+//            .onGloballyPositioned { coordinates ->
+//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
+////                println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
+//            }
             .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
                 val zoomFactor = 1 + (delta * 0.0006F / devicePixelRatio)
                 val newViewportScale = viewportScale * zoomFactor
@@ -169,7 +158,7 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
                 viewportScale = newViewportScale
                 delta
             })
-            .background(Color(theme.background.argb))) {
+            .background(theme.background)) {
 
             Box(modifier = Modifier.fillMaxSize()
                 .graphicsLayer(
@@ -189,15 +178,14 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
                     }
                 }
 
+                // TODO: suppress off-screen rendering, then change this condition to a ||
                 if (data.edges.size <= 1000 && viewportScale > 0.2) data.edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, Offset.Zero) }
 
                 Canvas(modifier = Modifier.fillMaxSize()
 //                .swipeable(state = swipeableState, anchors = anchors, orientation = Orientation.Vertical)
 //                        .transformable(state = transformableState)
                 ) {
-                    val vertexColors: Map<VertexEncoding, Color> =
-                        theme.vertex.map { Pair(it.key, Color(it.value.argb)) }.toMap()
-                    data.vertices.forEach { drawVertex(it, vertexColors, Offset.Zero, devicePixelRatio) }
+                    data.vertices.forEach { drawVertex(it, theme.vertex, Offset.Zero, devicePixelRatio) }
                 }
 
                 if (data.vertices.size <= 1000 && viewportScale > 0.2) data.vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, Offset.Zero) }
@@ -209,33 +197,36 @@ fun TypeDBVisualiser(db: DB, theme: VisualiserTheme, window: ComposeWindow, devi
         while (true) {
             withFrameNanos {
                 if (!running
-                    || System.nanoTime() - simulation.lastTickStartNanos < 1.667e7 // 60 FPS
-                    || simulation.alpha() < simulation.alphaMin()
-                    || !visualiser.dataStream.completed ) { return@withFrameNanos } // TODO: this just waits for the stream to complete, it should actually stream.
+                    || System.nanoTime() - simulation.lastTickStartNanos < 1.667e7 // 16.667ms = 60 FPS
+                    || simulation.alpha() < simulation.alphaMin()) { return@withFrameNanos }
 
-                val response: Either<GraphData, Exception> = visualiser.dataStream.drain()
-                if (response.isSecond) {
-                    running = false
-                    val error: Throwable = when {
-                        response.second() is CompletionException -> response.second().cause.let {
-                            when (it) { null -> response.second() else -> it }
+                if (!dataStream.isCompletedAndFullyDrained() &&
+                    System.nanoTime() - dataStream.lastFetchedNanos > 5e7) { // 50ms
+
+                    dataStream.lastFetchedNanos = System.nanoTime()
+                    val response: Either<GraphData, Exception> = dataStream.drain()
+                    if (response.isSecond) {
+                        running = false
+                        val error: Throwable = when {
+                            response.second() is CompletionException -> response.second().cause.let {
+                                when (it) { null -> response.second() else -> it }
+                            }
+                            else -> response.second()
                         }
-                        else -> response.second()
+                        snackbarCoroutineScope.launch {
+                            println(error.toString())
+                            snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                        }
+                        return@withFrameNanos
                     }
-                    snackbarCoroutineScope.launch {
-                        println(error.toString())
-                        snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                    }
-                    return@withFrameNanos
+                    val graphData: GraphData = response.first()
+                    simulation.addVertices(graphData.vertices.map(VertexState::of))
+                    simulation.addEdges(graphData.edges.map(EdgeState::of))
                 }
-                val graphData: GraphData = response.first()
-                simulation.addVertices(graphData.vertices.map(VertexState::of))
-                simulation.addEdges(graphData.edges.map(EdgeState::of))
 
                 simulation.lastTickStartNanos = System.nanoTime()
                 simulation.tick()
 //                println("simulation.tick: ${(System.nanoTime() - simulation.lastTickStartNanos) * 0.000001}ms (alpha: ${simulation.alpha()})")
-
 
                 data.vertices.forEach {
                     val node = simulation.nodes()[it.id]
@@ -295,7 +286,7 @@ private fun drawVertexLabel(v: VertexState, theme: VisualiserTheme, fontFamily: 
     Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = v.label, color = Color(theme.vertexLabel.argb), fontSize = 16.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+        Text(text = v.label, color = theme.vertexLabel, fontSize = 16.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
     }
 }
 
@@ -307,14 +298,14 @@ private fun DrawScope.drawSolidEdge(edge: EdgeState, verticesByID: Map<Int, Vert
 
     drawLine(
         start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-        color = Color(theme.edge.argb), strokeWidth = devicePixelRatio
+        color = theme.edge, strokeWidth = devicePixelRatio
     )
 
     val arrow = arrowhead(
         from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
         arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
     )
-    if (arrow != null) drawPath(path = arrow, color = Color(theme.edge.argb))
+    if (arrow != null) drawPath(path = arrow, color = theme.edge)
 }
 
 private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, VertexState>, theme: VisualiserTheme, viewportOffset: Offset, devicePixelRatio: Float) {
@@ -334,21 +325,21 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
         if (linePart1Target != null) {
             drawLine(
                 start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
-                color = Color(theme.edge.argb), strokeWidth = devicePixelRatio
+                color = theme.edge, strokeWidth = devicePixelRatio
             )
         }
         val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
         if (linePart2Source != null) {
             drawLine(
                 start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-                color = Color(theme.edge.argb), strokeWidth = devicePixelRatio
+                color = theme.edge, strokeWidth = devicePixelRatio
             )
 
             val arrow = arrowhead(
                 from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
                 arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
             )
-            if (arrow != null) drawPath(path = arrow, color = Color(theme.edge.argb))
+            if (arrow != null) drawPath(path = arrow, color = theme.edge)
         }
     }
 }
@@ -361,7 +352,7 @@ private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: F
         modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = edge.label, color = Color(theme.edge.argb), fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+        Text(text = edge.label, color = theme.edge, fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
     }
 }
 

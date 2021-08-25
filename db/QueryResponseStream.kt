@@ -34,10 +34,15 @@ class QueryResponseStream(@Volatile var completed: Boolean = false) {
                 val data = GraphData(vertexStore, edgeStore)
                 vertexStore = mutableListOf()
                 edgeStore = mutableListOf()
+                println("QueryResponseStream.drain: Fetched ${data.vertices.size} vertices and ${data.edges.size} edges")
                 Either.first(data)
             }
             else -> Either.second(exception)
         }
+    }
+
+    fun isCompletedAndFullyDrained(): Boolean {
+        return completed && vertexStore.isEmpty() && edgeStore.isEmpty() && exception == null
     }
 
     companion object {

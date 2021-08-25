@@ -6,13 +6,6 @@ import com.vaticle.force.graph.ForceSimulation
 import com.vaticle.force.graph.Link
 import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.ManyBodyForce
-import com.vaticle.typedb.studio.db.QueryResponseStream
-
-class TypeDBVisualiserState {
-
-    var dataStream: QueryResponseStream = QueryResponseStream.EMPTY
-    val simulation = TypeDBForceSimulation()
-}
 
 class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulation() {
 

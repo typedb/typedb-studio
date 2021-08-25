@@ -33,8 +33,12 @@ kt_jvm_binary(
     main_class = "com.vaticle.typedb.studio.MainKt",
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "//appearance",
+        "//components",
         "//db",
-        "//visualiser/ui",
+        "//login",
+        "//navigation",
+        "//visualiser",
 
         # Maven
         "@maven//:org_jetbrains_skiko_skiko_jvm_0_3_9",
