@@ -6,10 +6,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
-import com.vaticle.typedb.studio.db.EdgeData
-import com.vaticle.typedb.studio.db.EdgeHighlight
-import com.vaticle.typedb.studio.db.VertexData
-import com.vaticle.typedb.studio.db.VertexEncoding
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import com.vaticle.typedb.studio.data.EdgeData
+import com.vaticle.typedb.studio.data.EdgeHighlight
+import com.vaticle.typedb.studio.data.VertexData
+import com.vaticle.typedb.studio.data.VertexEncoding
 
 class GraphState {
     var vertices: SnapshotStateList<VertexState> = mutableStateListOf()
@@ -23,12 +25,17 @@ class GraphState {
     }
 }
 
-data class VertexState(val id: Int, val encoding: VertexEncoding, val label: String, val width: Float, val height: Float) {
+data class VertexState(val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String, val width: Float, val height: Float) {
     var position: Offset by mutableStateOf(Offset(0F, 0F))
+
+    val rect: Rect
+    get() {
+        return Rect(position - Offset(width, height) / 2F, Size(width, height))
+    }
 
     companion object {
         fun of(data: VertexData): VertexState {
-            return VertexState(data.id, data.encoding, data.label, data.width, data.height)
+            return VertexState(data.id, data.encoding, data.label, data.shortLabel, data.width, data.height)
         }
     }
 }

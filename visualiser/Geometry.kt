@@ -2,7 +2,6 @@ package com.vaticle.typedb.studio.visualiser
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import kotlin.math.sqrt
 

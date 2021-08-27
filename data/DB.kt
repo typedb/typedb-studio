@@ -1,11 +1,16 @@
-package com.vaticle.typedb.studio.db
+package com.vaticle.typedb.studio.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.thing.Thing
+import com.vaticle.typedb.client.api.connection.TypeDBOptions
 import com.vaticle.typedb.client.api.connection.TypeDBSession
 import com.vaticle.typedb.client.api.connection.TypeDBSession.Type.DATA
+import com.vaticle.typedb.client.api.connection.TypeDBTransaction
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction.Type.READ
-import com.vaticle.typedb.studio.db.VertexEncoding.*
-import com.vaticle.typedb.studio.db.EdgeDirection.*
+import com.vaticle.typedb.studio.data.VertexEncoding.*
+import com.vaticle.typedb.studio.data.EdgeDirection.*
 import java.util.concurrent.CompletableFuture
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
@@ -17,16 +22,20 @@ class DB(dbServer: DBServer, private val dbName: String) {
         return dbName
     }
 
+    private var session: TypeDBSession? by mutableStateOf(null)
+    var tx: TypeDBTransaction? by mutableStateOf(null)
+        private set
+
     private val client = dbServer.client
 
     fun matchQuery(query: String): QueryResponseStream {
         val responseStream = QueryResponseStream()
         val answerTasks: MutableList<CompletableFuture<Unit>> = mutableListOf()
-        var session: TypeDBSession? = null
         try {
+            session?.close()
             session = client.session(dbName, DATA)
-            val tx = session.transaction(READ)
-            val answerStream = tx.query().match(query)
+            tx = session!!.transaction(READ, TypeDBOptions.core().infer(true).explain(true))
+            val answerStream = tx!!.query().match(query)
             val elementIDs = GraphElementIDRegistry()
             val incompleteThingEdges: MutableMap<String, MutableList<IncompleteEdgeData>> = mutableMapOf()
             val incompleteTypeEdges: MutableMap<String, MutableList<IncompleteEdgeData>> = mutableMapOf()
@@ -63,10 +72,11 @@ class DB(dbServer: DBServer, private val dbName: String) {
                                 val thingVertex = VertexData(
                                     id = elementIDs.nextID++,
                                     encoding = encoding,
-                                    label = label.substring(
+                                    label = label,
+                                    shortLabel = label.substring(
                                         0, when {
-                                            thing.isRelation -> 11.coerceAtMost(label.length)
-                                            else -> 13.coerceAtMost(label.length)
+                                            thing.isRelation -> 22.coerceAtMost(label.length)
+                                            else -> 26.coerceAtMost(label.length)
                                         }
                                     ),
                                     width = when {
@@ -134,10 +144,17 @@ class DB(dbServer: DBServer, private val dbName: String) {
                         } else {
                             val type = concept.asType()
                             if (!elementIDs.types.contains(type.label.scopedName())) {
+                                val label = type.label.name()
                                 val typeVertex = VertexData(
                                     id = elementIDs.nextID++,
                                     encoding = encoding,
-                                    label = type.label.name(),
+                                    label = label,
+                                    shortLabel = label.substring(
+                                        0, when {
+                                            type.isRelationType -> 22.coerceAtMost(label.length)
+                                            else -> 26.coerceAtMost(label.length)
+                                        }
+                                    ),
                                     width = when {
                                         type.isRelationType -> 120F
                                         else -> 110F
@@ -160,8 +177,10 @@ class DB(dbServer: DBServer, private val dbName: String) {
                                                 responseStream.putEdge(EdgeData(id = elementIDs.nextID++, source = relationTypeNodeID, target = typeVertex.id, label = roleType.label.name()))
                                             } else {
                                                 if (!incompleteTypeEdges.contains(roleType.label.scope().get())) incompleteTypeEdges[roleType.label.scope().get()] = mutableListOf()
-                                                incompleteTypeEdges[roleType.label.scope().get()]!!.add(IncompleteEdgeData(
-                                                    id = elementIDs.nextID++, vertexID = typeVertex.id, direction = INCOMING, label = roleType.label.name()))
+                                                incompleteTypeEdges[roleType.label.scope().get()]!!.add(
+                                                    IncompleteEdgeData(
+                                                    id = elementIDs.nextID++, vertexID = typeVertex.id, direction = INCOMING, label = roleType.label.name())
+                                                )
                                             }
                                         }
                                     }
@@ -203,7 +222,6 @@ class DB(dbServer: DBServer, private val dbName: String) {
                     responseStream.completed = true
                 } catch (e: Exception) {
                     responseStream.putError(e)
-                } finally {
                     session?.close()
                 }
             }
@@ -213,6 +231,10 @@ class DB(dbServer: DBServer, private val dbName: String) {
         }
 
         return responseStream
+    }
+
+    fun close() {
+        client.close()
     }
 }
 

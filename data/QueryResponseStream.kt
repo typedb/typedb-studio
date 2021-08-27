@@ -1,4 +1,4 @@
-package com.vaticle.typedb.studio.db
+package com.vaticle.typedb.studio.data
 
 import com.vaticle.typedb.common.collection.Either
 

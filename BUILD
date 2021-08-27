@@ -34,11 +34,11 @@ kt_jvm_binary(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//appearance",
-        "//components",
-        "//db",
+        "//ui/elements",
+        "//data",
         "//login",
         "//navigation",
-        "//visualiser",
+        "//workspace",
 
         # Maven
         "@maven//:org_jetbrains_skiko_skiko_jvm_0_3_9",

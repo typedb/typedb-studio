@@ -10,6 +10,7 @@ import com.vaticle.force.graph.ManyBodyForce
 class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulation() {
 
     var lastTickStartNanos: Long = 0
+    var isRunning: Boolean = false
 
     fun init() {
         clear()
@@ -22,6 +23,7 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         alphaTarget(0.0)
         alphaMin(0.01)
 
+        isRunning = true
         lastTickStartNanos = 0
     }
 
