@@ -11,19 +11,24 @@ class QueryResponseStream(@Volatile var completed: Boolean = false) {
 
     @Synchronized
     fun putVertex(vertex: VertexData) {
-        if (!completed) vertexStore += vertex
+        if (!completed) {
+//            println("Adding a vertex! ${vertex.label}")
+            vertexStore += vertex
+        }
     }
 
     @Synchronized
     fun putEdge(edge: EdgeData) {
-        if (!completed) edgeStore += edge
+        if (!completed) {
+//            println("Adding an edge! (${edge.source} -> ${edge.target})")
+            edgeStore += edge
+        }
     }
 
     @Synchronized
     fun putError(exception: Exception) {
         if (this.completed) return
         this.exception = exception
-        completed = true
     }
 
     @Synchronized
@@ -35,14 +40,20 @@ class QueryResponseStream(@Volatile var completed: Boolean = false) {
                 vertexStore = mutableListOf()
                 edgeStore = mutableListOf()
                 println("QueryResponseStream.drain: Fetched ${data.vertices.size} vertices and ${data.edges.size} edges")
+                if (data.vertices.isNotEmpty()) println("Vertex IDs: ${data.vertices.map { it.id }}")
                 Either.first(data)
             }
-            else -> Either.second(exception)
+            else -> {
+                completed = true
+                vertexStore = mutableListOf()
+                edgeStore = mutableListOf()
+                Either.second(exception)
+            }
         }
     }
 
-    fun isCompletedAndFullyDrained(): Boolean {
-        return completed && vertexStore.isEmpty() && edgeStore.isEmpty() && exception == null
+    fun isEmpty(): Boolean {
+        return vertexStore.isEmpty() && edgeStore.isEmpty()
     }
 
     companion object {

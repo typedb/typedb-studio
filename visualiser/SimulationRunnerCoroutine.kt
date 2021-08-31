@@ -16,19 +16,28 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
                                       snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope) {
     while (true) {
         withFrameNanos {
-            if (!simulation.isRunning
-                || System.nanoTime() - simulation.lastTickStartNanos < 1.667e7 // 16.667ms = 60 FPS
-                || simulation.alpha() < simulation.alphaMin()) { return@withFrameNanos }
+            if (!simulation.isStarted
+                || simulation.alpha() < simulation.alphaMin()
+                || System.nanoTime() - simulation.lastTickStartNanos < 1.667e7) // 16.667ms = 60 FPS
+            {
+//                println("isEmpty=${simulation.isEmpty()};alpha=${simulation.alpha()};alphaMin=${simulation.alphaMin()}")
+                return@withFrameNanos
+            }
 
             simulation.lastTickStartNanos = System.nanoTime()
 
-            if (!dataStream.isCompletedAndFullyDrained() &&
+            if (!dataStream.isEmpty() &&
                 System.nanoTime() - dataStream.lastFetchedNanos > 5e7) { // 50ms
 
                 dataStream.lastFetchedNanos = System.nanoTime()
                 val response: Either<GraphData, Exception> = dataStream.drain()
-                if (response.isSecond) {
-                    simulation.isRunning = false
+                if (response.isFirst) {
+                    val graphData: GraphData = response.first()
+                    simulation.addVertices(graphData.vertices.map(VertexState.Companion::of))
+                    simulation.addEdges(graphData.edges.map(EdgeState.Companion::of))
+                    if (simulation.alpha() < 0.25) simulation.alpha(0.25)
+                } else {
+                    // TODO: Add some kind of indicator that results may be incomplete
                     val error: Throwable = when {
                         response.second() is CompletionException -> response.second().cause.let {
                             when (it) { null -> response.second() else -> it }
@@ -36,15 +45,13 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
                         else -> response.second()
                     }
                     snackbarCoroutineScope.launch {
-                        println(error.toString())
+                        println(error.stackTraceToString())
                         snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
                     }
-                    return@withFrameNanos
                 }
-                val graphData: GraphData = response.first()
-                simulation.addVertices(graphData.vertices.map(VertexState.Companion::of))
-                simulation.addEdges(graphData.edges.map(EdgeState.Companion::of))
             }
+
+            if (simulation.isEmpty()) return@withFrameNanos
 
             simulation.tick()
 

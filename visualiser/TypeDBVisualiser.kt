@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
+import com.vaticle.typedb.studio.data.EdgeHighlight
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
 import java.lang.Float.min
@@ -78,28 +79,29 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         Box(modifier = Modifier.fillMaxSize()
             .graphicsLayer(
                 scaleX = scale, scaleY = scale,
-                translationX = worldOffset.x * scale * devicePixelRatio,
-                translationY = worldOffset.y * scale * devicePixelRatio)
+//                translationX = worldOffset.x * scale * devicePixelRatio,
+//                translationY = worldOffset.y * scale * devicePixelRatio
+            )
         ) {
 
             // TODO: don't render vertices or edges that are fully outside the viewport
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val verticesByID = vertices.associateBy { it.id }
                 if (edges.size <= 1000 && scale > 0.2) {
-                    edges.forEach { drawEdgeSegments(it, verticesByID, theme, Offset.Zero, devicePixelRatio) }
+                    edges.forEach { drawEdgeSegments(it, verticesByID, theme, -worldOffset, devicePixelRatio) }
                 } else {
-                    edges.forEach { drawSolidEdge(it, verticesByID, theme, Offset.Zero, devicePixelRatio) }
+                    edges.forEach { drawSolidEdge(it, verticesByID, theme, -worldOffset, devicePixelRatio) }
                 }
             }
 
             // TODO: this condition is supposed to be a || but without off-screen rendering detection we can't do that
-            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, Offset.Zero) }
+            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, -worldOffset) }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
-                vertices.forEach { drawVertex(it, theme.vertex, Offset.Zero, dragged = draggedVertex === it, devicePixelRatio) }
+                vertices.forEach { drawVertex(it, theme.vertex, -worldOffset, dragged = draggedVertex === it, devicePixelRatio) }
             }
 
-            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, Offset.Zero) }
+            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, -worldOffset) }
         }
 
         Box(modifier = Modifier.fillMaxSize().zIndex(100F)
@@ -130,8 +132,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
             }
             .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
                 val zoomFactor = 1 + (delta * 0.0006F / devicePixelRatio)
-                // TODO: in theory zooming in past 1.0x should be ok, but for some reason it sometimes makes the whole visualiser disappear
-                val newViewportScale = min(1F, scale * zoomFactor)
+                val newViewportScale = scale * zoomFactor
                 // TODO: make the transform origin be where the mouse pointer is :-(
 //                val pointerLocationOnScreen: Point = MouseInfo.getPointerInfo().location
 //                val pointer = Offset(pointerLocationOnScreen.x.toFloat(), pointerLocationOnScreen.y.toFloat()) - canvasPositionOnScreen
@@ -261,17 +262,18 @@ private fun DrawScope.drawSolidEdge(edge: EdgeState, verticesByID: Map<Int, Vert
     val targetVertex = requireNotNull(verticesByID[edge.targetID])
     val lineSource = sourceVertex.position
     val lineTarget = targetVertex.position
+    val color = when (edge.highlight) { EdgeHighlight.NONE -> theme.edge; EdgeHighlight.INFERRED -> theme.inferred }
 
     drawLine(
         start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-        color = theme.edge, strokeWidth = devicePixelRatio
+        color = color, strokeWidth = devicePixelRatio
     )
 
     val arrow = arrowhead(
         from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
         arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
     )
-    if (arrow != null) drawPath(path = arrow, color = theme.edge)
+    if (arrow != null) drawPath(path = arrow, color = color)
 }
 
 private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, VertexState>, theme: VisualiserTheme, viewportOffset: Offset, devicePixelRatio: Float) {
@@ -279,6 +281,7 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
     val targetVertex = requireNotNull(verticesByID[edge.targetID])
     val lineSource = edgeEndpoint(targetVertex, sourceVertex)
     val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
+    val color = when (edge.highlight) { EdgeHighlight.NONE -> theme.edge; EdgeHighlight.INFERRED -> theme.inferred }
 
     if (lineSource != null && lineTarget != null) {
         val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
@@ -291,21 +294,21 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
         if (linePart1Target != null) {
             drawLine(
                 start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
-                color = theme.edge, strokeWidth = devicePixelRatio
+                color = color, strokeWidth = devicePixelRatio
             )
         }
         val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
         if (linePart2Source != null) {
             drawLine(
                 start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-                color = theme.edge, strokeWidth = devicePixelRatio
+                color = color, strokeWidth = devicePixelRatio
             )
 
             val arrow = arrowhead(
                 from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
                 arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
             )
-            if (arrow != null) drawPath(path = arrow, color = theme.edge)
+            if (arrow != null) drawPath(path = arrow, color = color)
         }
     }
 }
@@ -314,11 +317,12 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
 private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
     val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
     val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
+    val color = when (edge.highlight) { EdgeHighlight.NONE -> theme.edge; EdgeHighlight.INFERRED -> theme.inferred }
     Column(
         modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = edge.label, color = theme.edge, fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+        Text(text = edge.label, color = color, fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
     }
 }
 

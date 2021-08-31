@@ -106,7 +106,6 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                     .force("center", null)
                     .alpha(0.25)
                     .alphaDecay(0.0)
-                typeDBForceSimulation.isRunning = true
             }, onVertexDragMove = { vertex, position ->
                 typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
                     node.x(position.x.toDouble())

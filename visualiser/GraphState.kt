@@ -40,7 +40,7 @@ data class VertexState(val id: Int, val encoding: VertexEncoding, val label: Str
     }
 }
 
-data class EdgeState(val sourceID: Int = -1, val targetID: Int = -1, val label: String, val highlight: EdgeHighlight = EdgeHighlight.NONE) {
+data class EdgeState(val sourceID: Int = -1, val targetID: Int = -1, val label: String, val highlight: EdgeHighlight) {
     var sourcePosition: Offset by mutableStateOf(Offset(0F, 0F))
     var targetPosition: Offset by mutableStateOf(Offset(0F, 0F))
 
