@@ -12,6 +12,9 @@ kt_jvm_library(
         "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_client_java//common",
         "@vaticle_typedb_common//:common",
+        "@vaticle_typeql_lang_java//:typeql-lang",
+        "@vaticle_typeql_lang_java//pattern",
+        "@vaticle_typeql_lang_java//query",
 
         # Maven
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",

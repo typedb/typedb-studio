@@ -17,7 +17,6 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
     while (true) {
         withFrameNanos {
             if (!simulation.isStarted
-                || simulation.alpha() < simulation.alphaMin()
                 || System.nanoTime() - simulation.lastTickStartNanos < 1.667e7) // 16.667ms = 60 FPS
             {
 //                println("isEmpty=${simulation.isEmpty()};alpha=${simulation.alpha()};alphaMin=${simulation.alphaMin()}")
@@ -51,7 +50,7 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
                 }
             }
 
-            if (simulation.isEmpty()) return@withFrameNanos
+            if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withFrameNanos
 
             simulation.tick()
 

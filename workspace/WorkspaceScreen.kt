@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.visualiser.SimulationMetrics
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
-import java.util.*
+import java.util.UUID
 import kotlin.math.pow
 
 @Composable
@@ -64,6 +64,8 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
         var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
         var visualiserSize by mutableStateOf(Size.Zero)
         var visualiserMetricsID by remember { mutableStateOf("") }
+        var visualiserScale by remember { mutableStateOf(1F) }
+        var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
 
         Row(modifier = Modifier.fillMaxWidth().height(128.dp).background(StudioTheme.colors.background)
             .zIndex(10F).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -78,6 +80,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                 dataStream = db.matchQuery(query)
                 visualiserWorldOffset = visualiserSize.center
                 visualiserMetricsID = UUID.randomUUID().toString()
+                queryStartTimeNanos = System.nanoTime()
             }) {
                 Text("▶️")
             }
@@ -92,28 +95,40 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.panelSeparator)) {}
 
-        TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
-            vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges, theme = visualiserTheme,
-            metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
-            onVertexDragStart = { vertex ->
-                typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
-                    node.isXFixed = true
-                    node.isYFixed = true
-                }
-                typeDBForceSimulation
-                    .force("link", null)
-                    .force("charge", null)
-                    .force("center", null)
-                    .alpha(0.25)
-                    .alphaDecay(0.0)
-            }, onVertexDragMove = { vertex, position ->
-                typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
-                    node.x(position.x.toDouble())
-                    node.y(position.y.toDouble())
-                }
-            }, onVertexDragEnd = {
-                typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
-            })
+        Row(modifier = Modifier.fillMaxSize().weight(1F)) {
+            TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
+                vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges, theme = visualiserTheme,
+                metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
+                onZoom = { value -> visualiserScale = value },
+                onVertexDragStart = { vertex ->
+                    typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
+                        node.isXFixed = true
+                        node.isYFixed = true
+                    }
+                    typeDBForceSimulation
+                        .force("link", null)
+                        .force("charge", null)
+                        .force("center", null)
+                        .alpha(0.25)
+                        .alphaDecay(0.0)
+                }, onVertexDragMove = { vertex, position ->
+                    typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
+                        node.x(position.x.toDouble())
+                        node.y(position.y.toDouble())
+                    }
+                }, onVertexDragEnd = {
+                    typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
+                })
+        }
+
+        Row(modifier = Modifier.fillMaxWidth().zIndex(10F)) {
+            StatusBar(
+                dataStream = dataStream,
+                visualiserScale = visualiserScale,
+                vertexCount = typeDBForceSimulation.data.vertices.size,
+                edgeCount = typeDBForceSimulation.data.edges.size,
+                queryStartTimeNanos = queryStartTimeNanos)
+        }
 
         LaunchedEffect(key1 = dataStream) {
             simulationRunnerCoroutine(typeDBForceSimulation, dataStream, snackbarHostState, snackbarCoroutineScope)

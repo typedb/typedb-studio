@@ -53,6 +53,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         data.edges += edges
         force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 120.0, 0.5))
         force("charge", ManyBodyForce(nodes().values, -500.0 * data.edges.size / (data.vertices.size + 1)))
-        println("New charge strength = ${-200.0 * data.edges.size / (data.vertices.size + 1)}")
+//        println("New charge strength = ${-200.0 * data.edges.size / (data.vertices.size + 1)}")
     }
 }

@@ -9,7 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import com.vaticle.typedb.studio.data.EdgeData
-import com.vaticle.typedb.studio.data.EdgeHighlight
+import com.vaticle.typedb.studio.data.Highlight
 import com.vaticle.typedb.studio.data.VertexData
 import com.vaticle.typedb.studio.data.VertexEncoding
 
@@ -20,12 +20,13 @@ class GraphState {
         private set
 
     fun clear() {
-        vertices.clear()
         edges.clear()
+        vertices.clear()
     }
 }
 
-data class VertexState(val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String, val width: Float, val height: Float) {
+data class VertexState(val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String,
+                       val width: Float, val height: Float, val highlight: Highlight) {
     var position: Offset by mutableStateOf(Offset(0F, 0F))
 
     val rect: Rect
@@ -35,12 +36,12 @@ data class VertexState(val id: Int, val encoding: VertexEncoding, val label: Str
 
     companion object {
         fun of(data: VertexData): VertexState {
-            return VertexState(data.id, data.encoding, data.label, data.shortLabel, data.width, data.height)
+            return VertexState(data.id, data.encoding, data.label, data.shortLabel, data.width, data.height, data.highlight)
         }
     }
 }
 
-data class EdgeState(val sourceID: Int = -1, val targetID: Int = -1, val label: String, val highlight: EdgeHighlight) {
+data class EdgeState(val sourceID: Int = -1, val targetID: Int = -1, val label: String, val highlight: Highlight) {
     var sourcePosition: Offset by mutableStateOf(Offset(0F, 0F))
     var targetPosition: Offset by mutableStateOf(Offset(0F, 0F))
 
