@@ -45,7 +45,6 @@ import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.EdgeHighlight
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
-import java.lang.Float.min
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -57,6 +56,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     var scale by remember { mutableStateOf(1F) }
     var worldOffset by remember { mutableStateOf(Offset.Zero) }
 
+    // Metrics are recalculated on each query run
     LaunchedEffect(metrics.id) {
         worldOffset = metrics.worldOffset
     }
@@ -170,7 +170,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             val worldPoint = toWorldPoint(viewportPoint, worldOffset, scale, devicePixelRatio)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             draggedVertex = closestVertices.find { it.intersects(worldPoint) }
-                            println("dragging vertex: $draggedVertex")
+//                            println("dragging vertex: $draggedVertex")
                             val cancelled = tryAwaitRelease()
                             if (cancelled) draggedVertex = null
                         }
@@ -192,7 +192,7 @@ private fun PointerInputScope.toWorldPoint(point: Offset, worldOffset: Offset, s
     return (((scaledOffset - viewportTransformOrigin) / scale) + viewportTransformOrigin) - worldOffset
 }
 
-private fun PointerInputScope.getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, resultSizeLimit: Int): List<VertexState> {
+private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, resultSizeLimit: Int): List<VertexState> {
 
 //    val computeStart: Long = System.nanoTime()
     val vertexDistances = vertices.associateWith { (worldPoint - it.position).getDistanceSquared() }
