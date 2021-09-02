@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -36,9 +35,10 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
 
     Column(modifier = modifier.height(27.dp)) {
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.panelSeparator)) {}
-        Row(modifier = modifier.fillMaxHeight().padding(horizontal = 8.dp).background(StudioTheme.colors.background),
+        Row(modifier = modifier.fillMaxHeight().background(StudioTheme.colors.background),
             verticalAlignment = Alignment.CenterVertically) {
 
+            Spacer(modifier = modifier.width(8.dp))
             Text(principalStatus, style = StudioTheme.typography.body2)
 
             Spacer(modifier = modifier.weight(1F))
@@ -48,6 +48,7 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
             Spacer(modifier = modifier.width(16.dp))
             Text("Vertices: $vertexCount | Edges: $edgeCount | ${queryRunTimeMillis.toDurationString()}",
                 style = StudioTheme.typography.body2)
+            Spacer(modifier = modifier.width(8.dp))
         }
     }
 

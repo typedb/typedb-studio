@@ -34,7 +34,8 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
                     val graphData: GraphData = response.first()
                     simulation.addVertices(graphData.vertices.map(VertexState.Companion::of))
                     simulation.addEdges(graphData.edges.map(EdgeState.Companion::of))
-                    if (simulation.alpha() < 0.25) simulation.alpha(0.25)
+                    simulation.addVertexExplanations(graphData.explanationVertices.map(VertexExplanationState.Companion::of))
+                    if (simulation.alpha() < 0.3) simulation.alpha(0.3)
                 } else {
                     // TODO: Add some kind of indicator that results may be incomplete
                     val error: Throwable = when {

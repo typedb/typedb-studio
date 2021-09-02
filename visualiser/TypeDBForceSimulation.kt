@@ -16,7 +16,7 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         clear()
         addNodes(data.vertices.map { InputNode(it.id) })
         force("center", CenterForce(nodes().values, 0.0, 0.0))
-        force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 120.0,  0.5))
+        force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 100.0,  0.5))
         force("collide", CollideForce(nodes().values, 80.0))
 //        force("charge", ManyBodyForce(nodes().values) { forceEmitter, forceReceiver ->
 //            when (data.edges.count { it.sourceID == forceReceiver.index() || it.targetID == forceReceiver.index() }) {
@@ -51,8 +51,14 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
     fun addEdges(edges: List<EdgeState>) {
         if (edges.isEmpty()) return
         data.edges += edges
-        force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 120.0, 0.5))
-        force("charge", ManyBodyForce(nodes().values, -500.0 * data.edges.size / (data.vertices.size + 1)))
+        force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 100.0, 0.5))
+        force("charge", ManyBodyForce(nodes().values, -600.0 * data.edges.size / (data.vertices.size + 1)))
 //        println("New charge strength = ${-200.0 * data.edges.size / (data.vertices.size + 1)}")
+    }
+
+    fun addVertexExplanations(vertexExplanations: List<VertexExplanationState>) {
+        if (vertexExplanations.isEmpty()) return
+        data.vertexExplanations += vertexExplanations
+        println("Added vertex explanations: $vertexExplanations")
     }
 }

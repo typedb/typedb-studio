@@ -18,20 +18,25 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,20 +46,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
-import com.vaticle.typedb.studio.data.Highlight
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Composable
-fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>, theme: VisualiserTheme,
+fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
+                     vertexExplanations: List<VertexExplanationState>, theme: VisualiserTheme,
                      metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
                      onVertexDragStart: (vertex: VertexState) -> Unit,
-                     onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit) {
+                     onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
+                     explain: (vertex: VertexState) -> Unit) {
 
     var scale by remember { mutableStateOf(1F) }
     var worldOffset by remember { mutableStateOf(Offset.Zero) }
+    var pointerPosition: Offset? by remember { mutableStateOf(null) }
+    var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
+    var viewportSize by remember { mutableStateOf(Size.Zero) }
+    val highlightedExplanationIDs: SnapshotStateList<Int> = remember { mutableStateListOf() }
 
     // Metrics are recalculated on each query run
     LaunchedEffect(metrics.id) {
@@ -68,12 +78,14 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     )
 
     Box(modifier = modifier
-//            .onGloballyPositioned { coordinates ->
-//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
-////                println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
-//            }
+        .onGloballyPositioned { coordinates ->
+            viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
+//            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
+//            println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
+        }
         .background(theme.background)) {
 
+        var hoveredVertex: VertexState? by remember { mutableStateOf(null) }
         var draggedVertex: VertexState? by remember { mutableStateOf(null) }
 
         Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
@@ -87,11 +99,11 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                 }
             }
 
-            // TODO: this condition is supposed to be a || but without off-screen rendering detection we can't do that
+            // TODO: this condition is supposed to be a || but without out-of-viewport detection the performance would degrade unacceptably
             if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, -worldOffset) }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
-                vertices.forEach { drawVertex(it, theme, -worldOffset, dragged = draggedVertex === it, devicePixelRatio) }
+                vertices.forEach { drawVertex(it, vertexExplanations, highlightedExplanationIDs, theme, -worldOffset, focused = hoveredVertex === it || draggedVertex === it, devicePixelRatio) }
             }
 
             if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, -worldOffset) }
@@ -158,24 +170,67 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 
             // This nesting is required to prevent the drag event conflicting with the tap event
             Box(modifier = modifier.fillMaxSize()
+                .pointerMoveFilter(
+                    onMove = {
+                        pointerPosition = it
+                        return@pointerMoveFilter false
+                    },
+                    onExit = {
+                        pointerPosition = null
+                        return@pointerMoveFilter false
+                    }
+                )
                 .pointerInput(devicePixelRatio) {
                     detectTapGestures(
                         onPress = { viewportPoint ->
-                            val worldPoint = toWorldPoint(viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             draggedVertex = closestVertices.find { it.intersects(worldPoint) }
                             draggedVertex?.let { println("pressed vertex: $it") }
                             val cancelled = tryAwaitRelease()
                             if (cancelled) draggedVertex = null
+                        },
+                        onDoubleTap = { viewportPoint ->
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
+                            val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
+                            tappedVertex?.let {
+                                println("double-tapped vertex: $it")
+                                if (it.inferred) explain(it)
+                            }
                         }
                     )
                 })
+
+            LaunchedEffect(vertexExplanations) {
+                while (true) {
+                    withFrameNanos {
+                        val viewportPoint = pointerPosition
+                        if (viewportPoint != null
+                            && (hoveredVertexLastCheckDoneTimeNanos == 0L || System.nanoTime() - hoveredVertexLastCheckDoneTimeNanos > 5e7)) { // 50ms
+
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
+                            hoveredVertex = closestVertices.find { it.intersects(worldPoint) }
+                            val v = hoveredVertex
+                            hoveredVertexLastCheckDoneTimeNanos = System.nanoTime()
+                            highlightedExplanationIDs.clear()
+                            if (v != null) {
+//                                println("hovering over vertex: $it")
+                                highlightedExplanationIDs += vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID }
+//                                println(vertexExplanations.map { it })
+                                println(vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID })
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-private fun PointerInputScope.toWorldPoint(point: Offset, worldOffset: Offset, scale: Float, devicePixelRatio: Float): Offset {
-    val viewportTransformOrigin = Offset(size.width / 2F, size.height / 2F) / devicePixelRatio
+private fun toWorldPoint(viewportSize: Size, point: Offset, worldOffset: Offset, scale: Float, devicePixelRatio: Float): Offset {
+    val viewportTransformOrigin = Offset(viewportSize.width / 2F, viewportSize.height / 2F) / devicePixelRatio
     val scaledOffset = point / devicePixelRatio
 
     // Let viewport be the position of a vertex in the viewport, vpOrigin be the transform origin of the viewport,
@@ -188,6 +243,7 @@ private fun PointerInputScope.toWorldPoint(point: Offset, worldOffset: Offset, s
 
 private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, resultSizeLimit: Int): List<VertexState> {
 
+    // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
 //    val computeStart: Long = System.nanoTime()
     val vertexDistances = vertices.associateWith { (worldPoint - it.position).getDistanceSquared() }
 //    println("closestVertex: completed in ${(System.nanoTime() - computeStart) / 1e6}ms")
@@ -202,19 +258,34 @@ private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, 
     return vertexDistances.entries.sortedBy { it.value }.map { it.key }.take(resultSizeLimit)
 }
 
-private fun DrawScope.drawVertex(v: VertexState, theme: VisualiserTheme, viewportOffset: Offset, dragged: Boolean, devicePixelRatio: Float) {
-    val vertexColor = requireNotNull(theme.vertex[v.encoding]).copy(alpha = if (dragged) .675F else 1F)
+private fun DrawScope.drawVertex(v: VertexState, vertexExplanations: List<VertexExplanationState>, highlightedExplanationIDs: List<Int>, theme: VisualiserTheme, viewportOffset: Offset, focused: Boolean, devicePixelRatio: Float) {
+    val vertexColor = requireNotNull(theme.vertex[v.encoding]).copy(alpha = if (focused) .675F else 1F)
     val position = (v.position - viewportOffset) * devicePixelRatio
     val width = v.width * devicePixelRatio
     val height = v.height * devicePixelRatio
     val cornerRadius = CornerRadius(5F * devicePixelRatio)
-    val highlightWidth = 2 * devicePixelRatio
+    val highlightWidth = devicePixelRatio
+    val highlightColor: Color? = when {
+        vertexExplanations.firstOrNull { it.vertexID == v.id && it.explanationID in highlightedExplanationIDs } != null -> theme.explanation
+        v.inferred -> theme.inferred
+        else -> null
+    }
+
     when (v.encoding) {
 
-        VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE, VertexEncoding.ENTITY -> drawRoundRect(
-            color = vertexColor,
-            topLeft = Offset(position.x - width / 2, position.y - height / 2),
-            size = Size(width, height), cornerRadius = cornerRadius)
+        VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE, VertexEncoding.ENTITY -> {
+            if (highlightColor != null) {
+                drawRoundRect(
+                    color = highlightColor,
+                    topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
+                    size = Size(width + highlightWidth * 2, height + highlightWidth * 2), cornerRadius = cornerRadius)
+            }
+
+            drawRoundRect(
+                color = vertexColor,
+                topLeft = Offset(position.x - width / 2, position.y - height / 2),
+                size = Size(width, height), cornerRadius = cornerRadius)
+        }
 
         VertexEncoding.RELATION_TYPE, VertexEncoding.RELATION -> {
             // We start with a square of width n and transform it into a rhombus
@@ -223,8 +294,8 @@ private fun DrawScope.drawVertex(v: VertexState, theme: VisualiserTheme, viewpor
                 scale(scaleX = v.width / v.height, scaleY = 1F, pivot = position)
                 rotate(degrees = 45F, pivot = position)
             }) {
-                if (v.highlight == Highlight.INFERRED) {
-                    drawRoundRect(color = theme.inferred,
+                if (highlightColor != null) {
+                    drawRoundRect(color = highlightColor,
                         topLeft = Offset(position.x - n / 2 - highlightWidth, position.y - n / 2 - highlightWidth),
                         size = Size(n + highlightWidth * 2, n + highlightWidth * 2), cornerRadius = cornerRadius)
                 }
@@ -236,8 +307,8 @@ private fun DrawScope.drawVertex(v: VertexState, theme: VisualiserTheme, viewpor
         }
 
         VertexEncoding.ATTRIBUTE_TYPE, VertexEncoding.ATTRIBUTE -> {
-            if (v.highlight == Highlight.INFERRED) {
-                drawOval(color = theme.inferred,
+            if (highlightColor != null) {
+                drawOval(color = highlightColor,
                     topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
                     size = Size(width + highlightWidth * 2, height + highlightWidth * 2))
             }
@@ -266,7 +337,7 @@ private fun DrawScope.drawSolidEdge(edge: EdgeState, verticesByID: Map<Int, Vert
     val targetVertex = requireNotNull(verticesByID[edge.targetID])
     val lineSource = sourceVertex.position
     val lineTarget = targetVertex.position
-    val color = when (edge.highlight) { Highlight.NONE -> theme.edge; Highlight.INFERRED -> theme.inferred }
+    val color = if (edge.inferred) theme.inferred else theme.edge
 
     drawLine(
         start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
@@ -285,11 +356,11 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
     val targetVertex = requireNotNull(verticesByID[edge.targetID])
     val lineSource = edgeEndpoint(targetVertex, sourceVertex)
     val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
-    val color = when (edge.highlight) { Highlight.NONE -> theme.edge; Highlight.INFERRED -> theme.inferred }
+    val color = if (edge.inferred) theme.inferred else theme.edge
 
     if (lineSource != null && lineTarget != null) {
         val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
-        // TODO: This Size is an approximation - a Compose equivalent of TextMetrics would be more robust
+        // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
         val labelRect = Rect(
             Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
             Size(edge.label.length * 8F + 4, 14F + 4)
@@ -321,7 +392,7 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
 private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
     val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
     val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
-    val color = when (edge.highlight) { Highlight.NONE -> theme.edge; Highlight.INFERRED -> theme.inferred }
+    val color = if (edge.inferred) theme.inferred else theme.edge
     Column(
         modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally

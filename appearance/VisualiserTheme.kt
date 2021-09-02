@@ -7,7 +7,7 @@ import com.vaticle.typedb.studio.data.VertexEncoding.*
 private val Gold = Color(0xFFEBC53D)
 private val SkyBlue = Color(0xFF92E4FC)
 private val Blue = Color(0xFF7BA0FF)
-private val Purple = Color(0xFFE69CFF)
+private val Pink = Color(0xFFE69CFF)
 private val Black = Color(0xFF09022F)
 
 data class VisualiserTheme(
@@ -15,6 +15,7 @@ data class VisualiserTheme(
     val vertex: Map<VertexEncoding, Color>,
     val edge: Color,
     val inferred: Color,
+    val explanation: Color,
     val error: Color,
     val vertexLabel: Color,
 ) {
@@ -26,12 +27,13 @@ data class VisualiserTheme(
                 ENTITY_TYPE to VaticlePalette.Pink2,
                 RELATION_TYPE to VaticlePalette.Yellow2,
                 ATTRIBUTE_TYPE to Blue,
-                ENTITY to Purple,
+                ENTITY to Pink,
                 RELATION to Gold,
                 ATTRIBUTE to SkyBlue,
             ),
             edge = Blue,
             inferred = VaticlePalette.Green,
+            explanation = VaticlePalette.Red1,
             error = VaticlePalette.Red1,
             vertexLabel = Black,
         )

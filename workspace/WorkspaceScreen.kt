@@ -97,9 +97,11 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
 
         Row(modifier = Modifier.fillMaxSize().weight(1F)) {
             TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
-                vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges, theme = visualiserTheme,
+                vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
+                vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
                 metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
                 onZoom = { value -> visualiserScale = value },
+                explain = { vertex -> db.explainConcept(vertex.id) },
                 onVertexDragStart = { vertex ->
                     typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
                         node.isXFixed = true

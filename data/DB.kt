@@ -13,11 +13,12 @@ import com.vaticle.typedb.client.api.connection.TypeDBSession
 import com.vaticle.typedb.client.api.connection.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction.Type.READ
+import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typedb.studio.data.EdgeDirection.*
-import com.vaticle.typedb.studio.data.Highlight.*
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
+import java.lang.IllegalStateException
 import java.util.concurrent.CompletableFuture
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
@@ -34,76 +35,103 @@ class DB(dbServer: DBServer, private val dbName: String) {
     private var session: TypeDBSession? by mutableStateOf(null)
     var tx: TypeDBTransaction? by mutableStateOf(null)
         private set
+    var responseStream: QueryResponseStream = QueryResponseStream.EMPTY
+    var vertexGenerator = VertexGenerator()
+    private val incompleteThingEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
+    private val incompleteTypeEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
+    private val explainables: ConcurrentHashMap<Int, ConceptMap.Explainable> = ConcurrentHashMap()
+    private val explanationIterators: ConcurrentHashMap<Int, Iterator<Explanation>> = ConcurrentHashMap()
+    private val currentExplanationID = AtomicInteger(0)
 
     private val client = dbServer.client
 
-    fun matchQuery(query: String): QueryResponseStream {
-        val responseStream = QueryResponseStream()
+    private fun loadAnswerStream(answerStream: Stream<ConceptMap>) {
+        val tasks: MutableList<CompletableFuture<Void>> = mutableListOf()
+        answerStream.forEach { tasks += loadConceptMapAsync(it) }
+        CompletableFuture.allOf(*tasks.toTypedArray()).join()
+    }
+
+    private fun loadConceptMapAsync(conceptMap: ConceptMap, explanationID: Int? = null): CompletableFuture<Void> {
         val tasks: MutableList<CompletableFuture<Unit>> = mutableListOf()
-        try {
-            session?.close()
-            session = client.session(dbName, DATA)
-            tx = session!!.transaction(READ, TypeDBOptions.core().infer(true).explain(true))
-            val answerStream: Stream<ConceptMap> = tx!!.query().match(query)
-            val vertexGenerator = VertexGenerator()
-            val incompleteThingEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
-            val incompleteTypeEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
-            val queryAnswerCount = AtomicInteger(0)
-            CompletableFuture.supplyAsync {
-                try {
-                    answerStream.parallel().forEach { cm ->
-                        queryAnswerCount.incrementAndGet()
-                        cm.map().entries.parallelStream().forEach { (varName: String, concept: Concept) ->
-                            if (concept.isThing) {
-                                val thing = concept.asThing()
-                                vertexGenerator.things.computeIfAbsent(thing.iid) {
-                                    val thingVertex: VertexData = vertexGenerator.generateVertex(
-                                        concept = thing, highlight = if (thing.isInferred) INFERRED else NONE)
+        conceptMap.map().entries.parallelStream().forEach { (varName: String, concept: Concept) ->
+            if (concept.isThing) {
+                val thing = concept.asThing()
+                val vertexID: Int = vertexGenerator.things.computeIfAbsent(thing.iid) {
+                    val thingVertex: VertexData = vertexGenerator.generateVertex(thing)
 //                                    println("Added a thing! $thingVertex")
-                                    responseStream.putVertex(thingVertex)
-
-                                    tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges).supplyAsync()
-                                    if (thing.isRelation) {
-                                        tasks += LoadRoleplayersTask(thing.asRelation().asRemote(tx), thingVertex, vertexGenerator, responseStream).supplyAsync()
-                                    }
-
-                                    incompleteThingEdges.remove(thing.iid)?.forEach {
-                                        val edgeData = when (it.direction) {
-                                            INCOMING -> EdgeData(it.id, source = thingVertex.id, target = it.vertexID, it.label, it.highlight)
-                                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = thingVertex.id, it.label, it.highlight)
-                                        }
-                                        responseStream.putEdge(edgeData)
-                                    }
-
-                                    return@computeIfAbsent thingVertex.id
-                                }
-                            } else {
-                                val type = concept.asType()
-                                vertexGenerator.types.computeIfAbsent(type.label.scopedName()) {
-                                    val typeVertex: VertexData = vertexGenerator.generateVertex(type)
-                                    responseStream.putVertex(typeVertex)
-
-                                    if (type.isThingType) {
-                                        val remoteThingType = type.asThingType().asRemote(tx)
-                                        tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                                        tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                                    }
-
-                                    incompleteTypeEdges.remove(type.label.scopedName())?.forEach {
-                                        val edgeData = when (it.direction) {
-                                            INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.label, it.highlight)
-                                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.label, it.highlight)
-                                        }
-                                        responseStream.putEdge(edgeData)
-                                    }
-
-                                    return@computeIfAbsent typeVertex.id
-                                }
+                    responseStream.putVertex(thingVertex)
+                    if (thing.isInferred) {
+                        explainables.computeIfAbsent(thingVertex.id) {
+                            when {
+                                thing.isRelation -> conceptMap.explainables().relation(varName)
+                                thing.isAttribute -> conceptMap.explainables().attribute(varName)
+                                else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute!")
                             }
                         }
                     }
-                    CompletableFuture.allOf(*tasks.toTypedArray()).join()
-                    println("Completed query: $query and found $queryAnswerCount answers (excluding connected concepts)")
+
+                    tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges).supplyAsync()
+                    if (thing.isRelation) {
+                        tasks += LoadRoleplayersTask(thing.asRelation().asRemote(tx), thingVertex, vertexGenerator, responseStream).supplyAsync()
+                    }
+
+                    incompleteThingEdges.remove(thing.iid)?.forEach {
+                        val edgeData = when (it.direction) {
+                            INCOMING -> EdgeData(it.id, source = thingVertex.id, target = it.vertexID, it.label, it.inferred)
+                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = thingVertex.id, it.label, it.inferred)
+                        }
+                        responseStream.putEdge(edgeData)
+                    }
+
+                    return@computeIfAbsent thingVertex.id
+                }
+                explanationID?.let { value ->
+                    responseStream.putExplanationVertex(ExplanationVertexData(explanationID = value, vertexID = vertexID))
+                }
+            } else {
+                val type = concept.asType()
+                vertexGenerator.types.computeIfAbsent(type.label.scopedName()) {
+                    val typeVertex: VertexData = vertexGenerator.generateVertex(type)
+                    responseStream.putVertex(typeVertex)
+
+                    if (type.isThingType) {
+                        val remoteThingType = type.asThingType().asRemote(tx)
+                        tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                        tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                    }
+
+                    incompleteTypeEdges.remove(type.label.scopedName())?.forEach {
+                        val edgeData = when (it.direction) {
+                            INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.label, it.inferred)
+                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.label, it.inferred)
+                        }
+                        responseStream.putEdge(edgeData)
+                    }
+
+                    return@computeIfAbsent typeVertex.id
+                }
+            }
+        }
+        return CompletableFuture.allOf(*tasks.toTypedArray())
+    }
+
+    fun matchQuery(query: String): QueryResponseStream {
+        responseStream = QueryResponseStream()
+        incompleteThingEdges.clear()
+        incompleteTypeEdges.clear()
+        explainables.clear()
+        explanationIterators.clear()
+        currentExplanationID.set(0)
+        try {
+            if (session?.isOpen != true) {
+                session = client.session(dbName, DATA)
+                tx = session!!.transaction(READ, TypeDBOptions.core().infer(true).explain(true))
+            }
+            vertexGenerator = VertexGenerator()
+            CompletableFuture.supplyAsync {
+                try {
+                    loadAnswerStream(tx!!.query().match(query))
+                    println("Completed query: $query")
                     responseStream.completed = true
                 } catch (e: Exception) {
                     responseStream.putError(e)
@@ -115,6 +143,41 @@ class DB(dbServer: DBServer, private val dbName: String) {
             session?.close()
         }
 
+        return responseStream
+    }
+
+    // TODO: either support or block concurrent access
+    fun explainConcept(vertexID: Int): QueryResponseStream {
+        try {
+            CompletableFuture.supplyAsync {
+                try {
+                    var explanationIterator: Iterator<Explanation>? = explanationIterators[vertexID]
+
+                    if (explanationIterator == null) {
+                        val explainable: ConceptMap.Explainable? = explainables[vertexID]
+                        if (explainable != null) {
+                            explanationIterator = tx!!.query().explain(explainables[vertexID]).iterator()
+                            explanationIterators[vertexID] = explanationIterator
+                        } else throw IllegalStateException("This concept is not explainable")
+                    }
+
+                    val iter: Iterator<Explanation> = explanationIterator!!
+                    if (iter.hasNext()) {
+                        val explanation: Explanation = iter.next()
+                        val explanationID: Int = currentExplanationID.incrementAndGet()
+                        responseStream.putExplanationVertex(ExplanationVertexData(explanationID, vertexID))
+                        loadConceptMapAsync(explanation.condition(), explanationID)
+                    }
+                    return@supplyAsync
+                } catch (e: Exception) {
+                    responseStream.putError(e)
+                    session?.close()
+                }
+            }
+        } catch (e: Exception) {
+            responseStream.putError(e)
+            session?.close()
+        }
         return responseStream
     }
 
@@ -132,7 +195,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         return nextID.getAndIncrement()
     }
 
-    fun generateVertex(concept: Concept, highlight: Highlight = NONE): VertexData {
+    fun generateVertex(concept: Concept): VertexData {
         val encoding = concept.encoding()
         val label = concept.vertexLabel()
 
@@ -147,7 +210,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
             }),
             width = when (encoding) { RELATION_TYPE, RELATION -> 120F; else -> 110F },
             height = when (encoding) { RELATION_TYPE, RELATION -> 60F; else -> 40F },
-            highlight = highlight
+            inferred = concept.isThing && concept.asThing().isInferred
         )
     }
 
@@ -196,12 +259,12 @@ private class LoadRoleplayersTask(private val relation: Relation.Remote, vertex:
         for (rolePlayers in relation.playersByRoleType.entries) {
             for (player: Thing in rolePlayers.value) {
                 val rolePlayerNodeID = vertexGenerator.things.computeIfAbsent(player.iid) {
-                    val vertex = vertexGenerator.generateVertex(player, if (relation.isInferred) INFERRED else NONE)
+                    val vertex = vertexGenerator.generateVertex(player)
                     responseStream.putVertex(vertex)
                     return@computeIfAbsent vertex.id
                 }
                 responseStream.putEdge(EdgeData(id = vertexGenerator.nextID(), source = vertex.id, target = rolePlayerNodeID,
-                    label = rolePlayers.key.label.name(), highlight = if (relation.isInferred) INFERRED else NONE))
+                    label = rolePlayers.key.label.name(), inferred = relation.isInferred))
             }
         }
     }
@@ -215,14 +278,17 @@ private class LoadOwnedAttributesTask(private val thing: Thing, private val tx: 
     override fun run() {
         val (x, y) = Pair("x", "y")
         tx.query().match(match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(y)))).forEach { cm: ConceptMap ->
+            // TODO: if the owned attribute is inferred, get its Explainable
             val attribute = cm.get(y).asAttribute()
-            val edgeHighlight = if (y in cm.explainables().attributes().keys || y in cm.explainables().ownerships().keys.map { it.second() }) INFERRED else NONE
+            val isEdgeInferred = y in cm.explainables().attributes().keys || y in cm.explainables().ownerships().keys.map { it.second() }
             val attributeNodeID = vertexGenerator.things[attribute.iid]
             if (attributeNodeID != null) {
-                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = attributeNodeID, label = "has", highlight = edgeHighlight))
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = attributeNodeID,
+                    label = "has", inferred = isEdgeInferred))
             } else {
                 incompleteEdges.getOrPut(attribute.iid) { mutableListOf() }
-                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "has", highlight = edgeHighlight))
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING,
+                        label = "has", inferred = isEdgeInferred))
             }
         }
     }
