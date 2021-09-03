@@ -14,6 +14,7 @@ import com.vaticle.typedb.client.api.connection.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.logic.Explanation
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typedb.studio.data.EdgeDirection.*
 import com.vaticle.typeql.lang.TypeQL
@@ -35,7 +36,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
     private var session: TypeDBSession? by mutableStateOf(null)
     var tx: TypeDBTransaction? by mutableStateOf(null)
         private set
-    var responseStream: QueryResponseStream = QueryResponseStream.EMPTY
+    private var responseStream: QueryResponseStream = QueryResponseStream.EMPTY
     var vertexGenerator = VertexGenerator()
     private val incompleteThingEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
     private val incompleteTypeEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
@@ -60,14 +61,20 @@ class DB(dbServer: DBServer, private val dbName: String) {
                     val thingVertex: VertexData = vertexGenerator.generateVertex(thing)
 //                                    println("Added a thing! $thingVertex")
                     responseStream.putVertex(thingVertex)
-                    if (thing.isInferred) {
-                        explainables.computeIfAbsent(thingVertex.id) {
-                            when {
-                                thing.isRelation -> conceptMap.explainables().relation(varName)
-                                thing.isAttribute -> conceptMap.explainables().attribute(varName)
-                                else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute!")
+                    try {
+                        if (thing.isInferred) {
+                            explainables.computeIfAbsent(thingVertex.id) {
+                                when {
+                                    thing.isRelation -> conceptMap.explainables().relation(varName)
+                                    thing.isAttribute -> conceptMap.explainables().attribute(varName)
+                                    else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute!")
+                                }
                             }
                         }
+                    } catch (e: TypeDBClientException) {
+                        // TODO: Currently we need to catch this exception because not every Inferred concept is
+                        //       Explainable. Once that bug is fixed, remove this catch statement.
+                        println(e.message)
                     }
 
                     tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges).supplyAsync()
@@ -116,7 +123,8 @@ class DB(dbServer: DBServer, private val dbName: String) {
     }
 
     fun matchQuery(query: String): QueryResponseStream {
-        responseStream = QueryResponseStream()
+        responseStream.clear()
+        responseStream.completed = false
         incompleteThingEdges.clear()
         incompleteTypeEdges.clear()
         explainables.clear()
@@ -229,7 +237,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         else -> when {
             isAttribute -> {
                 val attribute = asAttribute()
-                "${attribute.type.label.name()}:${
+                "${attribute.type.label.name()}: ${
                     when {
                         attribute.isDateTime -> attribute.asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         else -> attribute.value

@@ -91,12 +91,13 @@ class QueryResponseStream(completed: Boolean = false) {
         }
     }
 
-    private fun clear() {
+    fun clear() {
         vertexStore = mutableListOf()
         edgeStore = mutableListOf()
         explanationVertexStore = mutableListOf()
         explanationEdgeStore = mutableListOf()
         exception = null
+        queryEndTimeNanos = null
     }
 
     fun isEmpty(): Boolean {

@@ -195,7 +195,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
                             tappedVertex?.let {
-                                println("double-tapped vertex: $it")
+//                                println("double-tapped vertex: $it")
                                 if (it.inferred) explain(it)
                             }
                         }
@@ -219,7 +219,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 //                                println("hovering over vertex: $it")
                                 highlightedExplanationIDs += vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID }
 //                                println(vertexExplanations.map { it })
-                                println(vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID })
+//                                println(vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID })
                             }
                         }
                     }
