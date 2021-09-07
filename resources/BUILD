@@ -1,6 +1,6 @@
 package(default_visibility = ["//:__pkg__"])
 
 filegroup(
-    name = "resources",
+    name = "logback-xml",
     srcs = ["logback.xml"]
 )

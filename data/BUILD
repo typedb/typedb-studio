@@ -19,4 +19,15 @@ kt_jvm_library(
         # Maven
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
     ],
+    tags = ["maven_coordinates=com.vaticle.typedb:studio-data:{pom_version}"],
 )
+
+#java_import(
+#    name = "client-java",
+#    jars = [
+#        "@vaticle_typedb_client_java//common:libcommon.jar",
+#        "@vaticle_typedb_client_java//api:libapi.jar",
+#    ],
+#    deps = [],
+#    tags = ["maven_coordinates=com.vaticle.typedb:studio-typedb-client:{pom_version}"]
+#)

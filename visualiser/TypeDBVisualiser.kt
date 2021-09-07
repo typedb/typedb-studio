@@ -74,7 +74,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     val devicePixelRatio = metrics.devicePixelRatio
 
     val ubuntuMono = FontFamily(
-        Font(resource = "fonts/UbuntuMono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
+        Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
     )
 
     Box(modifier = modifier

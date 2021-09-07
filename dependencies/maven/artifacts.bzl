@@ -40,4 +40,5 @@ artifacts = [
     "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",
     "org.jetbrains:annotations",
     "org.slf4j:slf4j-api",
+    "org.zeroturnaround:zt-exec",
 ]

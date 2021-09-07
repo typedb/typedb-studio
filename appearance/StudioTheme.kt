@@ -199,12 +199,12 @@ private fun TextStyle.withDefaultFontFamily(default: FontFamily): TextStyle {
 }
 
 private val titilliumWeb = FontFamily(
-    Font(resource = "fonts/TitilliumWeb/TitilliumWeb-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal),
-    Font(resource = "fonts/TitilliumWeb/TitilliumWeb-SemiBold.ttf", weight = FontWeight.SemiBold, style = FontStyle.Normal)
+    Font(resource = "fonts/titillium_web/TitilliumWeb-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal),
+    Font(resource = "fonts/titillium_web/TitilliumWeb-SemiBold.ttf", weight = FontWeight.SemiBold, style = FontStyle.Normal)
 )
 
 private val ubuntuMono = FontFamily(
-    Font(resource = "fonts/UbuntuMono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
+    Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
 )
 
 val LocalTypography = staticCompositionLocalOf { StudioTypography(defaultFontFamily = titilliumWeb, defaultMonospaceFontFamily = ubuntuMono) }

@@ -16,12 +16,12 @@
 #
 
 load("//:deployment.bzl", deployment_github = "deployment")
-load("//:rules.bzl", "print_rootpath")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary")
+load("//:rules.bzl", "jvm_application_image", "print_rootpath")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "checksum")
+load("@vaticle_bazel_distribution//common:rules.bzl", "checksum", "assemble_targz", "assemble_zip", "java_deps")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
@@ -29,7 +29,7 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 # TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
 kt_jvm_binary(
     name = "main",
-    srcs = glob(["*.kt"]),
+    srcs = ["main.kt"],
     main_class = "com.vaticle.typedb.studio.MainKt",
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
@@ -88,10 +88,67 @@ kt_jvm_binary(
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
     ],
     resources = [
-        "//resources",
-        "//resources/fonts",
+        "//resources:logback-xml",
+        "//resources/fonts/titillium_web:light",
+        "//resources/fonts/titillium_web:regular",
+        "//resources/fonts/titillium_web:semi-bold",
+        "//resources/fonts/ubuntu_mono:bold",
+        "//resources/fonts/ubuntu_mono:regular",
     ],
     resource_strip_prefix = "resources",
+    tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
+)
+
+# TODO: need native libraries deps
+#java_deps(
+#    name = "main-deps-mac",
+#    target = ":main",
+#    java_deps_root = "lib/",
+#    visibility = ["//:__pkg__"],
+#    maven_name = False,
+#)
+
+assemble_files = {
+    "//resources:logback-xml": "logback.xml",
+    "//resources/fonts/titillium_web:light": "fonts/titillium_web/TitilliumWeb-Light.ttf",
+    "//resources/fonts/titillium_web:regular": "fonts/titillium_web/TitilliumWeb-Regular.ttf",
+    "//resources/fonts/titillium_web:semi-bold": "fonts/titillium_web/TitilliumWeb-SemiBold.ttf",
+    "//resources/fonts/ubuntu_mono:bold": "fonts/ubuntu_mono/UbuntuMono-Bold.ttf",
+    "//resources/fonts/ubuntu_mono:regular": "fonts/ubuntu_mono/UbuntuMono-Regular.ttf",
+    "//:LICENSE": "LICENSE",
+}
+
+#assemble_zip(
+#    name = "assemble-mac-zip",
+#    targets = [":main-deps-mac"],
+#    additional_files = assemble_files,
+#    output_filename = "typedb-studio-mac",
+#    visibility = ["//:__pkg__"]
+#)
+
+kt_jvm_library(
+    name = "jpackage-runner-lib",
+    srcs = ["JPackageRunner.kt"],
+    deps = ["@maven//:org_zeroturnaround_zt_exec"],
+#    main_class = "com.vaticle.typedb.studio.JPackageRunnerKt",
+#    main_class = "--print_javabin",
+)
+
+java_binary(
+    name = "jpackage-runner",
+    runtime_deps = [":jpackage-runner-lib"],
+    main_class = "com.vaticle.typedb.studio.JPackageRunnerKt",
+)
+
+# TODO: Create a MANIFEST file in the jvm_binary and read it to determine the main jar and main class
+jvm_application_image(
+    name = "application-image",
+    application_name = "TypeDB Studio",
+    jvm_binary = ":main",
+    main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
+    main_class = "com.vaticle.typedb.studio.MainKt",
+    deps_use_maven_name = False,
+    additional_files = assemble_files,
 )
 
 pkg_zip(
@@ -174,6 +231,7 @@ checkstyle_test(
     license_type = "agpl",
 )
 
+# TODO: this is just a test genrule
 genrule(
     name = "compose-compiler-path-genrule",
     outs = [
@@ -184,6 +242,7 @@ genrule(
     tools = ["@org_jetbrains_compose_compiler//file"],
 )
 
+# TODO: this is just a test rule
 print_rootpath(
     name = "compose-compiler-path",
     out = "compose-compiler-path.txt",
