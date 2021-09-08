@@ -32,10 +32,14 @@ print_rootpath = rule(
 
 def _jpackage_impl(ctx):
     ctx.actions.run(
-        inputs = [ctx.file.src],
+        inputs = [
+            ctx.file.jdk,
+            ctx.file.src,
+        ],
         outputs = [ctx.outputs.distribution_file],
         executable = ctx.executable._jpackage_runner_kt,
         arguments = [
+            ctx.file.jdk.path,
             ctx.file.src.path,
             ctx.attr.application_name,
             ctx.attr.main_jar,
@@ -57,6 +61,10 @@ jpackage = rule(
         "application_name": attr.string(
             mandatory = True,
             doc = "The application name",
+        ),
+        "jdk": attr.label(
+            allow_single_file = True,
+            doc = "The JDK, which must be at least version 16",
         ),
         "main_jar": attr.string(
             mandatory = True,
@@ -111,4 +119,14 @@ def jvm_application_image(name,
         application_name = application_name,
         main_jar = "lib/" + main_jar,
         main_class = main_class,
+        jdk = native_jdk16(),
     )
+
+
+def native_jdk16():
+    return select({
+        "@vaticle_dependencies//util/platform:is_mac": "@jdk16_mac//file",
+        "@vaticle_dependencies//util/platform:is_linux": "@jdk16_linux//file",
+        "@vaticle_dependencies//util/platform:is_windows": "@jdk16_windows//file",
+        "//conditions:default": "@jdk16_mac//file",
+    })

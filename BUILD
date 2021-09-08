@@ -129,9 +129,10 @@ assemble_files = {
 kt_jvm_library(
     name = "jpackage-runner-lib",
     srcs = ["JPackageRunner.kt"],
-    deps = ["@maven//:org_zeroturnaround_zt_exec"],
-#    main_class = "com.vaticle.typedb.studio.JPackageRunnerKt",
-#    main_class = "--print_javabin",
+    deps = [
+        "@maven//:org_apache_commons_commons_compress",
+        "@maven//:org_zeroturnaround_zt_exec"
+    ],
 )
 
 java_binary(
