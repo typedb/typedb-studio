@@ -18,29 +18,34 @@
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def vaticle_dependencies():
-#    git_repository(
-#        name = "vaticle_dependencies",
-#        remote = "https://github.com/vaticle/dependencies",
-#        commit = "515d6adf719cc7e78f9d313e6c97bce9f918b60b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
-#    )
-    native.local_repository(
+    git_repository(
         name = "vaticle_dependencies",
-        path = "../dependencies",
+        remote = "https://github.com/alexjpwalker/dependencies",
+        commit = "d4aabf0f0676c11177fc8f8b6ab97ac4b8d9bb8b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
+#    native.local_repository(
+#        name = "vaticle_dependencies",
+#        path = "../dependencies",
+#    )
 
 def vaticle_force_graph():
-    native.local_repository(
+    git_repository(
         name = "vaticle_force_graph",
-        path = "../force-graph",
+        remote = "https://github.com/vaticle/force-graph",
+        commit = "52f1327d90148f0acc5a46293cecca856e06805a",
     )
+#    native.local_repository(
+#        name = "vaticle_force_graph",
+#        path = "../force-graph",
+#    )
 
 def vaticle_typedb_client_java():
-#    git_repository(
-#        name = "vaticle_typedb_client_java",
-#        remote = "https://github.com/vaticle/client-java",
-#        tag = "2.3.0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
-#    )
-    native.local_repository(
+    git_repository(
         name = "vaticle_typedb_client_java",
-        path = "../client-java",
+        remote = "https://github.com/alexjpwalker/client-java",
+        commit = "e177ec35dc16e2db21252954512214b655e29b90",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
+#    native.local_repository(
+#        name = "vaticle_typedb_client_java",
+#        path = "../client-java",
+#    )
