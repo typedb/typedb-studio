@@ -27,10 +27,9 @@ load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
 # TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
-kt_jvm_binary(
-    name = "main",
+kt_jvm_library(
+    name = "studio",
     srcs = ["main.kt"],
-    main_class = "com.vaticle.typedb.studio.MainKt",
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//appearance",
@@ -84,9 +83,6 @@ kt_jvm_binary(
         "@maven//:androidx_annotation_annotation_1_2_0",
         "@maven//:androidx_annotation_annotation",
     ],
-    runtime_deps = [
-        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
-    ],
     resources = [
         "//resources:logback-xml",
         "//resources/fonts/titillium_web:light",
@@ -99,7 +95,33 @@ kt_jvm_binary(
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
 )
 
-# TODO: need native libraries deps
+java_binary(
+    name = "studio-bin-mac",
+    main_class = "com.vaticle.typedb.studio.MainKt",
+    runtime_deps = [
+        ":studio",
+        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
+    ],
+)
+
+java_binary(
+    name = "studio-bin-windows",
+    main_class = "com.vaticle.typedb.studio.MainKt",
+    runtime_deps = [
+        ":studio",
+        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_windows_x64",
+    ],
+)
+
+java_binary(
+    name = "studio-bin-linux",
+    main_class = "com.vaticle.typedb.studio.MainKt",
+    runtime_deps = [
+        ":studio",
+        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_linux_x64",
+    ],
+)
+
 #java_deps(
 #    name = "main-deps-mac",
 #    target = ":main",
@@ -144,7 +166,12 @@ java_binary(
 jvm_application_image(
     name = "application-image",
     application_name = "TypeDB Studio",
-    jvm_binary = ":main",
+    jvm_binary = select({
+        "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
+        "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
+        "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
+        "//conditions:default": ":studio-bin-mac",
+    }),
     main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
     main_class = "com.vaticle.typedb.studio.MainKt",
     deps_use_maven_name = False,

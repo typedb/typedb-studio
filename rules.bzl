@@ -88,11 +88,20 @@ jpackage = rule(
 )
 
 
+def native_jdk16():
+    return select({
+        "@vaticle_dependencies//util/platform:is_mac": "@jdk16_mac//file",
+        "@vaticle_dependencies//util/platform:is_linux": "@jdk16_linux//file",
+        "@vaticle_dependencies//util/platform:is_windows": "@jdk16_windows//file",
+        "//conditions:default": "@jdk16_mac//file",
+    })
+
 def jvm_application_image(name,
                           application_name,
                           jvm_binary,
                           main_jar,
                           main_class,
+                          jdk = native_jdk16(),
                           deps_use_maven_name = True,
                           additional_files = {}):
 
@@ -119,14 +128,5 @@ def jvm_application_image(name,
         application_name = application_name,
         main_jar = "lib/" + main_jar,
         main_class = main_class,
-        jdk = native_jdk16(),
+        jdk = jdk,
     )
-
-
-def native_jdk16():
-    return select({
-        "@vaticle_dependencies//util/platform:is_mac": "@jdk16_mac//file",
-        "@vaticle_dependencies//util/platform:is_linux": "@jdk16_linux//file",
-        "@vaticle_dependencies//util/platform:is_windows": "@jdk16_windows//file",
-        "//conditions:default": "@jdk16_mac//file",
-    })
