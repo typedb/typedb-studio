@@ -17,7 +17,6 @@
 
 artifacts = [
     "androidx.annotation:annotation",
-    "org.apache.commons:commons-compress",
     "org.jetbrains.compose.animation:animation-core-desktop",
     "org.jetbrains.compose.animation:animation-desktop",
     "org.jetbrains.compose.desktop:desktop-jvm",

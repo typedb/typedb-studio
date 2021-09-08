@@ -130,7 +130,6 @@ kt_jvm_library(
     name = "jpackage-runner-lib",
     srcs = ["JPackageRunner.kt"],
     deps = [
-        "@maven//:org_apache_commons_commons_compress",
         "@maven//:org_zeroturnaround_zt_exec"
     ],
 )
