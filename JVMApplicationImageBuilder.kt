@@ -13,19 +13,22 @@ import java.util.zip.ZipOutputStream
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import java.nio.file.Files
+import java.util.*
 import java.util.Locale.ENGLISH
 
 fun main(args: Array<String>) {
     val config = parseConfig(args[0])
-    val privateConfig = parseConfig(args[1], private = true)
+    val verboseLoggingEnabled = config["verbose"].toBoolean()
+
+    val privateConfig = parseConfig(args[1], verboseLoggingEnabled = verboseLoggingEnabled, private = true)
     val applicationFilename = config.require("applicationFilename")
     val version = config.require("version")
-    val verboseLoggingEnabled = config["verbose"].toBoolean()
     val appleCodeSigningCertURL = privateConfig["appleCodeSigningCertificateUrl"]
 
     val os = OS.current
 
-    fun runShell(script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(), expectExitValueNormal: Boolean = true): ProcessResult {
+    fun runShell(script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(),
+                 expectExitValueNormal: Boolean = true, printParamsEndIndex: Int? = null): ProcessResult {
         var builder = ProcessExecutor(script)
             .readOutput(true)
             .redirectError(System.err)
@@ -36,12 +39,16 @@ fun main(args: Array<String>) {
         if (expectExitValueNormal) builder = builder.exitValueNormal()
         val execution = builder.execute()
         if (execution.exitValue != 0 || verboseLoggingEnabled) {
-            println("Execution of $script finished with status code '${execution.exitValue}'")
+            val loggedScript = when (printParamsEndIndex) {
+                null -> "$script"
+                else -> "${script.subList(0, printParamsEndIndex)} (+${script.size - printParamsEndIndex} hidden argument(s))"
+            }
+            println("Execution of $loggedScript finished with status code '${execution.exitValue}'")
         }
         return execution
     }
 
-    fun signFile(file: File, deep: Boolean = false, replaceExisting: Boolean = false) {
+    fun signFile(file: File, keychainName: String, deep: Boolean = false, replaceExisting: Boolean = false) {
         if (!replaceExisting) {
             val verifySignatureResult = runShell(listOf("codesign", "-v", "--strict", file.path), expectExitValueNormal = false)
             if (verifySignatureResult.exitValue == 0) return // file is already signed, skip
@@ -57,7 +64,7 @@ fun main(args: Array<String>) {
             "--prefix", "com.vaticle.typedb.studio.",
             "--options", "runtime",
             "--timestamp",
-            "--keychain", "vaticle-mac.keychain",
+            "--keychain", keychainName,
             file.path)
         if (deep) signCommand += "--deep"
         if (verboseLoggingEnabled) signCommand += "-vvv"
@@ -87,12 +94,22 @@ fun main(args: Array<String>) {
     assert(files[0].isDirectory)
     Files.move(files[0].toPath(), Path.of("src"))
 
+    val keychainName = "jvm-application-image-builder.keychain"
+
     if (os == MAC) {
         if (appleCodeSigningCertURL == null) {
             println("Skipping MacOS code signing step: environment variable APPLE_CODE_SIGNING_CERTIFICATE_URL is not set " +
                     "(it should only be set when deploying a distribution)")
         } else {
-            runShell(listOf("security", "unlock-keychain", "-p", "!bJib0Fmsh388O0pFvRjqXgFXiqoO2xPhLk2387", "vaticle-mac.keychain"))
+            val appleCodeSigningPassword = privateConfig.require("appleCodeSigningPassword")
+            val keychainPassword = UUID.randomUUID().toString()
+            runShell(listOf("curl", "-o", "code-signing-cert.p12", appleCodeSigningCertURL), printParamsEndIndex = 3)
+            runShell(listOf("security", "create-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
+            runShell(listOf("security", "default-keychain", "-s", keychainName))
+            runShell(listOf("security", "list-keychains", "-d", "user", "-s", "login.keychain", keychainName))
+            runShell(listOf("security", "unlock-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
+            runShell(listOf("security", "import", "code-signing-cert.p12", "-k", keychainName, "-P", appleCodeSigningPassword, "-T", "/usr/bin/codesign"), printParamsEndIndex = 5)
+            runShell(listOf("security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", keychainPassword, keychainName), printParamsEndIndex = 4)
 
             for (file in File("src").listFilesRecursively()) {
                 if (!file.isFile) continue
@@ -108,7 +125,7 @@ fun main(args: Array<String>) {
                     for (jarEntry: File in jarContents) {
                         if (jarEntry.extension == "jnilib") {
                             containsJnilib = true
-                            signFile(jarEntry)
+                            signFile(jarEntry, keychainName)
                         }
                     }
 
@@ -157,8 +174,8 @@ fun main(args: Array<String>) {
 
     if (os == MAC) {
         if (appleCodeSigningCertURL != null) {
-            signFile(File("dist/$applicationFilename.app/Contents/runtime"), replaceExisting = true)
-            signFile(File("dist/$applicationFilename.app"), replaceExisting = true)
+            signFile(File("dist/$applicationFilename.app/Contents/runtime"), keychainName, replaceExisting = true)
+            signFile(File("dist/$applicationFilename.app"), keychainName, replaceExisting = true)
         }
 
         runShell(listOf(
@@ -232,14 +249,14 @@ fun main(args: Array<String>) {
         baseDir = Path.of("dist"))
 }
 
-fun parseConfig(config: String, private: Boolean = false): Config {
+fun parseConfig(config: String, verboseLoggingEnabled: Boolean = false, private: Boolean = false): Config {
     val parsedConfig: Map<String, String> = config.lines()
         .filter { line -> ":" in line && !line.startsWith("#") }
         .associate { line ->
             val components = line.split(":", limit = 2)
             return@associate components[0].trim() to components[1].trim()
         }
-    if (parsedConfig["verbose"].toBoolean()) {
+    if (verboseLoggingEnabled || parsedConfig["verbose"].toBoolean()) {
         println()
         println("Parsed configuration object: ")
         parsedConfig.forEach { (key, value) -> println("$key=${if (private) "*******" else value}") }

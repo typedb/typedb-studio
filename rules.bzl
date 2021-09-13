@@ -43,7 +43,7 @@ appleCodeSigningPassword: {}
         ctx.var.get("APPLE_CODE_SIGNING_CERTIFICATE_URL", ""),
         ctx.var.get("APPLE_CODE_SIGNING_PASSWORD", ""))
 
-        step_description = step_description + " (NOTE: notarization may take up to 8 minutes to complete)"
+        step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
     ctx.actions.run(
         inputs = [
