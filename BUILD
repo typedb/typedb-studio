@@ -16,12 +16,13 @@
 #
 
 load("//:deployment.bzl", deployment_github = "deployment")
-load("//:rules.bzl", "jvm_application_image", "print_rootpath")
+load("//:rules.bzl", "jvm_application_image")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "checksum", "assemble_targz", "assemble_zip", "java_deps")
+load("@vaticle_bazel_distribution//common:rules.bzl", "checksum", "assemble_targz", "assemble_zip", "java_deps", "assemble_versioned")
+load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
@@ -149,23 +150,28 @@ assemble_files = {
 #)
 
 kt_jvm_library(
-    name = "jpackage-runner-lib",
-    srcs = ["JPackageRunner.kt"],
-    deps = [
-        "@maven//:org_zeroturnaround_zt_exec"
-    ],
+    name = "jvm-application-image-builder-lib",
+    srcs = ["JVMApplicationImageBuilder.kt"],
+    deps = ["@maven//:org_zeroturnaround_zt_exec"],
 )
 
 java_binary(
-    name = "jpackage-runner",
-    runtime_deps = [":jpackage-runner-lib"],
-    main_class = "com.vaticle.typedb.studio.JPackageRunnerKt",
+    name = "jvm-application-image-builder-bin",
+    runtime_deps = [":jvm-application-image-builder-lib"],
+    main_class = "com.vaticle.typedb.studio.JVMApplicationImageBuilderKt",
 )
 
 # TODO: Create a MANIFEST file in the jvm_binary and read it to determine the main jar and main class
 jvm_application_image(
     name = "application-image",
     application_name = "TypeDB Studio",
+    filename = "typedb-studio-" + select({
+        "@vaticle_dependencies//util/platform:is_mac": "mac",
+        "@vaticle_dependencies//util/platform:is_linux": "linux",
+        "@vaticle_dependencies//util/platform:is_windows": "windows",
+        "//conditions:default": "mac",
+    }),
+    version = "2.4.1",
     jvm_binary = select({
         "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
         "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
@@ -178,9 +184,25 @@ jvm_application_image(
     additional_files = assemble_files,
 )
 
-pkg_zip(
+genrule(
     name = "mac-zip",
-    srcs = glob(["release/*.dmg"]),
+    srcs = ["//:application-image"],
+    outs = ["typedb-studio-mac.zip"],
+    cmd = "cp $(location //:application-image) $@",
+)
+
+genrule(
+    name = "windows-zip",
+    srcs = ["//:application-image"],
+    outs = ["typedb-studio-windows.zip"],
+    cmd = "cp $(location //:application-image) $@",
+)
+
+genrule(
+    name = "linux-zip",
+    srcs = ["//:application-image"],
+    outs = ["typedb-studio-linux.zip"],
+    cmd = "cp $(location //:application-image) $@",
 )
 
 deploy_github(
@@ -195,11 +217,6 @@ deploy_github(
     draft = False
 )
 
-pkg_zip(
-    name = "windows-zip",
-    srcs = glob(["release/*.exe"]),
-)
-
 deploy_github(
     name = "deploy-github-windows",
     organisation = deployment_github['github.organisation'],
@@ -210,11 +227,6 @@ deploy_github(
     archive = ":windows-zip",
     version_file = ":VERSION",
     draft = False
-)
-
-pkg_zip(
-    name = "linux-zip",
-    srcs = glob(["release/*.AppImage"]),
 )
 
 deploy_github(
@@ -256,24 +268,6 @@ checkstyle_test(
         ".circleci/windows/dependencies.config",
     ]),
     license_type = "agpl",
-)
-
-# TODO: this is just a test genrule
-genrule(
-    name = "compose-compiler-path-genrule",
-    outs = [
-        "compose-compiler-path-genrule.txt",
-    ],
-    srcs = ["VERSION"],
-    cmd = "read -a outs <<< '$(OUTS)' && echo $(rootpath @org_jetbrains_compose_compiler//file) > $${outs[0]}",
-    tools = ["@org_jetbrains_compose_compiler//file"],
-)
-
-# TODO: this is just a test rule
-print_rootpath(
-    name = "compose-compiler-path",
-    out = "compose-compiler-path.txt",
-    target = "@org_jetbrains_compose_compiler//file",
 )
 
 # CI targets that are not declared in any BUILD file, but are called externally

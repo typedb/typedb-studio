@@ -26,16 +26,11 @@ build:
     build:
       image: vaticle-ubuntu-20.04
       command: |
+        bazel build //...
+
+        # TODO: re-enable checkstyle tests
         # bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
         # bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=streamed
-
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
-        export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && hash -r
-        nvm install 15.11.0
-        nvm use 15.11.0
-        npm install -g yarn
-        yarn
-        yarn build
 
 release:
 #  filter:
@@ -52,21 +47,12 @@ release:
         git checkout -b typedb-workbase-release-mac-windows-branch
         git push -f origin typedb-workbase-release-mac-windows-branch
         pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip3 install requests python-dateutil
-        bazel run //:wait-for-release -- $GRABL_OWNER $GRABL_REPO $(cat VERSION) typedb-workbase-mac-$(cat VERSION).dmg typedb-workbase-win-$(cat VERSION).exe
+        bazel run //:wait-for-release -- $GRABL_OWNER $GRABL_REPO $(cat VERSION) typedb-studio-mac-$(cat VERSION).dmg typedb-studio-win-$(cat VERSION).exe
     deploy-github-linux:
       image: vaticle-ubuntu-20.04
       command: |
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
-        export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && hash -r
-        nvm install 15.11.0
-        nvm use 15.11.0
-        npm install -g yarn
-        yarn
-        yarn package
-
         pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip install certifi
         export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
         bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
         export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
         bazel run //:deploy-github-linux -- $GRABL_COMMIT
-

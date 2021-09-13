@@ -1,57 +1,68 @@
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_zip", "java_deps")
 
-def _print_rootpath_impl(ctx):
-    ctx.actions.write(
-        output = ctx.outputs.executable,
-        content = "echo '%s/%s'" % (ctx.files.target[0].root.path, ctx.files.target[0].path),
-        is_executable = True
-    )
 
-    return [DefaultInfo(
-        runfiles = ctx.runfiles()
-    )]
+def _zip_to_jvm_application_image_impl(ctx):
+    if (ctx.attr.os == "unknown"):
+        fail("jvm_application_image is not supported on this operating system")
 
-print_rootpath = rule(
-    attrs = {
-        "target": attr.label(
-            allow_single_file = True,
-            mandatory = True,
-            doc = "The target",
-        ),
-        "out": attr.label(
-            allow_single_file = True,
-            mandatory = True,
-            doc = "The output file",
-        ),
-    },
-    implementation = _print_rootpath_impl,
-    doc = "Print rootpath",
-    executable = True,
-)
+    step_description = "Building native {} application image".format(ctx.attr.application_name)
 
+    config = """/
+verbose: {}
+jdkPath: {}
+srcFilename: {}
+applicationName: {}
+applicationFilename: {}
+version: {}
+mainJar: {}
+mainClass: {}
+outFilename: {}
+""".format(
+    True,
+    ctx.file.jdk.path,
+    ctx.file.src.path,
+    ctx.attr.application_name,
+    ctx.attr.filename,
+    ctx.attr.version,
+    ctx.attr.main_jar,
+    ctx.attr.main_class,
+    ctx.outputs.distribution_file.path)
 
-def _jpackage_impl(ctx):
+    private_config = ""
+
+    if "APPLE_CODE_SIGNING_CERTIFICATE_URL" in ctx.var:
+
+        private_config = private_config + """/
+appleId: {}
+appleIdPassword: {}
+appleCodeSigningCertificateUrl: {}
+appleCodeSigningPassword: {}
+""".format(
+        ctx.var.get("APPLEID", ""),
+        ctx.var.get("APPLEID_PASSWORD", ""),
+        ctx.var.get("APPLE_CODE_SIGNING_CERTIFICATE_URL", ""),
+        ctx.var.get("APPLE_CODE_SIGNING_PASSWORD", ""))
+
+        step_description = step_description + " (NOTE: notarization may take up to 8 minutes to complete)"
+
     ctx.actions.run(
         inputs = [
             ctx.file.jdk,
             ctx.file.src,
         ],
         outputs = [ctx.outputs.distribution_file],
-        executable = ctx.executable._jpackage_runner_kt,
+        executable = ctx.executable._jvm_application_image_builder_bin,
         arguments = [
-            ctx.file.jdk.path,
-            ctx.file.src.path,
-            ctx.attr.application_name,
-            ctx.attr.main_jar,
-            ctx.attr.main_class,
-            ctx.outputs.distribution_file.path,
+            config,
+            private_config,
         ],
-        progress_message = "Building native {} application image".format(ctx.attr.application_name)
+        progress_message = step_description,
     )
 
     return DefaultInfo(data_runfiles = ctx.runfiles(files=[ctx.outputs.distribution_file]))
 
-jpackage = rule(
+
+zip_to_jvm_application_image = rule(
     attrs = {
         "src": attr.label(
             mandatory = True,
@@ -61,6 +72,15 @@ jpackage = rule(
         "application_name": attr.string(
             mandatory = True,
             doc = "The application name",
+        ),
+        "filename": attr.string(
+            mandatory = True,
+            doc = "The filename",
+        ),
+        # TODO: supersede with version_file
+        "version": attr.string(
+            mandatory = True,
+            doc = "The version",
         ),
         "jdk": attr.label(
             allow_single_file = True,
@@ -74,16 +94,20 @@ jpackage = rule(
             mandatory = True,
             doc = "The main class",
         ),
-        "_jpackage_runner_kt": attr.label(
-            default = "//:jpackage-runner",
+        "os": attr.string(
+            mandatory = True,
+            doc = "The host OS",
+        ),
+        "_jvm_application_image_builder_bin": attr.label(
+            default = "//:jvm-application-image-builder-bin",
             executable = True,
             cfg = "host",
         ),
     },
     outputs = {
-        "distribution_file": "%{name}.tar.gz"
+        "distribution_file": "%{name}.zip"
     },
-    implementation = _jpackage_impl,
+    implementation = _zip_to_jvm_application_image_impl,
     doc = "A JVM application image",
 )
 
@@ -96,8 +120,11 @@ def native_jdk16():
         "//conditions:default": "@jdk16_mac//file",
     })
 
+
 def jvm_application_image(name,
                           application_name,
+                          filename,
+                          version,
                           jvm_binary,
                           main_jar,
                           main_class,
@@ -105,9 +132,8 @@ def jvm_application_image(name,
                           deps_use_maven_name = True,
                           additional_files = {}):
 
-    # TODO: need native libraries deps
     java_deps(
-        name = "{}-deps-native".format(name),
+        name = "{}-deps".format(name),
         target = jvm_binary,
         java_deps_root = "lib/",
         maven_name = deps_use_maven_name,
@@ -116,17 +142,25 @@ def jvm_application_image(name,
     assemble_filename = "{}-assemble".format(name)
 
     assemble_zip(
-        name = "{}-assemble-native-zip".format(name),
-        targets = [":{}-deps-native".format(name)],
+        name = "{}-assemble-zip".format(name),
+        targets = [":{}-deps".format(name)],
         additional_files = additional_files,
         output_filename = assemble_filename,
     )
 
-    jpackage(
+    zip_to_jvm_application_image(
         name = name,
-        src = ":{}-assemble-native-zip".format(name),
+        src = ":{}-assemble-zip".format(name),
         application_name = application_name,
+        filename = filename,
+        version = version,
         main_jar = "lib/" + main_jar,
         main_class = main_class,
         jdk = jdk,
+        os = select({
+            "@vaticle_dependencies//util/platform:is_mac": "mac",
+            "@vaticle_dependencies//util/platform:is_linux": "linux",
+            "@vaticle_dependencies//util/platform:is_windows": "windows",
+            "//conditions:default": "unknown",
+        })
     )
