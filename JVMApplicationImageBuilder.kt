@@ -169,7 +169,7 @@ fun main(args: Array<String>) {
 
     if (os != MAC) {
         // On MacOS, this gets added later, at the DMG step
-        jpackageScript += listOf("--license-file", "LICENSE")
+        jpackageScript += listOf("--license-file", Path.of("src", "LICENSE").toString())
     }
 
     if (verboseLoggingEnabled) jpackageScript += "--verbose"
