@@ -115,7 +115,7 @@ zip_to_jvm_application_image = rule(
 def native_jdk16():
     return select({
         "@vaticle_dependencies//util/platform:is_mac": "@jdk16_mac//file",
-        "@vaticle_dependencies//util/platform:is_linux": "@jdk16_linux//file",
+        "@vaticle_dependencies//util/platform:is_linux": "@jdk17_linux//file",
         "@vaticle_dependencies//util/platform:is_windows": "@jdk16_windows//file",
         "//conditions:default": "@jdk16_mac//file",
     })

@@ -168,7 +168,7 @@ fun main(args: Array<String>) {
             "--type", "app-image",
             "--mac-package-name", config.require("applicationName"))
         LINUX -> listOf(
-            "--type", "rpm",
+//            "--type", "rpm",
             "--linux-menu-group", "Utility;Development;IDE;",
             "--linux-shortcut",
             "--linux-app-category", "database")
