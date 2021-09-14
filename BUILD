@@ -212,7 +212,7 @@ deploy_brew(
     name = "deploy-brew",
     snapshot = deployment['brew.snapshot'],
     release = deployment['brew.release'],
-    formula = "//config/brew:typedb-workbase.rb",
+    formula = "//config/brew:typedb-studio.rb",
     checksum = "//:checksum",
     version_file = "//:VERSION",
     type = "cask",
