@@ -151,7 +151,7 @@ fun main(args: Array<String>) {
         "--name", applicationFilename,
         "--app-version", version,
         "--description", "TypeDB's Integrated Development Environment",
-        "--vendor", config["vendor"] ?: "",
+        "--vendor", "Vaticle Ltd",
         "--copyright", config["copyrightNotice"] ?: "",
         "--input", "src",
         "--main-jar", config.require("mainJar"),
