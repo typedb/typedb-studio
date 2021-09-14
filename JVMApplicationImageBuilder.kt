@@ -260,7 +260,7 @@ fun parseConfig(config: String, verboseLoggingEnabled: Boolean = false, private:
             val components = line.split(":", limit = 2)
             return@associate components[0].trim() to components[1].trim()
         }
-    if (verboseLoggingEnabled || parsedConfig["verbose"].toBoolean()) {
+    if (parsedConfig.isNotEmpty() && (verboseLoggingEnabled || parsedConfig["verbose"].toBoolean())) {
         println()
         println("Parsed configuration object: ")
         parsedConfig.forEach { (key, value) -> println("$key=${if (private) "*******" else value}") }
