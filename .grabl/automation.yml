@@ -26,7 +26,7 @@ build:
     build:
       image: vaticle-ubuntu-20.04
       command: |
-        bazel build //...
+        bazel build //... --spawn_strategy=local
 
         # TODO: re-enable checkstyle tests
         # bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
