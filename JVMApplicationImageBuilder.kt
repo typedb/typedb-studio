@@ -150,7 +150,7 @@ fun main(args: Array<String>) {
         jpackage.path,
         "--name", applicationFilename,
         "--app-version", version,
-        "--description", config["description"] ?: "",
+        "--description", "TypeDB's Integrated Development Environment",
         "--vendor", config["vendor"] ?: "",
         "--copyright", config["copyrightNotice"] ?: "",
         "--input", "src",
@@ -168,7 +168,6 @@ fun main(args: Array<String>) {
             "--type", "app-image",
             "--mac-package-name", config.require("applicationName"))
         LINUX -> listOf(
-//            "--type", "rpm",
             "--linux-menu-group", "Utility;Development;IDE;",
             "--linux-shortcut",
             "--linux-app-category", "database")
