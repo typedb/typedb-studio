@@ -15,16 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# TODO: Rename workbase to studio
-
-cask 'typedb-workbase' do
+cask 'typedb-studio' do
   version '{version}'
   sha256 '{sha256}'
 
-  url "https://github.com/vaticle/typedb-workbase/releases/download/{version}/typedb-workbase-mac-{version}.dmg"
-  name 'TypeDB Workbase'
+  url "https://github.com/vaticle/typedb-studio/releases/download/{version}/typedb-studio-mac-{version}.dmg"
+  name 'TypeDB Studio'
   homepage 'https://vaticle.com'
 
-  app "TypeDB Workbase.app"
+  app "TypeDB Studio.app"
 
 end

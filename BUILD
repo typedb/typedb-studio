@@ -201,6 +201,8 @@ py_binary(
     srcs = [".grabl/wait-for-release.py"],
 )
 
+# TODO: add release_validate_deps
+
 checksum(
     name = "checksum",
     archive = ":application-image",

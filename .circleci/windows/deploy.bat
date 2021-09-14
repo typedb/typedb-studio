@@ -16,19 +16,14 @@ REM You should have received a copy of the GNU Affero General Public License
 REM along with this program.  If not, see <https://www.gnu.org/licenses/>.
 REM
 
-REM uninstall Java 12 installed by CircleCI
-choco uninstall openjdk --limit-output --yes --no-progress
+REM needs to be called such that software installed
+REM by Chocolatey in prepare.bat is accessible
+CALL refreshenv
 
-REM install dependencies needed for build
-choco install .circleci\windows\dependencies.config  --limit-output --yes --no-progress
+REM Creating release notes
+SET RELEASE_NOTES_TOKEN=%REPO_GITHUB_TOKEN%
+bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md || EXIT /b
 
-REM create a symlink python3.exe and make it available in %PATH%
-mklink C:\Python37\python3.exe C:\Python37\python.exe
-set PATH=%PATH%;C:\Python37
-
-REM install runtime dependency for the build
-C:\Python37\python.exe -m pip install wheel
-
-REM permanently set variables for Bazel build
-SETX BAZEL_SH "C:\Program Files\Git\usr\bin\bash.exe"
-SETX BAZEL_PYTHON C:\Python37\python.exe
+REM Deploying to GitHub
+SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
+bazel run //:deploy-github -- %CIRCLE_SHA1% || EXIT /b

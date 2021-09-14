@@ -44,8 +44,8 @@ release:
     deploy-github-mac-windows:
       image: vaticle-ubuntu-20.04
       command: |
-        git checkout -b typedb-workbase-release-mac-windows-branch
-        git push -f origin typedb-workbase-release-mac-windows-branch
+        git checkout -b release-mac-windows
+        git push -f origin release-mac-windows
         pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip3 install requests python-dateutil
         bazel run //:wait-for-release -- $GRABL_OWNER $GRABL_REPO $(cat VERSION) typedb-studio-mac-$(cat VERSION).dmg typedb-studio-win-$(cat VERSION).exe
     deploy-github-linux:
