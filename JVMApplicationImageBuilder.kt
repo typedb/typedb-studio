@@ -158,18 +158,23 @@ fun main(args: Array<String>) {
         "--main-class", config.require("mainClass"),
         "-d", "dist")
 
-    if (os == MAC) {
-        jpackageScript += listOf(
-            "--type", "app-image",
-            "--mac-package-name", config.require("applicationName"),
-        )
-    } else if (os == LINUX) {
-        jpackageScript += listOf("--linux-package-name", config.require("applicationName"))
-    }
-
     if (os != MAC) {
         // On MacOS, this gets added later, at the DMG step
         jpackageScript += listOf("--license-file", Path.of("src", "LICENSE").toString())
+    }
+
+    jpackageScript += when (os) {
+        MAC -> listOf(
+            "--type", "app-image",
+            "--mac-package-name", config.require("applicationName"))
+        LINUX -> listOf(
+            "--linux-menu-group", "Utility;Development;IDE;",
+            "--linux-shortcut",
+            "--linux-app-category", "database")
+        WINDOWS -> listOf(
+            "--win-menu",
+            "--win-menu-group", "TypeDB Studio",
+            "--win-shortcut")
     }
 
     if (verboseLoggingEnabled) jpackageScript += "--verbose"
