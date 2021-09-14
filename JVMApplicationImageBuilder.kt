@@ -104,6 +104,11 @@ fun main(args: Array<String>) {
             val appleCodeSigningPassword = privateConfig.require("appleCodeSigningPassword")
             val keychainPassword = UUID.randomUUID().toString()
             runShell(listOf("curl", "-o", "code-signing-cert.p12", appleCodeSigningCertURL), printParamsEndIndex = 3)
+
+            // This check ensures the script doesn't fail if run twice on the same machine, e.g in local testing
+            val keychainListInfo = runShell(listOf("security", "list-keychains")).outputString()
+            if (keychainName in keychainListInfo) runShell(listOf("security", "delete-keychain", keychainName))
+
             runShell(listOf("security", "create-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
             runShell(listOf("security", "default-keychain", "-s", keychainName))
             runShell(listOf("security", "list-keychains", "-d", "user", "-s", "login.keychain", keychainName))
