@@ -184,61 +184,16 @@ jvm_application_image(
     additional_files = assemble_files,
 )
 
-genrule(
-    name = "mac-zip",
-    srcs = ["//:application-image"],
-    outs = ["typedb-studio-mac.zip"],
-    cmd = "cp $(location //:application-image) $@",
-)
-
-genrule(
-    name = "windows-zip",
-    srcs = ["//:application-image"],
-    outs = ["typedb-studio-windows.zip"],
-    cmd = "cp $(location //:application-image) $@",
-)
-
-genrule(
-    name = "linux-zip",
-    srcs = ["//:application-image"],
-    outs = ["typedb-studio-linux.zip"],
-    cmd = "cp $(location //:application-image) $@",
-)
-
 deploy_github(
-    name = "deploy-github-mac",
+    name = "deploy-github",
     organisation = deployment_github['github.organisation'],
     repository = deployment_github['github.repository'],
-    title = "TypeDB Workbase",
+    title = "TypeDB Studio",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":mac-zip",
+    archive = ":application-image",
     version_file = ":VERSION",
-    draft = False
-)
-
-deploy_github(
-    name = "deploy-github-windows",
-    organisation = deployment_github['github.organisation'],
-    repository = deployment_github['github.repository'],
-    title = "TypeDB Workbase",
-    title_append_version = True,
-    release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":windows-zip",
-    version_file = ":VERSION",
-    draft = False
-)
-
-deploy_github(
-    name = "deploy-github-linux",
-    organisation = deployment_github['github.organisation'],
-    repository = deployment_github['github.repository'],
-    title = "TypeDB Workbase",
-    title_append_version = True,
-    release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":linux-zip",
-    version_file = ":VERSION",
-    draft = False
+    draft = True
 )
 
 py_binary(
@@ -247,8 +202,8 @@ py_binary(
 )
 
 checksum(
-    name = "checksum-mac",
-    archive = ":mac-zip",
+    name = "checksum",
+    archive = ":application-image",
 )
 
 deploy_brew(
@@ -256,7 +211,7 @@ deploy_brew(
     snapshot = deployment['brew.snapshot'],
     release = deployment['brew.release'],
     formula = "//config/brew:typedb-workbase.rb",
-    checksum = "//:checksum-mac",
+    checksum = "//:checksum",
     version_file = "//:VERSION",
     type = "cask",
 )
