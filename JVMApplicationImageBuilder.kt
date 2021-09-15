@@ -169,10 +169,12 @@ fun main(args: Array<String>) {
             "--type", "app-image",
             "--mac-package-name", config.require("applicationName"))
         LINUX -> listOf(
+            "--type", "deb",
             "--linux-menu-group", "Utility;Development;IDE;",
             "--linux-shortcut",
             "--linux-app-category", "database")
         WINDOWS -> listOf(
+            "--type", "exe",
             "--win-menu",
             "--win-menu-group", "TypeDB Studio",
             "--win-shortcut")
