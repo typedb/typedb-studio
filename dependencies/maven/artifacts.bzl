@@ -27,7 +27,7 @@ artifacts = [
 #    "org.jetbrains.compose.material:material-ripple-desktop",
 #    "org.jetbrains.compose.runtime:runtime-desktop",
 #    "org.jetbrains.compose.runtime:runtime-saveable-desktop",
-#    "org.jetbrains.compose.ui:ui-desktop",
+    "org.jetbrains.compose.ui:ui-desktop",
 #    "org.jetbrains.compose.ui:ui-geometry-desktop",
 #    "org.jetbrains.compose.ui:ui-graphics-desktop",
 #    "org.jetbrains.compose.ui:ui-text-desktop",
