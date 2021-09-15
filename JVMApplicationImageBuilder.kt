@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
 
     val privateConfig = parseConfig(args[1], verboseLoggingEnabled = verboseLoggingEnabled, private = true)
     val applicationFilename = config.require("applicationFilename")
-    val version = File(config.require("versionFilePath")).readText()
+    val version = File(config.require("versionFilePath")).readLines()[0]
     val appleCodeSigningCertURL = privateConfig["appleCodeSigningCertificateUrl"]
 
     val os = OS.current
