@@ -182,6 +182,7 @@ jvm_application_image(
     main_class = "com.vaticle.typedb.studio.MainKt",
     deps_use_maven_name = False,
     additional_files = assemble_files,
+    mac_entitlements = "//resources:entitlements-mac-plist",
 )
 
 deploy_github(

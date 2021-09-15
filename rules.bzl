@@ -32,6 +32,13 @@ outFilename: {}
 
     if "APPLE_CODE_SIGNING_CERTIFICATE_URL" in ctx.var:
 
+        if not ctx.file.mac_entitlements:
+            fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_CERTIFICATE_URL is set")
+
+        config = config + """/
+macEntitlementsPath: {}
+""".format(ctx.file.mac_entitlements.path)
+
         private_config = private_config + """/
 appleId: {}
 appleIdPassword: {}
@@ -45,11 +52,12 @@ appleCodeSigningPassword: {}
 
         step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
+    inputs = [ctx.file.jdk, ctx.file.src]
+    if ctx.file.mac_entitlements:
+        inputs = inputs + [ctx.file.mac_entitlements]
+
     ctx.actions.run(
-        inputs = [
-            ctx.file.jdk,
-            ctx.file.src,
-        ],
+        inputs = inputs,
         outputs = [ctx.outputs.distribution_file],
         executable = ctx.executable._jvm_application_image_builder_bin,
         arguments = [
@@ -98,6 +106,10 @@ zip_to_jvm_application_image = rule(
             mandatory = True,
             doc = "The host OS",
         ),
+        "mac_entitlements": attr.label(
+            allow_single_file = True,
+            doc = "The MacOS entitlements.mac.plist file",
+        ),
         "_jvm_application_image_builder_bin": attr.label(
             default = "//:jvm-application-image-builder-bin",
             executable = True,
@@ -112,6 +124,7 @@ zip_to_jvm_application_image = rule(
 )
 
 
+# TODO: upgrade all to JDK17
 def native_jdk16():
     return select({
         "@vaticle_dependencies//util/platform:is_mac": "@jdk16_mac//file",
@@ -130,7 +143,8 @@ def jvm_application_image(name,
                           main_class,
                           jdk = native_jdk16(),
                           deps_use_maven_name = True,
-                          additional_files = {}):
+                          additional_files = {},
+                          mac_entitlements = None):
 
     java_deps(
         name = "{}-deps".format(name),
@@ -162,5 +176,6 @@ def jvm_application_image(name,
             "@vaticle_dependencies//util/platform:is_linux": "linux",
             "@vaticle_dependencies//util/platform:is_windows": "windows",
             "//conditions:default": "unknown",
-        })
+        }),
+        mac_entitlements = mac_entitlements
     )

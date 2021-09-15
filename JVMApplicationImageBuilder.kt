@@ -60,7 +60,7 @@ fun main(args: Array<String>) {
         val signCommand: MutableList<String> = mutableListOf(
             "codesign", "-s", "Developer ID Application: Grakn Labs Limited (RHKH8FP9SX)",
             "-f",
-            "--entitlements", "/Users/aw/Desktop/workspace/typedb-studio/resources/entitlements.mac.plist",
+            "--entitlements", config.require("macEntitlementsPath"),
             "--prefix", "com.vaticle.typedb.studio.",
             "--options", "runtime",
             "--timestamp",
