@@ -19,6 +19,9 @@ REM
 REM uninstall Java 12 installed by CircleCI
 choco uninstall openjdk --limit-output --yes --no-progress
 
+REM this is required to successfully install wixtoolset with choco
+powershell Install-WindowsFeature Net-Framework-Core
+
 REM install dependencies needed for build
 choco install .circleci\windows\dependencies.config  --limit-output --yes --no-progress
 
