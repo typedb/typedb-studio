@@ -31,7 +31,7 @@ java_binary(
     name = "hello",
     srcs = ["Hello.java"],
     main_class = "com.vaticle.typedb.studio.Hello",
-    deps = [],
+    deps = ["@maven//:org_jetbrains_compose_material_material_icons_core_desktop"],
 )
 
 java_deps(
