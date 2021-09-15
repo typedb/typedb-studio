@@ -24,7 +24,13 @@ choco install .circleci\windows\dependencies.config  --limit-output --yes --no-p
 
 REM create a symlink python3.exe and make it available in %PATH%
 mklink C:\Python39\python3.exe C:\Python39\python.exe
-set PATH=%PATH%;C:\Python39
+SET PATH=%PATH%;C:\Python39
+
+REM make WiX toolset binary available in %PATH%
+SET PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
+
+REM test WiX toolset binary
+RUN candle.exe -?
 
 REM install runtime dependency for the build
 C:\Python39\python.exe -m pip install wheel
