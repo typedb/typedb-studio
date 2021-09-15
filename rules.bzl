@@ -69,7 +69,7 @@ appleCodeSigningPassword: {}
 
         step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
-    inputs = [ctx.file.jdk, ctx.file.src]
+    inputs = [ctx.file.jdk, ctx.file.src, version_file]
     if ctx.file.mac_entitlements:
         inputs = inputs + [ctx.file.mac_entitlements]
 
