@@ -28,6 +28,5 @@ REM IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 ECHO Deploying to GitHub...
 SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
-bazel build //:hello-deps
-REM bazel run //:deploy-github -- %CIRCLE_SHA1%
+bazel run //:deploy-github -- %CIRCLE_SHA1%
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
