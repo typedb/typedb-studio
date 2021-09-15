@@ -61,7 +61,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_tooling_preview_desktop",
         "@maven//:org_jetbrains_compose_material_material_desktop",
         "@maven//:org_jetbrains_compose_material_material_ripple_desktop",
-        "@maven//:org_jetbrains_compose_material_material_icons_core_desktop",
+#        "@maven//:org_jetbrains_compose_material_material_icons_core_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_animation_animation_desktop_1_0_0_alpha3",
         "@maven//:org_jetbrains_compose_animation_animation_desktop",
