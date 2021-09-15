@@ -79,8 +79,9 @@ fun main(args: Array<String>) {
         WINDOWS -> runShell(script = listOf("jar", "xf", Path.of("..", jdkArchivePath).toString()), baseDir = Path.of("jdk"))
     }
 
-    val jpackage = File("jdk").listFilesRecursively().firstOrNull { it.name == "jpackage" }
-        ?: throw IllegalStateException("Could not locate 'jpackage' in the provided JDK")
+    val jpackageBinaryName = if (os == WINDOWS) "jpackage.bat" else "jpackage"
+    val jpackage = File("jdk").listFilesRecursively().firstOrNull { it.name == jpackageBinaryName }
+        ?: throw IllegalStateException("Could not locate '$jpackageBinaryName' in the provided JDK")
 
     Files.createDirectory(Path.of("src-temp"))
     runShell(script = listOf("jar", "xf", Path.of("..", config.require("srcFilename")).toString()),
