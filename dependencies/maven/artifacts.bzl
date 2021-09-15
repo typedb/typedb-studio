@@ -22,7 +22,7 @@ artifacts = [
     "org.jetbrains.compose.desktop:desktop-jvm",
 #    "org.jetbrains.compose.foundation:foundation-desktop",
 #    "org.jetbrains.compose.foundation:foundation-layout-desktop",
-#    "org.jetbrains.compose.material:material-desktop",
+    "org.jetbrains.compose.material:material-desktop",
     "org.jetbrains.compose.material:material-icons-core-desktop",
 #    "org.jetbrains.compose.material:material-ripple-desktop",
 #    "org.jetbrains.compose.runtime:runtime-desktop",
