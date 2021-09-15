@@ -20,10 +20,12 @@ REM needs to be called such that software installed
 REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
-REM Creating release notes
+ECHO Creating release notes
 SET RELEASE_NOTES_TOKEN=%REPO_GITHUB_TOKEN%
-bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md || EXIT /b
+bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
+IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
-REM Deploying to GitHub
+ECHO Deploying to GitHub
 SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
 bazel run //:deploy-github -- %CIRCLE_SHA1% || EXIT /b
+IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
