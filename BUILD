@@ -27,6 +27,20 @@ load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
+java_binary(
+    name = "hello",
+    srcs = ["Hello.java"],
+    main_class = "com.vaticle.typedb.studio.Hello",
+    deps = [],
+)
+
+java_deps(
+    name = "hello-deps",
+    target = ":hello",
+    java_deps_root = "lib/",
+    maven_name = False,
+)
+
 # TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
 kt_jvm_library(
     name = "studio",
