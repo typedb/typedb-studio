@@ -171,7 +171,7 @@ jvm_application_image(
         "@vaticle_dependencies//util/platform:is_windows": "windows",
         "//conditions:default": "mac",
     }),
-    version = "2.4.1",
+    version_file = ":VERSION",
     jvm_binary = select({
         "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
         "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",

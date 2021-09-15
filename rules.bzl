@@ -5,6 +5,23 @@ def _zip_to_jvm_application_image_impl(ctx):
     if (ctx.attr.os == "unknown"):
         fail("jvm_application_image is not supported on this operating system")
 
+    # TODO: copied from bazel-distribution/pip/rules.bzl
+    if not ctx.attr.version_file:
+        version_file = ctx.actions.declare_file(ctx.attr.name + "__do_not_reference.version")
+        version = ctx.var.get('version', '0.0.0')
+
+        if len(version) == 40:
+            # this is a commit SHA, most likely
+            version = "0.0.0-{}".format(version)
+
+        ctx.actions.run_shell(
+            inputs = [],
+            outputs = [version_file],
+            command = "echo {} > {}".format(version, version_file.path)
+        )
+    else:
+        version_file = ctx.file.version_file
+
     step_description = "Building native {} application image".format(ctx.attr.application_name)
 
     config = """/
@@ -13,7 +30,7 @@ jdkPath: {}
 srcFilename: {}
 applicationName: {}
 applicationFilename: {}
-version: {}
+versionFilePath: {}
 mainJar: {}
 mainClass: {}
 outFilename: {}
@@ -23,7 +40,7 @@ outFilename: {}
     ctx.file.src.path,
     ctx.attr.application_name,
     ctx.attr.filename,
-    ctx.attr.version,
+    version_file.path,
     ctx.attr.main_jar,
     ctx.attr.main_class,
     ctx.outputs.distribution_file.path)
@@ -85,10 +102,10 @@ zip_to_jvm_application_image = rule(
             mandatory = True,
             doc = "The filename",
         ),
-        # TODO: supersede with version_file
-        "version": attr.string(
+        "version_file": attr.label(
             mandatory = True,
-            doc = "The version",
+            allow_single_file = True,
+            doc = "The version file",
         ),
         "jdk": attr.label(
             allow_single_file = True,
@@ -137,7 +154,7 @@ def native_jdk16():
 def jvm_application_image(name,
                           application_name,
                           filename,
-                          version,
+                          version_file,
                           jvm_binary,
                           main_jar,
                           main_class,
@@ -167,7 +184,7 @@ def jvm_application_image(name,
         src = ":{}-assemble-zip".format(name),
         application_name = application_name,
         filename = filename,
-        version = version,
+        version_file = version_file,
         main_jar = "lib/" + main_jar,
         main_class = main_class,
         jdk = jdk,
