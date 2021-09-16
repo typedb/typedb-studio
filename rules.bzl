@@ -52,10 +52,6 @@ outFilename: {}
         if not ctx.file.mac_entitlements:
             fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_CERTIFICATE_URL is set")
 
-        config = config + """/
-macEntitlementsPath: {}
-""".format(ctx.file.mac_entitlements.path)
-
         private_config = private_config + """/
 appleId: {}
 appleIdPassword: {}
@@ -70,8 +66,18 @@ appleCodeSigningPassword: {}
         step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
     inputs = [ctx.file.jdk, ctx.file.src, version_file]
+
     if ctx.file.mac_entitlements:
         inputs = inputs + [ctx.file.mac_entitlements]
+        config = config + """/
+macEntitlementsPath: {}
+""".format(ctx.file.mac_entitlements.path)
+
+    if ctx.file.windows_wix_toolset:
+        inputs = inputs + [ctx.file.windows_wix_toolset]
+        config = config + """/
+windowsWixToolsetPath: {}
+""".format(ctx.file.windows_wix_toolset.path)
 
     ctx.actions.run(
         inputs = inputs,
@@ -109,7 +115,7 @@ zip_to_jvm_application_image = rule(
         ),
         "jdk": attr.label(
             allow_single_file = True,
-            doc = "The JDK, which must be at least version 16",
+            doc = "Archive containing the JDK, which must be at least version 16",
         ),
         "main_jar": attr.string(
             mandatory = True,
@@ -126,6 +132,10 @@ zip_to_jvm_application_image = rule(
         "mac_entitlements": attr.label(
             allow_single_file = True,
             doc = "The MacOS entitlements.mac.plist file",
+        ),
+        "windows_wix_toolset": attr.label(
+            allow_single_file = True,
+            doc = "Archive containing the Windows WiX toolset",
         ),
         "_jvm_application_image_builder_bin": attr.label(
             default = "//:jvm-application-image-builder-bin",
@@ -161,7 +171,8 @@ def jvm_application_image(name,
                           jdk = native_jdk16(),
                           deps_use_maven_name = True,
                           additional_files = {},
-                          mac_entitlements = None):
+                          mac_entitlements = None,
+                          windows_wix_toolset = "@wix_toolset_311//file"):
 
     java_deps(
         name = "{}-deps".format(name),
@@ -194,5 +205,6 @@ def jvm_application_image(name,
             "@vaticle_dependencies//util/platform:is_windows": "windows",
             "//conditions:default": "unknown",
         }),
-        mac_entitlements = mac_entitlements
+        mac_entitlements = mac_entitlements,
+        windows_wix_toolset = windows_wix_toolset,
     )

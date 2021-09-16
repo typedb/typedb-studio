@@ -79,6 +79,13 @@ fun main(args: Array<String>) {
         WINDOWS -> runShell(script = listOf("jar", "xf", Path.of("..", jdkArchivePath).toString()), baseDir = Path.of("jdk"))
     }
 
+    // On Windows, extract WiX Toolset and add it to the PATH
+    if (os == WINDOWS) {
+        Files.createDirectory(Path.of("wixtoolset"))
+        val wixToolsetPath = config.require("windowsWixToolsetPath")
+        runShell(script = listOf("jar", "xf", Path.of("..", wixToolsetPath).toString()), baseDir = Path.of("wixtoolset"))
+    }
+
     val jpackageBinaryName = if (os == WINDOWS) "jpackage.exe" else "jpackage"
     val jpackage = File("jdk").listFilesRecursively().firstOrNull { it.name == jpackageBinaryName }
         ?: throw IllegalStateException("Could not locate '$jpackageBinaryName' in the provided JDK")
@@ -182,7 +189,11 @@ fun main(args: Array<String>) {
 
     if (verboseLoggingEnabled) jpackageScript += "--verbose"
 
-    runShell(jpackageScript)
+    val env: Map<String, String> = when (os) {
+        MAC, LINUX -> mapOf()
+        WINDOWS -> mapOf("PATH" to "${File("wixtoolset").absolutePath};${System.getenv("PATH") ?: ""}")
+    }
+    runShell(script = jpackageScript, env = env)
 
     if (os == MAC) {
         if (appleCodeSigningCertURL != null) {
