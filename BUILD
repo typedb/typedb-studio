@@ -27,23 +27,29 @@ load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
-#java_binary(
-#    name = "hello",
-#    srcs = ["Hello.java"],
-#    main_class = "com.vaticle.typedb.studio.Hello",
-#    deps = [
-##        "@maven//:org_jetbrains_compose_material_material_desktop",
+java_binary(
+    name = "hello",
+    srcs = ["Hello.java"],
+    main_class = "com.vaticle.typedb.studio.Hello",
+    deps = [
+#        "@maven//:org_jetbrains_compose_material_material_desktop",
 #        "@maven//:org_jetbrains_compose_material_material_icons_core_desktop"
-##        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-#    ],
-#)
-#
-#java_deps(
-#    name = "hello-deps",
-#    target = ":hello",
-#    java_deps_root = "lib/",
-#    maven_name = False,
-#)
+#        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+    ],
+)
+
+java_deps(
+    name = "hello-deps",
+    target = ":hello",
+    java_deps_root = "lib/",
+    maven_name = False,
+)
+
+assemble_zip(
+    name = "hello-bundle",
+    targets = [":hello-deps"],
+    output_filename = "hello-assemble",
+)
 
 # TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
 kt_jvm_library(
@@ -191,7 +197,8 @@ deploy_github(
     title = "TypeDB Studio",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":application-image",
+#    archive = ":application-image",
+    archive = ":hello-bundle",
     version_file = ":VERSION",
     draft = True
 )
