@@ -62,6 +62,8 @@ jobs:
       - checkout
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy.bat
+      - store_artifacts:
+          path: bazel-bin\application-image.zip
 
 workflows:
   release:
