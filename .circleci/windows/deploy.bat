@@ -28,6 +28,7 @@ IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 ECHO Creating application image...
 bazel build //:application-image
+IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 ECHO the distribution file will appear in CircleCI artifacts shortly
 ECHO TODO make //:deploy-github work on Windows
