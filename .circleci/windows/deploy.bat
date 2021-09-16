@@ -26,6 +26,9 @@ SET /p VERSION=<VERSION
 bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase %VERSION% ./RELEASE_TEMPLATE.md
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
+ECHO Creating application image...
+bazel build //:application-image
+
 ECHO the distribution file will appear in CircleCI artifacts shortly
 ECHO TODO make //:deploy-github work on Windows
 REM ECHO Deploying to GitHub...
