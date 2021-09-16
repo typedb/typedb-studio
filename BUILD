@@ -197,7 +197,8 @@ deploy_github(
     title = "TypeDB Studio",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":application-image",
+#    archive = ":application-image",
+    archive = ":hello-bundle",
     version_file = ":VERSION",
     draft = True
 )
