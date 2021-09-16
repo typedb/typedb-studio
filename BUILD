@@ -197,10 +197,23 @@ deploy_github(
     title = "TypeDB Studio",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
+    archive = ":application-image",
+    version_file = ":VERSION",
+    draft = True
+)
+
+deploy_github(
+    name = "deploy-github-windows",
+    organisation = deployment_github['github.organisation'],
+    repository = deployment_github['github.repository'],
+    title = "TypeDB Studio",
+    title_append_version = True,
+    release_description = "//:RELEASE_TEMPLATE.md",
 #    archive = ":application-image",
     archive = ":hello-bundle",
     version_file = ":VERSION",
-    draft = True
+    draft = True,
+    windows = True,
 )
 
 py_binary(
