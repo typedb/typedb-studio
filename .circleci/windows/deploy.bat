@@ -26,8 +26,10 @@ SET /p VERSION=<VERSION
 bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase %VERSION% ./RELEASE_TEMPLATE.md
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
-ECHO Deploying to GitHub...
-SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
-SET COMMIT_ID=%CIRCLE_SHA1%
-bazel run //:deploy-github-windows
-IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
+ECHO the distribution file will appear in CircleCI artifacts shortly
+ECHO TODO make //:deploy-github work on Windows
+REM ECHO Deploying to GitHub...
+REM SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
+REM SET COMMIT_ID=%CIRCLE_SHA1%
+REM bazel run //:deploy-github-windows
+REM IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
