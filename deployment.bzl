@@ -16,6 +16,6 @@
 #
 
 deployment = {
-  'github.organisation': 'alexjpwalker',
-  'github.repository': 'typedb-workbase'
+  'github.organisation': 'vaticle',
+  'github.repository': 'typedb-studio'
 }

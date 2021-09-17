@@ -49,9 +49,9 @@ jobs:
           export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
           echo "Deploying to GitHub..."
           bazel run --define APPLEID=$APPLEID --define APPLEID_PASSWORD=$APPLEID_PASSWORD --define APPLE_CODE_SIGNING_CERTIFICATE_URL=$APPLE_CODE_SIGNING_CERTIFICATE_URL --define APPLE_CODE_SIGNING_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD --spawn_strategy=local //:deploy-github -- $CIRCLE_SHA1
-#          echo "Deploying to Homebrew..."
-#          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
-#          bazel run --define version=$(cat VERSION) //:deploy-brew -- release
+          echo "Deploying to Homebrew..."
+          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
+          bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   deploy-windows:
     executor:

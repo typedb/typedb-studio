@@ -200,7 +200,7 @@ deploy_github(
     archive = ":application-image",
 #    archive = ":hello-bundle",
     version_file = ":VERSION",
-    draft = True
+    draft = False
 )
 
 #deploy_github(
