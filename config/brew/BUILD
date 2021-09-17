@@ -17,7 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-exports_files(["typedb-workbase.rb"])
+exports_files(["typedb-studio.rb"])
 
 checkstyle_test(
     name = "checkstyle",

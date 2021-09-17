@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-build --incompatible_strict_action_env --javacopt='--release 11'
-run --incompatible_strict_action_env
-test --incompatible_strict_action_env
+deployment = {
+  'github.organisation': 'alexjpwalker',
+  'github.repository': 'typedb-workbase'
+}

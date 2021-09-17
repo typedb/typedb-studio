@@ -15,6 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-build --incompatible_strict_action_env --javacopt='--release 11'
-run --incompatible_strict_action_env
-test --incompatible_strict_action_env
+cask 'typedb-studio' do
+  version '{version}'
+  sha256 '{sha256}'
+
+  url "https://github.com/vaticle/typedb-studio/releases/download/{version}/typedb-studio-mac-{version}.dmg"
+  name 'TypeDB Studio'
+  homepage 'https://vaticle.com'
+
+  app "TypeDB Studio.app"
+
+end

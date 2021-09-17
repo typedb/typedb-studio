@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #
 # Copyright (C) 2021 Vaticle
 #
@@ -15,6 +16,4 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-build --incompatible_strict_action_env --javacopt='--release 11'
-run --incompatible_strict_action_env
-test --incompatible_strict_action_env
+bazel run @vaticle_dependencies//library/maven:update

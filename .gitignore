@@ -1,48 +1,9 @@
-#
-# Copyright (C) 2021 Vaticle
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-
+# OSX
 .DS_Store
-dist/
-build/*
-!build/icons
-!build/entitlements.mac.plist
-node_modules/
-npm-debug.log
-npm-debug.log.*
-thumbs.db
-!.gitkeep
-coverage
-.nyc_output
-.idea
-yarn-error.log
+
+# Bazel
 bazel-*
+
+# IntelliJ
+.idea
 .ijwb
-
-/tests/e2e/logs/
-.env.local
-.env.*.local
-npm-debug.log*
-
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-#Electron-builder output
-/dist_electron

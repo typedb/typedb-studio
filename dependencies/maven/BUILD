@@ -15,6 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-build --incompatible_strict_action_env --javacopt='--release 11'
-run --incompatible_strict_action_env
-test --incompatible_strict_action_env
+load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*"]),
+    exclude = ["artifacts.snapshot"],
+    license_type = "agpl",
+)

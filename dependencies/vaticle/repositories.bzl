@@ -20,6 +20,32 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 def vaticle_dependencies():
     git_repository(
         name = "vaticle_dependencies",
-        remote = "https://github.com/vaticle/dependencies",
-        commit = "515d6adf719cc7e78f9d313e6c97bce9f918b60b", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        remote = "https://github.com/alexjpwalker/dependencies",
+        commit = "7eea3a9c4da611f64ed01edfc0505f34de1d5adb", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
+#    native.local_repository(
+#        name = "vaticle_dependencies",
+#        path = "../dependencies",
+#    )
+
+def vaticle_force_graph():
+    git_repository(
+        name = "vaticle_force_graph",
+        remote = "https://github.com/vaticle/force-graph",
+        commit = "52f1327d90148f0acc5a46293cecca856e06805a",
+    )
+#    native.local_repository(
+#        name = "vaticle_force_graph",
+#        path = "../force-graph",
+#    )
+
+def vaticle_typedb_client_java():
+    git_repository(
+        name = "vaticle_typedb_client_java",
+        remote = "https://github.com/alexjpwalker/client-java",
+        commit = "e177ec35dc16e2db21252954512214b655e29b90",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+    )
+#    native.local_repository(
+#        name = "vaticle_typedb_client_java",
+#        path = "../client-java",
+#    )
