@@ -10,7 +10,7 @@
 
 TypeDB Studio is TypeDB's Integrated Development Environment to perform knowledge engineering. 
 
-You can alternatively utilise Studio instead of [TypeDB Console](http://docs.vaticle.com/docs/running-typedb/console) and [TypeDB Clients](http://docs.vaticle.com/docs/client-api/overview) to connect to your TypeDB instance and perform queries.
+You can utilise Studio like [TypeDB Console](http://docs.vaticle.com/docs/running-typedb/console) and [TypeDB Clients](http://docs.vaticle.com/docs/client-api/overview), to connect to your TypeDB instance and perform queries.
 
 Whether you need a tool to test and experiment with your newly created TypeDB database, or you prefer a graphical interface for reading data from TypeDB, you will find Studio extremely useful.
 
