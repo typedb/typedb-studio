@@ -115,6 +115,8 @@ jobs:
       image: ubuntu-2004:202101-01
     working_directory: ~/typedb-studio
     steps:
+      - attach_workspace:
+          at: ~/dist
       - install-bazel-linux
       - checkout
       - run: |
