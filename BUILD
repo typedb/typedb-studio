@@ -219,17 +219,17 @@ deploy_github(
 
 # TODO: add release_validate_deps
 
-checksum(
-    name = "checksum",
-    archive = ":application-image",
-)
+#checksum(
+#    name = "checksum",
+#    archive = ":application-image",
+#)
 
 deploy_brew(
     name = "deploy-brew",
     snapshot = deployment['brew.snapshot'],
     release = deployment['brew.release'],
     formula = "//config/brew:typedb-studio.rb",
-    checksum = "//:checksum",
+#    checksum = "//:checksum",
     version_file = "//:VERSION",
     type = "cask",
 )
