@@ -30,7 +30,7 @@ import com.vaticle.typedb.studio.workspace.WorkspaceScreen
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "Compose for Desktop",
+        title = "TypeDB Studio",
         state = rememberWindowState(placement = WindowPlacement.Maximized)
     ) {
 
