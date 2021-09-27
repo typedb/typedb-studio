@@ -1,4 +1,3 @@
-@echo off
 REM
 REM Copyright (C) 2021 Vaticle
 REM
