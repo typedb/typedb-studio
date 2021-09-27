@@ -105,6 +105,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
                         val remoteThingType = type.asThingType().asRemote(tx)
                         tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
                         tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                        tasks += LoadSupertypeTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
                     }
 
                     incompleteTypeEdges.remove(type.label.scopedName())?.forEach {
@@ -333,6 +334,24 @@ private class LoadOwnedAttributeTypesTask(private val thingType: ThingType.Remot
             } else {
                 incompleteEdges.getOrPut(attributeType.label.name()) { mutableListOf() }
                     .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "owns"))
+            }
+        }
+    }
+}
+
+private class LoadSupertypeTask(private val thingType: ThingType.Remote, vertex: VertexData,
+                                vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
+                                private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
+) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
+
+    override fun run() {
+        thingType.supertype?.let { supertype ->
+            val supertypeNodeID = vertexGenerator.types[supertype.label.name()]
+            if (supertypeNodeID != null) {
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = supertypeNodeID, label = "sub"))
+            } else {
+                incompleteEdges.getOrPut(supertype.label.name()) { mutableListOf() }
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "sub"))
             }
         }
     }
