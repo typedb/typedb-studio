@@ -26,7 +26,7 @@ build:
     build:
       image: vaticle-ubuntu-20.04
       command: |
-        bazel build //...
+        bazel build //:studio
 
         # TODO: re-enable checkstyle tests
         # bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
@@ -41,18 +41,9 @@ release:
 #      image: vaticle-ubuntu-20.04
 #      command: bazel test //:release-validate-nodejs-deps --test_output=streamed
   deployment:
-    deploy-github-mac-windows:
+    trigger-circleci-release:
       image: vaticle-ubuntu-20.04
       command: |
-        git checkout -b release-mac-windows
-        git push -f origin release-mac-windows
-        pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip3 install requests python-dateutil
-        bazel run //:wait-for-release -- $GRABL_OWNER $GRABL_REPO $(cat VERSION) typedb-studio-mac-$(cat VERSION).dmg typedb-studio-win-$(cat VERSION).exe
-    deploy-github-linux:
-      image: vaticle-ubuntu-20.04
-      command: |
-        pyenv install -s 3.6.10 && pyenv global 3.6.10 system && pip install certifi
-        export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-        bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase $(cat VERSION) ./RELEASE_TEMPLATE.md
-        export DEPLOY_GITHUB_TOKEN=$REPO_GITHUB_TOKEN
-        bazel run //:deploy-github -- $GRABL_COMMIT
+        git checkout -b release
+        git push -f origin release
+        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked there."

@@ -153,11 +153,13 @@ fun main(args: Array<String>) {
         }
     }
 
+    val shortVersion = version.split("-")[0] // e.g: 2.0.0-alpha5 -> 2.0.0
+
     // TODO: what about Windows? Can we make the filename nicer, or do we need to build an MSI for that?
     val jpackageScript = mutableListOf(
         jpackage.path,
         "--name", applicationFilename,
-        "--app-version", version,
+        "--app-version", shortVersion,
         "--description", "TypeDB's Integrated Development Environment",
         "--vendor", "Vaticle Ltd",
         "--copyright", config["copyrightNotice"] ?: "",
@@ -194,6 +196,10 @@ fun main(args: Array<String>) {
         WINDOWS -> mapOf("PATH" to "${File("wixtoolset").absolutePath};${System.getenv("PATH") ?: ""}")
     }
     runShell(script = jpackageScript, env = env)
+    if (os != MAC) {
+        val distFile = File("dist").listFiles()!![0]
+        distFile.renameTo(File(distFile.path.replace(shortVersion, version)))
+    }
 
     if (os == MAC) {
         if (appleCodeSigningCertURL != null) {
@@ -204,7 +210,7 @@ fun main(args: Array<String>) {
         runShell(listOf(
             jpackage.path,
             "--name", applicationFilename,
-            "--app-version", version,
+            "--app-version", shortVersion,
             "--description", config["description"] ?: "",
             "--vendor", config["vendor"] ?: "",
             "--copyright", config["copyrightNotice"] ?: "",
@@ -214,6 +220,8 @@ fun main(args: Array<String>) {
             "-d", "dist"))
 
         File("dist/$applicationFilename.app").deleteRecursively()
+        val distFile = File("dist").listFiles()!![0]
+        distFile.renameTo(File(distFile.path.replace(shortVersion, version)))
 
         if (appleCodeSigningCertURL == null) {
             if (verboseLoggingEnabled) {

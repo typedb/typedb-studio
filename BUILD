@@ -217,11 +217,6 @@ deploy_github(
 #    windows = True,
 #)
 
-py_binary(
-    name = "wait-for-release",
-    srcs = [".grabl/wait-for-release.py"],
-)
-
 # TODO: add release_validate_deps
 
 checksum(
