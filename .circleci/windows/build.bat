@@ -25,7 +25,9 @@ bazel build //:application-image
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 ECHO Extracting application image archive...
-mkdir dist
-cd dist
-jar xf ../bazel-bin/application-image.zip
+mkdir ~/src
+xcopy ../bazel-bin/application-image.zip ~/src
+mkdir ~/dist
+cd ~/dist
+jar xf ~/src/application-image.zip
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
