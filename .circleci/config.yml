@@ -73,6 +73,7 @@ jobs:
       image: ubuntu-2004:202101-01
     working_directory: ~/typedb-studio
     steps:
+      - install-bazel-linux
       - checkout
       - run: bazel build //:application-image
       - run: mkdir -p ~/dist && cd dist && jar xf ../bazel-bin/application-image.zip
