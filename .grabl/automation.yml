@@ -41,7 +41,7 @@ release:
 #      image: vaticle-ubuntu-20.04
 #      command: bazel test //:release-validate-nodejs-deps --test_output=streamed
   deployment:
-    trigger-circleci-release:
+    trigger-release-circleci:
       image: vaticle-ubuntu-20.04
       command: |
         git checkout -b release
