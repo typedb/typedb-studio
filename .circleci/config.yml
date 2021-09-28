@@ -47,7 +47,7 @@ jobs:
     steps:
       - install-bazel-mac
       - checkout
-      - run: bazel build --define APPLEID=$APPLEID --define APPLEID_PASSWORD=$APPLEID_PASSWORD --define APPLE_CODE_SIGNING_CERTIFICATE_URL=$APPLE_CODE_SIGNING_CERTIFICATE_URL --define APPLE_CODE_SIGNING_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD --spawn_strategy=local //:application-image
+      - run: bazel build --define APPLEID=$APPLEID --define APPLEID_PASSWORD=$APPLEID_PASSWORD --define APPLE_CODE_SIGNING_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD --spawn_strategy=local //:application-image
       - run: |
           mkdir -p ~/src && cp bazel-bin/application-image.zip ~/src
           mkdir -p ~/dist && cd ~/dist && jar xf ~/src/application-image.zip
@@ -66,7 +66,7 @@ jobs:
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\build.bat
       - persist_to_workspace:
-          root: ~/dist
+          root: dist
           paths:
             - ./*
 
@@ -108,17 +108,20 @@ jobs:
             tar -xf ghr_v0.12.1_linux_amd64.tar.gz
             ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_TEMPLATE.md)" \
-              -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/dist/
+              -c ${CIRCLE_SHA1} -delete $(cat VERSION) ~/dist/
 
   deploy-brew:
     machine:
       image: ubuntu-2004:202101-01
     working_directory: ~/typedb-studio
     steps:
+      - attach_workspace:
+          at: ~/dist
       - install-bazel-linux
       - checkout
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
+          export DEPLOY_BREW_CHECKSUM=$(sha256sum ~/dist/typedb-studio-mac-$(cat VERSION).dmg | awk '{print $1}')
           bazel run --define version=$(cat VERSION) //:deploy-brew -- release
 
   release-cleanup:
