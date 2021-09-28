@@ -67,6 +67,10 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
         var visualiserScale by remember { mutableStateOf(1F) }
         var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
 
+        Row(modifier = Modifier.fillMaxWidth().zIndex(10F)) {
+            Toolbar(dbName = "grabl")
+        }
+
         Row(modifier = Modifier.fillMaxWidth().height(128.dp).background(StudioTheme.colors.background)
             .zIndex(10F).padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -86,7 +90,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
             }
 
             OutlinedTextField(modifier = Modifier.fillMaxSize(), label = { Text("Query") },
-                value = query, onValueChange = { query = it }, textStyle = StudioTheme.typography.code,
+                value = query, onValueChange = { query = it }, textStyle = StudioTheme.typography.code1,
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     backgroundColor = StudioTheme.colors.editorBackground,
                     focusedLabelColor = Color(0x99FFFFFF),

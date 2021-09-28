@@ -37,14 +37,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
@@ -73,10 +69,6 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 
     val devicePixelRatio = metrics.devicePixelRatio
 
-    val ubuntuMono = FontFamily(
-        Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
-    )
-
     Box(modifier = modifier
         .onGloballyPositioned { coordinates ->
             viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
@@ -100,13 +92,13 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
             }
 
             // TODO: this condition is supposed to be a || but without out-of-viewport detection the performance would degrade unacceptably
-            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, -worldOffset) }
+            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, -worldOffset) }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 vertices.forEach { drawVertex(it, vertexExplanations, highlightedExplanationIDs, theme, -worldOffset, focused = hoveredVertex === it || draggedVertex === it, devicePixelRatio) }
             }
 
-            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, -worldOffset) }
+            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, -worldOffset) }
         }
 
         Box(modifier = Modifier.fillMaxSize().zIndex(100F)
@@ -321,14 +313,14 @@ private fun DrawScope.drawVertex(v: VertexState, vertexExplanations: List<Vertex
 }
 
 @Composable
-private fun drawVertexLabel(v: VertexState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
+private fun drawVertexLabel(v: VertexState, theme: VisualiserTheme, viewportOffset: Offset) {
     val r = v.rect
     val x = (r.left - viewportOffset.x).dp
     val y = (r.top - viewportOffset.y).dp
     Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = v.shortLabel, color = theme.vertexLabel, fontSize = 16.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+        Text(text = v.shortLabel, style = StudioTheme.typography.code1.copy(color = theme.vertexLabel, textAlign = TextAlign.Center))
     }
 }
 
@@ -389,7 +381,7 @@ private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, V
 }
 
 @Composable
-private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
+private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, viewportOffset: Offset) {
     val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
     val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
     val color = if (edge.inferred) theme.inferred else theme.edge
@@ -397,7 +389,7 @@ private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: F
         modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = edge.label, color = color, fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
+        Text(text = edge.label, style = StudioTheme.typography.code2.copy(color = color, textAlign = TextAlign.Center))
     }
 }
 

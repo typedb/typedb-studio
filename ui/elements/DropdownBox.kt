@@ -29,9 +29,9 @@ fun DropdownBox() {
     var textfieldSize by remember { mutableStateOf(Size.Zero)}
 
 //    val icon = if (expanded)
-//        Icons.Filled.ArrowDropUp //it requires androidx.compose.material:material-icons-extended
+//        com.vaticle.typedb.studio.ui.elements.Icons.Filled.ArrowDropUp //it requires androidx.compose.material:material-icons-extended
 //    else
-//        Icons.Filled.ArrowDropDown
+//        com.vaticle.typedb.studio.ui.elements.Icons.Filled.ArrowDropDown
 
 
     Column {

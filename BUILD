@@ -96,6 +96,8 @@ kt_jvm_library(
         "//resources/fonts/titillium_web:semi-bold",
         "//resources/fonts/ubuntu_mono:bold",
         "//resources/fonts/ubuntu_mono:regular",
+        "//resources/icons:blueprint-icons-16",
+        "//resources/icons:blueprint-icons-20",
     ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],

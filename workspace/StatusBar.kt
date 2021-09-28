@@ -33,7 +33,7 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
     var queryRunTimeMillis: Double by remember { mutableStateOf(0.0) }
     var principalStatus: String by remember { mutableStateOf("Ready") }
 
-    Column(modifier = modifier.height(27.dp)) {
+    Column(modifier = modifier.height(28.dp)) {
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.panelSeparator)) {}
         Row(modifier = modifier.fillMaxHeight().background(StudioTheme.colors.background),
             verticalAlignment = Alignment.CenterVertically) {
@@ -50,6 +50,7 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
                 style = StudioTheme.typography.body2)
             Spacer(modifier = modifier.width(8.dp))
         }
+        Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.panelSeparator)) {}
     }
 
     LaunchedEffect(dataStream.completed, queryStartTimeNanos, dataStream.queryEndTimeNanos) {
