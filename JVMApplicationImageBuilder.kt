@@ -161,6 +161,10 @@ fun main(args: Array<String>) {
         "--main-class", config.require("mainClass"),
         "-d", "dist")
 
+    if ("iconPath" in config) {
+        jpackageScript += listOf("--icon", config.require("iconPath"))
+    }
+
     if (os != MAC) {
         // On MacOS, this gets added later, at the DMG step
         jpackageScript += listOf("--license-file", Path.of("src", "LICENSE").toString())
@@ -294,9 +298,9 @@ fun parseConfig(config: String, verboseLoggingEnabled: Boolean = false, private:
 
 data class Config(private val config: Map<String, String>) {
 
-    operator fun get(key: String): String? {
-        return config[key]
-    }
+    operator fun contains(key: String) = key in config
+
+    operator fun get(key: String) = config[key]
 
     fun require(key: String): String {
         val value = config[key]
