@@ -47,21 +47,30 @@ outFilename: {}
 
     private_config = ""
 
-    if "APPLE_CODE_SIGNING_CERTIFICATE_URL" in ctx.var:
+    if "APPLE_CODE_SIGNING_PASSWORD" in ctx.var:
 
         if not ctx.file.mac_entitlements:
-            fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_CERTIFICATE_URL is set")
+            fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+        if not ctx.file.mac_code_signing_cert:
+            fail("Parameter mac_code_signing_cert must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+
+        if "APPLEID" not in ctx.var:
+            fail("Variable APPLEID must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+        if "APPLEID_PASSWORD" not in ctx.var:
+            fail("Variable APPLEID_PASSWORD must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+
+        config = config + """/
+appleCodeSigningCertificatePath: {}
+""".format(ctx.file.mac_code_signing_cert.path)
 
         private_config = private_config + """/
 appleId: {}
 appleIdPassword: {}
-appleCodeSigningCertificateUrl: {}
 appleCodeSigningPassword: {}
 """.format(
-        ctx.var.get("APPLEID", ""),
-        ctx.var.get("APPLEID_PASSWORD", ""),
-        ctx.var.get("APPLE_CODE_SIGNING_CERTIFICATE_URL", ""),
-        ctx.var.get("APPLE_CODE_SIGNING_PASSWORD", ""))
+        ctx.var["APPLEID"],
+        ctx.var["APPLEID_PASSWORD"],
+        ctx.var["APPLE_CODE_SIGNING_PASSWORD"])
 
         step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
@@ -133,6 +142,10 @@ zip_to_jvm_application_image = rule(
             allow_single_file = True,
             doc = "The MacOS entitlements.mac.plist file",
         ),
+        "mac_code_signing_cert": attr.label(
+            allow_single_file = True,
+            doc = "The MacOS code signing certificate",
+        ),
         "windows_wix_toolset": attr.label(
             allow_single_file = True,
             doc = "Archive containing the Windows WiX toolset",
@@ -172,6 +185,7 @@ def jvm_application_image(name,
                           deps_use_maven_name = True,
                           additional_files = {},
                           mac_entitlements = None,
+                          mac_code_signing_cert = None,
                           windows_wix_toolset = "@wix_toolset_311//file"):
 
     java_deps(
@@ -206,5 +220,6 @@ def jvm_application_image(name,
             "//conditions:default": "unknown",
         }),
         mac_entitlements = mac_entitlements,
+        mac_code_signing_cert = mac_code_signing_cert,
         windows_wix_toolset = windows_wix_toolset,
     )

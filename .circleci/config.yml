@@ -47,7 +47,7 @@ jobs:
     steps:
       - install-bazel-mac
       - checkout
-      - run: bazel build --define APPLEID=$APPLEID --define APPLEID_PASSWORD=$APPLEID_PASSWORD --define APPLE_CODE_SIGNING_CERTIFICATE_URL=$APPLE_CODE_SIGNING_CERTIFICATE_URL --define APPLE_CODE_SIGNING_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD --spawn_strategy=local //:application-image
+      - run: bazel build --define APPLEID=$APPLEID --define APPLEID_PASSWORD=$APPLEID_PASSWORD --define APPLE_CODE_SIGNING_PASSWORD=$APPLE_CODE_SIGNING_PASSWORD --spawn_strategy=local //:application-image
       - run: |
           mkdir -p ~/src && cp bazel-bin/application-image.zip ~/src
           mkdir -p ~/dist && cd ~/dist && jar xf ~/src/application-image.zip

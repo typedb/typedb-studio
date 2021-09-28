@@ -2,18 +2,11 @@ package com.vaticle.typedb.studio
 
 import com.vaticle.typedb.studio.OS.*
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import java.nio.file.Files
-import java.util.*
 import java.util.Locale.ENGLISH
 
 fun main(args: Array<String>) {
@@ -23,9 +16,9 @@ fun main(args: Array<String>) {
     val privateConfig = parseConfig(args[1], verboseLoggingEnabled = verboseLoggingEnabled, private = true)
     val applicationFilename = config.require("applicationFilename")
     val version = File(config.require("versionFilePath")).readLines()[0]
-    val appleCodeSigningCertURL = privateConfig["appleCodeSigningCertificateUrl"]
+    val appleCodeSigningPassword = privateConfig["appleCodeSigningPassword"]
 
-    val os = OS.current
+    val os = OS.currentOS
 
     fun runShell(script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(),
                  expectExitValueNormal: Boolean = true, printParamsEndIndex: Int? = null): ProcessResult {
@@ -58,7 +51,7 @@ fun main(args: Array<String>) {
 
         file.setWritable(true)
         val signCommand: MutableList<String> = mutableListOf(
-            "codesign", "-s", "Developer ID Application: Grakn Labs Limited (RHKH8FP9SX)",
+            "codesign", "-s", "Developer ID Application: Vaticle LTD (RHKH8FP9SX)",
             "-f",
             "--entitlements", config.require("macEntitlementsPath"),
             "--prefix", "com.vaticle.typedb.studio.",
@@ -105,13 +98,13 @@ fun main(args: Array<String>) {
     val keychainName = "jvm-application-image-builder.keychain"
 
     if (os == MAC) {
-        if (appleCodeSigningCertURL == null) {
-            println("Skipping MacOS code signing step: environment variable APPLE_CODE_SIGNING_CERTIFICATE_URL is not set " +
+        if (appleCodeSigningPassword == null) {
+            println("Skipping MacOS code signing step: variable APPLE_CODE_SIGNING_PASSWORD is not set " +
                     "(it should only be set when deploying a distribution)")
         } else {
-            val appleCodeSigningPassword = privateConfig.require("appleCodeSigningPassword")
-            val keychainPassword = UUID.randomUUID().toString()
-            runShell(listOf("curl", "-o", "code-signing-cert.p12", appleCodeSigningCertURL), printParamsEndIndex = 3)
+            val appleCodeSigningCertPath = config.require("appleCodeSigningCertificatePath")
+            val keychainPassword = "jvm-application-image-builder"
+//            runShell(listOf("curl", "-o", "code-signing-cert.p12", appleCodeSigningCertURL), printParamsEndIndex = 3)
 
             // These checks ensure the script doesn't fail if run twice on the same machine, e.g in local testing
             val keychainListInfo = runShell(listOf("security", "list-keychains")).outputString()
@@ -120,7 +113,7 @@ fun main(args: Array<String>) {
             runShell(listOf("security", "default-keychain", "-s", keychainName))
             runShell(listOf("security", "list-keychains", "-d", "user", "-s", "login.keychain", keychainName))
             runShell(listOf("security", "unlock-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
-            runShell(listOf("security", "import", "code-signing-cert.p12", "-k", keychainName, "-P", appleCodeSigningPassword, "-T", "/usr/bin/codesign"), printParamsEndIndex = 5)
+            runShell(listOf("security", "import", appleCodeSigningCertPath, "-k", keychainName, "-P", appleCodeSigningPassword, "-T", "/usr/bin/codesign"), printParamsEndIndex = 5)
             runShell(listOf("security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", keychainPassword, keychainName), printParamsEndIndex = 4)
 
             for (file in File("src").listFilesRecursively()) {
@@ -202,7 +195,7 @@ fun main(args: Array<String>) {
     }
 
     if (os == MAC) {
-        if (appleCodeSigningCertURL != null) {
+        if (appleCodeSigningPassword != null) {
             signFile(File("dist/$applicationFilename.app/Contents/runtime"), keychainName, replaceExisting = true)
             signFile(File("dist/$applicationFilename.app"), keychainName, replaceExisting = true)
         }
@@ -223,12 +216,15 @@ fun main(args: Array<String>) {
         val distFile = File("dist").listFiles()!![0]
         distFile.renameTo(File(distFile.path.replace(shortVersion, version)))
 
-        if (appleCodeSigningCertURL == null) {
+        if (appleCodeSigningPassword == null) {
             if (verboseLoggingEnabled) {
-                println("Skipping notarizing step: environment variable APPLE_CODE_SIGNING_CERTIFICATE_URL is not set")
+                println("Skipping notarizing step: variable APPLE_CODE_SIGNING_PASSWORD is not set")
             }
         } else {
             val dmgFilename = "$applicationFilename-$version.dmg"
+            val dmgFilePath = "dist/$dmgFilename"
+            signFile(File(dmgFilePath), keychainName)
+
             val appleID = privateConfig.require("appleId")
             val appleIDPassword = privateConfig.require("appleIdPassword")
 
@@ -239,7 +235,7 @@ fun main(args: Array<String>) {
                 "--primary-bundle-id", "com.vaticle.typedb.studio",
                 "--username", appleID,
                 "--password", appleIDPassword,
-                "--file", "dist/$dmgFilename"))
+                "--file", dmgFilePath))
             val notarizeAppResult = notarizeAppProcess.outputString()
             val requestUUID = Regex("RequestUUID = ([a-z0-9\\-]{36})").find(notarizeAppResult)?.groupValues?.get(1)
                 ?: throw IllegalStateException("Notarization failed: the response $notarizeAppResult from " +
@@ -272,7 +268,7 @@ fun main(args: Array<String>) {
                 retries++
             }
 
-            runShell(listOf("xcrun", "stapler", "staple", "dist/$dmgFilename"))
+            runShell(listOf("xcrun", "stapler", "staple", dmgFilePath))
         }
     }
 
@@ -315,7 +311,7 @@ enum class OS {
     LINUX;
 
     companion object {
-        val current: OS
+        val currentOS: OS
         get() {
             val osName = System.getProperty("os.name").lowercase(ENGLISH)
             return when {
