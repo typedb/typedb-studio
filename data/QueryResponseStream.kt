@@ -22,6 +22,9 @@ class QueryResponseStream(completed: Boolean = false) {
     private var exception: Exception? = null
     var queryEndTimeNanos: Long? = null
 
+    // TODO: These shouldn't have to be synchronized - the read/write lock should be enough. But for some reason
+    //       the visualiser keeps crashing when they aren't synchronized...
+    @Synchronized
     fun putVertex(vertex: VertexData) {
         try {
             accessLock.readLock().lock()
@@ -31,6 +34,7 @@ class QueryResponseStream(completed: Boolean = false) {
         }
     }
 
+    @Synchronized
     fun putEdge(edge: EdgeData) {
         try {
             accessLock.readLock().lock()
@@ -40,6 +44,7 @@ class QueryResponseStream(completed: Boolean = false) {
         }
     }
 
+    @Synchronized
     fun putExplanationVertex(explanationVertex: ExplanationVertexData) {
         try {
             accessLock.readLock().lock()
@@ -68,6 +73,7 @@ class QueryResponseStream(completed: Boolean = false) {
         }
     }
 
+    @Synchronized
     fun drain(): Either<GraphData, Exception> {
         try {
             accessLock.writeLock().lock()
@@ -91,6 +97,7 @@ class QueryResponseStream(completed: Boolean = false) {
         }
     }
 
+    @Synchronized
     fun clear() {
         vertexStore = mutableListOf()
         edgeStore = mutableListOf()

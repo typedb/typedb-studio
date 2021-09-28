@@ -19,6 +19,7 @@ import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typedb.studio.data.EdgeDirection.*
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
+import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.util.concurrent.CompletableFuture
 import java.time.format.DateTimeFormatter
@@ -95,20 +96,18 @@ class DB(dbServer: DBServer, private val dbName: String) {
                 explanationID?.let { value ->
                     responseStream.putExplanationVertex(ExplanationVertexData(explanationID = value, vertexID = vertexID))
                 }
-            } else {
-                val type = concept.asType()
-                vertexGenerator.types.computeIfAbsent(type.label.scopedName()) {
-                    val typeVertex: VertexData = vertexGenerator.generateVertex(type)
+            } else if (concept.isThingType) { // NOTE: RoleTypes are skipped - they generate edges, not vertices
+                val thingType = concept.asThingType()
+                vertexGenerator.types.computeIfAbsent(thingType.label.scopedName()) {
+                    val typeVertex: VertexData = vertexGenerator.generateVertex(thingType)
                     responseStream.putVertex(typeVertex)
 
-                    if (type.isThingType) {
-                        val remoteThingType = type.asThingType().asRemote(tx)
-                        tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                        tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                        tasks += LoadSupertypeTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                    }
+                    val remoteThingType = thingType.asRemote(tx)
+                    tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                    tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                    tasks += LoadSupertypeTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
 
-                    incompleteTypeEdges.remove(type.label.scopedName())?.forEach {
+                    incompleteTypeEdges.remove(thingType.label.scopedName())?.forEach {
                         val edgeData = when (it.direction) {
                             INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.label, it.inferred)
                             OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.label, it.inferred)
@@ -229,7 +228,8 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         isAttribute -> ATTRIBUTE
         isEntityType -> ENTITY_TYPE
         isRelationType -> RELATION_TYPE
-        isAttributeType -> ATTRIBUTE_TYPE // TODO: Support RoleType variables
+        isAttributeType -> ATTRIBUTE_TYPE
+        isRoleType -> throw IllegalArgumentException("Attempted to get the VertexEncoding of a RoleType, which is not allowed")
         else -> THING_TYPE
     }
 
