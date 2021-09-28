@@ -188,7 +188,10 @@ jvm_application_image(
     deps_use_maven_name = False,
     additional_files = assemble_files,
     mac_entitlements = "//resources:entitlements-mac-plist",
-    mac_code_signing_cert = "@vaticle_mac_developer_id_application_cert//file",
+    mac_code_signing_cert = select({
+        "@vaticle_dependencies//util/platform:is_mac": "@vaticle_apple_developer_id_application_cert//file",
+        "//conditions:default": None,
+    }),
 )
 
 deploy_github(
