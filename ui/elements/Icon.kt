@@ -20,13 +20,24 @@ private val blueprintIcons16 = FontFamily(Font(resource = "icons/blueprint-icons
 private val blueprintIcons20 = FontFamily(Font(resource = "icons/blueprint-icons-20.ttf"))
 
 enum class IconSize(val fontSize: TextUnit, val fontFamily: FontFamily) {
+    Size12(fontSize = 12.sp, fontFamily = blueprintIcons16), // WARNING: Blueprint recommends against using this nonstandard size
     Size16(fontSize = 16.sp, fontFamily = blueprintIcons16),
     Size20(fontSize = 20.sp, fontFamily = blueprintIcons20),
 }
 
 enum class Icon(charCode: UShort) {
+    // these codes can be found in resources/icons/blueprint-codepoints-reference.json
+    CaretUp(0x2303u),
     CaretDown(0x2304u),
-    Database(0xe683u);
+    ChevronLeft(0xe694u),
+    ChevronRight(0xe695u),
+    Cog(0xe645u),
+    Database(0xe683u),
+    FloppyDisk(0xe6b7u),
+    FolderOpen(0xe651u),
+    LogOut(0xe64cu),
+    Play(0xe6abu),
+    Stop(0xe6aau);
 
     val charString: String = Char(charCode).toString()
 }

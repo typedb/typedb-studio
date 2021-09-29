@@ -1,11 +1,12 @@
 package com.vaticle.typedb.studio.workspace
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -29,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -66,28 +68,23 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
         var visualiserMetricsID by remember { mutableStateOf("") }
         var visualiserScale by remember { mutableStateOf(1F) }
         var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
+        var query by remember { mutableStateOf("match \$x sub thing;\n" +
+                "offset 0;\n" +
+                "limit 1000;\n") }
 
-        Row(modifier = Modifier.fillMaxWidth().zIndex(10F)) {
-            Toolbar(dbName = "grabl")
-        }
-
-        Row(modifier = Modifier.fillMaxWidth().height(128.dp).background(StudioTheme.colors.background)
-            .zIndex(10F).padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-
-            var query by remember { mutableStateOf("match \$x sub thing;\n" +
-                    "offset 0;\n" +
-                    "limit 1000;\n") }
-
-            Button(modifier = Modifier.size(40.dp).offset(y = 8.dp), onClick = {
+        Row {
+            Toolbar(dbName = "grabl", onRun = {
                 typeDBForceSimulation.init()
                 dataStream = db.matchQuery(query)
                 visualiserWorldOffset = visualiserSize.center
                 visualiserMetricsID = UUID.randomUUID().toString()
                 queryStartTimeNanos = System.nanoTime()
-            }) {
-                Text("▶️")
-            }
+            })
+        }
+
+        Row(modifier = Modifier.height(128.dp).background(StudioTheme.colors.background)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 
             OutlinedTextField(modifier = Modifier.fillMaxSize(), label = { Text("Query") },
                 value = query, onValueChange = { query = it }, textStyle = StudioTheme.typography.code1,
@@ -97,9 +94,9 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                     focusedBorderColor = Color(0x99FFFFFF)))
         }
 
-        Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.panelSeparator)) {}
+        Row(modifier = Modifier.height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-        Row(modifier = Modifier.fillMaxSize().weight(1F)) {
+        Row(modifier = Modifier.weight(1F).zIndex(-1F)) {
             TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
                 vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
                 vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
@@ -127,7 +124,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                 })
         }
 
-        Row(modifier = Modifier.fillMaxWidth().zIndex(10F)) {
+        Row {
             StatusBar(
                 dataStream = dataStream,
                 visualiserScale = visualiserScale,

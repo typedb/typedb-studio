@@ -79,8 +79,8 @@ object StudioTheme {
 
 @Stable
 class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElementBackground: Color,
-                   editorBackground: Color, error: Color, panelSeparator: Color, windowBackdrop: Color,
-                   text: Color, icon: Color) {
+    uiElementBorder: Color, editorBackground: Color, error: Color, windowBackdrop: Color,
+    text: Color, icon: Color) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
         private set
     var onPrimary by mutableStateOf(onPrimary, structuralEqualityPolicy())
@@ -89,11 +89,11 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElemen
         private set
     var uiElementBackground by mutableStateOf(uiElementBackground, structuralEqualityPolicy())
         private set
+    var uiElementBorder by mutableStateOf(uiElementBorder, structuralEqualityPolicy())
+        private set
     var editorBackground by mutableStateOf(editorBackground, structuralEqualityPolicy())
         private set
     var error by mutableStateOf(error, structuralEqualityPolicy())
-        private set
-    var panelSeparator by mutableStateOf(panelSeparator, structuralEqualityPolicy())
         private set
     var windowBackdrop by mutableStateOf(windowBackdrop, structuralEqualityPolicy())
         private set
@@ -103,19 +103,20 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElemen
         private set
 
     fun copy(primary: Color = this.primary, onPrimary: Color = this.onPrimary, background: Color = this.background,
-             uiElementBackground: Color = this.uiElementBackground, editorBackground: Color = this.editorBackground,
-             error: Color = this.error, panelSeparator: Color = this.panelSeparator,
-             windowBackdrop: Color = this.windowBackdrop, text: Color = this.text, icon: Color = this.icon): StudioColors
-    = StudioColors(primary, onPrimary, background, uiElementBackground, editorBackground, error, panelSeparator, windowBackdrop, text, icon)
+        uiElementBackground: Color = this.uiElementBackground, uiElementBorder: Color = this.uiElementBorder,
+        editorBackground: Color = this.editorBackground, error: Color = this.error,
+        windowBackdrop: Color = this.windowBackdrop, text: Color = this.text, icon: Color = this.icon
+    ): StudioColors = StudioColors(primary, onPrimary, background, uiElementBackground, uiElementBorder,
+        editorBackground, error, windowBackdrop, text, icon)
 
     fun updateColorsFrom(other: StudioColors) {
         primary = other.primary
         onPrimary = other.onPrimary
         background = other.background
         uiElementBackground = other.uiElementBackground
+        uiElementBorder = other.uiElementBorder
         editorBackground = other.editorBackground
         error = other.error
-        panelSeparator = other.panelSeparator
         windowBackdrop = other.windowBackdrop
         text = other.text
         icon = other.icon
@@ -148,13 +149,15 @@ fun studioDarkColors(
     onPrimary: Color = VaticlePalette.Purple3,
     background: Color = VaticlePalette.Purple4,
     uiElementBackground: Color = VaticlePalette.Purple3,
+    uiElementBorder: Color = VaticlePalette.Purple6,
     editorBackground: Color = VaticlePalette.Purple0,
     error: Color = VaticlePalette.Red1,
-    panelSeparator: Color = VaticlePalette.Purple6,
     windowBackdrop: Color = VaticlePalette.Purple1,
     text: Color = Color.White,
     icon: Color = Color(0xFF888DCA),
-): StudioColors = StudioColors(primary, onPrimary, background, uiElementBackground, editorBackground, error, panelSeparator, windowBackdrop, text, icon)
+): StudioColors = StudioColors(
+    primary, onPrimary, background, uiElementBackground, uiElementBorder, editorBackground, error,
+    windowBackdrop, text, icon)
 
 val LocalColors = staticCompositionLocalOf { studioDarkColors() }
 
@@ -164,18 +167,20 @@ class StudioTypography(
     val defaultMonospaceFontFamily: FontFamily = FontFamily.Monospace,
     body1: TextStyle = TextStyle(fontSize = 16.sp),
     body2: TextStyle = TextStyle(fontSize = 14.sp),
+    small: TextStyle = TextStyle(fontSize = 12.sp),
     code1: TextStyle = TextStyle(fontSize = 16.sp),
     code2: TextStyle = TextStyle(fontSize = 14.sp),
 ) {
-
     val body1 = body1.withDefaultFontFamily(defaultFontFamily)
     val body2 = body2.withDefaultFontFamily(defaultFontFamily)
+    val small = small.withDefaultFontFamily(defaultFontFamily)
     val code1 = code1.withDefaultFontFamily(defaultMonospaceFontFamily)
     val code2 = code2.withDefaultFontFamily(defaultMonospaceFontFamily)
 
     fun copy(defaultFontFamily: FontFamily, defaultMonospaceFontFamily: FontFamily, body1: TextStyle = this.body1,
-             body2: TextStyle = this.body2, code1: TextStyle = this.code1, code2: TextStyle = this.code2): StudioTypography
-    = StudioTypography(defaultFontFamily, defaultMonospaceFontFamily, body1, body2, code1, code2)
+             body2: TextStyle = this.body2, small: TextStyle = this.small, code1: TextStyle = this.code1,
+             code2: TextStyle = this.code2): StudioTypography
+    = StudioTypography(defaultFontFamily, defaultMonospaceFontFamily, body1, body2, small, code1, code2)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -183,6 +188,7 @@ class StudioTypography(
 
         if (body1 != other.body1) return false
         if (body2 != other.body2) return false
+        if (small != other.small) return false
         if (code1 != other.code1) return false
         if (code2 != other.code2) return false
 
@@ -192,6 +198,7 @@ class StudioTypography(
     override fun hashCode(): Int {
         var result = body1.hashCode()
         result = 31 * result + body2.hashCode()
+        result = 31 * result + small.hashCode()
         result = 31 * result + code1.hashCode()
         result = 31 * result + code2.hashCode()
         return result

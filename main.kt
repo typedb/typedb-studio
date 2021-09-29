@@ -1,5 +1,7 @@
 package com.vaticle.typedb.studio
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -31,6 +34,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "TypeDB Studio",
+//        undecorated = true, // TODO: ideally we want undecorated (no title bar), but it seems to cause intermittent crashes on startup
         state = rememberWindowState(placement = WindowPlacement.Maximized)
     ) {
 
@@ -44,7 +48,9 @@ fun main() = application {
         val navigator = remember { Navigator(initialState = LoginScreenState()) }
 
         StudioTheme {
-            Scaffold(modifier = Modifier.fillMaxSize().onGloballyPositioned { coordinates ->
+            Scaffold(modifier = Modifier.fillMaxSize()
+                .border(BorderStroke(1.dp, SolidColor(StudioTheme.colors.uiElementBorder)))
+                .onGloballyPositioned { coordinates ->
                 titleBarHeight = window.height - coordinates.size.height / devicePixelRatio
             }) {
 
