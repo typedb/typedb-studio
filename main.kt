@@ -29,12 +29,15 @@ import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.workspace.WorkspaceScreen
+import java.io.File
 
 fun main() = application {
+    // TODO: we want undecorated (no title bar), but it seems to cause intermittent crashes on startup
+    //       Test if they occur when running the distribution, or only with bazel run :studio-bin-*
     Window(
-        onCloseRequest = ::exitApplication,
+        onCloseRequest = ::exitApplication, // TODO: I think this is the wrong behaviour on MacOS
         title = "TypeDB Studio",
-//        undecorated = true, // TODO: ideally we want undecorated (no title bar), but it seems to cause intermittent crashes on startup
+//        undecorated = true,
         state = rememberWindowState(placement = WindowPlacement.Maximized)
     ) {
 

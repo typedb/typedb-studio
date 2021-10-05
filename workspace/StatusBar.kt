@@ -33,7 +33,7 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
     var queryRunTimeMillis: Double by remember { mutableStateOf(0.0) }
     var principalStatus: String by remember { mutableStateOf("Ready") }
 
-    Column(modifier = modifier.height(28.dp)) {
+    Column(modifier = modifier.height(21.dp)) {
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
         Row(modifier = modifier.fillMaxHeight().background(StudioTheme.colors.background),
             verticalAlignment = Alignment.CenterVertically) {
@@ -45,7 +45,7 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
 
             Text("Zoom: ${BigDecimal(visualiserScale * 100.0, mathContext3SigFigures).toPlainString()}%",
                 style = StudioTheme.typography.body2)
-            Spacer(modifier = modifier.width(16.dp))
+            Spacer(modifier = modifier.width(11.dp))
             Text("Vertices: $vertexCount | Edges: $edgeCount | ${queryRunTimeMillis.toDurationString()}",
                 style = StudioTheme.typography.body2)
             Spacer(modifier = modifier.width(8.dp))

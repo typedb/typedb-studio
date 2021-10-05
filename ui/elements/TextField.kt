@@ -44,7 +44,7 @@ fun StudioTextField(
                     leadingIcon()
                     Spacer(Modifier.width(4.dp))
                 }
-                Box(modifier.offset(y = 3.dp).weight(1f)) {
+                Box(modifier.offset(y = 4.dp).weight(1f)) {
                     if (value.isEmpty()) Text(
                         placeholderText,
                         style = textStyle.copy(color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f))

@@ -98,6 +98,8 @@ kt_jvm_library(
         "//resources/fonts/ubuntu_mono:regular",
         "//resources/icons:blueprint-icons-16",
         "//resources/icons:blueprint-icons-20",
+        "//resources/icons:database-png",
+        "//resources/icons:database-svg",
     ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],

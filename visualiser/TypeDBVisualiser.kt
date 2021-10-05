@@ -389,7 +389,7 @@ private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, viewportOffse
         modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = edge.label, style = StudioTheme.typography.code2.copy(color = color, textAlign = TextAlign.Center))
+        Text(text = edge.label, style = StudioTheme.typography.code1.copy(color = color, textAlign = TextAlign.Center))
     }
 }
 

@@ -58,7 +58,7 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
             if (sourceNode != null && targetNode != null) links += Link(nodes()[it.sourceID], nodes()[it.targetID])
             else println("addEdges: Could not create link force for $it because one of its nodes is not in the simulation!")
         }
-        force("link", LinkForce(nodes().values, links, 100.0, 0.5))
+        force("link", LinkForce(nodes().values, links, 90.0, 0.5))
         force("charge", ManyBodyForce(nodes().values, -600.0 * data.edges.size / (data.vertices.size + 1)))
 //        println("New charge strength = ${-200.0 * data.edges.size / (data.vertices.size + 1)}")
     }

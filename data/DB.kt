@@ -216,8 +216,8 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
                 RELATION_TYPE, RELATION -> 22.coerceAtMost(label.length)
                 else -> 26.coerceAtMost(label.length)
             }),
-            width = when (encoding) { RELATION_TYPE, RELATION -> 120F; else -> 110F },
-            height = when (encoding) { RELATION_TYPE, RELATION -> 60F; else -> 40F },
+            width = when (encoding) { RELATION_TYPE, RELATION -> 110F; else -> 100F },
+            height = when (encoding) { RELATION_TYPE, RELATION -> 55F; else -> 35F },
             inferred = concept.isThing && concept.asThing().isInferred
         )
     }

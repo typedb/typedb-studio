@@ -13,6 +13,7 @@ kt_jvm_library(
         "//visualiser",
 
         # Maven
+        "@maven//:com_fifesoft_rsyntaxtextarea",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:studio-workspace:{pom_version}"],
