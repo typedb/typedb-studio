@@ -1,8 +1,11 @@
 package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -10,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.SnackbarHostState
@@ -76,6 +81,9 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
         ExecutionTabState(title = "Query1 : run1")
     ) }
     var activeExecutionTabIndex by remember { mutableStateOf(0) }
+    var showQuerySettingsPanel by remember { mutableStateOf(true) }
+    var showConceptPanel by remember { mutableStateOf(true) }
+    var querySettings by remember { mutableStateOf(QuerySettings()) }
 
     val db = workspace.db
     val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
@@ -90,7 +98,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
     Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = "grabl", onRun = {
             typeDBForceSimulation.init()
-            dataStream = db.matchQuery(activeQueryTab.query)
+            dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
             visualiserWorldOffset = visualiserSize.center
             visualiserMetricsID = UUID.randomUUID().toString()
             queryStartTimeNanos = System.nanoTime()
@@ -98,12 +106,14 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-        Row(modifier = Modifier.fillMaxWidth().weight(1F)) {
+        Row(modifier = Modifier.weight(1F)) {
             Column(modifier = Modifier.width(20.dp)) {
                 StudioTabs(orientation = TabOrientation.BOTTOM_TO_TOP) {
                     StudioTab("Schema Explorer", selected = false, leadingIcon = { StudioIcon(Icon.Layout) })
                     StudioTab("Permissions", selected = false, leadingIcon = { StudioIcon(Icon.Shield) })
                 }
+                Row(modifier = Modifier.weight(1f)) {}
+                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
             }
 
             Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
@@ -127,9 +137,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-                Row(modifier = Modifier.fillMaxWidth().height(26.dp).background(StudioTheme.colors.background),
-                    verticalAlignment = Alignment.CenterVertically) {
-
+                PanelHeader(modifier = Modifier.fillMaxWidth()) {
                     StudioTabs(modifier = Modifier.weight(1f)) {
                         Spacer(Modifier.width(8.dp))
                         Text("Output:", style = StudioTheme.typography.body2)
@@ -142,16 +150,15 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                         }
                     }
 
-                    StudioIcon(Icon.Cog)
-                    Spacer(Modifier.width(14.dp))
+//                    StudioIcon(Icon.Cog)
+//                    Spacer(Modifier.width(12.dp))
 
-                    StudioIcon(Icon.Minus)
-                    Spacer(Modifier.width(12.dp))
+                    // TODO: This should be a "maximise" icon allowing the Output panel to go full-screen
+//                    StudioIcon(Icon.Minus)
+//                    Spacer(Modifier.width(12.dp))
                 }
 
-                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-
-                Row(modifier = Modifier.weight(1F).zIndex(-1F)) {
+                Row(modifier = Modifier.weight(1F)) {
                     TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
                         vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
                         vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
@@ -189,26 +196,53 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                     StudioTab("Table", selected = false, highlight = TabHighlight.TOP,
                         leadingIcon = { StudioIcon(Icon.Table) })
                 }
+
+                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
+            }
+
+            if (showQuerySettingsPanel || showConceptPanel) {
+                Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
+
+                Column(modifier = Modifier.fillMaxHeight().requiredWidth(250.dp).background(StudioTheme.colors.background)) {
+                    if (showConceptPanel) {
+                        ConceptPanel(modifier = Modifier.weight(2f))
+                    }
+                    if (showQuerySettingsPanel) {
+                        QuerySettingsPanel(settings = querySettings, onSettingsChange = { querySettings = it },
+                            modifier = Modifier.weight(1f))
+                    }
+                }
             }
 
             Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder).zIndex(20f)) {}
 
             Column(modifier = Modifier.width(20.dp)) {
-                StudioTabs(orientation = TabOrientation.TOP_TO_BOTTOM) {
-                    StudioTab("Settings", selected = false, leadingIcon = { StudioIcon(Icon.Cog) })
-                    StudioTab("Graph Explorer", selected = false, leadingIcon = { StudioIcon(Icon.TimelineBarChart) })
+                Box {
+                    StudioIcon(Icon.Cog, modifier = Modifier.offset(x = 2.dp, y = 8.dp))
+                    Text("Settings", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier
+                        .offset(y = 40.dp)
+                        .requiredWidth(IntrinsicSize.Max)
+                        .rotate(90f))
                 }
+                Box {
+                    StudioIcon(Icon.SearchAround, modifier = Modifier.offset(x = 2.dp, y = 8.dp))
+                    Text("Concept", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier
+                        .offset(y = 40.dp)
+                        .requiredWidth(IntrinsicSize.Max)
+                        .rotate(90f))
+                }
+//                StudioTabs(orientation = TabOrientation.TOP_TO_BOTTOM) {
+//                    StudioTab("Settings", selected = showQuerySettingsPanel, leadingIcon = { StudioIcon(Icon.Cog) })
+//                    StudioTab("Concept", selected = showConceptPanel, leadingIcon = { StudioIcon(Icon.SearchAround) })
+//                }
+//                Row(modifier = Modifier.weight(1f)) {}
+                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
             }
         }
 
-        Row {
-            StatusBar(
-                dataStream = dataStream,
-                visualiserScale = visualiserScale,
-                vertexCount = typeDBForceSimulation.data.vertices.size,
-                edgeCount = typeDBForceSimulation.data.edges.size,
-                queryStartTimeNanos = queryStartTimeNanos)
-        }
+        StatusBar(dataStream = dataStream, visualiserScale = visualiserScale,
+            vertexCount = typeDBForceSimulation.data.vertices.size, edgeCount = typeDBForceSimulation.data.edges.size,
+            queryStartTimeNanos = queryStartTimeNanos)
 
         LaunchedEffect(key1 = dataStream) {
             simulationRunnerCoroutine(typeDBForceSimulation, dataStream, snackbarHostState, snackbarCoroutineScope)

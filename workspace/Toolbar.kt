@@ -20,7 +20,7 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 @Composable
 fun Toolbar(modifier: Modifier = Modifier, dbName: String, onRun: () -> Unit) {
 
-    Row(modifier = modifier.height(28.dp).background(StudioTheme.colors.background),
+    Row(modifier = modifier.height(28.dp),
         verticalAlignment = Alignment.CenterVertically) {
 
         Spacer(Modifier.width(8.dp))
@@ -46,8 +46,8 @@ fun Toolbar(modifier: Modifier = Modifier, dbName: String, onRun: () -> Unit) {
 
         Spacer(Modifier.weight(1F))
 
-        StudioIcon(Icon.Cog)
-        Spacer(Modifier.width(14.dp))
+//        StudioIcon(Icon.Cog)
+//        Spacer(Modifier.width(15.dp))
 
         StudioIcon(Icon.LogOut)
         Spacer(Modifier.width(12.dp))

@@ -122,7 +122,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
         return CompletableFuture.allOf(*tasks.toTypedArray())
     }
 
-    fun matchQuery(query: String): QueryResponseStream {
+    fun matchQuery(query: String, enableReasoning: Boolean): QueryResponseStream {
         responseStream.clear()
         responseStream.completed = false
         incompleteThingEdges.clear()
@@ -131,10 +131,10 @@ class DB(dbServer: DBServer, private val dbName: String) {
         explanationIterators.clear()
         currentExplanationID.set(0)
         try {
-            if (session?.isOpen != true) {
-                session = client.session(dbName, DATA)
-                tx = session!!.transaction(READ, TypeDBOptions.core().infer(true).explain(true))
-            }
+            session?.close()
+            session = client.session(dbName, DATA)
+            val options = if (enableReasoning) TypeDBOptions.core().infer(true).explain(true) else TypeDBOptions.core()
+            tx = session!!.transaction(READ, options)
             vertexGenerator = VertexGenerator()
             CompletableFuture.supplyAsync {
                 try {

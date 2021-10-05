@@ -70,6 +70,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     val devicePixelRatio = metrics.devicePixelRatio
 
     Box(modifier = modifier
+        .graphicsLayer(clip = true)
         .onGloballyPositioned { coordinates ->
             viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
 //            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
