@@ -18,10 +18,10 @@ import com.vaticle.typedb.studio.data.valueString
 import com.vaticle.typedb.studio.visualiser.VertexState
 
 @Composable
-fun ConceptPanel(vertex: VertexState?, modifier: Modifier = Modifier) {
+fun ConceptPanel(vertex: VertexState?, onCollapse: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Column {
-            SidebarPanelHeader(title = "Concept")
+            SidebarPanelHeader(title = "Concept", onCollapse = onCollapse)
 
             if (vertex == null) {
                 Row(Modifier.weight(1f).padding(8.dp)) {

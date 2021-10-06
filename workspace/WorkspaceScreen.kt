@@ -225,10 +225,11 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 Column(modifier = Modifier.fillMaxHeight().requiredWidth(250.dp).background(StudioTheme.colors.background)) {
                     if (showQuerySettingsPanel) {
                         QuerySettingsPanel(settings = querySettings, onSettingsChange = { querySettings = it },
-                            modifier = Modifier.weight(1f))
+                            onCollapse = { showQuerySettingsPanel = false }, modifier = Modifier.weight(1f))
                     }
                     if (showConceptPanel) {
-                        ConceptPanel(vertex = selectedVertex, modifier = Modifier.weight(2f))
+                        ConceptPanel(vertex = selectedVertex, onCollapse = { showConceptPanel = false },
+                            modifier = Modifier.weight(2f))
                     }
                 }
             }

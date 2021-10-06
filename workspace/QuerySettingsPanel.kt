@@ -27,10 +27,10 @@ import com.vaticle.typedb.studio.ui.elements.Icon
 import com.vaticle.typedb.studio.ui.elements.StudioIcon
 
 @Composable
-fun QuerySettingsPanel(settings: QuerySettings, onSettingsChange: (settings: QuerySettings) -> Unit, modifier: Modifier = Modifier) {
+fun QuerySettingsPanel(settings: QuerySettings, onSettingsChange: (settings: QuerySettings) -> Unit, onCollapse: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Column {
-            SidebarPanelHeader(title = "Query Settings")
+            SidebarPanelHeader(title = "Query Settings", onCollapse = onCollapse)
 
             Row(modifier = Modifier.weight(1f)) {
                 Column(modifier = Modifier.padding(6.dp)) {
