@@ -38,6 +38,8 @@ import androidx.compose.ui.zIndex
 import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
+import com.vaticle.typedb.studio.data.DB
+import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.navigation.LoginScreenState
 import com.vaticle.typedb.studio.navigation.Navigator
@@ -97,7 +99,12 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     }
 
     Column(Modifier.fillMaxSize()) {
-        Toolbar(dbName = "grabl", onRun = {
+        Toolbar(dbName = db.name, onDBNameChange = { dbName ->
+            // TODO: add confirmation dialog
+            db.client.close()
+            val dbClient = DBClient(db.client.serverAddress)
+            navigator.pushState(WorkspaceScreenState(DB(dbClient, dbName)))
+        }, onRun = {
             typeDBForceSimulation.init()
             dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
             visualiserWorldOffset = visualiserSize.center

@@ -26,15 +26,14 @@ import com.vaticle.typedb.studio.ui.elements.IconSize.*
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun StudioDropdownBox() {
+fun StudioDropdownBox(text: String, onTextChange: (value: String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val suggestions = listOf("Item1", "Item2", "Item3")
-    var selectedText by remember { mutableStateOf("grabl") }
     var textfieldSize by remember { mutableStateOf(Size.Zero)}
 
     Column {
         Row {
-            StudioTextField(value = selectedText, onValueChange = { selectedText = it },
+            StudioTextField(value = text, onValueChange = { onTextChange(it) },
                 modifier = Modifier.size(width = 96.dp, height = 24.dp)
                     .pointerIcon(PointerIcon.Default)
                     .onGloballyPositioned { coordinates ->
