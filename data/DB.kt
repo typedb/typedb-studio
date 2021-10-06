@@ -208,6 +208,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         val label = concept.vertexLabel()
 
         return VertexData(
+            concept = concept,
             id = nextID(),
             encoding = encoding,
             label = label,
@@ -238,12 +239,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         else -> when {
             isAttribute -> {
                 val attribute = asAttribute()
-                "${attribute.type.label.name()}: ${
-                    when {
-                        attribute.isDateTime -> attribute.asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                        else -> attribute.value
-                    }
-                }"
+                "${attribute.type.label.name()}: ${attribute.valueString()}"
             }
             else -> asThing().type.label.name()
         }

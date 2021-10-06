@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.QueryResponseStream
@@ -55,6 +56,7 @@ import com.vaticle.typedb.studio.ui.elements.TabOrientation
 import com.vaticle.typedb.studio.visualiser.SimulationMetrics
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
+import com.vaticle.typedb.studio.visualiser.VertexState
 import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
 import java.util.UUID
 import kotlin.math.pow
@@ -71,14 +73,16 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
     var visualiserSize by mutableStateOf(Size.Zero)
     var visualiserMetricsID by remember { mutableStateOf("") }
     var visualiserScale by remember { mutableStateOf(1F) }
+    var selectedVertex: VertexState? by remember { mutableStateOf(null) }
+    val selectedVertexNetwork: MutableList<VertexState> = remember { mutableStateListOf() }
     var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
-    val queryTabs: SnapshotStateList<QueryTabState> = remember { mutableStateListOf(
+    val queryTabs: MutableList<QueryTabState> = remember { mutableStateListOf(
         QueryTabState(initialTitle = "Query1.tql", initialQuery = "match \$x sub thing;\n" +
                 "offset 0;\n" +
                 "limit 1000;\n")
     ) }
     var activeQueryTabIndex by remember { mutableStateOf(0) }
-    val executionTabs: SnapshotStateList<ExecutionTabState> = remember { mutableStateListOf(
+    val executionTabs: MutableList<ExecutionTabState> = remember { mutableStateListOf(
         ExecutionTabState(title = "Query1 : run1")
     ) }
     var activeExecutionTabIndex by remember { mutableStateOf(0) }
@@ -103,6 +107,8 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
             visualiserWorldOffset = visualiserSize.center
             visualiserMetricsID = UUID.randomUUID().toString()
             queryStartTimeNanos = System.nanoTime()
+            selectedVertex = null
+            selectedVertexNetwork.clear()
         })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
@@ -166,8 +172,21 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                         metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
                         onZoom = { value -> visualiserScale = value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
-                        onVertexDragStart = { vertex ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
+                        selectedVertex = selectedVertex, onSelectVertex = { vertex ->
+                            selectedVertex = vertex
+                            selectedVertexNetwork.clear()
+                            if (vertex != null) {
+                                val verticesToAdd = mutableSetOf(vertex)
+                                val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
+                                typeDBForceSimulation.data.edges.forEach {
+                                    if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
+                                    else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
+                                }
+                                selectedVertexNetwork += verticesToAdd
+                            }
+                        }, selectedVertexNetwork = selectedVertexNetwork,
+                        onVertexDragStart = { vertex: VertexState ->
+                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
                                 node.isXFixed = true
                                 node.isYFixed = true
                             }
@@ -177,8 +196,8 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                                 .force("center", null)
                                 .alpha(0.25)
                                 .alphaDecay(0.0)
-                        }, onVertexDragMove = { vertex, position ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node ->
+                        }, onVertexDragMove = { vertex: VertexState, position: Offset ->
+                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
                                 node.x(position.x.toDouble())
                                 node.y(position.y.toDouble())
                             }
@@ -210,7 +229,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                             modifier = Modifier.weight(1f))
                     }
                     if (showConceptPanel) {
-                        ConceptPanel(modifier = Modifier.weight(2f))
+                        ConceptPanel(vertex = selectedVertex, modifier = Modifier.weight(2f))
                     }
                 }
             }
@@ -218,7 +237,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
             Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder).zIndex(20f)) {}
 
             Column(modifier = Modifier.width(20.dp)) {
-                Box(Modifier.height(76.dp).background(if (showQuerySettingsPanel) StudioTheme.colors.uiElementBackground else StudioTheme.colors.background)
+                Box(Modifier.height(76.dp).background(if (showQuerySettingsPanel) StudioTheme.colors.backgroundHighlight else StudioTheme.colors.background)
                     .clickable { showQuerySettingsPanel = !showQuerySettingsPanel }) {
                     StudioIcon(Icon.Cog, modifier = Modifier.offset(x = 4.dp, y = 8.dp))
                     Text("Settings", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier
@@ -226,7 +245,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                         .requiredWidth(IntrinsicSize.Max)
                         .rotate(90f))
                 }
-                Box(Modifier.height(76.dp).background(if (showConceptPanel) StudioTheme.colors.uiElementBackground else StudioTheme.colors.background)
+                Box(Modifier.height(76.dp).background(if (showConceptPanel) StudioTheme.colors.backgroundHighlight else StudioTheme.colors.background)
                     .clickable { showConceptPanel = !showConceptPanel }) {
                     StudioIcon(Icon.SearchAround, modifier = Modifier.offset(x = 4.dp, y = 8.dp))
                     Text("Concept", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier

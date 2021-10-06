@@ -78,7 +78,7 @@ object StudioTheme {
 }
 
 @Stable
-class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElementBackground: Color,
+class StudioColors(primary: Color, onPrimary: Color, background: Color, backgroundHighlight: Color, uiElementBackground: Color,
     uiElementBorder: Color, editorBackground: Color, error: Color, windowBackdrop: Color,
     text: Color, icon: Color) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
@@ -86,6 +86,8 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElemen
     var onPrimary by mutableStateOf(onPrimary, structuralEqualityPolicy())
         private set
     var background by mutableStateOf(background, structuralEqualityPolicy())
+        private set
+    var backgroundHighlight by mutableStateOf(backgroundHighlight, structuralEqualityPolicy())
         private set
     var uiElementBackground by mutableStateOf(uiElementBackground, structuralEqualityPolicy())
         private set
@@ -103,16 +105,18 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElemen
         private set
 
     fun copy(primary: Color = this.primary, onPrimary: Color = this.onPrimary, background: Color = this.background,
-        uiElementBackground: Color = this.uiElementBackground, uiElementBorder: Color = this.uiElementBorder,
-        editorBackground: Color = this.editorBackground, error: Color = this.error,
-        windowBackdrop: Color = this.windowBackdrop, text: Color = this.text, icon: Color = this.icon
-    ): StudioColors = StudioColors(primary, onPrimary, background, uiElementBackground, uiElementBorder,
-        editorBackground, error, windowBackdrop, text, icon)
+             backgroundHighlight: Color = this.backgroundHighlight, uiElementBackground: Color = this.uiElementBackground,
+             uiElementBorder: Color = this.uiElementBorder, editorBackground: Color = this.editorBackground,
+             error: Color = this.error, windowBackdrop: Color = this.windowBackdrop, text: Color = this.text,
+             icon: Color = this.icon
+    ): StudioColors = StudioColors(primary, onPrimary, background, backgroundHighlight, uiElementBackground,
+        uiElementBorder, editorBackground, error, windowBackdrop, text, icon)
 
     fun updateColorsFrom(other: StudioColors) {
         primary = other.primary
         onPrimary = other.onPrimary
         background = other.background
+        backgroundHighlight = other.backgroundHighlight
         uiElementBackground = other.uiElementBackground
         uiElementBorder = other.uiElementBorder
         editorBackground = other.editorBackground
@@ -150,6 +154,7 @@ fun studioDarkColors(
     primary: Color = VaticlePalette.Green,
     onPrimary: Color = VaticlePalette.Purple3,
     background: Color = VaticlePalette.Purple1,
+    backgroundHighlight: Color = VaticlePalette.Purple4,
     uiElementBackground: Color = VaticlePalette.Purple3,
     uiElementBorder: Color = VaticlePalette.Purple6,
     editorBackground: Color = VaticlePalette.Purple0,
@@ -158,7 +163,7 @@ fun studioDarkColors(
     text: Color = Color.White,
     icon: Color = Color(0xFF888DCA),
 ): StudioColors = StudioColors(
-    primary, onPrimary, background, uiElementBackground, uiElementBorder, editorBackground, error,
+    primary, onPrimary, background, backgroundHighlight, uiElementBackground, uiElementBorder, editorBackground, error,
     windowBackdrop, text, icon)
 
 val LocalColors = staticCompositionLocalOf { studioDarkColors() }

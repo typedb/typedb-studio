@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
               highlight: TabHighlight = TabHighlight.NONE) {
     Box(modifier = modifier.width(IntrinsicSize.Max)) {
         val (backgroundColor, highlightColor) = when (selected) {
-            true -> listOf(StudioTheme.colors.uiElementBackground, StudioTheme.colors.primary)
+            true -> listOf(StudioTheme.colors.backgroundHighlight, StudioTheme.colors.primary)
             else -> listOf(StudioTheme.colors.background, StudioTheme.colors.background)
         }
 
@@ -76,7 +77,7 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
             Text(text, style = StudioTheme.typography.body2)
             if (showCloseButton) {
                 Spacer(Modifier.width(4.dp))
-                StudioIcon(Icon.Cross, color = StudioTheme.colors.uiElementBorder)
+                StudioIcon(Icon.Cross, color = StudioTheme.colors.icon.copy(alpha = 0.5f))
                 Spacer(Modifier.width(4.dp))
             } else {
                 Spacer(Modifier.width(8.dp))

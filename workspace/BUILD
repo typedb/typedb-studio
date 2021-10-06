@@ -12,6 +12,9 @@ kt_jvm_library(
         "//navigation",
         "//visualiser",
 
+        # External dependencies from @vaticle
+        "@vaticle_typedb_client_java//api",
+
         # Maven
         "@maven//:com_fifesoft_rsyntaxtextarea",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",

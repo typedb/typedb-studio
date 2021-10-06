@@ -1,21 +1,23 @@
 package com.vaticle.typedb.studio.data
 
+import com.vaticle.typedb.client.api.concept.Concept
+
 data class GraphData(val vertices: List<VertexData> = listOf(),
                      val edges: List<EdgeData> = listOf(),
                      val explanationVertices: List<ExplanationVertexData> = listOf(),
                      val explanationEdges: List<ExplanationEdgeData> = listOf())
 
-data class VertexData(val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String,
+data class VertexData(val concept: Concept, val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String,
                       val width: Float, val height: Float, val inferred: Boolean = false)
 
-enum class VertexEncoding {
-    ENTITY_TYPE,
-    RELATION_TYPE,
-    ATTRIBUTE_TYPE,
-    THING_TYPE,
-    ENTITY,
-    RELATION,
-    ATTRIBUTE,
+enum class VertexEncoding(val displayName: String) {
+    ENTITY_TYPE("Entity Type"),
+    RELATION_TYPE("Relation Type"),
+    ATTRIBUTE_TYPE("Attribute Type"),
+    THING_TYPE("Thing Type"),
+    ENTITY("Entity"),
+    RELATION("Relation"),
+    ATTRIBUTE("Attribute"),
 }
 
 data class EdgeData(val id: Int, val source: Int, val target: Int, val label: String,

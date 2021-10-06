@@ -40,7 +40,7 @@ fun QuerySettingsPanel(settings: QuerySettings, onSettingsChange: (settings: Que
                             modifier = Modifier.scale(.75f),
                             colors = CheckboxDefaults.colors(checkedColor = StudioTheme.colors.icon))
                         Spacer(Modifier.width(4.dp))
-                        Text("Enable reasoning and explanations", style = StudioTheme.typography.body1)
+                        Text("Enable Reasoning and Explanations", style = StudioTheme.typography.body1)
                     }
                 }
             }
