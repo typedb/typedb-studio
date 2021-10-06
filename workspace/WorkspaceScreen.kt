@@ -2,6 +2,7 @@ package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -204,12 +205,12 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
                 Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
                 Column(modifier = Modifier.fillMaxHeight().requiredWidth(250.dp).background(StudioTheme.colors.background)) {
-                    if (showConceptPanel) {
-                        ConceptPanel(modifier = Modifier.weight(2f))
-                    }
                     if (showQuerySettingsPanel) {
                         QuerySettingsPanel(settings = querySettings, onSettingsChange = { querySettings = it },
                             modifier = Modifier.weight(1f))
+                    }
+                    if (showConceptPanel) {
+                        ConceptPanel(modifier = Modifier.weight(2f))
                     }
                 }
             }
@@ -217,25 +218,29 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
             Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder).zIndex(20f)) {}
 
             Column(modifier = Modifier.width(20.dp)) {
-                Box {
-                    StudioIcon(Icon.Cog, modifier = Modifier.offset(x = 2.dp, y = 8.dp))
+                Box(Modifier.height(76.dp).background(if (showQuerySettingsPanel) StudioTheme.colors.uiElementBackground else StudioTheme.colors.background)
+                    .clickable { showQuerySettingsPanel = !showQuerySettingsPanel }) {
+                    StudioIcon(Icon.Cog, modifier = Modifier.offset(x = 4.dp, y = 8.dp))
                     Text("Settings", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier
                         .offset(y = 40.dp)
                         .requiredWidth(IntrinsicSize.Max)
                         .rotate(90f))
                 }
-                Box {
-                    StudioIcon(Icon.SearchAround, modifier = Modifier.offset(x = 2.dp, y = 8.dp))
+                Box(Modifier.height(76.dp).background(if (showConceptPanel) StudioTheme.colors.uiElementBackground else StudioTheme.colors.background)
+                    .clickable { showConceptPanel = !showConceptPanel }) {
+                    StudioIcon(Icon.SearchAround, modifier = Modifier.offset(x = 4.dp, y = 8.dp))
                     Text("Concept", maxLines = 1, style = StudioTheme.typography.body2, modifier = Modifier
                         .offset(y = 40.dp)
                         .requiredWidth(IntrinsicSize.Max)
                         .rotate(90f))
                 }
+                // TODO: We really need to make StudioTabs work - these hardcoded-height boxes are a dirty hack
+                //       that will collapse the moment the font size is customised
 //                StudioTabs(orientation = TabOrientation.TOP_TO_BOTTOM) {
 //                    StudioTab("Settings", selected = showQuerySettingsPanel, leadingIcon = { StudioIcon(Icon.Cog) })
 //                    StudioTab("Concept", selected = showConceptPanel, leadingIcon = { StudioIcon(Icon.SearchAround) })
 //                }
-//                Row(modifier = Modifier.weight(1f)) {}
+                Row(modifier = Modifier.weight(1f)) {}
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
             }
         }

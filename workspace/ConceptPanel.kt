@@ -14,7 +14,7 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 fun ConceptPanel(modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Column {
-            SidebarPanelHeader(title = "ConceptConceptConceptConceptConceptConceptConcept")
+            SidebarPanelHeader(title = "Concept")
 
             Column(modifier = Modifier.weight(1f)) {
 

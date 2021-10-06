@@ -18,25 +18,13 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 
 @Composable
 fun SidebarPanelHeader(title: String) {
-    Row(modifier = Modifier.fillMaxWidth().height(26.dp).background(StudioTheme.colors.background),
-        verticalAlignment = Alignment.CenterVertically) {
+    PanelHeader(modifier = Modifier.fillMaxWidth()) {
         Spacer(Modifier.width(6.dp))
         Text(title, style = StudioTheme.typography.body2)
 
         Spacer(Modifier.weight(1f))
 
-//        StudioIcon(Icon.Minus, modifier = Modifier.width(16.dp))
-//        Spacer(Modifier.width(12.dp))
+        StudioIcon(Icon.Minus, modifier = Modifier.width(16.dp))
+        Spacer(Modifier.width(12.dp))
     }
-
-    Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-//    PanelHeader(modifier = Modifier.fillMaxWidth()) {
-//        Spacer(Modifier.width(6.dp))
-//        Text(title, style = StudioTheme.typography.body2)
-//
-//        Spacer(Modifier.weight(1f))
-//
-//        StudioIcon(Icon.Minus, modifier = Modifier.width(16.dp))
-//        Spacer(Modifier.width(12.dp))
-//    }
 }

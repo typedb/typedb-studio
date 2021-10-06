@@ -30,19 +30,7 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 fun QuerySettingsPanel(settings: QuerySettings, onSettingsChange: (settings: QuerySettings) -> Unit, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Column {
-            Row(modifier = Modifier.fillMaxWidth().height(26.dp).background(StudioTheme.colors.background),
-                verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.width(6.dp))
-                Text("Query Settings", style = StudioTheme.typography.body2)
-
-                Spacer(Modifier.weight(1f))
-
-                StudioIcon(Icon.Minus, modifier = Modifier.width(16.dp))
-                Spacer(Modifier.width(12.dp))
-            }
-
-            Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-//            SidebarPanelHeader(title = "Query Settings")
+            SidebarPanelHeader(title = "Query Settings")
 
             Row(modifier = Modifier.weight(1f)) {
                 Column(modifier = Modifier.padding(6.dp)) {
