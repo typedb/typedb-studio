@@ -101,9 +101,10 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = db.name, onDBNameChange = { dbName ->
             // TODO: add confirmation dialog
-            db.client.close()
-            val dbClient = DBClient(db.client.serverAddress)
-            navigator.pushState(WorkspaceScreenState(DB(dbClient, dbName)))
+            // TODO: none of this works anyway since we need to differentiate Core and Cluster
+//            db.client.close()
+//            val dbClient = DBClient(db.client.serverAddress)
+//            navigator.pushState(WorkspaceScreenState(DB(dbClient, dbName)))
         }, onRun = {
             typeDBForceSimulation.init()
             dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)

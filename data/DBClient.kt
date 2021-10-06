@@ -1,17 +1,12 @@
 package com.vaticle.typedb.studio.data
 
-import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.connection.TypeDBClient
 
-class DBClient(val serverAddress: String) {
+interface DBClient {
 
-    internal val typeDBClient: TypeDBClient = TypeDB.coreClient(serverAddress)
+    val serverAddress: String
 
-    init {
-        Runtime.getRuntime().addShutdownHook(Thread { typeDBClient.close() })
-    }
+    val typeDBClient: TypeDBClient
 
-    fun close() {
-        typeDBClient.close()
-    }
+    fun close()
 }

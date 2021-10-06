@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 
@@ -53,7 +55,8 @@ fun StudioTabs(modifier: Modifier = Modifier, orientation: TabOrientation = TabO
 @Composable
 fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
               leadingIcon: (@Composable () -> Unit)? = null, showCloseButton: Boolean = false,
-              highlight: TabHighlight = TabHighlight.NONE) {
+              highlight: TabHighlight = TabHighlight.NONE, arrangement: Arrangement.Horizontal = Arrangement.Start,
+              textStyle: TextStyle = StudioTheme.typography.body2) {
     Box(modifier = modifier.width(IntrinsicSize.Max)) {
         val (backgroundColor, highlightColor) = when (selected) {
             true -> listOf(StudioTheme.colors.backgroundHighlight, StudioTheme.colors.primary)
@@ -66,7 +69,7 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
             else -> Alignment.Center
         }
 
-        Row(modifier = Modifier.fillMaxHeight().background(backgroundColor),
+        Row(modifier = Modifier.fillMaxSize().background(backgroundColor), horizontalArrangement = arrangement,
             verticalAlignment = Alignment.CenterVertically) {
 
             Spacer(Modifier.width(8.dp))
@@ -74,7 +77,7 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
                 leadingIcon()
                 Spacer(Modifier.width(4.dp))
             }
-            Text(text, style = StudioTheme.typography.body2)
+            Text(text, style = textStyle)
             if (showCloseButton) {
                 Spacer(Modifier.width(4.dp))
                 StudioIcon(Icon.Cross, color = StudioTheme.colors.icon.copy(alpha = 0.5f))

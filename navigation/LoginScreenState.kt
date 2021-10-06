@@ -9,7 +9,10 @@ import com.vaticle.typedb.studio.data.DBClient
 class LoginScreenState(serverAddress: String = "127.0.0.1:1729", dbName: String = ""): ScreenState() {
 
     var serverAddress by mutableStateOf(serverAddress)
-    var dbClient by mutableStateOf(DBClient(serverAddress))
+    var username by mutableStateOf("")
+    var password by mutableStateOf("")
+    var rootCAPath by mutableStateOf("")
+    var dbClient: DBClient? by mutableStateOf(null)
     var dbName by mutableStateOf(dbName)
-    var db: DB? by mutableStateOf(if (serverAddress.isNotBlank() && dbName.isNotBlank()) DB(dbClient, dbName) else null)
+    var db: DB? by mutableStateOf(null)
 }
