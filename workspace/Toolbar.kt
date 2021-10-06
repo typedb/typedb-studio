@@ -18,7 +18,7 @@ import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioIcon
 
 @Composable
-fun Toolbar(modifier: Modifier = Modifier, dbName: String, onRun: () -> Unit) {
+fun Toolbar(modifier: Modifier = Modifier, dbName: String, onRun: () -> Unit, onLogout: () -> Unit) {
 
     Row(modifier = modifier.height(28.dp),
         verticalAlignment = Alignment.CenterVertically) {
@@ -49,7 +49,7 @@ fun Toolbar(modifier: Modifier = Modifier, dbName: String, onRun: () -> Unit) {
 //        StudioIcon(Icon.Cog)
 //        Spacer(Modifier.width(15.dp))
 
-        StudioIcon(Icon.LogOut)
+        StudioIcon(Icon.LogOut, modifier = Modifier.clickable { onLogout() })
         Spacer(Modifier.width(12.dp))
     }
 }

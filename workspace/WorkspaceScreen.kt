@@ -1,9 +1,7 @@
 package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -14,9 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
@@ -29,8 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.draw.rotate
@@ -45,6 +39,8 @@ import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.QueryResponseStream
+import com.vaticle.typedb.studio.navigation.LoginScreenState
+import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
 import com.vaticle.typedb.studio.ui.elements.Icon
 import com.vaticle.typedb.studio.ui.elements.IconSize.*
@@ -62,7 +58,7 @@ import java.util.UUID
 import kotlin.math.pow
 
 @Composable
-fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: VisualiserTheme, window: ComposeWindow,
+fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visualiserTheme: VisualiserTheme, window: ComposeWindow,
                     devicePixelRatio: Float, titleBarHeight: Float, snackbarHostState: SnackbarHostState) {
 
     val snackbarCoroutineScope = rememberCoroutineScope()
@@ -109,6 +105,9 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, visualiserTheme: Visualiser
             queryStartTimeNanos = System.nanoTime()
             selectedVertex = null
             selectedVertexNetwork.clear()
+        }, onLogout = {
+            workspace.db.client.close()
+            navigator.pushState(LoginScreenState(serverAddress = workspace.db.client.serverAddress, dbName = db.name))
         })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}

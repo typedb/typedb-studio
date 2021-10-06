@@ -59,7 +59,7 @@ fun main() = application {
 
                 when (val screenState = navigator.activeScreenState) {
                     is LoginScreenState -> LoginScreen(form = screenState, navigator, snackbarHostState)
-                    is WorkspaceScreenState -> WorkspaceScreen(workspace = screenState,
+                    is WorkspaceScreenState -> WorkspaceScreen(workspace = screenState, navigator,
                         visualiserTheme = VisualiserTheme.Default, window, devicePixelRatio, titleBarHeight, snackbarHostState)
                 }
 

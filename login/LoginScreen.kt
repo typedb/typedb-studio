@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.data.DBServer
+import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.navigation.LoginScreenState
 import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
@@ -36,9 +36,9 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
                 TextField(value = form.serverAddress, onValueChange = { value ->
                     form.serverAddress = value // TODO: fetch DBs on blur, or on change with debounce time (300ms)
                     try {
-                        form.dbServer?.close()
-                        form.dbServer = DBServer(value)
-                        form.dbServer?.let { dbServer -> form.db = DB(dbServer = dbServer, dbName = form.dbName) }
+                        form.dbClient.close()
+                        form.dbClient = DBClient(value)
+                        form.db = DB(form.dbClient, form.dbName)
                     } catch (e: Exception) {
                         snackbarCoroutineScope.launch {
                             println(e.toString())
@@ -49,7 +49,7 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
 
                 TextField(value = form.dbName, onValueChange = {
                     form.dbName = it
-                    form.dbServer?.let { dbServer -> form.db = DB(dbServer = dbServer, dbName = form.dbName) }
+                    form.dbClient?.let { dbClient -> form.db = DB(client = dbClient, dbName = form.dbName) }
                 }, label = { Text("Database") })
 
                 Button(enabled = form.db != null, onClick = {

@@ -22,12 +22,11 @@ import com.vaticle.typeql.lang.TypeQL.match
 import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.util.concurrent.CompletableFuture
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 
-class DB(dbServer: DBServer, private val dbName: String) {
+class DB(val client: DBClient, private val dbName: String) {
 
     val name: String
     get() {
@@ -45,7 +44,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
     private val explanationIterators: ConcurrentHashMap<Int, Iterator<Explanation>> = ConcurrentHashMap()
     private val currentExplanationID = AtomicInteger(0)
 
-    private val client = dbServer.client
+    private val typeDBClient = client.typeDBClient
 
     private fun loadAnswerStream(answerStream: Stream<ConceptMap>) {
         val tasks: MutableList<CompletableFuture<Void>> = mutableListOf()
@@ -132,7 +131,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
         currentExplanationID.set(0)
         try {
             session?.close()
-            session = client.session(dbName, DATA)
+            session = typeDBClient.session(dbName, DATA)
             val options = if (enableReasoning) TypeDBOptions.core().infer(true).explain(true) else TypeDBOptions.core()
             tx = session!!.transaction(READ, options)
             vertexGenerator = VertexGenerator()
@@ -190,7 +189,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
     }
 
     fun close() {
-        client.close()
+        typeDBClient.close()
     }
 }
 
