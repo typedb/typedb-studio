@@ -23,11 +23,11 @@ import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioIcon
 
 @Composable
-fun Toolbar(modifier: Modifier = Modifier, dbName: String, onDBNameChange: (value: String) -> Unit, onRun: () -> Unit, onLogout: () -> Unit) {
+fun Toolbar(modifier: Modifier = Modifier, dbName: String, allDBNames: List<String>, onDBNameChange: (value: String) -> Unit, onRun: () -> Unit, onLogout: () -> Unit) {
 
     Row(modifier = modifier.height(28.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(8.dp))
-        StudioDropdownBox(text = dbName, onTextChange = onDBNameChange, textStyle = StudioTheme.typography.body2,
+        StudioDropdownBox(items = allDBNames, text = dbName, onTextChange = onDBNameChange, textStyle = StudioTheme.typography.body2,
             modifier = Modifier.size(width = 96.dp, height = 24.dp),
             leadingIcon = {
                 val pixelDensity = LocalDensity.current.density

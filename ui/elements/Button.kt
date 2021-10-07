@@ -32,10 +32,12 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 @Composable
 fun StudioButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val focusManager = LocalFocusManager.current
+    val backgroundColor = if (enabled) StudioTheme.colors.primary else StudioTheme.colors.uiElementBackground
+    val textColor = if (enabled) StudioTheme.colors.onPrimary else StudioTheme.colors.text.copy(alpha = .25f)
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier
         .height(28.dp)
-        .background(color = StudioTheme.colors.primary, shape = RoundedCornerShape(CornerSize(4.dp)))
+        .background(color = backgroundColor, shape = RoundedCornerShape(CornerSize(4.dp)))
         .focusable(enabled = enabled)
         .clickable(enabled = enabled) { onClick() }
         .onKeyEvent { event: KeyEvent ->
@@ -54,7 +56,7 @@ fun StudioButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
             }
         }) {
         Spacer(Modifier.width(8.dp))
-        Text(text, style = StudioTheme.typography.body1, fontWeight = FontWeight.SemiBold, color = StudioTheme.colors.onPrimary)
+        Text(text, style = StudioTheme.typography.body1, fontWeight = FontWeight.SemiBold, color = textColor)
         Spacer(Modifier.width(8.dp))
     }
 }

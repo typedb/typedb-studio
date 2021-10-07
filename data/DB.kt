@@ -44,8 +44,6 @@ class DB(val client: DBClient, private val dbName: String) {
     private val explanationIterators: ConcurrentHashMap<Int, Iterator<Explanation>> = ConcurrentHashMap()
     private val currentExplanationID = AtomicInteger(0)
 
-    private val typeDBClient = client.typeDBClient
-
     private fun loadAnswerStream(answerStream: Stream<ConceptMap>) {
         val tasks: MutableList<CompletableFuture<Void>> = mutableListOf()
         answerStream.forEach { tasks += loadConceptMapAsync(it) }
@@ -131,7 +129,7 @@ class DB(val client: DBClient, private val dbName: String) {
         currentExplanationID.set(0)
         try {
             session?.close()
-            session = typeDBClient.session(dbName, DATA)
+            session = client.session(dbName, DATA)
             val options = if (enableReasoning) TypeDBOptions.core().infer(true).explain(true) else TypeDBOptions.core()
             tx = session!!.transaction(READ, options)
             vertexGenerator = VertexGenerator()
@@ -189,7 +187,7 @@ class DB(val client: DBClient, private val dbName: String) {
     }
 
     fun close() {
-        typeDBClient.close()
+        client.close()
     }
 }
 
