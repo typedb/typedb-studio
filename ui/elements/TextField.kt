@@ -13,29 +13,54 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerIcon
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StudioTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    readOnly: Boolean = true,
+    singleLine: Boolean = true,
+    readOnly: Boolean = false,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
-    placeholderText: String = "Placeholder",
+    placeholderText: String = "",
     textStyle: TextStyle) {
 
+    val focusManager = LocalFocusManager.current
+
     BasicTextField(modifier = modifier.background(MaterialTheme.colors.surface, MaterialTheme.shapes.small)
-        .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small),
+        .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small)
+        .pointerIcon(if (readOnly) PointerIcon.Default else PointerIcon.Text)
+        .onPreviewKeyEvent { event: KeyEvent ->
+            if (event.nativeKeyEvent.id == java.awt.event.KeyEvent.KEY_RELEASED) return@onPreviewKeyEvent true
+            when (event.key) {
+                Key.Tab -> {
+                    focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Up else FocusDirection.Down)
+                    return@onPreviewKeyEvent true
+                }
+                else -> return@onPreviewKeyEvent false
+            }
+        },
         value = value,
         onValueChange = onValueChange,
         readOnly = readOnly,
-        singleLine = true,
+        singleLine = singleLine,
         cursorBrush = SolidColor(MaterialTheme.colors.primary),
         textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface),
         decorationBox = { innerTextField ->

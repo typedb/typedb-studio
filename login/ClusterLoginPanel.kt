@@ -67,8 +67,7 @@ fun ClusterLoginPanel(form: LoginScreenState, navigator: Navigator, snackbarHost
                 .width(210.dp)
                 .focusRequester(addressFocus)
                 .onPreviewKeyEvent { e: KeyEvent ->
-                    val event = e.nativeKeyEvent
-                    if (event.id == KEY_RELEASED) return@onPreviewKeyEvent true
+                    if (e.nativeKeyEvent.id == KEY_RELEASED) return@onPreviewKeyEvent true
                     when (e.key) {
                         Key.Tab -> {
                             usernameFocus.requestFocus()

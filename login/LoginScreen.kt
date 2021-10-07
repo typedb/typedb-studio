@@ -58,7 +58,7 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
     Box(modifier = Modifier.fillMaxSize().background(StudioTheme.colors.windowBackdrop)
         .border(1.dp, StudioTheme.colors.uiElementBorder), contentAlignment = Alignment.Center) {
 
-        Column(modifier = Modifier.size(500.dp, 360.dp).background(StudioTheme.colors.background)
+        Column(modifier = Modifier.size(400.dp, 300.dp).background(StudioTheme.colors.background)
             .border(1.dp, StudioTheme.colors.uiElementBorder)) {
 
             StudioTabs(Modifier.height(24.dp)) {
