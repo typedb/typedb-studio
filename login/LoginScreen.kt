@@ -27,8 +27,10 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.common.exception.ErrorMessage
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.appearance.StudioTheme
+import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
+import com.vaticle.typedb.studio.login.ServerSoftware.*
 import com.vaticle.typedb.studio.navigation.LoginScreenState
 import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
@@ -41,7 +43,7 @@ import java.util.concurrent.CompletableFuture
 @Composable
 fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState: SnackbarHostState) {
     val snackbarCoroutineScope = rememberCoroutineScope()
-    var selectedServerSoftware by remember { mutableStateOf(ServerSoftware.CORE) }
+    var selectedServerSoftware by remember { mutableStateOf(CORE) }
     var lastCheckedAddress by remember { mutableStateOf("") }
     var loadingDatabases by remember { mutableStateOf(false) }
 
@@ -51,7 +53,10 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
         form.dbClient?.close()
         if (form.serverAddress.isNotBlank()) {
             if (!form.databaseSelected) form.dbName = "Loading databases..."
-            val client = CoreClient(form.serverAddress)
+            val client = when (selectedServerSoftware) {
+                CORE -> CoreClient(form.serverAddress)
+                CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
+            }
             form.dbClient = client
             form.allDBNames.clear()
             CompletableFuture.supplyAsync {
@@ -112,19 +117,19 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
             .border(1.dp, StudioTheme.colors.uiElementBorder)) {
 
             StudioTabs(Modifier.height(24.dp)) {
-                StudioTab("TypeDB", selected = selectedServerSoftware == ServerSoftware.CORE,
+                StudioTab("TypeDB", selected = selectedServerSoftware == CORE,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = ServerSoftware.CORE })
-                StudioTab("TypeDB Cluster", selected = selectedServerSoftware == ServerSoftware.CLUSTER,
+                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = CORE })
+                StudioTab("TypeDB Cluster", selected = selectedServerSoftware == CLUSTER,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = ServerSoftware.CLUSTER })
+                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = CLUSTER })
             }
 
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
             when (selectedServerSoftware) {
-                ServerSoftware.CORE -> CoreLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
-                ServerSoftware.CLUSTER -> ClusterLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
+                CORE -> CoreLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
+                CLUSTER -> ClusterLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
             }
         }
     }
