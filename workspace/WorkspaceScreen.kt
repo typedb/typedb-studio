@@ -120,16 +120,16 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
         Row(modifier = Modifier.weight(1F)) {
-            Column(modifier = Modifier.width(20.dp)) {
-                StudioTabs(orientation = TabOrientation.BOTTOM_TO_TOP) {
-                    StudioTab("Schema Explorer", selected = false, leadingIcon = { StudioIcon(Icon.Layout) })
-                    StudioTab("Permissions", selected = false, leadingIcon = { StudioIcon(Icon.Shield) })
-                }
-                Row(modifier = Modifier.weight(1f)) {}
-                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-            }
-
-            Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
+//            Column(modifier = Modifier.width(20.dp)) {
+//                StudioTabs(orientation = TabOrientation.BOTTOM_TO_TOP) {
+//                    StudioTab("Schema Explorer", selected = false, leadingIcon = { StudioIcon(Icon.Layout) })
+//                    StudioTab("Permissions", selected = false, leadingIcon = { StudioIcon(Icon.Shield) })
+//                }
+//                Row(modifier = Modifier.weight(1f)) {}
+//                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
+//            }
+//
+//            Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
             Column(modifier = Modifier.fillMaxHeight().weight(1F)) {
                 StudioTabs(modifier = Modifier.fillMaxWidth().height(26.dp)) {
