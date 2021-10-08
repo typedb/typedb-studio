@@ -18,7 +18,7 @@ import com.vaticle.typedb.studio.ui.elements.StudioDatabaseIcon
 import com.vaticle.typedb.studio.ui.elements.StudioIcon
 
 @Composable
-fun Toolbar(modifier: Modifier = Modifier, dbName: String, allDBNames: List<String>, onDBNameChange: (value: String) -> Unit, onRun: () -> Unit, onLogout: () -> Unit) {
+fun Toolbar(modifier: Modifier = Modifier, dbName: String, allDBNames: List<String>, onDBNameChange: (value: String) -> Unit, onOpen: () -> Unit, onSave: () -> Unit, onRun: () -> Unit, onLogout: () -> Unit) {
 
     Row(modifier = modifier.height(28.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(8.dp))
@@ -38,10 +38,10 @@ fun Toolbar(modifier: Modifier = Modifier, dbName: String, allDBNames: List<Stri
 //        StudioIcon(Icon.ChevronRight, size = Size16Light)
 
         Spacer(Modifier.width(10.dp))
-        StudioIcon(Icon.FolderOpen, size = Size14)
+        StudioIcon(Icon.FolderOpen, size = Size14, modifier = Modifier.clickable { onOpen() })
 
         Spacer(Modifier.width(12.dp))
-        StudioIcon(Icon.FloppyDisk)
+        StudioIcon(Icon.FloppyDisk, modifier = Modifier.clickable { onSave() })
 
         Spacer(Modifier.width(10.dp))
         StudioIcon(Icon.Play, Color(0xFF499C54), size = Size18, modifier = Modifier.clickable { onRun() })

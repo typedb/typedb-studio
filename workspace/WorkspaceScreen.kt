@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +55,14 @@ import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.VertexState
 import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
+import kotlinx.coroutines.launch
+import java.awt.FileDialog
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FilenameFilter
+import java.io.PrintWriter
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.UUID
 import kotlin.math.pow
 
@@ -96,26 +105,89 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
         queryTabNextIndex++
     }
 
+    fun openOpenQueryDialog() {
+        try {
+            FileDialog(window, "Open", FileDialog.LOAD).apply {
+                isMultipleMode = false
+
+                // TODO: look into file extension filtering
+//                // Windows
+//                file = "*.tql"
+//
+//                // Mac, Linux
+//                filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
+
+                isVisible = true
+                file?.let { filename ->
+                    val path = Path.of(directory, filename)
+                    val fileContent: String = Files.readString(Path.of(directory, filename))
+                    queryTabs += QueryTabState(title = filename, query = fileContent, file = path.toFile())
+                    activeQueryTabIndex = queryTabs.size - 1
+                }
+            }
+        } catch (error: Exception) {
+            snackbarCoroutineScope.launch {
+                println(error.stackTraceToString())
+                snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+            }
+        }
+    }
+
+    fun openSaveQueryDialog() {
+        try {
+            FileDialog(window, "Save", FileDialog.SAVE).apply {
+                isMultipleMode = false
+                val queryTabFile = activeQueryTab.file
+                if (queryTabFile == null) {
+                    file = activeQueryTab.title
+                } else {
+                    file = queryTabFile.name
+                    directory = queryTabFile.parentFile.absolutePath
+                }
+                filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
+                isVisible = true
+                file?.let { filename ->
+                    PrintWriter(Path.of(directory, filename).toFile()).use { printWriter ->
+                        printWriter.print(activeQueryTab.query)
+                        activeQueryTab.title = filename
+                        activeQueryTab.file = File(filename)
+                    }
+                }
+            }
+        } catch (error: Exception) {
+            snackbarCoroutineScope.launch {
+                println(error.stackTraceToString())
+                snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+            }
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
-        Toolbar(dbName = db.name, onDBNameChange = { dbName ->
-            // TODO: add confirmation dialog
-            db.client.closeAllSessions()
-            workspace.loginForm.dbFieldText = dbName
-            workspace.loginForm.db = DB(db.client, dbName)
-            // TODO: test if this actually reinitialises the workspace screen
-            navigator.pushState(WorkspaceScreenState(workspace.loginForm))
-        }, allDBNames = remember { db.client.listDatabases() }, onRun = {
-            typeDBForceSimulation.init()
-            dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
-            visualiserWorldOffset = visualiserSize.center
-            visualiserMetricsID = UUID.randomUUID().toString()
-            queryStartTimeNanos = System.nanoTime()
-            selectedVertex = null
-            selectedVertexNetwork.clear()
-        }, onLogout = {
-            db.client.close()
-            navigator.pushState(workspace.loginForm)
-        })
+        Toolbar(dbName = db.name,
+            onDBNameChange = { dbName ->
+                // TODO: add confirmation dialog
+                db.client.closeAllSessions()
+                workspace.loginForm.dbFieldText = dbName
+                workspace.loginForm.db = DB(db.client, dbName)
+                // TODO: test if this actually reinitialises the workspace screen
+                navigator.pushState(WorkspaceScreenState(workspace.loginForm))
+            },
+            allDBNames = remember { db.client.listDatabases() },
+            onOpen = { openOpenQueryDialog() },
+            onSave = { openSaveQueryDialog() },
+            onRun = {
+                typeDBForceSimulation.init()
+                dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
+                visualiserWorldOffset = visualiserSize.center
+                visualiserMetricsID = UUID.randomUUID().toString()
+                queryStartTimeNanos = System.nanoTime()
+                selectedVertex = null
+                selectedVertexNetwork.clear()
+            },
+            onLogout = {
+                db.client.close()
+                navigator.pushState(workspace.loginForm)
+            })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
@@ -156,7 +228,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 CodeEditor(code = activeQueryTab.query, editorID = activeQueryTab.editorID,
                     onChange = { value -> activeQueryTab.query = value },
                     font = StudioTheme.typography.codeEditorSwing,
-                    modifier = Modifier.fillMaxWidth().height(104.dp).background(StudioTheme.colors.editorBackground))
+                    modifier = Modifier.fillMaxWidth().height(112.dp).background(StudioTheme.colors.editorBackground))
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
