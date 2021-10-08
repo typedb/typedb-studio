@@ -19,14 +19,14 @@ import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typedb.studio.data.EdgeDirection.*
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
+import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.util.concurrent.CompletableFuture
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 
-class DB(dbServer: DBServer, private val dbName: String) {
+class DB(val client: DBClient, private val dbName: String) {
 
     val name: String
     get() {
@@ -43,8 +43,6 @@ class DB(dbServer: DBServer, private val dbName: String) {
     private val explainables: ConcurrentHashMap<Int, ConceptMap.Explainable> = ConcurrentHashMap()
     private val explanationIterators: ConcurrentHashMap<Int, Iterator<Explanation>> = ConcurrentHashMap()
     private val currentExplanationID = AtomicInteger(0)
-
-    private val client = dbServer.client
 
     private fun loadAnswerStream(answerStream: Stream<ConceptMap>) {
         val tasks: MutableList<CompletableFuture<Void>> = mutableListOf()
@@ -95,19 +93,18 @@ class DB(dbServer: DBServer, private val dbName: String) {
                 explanationID?.let { value ->
                     responseStream.putExplanationVertex(ExplanationVertexData(explanationID = value, vertexID = vertexID))
                 }
-            } else {
-                val type = concept.asType()
-                vertexGenerator.types.computeIfAbsent(type.label.scopedName()) {
-                    val typeVertex: VertexData = vertexGenerator.generateVertex(type)
+            } else if (concept.isThingType) { // NOTE: RoleTypes are skipped - they generate edges, not vertices
+                val thingType = concept.asThingType()
+                vertexGenerator.types.computeIfAbsent(thingType.label.scopedName()) {
+                    val typeVertex: VertexData = vertexGenerator.generateVertex(thingType)
                     responseStream.putVertex(typeVertex)
 
-                    if (type.isThingType) {
-                        val remoteThingType = type.asThingType().asRemote(tx)
-                        tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                        tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
-                    }
+                    val remoteThingType = thingType.asRemote(tx)
+                    tasks += LoadPlayableRolesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                    tasks += LoadOwnedAttributeTypesTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
+                    tasks += LoadSupertypeTask(remoteThingType, typeVertex, vertexGenerator, responseStream, incompleteTypeEdges).supplyAsync()
 
-                    incompleteTypeEdges.remove(type.label.scopedName())?.forEach {
+                    incompleteTypeEdges.remove(thingType.label.scopedName())?.forEach {
                         val edgeData = when (it.direction) {
                             INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.label, it.inferred)
                             OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.label, it.inferred)
@@ -122,7 +119,7 @@ class DB(dbServer: DBServer, private val dbName: String) {
         return CompletableFuture.allOf(*tasks.toTypedArray())
     }
 
-    fun matchQuery(query: String): QueryResponseStream {
+    fun matchQuery(query: String, enableReasoning: Boolean): QueryResponseStream {
         responseStream.clear()
         responseStream.completed = false
         incompleteThingEdges.clear()
@@ -131,10 +128,11 @@ class DB(dbServer: DBServer, private val dbName: String) {
         explanationIterators.clear()
         currentExplanationID.set(0)
         try {
-            if (session?.isOpen != true) {
-                session = client.session(dbName, DATA)
-                tx = session!!.transaction(READ, TypeDBOptions.core().infer(true).explain(true))
-            }
+            session?.close()
+            session = client.session(dbName, DATA)
+            var options = if (client is CoreClient) TypeDBOptions.core() else TypeDBOptions.cluster()
+            if (enableReasoning) options = options.infer(true).explain(true)
+            tx = session!!.transaction(READ, options)
             vertexGenerator = VertexGenerator()
             CompletableFuture.supplyAsync {
                 try {
@@ -208,6 +206,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         val label = concept.vertexLabel()
 
         return VertexData(
+            concept = concept,
             id = nextID(),
             encoding = encoding,
             label = label,
@@ -216,8 +215,8 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
                 RELATION_TYPE, RELATION -> 22.coerceAtMost(label.length)
                 else -> 26.coerceAtMost(label.length)
             }),
-            width = when (encoding) { RELATION_TYPE, RELATION -> 120F; else -> 110F },
-            height = when (encoding) { RELATION_TYPE, RELATION -> 60F; else -> 40F },
+            width = when (encoding) { RELATION_TYPE, RELATION -> 110F; else -> 100F },
+            height = when (encoding) { RELATION_TYPE, RELATION -> 55F; else -> 35F },
             inferred = concept.isThing && concept.asThing().isInferred
         )
     }
@@ -228,7 +227,8 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         isAttribute -> ATTRIBUTE
         isEntityType -> ENTITY_TYPE
         isRelationType -> RELATION_TYPE
-        isAttributeType -> ATTRIBUTE_TYPE // TODO: Support RoleType variables
+        isAttributeType -> ATTRIBUTE_TYPE
+        isRoleType -> throw IllegalArgumentException("Attempted to get the VertexEncoding of a RoleType, which is not allowed")
         else -> THING_TYPE
     }
 
@@ -237,12 +237,7 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
         else -> when {
             isAttribute -> {
                 val attribute = asAttribute()
-                "${attribute.type.label.name()}: ${
-                    when {
-                        attribute.isDateTime -> attribute.asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                        else -> attribute.value
-                    }
-                }"
+                "${attribute.type.label.name()}: ${attribute.valueString()}"
             }
             else -> asThing().type.label.name()
         }
@@ -333,6 +328,24 @@ private class LoadOwnedAttributeTypesTask(private val thingType: ThingType.Remot
             } else {
                 incompleteEdges.getOrPut(attributeType.label.name()) { mutableListOf() }
                     .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "owns"))
+            }
+        }
+    }
+}
+
+private class LoadSupertypeTask(private val thingType: ThingType.Remote, vertex: VertexData,
+                                vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
+                                private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
+) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
+
+    override fun run() {
+        thingType.supertype?.let { supertype ->
+            val supertypeNodeID = vertexGenerator.types[supertype.label.name()]
+            if (supertypeNodeID != null) {
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = supertypeNodeID, label = "sub"))
+            } else {
+                incompleteEdges.getOrPut(supertype.label.name()) { mutableListOf() }
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "sub"))
             }
         }
     }

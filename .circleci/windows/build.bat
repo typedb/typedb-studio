@@ -1,4 +1,3 @@
-@echo off
 REM
 REM Copyright (C) 2021 Vaticle
 REM
@@ -20,20 +19,12 @@ REM needs to be called such that software installed
 REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
-ECHO Creating release notes...
-SET RELEASE_NOTES_TOKEN=%REPO_GITHUB_TOKEN%
-SET /p VERSION=<VERSION
-bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-workbase %VERSION% ./RELEASE_TEMPLATE.md
-IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
-
-ECHO Creating application image...
+ECHO Building Windows application image...
 bazel build //:application-image
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
-ECHO the distribution file will appear in CircleCI artifacts shortly
-ECHO TODO make //:deploy-github work on Windows
-REM ECHO Deploying to GitHub...
-REM SET DEPLOY_GITHUB_TOKEN=%REPO_GITHUB_TOKEN%
-REM SET COMMIT_ID=%CIRCLE_SHA1%
-REM bazel run //:deploy-github-windows
-REM IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
+ECHO Extracting application image archive...
+mkdir dist
+cd dist
+jar xf ..\bazel-bin\application-image.zip
+IF %errorlevel% NEQ 0 EXIT /b %errorlevel%

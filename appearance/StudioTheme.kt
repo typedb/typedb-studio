@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 fun StudioTheme(
     colors: StudioColors = StudioTheme.colors,
     typography: StudioTypography = StudioTheme.typography,
-    shapes: StudioShapes = StudioTheme.shapes,
     content: @Composable () -> Unit
 ) {
     val rememberedColors = remember {
@@ -37,7 +36,6 @@ fun StudioTheme(
     }.apply { updateColorsFrom(colors) }
     CompositionLocalProvider(
         LocalColors provides rememberedColors,
-        LocalShapes provides shapes,
         LocalTypography provides typography
     ) {
         ProvideTextStyle(value = typography.body1) {
@@ -77,52 +75,59 @@ object StudioTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalTypography.current
-
-    val shapes: StudioShapes
-        @Composable
-        @ReadOnlyComposable
-        get() = LocalShapes.current
 }
 
 @Stable
-class StudioColors(primary: Color, onPrimary: Color, background: Color, uiElementBackground: Color, editorBackground: Color, error: Color, panelSeparator: Color, windowBackdrop: Color, text: Color) {
+class StudioColors(primary: Color, onPrimary: Color, background: Color, backgroundHighlight: Color, uiElementBackground: Color,
+    uiElementBorder: Color, editorBackground: Color, error: Color, windowBackdrop: Color,
+    text: Color, icon: Color) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
         private set
     var onPrimary by mutableStateOf(onPrimary, structuralEqualityPolicy())
         private set
     var background by mutableStateOf(background, structuralEqualityPolicy())
         private set
+    var backgroundHighlight by mutableStateOf(backgroundHighlight, structuralEqualityPolicy())
+        private set
     var uiElementBackground by mutableStateOf(uiElementBackground, structuralEqualityPolicy())
+        private set
+    var uiElementBorder by mutableStateOf(uiElementBorder, structuralEqualityPolicy())
         private set
     var editorBackground by mutableStateOf(editorBackground, structuralEqualityPolicy())
         private set
     var error by mutableStateOf(error, structuralEqualityPolicy())
         private set
-    var panelSeparator by mutableStateOf(panelSeparator, structuralEqualityPolicy())
-        private set
     var windowBackdrop by mutableStateOf(windowBackdrop, structuralEqualityPolicy())
         private set
     var text by mutableStateOf(text, structuralEqualityPolicy())
         private set
+    var icon by mutableStateOf(icon, structuralEqualityPolicy())
+        private set
 
     fun copy(primary: Color = this.primary, onPrimary: Color = this.onPrimary, background: Color = this.background,
-             uiElementBackground: Color = this.uiElementBackground, editorBackground: Color = this.editorBackground,
-             error: Color = this.error, panelSeparator: Color = this.panelSeparator,
-             windowBackdrop: Color = this.windowBackdrop, text: Color = this.text): StudioColors
-    = StudioColors(primary, onPrimary, background, uiElementBackground, editorBackground, error, panelSeparator, windowBackdrop, text)
+             backgroundHighlight: Color = this.backgroundHighlight, uiElementBackground: Color = this.uiElementBackground,
+             uiElementBorder: Color = this.uiElementBorder, editorBackground: Color = this.editorBackground,
+             error: Color = this.error, windowBackdrop: Color = this.windowBackdrop, text: Color = this.text,
+             icon: Color = this.icon
+    ): StudioColors = StudioColors(primary, onPrimary, background, backgroundHighlight, uiElementBackground,
+        uiElementBorder, editorBackground, error, windowBackdrop, text, icon)
 
     fun updateColorsFrom(other: StudioColors) {
         primary = other.primary
         onPrimary = other.onPrimary
         background = other.background
+        backgroundHighlight = other.backgroundHighlight
         uiElementBackground = other.uiElementBackground
+        uiElementBorder = other.uiElementBorder
         editorBackground = other.editorBackground
         error = other.error
-        panelSeparator = other.panelSeparator
         windowBackdrop = other.windowBackdrop
         text = other.text
+        icon = other.icon
     }
 }
+
+fun Color.toSwingColor() = java.awt.Color(red, green, blue, alpha)
 
 class VaticlePalette {
     companion object {
@@ -148,14 +153,18 @@ class VaticlePalette {
 fun studioDarkColors(
     primary: Color = VaticlePalette.Green,
     onPrimary: Color = VaticlePalette.Purple3,
-    background: Color = VaticlePalette.Purple4,
+    background: Color = VaticlePalette.Purple1,
+    backgroundHighlight: Color = VaticlePalette.Purple4,
     uiElementBackground: Color = VaticlePalette.Purple3,
+    uiElementBorder: Color = VaticlePalette.Purple6,
     editorBackground: Color = VaticlePalette.Purple0,
     error: Color = VaticlePalette.Red1,
-    panelSeparator: Color = VaticlePalette.Purple6,
-    windowBackdrop: Color = VaticlePalette.Purple1,
-    text: Color = Color.White
-): StudioColors = StudioColors(primary, onPrimary, background, uiElementBackground, editorBackground, error, panelSeparator, windowBackdrop, text)
+    windowBackdrop: Color = VaticlePalette.Purple0,
+    text: Color = Color.White,
+    icon: Color = Color(0xFF888DCA),
+): StudioColors = StudioColors(
+    primary, onPrimary, background, backgroundHighlight, uiElementBackground, uiElementBorder, editorBackground, error,
+    windowBackdrop, text, icon)
 
 val LocalColors = staticCompositionLocalOf { studioDarkColors() }
 
@@ -163,17 +172,24 @@ val LocalColors = staticCompositionLocalOf { studioDarkColors() }
 class StudioTypography(
     val defaultFontFamily: FontFamily = FontFamily.Default,
     val defaultMonospaceFontFamily: FontFamily = FontFamily.Monospace,
-    body1: TextStyle = TextStyle(fontSize = 16.sp),
-    body2: TextStyle = TextStyle(fontSize = 14.sp),
-    code: TextStyle = TextStyle(fontSize = 16.sp)) {
-
+    body1: TextStyle = TextStyle(fontSize = 13.sp),
+    body2: TextStyle = TextStyle(fontSize = 11.sp),
+    code1: TextStyle = TextStyle(fontSize = 13.sp),
+    code2: TextStyle = TextStyle(fontSize = 11.sp),
+    val codeEditorSwing: java.awt.Font = ubuntuMonoSize13Swing,
+    val codeEditorContextMenuSwing: java.awt.Font = titilliumWebSize13Swing,
+) {
     val body1 = body1.withDefaultFontFamily(defaultFontFamily)
     val body2 = body2.withDefaultFontFamily(defaultFontFamily)
-    val code = code.withDefaultFontFamily(defaultMonospaceFontFamily)
+    val code1 = code1.withDefaultFontFamily(defaultMonospaceFontFamily)
+    val code2 = code2.withDefaultFontFamily(defaultMonospaceFontFamily)
 
     fun copy(defaultFontFamily: FontFamily, defaultMonospaceFontFamily: FontFamily, body1: TextStyle = this.body1,
-             body2: TextStyle = this.body2, code: TextStyle = this.code): StudioTypography
-    = StudioTypography(defaultFontFamily, defaultMonospaceFontFamily, body1, body2, code)
+             body2: TextStyle = this.body2, code1: TextStyle = this.code1,
+             code2: TextStyle = this.code2, codeEditorSwing: java.awt.Font = this.codeEditorSwing,
+             codeEditorContextMenuSwing: java.awt.Font = this.codeEditorContextMenuSwing): StudioTypography
+    = StudioTypography(defaultFontFamily, defaultMonospaceFontFamily, body1, body2, code1, code2, codeEditorSwing,
+        codeEditorContextMenuSwing)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -181,7 +197,10 @@ class StudioTypography(
 
         if (body1 != other.body1) return false
         if (body2 != other.body2) return false
-        if (code != other.code) return false
+        if (code1 != other.code1) return false
+        if (code2 != other.code2) return false
+        if (codeEditorSwing != other.codeEditorSwing) return false
+        if (codeEditorContextMenuSwing != other.codeEditorContextMenuSwing) return false
 
         return true
     }
@@ -189,7 +208,10 @@ class StudioTypography(
     override fun hashCode(): Int {
         var result = body1.hashCode()
         result = 31 * result + body2.hashCode()
-        result = 31 * result + code.hashCode()
+        result = 31 * result + code1.hashCode()
+        result = 31 * result + code2.hashCode()
+        result = 31 * result + codeEditorSwing.hashCode()
+        result = 31 * result + codeEditorContextMenuSwing.hashCode()
         return result
     }
 }
@@ -207,10 +229,12 @@ private val ubuntuMono = FontFamily(
     Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
 )
 
+private val ubuntuMonoSize13Swing: java.awt.Font
+get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
+    ClassLoader.getSystemResourceAsStream("fonts/ubuntu_mono/UbuntuMono-Regular.ttf")).deriveFont(13F)
+
+private val titilliumWebSize13Swing: java.awt.Font
+get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
+    ClassLoader.getSystemResourceAsStream("fonts/titillium_web/TitilliumWeb-Regular.ttf")).deriveFont(13F)
+
 val LocalTypography = staticCompositionLocalOf { StudioTypography(defaultFontFamily = titilliumWeb, defaultMonospaceFontFamily = ubuntuMono) }
-
-class StudioShapes {
-
-}
-
-val LocalShapes = staticCompositionLocalOf { StudioShapes() }

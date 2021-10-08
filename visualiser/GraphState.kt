@@ -8,6 +8,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.studio.data.EdgeData
 import com.vaticle.typedb.studio.data.ExplanationVertexData
 import com.vaticle.typedb.studio.data.VertexData
@@ -29,7 +30,7 @@ class GraphState {
     }
 }
 
-data class VertexState(val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String,
+data class VertexState(val concept: Concept, val id: Int, val encoding: VertexEncoding, val label: String, val shortLabel: String,
                        val width: Float, val height: Float, val inferred: Boolean) {
     var position: Offset by mutableStateOf(Offset(0F, 0F))
 
@@ -40,7 +41,7 @@ data class VertexState(val id: Int, val encoding: VertexEncoding, val label: Str
 
     companion object {
         fun of(data: VertexData): VertexState {
-            return VertexState(data.id, data.encoding, data.label, data.shortLabel, data.width, data.height, data.inferred)
+            return VertexState(data.concept, data.id, data.encoding, data.label, data.shortLabel, data.width, data.height, data.inferred)
         }
     }
 }

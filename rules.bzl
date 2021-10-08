@@ -47,25 +47,40 @@ outFilename: {}
 
     private_config = ""
 
-    if "APPLE_CODE_SIGNING_CERTIFICATE_URL" in ctx.var:
+    if "APPLE_CODE_SIGNING_PASSWORD" in ctx.var:
 
         if not ctx.file.mac_entitlements:
-            fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_CERTIFICATE_URL is set")
+            fail("Parameter mac_entitlements must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+        if not ctx.file.mac_code_signing_cert:
+            fail("Parameter mac_code_signing_cert must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+
+        if "APPLEID" not in ctx.var:
+            fail("Variable APPLEID must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+        if "APPLEID_PASSWORD" not in ctx.var:
+            fail("Variable APPLEID_PASSWORD must be set if variable APPLE_CODE_SIGNING_PASSWORD is set")
+
+        config = config + """/
+appleCodeSigningCertificatePath: {}
+""".format(ctx.file.mac_code_signing_cert.path)
 
         private_config = private_config + """/
 appleId: {}
 appleIdPassword: {}
-appleCodeSigningCertificateUrl: {}
 appleCodeSigningPassword: {}
 """.format(
-        ctx.var.get("APPLEID", ""),
-        ctx.var.get("APPLEID_PASSWORD", ""),
-        ctx.var.get("APPLE_CODE_SIGNING_CERTIFICATE_URL", ""),
-        ctx.var.get("APPLE_CODE_SIGNING_PASSWORD", ""))
+        ctx.var["APPLEID"],
+        ctx.var["APPLEID_PASSWORD"],
+        ctx.var["APPLE_CODE_SIGNING_PASSWORD"])
 
         step_description = step_description + " (NOTE: notarization typically takes several minutes to complete)"
 
     inputs = [ctx.file.jdk, ctx.file.src, version_file]
+
+    if ctx.file.icon:
+        inputs = inputs + [ctx.file.icon]
+        config = config + """/
+iconPath: {}
+""".format(ctx.file.icon.path)
 
     if ctx.file.mac_entitlements:
         inputs = inputs + [ctx.file.mac_entitlements]
@@ -104,6 +119,10 @@ zip_to_jvm_application_image = rule(
             mandatory = True,
             doc = "The application name",
         ),
+        "icon": attr.label(
+            allow_single_file = True,
+            doc = "The application icon",
+        ),
         "filename": attr.string(
             mandatory = True,
             doc = "The filename",
@@ -132,6 +151,10 @@ zip_to_jvm_application_image = rule(
         "mac_entitlements": attr.label(
             allow_single_file = True,
             doc = "The MacOS entitlements.mac.plist file",
+        ),
+        "mac_code_signing_cert": attr.label(
+            allow_single_file = True,
+            doc = "The MacOS code signing certificate",
         ),
         "windows_wix_toolset": attr.label(
             allow_single_file = True,
@@ -168,10 +191,14 @@ def jvm_application_image(name,
                           jvm_binary,
                           main_jar,
                           main_class,
+                          icon_mac = None,
+                          icon_linux = None,
+                          icon_windows = None,
                           jdk = native_jdk16(),
                           deps_use_maven_name = True,
                           additional_files = {},
                           mac_entitlements = None,
+                          mac_code_signing_cert = None,
                           windows_wix_toolset = "@wix_toolset_311//file"):
 
     java_deps(
@@ -194,6 +221,12 @@ def jvm_application_image(name,
         name = name,
         src = ":{}-assemble-zip".format(name),
         application_name = application_name,
+        icon = select({
+            "@vaticle_dependencies//util/platform:is_mac": icon_mac,
+            "@vaticle_dependencies//util/platform:is_linux": icon_linux,
+            "@vaticle_dependencies//util/platform:is_windows": icon_windows,
+            "//conditions:default": None,
+        }),
         filename = filename,
         version_file = version_file,
         main_jar = "lib/" + main_jar,
@@ -206,5 +239,9 @@ def jvm_application_image(name,
             "//conditions:default": "unknown",
         }),
         mac_entitlements = mac_entitlements,
+        mac_code_signing_cert = select({
+            "@vaticle_dependencies//util/platform:is_mac": mac_code_signing_cert,
+            "//conditions:default": None,
+        }),
         windows_wix_toolset = windows_wix_toolset,
     )

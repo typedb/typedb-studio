@@ -96,6 +96,10 @@ kt_jvm_library(
         "//resources/fonts/titillium_web:semi-bold",
         "//resources/fonts/ubuntu_mono:bold",
         "//resources/fonts/ubuntu_mono:regular",
+        "//resources/icons:blueprint-icons-16",
+        "//resources/icons:blueprint-icons-20",
+        "//resources/icons:database-png",
+        "//resources/icons:database-svg",
     ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
@@ -170,6 +174,9 @@ java_binary(
 jvm_application_image(
     name = "application-image",
     application_name = "TypeDB Studio",
+    icon_mac = "//resources/icons/application:vaticle-bot-mac",
+    icon_linux = "//resources/icons/application:vaticle-bot-linux",
+    icon_windows = "//resources/icons/application:vaticle-bot-windows",
     filename = "typedb-studio-" + select({
         "@vaticle_dependencies//util/platform:is_mac": "mac",
         "@vaticle_dependencies//util/platform:is_linux": "linux",
@@ -188,6 +195,7 @@ jvm_application_image(
     deps_use_maven_name = False,
     additional_files = assemble_files,
     mac_entitlements = "//resources:entitlements-mac-plist",
+    mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
 )
 
 deploy_github(
@@ -217,24 +225,19 @@ deploy_github(
 #    windows = True,
 #)
 
-py_binary(
-    name = "wait-for-release",
-    srcs = [".grabl/wait-for-release.py"],
-)
-
 # TODO: add release_validate_deps
 
-checksum(
-    name = "checksum",
-    archive = ":application-image",
-)
+#checksum(
+#    name = "checksum",
+#    archive = ":application-image",
+#)
 
 deploy_brew(
     name = "deploy-brew",
     snapshot = deployment['brew.snapshot'],
     release = deployment['brew.release'],
     formula = "//config/brew:typedb-studio.rb",
-    checksum = "//:checksum",
+#    checksum = "//:checksum",
     version_file = "//:VERSION",
     type = "cask",
 )

@@ -37,14 +37,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
@@ -55,7 +51,8 @@ import kotlin.math.sqrt
 fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
                      vertexExplanations: List<VertexExplanationState>, theme: VisualiserTheme,
                      metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
-                     onVertexDragStart: (vertex: VertexState) -> Unit,
+                     selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
+                     selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
                      onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
                      explain: (vertex: VertexState) -> Unit) {
 
@@ -65,19 +62,184 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val highlightedExplanationIDs: SnapshotStateList<Int> = remember { mutableStateListOf() }
+    val devicePixelRatio = metrics.devicePixelRatio
+    val verticesByID = vertices.associateBy { it.id }
+    var hoveredVertex: VertexState? by remember { mutableStateOf(null) }
+    var draggedVertex: VertexState? by remember { mutableStateOf(null) }
+
+    fun DrawScope.drawVertex(v: VertexState) {
+        val viewportOffset: Offset = -worldOffset
+        val vertexBaseColor = requireNotNull(theme.vertex[v.encoding])
+        val focused = hoveredVertex === v || draggedVertex === v
+        val faded = selectedVertex != null && v !in selectedVertexNetwork
+        val alpha = when {
+            focused && faded -> .175f
+            faded -> .25f
+            focused -> .675f
+            else -> null
+        }
+        val vertexColor = if (alpha != null) vertexBaseColor.copy(alpha) else vertexBaseColor
+        val position = (v.position - viewportOffset) * devicePixelRatio
+        val width = v.width * devicePixelRatio
+        val height = v.height * devicePixelRatio
+        val cornerRadius = CornerRadius(5F * devicePixelRatio)
+        val highlightWidth = devicePixelRatio
+        val highlightBaseColor: Color? = when {
+            vertexExplanations.firstOrNull { it.vertexID == v.id && it.explanationID in highlightedExplanationIDs } != null -> theme.explanation
+            v.inferred -> theme.inferred
+            else -> null
+        }
+        val highlightColor: Color? = if (alpha != null) highlightBaseColor?.copy(alpha) else highlightBaseColor
+
+        when (v.encoding) {
+
+            VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE, VertexEncoding.ENTITY -> {
+                if (highlightColor != null) {
+                    drawRoundRect(
+                        color = highlightColor,
+                        topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
+                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2), cornerRadius = cornerRadius)
+                }
+
+                drawRoundRect(
+                    color = vertexColor,
+                    topLeft = Offset(position.x - width / 2, position.y - height / 2),
+                    size = Size(width, height), cornerRadius = cornerRadius)
+            }
+
+            VertexEncoding.RELATION_TYPE, VertexEncoding.RELATION -> {
+                // We start with a square of width n and transform it into a rhombus
+                val n: Float = (height / sqrt(2.0)).toFloat()
+                withTransform({
+                    scale(scaleX = v.width / v.height, scaleY = 1F, pivot = position)
+                    rotate(degrees = 45F, pivot = position)
+                }) {
+                    if (highlightColor != null) {
+                        drawRoundRect(color = highlightColor,
+                            topLeft = Offset(position.x - n / 2 - highlightWidth, position.y - n / 2 - highlightWidth),
+                            size = Size(n + highlightWidth * 2, n + highlightWidth * 2), cornerRadius = cornerRadius)
+                    }
+
+                    drawRoundRect(color = vertexColor,
+                        topLeft = Offset(position.x - n / 2, position.y - n / 2),
+                        size = Size(n, n), cornerRadius = cornerRadius)
+                }
+            }
+
+            VertexEncoding.ATTRIBUTE_TYPE, VertexEncoding.ATTRIBUTE -> {
+                if (highlightColor != null) {
+                    drawOval(color = highlightColor,
+                        topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
+                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2))
+                }
+
+                drawOval(color = vertexColor,
+                    topLeft = Offset(position.x - width / 2, position.y - height / 2),
+                    size = Size(width, height))
+            }
+        }
+    }
+
+    @Composable
+    fun drawVertexLabel(v: VertexState) {
+        val viewportOffset: Offset = -worldOffset
+        val r = v.rect
+        val x = (r.left - viewportOffset.x).dp
+        val y = (r.top - viewportOffset.y).dp
+        val color = theme.vertexLabel
+
+        Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
+            verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = v.shortLabel, style = StudioTheme.typography.code1, color = color, textAlign = TextAlign.Center)
+        }
+    }
+
+    fun DrawScope.drawSolidEdge(edge: EdgeState) {
+        val viewportOffset: Offset = -worldOffset
+        val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
+        val targetVertex = requireNotNull(verticesByID[edge.targetID])
+        val lineSource = sourceVertex.position
+        val lineTarget = targetVertex.position
+        val faded = selectedVertex != null && selectedVertex !in listOf(sourceVertex, targetVertex)
+        val baseColor = if (edge.inferred) theme.inferred else theme.edge
+        val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
+
+        drawLine(
+            start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
+            color = color, strokeWidth = devicePixelRatio
+        )
+
+        val arrow = arrowhead(
+            from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
+            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
+        )
+        if (arrow != null) drawPath(path = arrow, color = color)
+    }
+
+    fun DrawScope.drawEdgeSegments(edge: EdgeState) {
+        val viewportOffset: Offset = -worldOffset
+        val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
+        val targetVertex = requireNotNull(verticesByID[edge.targetID])
+        val lineSource = edgeEndpoint(targetVertex, sourceVertex)
+        val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
+        val faded = selectedVertex != null && selectedVertex !in listOf(sourceVertex, targetVertex)
+        val baseColor = if (edge.inferred) theme.inferred else theme.edge
+        val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
+
+        if (lineSource != null && lineTarget != null) {
+            val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
+            // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
+            val labelRect = Rect(
+                Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
+                Size(edge.label.length * 8F + 4, 14F + 4)
+            )
+            val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
+            if (linePart1Target != null) {
+                drawLine(
+                    start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
+                    color = color, strokeWidth = devicePixelRatio
+                )
+            }
+            val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
+            if (linePart2Source != null) {
+                drawLine(
+                    start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
+                    color = color, strokeWidth = devicePixelRatio
+                )
+
+                val arrow = arrowhead(
+                    from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
+                    arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
+                )
+                if (arrow != null) drawPath(path = arrow, color = color)
+            }
+        }
+    }
+
+    @Composable
+    fun drawEdgeLabel(edge: EdgeState) {
+        val viewportOffset: Offset = -worldOffset
+        val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
+        val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
+        val faded = selectedVertex != null && selectedVertex.id !in listOf(edge.sourceID, edge.targetID)
+        val baseColor = if (edge.inferred) theme.inferred else theme.edge
+        val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
+        Column(
+            modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
+            verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = edge.label, style = StudioTheme.typography.code1.copy(color = color, textAlign = TextAlign.Center))
+        }
+    }
 
     // Metrics are recalculated on each query run
     LaunchedEffect(metrics.id) {
         worldOffset = metrics.worldOffset
     }
 
-    val devicePixelRatio = metrics.devicePixelRatio
-
-    val ubuntuMono = FontFamily(
-        Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
-    )
-
     Box(modifier = modifier
+        .graphicsLayer(clip = true)
         .onGloballyPositioned { coordinates ->
             viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
 //            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
@@ -85,28 +247,21 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         }
         .background(theme.background)) {
 
-        var hoveredVertex: VertexState? by remember { mutableStateOf(null) }
-        var draggedVertex: VertexState? by remember { mutableStateOf(null) }
-
         Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
             // TODO: don't render vertices or edges that are fully outside the viewport
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val verticesByID = vertices.associateBy { it.id }
-                if (edges.size <= 1000 && scale > 0.2) {
-                    edges.forEach { drawEdgeSegments(it, verticesByID, theme, -worldOffset, devicePixelRatio) }
-                } else {
-                    edges.forEach { drawSolidEdge(it, verticesByID, theme, -worldOffset, devicePixelRatio) }
-                }
+                if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeSegments(it) }
+                else edges.forEach { drawSolidEdge(it) }
             }
 
             // TODO: this condition is supposed to be a || but without out-of-viewport detection the performance would degrade unacceptably
-            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it, theme, ubuntuMono, -worldOffset) }
+            if (edges.size <= 1000 && scale > 0.2) edges.forEach { drawEdgeLabel(it) }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
-                vertices.forEach { drawVertex(it, vertexExplanations, highlightedExplanationIDs, theme, -worldOffset, focused = hoveredVertex === it || draggedVertex === it, devicePixelRatio) }
+                vertices.forEach { drawVertex(it) }
             }
 
-            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it, theme, ubuntuMono, -worldOffset) }
+            if (vertices.size <= 1000 && scale > 0.2) vertices.forEach { drawVertexLabel(it) }
         }
 
         Box(modifier = Modifier.fillMaxSize().zIndex(100F)
@@ -125,7 +280,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         onVertexDragEnd()
                         draggedVertex = null
                     }
-                ) { _, dragAmount ->
+                ) /* onDrag = */ { _, dragAmount: Offset ->
                     val worldDragDistance = dragAmount / (scale * devicePixelRatio)
                     val vertex = draggedVertex
                     if (vertex != null) {
@@ -182,7 +337,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                 )
                 .pointerInput(devicePixelRatio) {
                     detectTapGestures(
-                        onPress = { viewportPoint ->
+                        onPress = { viewportPoint: Offset ->
                             val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             draggedVertex = closestVertices.find { it.intersects(worldPoint) }
@@ -190,16 +345,22 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             val cancelled = tryAwaitRelease()
                             if (cancelled) draggedVertex = null
                         },
-                        onDoubleTap = { viewportPoint ->
+                        onDoubleTap = { viewportPoint: Offset ->
                             val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
                             tappedVertex?.let {
+                                // TODO: this should require SHIFT-doubleclick, not doubleclick
 //                                println("double-tapped vertex: $it")
                                 if (it.inferred) explain(it)
                             }
                         }
-                    )
+                    ) /* onTap = */ { viewportPoint: Offset ->
+                        val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                        val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
+                        val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
+                        onSelectVertex(tappedVertex)
+                    }
                 })
 
             LaunchedEffect(vertexExplanations) {
@@ -256,149 +417,6 @@ private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, 
 //        )
 //    }
     return vertexDistances.entries.sortedBy { it.value }.map { it.key }.take(resultSizeLimit)
-}
-
-private fun DrawScope.drawVertex(v: VertexState, vertexExplanations: List<VertexExplanationState>, highlightedExplanationIDs: List<Int>, theme: VisualiserTheme, viewportOffset: Offset, focused: Boolean, devicePixelRatio: Float) {
-    val vertexColor = requireNotNull(theme.vertex[v.encoding]).copy(alpha = if (focused) .675F else 1F)
-    val position = (v.position - viewportOffset) * devicePixelRatio
-    val width = v.width * devicePixelRatio
-    val height = v.height * devicePixelRatio
-    val cornerRadius = CornerRadius(5F * devicePixelRatio)
-    val highlightWidth = devicePixelRatio
-    val highlightColor: Color? = when {
-        vertexExplanations.firstOrNull { it.vertexID == v.id && it.explanationID in highlightedExplanationIDs } != null -> theme.explanation
-        v.inferred -> theme.inferred
-        else -> null
-    }
-
-    when (v.encoding) {
-
-        VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE, VertexEncoding.ENTITY -> {
-            if (highlightColor != null) {
-                drawRoundRect(
-                    color = highlightColor,
-                    topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
-                    size = Size(width + highlightWidth * 2, height + highlightWidth * 2), cornerRadius = cornerRadius)
-            }
-
-            drawRoundRect(
-                color = vertexColor,
-                topLeft = Offset(position.x - width / 2, position.y - height / 2),
-                size = Size(width, height), cornerRadius = cornerRadius)
-        }
-
-        VertexEncoding.RELATION_TYPE, VertexEncoding.RELATION -> {
-            // We start with a square of width n and transform it into a rhombus
-            val n: Float = (height / sqrt(2.0)).toFloat()
-            withTransform({
-                scale(scaleX = v.width / v.height, scaleY = 1F, pivot = position)
-                rotate(degrees = 45F, pivot = position)
-            }) {
-                if (highlightColor != null) {
-                    drawRoundRect(color = highlightColor,
-                        topLeft = Offset(position.x - n / 2 - highlightWidth, position.y - n / 2 - highlightWidth),
-                        size = Size(n + highlightWidth * 2, n + highlightWidth * 2), cornerRadius = cornerRadius)
-                }
-
-                drawRoundRect(color = vertexColor,
-                    topLeft = Offset(position.x - n / 2, position.y - n / 2),
-                    size = Size(n, n), cornerRadius = cornerRadius)
-            }
-        }
-
-        VertexEncoding.ATTRIBUTE_TYPE, VertexEncoding.ATTRIBUTE -> {
-            if (highlightColor != null) {
-                drawOval(color = highlightColor,
-                    topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
-                    size = Size(width + highlightWidth * 2, height + highlightWidth * 2))
-            }
-
-            drawOval(color = vertexColor,
-                topLeft = Offset(position.x - width / 2, position.y - height / 2),
-                size = Size(width, height))
-        }
-    }
-}
-
-@Composable
-private fun drawVertexLabel(v: VertexState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
-    val r = v.rect
-    val x = (r.left - viewportOffset.x).dp
-    val y = (r.top - viewportOffset.y).dp
-    Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
-        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = v.shortLabel, color = theme.vertexLabel, fontSize = 16.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
-    }
-}
-
-private fun DrawScope.drawSolidEdge(edge: EdgeState, verticesByID: Map<Int, VertexState>, theme: VisualiserTheme, viewportOffset: Offset, devicePixelRatio: Float) {
-    val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
-    val targetVertex = requireNotNull(verticesByID[edge.targetID])
-    val lineSource = sourceVertex.position
-    val lineTarget = targetVertex.position
-    val color = if (edge.inferred) theme.inferred else theme.edge
-
-    drawLine(
-        start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-        color = color, strokeWidth = devicePixelRatio
-    )
-
-    val arrow = arrowhead(
-        from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-        arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
-    )
-    if (arrow != null) drawPath(path = arrow, color = color)
-}
-
-private fun DrawScope.drawEdgeSegments(edge: EdgeState, verticesByID: Map<Int, VertexState>, theme: VisualiserTheme, viewportOffset: Offset, devicePixelRatio: Float) {
-    val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
-    val targetVertex = requireNotNull(verticesByID[edge.targetID])
-    val lineSource = edgeEndpoint(targetVertex, sourceVertex)
-    val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
-    val color = if (edge.inferred) theme.inferred else theme.edge
-
-    if (lineSource != null && lineTarget != null) {
-        val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
-        // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
-        val labelRect = Rect(
-            Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
-            Size(edge.label.length * 8F + 4, 14F + 4)
-        )
-        val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
-        if (linePart1Target != null) {
-            drawLine(
-                start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
-                color = color, strokeWidth = devicePixelRatio
-            )
-        }
-        val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
-        if (linePart2Source != null) {
-            drawLine(
-                start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-                color = color, strokeWidth = devicePixelRatio
-            )
-
-            val arrow = arrowhead(
-                from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-                arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
-            )
-            if (arrow != null) drawPath(path = arrow, color = color)
-        }
-    }
-}
-
-@Composable
-private fun drawEdgeLabel(edge: EdgeState, theme: VisualiserTheme, fontFamily: FontFamily, viewportOffset: Offset) {
-    val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
-    val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
-    val color = if (edge.inferred) theme.inferred else theme.edge
-    Column(
-        modifier = Modifier.offset(rect.left.dp, rect.top.dp).width(rect.width.dp).height(rect.height.dp),
-        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = edge.label, color = color, fontSize = 14.sp, fontFamily = fontFamily, textAlign = TextAlign.Center)
-    }
 }
 
 /**
