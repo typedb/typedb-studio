@@ -130,7 +130,8 @@ class DB(val client: DBClient, private val dbName: String) {
         try {
             session?.close()
             session = client.session(dbName, DATA)
-            val options = if (enableReasoning) TypeDBOptions.core().infer(true).explain(true) else TypeDBOptions.core()
+            var options = if (client is CoreClient) TypeDBOptions.core() else TypeDBOptions.cluster()
+            if (enableReasoning) options = options.infer(true).explain(true)
             tx = session!!.transaction(READ, options)
             vertexGenerator = VertexGenerator()
             CompletableFuture.supplyAsync {
