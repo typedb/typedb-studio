@@ -26,6 +26,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 
@@ -40,6 +41,7 @@ fun StudioTextField(
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
     placeholderText: String = "",
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     textStyle: TextStyle) {
 
     val focusManager = LocalFocusManager.current
@@ -63,6 +65,7 @@ fun StudioTextField(
         singleLine = singleLine,
         cursorBrush = SolidColor(MaterialTheme.colors.primary),
         textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface),
+        visualTransformation = visualTransformation,
         decorationBox = { innerTextField ->
             Row(modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (leadingIcon != null) {

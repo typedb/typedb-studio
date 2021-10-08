@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.navigation.LoginScreenState
@@ -46,7 +47,8 @@ fun ClusterLoginPanel(form: LoginScreenState, loadDatabases: () -> Unit, selectD
             FormField {
                 Text("Password", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
                 StudioTextField(value = form.password, onValueChange = { value -> form.password = value },
-                    textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp))
+                    textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp),
+                    visualTransformation = PasswordVisualTransformation())
             }
             FormField {
                 Text("Root CA path", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
