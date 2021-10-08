@@ -30,9 +30,10 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.login.ServerSoftware.*
 import com.vaticle.typedb.studio.navigation.LoginScreenState
 import com.vaticle.typedb.studio.navigation.Navigator
+import com.vaticle.typedb.studio.navigation.ServerSoftware
+import com.vaticle.typedb.studio.navigation.ServerSoftware.*
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
@@ -43,42 +44,45 @@ import java.util.concurrent.CompletableFuture
 @Composable
 fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState: SnackbarHostState) {
     val snackbarCoroutineScope = rememberCoroutineScope()
-    var selectedServerSoftware by remember { mutableStateOf(CORE) }
     var lastCheckedAddress by remember { mutableStateOf("") }
     var loadingDatabases by remember { mutableStateOf(false) }
+
+    fun selectServerSoftware(software: ServerSoftware) {
+        form.serverSoftware = software
+        form.dbClient?.close()
+        form.dbClient = null
+        form.db = null
+        form.allDBNames.clear()
+        form.dbFieldText = ""
+        form.databaseSelected = false
+        lastCheckedAddress = ""
+    }
 
     fun loadDatabases() {
         if (form.serverAddress == lastCheckedAddress || loadingDatabases) return
         loadingDatabases = true
         form.dbClient?.close()
         if (form.serverAddress.isNotBlank()) {
-            if (!form.databaseSelected) form.dbName = "Loading databases..."
-            val client = when (selectedServerSoftware) {
-                CORE -> CoreClient(form.serverAddress)
-                CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
-            }
-            form.dbClient = client
+            if (!form.databaseSelected) form.dbFieldText = "Loading databases..."
             form.allDBNames.clear()
             CompletableFuture.supplyAsync {
                 try {
+                    val client = when (form.serverSoftware) {
+                        CORE -> CoreClient(form.serverAddress)
+                        CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
+                    }
+                    form.dbClient = client
                     form.allDBNames.let { dbNames ->
                         dbNames += client.listDatabases()
                         lastCheckedAddress = form.serverAddress
-                        if (dbNames.isEmpty()) form.dbName = "This server has no databases"
-                        else {
-                            if (!form.databaseSelected) {
-                                val dbName = dbNames[0]
-                                form.dbName = dbName
-                                form.db = DB(client, dbName)
-                            }
-                            form.databaseSelected = true
-                        }
+                        if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
+                        else if (!form.databaseSelected) form.dbFieldText = "Select a database"
                     }
                 } catch (e: Exception) {
                     lastCheckedAddress = ""
                     form.db = null
                     form.databaseSelected = false
-                    form.dbName = "Failed to load databases"
+                    form.dbFieldText = "Failed to load databases"
                     snackbarCoroutineScope.launch {
                         println(e.toString())
                         snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
@@ -90,9 +94,9 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
         }
     }
 
-    fun selectDatabase(value: String) {
-        form.dbName = value
-        form.db = form.dbClient?.let { client -> DB(client, form.dbName) }
+    fun selectDatabase(dbName: String) {
+        form.dbFieldText = dbName
+        form.db = DB(requireNotNull(form.dbClient), dbName)
         form.databaseSelected = true
     }
 
@@ -100,7 +104,7 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
         val dbClient = requireNotNull(form.dbClient)
         val db = requireNotNull(form.db)
 
-        if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(db = db))
+        if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(form))
         else {
             val e = TypeDBClientException(ErrorMessage.Client.DB_DOES_NOT_EXIST, db.name)
             snackbarCoroutineScope.launch {
@@ -117,27 +121,22 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
             .border(1.dp, StudioTheme.colors.uiElementBorder)) {
 
             StudioTabs(Modifier.height(24.dp)) {
-                StudioTab("TypeDB", selected = selectedServerSoftware == CORE,
+                StudioTab("TypeDB", selected = form.serverSoftware == CORE,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = CORE })
-                StudioTab("TypeDB Cluster", selected = selectedServerSoftware == CLUSTER,
+                    modifier = Modifier.weight(1f).clickable { selectServerSoftware(CORE) })
+                StudioTab("TypeDB Cluster", selected = form.serverSoftware == CLUSTER,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectedServerSoftware = CLUSTER })
+                    modifier = Modifier.weight(1f).clickable { selectServerSoftware(CLUSTER) })
             }
 
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-            when (selectedServerSoftware) {
+            when (form.serverSoftware) {
                 CORE -> CoreLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
                 CLUSTER -> ClusterLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
             }
         }
     }
-}
-
-enum class ServerSoftware {
-    CORE,
-    CLUSTER
 }
 
 internal val ColumnScope.labelWeightModifier: Modifier

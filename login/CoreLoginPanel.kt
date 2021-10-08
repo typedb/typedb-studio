@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.navigation.LoginScreenState
+import com.vaticle.typedb.studio.navigation.ServerSoftware.*
 import com.vaticle.typedb.studio.ui.elements.StudioButton
 import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioTextField
@@ -40,9 +41,12 @@ fun CoreLoginPanel(form: LoginScreenState, loadDatabases: () -> Unit, selectData
             }
             FormField {
                 Text("Database", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
-                StudioDropdownBox(items = form.allDBNames, text = form.dbName, onTextChange = { selectDatabase(it) },
+                StudioDropdownBox(items = form.allDBNames, text = form.dbFieldText, onTextChange = { selectDatabase(it) },
                     modifier = fieldWeightModifier.height(28.dp),
-                    textFieldModifier = Modifier.onFocusChanged { if (it.isFocused) loadDatabases() })
+                    textFieldModifier = Modifier.onFocusChanged {
+                        // sanity check - for some reason onFocusChanged triggers when switching tabs
+                        if (it.isFocused && form.serverSoftware == CORE) loadDatabases()
+                    })
             }
         }
 
