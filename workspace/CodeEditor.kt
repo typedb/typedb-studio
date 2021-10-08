@@ -2,8 +2,10 @@ package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
@@ -14,22 +16,40 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants
 import org.fife.ui.rtextarea.RTextArea
 import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.Dimension
-import java.awt.Font
 import javax.swing.BorderFactory
 import javax.swing.BoxLayout
 import javax.swing.JComponent
-import javax.swing.JMenuItem
 import javax.swing.JPanel
-import javax.swing.MenuElement
-import javax.swing.plaf.basic.BasicMenuItemUI
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 var swingComponent: JComponent? = null
 
 @Composable
-fun CodeEditor(code: String, onChange: (value: String) -> Unit, font: Font, modifier: Modifier = Modifier) {
+fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit, font: java.awt.Font, modifier: Modifier = Modifier) {
+    val textArea = remember { RSyntaxTextArea() }
+    var documentListener: DocumentListener? by remember { mutableStateOf(null) }
+
+    fun createDocumentListener(): DocumentListener {
+        return object: DocumentListener {
+            override fun insertUpdate(e: DocumentEvent?) {
+                onChange(textArea.text)
+            }
+
+            override fun removeUpdate(e: DocumentEvent?) {
+                onChange(textArea.text)
+            }
+
+            override fun changedUpdate(e: DocumentEvent?) {
+                // ignored
+            }
+        }
+    }
+
     if (swingComponent == null) {
-        val textArea = RSyntaxTextArea().apply {
+        textArea.apply {
             text = code
+            this.font = font
             syntaxEditingStyle = SyntaxConstants.SYNTAX_STYLE_NONE // TODO: Add TypeQL syntax style
             background = StudioTheme.colors.editorBackground.toSwingColor()
             foreground = StudioTheme.colors.text.toSwingColor()
@@ -47,7 +67,8 @@ fun CodeEditor(code: String, onChange: (value: String) -> Unit, font: Font, modi
                     }
                 }
             }
-            addCaretListener { onChange(text) }
+            documentListener = createDocumentListener()
+            document.addDocumentListener(documentListener)
         }
 
         val scrollPane = RTextScrollPane(textArea).apply {
@@ -69,5 +90,13 @@ fun CodeEditor(code: String, onChange: (value: String) -> Unit, font: Font, modi
                 }
             },
         )
+    }
+
+    LaunchedEffect(editorID) {
+        // Temporarily "switch off" the document listener so we don't emit an incorrect change event
+        documentListener?.let { textArea.document.removeDocumentListener(it) }
+        textArea.text = code
+        documentListener = createDocumentListener()
+        textArea.document.addDocumentListener(documentListener)
     }
 }

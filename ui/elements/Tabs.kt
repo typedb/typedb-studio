@@ -1,6 +1,7 @@
 package com.vaticle.typedb.studio.ui.elements
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -53,10 +54,9 @@ fun StudioTabs(modifier: Modifier = Modifier, orientation: TabOrientation = TabO
 }
 
 @Composable
-fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
-              leadingIcon: (@Composable () -> Unit)? = null, showCloseButton: Boolean = false,
-              highlight: TabHighlight = TabHighlight.NONE, arrangement: Arrangement.Horizontal = Arrangement.Start,
-              textStyle: TextStyle = StudioTheme.typography.body2) {
+fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier, leadingIcon: (@Composable () -> Unit)? = null,
+              showCloseButton: Boolean = false, onClose: () -> Unit = {}, highlight: TabHighlight = TabHighlight.NONE,
+              arrangement: Arrangement.Horizontal = Arrangement.Start, textStyle: TextStyle = StudioTheme.typography.body2) {
     Box(modifier = modifier.width(IntrinsicSize.Max)) {
         val (backgroundColor, highlightColor) = when (selected) {
             true -> listOf(StudioTheme.colors.backgroundHighlight, StudioTheme.colors.primary)
@@ -80,7 +80,8 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier,
             Text(text, style = textStyle)
             if (showCloseButton) {
                 Spacer(Modifier.width(4.dp))
-                StudioIcon(Icon.Cross, color = StudioTheme.colors.icon.copy(alpha = 0.5f))
+                StudioIcon(Icon.Cross, color = StudioTheme.colors.icon.copy(alpha = 0.5f),
+                    modifier = Modifier.clickable { onClose() })
                 Spacer(Modifier.width(4.dp))
             } else {
                 Spacer(Modifier.width(8.dp))

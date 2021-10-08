@@ -1,9 +1,14 @@
 package com.vaticle.typedb.studio.ui.elements
 
+import androidx.compose.foundation.Image
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.loadSvgPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.TextUnit
@@ -55,4 +60,17 @@ enum class Icon(charCode: UShort) {
     TimelineBarChart(0xe620u);
 
     val charString: String = Char(charCode).toString()
+}
+
+@Composable
+fun StudioDatabaseIcon() {
+    val pixelDensity = LocalDensity.current.density
+    when {
+        pixelDensity <= 1f -> Image(painter = painterResource("icons/database.png"),
+            contentDescription = "Database",
+            modifier = Modifier.graphicsLayer(scaleX = pixelDensity, scaleY = pixelDensity))
+        else -> Image(painter = loadSvgPainter(ClassLoader.getSystemResourceAsStream("icons/database.svg")!!, LocalDensity.current),
+            contentDescription = "Database",
+            modifier = Modifier.graphicsLayer(scaleX = 14f / 12f, scaleY = 14f / 12f))
+    }
 }

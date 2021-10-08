@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -27,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -39,9 +39,7 @@ import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.data.QueryResponseStream
-import com.vaticle.typedb.studio.navigation.LoginScreenState
 import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
 import com.vaticle.typedb.studio.ui.elements.Icon
@@ -75,10 +73,11 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     val selectedVertexNetwork: MutableList<VertexState> = remember { mutableStateListOf() }
     var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
     val queryTabs: MutableList<QueryTabState> = remember { mutableStateListOf(
-        QueryTabState(initialTitle = "Query1.tql", initialQuery = "match \$x sub thing;\n" +
+        QueryTabState(title = "Query1.tql", query = "match \$x sub thing;\n" +
                 "offset 0;\n" +
                 "limit 1000;\n")
     ) }
+    var queryTabNextIndex by remember { mutableStateOf(2) }
     var activeQueryTabIndex by remember { mutableStateOf(0) }
     val executionTabs: MutableList<ExecutionTabState> = remember { mutableStateListOf(
         ExecutionTabState(title = "Query1 : run1")
@@ -88,22 +87,24 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     var showConceptPanel by remember { mutableStateOf(true) }
     var querySettings by remember { mutableStateOf(QuerySettings()) }
 
-    val db = workspace.db
+    val db = requireNotNull(workspace.loginForm.db)
     val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
     val activeExecutionTab: ExecutionTabState = executionTabs[activeExecutionTabIndex]
 
-    DisposableEffect(workspace.db) {
-        onDispose {
-            workspace.db.close()
-        }
+    fun addNewQueryTab() {
+        queryTabs += QueryTabState(title = "Query${queryTabNextIndex}.tql", query = "\n")
+        queryTabNextIndex++
     }
 
     Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = db.name, onDBNameChange = { dbName ->
             // TODO: add confirmation dialog
             db.client.closeAllSessions()
-            navigator.pushState(WorkspaceScreenState(DB(db.client, dbName)))
-        }, allDBNames = remember { workspace.db.client.listDatabases() }, onRun = {
+            workspace.loginForm.dbFieldText = dbName
+            workspace.loginForm.db = DB(db.client, dbName)
+            // TODO: test if this actually reinitialises the workspace screen
+            navigator.pushState(WorkspaceScreenState(workspace.loginForm))
+        }, allDBNames = remember { db.client.listDatabases() }, onRun = {
             typeDBForceSimulation.init()
             dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
             visualiserWorldOffset = visualiserSize.center
@@ -112,8 +113,8 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             selectedVertex = null
             selectedVertexNetwork.clear()
         }, onLogout = {
-            workspace.db.client.close()
-            navigator.pushState(LoginScreenState(serverAddress = workspace.db.client.serverAddress, dbName = db.name))
+            db.client.close()
+            navigator.pushState(workspace.loginForm)
         })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
@@ -135,15 +136,25 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                     queryTabs.mapIndexed { index: Int, queryTab: QueryTabState ->
                         val selected = index == activeQueryTabIndex
                         StudioTab(text = queryTab.title, selected = selected, highlight = TabHighlight.BOTTOM,
-                            showCloseButton = true)
+                            showCloseButton = true, modifier = Modifier.clickable {
+                                activeQueryTabIndex = index.coerceAtMost(queryTabs.size - 1)
+                            }, onClose = {
+                                queryTabs.removeAt(index)
+                                if (queryTabs.isEmpty()) { addNewQueryTab() }
+                                activeQueryTabIndex = index.coerceAtMost(queryTabs.size - 1)
+                            })
                     }
                     Spacer(Modifier.width(6.dp))
-                    StudioIcon(icon = Icon.Plus, size = Size14)
+                    StudioIcon(icon = Icon.Plus, size = Size14, modifier = Modifier.clickable {
+                        addNewQueryTab()
+                        activeQueryTabIndex = queryTabs.size - 1
+                    })
                 }
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-                CodeEditor(code = activeQueryTab.query, onChange = { value -> activeQueryTab.query = value },
+                CodeEditor(code = activeQueryTab.query, editorID = activeQueryTab.editorID,
+                    onChange = { value -> activeQueryTab.query = value },
                     font = StudioTheme.typography.codeEditorSwing,
                     modifier = Modifier.fillMaxWidth().height(104.dp).background(StudioTheme.colors.editorBackground))
 
@@ -152,14 +163,14 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 PanelHeader(modifier = Modifier.fillMaxWidth()) {
                     StudioTabs(modifier = Modifier.weight(1f)) {
                         Spacer(Modifier.width(8.dp))
-                        Text("Output:", style = StudioTheme.typography.body2)
+                        Text("Output", style = StudioTheme.typography.body2)
                         Spacer(Modifier.width(8.dp))
 
-                        executionTabs.mapIndexed { index: Int, executionTab: ExecutionTabState ->
-                            val selected = index == activeExecutionTabIndex
-                            StudioTab(text = executionTab.title, selected = selected,
-                                highlight = TabHighlight.BOTTOM, showCloseButton = true)
-                        }
+//                        executionTabs.mapIndexed { index: Int, executionTab: ExecutionTabState ->
+//                            val selected = index == activeExecutionTabIndex
+//                            StudioTab(text = executionTab.title, selected = selected,
+//                                highlight = TabHighlight.BOTTOM, showCloseButton = true)
+//                        }
                     }
 
 //                    StudioIcon(Icon.Cog)
@@ -211,16 +222,16 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                         })
                 }
 
-                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-
-                StudioTabs(modifier = Modifier.fillMaxWidth().height(26.dp)) {
-                    StudioTab("Log", selected = false, highlight = TabHighlight.TOP,
-                        leadingIcon = { StudioIcon(Icon.HorizontalBarChartDesc) })
-                    StudioTab("Graph", selected = true, highlight = TabHighlight.TOP,
-                        leadingIcon = { StudioIcon(Icon.Graph) })
-                    StudioTab("Table", selected = false, highlight = TabHighlight.TOP,
-                        leadingIcon = { StudioIcon(Icon.Table) })
-                }
+//                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
+//
+//                StudioTabs(modifier = Modifier.fillMaxWidth().height(26.dp)) {
+//                    StudioTab("Log", selected = false, highlight = TabHighlight.TOP,
+//                        leadingIcon = { StudioIcon(Icon.HorizontalBarChartDesc) })
+//                    StudioTab("Graph", selected = true, highlight = TabHighlight.TOP,
+//                        leadingIcon = { StudioIcon(Icon.Graph) })
+//                    StudioTab("Table", selected = false, highlight = TabHighlight.TOP,
+//                        leadingIcon = { StudioIcon(Icon.Table) })
+//                }
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
             }
