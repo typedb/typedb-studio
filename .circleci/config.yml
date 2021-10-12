@@ -82,9 +82,14 @@ jobs:
       - install-bazel-linux
       - checkout
       - run: bazel build //:application-image
+      - run: bazel build //:linux-jar-runner
       - run: |
-          mkdir -p ~/src && cp bazel-bin/application-image.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/application-image.zip
+          mkdir -p ~/src
+          mkdir -p ~/dist
+          cp bazel-bin/typedb-studio-linux-jar-runner.tar.gz ~/dist/typedb-studio-linux-jar-runner-$(cat VERSION).tar.gz
+          cp bazel-bin/application-image.zip ~/src
+          cd ~/dist
+          jar xf ~/src/application-image.zip
       - persist_to_workspace:
           root: ~/dist
           paths:

@@ -27,31 +27,7 @@ load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
-java_binary(
-    name = "hello",
-    srcs = ["Hello.java"],
-    main_class = "com.vaticle.typedb.studio.Hello",
-    deps = [
-#        "@maven//:org_jetbrains_compose_material_material_desktop",
-#        "@maven//:org_jetbrains_compose_material_material_icons_core_desktop"
-#        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-    ],
-)
 
-java_deps(
-    name = "hello-deps",
-    target = ":hello",
-    java_deps_root = "lib/",
-    maven_name = False,
-)
-
-assemble_zip(
-    name = "hello-bundle",
-    targets = [":hello-deps"],
-    output_filename = "hello-assemble",
-)
-
-# TODO: If we remove some of these deps, IntelliJ starts to complain - we should investigate
 kt_jvm_library(
     name = "studio",
     srcs = ["main.kt"],
@@ -63,31 +39,6 @@ kt_jvm_library(
         "//login",
         "//navigation",
         "//workspace",
-
-        # Maven
-#        "@maven//:androidx_annotation_annotation_1_2_0",
-#        "@maven//:androidx_annotation_annotation",
-#        "@maven//:org_jetbrains_annotations_13_0",
-#        "@maven//:org_jetbrains_annotations",
-#        "@maven//:org_jetbrains_compose_ui_ui_tooling_preview_desktop_1_0_0_alpha3",
-#        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-#        "@maven//:org_jetbrains_compose_ui_ui_tooling_preview_desktop",
-#        "@maven//:org_jetbrains_compose_material_material_desktop",
-#        "@maven//:org_jetbrains_compose_material_material_ripple_desktop",
-#        "@maven//:org_jetbrains_compose_material_material_icons_core_desktop",
-#        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-#        "@maven//:org_jetbrains_compose_animation_animation_desktop",
-#        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-#        "@maven//:org_jetbrains_compose_animation_animation_core_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
-#        "@maven//:org_jetbrains_compose_ui_ui_util_desktop",
-#        "@maven//:org_jetbrains_compose_runtime_runtime_saveable_desktop",
-#        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-#        "@maven//:org_jetbrains_skiko_skiko_jvm",
     ],
     resources = [
         "//resources:logback-xml",
@@ -196,6 +147,16 @@ jvm_application_image(
     additional_files = assemble_files,
     mac_entitlements = "//resources:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
+)
+
+# A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
+# if built on Mac, and fail to produce anything useful if built on Windows.
+assemble_targz(
+    name = "linux-jar-runner",
+    targets = [":application-image-deps", "//binary:assemble-bash-targz"],
+    additional_files = assemble_files,
+    output_filename = "typedb-studio-linux-jar-runner",
+    visibility = ["//:__pkg__"]
 )
 
 deploy_github(
