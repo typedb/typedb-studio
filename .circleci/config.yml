@@ -82,11 +82,11 @@ jobs:
       - install-bazel-linux
       - checkout
       - run: bazel build //:application-image
-      - run: bazel build //:linux-jar-runner
+      - run: bazel build //:linux-java-binary
       - run: |
           mkdir -p ~/src
           mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux-jar-runner.tar.gz ~/dist/typedb-studio-linux-jar-runner-$(cat VERSION).tar.gz
+          cp bazel-bin/typedb-studio-linux-java-binary.tar.gz ~/dist/typedb-studio-linux-java-binary-$(cat VERSION).tar.gz
           cp bazel-bin/application-image.zip ~/src
           cd ~/dist
           jar xf ~/src/application-image.zip

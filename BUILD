@@ -152,10 +152,10 @@ jvm_application_image(
 # A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
 # if built on Mac, and fail to produce anything useful if built on Windows.
 assemble_targz(
-    name = "linux-jar-runner",
+    name = "linux-java-binary",
     targets = [":application-image-deps", "//binary:assemble-bash-targz"],
     additional_files = assemble_files,
-    output_filename = "typedb-studio-linux-jar-runner",
+    output_filename = "typedb-studio-linux-java-binary",
     visibility = ["//:__pkg__"]
 )
 
