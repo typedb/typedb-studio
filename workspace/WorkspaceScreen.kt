@@ -94,6 +94,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     var showQuerySettingsPanel by remember { mutableStateOf(true) }
     var showConceptPanel by remember { mutableStateOf(true) }
     var querySettings by remember { mutableStateOf(QuerySettings()) }
+    var temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
 
     val db = requireNotNull(workspace.loginForm.db)
     val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
@@ -282,20 +283,31 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                                 .force("center", null)
                                 .force("x", null)
                                 .force("y", null)
-                                .alpha(0.2)
-                                .alphaDecay(0.0)
+                                .alpha(0.25)
+                                .alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
                             // TODO: temporary hack for testing this feature
-                            if (typeDBForceSimulation.data.edges
-                                    .any { it.targetID == vertex.id && it.label != "has" }) {
-                                val relationAndAttributeNodeIDs = (typeDBForceSimulation.data.edges
+                            if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.label != "has" }) {
+                                val attributeEdges = typeDBForceSimulation.data.edges
                                     .filter { it.sourceID == vertex.id && it.label == "has" }
-                                    .map { it.targetID }
-                                        + typeDBForceSimulation.data.edges
+                                val attributeNodeIDs = attributeEdges.map { it.targetID }
+                                val roleplayerEdges = typeDBForceSimulation.data.edges
                                     .filter { it.targetID == vertex.id && it.label != "has" }
-                                    .map { it.sourceID }).toSet()
-                                val nodes = relationAndAttributeNodeIDs.map { typeDBForceSimulation.nodes()[it] }
-                                val links = relationAndAttributeNodeIDs
-                                    .map { Link(typeDBForceSimulation.nodes()[vertex.id], typeDBForceSimulation.nodes()[it]) }
+                                    .map { it.sourceID }
+                                    .flatMap { relationNodeID -> typeDBForceSimulation.data.edges
+                                        .filter { it.sourceID == relationNodeID } }
+                                val relationNodeIDs = roleplayerEdges.map { it.sourceID }
+                                val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
+                                val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
+                                val nodes = nodeIDs.map { typeDBForceSimulation.nodes()[it] }
+                                val links = (attributeEdges + roleplayerEdges)
+                                    .map { Link(typeDBForceSimulation.nodes()[it.sourceID], typeDBForceSimulation.nodes()[it.targetID]) }
+                                val nodeIDsToFreeze = roleplayerNodeIDs
+                                    .filter { it != vertex.id && typeDBForceSimulation.nodes()[it]?.isXFixed == false }
+                                nodeIDsToFreeze.forEach {
+                                    typeDBForceSimulation.nodes()[it]?.isXFixed = true
+                                    typeDBForceSimulation.nodes()[it]?.isYFixed = true
+                                }
+                                temporarilyFrozenNodeIDs += nodeIDsToFreeze
                                 typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.15))
                             } else {
                                 typeDBForceSimulation.force("link", null)
@@ -305,8 +317,14 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                                 node.x(position.x.toDouble())
                                 node.y(position.y.toDouble())
                             }
+                            typeDBForceSimulation.alpha(0.2)
                         }, onVertexDragEnd = {
-                            typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
+                            typeDBForceSimulation.force("link", null)
+                            temporarilyFrozenNodeIDs.forEach {
+                                typeDBForceSimulation.nodes()[it]?.isXFixed = false
+                                typeDBForceSimulation.nodes()[it]?.isYFixed = false
+                            }
+                            temporarilyFrozenNodeIDs.clear()
                         })
                 }
 
