@@ -21,7 +21,7 @@ import com.vaticle.typedb.studio.visualiser.VertexState
 fun ConceptPanel(vertex: VertexState?, onCollapse: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Column {
-            SidebarPanelHeader(title = "Concept", onCollapse = onCollapse)
+            SidebarPanelHeader(title = "${vertex?.encoding?.displayName ?: "Concept"} Details", onCollapse = onCollapse)
 
             if (vertex == null) {
                 Row(Modifier.weight(1f).padding(8.dp)) {
@@ -30,11 +30,12 @@ fun ConceptPanel(vertex: VertexState?, onCollapse: () -> Unit, modifier: Modifie
             } else {
                 val concept = vertex.concept
                 val rows = listOfNotNull(
-                    listOf("Type", if (concept.isThing) concept.asThing().type.label.name() else concept.asType().label.name()),
+                    if (concept.isThing) listOf("Type", concept.asThing().type.label.name())
+                    else listOf("Label", concept.asType().label.name()),
+
                     if (concept.isAttribute) listOf("Value", concept.asAttribute().valueString()) else null,
                     if (concept.isAttribute) listOf("Value Type", concept.asAttribute().type.valueType.schemaString()) else null,
                     if (concept.isAttributeType) listOf("Value Type", concept.asAttributeType().valueType.schemaString()) else null,
-                    listOf("Encoding", vertex.encoding.displayName),
                     if (concept.isThing) listOf("Internal ID", "123b548m565") else null,
                 )
 
