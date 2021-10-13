@@ -280,6 +280,8 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                             typeDBForceSimulation
                                 .force("charge", null)
                                 .force("center", null)
+                                .force("x", null)
+                                .force("y", null)
                                 .alpha(0.2)
                                 .alphaDecay(0.0)
                             // TODO: temporary hack for testing this feature

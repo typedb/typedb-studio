@@ -26,11 +26,9 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -52,7 +50,6 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
             StudioTextField(value = text, onValueChange = { onTextChange(it) },
                 modifier = textFieldModifier
                     .fillMaxSize()
-                    .pointerIcon(PointerIcon.Default)
                     .focusable()
                     .focusRequester(focusRequester)
                     .clickable {
@@ -73,7 +70,7 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
                     // This is used to keep the DropdownMenu the same width as the TextField
                     textfieldSize = coordinates.size.toSize()
                 }, readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
-                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) })
+                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerIcon = PointerIcon.Default)
         }
 
         Row {

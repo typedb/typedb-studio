@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.schemaString
 import com.vaticle.typedb.studio.data.valueString
+import com.vaticle.typedb.studio.ui.elements.StudioTextField
+import com.vaticle.typedb.studio.ui.elements.StudioTextFieldVariant
 import com.vaticle.typedb.studio.visualiser.VertexState
 
 @Composable
@@ -57,8 +60,14 @@ private fun Table(rows: List<List<String>>, modifier: Modifier = Modifier, colum
 
                 cells.mapIndexed { columnIndex: Int, cell: String ->
                     Row(Modifier.weight(columnWeights.elementAtOrElse(columnIndex) { 1f }).padding(horizontal = 6.dp)) {
-                        Text(text = cell, maxLines = 1, style = StudioTheme.typography.body1,
-                            fontWeight = if (columnIndex == 0) FontWeight.SemiBold else FontWeight.Normal)
+                        when (columnIndex) {
+                            0 -> Text(text = cell, maxLines = 1, style = StudioTheme.typography.body1,
+                                fontWeight = if (columnIndex == 0) FontWeight.SemiBold else FontWeight.Normal)
+                            // In BasicTextField, readOnly = false is required to display a caret marker
+                            else -> StudioTextField(value = cell, onValueChange = {},
+                                variant = StudioTextFieldVariant.UNDECORATED, readOnly = false,
+                                textStyle = StudioTheme.typography.body1.copy(fontWeight = if (columnIndex == 0) FontWeight.SemiBold else FontWeight.Normal))
+                        }
                     }
                 }
             }
