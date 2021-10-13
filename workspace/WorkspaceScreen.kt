@@ -27,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -36,6 +35,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import com.vaticle.force.graph.Link
+import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
@@ -49,7 +50,6 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import com.vaticle.typedb.studio.ui.elements.TabHighlight
-import com.vaticle.typedb.studio.ui.elements.TabOrientation
 import com.vaticle.typedb.studio.visualiser.SimulationMetrics
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
@@ -58,7 +58,6 @@ import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
 import kotlinx.coroutines.launch
 import java.awt.FileDialog
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FilenameFilter
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -279,11 +278,26 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                                 node.isYFixed = true
                             }
                             typeDBForceSimulation
-                                .force("link", null)
                                 .force("charge", null)
                                 .force("center", null)
-                                .alpha(0.25)
+                                .alpha(0.2)
                                 .alphaDecay(0.0)
+                            // TODO: temporary hack for testing this feature
+                            if (typeDBForceSimulation.data.edges
+                                    .any { it.targetID == vertex.id && it.label != "has" }) {
+                                val relationAndAttributeNodeIDs = (typeDBForceSimulation.data.edges
+                                    .filter { it.sourceID == vertex.id && it.label == "has" }
+                                    .map { it.targetID }
+                                        + typeDBForceSimulation.data.edges
+                                    .filter { it.targetID == vertex.id && it.label != "has" }
+                                    .map { it.sourceID }).toSet()
+                                val nodes = relationAndAttributeNodeIDs.map { typeDBForceSimulation.nodes()[it] }
+                                val links = relationAndAttributeNodeIDs
+                                    .map { Link(typeDBForceSimulation.nodes()[vertex.id], typeDBForceSimulation.nodes()[it]) }
+                                typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.15))
+                            } else {
+                                typeDBForceSimulation.force("link", null)
+                            }
                         }, onVertexDragMove = { vertex: VertexState, position: Offset ->
                             typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
                                 node.x(position.x.toDouble())
