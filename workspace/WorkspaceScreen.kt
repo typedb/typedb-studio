@@ -41,6 +41,7 @@ import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.DB
+import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
@@ -162,6 +163,78 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
         }
     }
 
+    fun onSelectVertex(vertex: VertexState?) {
+        selectedVertex = vertex
+        selectedVertexNetwork.clear()
+        if (vertex != null) {
+            val verticesToAdd = mutableSetOf(vertex)
+            val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
+            typeDBForceSimulation.data.edges.forEach {
+                if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
+                else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
+            }
+            selectedVertexNetwork += verticesToAdd
+        }
+    }
+
+    fun onVertexDragStart(vertex: VertexState) {
+        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
+            node.isXFixed = true
+            node.isYFixed = true
+        }
+        typeDBForceSimulation
+            .force("charge", null)
+            .force("center", null)
+            .force("x", null)
+            .force("y", null)
+            .alpha(0.25)
+            .alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
+
+        if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.encoding == ROLEPLAYER }) {
+            val attributeEdges = typeDBForceSimulation.data.edges
+                .filter { it.sourceID == vertex.id && it.encoding == HAS }
+            val attributeNodeIDs = attributeEdges.map { it.targetID }
+            val roleplayerEdges = typeDBForceSimulation.data.edges
+                .filter { it.targetID == vertex.id && it.encoding == ROLEPLAYER }
+                .map { it.sourceID }
+                .flatMap { relationNodeID -> typeDBForceSimulation.data.edges
+                    .filter { it.sourceID == relationNodeID && it.encoding == ROLEPLAYER } }
+            val relationNodeIDs = roleplayerEdges.map { it.sourceID }
+            val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
+            val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
+            val nodes = nodeIDs.map { typeDBForceSimulation.nodes()[it] }
+            val links = (attributeEdges + roleplayerEdges)
+                .map { Link(typeDBForceSimulation.nodes()[it.sourceID], typeDBForceSimulation.nodes()[it.targetID]) }
+            val nodeIDsToFreeze = roleplayerNodeIDs
+                .filter { it != vertex.id && typeDBForceSimulation.nodes()[it]?.isXFixed == false }
+            nodeIDsToFreeze.forEach {
+                typeDBForceSimulation.nodes()[it]?.isXFixed = true
+                typeDBForceSimulation.nodes()[it]?.isYFixed = true
+            }
+            temporarilyFrozenNodeIDs += nodeIDsToFreeze
+            typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.15))
+        } else {
+            typeDBForceSimulation.force("link", null)
+        }
+    }
+
+    fun onVertexDragMove(vertex: VertexState, position: Offset) {
+        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
+            node.x(position.x.toDouble())
+            node.y(position.y.toDouble())
+        }
+        typeDBForceSimulation.alpha(0.2)
+    }
+
+    fun onVertexDragEnd() {
+        typeDBForceSimulation.force("link", null)
+        temporarilyFrozenNodeIDs.forEach {
+            typeDBForceSimulation.nodes()[it]?.isXFixed = false
+            typeDBForceSimulation.nodes()[it]?.isYFixed = false
+        }
+        temporarilyFrozenNodeIDs.clear()
+    }
+
     Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = db.name,
             onDBNameChange = { dbName ->
@@ -260,72 +333,12 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                         metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
                         onZoom = { value -> visualiserScale = value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
-                        selectedVertex = selectedVertex, onSelectVertex = { vertex ->
-                            selectedVertex = vertex
-                            selectedVertexNetwork.clear()
-                            if (vertex != null) {
-                                val verticesToAdd = mutableSetOf(vertex)
-                                val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
-                                typeDBForceSimulation.data.edges.forEach {
-                                    if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
-                                    else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
-                                }
-                                selectedVertexNetwork += verticesToAdd
-                            }
-                        }, selectedVertexNetwork = selectedVertexNetwork,
-                        onVertexDragStart = { vertex: VertexState ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-                                node.isXFixed = true
-                                node.isYFixed = true
-                            }
-                            typeDBForceSimulation
-                                .force("charge", null)
-                                .force("center", null)
-                                .force("x", null)
-                                .force("y", null)
-                                .alpha(0.25)
-                                .alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
-                            // TODO: temporary hack for testing this feature
-                            if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.label != "has" }) {
-                                val attributeEdges = typeDBForceSimulation.data.edges
-                                    .filter { it.sourceID == vertex.id && it.label == "has" }
-                                val attributeNodeIDs = attributeEdges.map { it.targetID }
-                                val roleplayerEdges = typeDBForceSimulation.data.edges
-                                    .filter { it.targetID == vertex.id && it.label != "has" }
-                                    .map { it.sourceID }
-                                    .flatMap { relationNodeID -> typeDBForceSimulation.data.edges
-                                        .filter { it.sourceID == relationNodeID } }
-                                val relationNodeIDs = roleplayerEdges.map { it.sourceID }
-                                val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
-                                val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
-                                val nodes = nodeIDs.map { typeDBForceSimulation.nodes()[it] }
-                                val links = (attributeEdges + roleplayerEdges)
-                                    .map { Link(typeDBForceSimulation.nodes()[it.sourceID], typeDBForceSimulation.nodes()[it.targetID]) }
-                                val nodeIDsToFreeze = roleplayerNodeIDs
-                                    .filter { it != vertex.id && typeDBForceSimulation.nodes()[it]?.isXFixed == false }
-                                nodeIDsToFreeze.forEach {
-                                    typeDBForceSimulation.nodes()[it]?.isXFixed = true
-                                    typeDBForceSimulation.nodes()[it]?.isYFixed = true
-                                }
-                                temporarilyFrozenNodeIDs += nodeIDsToFreeze
-                                typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.15))
-                            } else {
-                                typeDBForceSimulation.force("link", null)
-                            }
-                        }, onVertexDragMove = { vertex: VertexState, position: Offset ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-                                node.x(position.x.toDouble())
-                                node.y(position.y.toDouble())
-                            }
-                            typeDBForceSimulation.alpha(0.2)
-                        }, onVertexDragEnd = {
-                            typeDBForceSimulation.force("link", null)
-                            temporarilyFrozenNodeIDs.forEach {
-                                typeDBForceSimulation.nodes()[it]?.isXFixed = false
-                                typeDBForceSimulation.nodes()[it]?.isYFixed = false
-                            }
-                            temporarilyFrozenNodeIDs.clear()
-                        })
+                        selectedVertex = selectedVertex,
+                        onSelectVertex = ::onSelectVertex,
+                        selectedVertexNetwork = selectedVertexNetwork,
+                        onVertexDragStart = ::onVertexDragStart,
+                        onVertexDragMove = ::onVertexDragMove,
+                        onVertexDragEnd = ::onVertexDragEnd)
                 }
 
 //                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}

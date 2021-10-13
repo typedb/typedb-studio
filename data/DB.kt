@@ -15,8 +15,9 @@ import com.vaticle.typedb.client.api.connection.TypeDBTransaction
 import com.vaticle.typedb.client.api.connection.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typedb.studio.data.EdgeDirection.*
+import com.vaticle.typedb.studio.data.EdgeEncoding.*
+import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
 import java.lang.IllegalArgumentException
@@ -78,10 +79,12 @@ class DB(val client: DBClient, private val dbName: String) {
                     thing.type.let { type ->
                         val typeNodeID = vertexGenerator.types[type.label.name()]
                         if (typeNodeID != null) {
-                            responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = thingVertex.id, target = typeNodeID, label = "isa"))
+                            responseStream.putEdge(EdgeData(id = vertexGenerator.nextID(), source = thingVertex.id,
+                                target = typeNodeID, encoding = ISA, label = "isa"))
                         } else {
                             incompleteTypeEdges.getOrPut(type.label.name()) { mutableListOf() }
-                                .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = thingVertex.id, direction = OUTGOING, label = "isa"))
+                                .add(IncompleteEdgeData(id = vertexGenerator.nextID(), vertexID = thingVertex.id,
+                                    direction = OUTGOING, encoding = ISA, label = "isa"))
                         }
                     }
 
@@ -92,8 +95,8 @@ class DB(val client: DBClient, private val dbName: String) {
 
                     incompleteThingEdges.remove(thing.iid)?.forEach {
                         val edgeData = when (it.direction) {
-                            INCOMING -> EdgeData(it.id, source = thingVertex.id, target = it.vertexID, it.label, it.inferred)
-                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = thingVertex.id, it.label, it.inferred)
+                            INCOMING -> EdgeData(it.id, source = thingVertex.id, target = it.vertexID, it.encoding, it.label, it.inferred)
+                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = thingVertex.id, it.encoding, it.label, it.inferred)
                         }
                         responseStream.putEdge(edgeData)
                     }
@@ -116,8 +119,8 @@ class DB(val client: DBClient, private val dbName: String) {
 
                     incompleteTypeEdges.remove(thingType.label.scopedName())?.forEach {
                         val edgeData = when (it.direction) {
-                            INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.label, it.inferred)
-                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.label, it.inferred)
+                            INCOMING -> EdgeData(it.id, source = typeVertex.id, target = it.vertexID, it.encoding, it.label, it.inferred)
+                            OUTGOING -> EdgeData(it.id, source = it.vertexID, target = typeVertex.id, it.encoding, it.label, it.inferred)
                         }
                         responseStream.putEdge(edgeData)
                     }
@@ -273,7 +276,7 @@ private class LoadRoleplayersTask(private val relation: Relation.Remote, vertex:
                     return@computeIfAbsent vertex.id
                 }
                 responseStream.putEdge(EdgeData(id = vertexGenerator.nextID(), source = vertex.id, target = rolePlayerNodeID,
-                    label = rolePlayers.key.label.name(), inferred = relation.isInferred))
+                    encoding = ROLEPLAYER, label = rolePlayers.key.label.name(), inferred = relation.isInferred))
             }
         }
     }
@@ -293,11 +296,11 @@ private class LoadOwnedAttributesTask(private val thing: Thing, private val tx: 
             val attributeNodeID = vertexGenerator.things[attribute.iid]
             if (attributeNodeID != null) {
                 responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = attributeNodeID,
-                    label = "has", inferred = isEdgeInferred))
+                    encoding = HAS, label = "has", inferred = isEdgeInferred))
             } else {
                 incompleteEdges.getOrPut(attribute.iid) { mutableListOf() }
                     .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING,
-                        label = "has", inferred = isEdgeInferred))
+                        encoding = HAS, label = "has", inferred = isEdgeInferred))
             }
         }
     }
@@ -312,10 +315,12 @@ private class LoadPlayableRolesTask(private val thingType: ThingType.Remote, ver
         thingType.plays.parallel().forEach { roleType ->
             val relationTypeNodeID = vertexGenerator.types[roleType.label.scope().get()]
             if (relationTypeNodeID != null) {
-                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = relationTypeNodeID, target = vertex.id, label = roleType.label.name()))
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = relationTypeNodeID,
+                    target = vertex.id, encoding = PLAYS, label = roleType.label.name()))
             } else {
                 incompleteEdges.getOrPut(roleType.label.scope().get()) { mutableListOf() }
-                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = INCOMING, label = roleType.label.name()))
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = INCOMING,
+                        encoding = PLAYS, label = roleType.label.name()))
             }
         }
     }
@@ -330,10 +335,12 @@ private class LoadOwnedAttributeTypesTask(private val thingType: ThingType.Remot
         thingType.owns.parallel().forEach { attributeType ->
             val attributeTypeNodeID = vertexGenerator.types[attributeType.label.name()]
             if (attributeTypeNodeID != null) {
-                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = attributeTypeNodeID, label = "owns"))
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id,
+                    target = attributeTypeNodeID, encoding = OWNS, label = "owns"))
             } else {
                 incompleteEdges.getOrPut(attributeType.label.name()) { mutableListOf() }
-                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "owns"))
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING,
+                        encoding = OWNS, label = "owns"))
             }
         }
     }
@@ -348,10 +355,12 @@ private class LoadSupertypeTask(private val thingType: ThingType.Remote, vertex:
         thingType.supertype?.let { supertype ->
             val supertypeNodeID = vertexGenerator.types[supertype.label.name()]
             if (supertypeNodeID != null) {
-                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = supertypeNodeID, label = "sub"))
+                responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = vertex.id, target = supertypeNodeID,
+                    encoding = SUB, label = "sub"))
             } else {
                 incompleteEdges.getOrPut(supertype.label.name()) { mutableListOf() }
-                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING, label = "sub"))
+                    .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = vertex.id, direction = OUTGOING,
+                        encoding = SUB, label = "sub"))
             }
         }
     }
