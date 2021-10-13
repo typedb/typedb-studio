@@ -6,6 +6,8 @@ import com.vaticle.force.graph.ForceSimulation
 import com.vaticle.force.graph.Link
 import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.ManyBodyForce
+import com.vaticle.force.graph.XForce
+import com.vaticle.force.graph.YForce
 
 class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulation() {
 
@@ -25,6 +27,8 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
 //            }
 //        })
         force("charge", ManyBodyForce(nodes().values, -100.0))
+        force("x", XForce(nodes().values, 0.0, 0.05))
+        force("y", YForce(nodes().values, 0.0, 0.05))
         alpha(1.0)
         alphaTarget(0.0)
         alphaMin(0.01)

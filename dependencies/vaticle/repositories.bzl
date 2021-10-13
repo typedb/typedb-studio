@@ -29,15 +29,15 @@ def vaticle_dependencies():
 #    )
 
 def vaticle_force_graph():
-    git_repository(
-        name = "vaticle_force_graph",
-        remote = "https://github.com/vaticle/force-graph",
-        commit = "52f1327d90148f0acc5a46293cecca856e06805a",
-    )
-#    native.local_repository(
+#    git_repository(
 #        name = "vaticle_force_graph",
-#        path = "../force-graph",
+#        remote = "https://github.com/vaticle/force-graph",
+#        commit = "52f1327d90148f0acc5a46293cecca856e06805a",
 #    )
+    native.local_repository(
+        name = "vaticle_force_graph",
+        path = "../force-graph",
+    )
 
 def vaticle_typedb_client_java():
     git_repository(
