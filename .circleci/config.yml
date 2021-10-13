@@ -22,7 +22,7 @@ commands:
 
   install-bazel-linux:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/graknlabs/dependencies/master/tool/bazelinstall/linux.sh
+      - run: curl -OL https://raw.githubusercontent.com/vaticle/dependencies/master/tool/bazelinstall/linux.sh
       - run: bash ./linux.sh && rm ./linux.sh
 
   install-bazel-mac:
@@ -138,7 +138,7 @@ jobs:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
-      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/graknlabs/workbase $CIRCLE_BRANCH
+      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/vaticle/typedb-studio.git $CIRCLE_BRANCH
 
 workflows:
   release:
