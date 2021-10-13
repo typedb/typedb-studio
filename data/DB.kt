@@ -50,6 +50,7 @@ class DB(val client: DBClient, private val dbName: String) {
         CompletableFuture.allOf(*tasks.toTypedArray()).join()
     }
 
+    // TODO: The complexity of this function is too high - we should create some kind of ConceptMapLoader class
     private fun loadConceptMapAsync(conceptMap: ConceptMap, explanationID: Int? = null): CompletableFuture<Void> {
         val tasks: MutableList<CompletableFuture<Unit>> = mutableListOf()
         conceptMap.map().entries.parallelStream().forEach { (varName: String, concept: Concept) ->
@@ -57,7 +58,6 @@ class DB(val client: DBClient, private val dbName: String) {
                 val thing = concept.asThing()
                 val vertexID: Int = vertexGenerator.things.computeIfAbsent(thing.iid) {
                     val thingVertex: VertexData = vertexGenerator.generateVertex(thing)
-//                                    println("Added a thing! $thingVertex")
                     responseStream.putVertex(thingVertex)
                     try {
                         if (thing.isInferred) {
@@ -73,6 +73,16 @@ class DB(val client: DBClient, private val dbName: String) {
                         // TODO: Currently we need to catch this exception because not every Inferred concept is
                         //       Explainable. Once that bug is fixed, remove this catch statement.
                         println(e.message)
+                    }
+
+                    thing.type.let { type ->
+                        val typeNodeID = vertexGenerator.types[type.label.name()]
+                        if (typeNodeID != null) {
+                            responseStream.putEdge(EdgeData(vertexGenerator.nextID(), source = thingVertex.id, target = typeNodeID, label = "isa"))
+                        } else {
+                            incompleteTypeEdges.getOrPut(type.label.name()) { mutableListOf() }
+                                .add(IncompleteEdgeData(vertexGenerator.nextID(), vertexID = thingVertex.id, direction = OUTGOING, label = "isa"))
+                        }
                     }
 
                     tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges).supplyAsync()
@@ -185,10 +195,6 @@ class DB(val client: DBClient, private val dbName: String) {
             session?.close()
         }
         return responseStream
-    }
-
-    fun close() {
-        client.close()
     }
 }
 
