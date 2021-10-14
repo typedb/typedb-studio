@@ -188,7 +188,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             .force("x", null)
             .force("y", null)
             .alpha(0.25)
-            .alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
+            .alphaDecay(0.0)
 
         if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.encoding == ROLEPLAYER }) {
             val attributeEdges = typeDBForceSimulation.data.edges
@@ -212,7 +212,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 typeDBForceSimulation.nodes()[it]?.isYFixed = true
             }
             temporarilyFrozenNodeIDs += nodeIDsToFreeze
-            typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.15))
+            typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.25))
         } else {
             typeDBForceSimulation.force("link", null)
         }
@@ -223,11 +223,11 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             node.x(position.x.toDouble())
             node.y(position.y.toDouble())
         }
-        typeDBForceSimulation.alpha(0.2)
     }
 
     fun onVertexDragEnd() {
         typeDBForceSimulation.force("link", null)
+        typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
         temporarilyFrozenNodeIDs.forEach {
             typeDBForceSimulation.nodes()[it]?.isXFixed = false
             typeDBForceSimulation.nodes()[it]?.isYFixed = false
