@@ -258,7 +258,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 selectedVertexNetwork.clear()
             },
             onLogout = {
-                db.client.close()
+                db.client.closeAllSessions()
                 navigator.pushState(workspace.loginForm)
             })
 
