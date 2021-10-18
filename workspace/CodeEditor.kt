@@ -2,6 +2,8 @@ package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.DisposableEffectResult
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -98,5 +100,13 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
         textArea.text = code
         documentListener = createDocumentListener()
         textArea.document.addDocumentListener(documentListener)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            // We need to deallocate this reference, otherwise after logging out and back in, we'll still be attached
+            // to the old, no longer visible instance of RSyntaxTextArea
+            swingComponent = null
+        }
     }
 }
