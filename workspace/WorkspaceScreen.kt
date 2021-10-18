@@ -329,6 +329,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 Row(modifier = Modifier.weight(1F)) {
                     TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
                         vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
+                        hyperedges = typeDBForceSimulation.data.hyperedges,
                         vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
                         metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
                         onZoom = { value -> visualiserScale = value },

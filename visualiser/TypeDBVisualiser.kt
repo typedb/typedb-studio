@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -49,8 +50,8 @@ import kotlin.math.sqrt
 
 @Composable
 fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
-                     vertexExplanations: List<VertexExplanationState>, theme: VisualiserTheme,
-                     metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
+                     hyperedges: List<HyperedgeState>, vertexExplanations: List<VertexExplanationState>,
+                     theme: VisualiserTheme, metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
                      selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
                      selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
                      onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
@@ -165,15 +166,21 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
         val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
 
-        drawLine(
-            start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-            color = color, strokeWidth = devicePixelRatio
-        )
+        val hyperedge = hyperedges.find { it.edgeID == edge.id }
+        val arc = if (hyperedge == null) null
+        else arcThroughPoints(lineSource, hyperedge.position, lineTarget)
 
-        val arrow = arrowhead(
-            from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
-        )
+        if (arc == null) {
+            drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
+                end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+        } else {
+            drawArc(color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
+                topLeft = (arc.topLeft - viewportOffset) * devicePixelRatio, size = arc.size * devicePixelRatio,
+                style = Stroke(width = devicePixelRatio))
+        }
+
+        val arrow = arrowhead(from = lineSource, to = lineTarget, arrowLength = 6F * devicePixelRatio,
+            arrowWidth = 3F * devicePixelRatio)
         if (arrow != null) drawPath(path = arrow, color = color)
     }
 
@@ -188,31 +195,41 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
 
         if (lineSource != null && lineTarget != null) {
-            val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
-            // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
-            val labelRect = Rect(
-                Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
-                Size(edge.label.length * 8F + 4, 14F + 4)
-            )
-            val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
-            if (linePart1Target != null) {
-                drawLine(
-                    start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
-                    color = color, strokeWidth = devicePixelRatio
-                )
-            }
-            val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
-            if (linePart2Source != null) {
-                drawLine(
-                    start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-                    color = color, strokeWidth = devicePixelRatio
-                )
+            val hyperedge = hyperedges.find { it.edgeID == edge.id }
+            val arc = if (hyperedge == null) null
+            else arcThroughPoints(lineSource, hyperedge.position, lineTarget)
 
-                val arrow = arrowhead(
-                    from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-                    arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
+            if (arc == null) {
+                val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
+                // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
+                val labelRect = Rect(
+                    Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
+                    Size(edge.label.length * 8F + 4, 14F + 4)
                 )
-                if (arrow != null) drawPath(path = arrow, color = color)
+                val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
+                if (linePart1Target != null) {
+                    drawLine(
+                        start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
+                        color = color, strokeWidth = devicePixelRatio
+                    )
+                }
+                val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
+                if (linePart2Source != null) {
+                    drawLine(
+                        start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
+                        color = color, strokeWidth = devicePixelRatio
+                    )
+
+                    val arrow = arrowhead(
+                        from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
+                        arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
+                    )
+                    if (arrow != null) drawPath(path = arrow, color = color)
+                }
+            } else {
+                drawArc(color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
+                    topLeft = (arc.topLeft - viewportOffset) * devicePixelRatio, size = arc.size * devicePixelRatio,
+                    style = Stroke(width = devicePixelRatio))
             }
         }
     }
@@ -220,7 +237,10 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     @Composable
     fun drawEdgeLabel(edge: EdgeState) {
         val viewportOffset: Offset = -worldOffset
-        val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
+        val m: Offset = when (val hyperedge = hyperedges.find { it.edgeID == edge.id }) {
+            null -> midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
+            else -> hyperedge.position - viewportOffset
+        }
         val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
         val faded = selectedVertex != null && selectedVertex.id !in listOf(edge.sourceID, edge.targetID)
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
