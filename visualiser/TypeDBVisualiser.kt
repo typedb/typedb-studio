@@ -293,11 +293,11 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 //                        println(closestVertices)
                     },
                     onDragEnd = {
-                        onVertexDragEnd()
+                        if (draggedVertex != null) onVertexDragEnd()
                         draggedVertex = null
                     },
                     onDragCancel = {
-                        onVertexDragEnd()
+                        if (draggedVertex != null) onVertexDragEnd()
                         draggedVertex = null
                     }
                 ) /* onDrag = */ { _, dragAmount: Offset ->
