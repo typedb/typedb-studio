@@ -179,8 +179,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                 style = Stroke(width = devicePixelRatio))
         }
 
-        val arrow = arrowhead(from = lineSource, to = lineTarget, arrowLength = 6F * devicePixelRatio,
-            arrowWidth = 3F * devicePixelRatio)
+        val arrow = arrowhead(from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
+            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
         if (arrow != null) drawPath(path = arrow, color = color)
     }
 
