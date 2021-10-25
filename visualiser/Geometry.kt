@@ -142,7 +142,7 @@ fun rayCircleIntersect(ray: Ray, circle: Circle): Set<Offset> {
             // into a quadratic function of y
             // This yields y^2 - 2by + (b^2 + (x-a)^2 - r^2) = 0
             val x = ray.origin.x
-            val yValues = quadraticRoots(a = 1f, b = 2*b, c = b*b + (x-a)*(x-a) - r*r)
+            val yValues = quadraticRoots(a = 1f, b = -2*b, c = b*b + (x-a)*(x-a) - r*r)
             yValues.map { y -> Offset(x, y) }.toSet()
         }
     }
