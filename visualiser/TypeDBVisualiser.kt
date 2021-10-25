@@ -256,7 +256,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                 if (arcStartAngle == null) println("drawEdgeSegments: arcStartAngle is NULL for edge with label '${edge.label}'")
                 if (arcEndAngle == null) println("drawEdgeSegments: arcEndAngle is NULL for edge with label '${edge.label}'")
                 if (arcStartAngle == null || arcEndAngle == null) return
-                val labelAngle = atan2(y = hyperedge.position.y - fullArc.center.y, x = hyperedge.position.x - fullArc.center.x).normalisedAngle()
+                val labelAngle = (atan2(y = hyperedge.position.y - fullArc.center.y, x = hyperedge.position.x - fullArc.center.x) * 180 / PI)
+                    .toFloat().normalisedAngle()
 
                 val sweepAngle1Unclipped = sweepAngle(from = fullArc.startAngle, to = labelAngle, direction = fullArc.direction)
                 val arcPart1Unclipped = Arc(fullArc.topLeft, fullArc.size, fullArc.startAngle, sweepAngle1Unclipped)
