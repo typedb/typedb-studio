@@ -20,11 +20,11 @@ import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.VertexEncoding.*
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
+import com.vaticle.typeql.lang.query.TypeQLQuery
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
 class DB(val client: DBClient, private val dbName: String) {
@@ -149,6 +149,7 @@ class DB(val client: DBClient, private val dbName: String) {
             vertexGenerator = VertexGenerator()
             CompletableFuture.supplyAsync {
                 try {
+//                    TypeQL.parseQueries<TypeQLQuery>(query).collect(Collectors.toList())
                     loadAnswerStream(tx!!.query().match(query))
                     println("Completed query: $query")
                     responseStream.completed = true

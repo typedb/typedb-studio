@@ -17,7 +17,9 @@
 
 artifacts = [
     "com.fifesoft:rsyntaxtextarea",
+    "junit:junit",
     "org.jetbrains.compose.desktop:desktop-jvm",
+    "org.jetbrains.kotlin:kotlin-test",
     "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",

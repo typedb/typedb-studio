@@ -1,22 +1,68 @@
 package com.vaticle.typedb.studio.visualiser
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
-data class Ray(val origin: Offset, val directionVector: Offset)
+data class Ray(val origin: Offset, val directionVector: Offset) {
+    @Stable
+    val isVertical: Boolean
+    get() = directionVector.x == 0f
 
-data class Line(val from: Offset, val to: Offset)
+    @Stable
+    val gradient: Float
+    get() = if (!isVertical) directionVector.y / directionVector.x else Float.POSITIVE_INFINITY
+
+    @Stable
+    val yIntercept: Float
+    // Let origin be (x0,y0) and directionVector be (x',y'), then the ray equation is (x,y) = (x0+vx',y0+vy')
+    // At the y-intercept, x0+vx'=0 so v=-x0/x'. Substituting this in gives y = y0 - x0*y'/x'
+    get() = if (!isVertical) origin.y - (origin.x * directionVector.y) / directionVector.x else Float.NaN
+}
+
+data class Line(val from: Offset, val to: Offset) {
+    @Stable
+    fun toRay(): Ray = Ray(origin = from, directionVector = to - from)
+}
+
+data class Circle(val x: Float, val y: Float, val r: Float)
 
 data class Ellipse(val x: Float, val y: Float, /** half-width */ val hw: Float, /** half-height */ val hh: Float)
 
-data class Arc(val topLeft: Offset, val size: Size, val startAngle: Float, val sweepAngle: Float)
+data class Arc(val topLeft: Offset, val size: Size, val startAngle: Float, val sweepAngle: Float) {
+    @Stable
+    val center: Offset
+    get() = topLeft + Offset(x = size.width / 2, y = size.height / 2)
+
+    @Stable
+    val direction: AngularDirection
+    get() = if (sweepAngle > 0) AngularDirection.Clockwise else AngularDirection.CounterClockwise
+
+    @Stable
+    val endAngle: Float
+    get() = (startAngle + sweepAngle).normalisedAngle()
+
+    @Stable
+    fun toCircle(): Circle {
+        if (size.height == 0f || size.width / size.height !in 0.999f..1.001f) {
+            throw IllegalStateException("toCircle: width and height are different, so this arc is not circular")
+        }
+        return Circle(x = center.x, y = center.y, r = size.height / 2f)
+    }
+}
+
+enum class AngularDirection {
+    Clockwise,
+    CounterClockwise
+}
 
 fun midpoint(from: Offset, to: Offset): Offset {
     return Offset((from.x + to.x) / 2, (from.y + to.y) / 2)
@@ -61,26 +107,104 @@ fun lineIntersect(line1: Line, line2: Line, infiniteLength: Boolean = false): Of
 }
 
 /**
- * Find intersection point of a line and an ellipse
+ * Return all roots of an equation of the form ax^2 + bx + c = 0, where a is nonzero
  */
-fun lineArcIntersect(line: Line, arc: Arc): Collection<Offset> {
-    var px = line.to.x - line.from.x; var py = line.to.y - line.from.y
-    val x = arc.topLeft.x + arc.size.width / 2; val y = arc.topLeft.y + arc.size.height / 2
-    val a = arc.size.width / 2; val b = arc.size.height // ellipse has centre (x,y) and semiaxes of lengths [a,b]
-
-    // translate structure to centre ellipse at origin
-    px -= x
-    py -= y
-
-    // compute intersection points: +-(x0, y0)
-    val x0 = (a * b * px) / sqrt(a*a * py*py + b*b * px*px)
-    val y0 = (a * b * py) / sqrt(a*a * py*py + b*b * px*px)
-
-    val lineEllipseIntersects = listOf(Offset(x0+x, y0+y))
-    return lineEllipseIntersects.filter {
-        // TODO
-        return@filter true
+fun quadraticRoots(a: Float, b: Float, c: Float): Set<Float> {
+    if (a == 0f) throw IllegalArgumentException("quadraticRoots: a must be nonzero")
+    val discriminant = b*b - 4f*a*c
+    return when {
+        discriminant > 0 -> {
+            val sqrtDiscriminant = sqrt(discriminant)
+            setOf((-b + sqrtDiscriminant) / (2f*a), (-b - sqrtDiscriminant) / (2f*a))
+        }
+        discriminant < 0 -> emptySet()
+        else -> setOf(-b / (2f*a))
     }
+}
+
+/**
+ * Find intersection points of a ray and a circle
+ */
+fun rayCircleIntersect(ray: Ray, circle: Circle): Set<Offset> {
+    val (a, b, r) = listOf(circle.x, circle.y, circle.r)
+    return when (ray.isVertical) {
+        false -> {
+            // The equations of the ray and circle are (x - a)^2 + (y - b)^2 = r^2 and y = mx + c
+            // Substituting y = mx + c into (x - a)^2 + (y - b)^2 = r^2 gives (x-a)^2 + (mx+c-b)^2 = r^2
+            // Rearranging gives the quadratic: (m^2 + 1)(x^2) + (2(mc-mb-a))x + (a^2 + b^2 + c^2 - r^2 - 2bc) = 0
+            val m = ray.gradient
+            val c = ray.yIntercept
+            val xValues = quadraticRoots(a = m*m + 1, b = 2 * (m*c - m*b - a), c = (a*a + b*b + c*c - r*r - 2*b*c))
+            xValues.map { x -> Offset(x, m*x + c) }.toSet()
+        }
+        true -> {
+            // For a vertical ray, x is just a constant, so we need only rearrange (x - a)^2 + (y - b)^2 = r^2
+            // into a quadratic function of y
+            // This yields y^2 - 2by + (b^2 + (x-a)^2 - r^2) = 0
+            val x = ray.origin.x
+            val yValues = quadraticRoots(a = 1f, b = 2*b, c = b*b + (x-a)*(x-a) - r*r)
+            yValues.map { y -> Offset(x, y) }.toSet()
+        }
+    }
+}
+
+fun min(a: Float, b: Float): Float = a.coerceAtMost(b)
+
+fun max(a: Float, b: Float): Float = a.coerceAtLeast(b)
+
+fun Float.normalisedAngle(): Float {
+    return (this + 7200) % 360
+}
+
+/**
+ * Check if this angle lies within an arc defined by the given start and sweep angles
+ */
+fun Float.isInArcSweep(startAngle: Float, sweepAngle: Float): Boolean {
+    val normalisedAngle = this.normalisedAngle()
+    val normalisedStartAngle = startAngle.normalisedAngle()
+    val normalisedEndAngle = (startAngle + sweepAngle).normalisedAngle()
+    return when (sweepAngle > 0) {
+        true -> {
+            when (normalisedStartAngle < normalisedEndAngle) {
+                true -> normalisedAngle in normalisedStartAngle..normalisedEndAngle
+                false -> normalisedAngle > normalisedStartAngle || normalisedAngle < normalisedEndAngle
+            }
+        }
+        false -> {
+            when (normalisedStartAngle > normalisedEndAngle) {
+                true -> normalisedAngle in normalisedEndAngle..normalisedStartAngle
+                false -> normalisedAngle > normalisedEndAngle || normalisedAngle < normalisedStartAngle
+            }
+        }
+    }
+}
+
+/**
+ * Compute the sweep angle of an arc between two polar-coordinate angles in a specified angular direction
+ */
+fun sweepAngle(from: Float, to: Float, direction: AngularDirection): Float {
+    val fromAngle = from.normalisedAngle()
+    val toAngle = to.normalisedAngle()
+    return when (direction) {
+        AngularDirection.Clockwise -> if (toAngle > fromAngle) toAngle - fromAngle else 360 - toAngle + fromAngle
+        AngularDirection.CounterClockwise -> if (toAngle < fromAngle) toAngle - fromAngle else -(360 - toAngle + fromAngle)
+    }
+}
+
+/**
+ * Find intersection angles of an arc with a line
+ */
+fun lineArcIntersectAngles(line: Line, arc: Arc): List<Float> {
+    val ray = line.toRay()
+    val circle = arc.toCircle()
+    val rayCircleIntersections = rayCircleIntersect(ray, circle)
+
+    val lineRect = Rect(left = min(line.from.x, line.to.x) - 1f, top = min(line.from.y, line.to.y) - 1f,
+        right = max(line.from.x, line.to.x) + 1f, bottom = max(line.from.y, line.to.y) + 1f)
+    return rayCircleIntersections
+        .filter { lineRect.contains(it) }
+        .map { (atan2(y = it.y - circle.y, x = it.x - circle.x) * 180 / PI).toFloat().normalisedAngle() }
+        .filter { it.isInArcSweep(arc.startAngle, arc.sweepAngle) }
 }
 
 /**
@@ -106,6 +230,15 @@ fun rectIncomingLineIntersect(sourcePoint: Offset, rect: Rect): Offset? {
     return null
 }
 
+fun Rect.lines(): List<Line> = listOf(Line(bottomLeft, topLeft), Line(topLeft, topRight), Line(topRight, bottomRight), Line(bottomRight, bottomLeft))
+
+/**
+ * Find intersection angles of an arc with the edges of `rect`
+ */
+fun rectArcIntersectAngles(arc: Arc, rect: Rect): List<Float> {
+    return rect.lines().flatMap { lineArcIntersectAngles(line = it, arc = arc) }
+}
+
 /**
  * Find intersection point of a line from `sourcePoint` to the centre of `diamond`, with the edge of `diamond`
  */
@@ -120,6 +253,16 @@ fun diamondIncomingLineIntersect(sourcePoint: Offset, diamond: Rect): Offset? {
         else Line(from = diamond.bottomCenter, to = diamond.centerLeft)
 
     return lineIntersect(incomingLine, edgeToCheck)
+}
+
+fun Rect.diamondLines(): List<Line> = listOf(Line(centerLeft, topCenter), Line(topCenter, centerRight),
+    Line(centerRight, bottomCenter), Line(bottomCenter, centerLeft))
+
+/**
+ * Find intersection angles of an arc with the edges of `diamond`
+ */
+fun diamondArcIntersectAngles(arc: Arc, diamond: Rect): List<Float> {
+    return diamond.diamondLines().flatMap { lineArcIntersectAngles(line = it, arc = arc) }
 }
 
 /**
@@ -181,6 +324,7 @@ fun arcThroughPoints(point1: Offset, point2: Offset, point3: Offset): Arc? {
     val topLeft = centrePoint - Offset(x = radius, y = radius)
     val size = Size(radius * 2, radius * 2)
 
+    // Now determine if we want a clockwise or counter-clockwise arc from point 1
     // (t1, t2, t3) are the angles in polar coordinates of tangents at (point1, point2, point3)
     val point1FromCentre = point1 - centrePoint
     val t1 = (atan2(point1FromCentre.y, point1FromCentre.x) * 180 / PI).toFloat()
@@ -189,12 +333,8 @@ fun arcThroughPoints(point1: Offset, point2: Offset, point3: Offset): Arc? {
     val point3FromCentre = point3 - centrePoint
     val t3 = (atan2(point3FromCentre.y, point3FromCentre.x) * 180 / PI).toFloat()
 
-    // Now determine if we want a clockwise or counter-clockwise arc from point 1
-    return when ((t2 in t1..t3) || (t3 in t2..t1) || (t1 in t3..t2)) {
-        // We need sweepAngle > 0 if and only if the arc is going clockwise
-        true -> Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = if (t3 >= t1) t3 - t1 else t3 - t1 + 360)
-        false -> Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = if (t1 >= t3) t3 - t1 else t3 - t1 - 360)
-    }
+    val direction = if ((t2 in t1..t3) || (t3 in t2..t1) || (t1 in t3..t2)) AngularDirection.Clockwise else AngularDirection.CounterClockwise
+    return Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = sweepAngle(from = t1, to = t3, direction = direction))
 }
 
 fun arrowhead(from: Offset, to: Offset, arrowLength: Float, arrowWidth: Float): Path? {
