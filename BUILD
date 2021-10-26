@@ -39,6 +39,14 @@ kt_jvm_library(
         "//login",
         "//navigation",
         "//workspace",
+
+        # Maven
+        # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
+        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
     ],
     resources = [
         "//resources:logback-xml",

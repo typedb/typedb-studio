@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.ui.elements.IconSize.*
+import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -70,7 +71,7 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
                     // This is used to keep the DropdownMenu the same width as the TextField
                     textfieldSize = coordinates.size.toSize()
                 }, readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
-                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerIcon = PointerIcon.Default)
+                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerHoverIcon = PointerIcon(Cursor(Cursor.HAND_CURSOR)))
         }
 
         Row {
