@@ -119,22 +119,22 @@ fun main(args: Array<String>) {
             for (file in File("src").listFilesRecursively()) {
                 if (!file.isFile) continue
 
-                // Some JARs contain unsigned `.jnilib` files, which we can extract, sign and repackage
-                if (file.extension == "jar" && file.name.startsWith("io-netty-netty-")) {
-                    var containsJnilib = false
+                // Some JARs contain unsigned `.jnilib` and `.dylib` files, which we can extract, sign and repackage
+                if (file.extension == "jar" && (file.name.startsWith("io-netty-netty-") || "skiko-jvm-runtime" in file.name)) {
+                    var containsNativeLib = false
                     val tmpDir = Path.of("tmp")
                     Files.createDirectory(tmpDir)
                     runShell(listOf("jar", "xf", "../${file.path}"), baseDir = tmpDir).outputString()
 
                     val jarContents = File("tmp").listFilesRecursively()
                     for (jarEntry: File in jarContents) {
-                        if (jarEntry.extension == "jnilib") {
-                            containsJnilib = true
+                        if (jarEntry.extension in listOf("jnilib", "dylib")) {
+                            containsNativeLib = true
                             signFile(jarEntry, keychainName)
                         }
                     }
 
-                    if (containsJnilib) {
+                    if (containsNativeLib) {
                         file.setWritable(true)
                         file.delete()
                         runShell(listOf("jar", "cf", file.name, "tmp"))
