@@ -39,10 +39,10 @@ fun ConceptPanel(vertex: VertexState?, onCollapse: () -> Unit, modifier: Modifie
                     if (concept.isAttribute) listOf("Value", concept.asAttribute().valueString()) else null,
                     if (concept.isAttribute) listOf("Value Type", concept.asAttribute().type.valueType.schemaString()) else null,
                     if (concept.isAttributeType) listOf("Value Type", concept.asAttributeType().valueType.schemaString()) else null,
-                    if (concept.isThing) listOf("Internal ID", "123b548m565") else null,
+                    if (concept.isThing) listOf("Internal ID", concept.asThing().iid) else null,
                 )
 
-                Table(rows = rows, columnWeights = listOf(1f, 2f), modifier = Modifier.weight(1f))
+                Table(rows = rows, columnWeights = listOf(3f, 8f), modifier = Modifier.weight(1f))
             }
 
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}

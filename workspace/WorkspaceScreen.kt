@@ -359,7 +359,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             if (showQuerySettingsPanel || showConceptPanel) {
                 Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-                Column(modifier = Modifier.fillMaxHeight().requiredWidth(250.dp).background(StudioTheme.colors.background)) {
+                Column(modifier = Modifier.fillMaxHeight().requiredWidth(285.dp).background(StudioTheme.colors.background)) {
                     if (showQuerySettingsPanel) {
                         QuerySettingsPanel(settings = querySettings, onSettingsChange = { querySettings = it },
                             onCollapse = { showQuerySettingsPanel = false }, modifier = Modifier.weight(1f))
