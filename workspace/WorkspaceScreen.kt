@@ -27,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -36,10 +35,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import com.vaticle.force.graph.Link
+import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.DB
+import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.navigation.Navigator
 import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
@@ -49,7 +51,6 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import com.vaticle.typedb.studio.ui.elements.TabHighlight
-import com.vaticle.typedb.studio.ui.elements.TabOrientation
 import com.vaticle.typedb.studio.visualiser.SimulationMetrics
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
@@ -58,7 +59,6 @@ import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
 import kotlinx.coroutines.launch
 import java.awt.FileDialog
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FilenameFilter
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -95,6 +95,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
     var showQuerySettingsPanel by remember { mutableStateOf(true) }
     var showConceptPanel by remember { mutableStateOf(true) }
     var querySettings by remember { mutableStateOf(QuerySettings()) }
+    var temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
 
     val db = requireNotNull(workspace.loginForm.db)
     val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
@@ -162,6 +163,78 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
         }
     }
 
+    fun onSelectVertex(vertex: VertexState?) {
+        selectedVertex = vertex
+        selectedVertexNetwork.clear()
+        if (vertex != null) {
+            val verticesToAdd = mutableSetOf(vertex)
+            val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
+            typeDBForceSimulation.data.edges.forEach {
+                if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
+                else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
+            }
+            selectedVertexNetwork += verticesToAdd
+        }
+    }
+
+    fun onVertexDragStart(vertex: VertexState) {
+        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
+            node.isXFixed = true
+            node.isYFixed = true
+        }
+        typeDBForceSimulation
+            .force("charge", null)
+            .force("center", null)
+            .force("x", null)
+            .force("y", null)
+            .alpha(0.25)
+            .alphaDecay(0.0)
+
+        if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.encoding == ROLEPLAYER }) {
+            val attributeEdges = typeDBForceSimulation.data.edges
+                .filter { it.sourceID == vertex.id && it.encoding == HAS }
+            val attributeNodeIDs = attributeEdges.map { it.targetID }
+            val roleplayerEdges = typeDBForceSimulation.data.edges
+                .filter { it.targetID == vertex.id && it.encoding == ROLEPLAYER }
+                .map { it.sourceID }
+                .flatMap { relationNodeID -> typeDBForceSimulation.data.edges
+                    .filter { it.sourceID == relationNodeID && it.encoding == ROLEPLAYER } }
+            val relationNodeIDs = roleplayerEdges.map { it.sourceID }
+            val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
+            val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
+            val nodes = nodeIDs.map { typeDBForceSimulation.nodes()[it] }
+            val links = (attributeEdges + roleplayerEdges)
+                .map { Link(typeDBForceSimulation.nodes()[it.sourceID], typeDBForceSimulation.nodes()[it.targetID]) }
+            val nodeIDsToFreeze = roleplayerNodeIDs
+                .filter { it != vertex.id && typeDBForceSimulation.nodes()[it]?.isXFixed == false }
+            nodeIDsToFreeze.forEach {
+                typeDBForceSimulation.nodes()[it]?.isXFixed = true
+                typeDBForceSimulation.nodes()[it]?.isYFixed = true
+            }
+            temporarilyFrozenNodeIDs += nodeIDsToFreeze
+            typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.25))
+        } else {
+            typeDBForceSimulation.force("link", null)
+        }
+    }
+
+    fun onVertexDragMove(vertex: VertexState, position: Offset) {
+        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
+            node.x(position.x.toDouble())
+            node.y(position.y.toDouble())
+        }
+    }
+
+    fun onVertexDragEnd() {
+        typeDBForceSimulation.force("link", null)
+        typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
+        temporarilyFrozenNodeIDs.forEach {
+            typeDBForceSimulation.nodes()[it]?.isXFixed = false
+            typeDBForceSimulation.nodes()[it]?.isYFixed = false
+        }
+        temporarilyFrozenNodeIDs.clear()
+    }
+
     Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = db.name,
             onDBNameChange = { dbName ->
@@ -185,7 +258,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 selectedVertexNetwork.clear()
             },
             onLogout = {
-                db.client.close()
+                db.client.closeAllSessions()
                 navigator.pushState(workspace.loginForm)
             })
 
@@ -256,42 +329,17 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 Row(modifier = Modifier.weight(1F)) {
                     TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
                         vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
+                        hyperedges = typeDBForceSimulation.data.hyperedges,
                         vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
                         metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
                         onZoom = { value -> visualiserScale = value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
-                        selectedVertex = selectedVertex, onSelectVertex = { vertex ->
-                            selectedVertex = vertex
-                            selectedVertexNetwork.clear()
-                            if (vertex != null) {
-                                val verticesToAdd = mutableSetOf(vertex)
-                                val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
-                                typeDBForceSimulation.data.edges.forEach {
-                                    if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
-                                    else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
-                                }
-                                selectedVertexNetwork += verticesToAdd
-                            }
-                        }, selectedVertexNetwork = selectedVertexNetwork,
-                        onVertexDragStart = { vertex: VertexState ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-                                node.isXFixed = true
-                                node.isYFixed = true
-                            }
-                            typeDBForceSimulation
-                                .force("link", null)
-                                .force("charge", null)
-                                .force("center", null)
-                                .alpha(0.25)
-                                .alphaDecay(0.0)
-                        }, onVertexDragMove = { vertex: VertexState, position: Offset ->
-                            typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-                                node.x(position.x.toDouble())
-                                node.y(position.y.toDouble())
-                            }
-                        }, onVertexDragEnd = {
-                            typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
-                        })
+                        selectedVertex = selectedVertex,
+                        onSelectVertex = ::onSelectVertex,
+                        selectedVertexNetwork = selectedVertexNetwork,
+                        onVertexDragStart = ::onVertexDragStart,
+                        onVertexDragMove = ::onVertexDragMove,
+                        onVertexDragEnd = ::onVertexDragEnd)
                 }
 
 //                Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
@@ -311,7 +359,7 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             if (showQuerySettingsPanel || showConceptPanel) {
                 Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-                Column(modifier = Modifier.fillMaxHeight().requiredWidth(250.dp).background(StudioTheme.colors.background)) {
+                Column(modifier = Modifier.fillMaxHeight().requiredWidth(285.dp).background(StudioTheme.colors.background)) {
                     if (showQuerySettingsPanel) {
                         QuerySettingsPanel(settings = querySettings, onSettingsChange = { querySettings = it },
                             onCollapse = { showQuerySettingsPanel = false }, modifier = Modifier.weight(1f))

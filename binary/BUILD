@@ -14,19 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+#
 
-artifacts = [
-    "com.fifesoft:rsyntaxtextarea",
-    "junit:junit",
-    "org.jetbrains.compose.desktop:desktop-jvm",
-    "org.jetbrains.compose.foundation:foundation-desktop",
-    "org.jetbrains.compose.foundation:foundation-layout-desktop",
-    "org.jetbrains.compose.ui:ui-desktop",
-    "org.jetbrains.compose.ui:ui-geometry-desktop",
-    "org.jetbrains.kotlin:kotlin-test",
-    "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",
-    "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64",
-    "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",
-    "org.slf4j:slf4j-api",
-    "org.zeroturnaround:zt-exec",
-]
+load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz")
+
+exports_files(["typedb-studio"])
+
+assemble_targz(
+    name = "assemble-bash-targz",
+    additional_files = {
+        "//binary:typedb-studio": 'typedb-studio',
+    },
+    permissions = {
+        "typedb-studio": "0755",
+    },
+    visibility = ["//visibility:public"]
+)

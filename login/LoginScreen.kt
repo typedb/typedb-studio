@@ -104,9 +104,10 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
         val dbClient = requireNotNull(form.dbClient)
         val db = requireNotNull(form.db)
 
-        if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(form))
-        else {
-            val e = TypeDBClientException(ErrorMessage.Client.DB_DOES_NOT_EXIST, db.name)
+        try {
+            if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(form))
+            else throw TypeDBClientException(ErrorMessage.Client.DB_DOES_NOT_EXIST, db.name)
+        } catch (e: Exception) {
             snackbarCoroutineScope.launch {
                 println(e.toString())
                 snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)

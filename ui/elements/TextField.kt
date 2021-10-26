@@ -23,12 +23,14 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
+import com.vaticle.typedb.studio.ui.elements.StudioTextFieldVariant.*
+import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -36,19 +38,28 @@ fun StudioTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    variant: StudioTextFieldVariant = OUTLINED,
     singleLine: Boolean = true,
+    maxLines: Int = 1,
     readOnly: Boolean = false,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
     placeholderText: String = "",
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    // TODO: Currently pointerHoverIcon has no effect - see https://github.com/JetBrains/compose-jb/issues/1315
+    pointerHoverIcon: PointerIcon = PointerIcon(Cursor(Cursor.TEXT_CURSOR)),
     textStyle: TextStyle) {
 
     val focusManager = LocalFocusManager.current
+    var basicTextFieldModifier = modifier
 
-    BasicTextField(modifier = modifier.background(MaterialTheme.colors.surface, MaterialTheme.shapes.small)
-        .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small)
-        .pointerIcon(if (readOnly) PointerIcon.Default else PointerIcon.Text)
+    if (variant == OUTLINED) {
+        basicTextFieldModifier = basicTextFieldModifier
+            .background(MaterialTheme.colors.surface, MaterialTheme.shapes.small)
+            .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small)
+    }
+
+    BasicTextField(modifier = basicTextFieldModifier.pointerHoverIcon(pointerHoverIcon)
         .onPreviewKeyEvent { event: KeyEvent ->
             if (event.nativeKeyEvent.id == java.awt.event.KeyEvent.KEY_RELEASED) return@onPreviewKeyEvent true
             when (event.key) {
@@ -63,6 +74,7 @@ fun StudioTextField(
         onValueChange = onValueChange,
         readOnly = readOnly,
         singleLine = singleLine,
+        maxLines = maxLines,
         cursorBrush = SolidColor(MaterialTheme.colors.primary),
         textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface),
         visualTransformation = visualTransformation,
@@ -72,7 +84,7 @@ fun StudioTextField(
                     leadingIcon()
                     Spacer(Modifier.width(4.dp))
                 }
-                Box(modifier.offset(y = 4.dp).weight(1f)) {
+                Box(modifier.offset(y = if (variant == UNDECORATED) 0.dp else 4.dp).weight(1f)) {
                     if (value.isEmpty()) Text(
                         placeholderText,
                         style = textStyle.copy(color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f))
@@ -86,4 +98,9 @@ fun StudioTextField(
             }
         }
     )
+}
+
+enum class StudioTextFieldVariant {
+    OUTLINED,
+    UNDECORATED
 }

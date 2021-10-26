@@ -20,11 +20,25 @@ enum class VertexEncoding(val displayName: String) {
     ATTRIBUTE("Attribute"),
 }
 
-data class EdgeData(val id: Int, val source: Int, val target: Int, val label: String,
+data class EdgeData(val id: Int, val source: Int, val target: Int, val encoding: EdgeEncoding, val label: String,
                     val inferred: Boolean = false)
 
-data class IncompleteEdgeData(val id: Int, val vertexID: Int, val direction: EdgeDirection, val label: String,
-                              val inferred: Boolean = false)
+enum class EdgeEncoding {
+    // Type edges
+    SUB,
+    OWNS,
+    PLAYS,
+
+    // Thing edges
+    HAS,
+    ROLEPLAYER,
+
+    // Thing-to-type edges
+    ISA,
+}
+
+data class IncompleteEdgeData(val id: Int, val vertexID: Int, val direction: EdgeDirection, val encoding: EdgeEncoding,
+                              val label: String, val inferred: Boolean = false)
 
 enum class EdgeDirection {
     OUTGOING,

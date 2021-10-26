@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxColors
@@ -37,7 +38,7 @@ fun QuerySettingsPanel(settings: QuerySettings, onSettingsChange: (settings: Que
                     val toggleReasoning = { onSettingsChange(settings.copy(enableReasoning = !settings.enableReasoning)) }
                     Row(modifier = Modifier.clickable { toggleReasoning() }, verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = settings.enableReasoning, onCheckedChange = { toggleReasoning() },
-                            modifier = Modifier.scale(.75f),
+                            modifier = Modifier.scale(.75f).size(21.dp),
                             colors = CheckboxDefaults.colors(checkedColor = StudioTheme.colors.icon))
                         Spacer(Modifier.width(4.dp))
                         Text("Enable Reasoning and Explanations", style = StudioTheme.typography.body1)

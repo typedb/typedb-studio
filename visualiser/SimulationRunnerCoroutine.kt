@@ -4,6 +4,7 @@ import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
+import com.vaticle.force.graph.Node
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.data.GraphData
 import com.vaticle.typedb.studio.data.QueryResponseStream
@@ -64,6 +65,12 @@ suspend fun simulationRunnerCoroutine(simulation: TypeDBForceSimulation, dataStr
             simulation.data.edges.forEach {
                 it.sourcePosition = verticesByID[it.sourceID]!!.position
                 it.targetPosition = verticesByID[it.targetID]!!.position
+            }
+            val hyperedgeNodesByNodeID: Map<Int, Node> = simulation.hyperedgeNodes.values.associateBy { it.index() }
+            simulation.data.hyperedges.forEach {
+                val hyperedgeNode = hyperedgeNodesByNodeID[it.hyperedgeNodeID]
+                    ?: throw IllegalStateException("Received bad simulation data: no hyperedge node found with ID ${it.hyperedgeNodeID}!")
+                it.position = Offset(hyperedgeNode.x().toFloat(), hyperedgeNode.y().toFloat())
             }
         }
     }

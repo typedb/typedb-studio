@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +33,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -44,13 +46,19 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
-                     vertexExplanations: List<VertexExplanationState>, theme: VisualiserTheme,
-                     metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
+                     hyperedges: List<HyperedgeState>, vertexExplanations: List<VertexExplanationState>,
+                     theme: VisualiserTheme, metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
                      selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
                      selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
                      onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
@@ -165,54 +173,135 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
         val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
 
-        drawLine(
-            start = (lineSource - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-            color = color, strokeWidth = devicePixelRatio
-        )
+        val hyperedge = hyperedges.find { it.edgeID == edge.id }
+        val arc = if (hyperedge == null) null else arcThroughPoints(lineSource, hyperedge.position, lineTarget)
 
-        val arrow = arrowhead(
-            from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
-        )
+        when {
+            arc == null -> {
+                drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
+                    end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+            }
+            abs(arc.sweepAngle) < 270 -> {
+                drawArc(color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
+                    topLeft = (arc.topLeft - viewportOffset) * devicePixelRatio, size = arc.size * devicePixelRatio,
+                    style = Stroke(width = devicePixelRatio))
+            }
+            else -> {
+                drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
+                    end = (hyperedge!!.position - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+                drawLine(start = (hyperedge.position - viewportOffset) * devicePixelRatio,
+                    end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+            }
+        }
+
+        val arrow = arrowhead(from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
+            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
         if (arrow != null) drawPath(path = arrow, color = color)
+    }
+
+    fun DrawScope.drawArrowSegment1(lineSource: Offset, labelRect: Rect, color: Color) {
+        val viewportOffset: Offset = -worldOffset
+        val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
+        if (linePart1Target != null) {
+            drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
+                end = (linePart1Target - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+        }
+    }
+
+    fun DrawScope.drawArrowSegment2(labelRect: Rect, lineTarget: Offset, color: Color) {
+        val viewportOffset: Offset = -worldOffset
+        val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
+        if (linePart2Source != null) {
+            drawLine(start = (linePart2Source - viewportOffset) * devicePixelRatio,
+                end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+
+            val arrow = arrowhead(from = (linePart2Source - viewportOffset) * devicePixelRatio,
+                to = (lineTarget - viewportOffset) * devicePixelRatio,
+                arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
+            if (arrow != null) drawPath(path = arrow, color = color)
+        }
     }
 
     fun DrawScope.drawEdgeSegments(edge: EdgeState) {
         val viewportOffset: Offset = -worldOffset
         val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
         val targetVertex = requireNotNull(verticesByID[edge.targetID])
-        val lineSource = edgeEndpoint(targetVertex, sourceVertex)
-        val lineTarget = edgeEndpoint(sourceVertex, targetVertex)
         val faded = selectedVertex != null && selectedVertex !in listOf(sourceVertex, targetVertex)
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
         val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
 
-        if (lineSource != null && lineTarget != null) {
+        val hyperedge = hyperedges.find { it.edgeID == edge.id }
+        if (hyperedge == null) {
+            val lineSource = edgeEndpoint(targetVertex.position, sourceVertex)
+            val lineTarget = edgeEndpoint(sourceVertex.position, targetVertex)
+            if (lineSource == null || lineTarget == null) return
             val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition)
             // TODO: This Size is an approximation - a Compose equivalent of PixiJS TextMetrics would be more robust
             val labelRect = Rect(
                 Offset(m.x - edge.label.length * 4 - 2, m.y - 7 - 2),
-                Size(edge.label.length * 8F + 4, 14F + 4)
-            )
-            val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
-            if (linePart1Target != null) {
-                drawLine(
-                    start = (lineSource - viewportOffset) * devicePixelRatio, end = (linePart1Target - viewportOffset) * devicePixelRatio,
-                    color = color, strokeWidth = devicePixelRatio
-                )
-            }
-            val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
-            if (linePart2Source != null) {
-                drawLine(
-                    start = (linePart2Source - viewportOffset) * devicePixelRatio, end = (lineTarget - viewportOffset) * devicePixelRatio,
-                    color = color, strokeWidth = devicePixelRatio
-                )
+                Size(edge.label.length * 8F + 4, 14F + 4))
+            drawArrowSegment1(lineSource, labelRect, color)
+            drawArrowSegment2(labelRect, lineTarget, color)
+        } else /* if (hyperedge != null) */ {
+            val fullArc = arcThroughPoints(sourceVertex.position, hyperedge.position, targetVertex.position)
+            val labelRect = Rect(
+                Offset(hyperedge.position.x - edge.label.length * 4 - 2, hyperedge.position.y - 7 - 2),
+                Size(edge.label.length * 8F + 4, 14F + 4))
+            val lineSource = edgeEndpoint(labelRect.center, sourceVertex)
+            val lineTarget = edgeEndpoint(labelRect.center, targetVertex)
+            if (fullArc != null) {
+                val arcStartAngle = hyperedgeEndAngle(fullArc, sourceVertex)
+                val arcEndAngle = hyperedgeEndAngle(fullArc, targetVertex)
+                if (arcStartAngle == null) println("drawEdgeSegments: arcStartAngle is NULL for edge with label '${edge.label}'")
+                if (arcEndAngle == null) println("drawEdgeSegments: arcEndAngle is NULL for edge with label '${edge.label}'")
+                if (arcStartAngle == null || arcEndAngle == null) return
+                val labelAngle = atan2(y = hyperedge.position.y - fullArc.center.y, x = hyperedge.position.x - fullArc.center.x)
+                    .radToDeg().normalisedAngle()
 
-                val arrow = arrowhead(
-                    from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-                    arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio
-                )
-                if (arrow != null) drawPath(path = arrow, color = color)
+                val sweepAngle1Unclipped = sweepAngle(from = fullArc.startAngle, to = labelAngle, direction = fullArc.direction)
+                val arcPart1Unclipped = Arc(fullArc.topLeft, fullArc.size, fullArc.startAngle, sweepAngle1Unclipped)
+                val arcPart1LabelIntersectAngles = rectArcIntersectAngles(arcPart1Unclipped, labelRect)
+                if (arcPart1LabelIntersectAngles.isNotEmpty()) {
+                    // We expect a single point of intersection
+                    val arcPart1EndAngle = arcPart1LabelIntersectAngles[0]
+                    val sweepAngle1 = sweepAngle(from = arcStartAngle, to = arcPart1EndAngle, direction = fullArc.direction)
+                    if (abs(sweepAngle1) < 180) {
+                        drawArc(color = color, startAngle = arcStartAngle, sweepAngle = sweepAngle1, useCenter = false,
+                            topLeft = (fullArc.topLeft - viewportOffset) * devicePixelRatio, size = fullArc.size * devicePixelRatio,
+                            style = Stroke(width = devicePixelRatio))
+                    } else if (lineSource != null) {
+                        // This typically means the edge label has reached a spot that would be awkward to draw an arc through
+                        drawArrowSegment1(lineSource, labelRect, color)
+                    }
+                    // If both conditions fail, typically the edge label is inside the vertex and no edge can be drawn
+                }
+
+                val sweepAngle2Unclipped = sweepAngle(from = labelAngle, to = fullArc.endAngle, direction = fullArc.direction)
+                val arcPart2Unclipped = Arc(fullArc.topLeft, fullArc.size, labelAngle, sweepAngle2Unclipped)
+                val arcPart2LabelIntersectAngles = rectArcIntersectAngles(arcPart2Unclipped, labelRect)
+                if (arcPart2LabelIntersectAngles.isNotEmpty()) {
+                    val arcPart2StartAngle = arcPart2LabelIntersectAngles[0]
+                    val sweepAngle2 = sweepAngle(from = arcPart2StartAngle, to = arcEndAngle, direction = fullArc.direction)
+                    if (abs(sweepAngle2) < 180) {
+                        drawArc(color = color, startAngle = arcPart2StartAngle, sweepAngle = sweepAngle2, useCenter = false,
+                            topLeft = (fullArc.topLeft - viewportOffset) * devicePixelRatio, size = fullArc.size * devicePixelRatio,
+                            style = Stroke(width = devicePixelRatio))
+
+                        val arrowTarget = fullArc.offsetAtAngle(arcEndAngle)
+                        val approachAngle = if (fullArc.direction == AngularDirection.Clockwise) (arcEndAngle - 1).normalisedAngle() else (arcEndAngle + 1).normalisedAngle()
+                        val arrowSource = fullArc.offsetAtAngle(approachAngle)
+                        val arrow = arrowhead(from = (arrowSource - viewportOffset) * devicePixelRatio,
+                            to = (arrowTarget - viewportOffset) * devicePixelRatio,
+                            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
+                        if (arrow != null) drawPath(path = arrow, color = color)
+                    } else if (lineTarget != null) {
+                        drawArrowSegment2(labelRect, lineTarget, color)
+                    }
+                }
+            } else /* if (arc == null) */ {
+                // Typically this means the 3 points are almost collinear, so we fall back to line segments
+                if (lineSource != null) drawArrowSegment1(lineSource, labelRect, color)
+                if (lineTarget != null) drawArrowSegment2(labelRect, lineTarget, color)
             }
         }
     }
@@ -220,7 +309,10 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     @Composable
     fun drawEdgeLabel(edge: EdgeState) {
         val viewportOffset: Offset = -worldOffset
-        val m: Offset = midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
+        val m: Offset = when (val hyperedge = hyperedges.find { it.edgeID == edge.id }) {
+            null -> midpoint(edge.sourcePosition, edge.targetPosition) - viewportOffset
+            else -> hyperedge.position - viewportOffset
+        }
         val rect = Rect(Offset(m.x - edge.label.length * 4, m.y - 7), Size(edge.label.length * 8F, 14F))
         val faded = selectedVertex != null && selectedVertex.id !in listOf(edge.sourceID, edge.targetID)
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
@@ -273,11 +365,11 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 //                        println(closestVertices)
                     },
                     onDragEnd = {
-                        onVertexDragEnd()
+                        if (draggedVertex != null) onVertexDragEnd()
                         draggedVertex = null
                     },
                     onDragCancel = {
-                        onVertexDragEnd()
+                        if (draggedVertex != null) onVertexDragEnd()
                         draggedVertex = null
                     }
                 ) /* onDrag = */ { _, dragAmount: Offset ->
@@ -420,23 +512,47 @@ private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, 
 }
 
 /**
- * Find the endpoint of an edge drawn from `source` to `target`
+ * Find the endpoint of an edge drawn from `source` position to `target` vertex
  */
-private fun edgeEndpoint(source: VertexState, target: VertexState): Offset? {
+private fun edgeEndpoint(source: Offset, target: VertexState): Offset? {
     return when (target.encoding) {
         VertexEncoding.ENTITY, VertexEncoding.RELATION, VertexEncoding.ENTITY_TYPE, VertexEncoding.RELATION_TYPE, VertexEncoding.THING_TYPE -> {
             val r = target.rect
             val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
             when (target.encoding) {
-                VertexEncoding.ENTITY, VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE -> rectIncomingLineIntersect(source.position, targetRect)
-                else -> diamondIncomingLineIntersect(source.position, targetRect)
+                VertexEncoding.ENTITY, VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE -> rectIncomingLineIntersect(source, targetRect)
+                else -> diamondIncomingLineIntersect(source, targetRect)
             }
         }
         VertexEncoding.ATTRIBUTE, VertexEncoding.ATTRIBUTE_TYPE -> {
             val targetEllipse = Ellipse(target.position.x, target.position.y, target.width / 2 + 2, target.height / 2 + 2)
-            ellipseIncomingLineIntersect(source.position, targetEllipse)
+            ellipseIncomingLineIntersect(source, targetEllipse)
         }
     }
+}
+
+/**
+ * Find the end angle of a hyperedge, represented by `arc`, drawn to `target`
+ */
+private fun hyperedgeEndAngle(arc: Arc, target: VertexState): Float? {
+    val intersections = when (target.encoding) {
+        VertexEncoding.ENTITY, VertexEncoding.RELATION, VertexEncoding.ENTITY_TYPE, VertexEncoding.RELATION_TYPE, VertexEncoding.THING_TYPE -> {
+            val r = target.rect
+            val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
+            when (target.encoding) {
+                VertexEncoding.ENTITY, VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE -> rectArcIntersectAngles(arc, targetRect)
+                else -> diamondArcIntersectAngles(arc, targetRect)
+            }
+        }
+        VertexEncoding.ATTRIBUTE, VertexEncoding.ATTRIBUTE_TYPE -> {
+            // TODO: add the proper attribute handling logic
+            val r = target.rect
+            val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
+            diamondArcIntersectAngles(arc, targetRect)
+        }
+    }
+    // We expect only one intersection point
+    return if (intersections.isEmpty()) null else intersections[0]
 }
 
 /**
