@@ -545,12 +545,13 @@ private fun hyperedgeEndAngle(arc: Arc, target: VertexState): Float? {
             }
         }
         VertexEncoding.ATTRIBUTE, VertexEncoding.ATTRIBUTE_TYPE -> {
-            // TODO
-            throw NotImplementedError()
+            // TODO: add the proper attribute handling logic
+            val r = target.rect
+            val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
+            diamondArcIntersectAngles(arc, targetRect)
         }
     }
-//    return intersections
-    // We expect only one intersection point, although the same point might appear twice if it's a corner of the vertex
+    // We expect only one intersection point
     return if (intersections.isEmpty()) null else intersections[0]
 }
 
