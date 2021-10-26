@@ -31,6 +31,10 @@ build:
         # TODO: re-enable checkstyle tests
         # bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
         # bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=streamed
+    test-unit:
+      image: vaticle-ubuntu-20.04
+      command: |
+        bazel test //visualiser/...
 
 release:
 #  filter:
