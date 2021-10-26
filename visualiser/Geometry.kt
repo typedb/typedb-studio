@@ -10,6 +10,8 @@ import java.lang.IllegalStateException
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 data class Ray(val origin: Offset, val directionVector: Offset) {
@@ -37,6 +39,14 @@ data class Circle(val x: Float, val y: Float, val r: Float)
 
 data class Ellipse(val x: Float, val y: Float, /** half-width */ val hw: Float, /** half-height */ val hh: Float)
 
+fun Float.radToDeg(): Float {
+    return (this * 180 / PI).toFloat()
+}
+
+fun Float.degToRad(): Float {
+    return (this * PI / 180).toFloat()
+}
+
 data class Arc(val topLeft: Offset, val size: Size, val startAngle: Float, val sweepAngle: Float) {
     @Stable
     val center: Offset
@@ -49,6 +59,11 @@ data class Arc(val topLeft: Offset, val size: Size, val startAngle: Float, val s
     @Stable
     val endAngle: Float
     get() = (startAngle + sweepAngle).normalisedAngle()
+
+    @Stable
+    fun offsetAtAngle(angle: Float): Offset {
+        return center + Offset(x = cos(angle.degToRad()) * size.width / 2, y = sin(angle.degToRad()) * size.height / 2)
+    }
 
     @Stable
     fun toCircle(): Circle {
@@ -186,8 +201,8 @@ fun sweepAngle(from: Float, to: Float, direction: AngularDirection): Float {
     val fromAngle = from.normalisedAngle()
     val toAngle = to.normalisedAngle()
     return when (direction) {
-        AngularDirection.Clockwise -> if (toAngle > fromAngle) toAngle - fromAngle else 360 - toAngle + fromAngle
-        AngularDirection.CounterClockwise -> if (toAngle < fromAngle) toAngle - fromAngle else -(360 - toAngle + fromAngle)
+        AngularDirection.Clockwise -> if (toAngle > fromAngle) toAngle - fromAngle else 360 + toAngle - fromAngle
+        AngularDirection.CounterClockwise -> if (toAngle < fromAngle) toAngle - fromAngle else -360 + toAngle - fromAngle
     }
 }
 
@@ -203,7 +218,7 @@ fun lineArcIntersectAngles(line: Line, arc: Arc): List<Float> {
         right = max(line.from.x, line.to.x) + 1f, bottom = max(line.from.y, line.to.y) + 1f)
     return rayCircleIntersections
         .filter { lineRect.contains(it) }
-        .map { (atan2(y = it.y - circle.y, x = it.x - circle.x) * 180 / PI).toFloat().normalisedAngle() }
+        .map { atan2(y = it.y - circle.y, x = it.x - circle.x).radToDeg().normalisedAngle() }
         .filter { it.isInArcSweep(arc.startAngle, arc.sweepAngle) }
 }
 
@@ -327,11 +342,11 @@ fun arcThroughPoints(point1: Offset, point2: Offset, point3: Offset): Arc? {
     // Now determine if we want a clockwise or counter-clockwise arc from point 1
     // (t1, t2, t3) are the angles in polar coordinates of tangents at (point1, point2, point3)
     val point1FromCentre = point1 - centrePoint
-    val t1 = (atan2(point1FromCentre.y, point1FromCentre.x) * 180 / PI).toFloat()
+    val t1 = atan2(point1FromCentre.y, point1FromCentre.x).radToDeg()
     val point2FromCentre = point2 - centrePoint
-    val t2 = (atan2(point2FromCentre.y, point2FromCentre.x) * 180 / PI).toFloat()
+    val t2 = atan2(point2FromCentre.y, point2FromCentre.x).radToDeg()
     val point3FromCentre = point3 - centrePoint
-    val t3 = (atan2(point3FromCentre.y, point3FromCentre.x) * 180 / PI).toFloat()
+    val t3 = atan2(point3FromCentre.y, point3FromCentre.x).radToDeg()
 
     val direction = if ((t2 in t1..t3) || (t3 in t2..t1) || (t1 in t3..t2)) AngularDirection.Clockwise else AngularDirection.CounterClockwise
     return Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = sweepAngle(from = t1, to = t3, direction = direction))

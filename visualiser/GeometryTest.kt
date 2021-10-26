@@ -55,6 +55,31 @@ class GeometryTest {
     }
 
     @Test
+    fun sweepAngle1() {
+        assertFloatEquals(expected = 90f, actual = sweepAngle(from = 10f, to = 100f, direction = AngularDirection.Clockwise))
+    }
+
+    @Test
+    fun sweepAngle2() {
+        assertFloatEquals(expected = -270f, actual = sweepAngle(from = 10f, to = 100f, direction = AngularDirection.CounterClockwise))
+    }
+
+    @Test
+    fun sweepAngle3() {
+        assertFloatEquals(expected = 45f, actual = sweepAngle(from = -10f, to = 35f, direction = AngularDirection.Clockwise))
+    }
+
+    @Test
+    fun sweepAngle4() {
+        assertFloatEquals(expected = -45f, actual = sweepAngle(from = 35f, to = -10f, direction = AngularDirection.CounterClockwise))
+    }
+
+    @Test
+    fun sweepAngle5() {
+        assertFloatEquals(expected = -135f, actual = sweepAngle(from = 135f, to = 0f, direction = AngularDirection.CounterClockwise))
+    }
+
+    @Test
     fun quadraticRootsTwoSolutions() {
         assertFloatSetEquals(setOf(-1f/3, 1f), quadraticRoots(3f, -2f, -1f))
     }
