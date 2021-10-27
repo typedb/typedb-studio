@@ -137,7 +137,7 @@ fun main(args: Array<String>) {
                     if (containsNativeLib) {
                         file.setWritable(true)
                         file.delete()
-                        runShell(listOf("jar", "cf", file.name, "tmp"))
+                        runShell(script = listOf("jar", "cMf", "../${file.path}", "."), baseDir = tmpDir)
                     }
 
                     File("tmp").deleteRecursively()
