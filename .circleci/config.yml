@@ -105,11 +105,9 @@ jobs:
       - install-bazel-linux
       - checkout
       - run:
-          name: "Create GitHub release notes"
+          name: "TODO: Create GitHub release notes"
           command: |
-            pip install certifi
-            export RELEASE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-            bazel run @vaticle_dependencies//tool/release:create-notes -- typedb-studio $(cat VERSION) ./RELEASE_TEMPLATE.md
+            echo banana banana banana
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
