@@ -42,8 +42,8 @@ def vaticle_force_graph():
 def vaticle_typedb_client_java():
     git_repository(
         name = "vaticle_typedb_client_java",
-        remote = "https://github.com/alexjpwalker/client-java",
-        commit = "e177ec35dc16e2db21252954512214b655e29b90",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+        remote = "https://github.com/vaticle/client-java",
+        tag = "2.5.0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
 #    native.local_repository(
 #        name = "vaticle_typedb_client_java",
