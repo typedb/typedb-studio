@@ -23,6 +23,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -47,7 +48,7 @@ fun StudioTextField(
     placeholderText: String = "",
     visualTransformation: VisualTransformation = VisualTransformation.None,
     // TODO: Currently pointerHoverIcon has no effect - see https://github.com/JetBrains/compose-jb/issues/1315
-    pointerHoverIcon: PointerIcon = PointerIcon(Cursor(Cursor.TEXT_CURSOR)),
+    pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
     textStyle: TextStyle) {
 
     val focusManager = LocalFocusManager.current
@@ -59,7 +60,7 @@ fun StudioTextField(
             .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small)
     }
 
-    BasicTextField(modifier = basicTextFieldModifier.pointerHoverIcon(pointerHoverIcon)
+    BasicTextField(modifier = basicTextFieldModifier.pointerHoverIcon(pointerHoverIcon, overrideDescendants = true)
         .onPreviewKeyEvent { event: KeyEvent ->
             if (event.nativeKeyEvent.id == java.awt.event.KeyEvent.KEY_RELEASED) return@onPreviewKeyEvent true
             when (event.key) {
