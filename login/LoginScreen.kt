@@ -38,30 +38,29 @@ import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import kotlinx.coroutines.launch
+import mu.KotlinLogging.logger
 import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState: SnackbarHostState) {
+    val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
     var lastCheckedAddress by remember { mutableStateOf("") }
     var loadingDatabases by remember { mutableStateOf(false) }
 
     fun selectServerSoftware(software: ServerSoftware) {
         form.serverSoftware = software
-        form.dbClient?.close()
-        form.dbClient = null
-        form.db = null
-        form.allDBNames.clear()
-        form.dbFieldText = ""
-        form.databaseSelected = false
+        form.clearDBList()
+        form.closeClient()
         lastCheckedAddress = ""
     }
 
     fun loadDatabases() {
         if (form.serverAddress == lastCheckedAddress || loadingDatabases) return
         loadingDatabases = true
-        form.dbClient?.close()
+        lastCheckedAddress = form.serverAddress
+        form.closeClient()
         if (form.serverAddress.isNotBlank()) {
             if (!form.databaseSelected) form.dbFieldText = "Loading databases..."
             form.allDBNames.clear()
@@ -80,11 +79,9 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
                     }
                 } catch (e: Exception) {
                     lastCheckedAddress = ""
-                    form.db = null
-                    form.databaseSelected = false
                     form.dbFieldText = "Failed to load databases"
                     snackbarCoroutineScope.launch {
-                        println(e.toString())
+                        log.error(e) { "Failed to load databases at address ${form.serverAddress}" }
                         snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
                     }
                 } finally {
@@ -95,21 +92,27 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
     }
 
     fun selectDatabase(dbName: String) {
-        form.dbFieldText = dbName
-        form.db = DB(requireNotNull(form.dbClient), dbName)
-        form.databaseSelected = true
+        form.dbClient.let {
+            if (it != null) {
+                form.dbFieldText = dbName
+                form.db = DB(it, dbName)
+            } else {
+                form.db = null
+                form.clearDBList()
+                lastCheckedAddress = ""
+            }
+        }
     }
 
     fun onSubmit() {
-        val dbClient = requireNotNull(form.dbClient)
-        val db = requireNotNull(form.db)
-
         try {
+            val dbClient = requireNotNull(form.dbClient)
+            val db = requireNotNull(form.db)
             if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(form))
             else throw TypeDBClientException(ErrorMessage.Client.DB_DOES_NOT_EXIST, db.name)
         } catch (e: Exception) {
             snackbarCoroutineScope.launch {
-                println(e.toString())
+                log.error(e) { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }
                 snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
             }
         }
@@ -122,10 +125,10 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
             .border(1.dp, StudioTheme.colors.uiElementBorder)) {
 
             StudioTabs(Modifier.height(24.dp)) {
-                StudioTab("TypeDB", selected = form.serverSoftware == CORE,
+                StudioTab(text = CORE.displayName, selected = form.serverSoftware == CORE,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
                     modifier = Modifier.weight(1f).clickable { selectServerSoftware(CORE) })
-                StudioTab("TypeDB Cluster", selected = form.serverSoftware == CLUSTER,
+                StudioTab(text = CLUSTER.displayName, selected = form.serverSoftware == CLUSTER,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
                     modifier = Modifier.weight(1f).clickable { selectServerSoftware(CLUSTER) })
             }

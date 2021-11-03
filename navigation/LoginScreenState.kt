@@ -8,6 +8,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.navigation.ServerSoftware.*
+import mu.KotlinLogging.logger
 
 class LoginScreenState(serverSoftware: ServerSoftware = CORE, serverAddress: String = "127.0.0.1:1729",
                        username: String = "", password: String = "", rootCAPath: String = "", dbFieldText: String = "",
@@ -22,10 +23,33 @@ class LoginScreenState(serverSoftware: ServerSoftware = CORE, serverAddress: Str
     var dbClient: DBClient? by mutableStateOf(dbClient)
     val allDBNames: SnapshotStateList<String> = mutableStateListOf<String>().let { it += allDBNames; return@let it }
     var db: DB? by mutableStateOf(db)
-    var databaseSelected: Boolean by mutableStateOf(dbFieldText.isNotBlank())
+    val databaseSelected: Boolean
+    get() = db != null
+
+    /**
+     * If a Client is currently open, close it, handling and logging any errors that occur.
+     */
+    fun closeClient() {
+        dbClient = null
+        db = null
+        try {
+            dbClient?.close()
+        } catch (e: Exception) {
+            log.warn(e) { "Failed to close client" }
+        }
+    }
+
+    fun clearDBList() {
+        allDBNames.clear()
+        dbFieldText = ""
+    }
+
+    companion object {
+        val log = logger {}
+    }
 }
 
-enum class ServerSoftware {
-    CORE,
-    CLUSTER
+enum class ServerSoftware(val displayName: String) {
+    CORE(displayName = "TypeDB"),
+    CLUSTER(displayName = "TypeDB Cluster"),
 }

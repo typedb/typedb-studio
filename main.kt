@@ -54,14 +54,14 @@ fun main() {
 
     val log = logger {}
     appData.notWritableCause?.let {
-        log.error { "Unable to access app data. User preferences and history will be unavailable.\n$it" }
+        log.error(it) { "Unable to access app data. User preferences and history will be unavailable." }
     }
 
     application {
         val windowState: WindowState = rememberWindowState(placement = WindowPlacement.Maximized)
 
         fun onCloseRequest() {
-            log.error { "Closing TypeDB Studio" }
+            log.debug { "Closing TypeDB Studio" }
             exitApplication() // TODO: I think this is the wrong behaviour on MacOS
         }
 
