@@ -16,7 +16,10 @@
 #
 
 artifacts = [
+    "ch.qos.logback:logback-classic",
+    "ch.qos.logback:logback-core",
     "com.fifesoft:rsyntaxtextarea",
+    "io.github.microutils:kotlin-logging-jvm",
     "junit:junit",
     "org.jetbrains.compose.desktop:desktop-jvm",
     "org.jetbrains.compose.foundation:foundation-desktop",
@@ -24,6 +27,7 @@ artifacts = [
     "org.jetbrains.compose.ui:ui-desktop",
     "org.jetbrains.compose.ui:ui-geometry-desktop",
     "org.jetbrains.kotlin:kotlin-test",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-core",
     "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",

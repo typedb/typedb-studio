@@ -28,38 +28,47 @@ load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
 
+studio_deps = [
+    "//appearance",
+    "//ui/elements",
+    "//data",
+    "//login",
+    "//navigation",
+    "//workspace",
+
+    # Maven
+    "@maven//:ch_qos_logback_logback_classic",
+    "@maven//:ch_qos_logback_logback_core",
+    "@maven//:io_github_microutils_kotlin_logging_jvm",
+    "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+    "@maven//:org_slf4j_slf4j_api",
+
+    # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
+    "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+    "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+    "@maven//:org_jetbrains_compose_ui_ui_desktop",
+    "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
+    "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+]
+
+studio_resources = [
+    "//resources/fonts/titillium_web:light",
+    "//resources/fonts/titillium_web:regular",
+    "//resources/fonts/titillium_web:semi-bold",
+    "//resources/fonts/ubuntu_mono:bold",
+    "//resources/fonts/ubuntu_mono:regular",
+    "//resources/icons:blueprint-icons-16",
+    "//resources/icons:blueprint-icons-20",
+    "//resources/icons:database-png",
+    "//resources/icons:database-svg",
+]
+
 kt_jvm_library(
     name = "studio",
     srcs = ["main.kt"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    deps = [
-        "//appearance",
-        "//ui/elements",
-        "//data",
-        "//login",
-        "//navigation",
-        "//workspace",
-
-        # Maven
-        # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
-        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
-    ],
-    resources = [
-        "//resources:logback-xml",
-        "//resources/fonts/titillium_web:light",
-        "//resources/fonts/titillium_web:regular",
-        "//resources/fonts/titillium_web:semi-bold",
-        "//resources/fonts/ubuntu_mono:bold",
-        "//resources/fonts/ubuntu_mono:regular",
-        "//resources/icons:blueprint-icons-16",
-        "//resources/icons:blueprint-icons-20",
-        "//resources/icons:database-png",
-        "//resources/icons:database-svg",
-    ],
+    deps = studio_deps,
+    resources = studio_resources,
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
 )
@@ -71,6 +80,7 @@ java_binary(
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
     ],
+    classpath_resources = ["//resources:logback-test-xml"],
 )
 
 java_binary(
@@ -80,6 +90,7 @@ java_binary(
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_windows_x64",
     ],
+    classpath_resources = ["//resources:logback-test-xml"],
 )
 
 java_binary(
@@ -89,6 +100,7 @@ java_binary(
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_linux_x64",
     ],
+    classpath_resources = ["//resources:logback-test-xml"],
 )
 
 #java_deps(
@@ -101,11 +113,6 @@ java_binary(
 
 assemble_files = {
     "//resources:logback-xml": "logback.xml",
-    "//resources/fonts/titillium_web:light": "fonts/titillium_web/TitilliumWeb-Light.ttf",
-    "//resources/fonts/titillium_web:regular": "fonts/titillium_web/TitilliumWeb-Regular.ttf",
-    "//resources/fonts/titillium_web:semi-bold": "fonts/titillium_web/TitilliumWeb-SemiBold.ttf",
-    "//resources/fonts/ubuntu_mono:bold": "fonts/ubuntu_mono/UbuntuMono-Bold.ttf",
-    "//resources/fonts/ubuntu_mono:regular": "fonts/ubuntu_mono/UbuntuMono-Regular.ttf",
     "//:LICENSE": "LICENSE",
 }
 
