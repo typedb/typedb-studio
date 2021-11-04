@@ -41,7 +41,6 @@ import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.Node
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
-import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.routing.Router
@@ -69,16 +68,17 @@ import java.util.UUID
 import kotlin.math.pow
 
 @Composable
-fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: VisualiserTheme,
+fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: VisualiserTheme,
                     window: ComposeWindow, titleBarHeight: Float, snackbarHostState: SnackbarHostState) {
 
     val snackbarCoroutineScope = rememberCoroutineScope()
     val log = remember { logger {} }
+//    val workspace = remember { workspaceScreenStateOf(routeData) }
 
     Column(Modifier.fillMaxSize()) {
 
         // TODO: combine these into meaningful groups of state objects
-        var dataStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
+        var queryResponseStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
         val forceSimulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
         var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
         var visualiserSize by mutableStateOf(Size.Zero)
@@ -101,9 +101,21 @@ fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: 
         var activeExecutionTabIndex by remember { mutableStateOf(0) }
         val temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
 
-        val db = workspace.db
+        val db = routeData.db
         val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
         val activeExecutionTab: ExecutionTabState = executionTabs[activeExecutionTabIndex]
+
+        fun switchWorkspace(dbName: String) {
+            try {
+                db.client.closeAllSessions()
+                // TODO: switch workspaces
+            } catch (e: Exception) {
+                snackbarCoroutineScope.launch {
+                    log.error(e) { "An error occurred while switching workspaces." }
+                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                }
+            }
+        }
 
         fun openOpenQueryDialog() {
             try {
@@ -162,34 +174,24 @@ fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: 
             }
         }
 
-        Toolbar(dbName = db.name,
-            onDBNameChange = { dbName ->
-                try {
-                    db.client.closeAllSessions()
-                    // TODO: switch workspaces
-                } catch (e: Exception) {
-                    snackbarCoroutineScope.launch {
-                        log.error(e) { "An error occurred while switching workspaces." }
-                        snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                    }
-                }
-            },
-            allDBNames = remember { workspace.loginForm.allDBNames },
-            onOpen = { openOpenQueryDialog() },
-            onSave = { openSaveQueryDialog() },
-            onRun = {
-                forceSimulation.init()
-                dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
-                visualiserWorldOffset = visualiserSize.center
-                visualiserMetricsID = UUID.randomUUID().toString()
-                queryStartTimeNanos = System.nanoTime()
-                selectedVertex = null
-                selectedVertexNetwork.clear()
-            },
-            onLogout = {
-                db.client.closeAllSessions()
-                router.navigateTo(workspace.loginForm.toRoute())
-            })
+        fun runQuery() {
+            forceSimulation.init()
+            queryResponseStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
+            visualiserWorldOffset = visualiserSize.center
+            visualiserMetricsID = UUID.randomUUID().toString()
+            queryStartTimeNanos = System.nanoTime()
+            selectedVertex = null
+            selectedVertexNetwork.clear()
+        }
+
+        fun logout() {
+            db.client.closeAllSessions()
+            router.navigateTo(routeData.loginForm.toRoute())
+        }
+
+        Toolbar(dbName = db.name, onDBNameChange = { dbName -> switchWorkspace(dbName) },
+            allDBNames = remember { routeData.loginForm.allDBNames }, onOpen = { openOpenQueryDialog() },
+            onSave = { openSaveQueryDialog() }, onRun = { runQuery() }, onLogout = { logout() })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
@@ -345,7 +347,7 @@ fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: 
                         vertices = forceSimulation.data.vertices, edges = forceSimulation.data.edges,
                         hyperedges = forceSimulation.data.hyperedges,
                         vertexExplanations = forceSimulation.data.vertexExplanations, theme = visualiserTheme,
-                        metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, pixelDensity = pixelDensity),
+                        /*metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset),*/
                         onZoom = { value -> visualiserScale = value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
                         selectedVertex = selectedVertex,
@@ -415,12 +417,12 @@ fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: 
             }
         }
 
-        StatusBar(dataStream = dataStream, visualiserScale = visualiserScale,
+        StatusBar(queryResponseStream = queryResponseStream, visualiserScale = visualiserScale,
             vertexCount = forceSimulation.data.vertices.size, edgeCount = forceSimulation.data.edges.size,
             queryStartTimeNanos = queryStartTimeNanos)
 
-        LaunchedEffect(key1 = dataStream) {
-            simulationRunnerCoroutine(forceSimulation, dataStream, snackbarHostState, snackbarCoroutineScope)
+        LaunchedEffect(key1 = queryResponseStream) {
+            simulationRunnerCoroutine(forceSimulation, queryResponseStream, snackbarHostState, snackbarCoroutineScope)
         }
     }
 }

@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -55,22 +56,26 @@ import kotlin.math.sqrt
 @Composable
 fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
                      hyperedges: List<HyperedgeState>, vertexExplanations: List<VertexExplanationState>,
-                     theme: VisualiserTheme, metrics: SimulationMetrics, onZoom: (scale: Float) -> Unit,
+                     theme: VisualiserTheme, /*worldOffsetListener: EventListener<Offset>,*/ onZoom: (scale: Float) -> Unit,
                      selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
                      selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
                      onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
                      explain: (vertex: VertexState) -> Unit) {
 
+    // We refresh scale and world offset locally because it's smoother than when relying on events (onZoom etc.)
+    // The events are used to update the UI elsewhere in the application.
+    // TODO: add event listeners to receive scale and reposition requests from elsewhere in the application
     var scale by remember { mutableStateOf(1F) }
     var worldOffset by remember { mutableStateOf(Offset.Zero) }
     var pointerPosition: Offset? by remember { mutableStateOf(null) }
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val highlightedExplanationIDs: SnapshotStateList<Int> = remember { mutableStateListOf() }
-    val pixelDensity = metrics.pixelDensity
-    val verticesByID = vertices.associateBy { it.id }
     var hoveredVertex: VertexState? by remember { mutableStateOf(null) }
     var draggedVertex: VertexState? by remember { mutableStateOf(null) }
+
+    val pixelDensity = LocalDensity.current.density
+    val verticesByID = vertices.associateBy { it.id }
 
     fun DrawScope.drawVertex(v: VertexState) {
         val viewportOffset: Offset = -worldOffset
@@ -323,9 +328,10 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     }
 
     // Metrics are recalculated on each query run
-    LaunchedEffect(metrics.id) {
-        worldOffset = metrics.worldOffset
-    }
+    // TODO
+//    LaunchedEffect(metrics.id) {
+//        worldOffset = metrics.worldOffset
+//    }
 
     Box(modifier = modifier
         .graphicsLayer(clip = true)

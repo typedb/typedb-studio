@@ -26,7 +26,7 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 @Composable
-fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, visualiserScale: Float, vertexCount: Int,
+fun StatusBar(modifier: Modifier = Modifier, queryResponseStream: QueryResponseStream, visualiserScale: Float, vertexCount: Int,
               edgeCount: Int, queryStartTimeNanos: Long?) {
 
     val mathContext3SigFigures: MathContext = remember { MathContext(3, RoundingMode.HALF_UP) }
@@ -55,19 +55,19 @@ fun StatusBar(modifier: Modifier = Modifier, dataStream: QueryResponseStream, vi
         }
     }
 
-    LaunchedEffect(dataStream.completed, queryStartTimeNanos, dataStream.queryEndTimeNanos) {
+    LaunchedEffect(queryResponseStream.completed, queryStartTimeNanos, queryResponseStream.queryEndTimeNanos) {
         while (true) {
             withFrameNanos {
-                principalStatus = if (dataStream.completed) "Ready" else "Running Match query..."
+                principalStatus = if (queryResponseStream.completed) "Ready" else "Running Match query..."
                 queryRunTimeMillis = when (queryStartTimeNanos) {
                     null -> 0.0
-                    else -> when (val endTime = dataStream.queryEndTimeNanos) {
+                    else -> when (val endTime = queryResponseStream.queryEndTimeNanos) {
                         null -> (System.nanoTime() - queryStartTimeNanos) * 1e-6
                         else -> (endTime - queryStartTimeNanos) * 1e-6
                     }
                 }
             }
-            if (dataStream.completed) {
+            if (queryResponseStream.completed) {
                 principalStatus = "Ready"
                 return@LaunchedEffect
             }
