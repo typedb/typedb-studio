@@ -46,12 +46,9 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.VertexEncoding
 import java.awt.Polygon
-import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.pow
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -70,7 +67,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val highlightedExplanationIDs: SnapshotStateList<Int> = remember { mutableStateListOf() }
-    val devicePixelRatio = metrics.devicePixelRatio
+    val pixelDensity = metrics.pixelDensity
     val verticesByID = vertices.associateBy { it.id }
     var hoveredVertex: VertexState? by remember { mutableStateOf(null) }
     var draggedVertex: VertexState? by remember { mutableStateOf(null) }
@@ -87,11 +84,11 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
             else -> null
         }
         val vertexColor = if (alpha != null) vertexBaseColor.copy(alpha) else vertexBaseColor
-        val position = (v.position - viewportOffset) * devicePixelRatio
-        val width = v.width * devicePixelRatio
-        val height = v.height * devicePixelRatio
-        val cornerRadius = CornerRadius(5F * devicePixelRatio)
-        val highlightWidth = devicePixelRatio
+        val position = (v.position - viewportOffset) * pixelDensity
+        val width = v.width * pixelDensity
+        val height = v.height * pixelDensity
+        val cornerRadius = CornerRadius(5F * pixelDensity)
+        val highlightWidth = pixelDensity
         val highlightBaseColor: Color? = when {
             vertexExplanations.firstOrNull { it.vertexID == v.id && it.explanationID in highlightedExplanationIDs } != null -> theme.explanation
             v.inferred -> theme.inferred
@@ -178,24 +175,24 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 
         when {
             arc == null -> {
-                drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
-                    end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+                drawLine(start = (lineSource - viewportOffset) * pixelDensity,
+                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
             }
             abs(arc.sweepAngle) < 270 -> {
                 drawArc(color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
-                    topLeft = (arc.topLeft - viewportOffset) * devicePixelRatio, size = arc.size * devicePixelRatio,
-                    style = Stroke(width = devicePixelRatio))
+                    topLeft = (arc.topLeft - viewportOffset) * pixelDensity, size = arc.size * pixelDensity,
+                    style = Stroke(width = pixelDensity))
             }
             else -> {
-                drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
-                    end = (hyperedge!!.position - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
-                drawLine(start = (hyperedge.position - viewportOffset) * devicePixelRatio,
-                    end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+                drawLine(start = (lineSource - viewportOffset) * pixelDensity,
+                    end = (hyperedge!!.position - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
+                drawLine(start = (hyperedge.position - viewportOffset) * pixelDensity,
+                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
             }
         }
 
-        val arrow = arrowhead(from = (lineSource - viewportOffset) * devicePixelRatio, to = (lineTarget - viewportOffset) * devicePixelRatio,
-            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
+        val arrow = arrowhead(from = (lineSource - viewportOffset) * pixelDensity, to = (lineTarget - viewportOffset) * pixelDensity,
+            arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity)
         if (arrow != null) drawPath(path = arrow, color = color)
     }
 
@@ -203,8 +200,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val viewportOffset: Offset = -worldOffset
         val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
         if (linePart1Target != null) {
-            drawLine(start = (lineSource - viewportOffset) * devicePixelRatio,
-                end = (linePart1Target - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+            drawLine(start = (lineSource - viewportOffset) * pixelDensity,
+                end = (linePart1Target - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
         }
     }
 
@@ -212,12 +209,12 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val viewportOffset: Offset = -worldOffset
         val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
         if (linePart2Source != null) {
-            drawLine(start = (linePart2Source - viewportOffset) * devicePixelRatio,
-                end = (lineTarget - viewportOffset) * devicePixelRatio, color = color, strokeWidth = devicePixelRatio)
+            drawLine(start = (linePart2Source - viewportOffset) * pixelDensity,
+                end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
 
-            val arrow = arrowhead(from = (linePart2Source - viewportOffset) * devicePixelRatio,
-                to = (lineTarget - viewportOffset) * devicePixelRatio,
-                arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
+            val arrow = arrowhead(from = (linePart2Source - viewportOffset) * pixelDensity,
+                to = (lineTarget - viewportOffset) * pixelDensity,
+                arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity)
             if (arrow != null) drawPath(path = arrow, color = color)
         }
     }
@@ -267,8 +264,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                     val sweepAngle1 = sweepAngle(from = arcStartAngle, to = arcPart1EndAngle, direction = fullArc.direction)
                     if (abs(sweepAngle1) < 180) {
                         drawArc(color = color, startAngle = arcStartAngle, sweepAngle = sweepAngle1, useCenter = false,
-                            topLeft = (fullArc.topLeft - viewportOffset) * devicePixelRatio, size = fullArc.size * devicePixelRatio,
-                            style = Stroke(width = devicePixelRatio))
+                            topLeft = (fullArc.topLeft - viewportOffset) * pixelDensity, size = fullArc.size * pixelDensity,
+                            style = Stroke(width = pixelDensity))
                     } else if (lineSource != null) {
                         // This typically means the edge label has reached a spot that would be awkward to draw an arc through
                         drawArrowSegment1(lineSource, labelRect, color)
@@ -284,15 +281,15 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                     val sweepAngle2 = sweepAngle(from = arcPart2StartAngle, to = arcEndAngle, direction = fullArc.direction)
                     if (abs(sweepAngle2) < 180) {
                         drawArc(color = color, startAngle = arcPart2StartAngle, sweepAngle = sweepAngle2, useCenter = false,
-                            topLeft = (fullArc.topLeft - viewportOffset) * devicePixelRatio, size = fullArc.size * devicePixelRatio,
-                            style = Stroke(width = devicePixelRatio))
+                            topLeft = (fullArc.topLeft - viewportOffset) * pixelDensity, size = fullArc.size * pixelDensity,
+                            style = Stroke(width = pixelDensity))
 
                         val arrowTarget = fullArc.offsetAtAngle(arcEndAngle)
                         val approachAngle = if (fullArc.direction == AngularDirection.Clockwise) (arcEndAngle - 1).normalisedAngle() else (arcEndAngle + 1).normalisedAngle()
                         val arrowSource = fullArc.offsetAtAngle(approachAngle)
-                        val arrow = arrowhead(from = (arrowSource - viewportOffset) * devicePixelRatio,
-                            to = (arrowTarget - viewportOffset) * devicePixelRatio,
-                            arrowLength = 6F * devicePixelRatio, arrowWidth = 3F * devicePixelRatio)
+                        val arrow = arrowhead(from = (arrowSource - viewportOffset) * pixelDensity,
+                            to = (arrowTarget - viewportOffset) * pixelDensity,
+                            arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity)
                         if (arrow != null) drawPath(path = arrow, color = color)
                     } else if (lineTarget != null) {
                         drawArrowSegment2(labelRect, lineTarget, color)
@@ -334,7 +331,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         .graphicsLayer(clip = true)
         .onGloballyPositioned { coordinates ->
             viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
-//            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / devicePixelRatio + Offset(window.x.toFloat(), window.y + titleBarHeight)
+//            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / pixelDensity + Offset(window.x.toFloat(), window.y + titleBarHeight)
 //            println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
         }
         .background(theme.background)) {
@@ -357,11 +354,11 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         }
 
         Box(modifier = Modifier.fillMaxSize().zIndex(100F)
-            .pointerInput(devicePixelRatio) {
+            .pointerInput(pixelDensity) {
                 detectDragGestures(
                     onDragStart = { _ ->
                         draggedVertex?.let { onVertexDragStart(it) }
-//                        val closestVertices = getClosestVertices(dragOffset, vertices, 10, worldOffset, scale, devicePixelRatio)
+//                        val closestVertices = getClosestVertices(dragOffset, vertices, 10, worldOffset, scale, pixelDensity)
 //                        println(closestVertices)
                     },
                     onDragEnd = {
@@ -373,7 +370,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         draggedVertex = null
                     }
                 ) /* onDrag = */ { _, dragAmount: Offset ->
-                    val worldDragDistance = dragAmount / (scale * devicePixelRatio)
+                    val worldDragDistance = dragAmount / (scale * pixelDensity)
                     val vertex = draggedVertex
                     if (vertex != null) {
                         vertex.position += worldDragDistance
@@ -383,7 +380,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                 }
             }
             .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
-                val zoomFactor = 1 + (delta * 0.0006F / devicePixelRatio)
+                val zoomFactor = 1 + (delta * 0.0006F / pixelDensity)
                 val newViewportScale = scale * zoomFactor
                 // TODO: make the transform origin be where the mouse pointer is :-(
 //                val pointerLocationOnScreen: Point = MouseInfo.getPointerInfo().location
@@ -427,10 +424,10 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         return@pointerMoveFilter false
                     }
                 )
-                .pointerInput(devicePixelRatio) {
+                .pointerInput(pixelDensity) {
                     detectTapGestures(
                         onPress = { viewportPoint: Offset ->
-                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             draggedVertex = closestVertices.find { it.intersects(worldPoint) }
                             draggedVertex?.let { println("pressed vertex: $it") }
@@ -438,7 +435,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             if (cancelled) draggedVertex = null
                         },
                         onDoubleTap = { viewportPoint: Offset ->
-                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
                             tappedVertex?.let {
@@ -448,7 +445,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             }
                         }
                     ) /* onTap = */ { viewportPoint: Offset ->
-                        val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                        val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
                         val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                         val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
                         onSelectVertex(tappedVertex)
@@ -462,7 +459,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         if (viewportPoint != null
                             && (hoveredVertexLastCheckDoneTimeNanos == 0L || System.nanoTime() - hoveredVertexLastCheckDoneTimeNanos > 5e7)) { // 50ms
 
-                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, devicePixelRatio)
+                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
                             hoveredVertex = closestVertices.find { it.intersects(worldPoint) }
                             val v = hoveredVertex
@@ -482,9 +479,9 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
     }
 }
 
-private fun toWorldPoint(viewportSize: Size, point: Offset, worldOffset: Offset, scale: Float, devicePixelRatio: Float): Offset {
-    val viewportTransformOrigin = Offset(viewportSize.width / 2F, viewportSize.height / 2F) / devicePixelRatio
-    val scaledOffset = point / devicePixelRatio
+private fun toWorldPoint(viewportSize: Size, point: Offset, worldOffset: Offset, scale: Float, pixelDensity: Float): Offset {
+    val viewportTransformOrigin = Offset(viewportSize.width / 2F, viewportSize.height / 2F) / pixelDensity
+    val scaledOffset = point / pixelDensity
 
     // Let viewport be the position of a vertex in the viewport, vpOrigin be the transform origin of the viewport,
     // world be the position of a vertex in the world (ie vertex.position), worldOffset be the world offset

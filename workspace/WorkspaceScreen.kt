@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
@@ -43,8 +44,8 @@ import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
-import com.vaticle.typedb.studio.navigation.Navigator
-import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
+import com.vaticle.typedb.studio.routing.Router
+import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.Icon
 import com.vaticle.typedb.studio.ui.elements.IconSize.*
 import com.vaticle.typedb.studio.ui.elements.StudioIcon
@@ -57,6 +58,7 @@ import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.VertexState
 import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
 import kotlinx.coroutines.launch
+import mu.KotlinLogging.logger
 import java.awt.FileDialog
 import java.io.File
 import java.io.FilenameFilter
@@ -67,189 +69,116 @@ import java.util.UUID
 import kotlin.math.pow
 
 @Composable
-fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visualiserTheme: VisualiserTheme, window: ComposeWindow,
-                    devicePixelRatio: Float, titleBarHeight: Float, snackbarHostState: SnackbarHostState) {
+fun WorkspaceScreen(workspace: WorkspaceRoute, router: Router, visualiserTheme: VisualiserTheme,
+                    window: ComposeWindow, titleBarHeight: Float, snackbarHostState: SnackbarHostState) {
 
     val snackbarCoroutineScope = rememberCoroutineScope()
+    val log = remember { logger {} }
 
-    var dataStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
-    val typeDBForceSimulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
-    var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
-    var visualiserSize by mutableStateOf(Size.Zero)
-    var visualiserMetricsID by remember { mutableStateOf("") }
-    var visualiserScale by remember { mutableStateOf(1F) }
-    var selectedVertex: VertexState? by remember { mutableStateOf(null) }
-    val selectedVertexNetwork: MutableList<VertexState> = remember { mutableStateListOf() }
-    var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
-    val queryTabs: MutableList<QueryTabState> = remember { mutableStateListOf(
-        QueryTabState(title = "Query1.tql", query = "match \$x sub thing;\n" +
-                "offset 0;\n" +
-                "limit 1000;\n")
-    ) }
-    var queryTabNextIndex by remember { mutableStateOf(2) }
-    var activeQueryTabIndex by remember { mutableStateOf(0) }
-    val executionTabs: MutableList<ExecutionTabState> = remember { mutableStateListOf(
-        ExecutionTabState(title = "Query1 : run1")
-    ) }
-    var activeExecutionTabIndex by remember { mutableStateOf(0) }
-    var showQuerySettingsPanel by remember { mutableStateOf(true) }
-    var showConceptPanel by remember { mutableStateOf(true) }
-    var querySettings by remember { mutableStateOf(QuerySettings()) }
-    var temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
+    Column(Modifier.fillMaxSize()) {
 
-    val db = requireNotNull(workspace.loginForm.db)
-    val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
-    val activeExecutionTab: ExecutionTabState = executionTabs[activeExecutionTabIndex]
+        // TODO: combine these into meaningful groups of state objects
+        var dataStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
+        val forceSimulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
+        var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
+        var visualiserSize by mutableStateOf(Size.Zero)
+        var visualiserMetricsID by remember { mutableStateOf("") }
+        var visualiserScale by remember { mutableStateOf(1F) }
+        var selectedVertex: VertexState? by remember { mutableStateOf(null) }
+        val selectedVertexNetwork: MutableList<VertexState> = remember { mutableStateListOf() }
+        var queryStartTimeNanos: Long? by remember { mutableStateOf(null) }
+        var querySettings by remember { mutableStateOf(QuerySettings()) }
+        val queryTabs: MutableList<QueryTabState> = remember { mutableStateListOf(
+            QueryTabState(title = "Query1.tql", query = "match \$x sub thing;\n" +
+                    "offset 0;\n" +
+                    "limit 1000;\n")
+        ) }
+        var queryTabNextIndex by remember { mutableStateOf(2) }
+        var activeQueryTabIndex by remember { mutableStateOf(0) }
+        val executionTabs: MutableList<ExecutionTabState> = remember { mutableStateListOf(
+            ExecutionTabState(title = "Query1 : run1")
+        ) }
+        var activeExecutionTabIndex by remember { mutableStateOf(0) }
+        val temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
 
-    fun addNewQueryTab() {
-        queryTabs += QueryTabState(title = "Query${queryTabNextIndex}.tql", query = "\n")
-        queryTabNextIndex++
-    }
+        val db = workspace.db
+        val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
+        val activeExecutionTab: ExecutionTabState = executionTabs[activeExecutionTabIndex]
 
-    fun openOpenQueryDialog() {
-        try {
-            FileDialog(window, "Open", FileDialog.LOAD).apply {
-                isMultipleMode = false
+        fun openOpenQueryDialog() {
+            try {
+                FileDialog(window, "Open", FileDialog.LOAD).apply {
+                    isMultipleMode = false
 
-                // TODO: look into file extension filtering
+                    // TODO: look into file extension filtering
 //                // Windows
 //                file = "*.tql"
 //
 //                // Mac, Linux
 //                filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
 
-                isVisible = true
-                file?.let { filename ->
-                    val path = Path.of(directory, filename)
-                    val fileContent: String = Files.readString(Path.of(directory, filename))
-                    queryTabs += QueryTabState(title = filename, query = fileContent, file = path.toFile())
-                    activeQueryTabIndex = queryTabs.size - 1
-                }
-            }
-        } catch (error: Exception) {
-            snackbarCoroutineScope.launch {
-                println(error.stackTraceToString())
-                snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-            }
-        }
-    }
-
-    fun openSaveQueryDialog() {
-        try {
-            FileDialog(window, "Save", FileDialog.SAVE).apply {
-                isMultipleMode = false
-                val queryTabFile = activeQueryTab.file
-                if (queryTabFile == null) {
-                    file = activeQueryTab.title
-                } else {
-                    file = queryTabFile.name
-                    directory = queryTabFile.parentFile.absolutePath
-                }
-                filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
-                isVisible = true
-                file?.let { filename ->
-                    PrintWriter(Path.of(directory, filename).toFile()).use { printWriter ->
-                        printWriter.print(activeQueryTab.query)
-                        activeQueryTab.title = filename
-                        activeQueryTab.file = File(filename)
+                    isVisible = true
+                    file?.let { filename ->
+                        val path = Path.of(directory, filename)
+                        val fileContent: String = Files.readString(Path.of(directory, filename))
+                        queryTabs += QueryTabState(title = filename, query = fileContent, file = path.toFile())
+                        activeQueryTabIndex = queryTabs.size - 1
                     }
                 }
+            } catch (e: Exception) {
+                snackbarCoroutineScope.launch {
+                    log.error(e) { "An error occurred while attempting to open a query file." }
+                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                }
             }
-        } catch (error: Exception) {
-            snackbarCoroutineScope.launch {
-                println(error.stackTraceToString())
-                snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+        }
+
+        fun openSaveQueryDialog() {
+            try {
+                FileDialog(window, "Save", FileDialog.SAVE).apply {
+                    isMultipleMode = false
+                    val queryTabFile = activeQueryTab.file
+                    if (queryTabFile == null) {
+                        file = activeQueryTab.title
+                    } else {
+                        file = queryTabFile.name
+                        directory = queryTabFile.parentFile.absolutePath
+                    }
+                    filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
+                    isVisible = true
+                    file?.let { filename ->
+                        PrintWriter(Path.of(directory, filename).toFile()).use { printWriter ->
+                            printWriter.print(activeQueryTab.query)
+                            activeQueryTab.title = filename
+                            activeQueryTab.file = File(filename)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                snackbarCoroutineScope.launch {
+                    log.error(e) { "An error occurred while attempting to save a query file." }
+                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                }
             }
         }
-    }
 
-    fun onSelectVertex(vertex: VertexState?) {
-        selectedVertex = vertex
-        selectedVertexNetwork.clear()
-        if (vertex != null) {
-            val verticesToAdd = mutableSetOf(vertex)
-            val verticesByID = typeDBForceSimulation.data.vertices.associateBy { it.id }
-            typeDBForceSimulation.data.edges.forEach {
-                if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
-                else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
-            }
-            selectedVertexNetwork += verticesToAdd
-        }
-    }
-
-    fun onVertexDragStart(vertex: VertexState) {
-        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-            node.isXFixed = true
-            node.isYFixed = true
-        }
-        typeDBForceSimulation
-            .force("charge", null)
-            .force("center", null)
-            .force("x", null)
-            .force("y", null)
-            .alpha(0.25)
-            .alphaDecay(0.0)
-
-        if (typeDBForceSimulation.data.edges.any { it.targetID == vertex.id && it.encoding == ROLEPLAYER }) {
-            val attributeEdges = typeDBForceSimulation.data.edges
-                .filter { it.sourceID == vertex.id && it.encoding == HAS }
-            val attributeNodeIDs = attributeEdges.map { it.targetID }
-            val roleplayerEdges = typeDBForceSimulation.data.edges
-                .filter { it.targetID == vertex.id && it.encoding == ROLEPLAYER }
-                .map { it.sourceID }
-                .flatMap { relationNodeID -> typeDBForceSimulation.data.edges
-                    .filter { it.sourceID == relationNodeID && it.encoding == ROLEPLAYER } }
-            val relationNodeIDs = roleplayerEdges.map { it.sourceID }
-            val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
-            val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
-            val nodes = nodeIDs.map { typeDBForceSimulation.nodes()[it] }
-            val links = (attributeEdges + roleplayerEdges)
-                .map { Link(typeDBForceSimulation.nodes()[it.sourceID], typeDBForceSimulation.nodes()[it.targetID]) }
-            val nodeIDsToFreeze = roleplayerNodeIDs
-                .filter { it != vertex.id && typeDBForceSimulation.nodes()[it]?.isXFixed == false }
-            nodeIDsToFreeze.forEach {
-                typeDBForceSimulation.nodes()[it]?.isXFixed = true
-                typeDBForceSimulation.nodes()[it]?.isYFixed = true
-            }
-            temporarilyFrozenNodeIDs += nodeIDsToFreeze
-            typeDBForceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.25))
-        } else {
-            typeDBForceSimulation.force("link", null)
-        }
-    }
-
-    fun onVertexDragMove(vertex: VertexState, position: Offset) {
-        typeDBForceSimulation.nodes()[vertex.id]?.let { node: Node ->
-            node.x(position.x.toDouble())
-            node.y(position.y.toDouble())
-        }
-    }
-
-    fun onVertexDragEnd() {
-        typeDBForceSimulation.force("link", null)
-        typeDBForceSimulation.alphaDecay(1 - typeDBForceSimulation.alphaMin().pow(1.0 / 300))
-        temporarilyFrozenNodeIDs.forEach {
-            typeDBForceSimulation.nodes()[it]?.isXFixed = false
-            typeDBForceSimulation.nodes()[it]?.isYFixed = false
-        }
-        temporarilyFrozenNodeIDs.clear()
-    }
-
-    Column(Modifier.fillMaxSize()) {
         Toolbar(dbName = db.name,
             onDBNameChange = { dbName ->
-                // TODO: add confirmation dialog
-                db.client.closeAllSessions()
-                workspace.loginForm.dbFieldText = dbName
-                workspace.loginForm.db = DB(db.client, dbName)
-                // TODO: test if this actually reinitialises the workspace screen
-                navigator.pushState(WorkspaceScreenState(workspace.loginForm))
+                try {
+                    db.client.closeAllSessions()
+                    // TODO: switch workspaces
+                } catch (e: Exception) {
+                    snackbarCoroutineScope.launch {
+                        log.error(e) { "An error occurred while switching workspaces." }
+                        snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                    }
+                }
             },
-            allDBNames = remember { db.client.listDatabases() },
+            allDBNames = remember { workspace.loginForm.allDBNames },
             onOpen = { openOpenQueryDialog() },
             onSave = { openSaveQueryDialog() },
             onRun = {
-                typeDBForceSimulation.init()
+                forceSimulation.init()
                 dataStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
                 visualiserWorldOffset = visualiserSize.center
                 visualiserMetricsID = UUID.randomUUID().toString()
@@ -259,12 +188,16 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
             },
             onLogout = {
                 db.client.closeAllSessions()
-                navigator.pushState(workspace.loginForm)
+                router.navigateTo(workspace.loginForm.toRoute())
             })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
         Row(modifier = Modifier.weight(1F)) {
+
+            var showQuerySettingsPanel by remember { mutableStateOf(true) }
+            var showConceptPanel by remember { mutableStateOf(true) }
+
 //            Column(modifier = Modifier.width(20.dp)) {
 //                StudioTabs(orientation = TabOrientation.BOTTOM_TO_TOP) {
 //                    StudioTab("Schema Explorer", selected = false, leadingIcon = { StudioIcon(Icon.Layout) })
@@ -277,7 +210,27 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
 //            Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
             Column(modifier = Modifier.fillMaxHeight().weight(1F)) {
+
+                fun onSelectVertex(vertex: VertexState?) {
+                    selectedVertex = vertex
+                    selectedVertexNetwork.clear()
+                    if (vertex != null) {
+                        val verticesToAdd = mutableSetOf(vertex)
+                        val verticesByID = forceSimulation.data.vertices.associateBy { it.id }
+                        forceSimulation.data.edges.forEach {
+                            if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
+                            else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
+                        }
+                        selectedVertexNetwork += verticesToAdd
+                    }
+                }
+
                 StudioTabs(modifier = Modifier.fillMaxWidth().height(26.dp)) {
+                    fun addNewQueryTab() {
+                        queryTabs += QueryTabState(title = "Query${queryTabNextIndex}.tql", query = "\n")
+                        queryTabNextIndex++
+                    }
+
                     queryTabs.mapIndexed { index: Int, queryTab: QueryTabState ->
                         val selected = index == activeQueryTabIndex
                         StudioTab(text = queryTab.title, selected = selected, highlight = TabHighlight.BOTTOM,
@@ -327,11 +280,72 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
                 }
 
                 Row(modifier = Modifier.weight(1F)) {
-                    TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / devicePixelRatio },
-                        vertices = typeDBForceSimulation.data.vertices, edges = typeDBForceSimulation.data.edges,
-                        hyperedges = typeDBForceSimulation.data.hyperedges,
-                        vertexExplanations = typeDBForceSimulation.data.vertexExplanations, theme = visualiserTheme,
-                        metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, devicePixelRatio),
+
+                    val pixelDensity = LocalDensity.current.density
+
+                    fun onVertexDragStart(vertex: VertexState) {
+                        forceSimulation.nodes()[vertex.id]?.let { node: Node ->
+                            node.isXFixed = true
+                            node.isYFixed = true
+                        }
+                        forceSimulation
+                            .force("charge", null)
+                            .force("center", null)
+                            .force("x", null)
+                            .force("y", null)
+                            .alpha(0.25)
+                            .alphaDecay(0.0)
+
+                        if (forceSimulation.data.edges.any { it.targetID == vertex.id && it.encoding == ROLEPLAYER }) {
+                            val attributeEdges = forceSimulation.data.edges
+                                .filter { it.sourceID == vertex.id && it.encoding == HAS }
+                            val attributeNodeIDs = attributeEdges.map { it.targetID }
+                            val roleplayerEdges = forceSimulation.data.edges
+                                .filter { it.targetID == vertex.id && it.encoding == ROLEPLAYER }
+                                .map { it.sourceID }
+                                .flatMap { relationNodeID -> forceSimulation.data.edges
+                                    .filter { it.sourceID == relationNodeID && it.encoding == ROLEPLAYER } }
+                            val relationNodeIDs = roleplayerEdges.map { it.sourceID }
+                            val roleplayerNodeIDs = roleplayerEdges.map { it.targetID }
+                            val nodeIDs = (attributeNodeIDs + relationNodeIDs + roleplayerNodeIDs).toSet()
+                            val nodes = nodeIDs.map { forceSimulation.nodes()[it] }
+                            val links = (attributeEdges + roleplayerEdges)
+                                .map { Link(forceSimulation.nodes()[it.sourceID], forceSimulation.nodes()[it.targetID]) }
+                            val nodeIDsToFreeze = roleplayerNodeIDs
+                                .filter { it != vertex.id && forceSimulation.nodes()[it]?.isXFixed == false }
+                            nodeIDsToFreeze.forEach {
+                                forceSimulation.nodes()[it]?.isXFixed = true
+                                forceSimulation.nodes()[it]?.isYFixed = true
+                            }
+                            temporarilyFrozenNodeIDs += nodeIDsToFreeze
+                            forceSimulation.force("link", LinkForce(nodes, links, 90.0, 0.25))
+                        } else {
+                            forceSimulation.force("link", null)
+                        }
+                    }
+
+                    fun onVertexDragMove(vertex: VertexState, position: Offset) {
+                        forceSimulation.nodes()[vertex.id]?.let { node: Node ->
+                            node.x(position.x.toDouble())
+                            node.y(position.y.toDouble())
+                        }
+                    }
+
+                    fun onVertexDragEnd() {
+                        forceSimulation.force("link", null)
+                        forceSimulation.alphaDecay(1 - forceSimulation.alphaMin().pow(1.0 / 300))
+                        temporarilyFrozenNodeIDs.forEach {
+                            forceSimulation.nodes()[it]?.isXFixed = false
+                            forceSimulation.nodes()[it]?.isYFixed = false
+                        }
+                        temporarilyFrozenNodeIDs.clear()
+                    }
+
+                    TypeDBVisualiser(modifier = Modifier.fillMaxSize().onGloballyPositioned { visualiserSize = it.size.toSize() / pixelDensity },
+                        vertices = forceSimulation.data.vertices, edges = forceSimulation.data.edges,
+                        hyperedges = forceSimulation.data.hyperedges,
+                        vertexExplanations = forceSimulation.data.vertexExplanations, theme = visualiserTheme,
+                        metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset, pixelDensity = pixelDensity),
                         onZoom = { value -> visualiserScale = value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
                         selectedVertex = selectedVertex,
@@ -402,11 +416,11 @@ fun WorkspaceScreen(workspace: WorkspaceScreenState, navigator: Navigator, visua
         }
 
         StatusBar(dataStream = dataStream, visualiserScale = visualiserScale,
-            vertexCount = typeDBForceSimulation.data.vertices.size, edgeCount = typeDBForceSimulation.data.edges.size,
+            vertexCount = forceSimulation.data.vertices.size, edgeCount = forceSimulation.data.edges.size,
             queryStartTimeNanos = queryStartTimeNanos)
 
         LaunchedEffect(key1 = dataStream) {
-            simulationRunnerCoroutine(typeDBForceSimulation, dataStream, snackbarHostState, snackbarCoroutineScope)
+            simulationRunnerCoroutine(forceSimulation, dataStream, snackbarHostState, snackbarCoroutineScope)
         }
     }
 }

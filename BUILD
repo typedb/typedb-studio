@@ -30,10 +30,12 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 
 studio_deps = [
     "//appearance",
-    "//ui/elements",
+    "//common",
     "//data",
     "//login",
-    "//navigation",
+    "//routing",
+    "//storage",
+    "//ui/elements",
     "//workspace",
 
     # Maven
@@ -65,7 +67,10 @@ studio_resources = [
 
 kt_jvm_library(
     name = "studio",
-    srcs = ["main.kt"],
+    srcs = [
+        "main.kt",
+        "MainWindow.kt",
+    ],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = studio_deps,
     resources = studio_resources,

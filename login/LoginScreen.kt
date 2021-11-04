@@ -24,17 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.common.exception.ErrorMessage
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.navigation.LoginScreenState
-import com.vaticle.typedb.studio.navigation.Navigator
-import com.vaticle.typedb.studio.navigation.ServerSoftware
-import com.vaticle.typedb.studio.navigation.ServerSoftware.*
-import com.vaticle.typedb.studio.navigation.WorkspaceScreenState
+import com.vaticle.typedb.studio.routing.Router
+import com.vaticle.typedb.studio.login.ServerSoftware.*
+import com.vaticle.typedb.studio.routing.LoginRoute
+import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import kotlinx.coroutines.launch
@@ -43,55 +40,67 @@ import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState: SnackbarHostState) {
+fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: SnackbarHostState) {
     val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
-    var lastCheckedAddress by remember { mutableStateOf("") }
+    val form = remember { loginScreenStateOf(routeData) }
+    var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
+    var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
     var loadingDatabases by remember { mutableStateOf(false) }
 
     fun selectServerSoftware(software: ServerSoftware) {
+        if (form.serverSoftware == software) return
         form.serverSoftware = software
         form.clearDBList()
         form.closeClient()
-        lastCheckedAddress = ""
+        databasesLastLoadedFromAddress = null
+        databasesLastLoadedAtMillis = null
     }
 
-    fun loadDatabases() {
-        if (form.serverAddress == lastCheckedAddress || loadingDatabases) return
-        loadingDatabases = true
-        lastCheckedAddress = form.serverAddress
-        form.closeClient()
-        if (form.serverAddress.isNotBlank()) {
-            if (!form.databaseSelected) form.dbFieldText = "Loading databases..."
-            form.allDBNames.clear()
-            CompletableFuture.supplyAsync {
-                try {
-                    val client = when (form.serverSoftware) {
-                        CORE -> CoreClient(form.serverAddress)
-                        CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
-                    }
-                    form.dbClient = client
-                    form.allDBNames.let { dbNames ->
-                        dbNames += client.listDatabases()
-                        lastCheckedAddress = form.serverAddress
-                        if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
-                        else if (!form.databaseSelected) form.dbFieldText = "Select a database"
-                    }
-                } catch (e: Exception) {
-                    lastCheckedAddress = ""
-                    form.dbFieldText = "Failed to load databases"
-                    snackbarCoroutineScope.launch {
-                        log.error(e) { "Failed to load databases at address ${form.serverAddress}" }
-                        snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                    }
-                } finally {
-                    loadingDatabases = false
+    fun populateDBListAsync() {
+        CompletableFuture.supplyAsync {
+            try {
+                val client = when (form.serverSoftware) {
+                    CORE -> CoreClient(form.serverAddress)
+                    CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
                 }
+                form.dbClient = client
+                form.allDBNames.let { dbNames ->
+                    dbNames += client.listDatabases()
+                    if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
+                    else if (!form.databaseSelected) form.dbFieldText = "Select a database"
+                }
+            } catch (e: Exception) {
+                databasesLastLoadedFromAddress = null
+                form.dbFieldText = "Failed to load databases"
+                snackbarCoroutineScope.launch {
+                    log.error(e) { "Failed to load databases at address ${form.serverAddress}" }
+                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
+                }
+            } finally {
+                loadingDatabases = false
             }
         }
     }
 
-    fun selectDatabase(dbName: String) {
+    fun onDatabaseDropdownFocused() {
+        if (loadingDatabases) return
+        val lastLoadedMillis = databasesLastLoadedAtMillis
+        if (form.serverAddress == databasesLastLoadedFromAddress
+            && lastLoadedMillis != null && System.currentTimeMillis() - lastLoadedMillis < 2000) return
+
+        loadingDatabases = true
+        databasesLastLoadedFromAddress = form.serverAddress
+        databasesLastLoadedAtMillis = System.currentTimeMillis()
+        form.closeClient()
+        if (form.serverAddress.isNotBlank()) {
+            if (!form.databaseSelected) form.dbFieldText = "Loading databases..."
+            form.allDBNames.clear()
+            populateDBListAsync()
+        }
+    }
+
+    fun onSelectDatabase(dbName: String) {
         form.dbClient.let {
             if (it != null) {
                 form.dbFieldText = dbName
@@ -99,17 +108,14 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
             } else {
                 form.db = null
                 form.clearDBList()
-                lastCheckedAddress = ""
             }
         }
     }
 
     fun onSubmit() {
         try {
-            val dbClient = requireNotNull(form.dbClient)
-            val db = requireNotNull(form.db)
-            if (dbClient.containsDatabase(db.name)) navigator.pushState(WorkspaceScreenState(form))
-            else throw TypeDBClientException(ErrorMessage.Client.DB_DOES_NOT_EXIST, db.name)
+            val submission = form.asSubmission()
+            router.navigateTo(WorkspaceRoute(submission))
         } catch (e: Exception) {
             snackbarCoroutineScope.launch {
                 log.error(e) { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }
@@ -136,8 +142,8 @@ fun LoginScreen(form: LoginScreenState, navigator: Navigator, snackbarHostState:
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
             when (form.serverSoftware) {
-                CORE -> CoreLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
-                CLUSTER -> ClusterLoginPanel(form, ::loadDatabases, ::selectDatabase, ::onSubmit)
+                CORE -> CoreLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
+                CLUSTER -> ClusterLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
             }
         }
     }

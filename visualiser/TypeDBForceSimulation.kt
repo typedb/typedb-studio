@@ -1,5 +1,6 @@
 package com.vaticle.typedb.studio.visualiser
 
+import androidx.compose.ui.geometry.Offset
 import com.vaticle.force.graph.CenterForce
 import com.vaticle.force.graph.CollideForce
 import com.vaticle.force.graph.ForceSimulation
@@ -10,6 +11,7 @@ import com.vaticle.force.graph.Node
 import com.vaticle.force.graph.RandomEffects
 import com.vaticle.force.graph.XForce
 import com.vaticle.force.graph.YForce
+import mu.KotlinLogging.logger
 import java.lang.IllegalStateException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -19,24 +21,17 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
 
     var lastTickStartNanos: Long = 0
     var isStarted = false
-    val edgeBandsByEndpoints: MutableMap<Pair<Int, Int>, MutableSet<Int>> = mutableMapOf()
-    val edgeBandsByEdge: MutableMap<Int, Pair<Int, Int>> = mutableMapOf()
-    val nextHyperedgeNodeID = AtomicInteger(-1)
-    val vertexNodes: MutableCollection<Node> = mutableListOf()
+    private val edgeBandsByEndpoints: MutableMap<Pair<Int, Int>, MutableSet<Int>> = mutableMapOf()
+    private val edgeBandsByEdge: MutableMap<Int, Pair<Int, Int>> = mutableMapOf()
+    private val nextHyperedgeNodeID = AtomicInteger(-1)
+    private val vertexNodes: MutableCollection<Node> = mutableListOf()
     val hyperedgeNodes: MutableMap<Int, Node> = mutableMapOf()
 
     fun init() {
         clear()
         addNodes(data.vertices.map { InputNode(it.id) })
         force("center", CenterForce(nodes().values, 0.0, 0.0))
-//        force("link", LinkForce(nodes().values, data.edges.map { Link(nodes()[it.sourceID], nodes()[it.targetID]) }, 100.0,  0.5))
         force("collide", CollideForce(vertexNodes, 80.0))
-//        force("charge", ManyBodyForce(nodes().values) { forceEmitter, forceReceiver ->
-//            when (data.edges.count { it.sourceID == forceReceiver.index() || it.targetID == forceReceiver.index() }) {
-//                0 -> 1000.0
-//                else -> -1000.0
-//            }
-//        })
         force("charge", ManyBodyForce(vertexNodes, -100.0))
         force("x", XForce(vertexNodes, 0.0, 0.05))
         force("y", YForce(vertexNodes, 0.0, 0.05))
@@ -53,8 +48,29 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         return nodes().isEmpty()
     }
 
+    override fun tick() {
+        super.tick()
+        data.vertices.forEach {
+            val node = nodes()[it.id]
+                ?: throw IllegalStateException("Received bad simulation data: no entry received for vertex ID ${it.id}!")
+            it.position = Offset(node.x().toFloat(), node.y().toFloat())
+        }
+        val verticesByID: Map<Int, VertexState> = data.vertices.associateBy { it.id }
+        data.edges.forEach {
+            it.sourcePosition = verticesByID[it.sourceID]!!.position
+            it.targetPosition = verticesByID[it.targetID]!!.position
+        }
+        val hyperedgeNodesByNodeID: Map<Int, Node> = hyperedgeNodes.values.associateBy { it.index() }
+        data.hyperedges.forEach {
+            val hyperedgeNode = hyperedgeNodesByNodeID[it.hyperedgeNodeID]
+                ?: throw IllegalStateException("Received bad simulation data: no hyperedge node found with ID ${it.hyperedgeNodeID}!")
+            it.position = Offset(hyperedgeNode.x().toFloat(), hyperedgeNode.y().toFloat())
+        }
+    }
+
     override fun clear() {
         super.clear()
+        isStarted = false
         data.clear()
         vertexNodes.clear()
         edgeBandsByEndpoints.clear()
@@ -83,7 +99,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         }
         force("link", LinkForce(vertexNodes, links, 90.0, 0.5))
         force("charge", ManyBodyForce(vertexNodes, -600.0 * data.edges.size / (data.vertices.size + 1)))
-//        println("New charge strength = ${-200.0 * data.edges.size / (data.vertices.size + 1)}")
 
         val edgesBySource = data.edges.groupBy { it.sourceID }
         edges.forEach { edge ->
@@ -111,7 +126,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
             val placementOffset = RandomEffects.jiggle()
             force("x_$nodeID", XForce(listOf(node), { edgeMidpoint(edge).x + placementOffset }, 0.35))
             force("y_$nodeID", YForce(listOf(node), { edgeMidpoint(edge).y + placementOffset }, 0.35))
-//            println("Adding edge band member: $edge")
             data.hyperedges += HyperedgeState(edge.id, nodeID)
         }
     }

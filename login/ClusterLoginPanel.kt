@@ -18,15 +18,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
-import com.vaticle.typedb.studio.navigation.LoginScreenState
-import com.vaticle.typedb.studio.navigation.ServerSoftware.*
+import com.vaticle.typedb.studio.login.ServerSoftware.*
 import com.vaticle.typedb.studio.ui.elements.StudioButton
 import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioTextField
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ClusterLoginPanel(form: LoginScreenState, loadDatabases: () -> Unit, selectDatabase: (dbName: String) -> Unit,
+fun ClusterLoginPanel(form: LoginScreenState, onDatabaseDropdownFocused: () -> Unit, onSelectDatabase: (dbName: String) -> Unit,
                       onSubmit: () -> Unit) {
     val focusManager: FocusManager = LocalFocusManager.current
 
@@ -57,9 +56,9 @@ fun ClusterLoginPanel(form: LoginScreenState, loadDatabases: () -> Unit, selectD
             }
             FormField {
                 Text("Database", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
-                StudioDropdownBox(items = form.allDBNames, text = form.dbFieldText, onTextChange = { selectDatabase(it) },
+                StudioDropdownBox(items = form.allDBNames, text = form.dbFieldText, onTextChange = { onSelectDatabase(it) },
                     modifier = fieldWeightModifier.height(28.dp),
-                    textFieldModifier = Modifier.onFocusChanged { if (it.isFocused && form.serverSoftware == CLUSTER) loadDatabases() })
+                    textFieldModifier = Modifier.onFocusChanged { if (it.isFocused && form.serverSoftware == CLUSTER) onDatabaseDropdownFocused() })
             }
         }
 

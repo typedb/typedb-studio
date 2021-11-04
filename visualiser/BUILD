@@ -10,7 +10,7 @@ kt_jvm_library(
         "//appearance",
         "//ui/elements",
         "//data",
-        "//navigation",
+        "//routing",
 
         # External dependencies from @vaticle
         "@vaticle_force_graph//:force-graph",
