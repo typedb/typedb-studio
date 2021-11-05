@@ -46,7 +46,7 @@ class AppData {
         } catch (e: Exception) {
             isWritable = false;
         }
-        LOG.error { "Unable to access app data. User preferences and history will be unavailable." }
+        if (!isWritable) LOG.error { "Unable to access app data. User preferences and history will be unavailable." }
     }
 
     private fun initLogFileOutput() {
