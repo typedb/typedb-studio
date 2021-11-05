@@ -56,17 +56,18 @@ import kotlin.math.sqrt
 @Composable
 fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
                      hyperedges: List<HyperedgeState>, vertexExplanations: List<VertexExplanationState>,
-                     theme: VisualiserTheme, /*worldOffsetListener: EventListener<Offset>,*/ onZoom: (scale: Float) -> Unit,
-                     selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
-                     selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
+                     theme: VisualiserTheme, worldOffset: Offset, onWorldOffsetChange: (delta: Offset) -> Unit,
+                     scale: Float, onZoom: (delta: Float) -> Unit, selectedVertex: VertexState?,
+                     onSelectVertex: (vertex: VertexState?) -> Unit, selectedVertexNetwork: List<VertexState>,
+                     onVertexDragStart: (vertex: VertexState) -> Unit,
                      onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
                      explain: (vertex: VertexState) -> Unit) {
 
     // We refresh scale and world offset locally because it's smoother than when relying on events (onZoom etc.)
     // The events are used to update the UI elsewhere in the application.
     // TODO: add event listeners to receive scale and reposition requests from elsewhere in the application
-    var scale by remember { mutableStateOf(1F) }
-    var worldOffset by remember { mutableStateOf(Offset.Zero) }
+//    var scale by remember { mutableStateOf(1F) }
+//    var worldOffset by remember { mutableStateOf(worldOffset) }
     var pointerPosition: Offset? by remember { mutableStateOf(null) }
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
@@ -360,7 +361,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         }
 
         Box(modifier = Modifier.fillMaxSize().zIndex(100F)
-            .pointerInput(pixelDensity) {
+            .pointerInput(pixelDensity, scale) {
                 detectDragGestures(
                     onDragStart = { _ ->
                         draggedVertex?.let { onVertexDragStart(it) }
@@ -382,7 +383,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         vertex.position += worldDragDistance
                         onVertexDragMove(vertex, vertex.position)
                     }
-                    else worldOffset += worldDragDistance
+//                    else worldOffset += worldDragDistance
+                    else onWorldOffsetChange(worldDragDistance)
                 }
             }
             .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
@@ -413,9 +415,9 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
 //                val newX = viewportOffset.x * (1 + ((2 * transformOrigin.x) / canvasSize.width) * (1 / zoomFactor - 1))
 //                val newY = viewportOffset.y * (1 + ((2 * transformOrigin.y) / canvasSize.width) * (1 / zoomFactor - 1))
 //                viewportOffset = Offset(newX, newY)
-                scale = newViewportScale
-                onZoom(newViewportScale)
-                delta
+//                scale = newViewportScale
+                onZoom(newViewportScale - scale)
+                return@rememberScrollableState delta
             })) {
 
             // This nesting is required to prevent the drag event conflicting with the tap event
@@ -430,7 +432,7 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                         return@pointerMoveFilter false
                     }
                 )
-                .pointerInput(pixelDensity) {
+                .pointerInput(pixelDensity, worldOffset) {
                     detectTapGestures(
                         onPress = { viewportPoint: Offset ->
                             val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
@@ -440,25 +442,19 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
                             val cancelled = tryAwaitRelease()
                             if (cancelled) draggedVertex = null
                         },
-                        onDoubleTap = { viewportPoint: Offset ->
-                            val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
-                            val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
-                            val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
-                            tappedVertex?.let {
+                        onDoubleTap = {
+                            hoveredVertex?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
 //                                println("double-tapped vertex: $it")
                                 if (it.inferred) explain(it)
                             }
                         }
-                    ) /* onTap = */ { viewportPoint: Offset ->
-                        val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
-                        val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
-                        val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
-                        onSelectVertex(tappedVertex)
+                    ) /* onTap = */ {
+                        onSelectVertex(hoveredVertex)
                     }
                 })
 
-            LaunchedEffect(vertexExplanations) {
+            LaunchedEffect(vertexExplanations, worldOffset, scale) {
                 while (true) {
                     withFrameNanos {
                         val viewportPoint = pointerPosition

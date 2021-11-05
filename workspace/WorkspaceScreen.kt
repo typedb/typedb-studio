@@ -348,7 +348,8 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                         hyperedges = forceSimulation.data.hyperedges,
                         vertexExplanations = forceSimulation.data.vertexExplanations, theme = visualiserTheme,
                         /*metrics = SimulationMetrics(id = visualiserMetricsID, worldOffset = visualiserWorldOffset),*/
-                        onZoom = { value -> visualiserScale = value },
+                        worldOffset = visualiserWorldOffset, onWorldOffsetChange = { visualiserWorldOffset += it },
+                        scale = visualiserScale, onZoom = { value -> visualiserScale += value },
                         explain = { vertex -> db.explainConcept(vertex.id) },
                         selectedVertex = selectedVertex,
                         onSelectVertex = ::onSelectVertex,
