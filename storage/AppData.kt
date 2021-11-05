@@ -1,42 +1,79 @@
 package com.vaticle.typedb.studio.storage
 
-import com.vaticle.typedb.studio.common.platform.OS.*
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.rolling.RollingFileAppender
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
+import ch.qos.logback.core.util.FileSize
+import com.vaticle.typedb.studio.common.platform.OS.LINUX
+import com.vaticle.typedb.studio.common.platform.OS.MAC
+import com.vaticle.typedb.studio.common.platform.OS.WINDOWS
 import com.vaticle.typedb.studio.common.platform.currentOS
-import java.io.File
+import java.lang.System.getProperty
+import java.lang.System.getenv
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.notExists
+import mu.KotlinLogging
+import org.slf4j.LoggerFactory
+
+private const val WIN_ENV_APP_DATA = "AppData"
+private const val UNIX_PROP_USER_HOME = "user.home"
+private const val MAC_DIR_LIBRARY = "Library"
+private const val MAC_DIR_APP_SUPPORT = "Application Support"
+private const val APP_DIR_TYPEDB_STUDIO = "TypeDB Studio"
+private const val APP_LOG = "typedb-studio.log"
+private val LOG = KotlinLogging.logger {}
 
 class AppData {
-    private val dataDir: Path
+    private val dataDir: Path = when (currentOS()) {
+        // Source: https://stackoverflow.com/a/16660314/2902555
+        WINDOWS -> Path.of(getenv(WIN_ENV_APP_DATA), APP_DIR_TYPEDB_STUDIO)
+        MAC -> Path.of(getProperty(UNIX_PROP_USER_HOME), MAC_DIR_LIBRARY, MAC_DIR_APP_SUPPORT, APP_DIR_TYPEDB_STUDIO)
+        LINUX -> Path.of(getProperty(UNIX_PROP_USER_HOME), APP_DIR_TYPEDB_STUDIO)
+    }
 
-    var logFile: File
-        private set
+    private var logFile = dataDir.resolve(APP_LOG).toFile()
+    private var isWritable = false
 
-    val isWritable: Boolean
-        get() = notWritableCause == null
-
-    var notWritableCause: Exception? = null
-        private set
-
-    init {
-        val appName = "TypeDB Studio"
-        dataDir = when (currentOS()) {
-            // https://stackoverflow.com/a/16660314/2902555
-            WINDOWS -> Path.of(System.getenv("AppData"), appName)
-            MAC -> Path.of(System.getProperty("user.home"), "Library", "Application Support", appName)
-            LINUX -> Path.of(System.getProperty("user.home"), appName)
-        }
-        logFile = dataDir.resolve("typedb-studio.log").toFile()
+    fun initialise() {
         try {
             if (dataDir.notExists()) Files.createDirectory(dataDir)
-            // test that we have write access
-            val testPath = dataDir.resolve("test.txt")
-            Files.deleteIfExists(testPath)
-            Files.createFile(testPath)
-            Files.delete(testPath)
+            isWritable = Files.isWritable(dataDir)
+            if (isWritable) initLogFileOutput()
         } catch (e: Exception) {
-            notWritableCause = e
+            isWritable = false;
         }
+        LOG.error { "Unable to access app data. User preferences and history will be unavailable." }
+    }
+
+    private fun initLogFileOutput() {
+        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        val fileAppender = RollingFileAppender<ILoggingEvent>().apply {
+            context = loggerContext
+            name = "LOGFILE"
+            file = logFile.path
+        }
+        val encoder = PatternLayoutEncoder().apply {
+            context = loggerContext
+            pattern = "%date{ISO8601} [%thread] [%-5level] %logger{36} - %msg%n"
+        }
+        encoder.start()
+        fileAppender.encoder = encoder
+        val rollingPolicy = SizeAndTimeBasedRollingPolicy<ILoggingEvent>().apply {
+            context = loggerContext
+            setParent(fileAppender)
+            fileNamePattern = "${logFile.path}-%d{yyyy-MM}.%i.log.gz"
+            setMaxFileSize(FileSize.valueOf("50MB"))
+            maxHistory = 60
+            setTotalSizeCap(FileSize.valueOf("1GB"))
+        }
+        rollingPolicy.start()
+        fileAppender.rollingPolicy = rollingPolicy
+        fileAppender.start()
+        val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        rootLogger.addAppender(fileAppender)
     }
 }
