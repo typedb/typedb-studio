@@ -51,11 +51,10 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import com.vaticle.typedb.studio.ui.elements.TabHighlight
-import com.vaticle.typedb.studio.visualiser.SimulationMetrics
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.VertexState
-import com.vaticle.typedb.studio.visualiser.simulationRunnerCoroutine
+import com.vaticle.typedb.studio.visualiser.runSimulation
 import kotlinx.coroutines.launch
 import mu.KotlinLogging.logger
 import java.awt.FileDialog
@@ -423,7 +422,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
             queryStartTimeNanos = queryStartTimeNanos)
 
         LaunchedEffect(key1 = queryResponseStream) {
-            simulationRunnerCoroutine(forceSimulation, queryResponseStream, snackbarHostState, snackbarCoroutineScope)
+            runSimulation(forceSimulation, queryResponseStream, snackbarHostState, snackbarCoroutineScope)
         }
     }
 }
