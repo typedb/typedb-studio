@@ -1,6 +1,6 @@
-package com.vaticle.typedb.studio.common.platform
+package com.vaticle.typedb.studio.common
 
-import com.vaticle.typedb.studio.common.platform.OS.*
+import com.vaticle.typedb.studio.common.OS.*
 import java.util.Locale
 
 enum class OS {

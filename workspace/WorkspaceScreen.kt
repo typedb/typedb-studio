@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.ui.elements.StudioIcon
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import com.vaticle.typedb.studio.ui.elements.TabHighlight
+import com.vaticle.typedb.studio.visualiser.EdgeState
 import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.VertexState
@@ -218,9 +219,13 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                     if (vertex != null) {
                         val verticesToAdd = mutableSetOf(vertex)
                         val verticesByID = forceSimulation.data.vertices.associateBy { it.id }
-                        forceSimulation.data.edges.forEach {
-                            if (it.sourceID == vertex.id) verticesToAdd += verticesByID[it.targetID]!!
-                            else if (it.targetID == vertex.id) verticesToAdd += verticesByID[it.sourceID]!!
+                        forceSimulation.data.edges.forEach { edge: EdgeState ->
+                            val vertexToAdd = when (vertex.id) {
+                                edge.sourceID -> verticesByID[edge.targetID]
+                                edge.targetID -> verticesByID[edge.sourceID]
+                                else -> null
+                            }
+                            if (vertexToAdd != null) verticesToAdd += vertexToAdd
                         }
                         selectedVertexNetwork += verticesToAdd
                     }
@@ -284,6 +289,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
 
                     val pixelDensity = LocalDensity.current.density
 
+                    // TODO: this drag logic is too complex - should be extracted out into a VM (maybe TypeDBForceSimulation)
                     fun onVertexDragStart(vertex: VertexState) {
                         forceSimulation.nodes()[vertex.id]?.let { node: Node ->
                             node.isXFixed = true
@@ -390,6 +396,8 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
             Column(modifier = Modifier.fillMaxHeight().width(1.dp).background(StudioTheme.colors.uiElementBorder).zIndex(20f)) {}
 
             Column(modifier = Modifier.width(20.dp)) {
+                // TODO: We really need to make StudioTabs work - these hardcoded-height boxes are a dirty hack
+                //       that will break if the font size is customised
                 Box(Modifier.height(76.dp).background(if (showQuerySettingsPanel) StudioTheme.colors.backgroundHighlight else StudioTheme.colors.background)
                     .clickable { showQuerySettingsPanel = !showQuerySettingsPanel }) {
                     StudioIcon(Icon.Cog, modifier = Modifier.offset(x = 4.dp, y = 8.dp))
@@ -406,8 +414,6 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                         .requiredWidth(IntrinsicSize.Max)
                         .rotate(90f))
                 }
-                // TODO: We really need to make StudioTabs work - these hardcoded-height boxes are a dirty hack
-                //       that will collapse the moment the font size is customised
 //                StudioTabs(orientation = TabOrientation.TOP_TO_BOTTOM) {
 //                    StudioTab("Settings", selected = showQuerySettingsPanel, leadingIcon = { StudioIcon(Icon.Cog) })
 //                    StudioTab("Concept", selected = showConceptPanel, leadingIcon = { StudioIcon(Icon.SearchAround) })
