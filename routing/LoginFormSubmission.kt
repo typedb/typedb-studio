@@ -8,17 +8,16 @@ import com.vaticle.typedb.studio.data.DBClient
 abstract class LoginFormSubmission(val serverAddress: String, val db: DB, val allDBNames: List<String>) {
     abstract val dbClient: DBClient
     abstract fun toRoute(): LoginRoute
-}
 
-class CoreLoginFormSubmission(override val dbClient: CoreClient, db: DB, allDBNames: List<String>):
-    LoginFormSubmission(serverAddress = dbClient.serverAddress, db = db, allDBNames = allDBNames) {
+    class Core(override val dbClient: CoreClient, db: DB, allDBNames: List<String>) :
+        LoginFormSubmission(serverAddress = dbClient.serverAddress, db = db, allDBNames = allDBNames) {
+        override fun toRoute() = LoginRoute.Core(serverAddress)
+    }
 
-    override fun toRoute() = CoreLoginRoute(serverAddress)
-}
-
-class ClusterLoginFormSubmission(override val dbClient: ClusterClient, val username: String, val rootCAPath: String,
-                                 db: DB, allDBNames: List<String>):
-    LoginFormSubmission(serverAddress = dbClient.serverAddress, db = db, allDBNames = allDBNames) {
-
-    override fun toRoute() = ClusterLoginRoute(serverAddress, username, rootCAPath)
+    class Cluster(
+        override val dbClient: ClusterClient, private val username: String,
+        val rootCAPath: String, db: DB, allDBNames: List<String>
+    ) : LoginFormSubmission(serverAddress = dbClient.serverAddress, db = db, allDBNames = allDBNames) {
+        override fun toRoute() = LoginRoute.Cluster(serverAddress, username, rootCAPath)
+    }
 }

@@ -10,9 +10,6 @@ import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.login.ServerSoftware.*
-import com.vaticle.typedb.studio.routing.ClusterLoginFormSubmission
-import com.vaticle.typedb.studio.routing.ClusterLoginRoute
-import com.vaticle.typedb.studio.routing.CoreLoginFormSubmission
 import com.vaticle.typedb.studio.routing.LoginFormSubmission
 import com.vaticle.typedb.studio.routing.LoginRoute
 import mu.KotlinLogging.logger
@@ -60,13 +57,13 @@ class LoginScreenState(serverSoftware: ServerSoftware = CORE, serverAddress: Str
                 if (dbClientSnapshot !is CoreClient) {
                     throw IllegalStateException("Core login form expected DBClient of type CoreClient, but was ${dbClientSnapshot.javaClass}")
                 }
-                CoreLoginFormSubmission(dbClient = dbClientSnapshot, db = dbSnapshot, allDBNames = allDBNames)
+                LoginFormSubmission.Core(dbClient = dbClientSnapshot, db = dbSnapshot, allDBNames = allDBNames)
             }
             CLUSTER -> {
                 if (dbClientSnapshot !is ClusterClient) {
                     throw IllegalStateException("Cluster login form expected DBClient of type ClusterClient, but was ${dbClientSnapshot.javaClass}")
                 }
-                ClusterLoginFormSubmission(dbClient = dbClientSnapshot, username = username, rootCAPath = rootCAPath,
+                LoginFormSubmission.Cluster(dbClient = dbClientSnapshot, username = username, rootCAPath = rootCAPath,
                     db = dbSnapshot, allDBNames = allDBNames)
             }
         }
@@ -78,7 +75,7 @@ class LoginScreenState(serverSoftware: ServerSoftware = CORE, serverAddress: Str
 }
 
 fun loginScreenStateOf(routeData: LoginRoute) = when (routeData) {
-    is ClusterLoginRoute -> LoginScreenState(serverSoftware = CLUSTER, serverAddress = routeData.serverAddress,
+    is LoginRoute.Cluster -> LoginScreenState(serverSoftware = CLUSTER, serverAddress = routeData.serverAddress,
         username = routeData.username, rootCAPath = routeData.rootCAPath)
     else -> LoginScreenState(serverSoftware = CORE, serverAddress = routeData.serverAddress)
 }

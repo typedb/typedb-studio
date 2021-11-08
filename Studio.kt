@@ -24,7 +24,6 @@ import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.login.LoginScreen
-import com.vaticle.typedb.studio.routing.CoreLoginRoute
 import com.vaticle.typedb.studio.routing.LoginRoute
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
@@ -38,7 +37,7 @@ fun Studio(onCloseRequest: () -> Unit) {
     val windowState = rememberWindowState(WindowPlacement.Maximized);
     val snackbarHostState = rememberScaffoldState().snackbarHostState
     var titleBarHeight by remember { mutableStateOf(0F) }
-    val router = remember { Router(initialRoute = CoreLoginRoute()) }
+    val router = remember { Router(initialRoute = LoginRoute.Core()) }
     val pixelDensity = LocalDensity.current.density
 
     // TODO: we want undecorated (no title bar), by passing undecorated = true,
