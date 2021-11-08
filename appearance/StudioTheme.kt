@@ -221,20 +221,20 @@ private fun TextStyle.withDefaultFontFamily(default: FontFamily): TextStyle {
 }
 
 private val titilliumWeb = FontFamily(
-    Font(resource = "fonts/titillium_web/TitilliumWeb-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal),
-    Font(resource = "fonts/titillium_web/TitilliumWeb-SemiBold.ttf", weight = FontWeight.SemiBold, style = FontStyle.Normal)
+    Font(resource = "fonts/titilliumweb/TitilliumWeb-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal),
+    Font(resource = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf", weight = FontWeight.SemiBold, style = FontStyle.Normal)
 )
 
 private val ubuntuMono = FontFamily(
-    Font(resource = "fonts/ubuntu_mono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
+    Font(resource = "fonts/ubuntumono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
 )
 
 private val ubuntuMonoSize13Swing: java.awt.Font
 get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
-    ClassLoader.getSystemResourceAsStream("fonts/ubuntu_mono/UbuntuMono-Regular.ttf")).deriveFont(13F)
+    ClassLoader.getSystemResourceAsStream("fonts/ubuntumono/UbuntuMono-Regular.ttf")).deriveFont(13F)
 
 private val titilliumWebSize13Swing: java.awt.Font
 get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
-    ClassLoader.getSystemResourceAsStream("fonts/titillium_web/TitilliumWeb-Regular.ttf")).deriveFont(13F)
+    ClassLoader.getSystemResourceAsStream("fonts/titilliumweb/TitilliumWeb-Regular.ttf")).deriveFont(13F)
 
 val LocalTypography = staticCompositionLocalOf { StudioTypography(defaultFontFamily = titilliumWeb, defaultMonospaceFontFamily = ubuntuMono) }

@@ -27,52 +27,41 @@ load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 
-
-studio_deps = [
-    "//appearance",
-    "//common",
-    "//data",
-    "//login",
-    "//routing",
-    "//storage",
-    "//ui/elements",
-    "//workspace",
-
-    # Maven
-    "@maven//:ch_qos_logback_logback_classic",
-    "@maven//:ch_qos_logback_logback_core",
-    "@maven//:io_github_microutils_kotlin_logging_jvm",
-    "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-    "@maven//:org_slf4j_slf4j_api",
-
-    # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
-    "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-    "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-    "@maven//:org_jetbrains_compose_ui_ui_desktop",
-    "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
-    "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
-]
-
-studio_resources = [
-    "//resources/fonts/titillium_web:light",
-    "//resources/fonts/titillium_web:regular",
-    "//resources/fonts/titillium_web:semi-bold",
-    "//resources/fonts/ubuntu_mono:bold",
-    "//resources/fonts/ubuntu_mono:regular",
-    "//resources/icons:blueprint-icons-16",
-    "//resources/icons:blueprint-icons-20",
-    "//resources/icons:database-png",
-    "//resources/icons:database-svg",
-]
-
 kt_jvm_library(
     name = "studio",
     srcs = [
         "Studio.kt",
     ],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    deps = studio_deps,
-    resources = studio_resources,
+    deps = [
+        "//appearance",
+        "//common",
+        "//data",
+        "//login",
+        "//routing",
+        "//storage",
+        "//ui/elements",
+        "//workspace",
+
+        # Maven
+        "@maven//:ch_qos_logback_logback_classic",
+        "@maven//:ch_qos_logback_logback_core",
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+        "@maven//:org_slf4j_slf4j_api",
+
+        # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+    ],
+    resources = [
+        "//resources/fonts:titillium-web",
+        "//resources/fonts:ubuntu-mono",
+        "//resources/icons:icons",
+    ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
 )
