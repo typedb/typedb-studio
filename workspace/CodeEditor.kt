@@ -57,45 +57,39 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
     }
 
     if (swingComponent == null) {
-        try {
-            textArea.apply {
-                text = code
-                this.font = font
-                syntaxEditingStyle = SyntaxConstants.SYNTAX_STYLE_NONE // TODO: Add TypeQL syntax style
-                background = StudioTheme.colors.editorBackground.toSwingColor()
-                foreground = StudioTheme.colors.text.toSwingColor()
-                caretColor = StudioTheme.colors.primary.toSwingColor()
-                currentLineHighlightColor = StudioTheme.colors.background.toSwingColor()
-                antiAliasingEnabled = true
-                popupMenu.background = StudioTheme.colors.uiElementBackground.toSwingColor()
-                popupMenu.subElements.forEach { element ->
-                    element.component.apply {
-                        background = StudioTheme.colors.uiElementBackground.toSwingColor()
-                        foreground = StudioTheme.colors.text.toSwingColor()
-                        this.font = StudioTheme.typography.codeEditorContextMenuSwing
-                        if (this is RTextArea) {
-                            this.markAllHighlightColor = StudioTheme.colors.uiElementBorder.toSwingColor()
-                        }
+        // TODO: we need to not use 'if (X == null) initialise X'. It's ugly and it makes it impossible to use try-catch
+        textArea.apply {
+            text = code
+            this.font = font
+            syntaxEditingStyle = SyntaxConstants.SYNTAX_STYLE_NONE // TODO: Add TypeQL syntax style
+            background = StudioTheme.colors.editorBackground.toSwingColor()
+            foreground = StudioTheme.colors.text.toSwingColor()
+            caretColor = StudioTheme.colors.primary.toSwingColor()
+            currentLineHighlightColor = StudioTheme.colors.background.toSwingColor()
+            antiAliasingEnabled = true
+            popupMenu.background = StudioTheme.colors.uiElementBackground.toSwingColor()
+            popupMenu.subElements.forEach { element ->
+                element.component.apply {
+                    background = StudioTheme.colors.uiElementBackground.toSwingColor()
+                    foreground = StudioTheme.colors.text.toSwingColor()
+                    this.font = StudioTheme.typography.codeEditorContextMenuSwing
+                    if (this is RTextArea) {
+                        this.markAllHighlightColor = StudioTheme.colors.uiElementBorder.toSwingColor()
                     }
                 }
-                documentListener = createDocumentListener()
-                document.addDocumentListener(documentListener)
             }
-
-            val scrollPane = RTextScrollPane(textArea).apply {
-                verticalScrollBar.preferredSize = Dimension(0, 0)
-                horizontalScrollBar.preferredSize = Dimension(0, 0)
-                border = BorderFactory.createEmptyBorder()
-                background = StudioTheme.colors.uiElementBorder.toSwingColor()
-                gutter.borderColor = StudioTheme.colors.uiElementBorder.toSwingColor()
-            }
-            swingComponent = scrollPane
-        } catch (e: Exception) {
-            snackbarCoroutineScope.launch {
-                log.error(e) { "An error occurred while attempting to initialise CodeEditor." }
-                snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-            }
+            documentListener = createDocumentListener()
+            document.addDocumentListener(documentListener)
         }
+
+        val scrollPane = RTextScrollPane(textArea).apply {
+            verticalScrollBar.preferredSize = Dimension(0, 0)
+            horizontalScrollBar.preferredSize = Dimension(0, 0)
+            border = BorderFactory.createEmptyBorder()
+            background = StudioTheme.colors.uiElementBorder.toSwingColor()
+            gutter.borderColor = StudioTheme.colors.uiElementBorder.toSwingColor()
+        }
+        swingComponent = scrollPane
     }
 
     Box(modifier = modifier) {
