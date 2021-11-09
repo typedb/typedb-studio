@@ -58,9 +58,11 @@ fun QuerySettingsPanel(
                 Column(modifier = Modifier.padding(6.dp)) {
                     val toggleReasoning = { onSettingsChange(settings.copy(enableReasoning = !settings.enableReasoning)) }
                     Row(modifier = Modifier.clickable { toggleReasoning() }, verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = settings.enableReasoning, onCheckedChange = { toggleReasoning() },
+                        Checkbox(
+                            checked = settings.enableReasoning, onCheckedChange = { toggleReasoning() },
                             modifier = Modifier.scale(.75f).size(21.dp),
-                            colors = CheckboxDefaults.colors(checkedColor = StudioTheme.colors.icon))
+                            colors = CheckboxDefaults.colors(checkedColor = StudioTheme.colors.icon)
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text("Enable Reasoning and Explanations", style = StudioTheme.typography.body1)
                     }
