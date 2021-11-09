@@ -29,7 +29,10 @@ class ErrorHandler(
                 DEBUG -> logger.debug(error) { message() }
                 TRACE -> logger.trace(error) { message() }
             }
-            if (showSnackbar) snackbarHostState.showSnackbar(error.toString(), actionLabel = "HIDE", snackbarDuration)
+            if (showSnackbar) {
+                val errorMessage = if (error.message?.isNotBlank() == true) error.message!! else error.toString()
+                snackbarHostState.showSnackbar(errorMessage, actionLabel = "HIDE", snackbarDuration)
+            }
         }
     }
 }

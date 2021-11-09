@@ -5,8 +5,8 @@ import androidx.compose.runtime.withFrameNanos
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.data.GraphData
 import com.vaticle.typedb.studio.data.QueryResponseStream
+import com.vaticle.typedb.studio.diagnostics.ErrorHandler
 import com.vaticle.typedb.studio.diagnostics.LogLevel
-import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
 import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging.logger
@@ -17,7 +17,7 @@ suspend fun runSimulation(
     snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
 ) {
     val log = logger {}
-    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
+    val errorHandler = ErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
 
     fun fetchNewData() {
         if (dataStream.isEmpty()) return

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,13 +29,13 @@ import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
 import com.vaticle.typedb.studio.diagnostics.withErrorHandling
-import com.vaticle.typedb.studio.routing.Router
-import com.vaticle.typedb.studio.login.ServerSoftware.*
+import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
+import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
+import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
-import kotlinx.coroutines.launch
 import mu.KotlinLogging.logger
 import java.util.concurrent.CompletableFuture
 
@@ -87,7 +86,8 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
         if (loadingDatabases) return
         val lastLoadedMillis = databasesLastLoadedAtMillis
         if (form.serverAddress == databasesLastLoadedFromAddress
-            && lastLoadedMillis != null && System.currentTimeMillis() - lastLoadedMillis < 2000) return
+            && lastLoadedMillis != null && System.currentTimeMillis() - lastLoadedMillis < 2000
+        ) return
 
         loadingDatabases = true
         databasesLastLoadedFromAddress = form.serverAddress
@@ -119,11 +119,15 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(StudioTheme.colors.windowBackdrop)
-        .border(1.dp, StudioTheme.colors.uiElementBorder), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(StudioTheme.colors.windowBackdrop)
+            .border(1.dp, StudioTheme.colors.uiElementBorder), contentAlignment = Alignment.Center
+    ) {
 
-        Column(modifier = Modifier.size(400.dp, 320.dp).background(StudioTheme.colors.background)
-            .border(1.dp, StudioTheme.colors.uiElementBorder)) {
+        Column(
+            modifier = Modifier.size(400.dp, 320.dp).background(StudioTheme.colors.background)
+                .border(1.dp, StudioTheme.colors.uiElementBorder)
+        ) {
 
             StudioTabs(Modifier.height(24.dp)) {
                 StudioTab(text = CORE.displayName, selected = form.serverSoftware == CORE,
