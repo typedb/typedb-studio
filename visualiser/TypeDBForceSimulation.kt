@@ -29,7 +29,6 @@ import com.vaticle.force.graph.Node
 import com.vaticle.force.graph.RandomEffects
 import com.vaticle.force.graph.XForce
 import com.vaticle.force.graph.YForce
-import mu.KotlinLogging.logger
 import java.lang.IllegalStateException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max

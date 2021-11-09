@@ -64,6 +64,7 @@ import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.VertexEncoding
+import mu.KotlinLogging.logger
 import java.awt.Polygon
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -81,6 +82,7 @@ fun TypeDBVisualiser(
     onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
     explain: (vertex: VertexState) -> Unit
 ) {
+    val log = remember { logger {} }
     var pointerPosition: Offset? by remember { mutableStateOf(null) }
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
@@ -93,7 +95,7 @@ fun TypeDBVisualiser(
 
     fun DrawScope.drawVertex(v: VertexState) {
         val viewportOffset: Offset = -worldOffset
-        val vertexBaseColor = requireNotNull(theme.vertex[v.encoding])
+        val vertexBaseColor = theme.vertex[v.encoding] ?: Color.Magenta
         val focused = hoveredVertex === v || draggedVertex === v
         val faded = selectedVertex != null && v !in selectedVertexNetwork
         val alpha = when {
@@ -121,13 +123,14 @@ fun TypeDBVisualiser(
                     drawRoundRect(
                         color = highlightColor,
                         topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
-                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2), cornerRadius = cornerRadius)
+                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2), cornerRadius = cornerRadius
+                    )
                 }
 
                 drawRoundRect(
-                    color = vertexColor,
-                    topLeft = Offset(position.x - width / 2, position.y - height / 2),
-                    size = Size(width, height), cornerRadius = cornerRadius)
+                    color = vertexColor, topLeft = Offset(position.x - width / 2, position.y - height / 2),
+                    size = Size(width, height), cornerRadius = cornerRadius
+                )
             }
 
             VertexEncoding.RELATION_TYPE, VertexEncoding.RELATION -> {
@@ -140,25 +143,30 @@ fun TypeDBVisualiser(
                     if (highlightColor != null) {
                         drawRoundRect(color = highlightColor,
                             topLeft = Offset(position.x - n / 2 - highlightWidth, position.y - n / 2 - highlightWidth),
-                            size = Size(n + highlightWidth * 2, n + highlightWidth * 2), cornerRadius = cornerRadius)
+                            size = Size(n + highlightWidth * 2, n + highlightWidth * 2), cornerRadius = cornerRadius
+                        )
                     }
 
-                    drawRoundRect(color = vertexColor,
-                        topLeft = Offset(position.x - n / 2, position.y - n / 2),
-                        size = Size(n, n), cornerRadius = cornerRadius)
+                    drawRoundRect(
+                        color = vertexColor, topLeft = Offset(position.x - n / 2, position.y - n / 2),
+                        size = Size(n, n), cornerRadius = cornerRadius
+                    )
                 }
             }
 
             VertexEncoding.ATTRIBUTE_TYPE, VertexEncoding.ATTRIBUTE -> {
                 if (highlightColor != null) {
-                    drawOval(color = highlightColor,
+                    drawOval(
+                        color = highlightColor,
                         topLeft = Offset(position.x - width / 2 - highlightWidth, position.y - height / 2 - highlightWidth),
-                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2))
+                        size = Size(width + highlightWidth * 2, height + highlightWidth * 2)
+                    )
                 }
 
-                drawOval(color = vertexColor,
-                    topLeft = Offset(position.x - width / 2, position.y - height / 2),
-                    size = Size(width, height))
+                drawOval(
+                    color = vertexColor, topLeft = Offset(position.x - width / 2, position.y - height / 2),
+                    size = Size(width, height)
+                )
             }
         }
     }
@@ -172,7 +180,7 @@ fun TypeDBVisualiser(
         val color = theme.vertexLabel
 
         Column(
-            modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
+            Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
             verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = v.shortLabel, style = StudioTheme.typography.code1, color = color, textAlign = TextAlign.Center)
@@ -181,8 +189,9 @@ fun TypeDBVisualiser(
 
     fun DrawScope.drawSolidEdge(edge: EdgeState) {
         val viewportOffset: Offset = -worldOffset
-        val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
-        val targetVertex = requireNotNull(verticesByID[edge.targetID])
+        val sourceVertex = verticesByID[edge.sourceID]
+        val targetVertex = verticesByID[edge.targetID]
+        if (sourceVertex == null || targetVertex == null) return
         val lineSource = sourceVertex.position
         val lineTarget = targetVertex.position
         val faded = selectedVertex != null && selectedVertex !in listOf(sourceVertex, targetVertex)
@@ -194,24 +203,35 @@ fun TypeDBVisualiser(
 
         when {
             arc == null -> {
-                drawLine(start = (lineSource - viewportOffset) * pixelDensity,
-                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
+                drawLine(
+                    start = (lineSource - viewportOffset) * pixelDensity,
+                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity
+                )
             }
             abs(arc.sweepAngle) < 270 -> {
-                drawArc(color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
+                drawArc(
+                    color = color, startAngle = arc.startAngle, sweepAngle = arc.sweepAngle, useCenter = false,
                     topLeft = (arc.topLeft - viewportOffset) * pixelDensity, size = arc.size * pixelDensity,
-                    style = Stroke(width = pixelDensity))
+                    style = Stroke(width = pixelDensity)
+                )
             }
             else -> {
-                drawLine(start = (lineSource - viewportOffset) * pixelDensity,
-                    end = (hyperedge!!.position - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
-                drawLine(start = (hyperedge.position - viewportOffset) * pixelDensity,
-                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
+                drawLine(
+                    start = (lineSource - viewportOffset) * pixelDensity,
+                    end = (hyperedge!!.position - viewportOffset) * pixelDensity,
+                    color = color, strokeWidth = pixelDensity
+                )
+                drawLine(
+                    start = (hyperedge.position - viewportOffset) * pixelDensity,
+                    end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity
+                )
             }
         }
 
-        val arrow = arrowhead(from = (lineSource - viewportOffset) * pixelDensity, to = (lineTarget - viewportOffset) * pixelDensity,
-            arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity)
+        val arrow = arrowhead(
+            from = (lineSource - viewportOffset) * pixelDensity, to = (lineTarget - viewportOffset) * pixelDensity,
+            arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity
+        )
         if (arrow != null) drawPath(path = arrow, color = color)
     }
 
@@ -219,8 +239,10 @@ fun TypeDBVisualiser(
         val viewportOffset: Offset = -worldOffset
         val linePart1Target = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect)
         if (linePart1Target != null) {
-            drawLine(start = (lineSource - viewportOffset) * pixelDensity,
-                end = (linePart1Target - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
+            drawLine(
+                start = (lineSource - viewportOffset) * pixelDensity,
+                end = (linePart1Target - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity
+            )
         }
     }
 
@@ -228,20 +250,25 @@ fun TypeDBVisualiser(
         val viewportOffset: Offset = -worldOffset
         val linePart2Source = rectIncomingLineIntersect(sourcePoint = lineTarget, rect = labelRect)
         if (linePart2Source != null) {
-            drawLine(start = (linePart2Source - viewportOffset) * pixelDensity,
-                end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity)
+            drawLine(
+                start = (linePart2Source - viewportOffset) * pixelDensity,
+                end = (lineTarget - viewportOffset) * pixelDensity, color = color, strokeWidth = pixelDensity
+            )
 
-            val arrow = arrowhead(from = (linePart2Source - viewportOffset) * pixelDensity,
+            val arrow = arrowhead(
+                from = (linePart2Source - viewportOffset) * pixelDensity,
                 to = (lineTarget - viewportOffset) * pixelDensity,
-                arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity)
+                arrowLength = 6F * pixelDensity, arrowWidth = 3F * pixelDensity
+            )
             if (arrow != null) drawPath(path = arrow, color = color)
         }
     }
 
     fun DrawScope.drawEdgeSegments(edge: EdgeState) {
         val viewportOffset: Offset = -worldOffset
-        val sourceVertex = requireNotNull(verticesByID[edge.sourceID])
-        val targetVertex = requireNotNull(verticesByID[edge.targetID])
+        val sourceVertex = verticesByID[edge.sourceID]
+        val targetVertex = verticesByID[edge.targetID]
+        if (sourceVertex == null || targetVertex == null) return
         val faded = selectedVertex != null && selectedVertex !in listOf(sourceVertex, targetVertex)
         val baseColor = if (edge.inferred) theme.inferred else theme.edge
         val color = if (faded) baseColor.copy(alpha = 0.25f) else baseColor
@@ -262,7 +289,8 @@ fun TypeDBVisualiser(
             val fullArc = arcThroughPoints(sourceVertex.position, hyperedge.position, targetVertex.position)
             val labelRect = Rect(
                 Offset(hyperedge.position.x - edge.label.length * 4 - 2, hyperedge.position.y - 7 - 2),
-                Size(edge.label.length * 8F + 4, 14F + 4))
+                Size(edge.label.length * 8F + 4, 14F + 4)
+            )
             val lineSource = edgeEndpoint(labelRect.center, sourceVertex)
             val lineTarget = edgeEndpoint(labelRect.center, targetVertex)
             if (fullArc != null) {
@@ -341,14 +369,15 @@ fun TypeDBVisualiser(
         }
     }
 
-    Box(modifier = modifier
-        .graphicsLayer(clip = true)
-        .onGloballyPositioned { coordinates ->
-            viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
-//            canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / pixelDensity + Offset(window.x.toFloat(), window.y + titleBarHeight)
-//            println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
-        }
-        .background(theme.background)) {
+    Box(
+        modifier.graphicsLayer(clip = true)
+            .onGloballyPositioned { coordinates ->
+                viewportSize = Size(coordinates.size.width.toFloat(), coordinates.size.height.toFloat())
+//                canvasPositionOnScreen = coordinates.localToWindow(Offset.Zero) / pixelDensity + Offset(window.x.toFloat(), window.y + titleBarHeight)
+//                println("coordinatesLocal=${coordinates.localToWindow(Offset.Zero)},windowPosition=${window.location},canvasPositionOnScreen=$canvasPositionOnScreen")
+            }
+            .background(theme.background)
+    ) {
 
         Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
             // TODO: don't render vertices or edges that are fully outside the viewport
@@ -390,7 +419,6 @@ fun TypeDBVisualiser(
                         vertex.position += worldDragDistance
                         onVertexDragMove(vertex, vertex.position)
                     }
-//                    else worldOffset += worldDragDistance
                     else onWorldOffsetChange(worldDragDistance)
                 }
             }
@@ -398,6 +426,7 @@ fun TypeDBVisualiser(
                 val zoomFactor = 1 + (delta * 0.0006F / pixelDensity)
                 val newViewportScale = scale * zoomFactor
                 // TODO: make the transform origin be where the mouse pointer is :-(
+                //       everything below is a list of shameful failed attempts
 //                val pointerLocationOnScreen: Point = MouseInfo.getPointerInfo().location
 //                val pointer = Offset(pointerLocationOnScreen.x.toFloat(), pointerLocationOnScreen.y.toFloat()) - canvasPositionOnScreen
 //                val transformOrigin = Offset(canvasSize.width - pointer.x, canvasSize.height - pointer.y)
@@ -427,39 +456,47 @@ fun TypeDBVisualiser(
                 return@rememberScrollableState delta
             })) {
 
-            // This nesting is required to prevent the drag event conflicting with the tap event
-            Box(modifier = modifier.fillMaxSize()
-                .pointerMoveFilter(
-                    onMove = {
-                        pointerPosition = it
-                        return@pointerMoveFilter false
-                    },
-                    onExit = {
-                        pointerPosition = null
-                        return@pointerMoveFilter false
-                    }
-                )
-                .pointerInput(pixelDensity, worldOffset) {
-                    detectTapGestures(
-                        onPress = { viewportPoint: Offset ->
+            // These nested Boxes are required to prevent the drag event conflicting with the tap event
+            Box(
+                modifier.fillMaxSize()
+                    .pointerMoveFilter(
+                        onMove = {
+                            pointerPosition = it
+                            return@pointerMoveFilter false
+                        },
+                        onExit = {
+                            pointerPosition = null
+                            return@pointerMoveFilter false
+                        }
+                    )
+                    .pointerInput(pixelDensity, worldOffset) {
+                        detectTapGestures(
+                            onPress = { viewportPoint: Offset ->
+                                val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
+                                val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
+                                draggedVertex = closestVertices.find { it.intersects(worldPoint) }
+                                draggedVertex?.let { log.trace("pressed vertex: $it") }
+                                val cancelled = tryAwaitRelease()
+                                if (cancelled) draggedVertex = null
+                            },
+                            onDoubleTap = { viewportPoint: Offset ->
+                                val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
+                                val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
+                                val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
+                                tappedVertex?.let {
+                                    // TODO: this should require SHIFT-doubleclick, not doubleclick
+                                    log.trace("double-tapped vertex: $it")
+                                    if (it.inferred) explain(it)
+                                }
+                            }
+                        ) /* onTap = */ { viewportPoint: Offset ->
                             val worldPoint = toWorldPoint(viewportSize, viewportPoint, worldOffset, scale, pixelDensity)
                             val closestVertices = getClosestVertices(worldPoint, vertices, resultSizeLimit = 10)
-                            draggedVertex = closestVertices.find { it.intersects(worldPoint) }
-                            draggedVertex?.let { println("pressed vertex: $it") }
-                            val cancelled = tryAwaitRelease()
-                            if (cancelled) draggedVertex = null
-                        },
-                        onDoubleTap = {
-                            hoveredVertex?.let {
-                                // TODO: this should require SHIFT-doubleclick, not doubleclick
-//                                println("double-tapped vertex: $it")
-                                if (it.inferred) explain(it)
-                            }
+                            val tappedVertex = closestVertices.find { it.intersects(worldPoint) }
+                            onSelectVertex(tappedVertex)
                         }
-                    ) /* onTap = */ {
-                        onSelectVertex(hoveredVertex)
                     }
-                })
+            )
 
             LaunchedEffect(vertexExplanations, worldOffset, scale) {
                 while (true) {
@@ -475,10 +512,7 @@ fun TypeDBVisualiser(
                             hoveredVertexLastCheckDoneTimeNanos = System.nanoTime()
                             highlightedExplanationIDs.clear()
                             if (v != null) {
-//                                println("hovering over vertex: $it")
                                 highlightedExplanationIDs += vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID }
-//                                println(vertexExplanations.map { it })
-//                                println(vertexExplanations.filter { it.vertexID == v.id }.map { it.explanationID })
                             }
                         }
                     }
@@ -501,19 +535,8 @@ private fun toWorldPoint(viewportSize: Size, point: Offset, worldOffset: Offset,
 }
 
 private fun getClosestVertices(worldPoint: Offset, vertices: List<VertexState>, resultSizeLimit: Int): List<VertexState> {
-
     // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
-//    val computeStart: Long = System.nanoTime()
     val vertexDistances = vertices.associateWith { (worldPoint - it.position).getDistanceSquared() }
-//    println("closestVertex: completed in ${(System.nanoTime() - computeStart) / 1e6}ms")
-//    if (closestVertex != null) {
-//        println(
-//            "closestVertex: ${closestVertex.label} (${closestVertex.position}) was the closest " +
-//            "vertex to the tap point, $tappedPoint (scaledTapOffset: $scaledTapOffset, " +
-//            "worldOffset: $worldOffset, viewportTransformOrigin: $viewportTransformOrigin, " +
-//            "scale: $scale)"
-//        )
-//    }
     return vertexDistances.entries.sortedBy { it.value }.map { it.key }.take(resultSizeLimit)
 }
 

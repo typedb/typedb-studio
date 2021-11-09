@@ -64,7 +64,7 @@ suspend fun runSimulation(
             }
             simulation.lastTickStartNanos = System.nanoTime()
 
-            withErrorHandling(errorHandler, { "Error in simulation runner coroutine" }) {
+            withErrorHandling(errorHandler, { "Error in simulation runner" }) {
                 if (System.nanoTime() - dataStream.lastFetchedNanos > 5e7 /* 50ms */) fetchNewData()
                 if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withErrorHandling
                 simulation.tick()
