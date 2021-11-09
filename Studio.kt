@@ -36,11 +36,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement.Maximized
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.appearance.StudioTheme
-import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.appearance.defaultVisualiserTheme
 import com.vaticle.typedb.studio.login.LoginScreen
 import com.vaticle.typedb.studio.routing.LoginRoute
@@ -53,16 +53,14 @@ import mu.KotlinLogging.logger
 
 @Composable
 fun Studio(onCloseRequest: () -> Unit) {
-    val windowState = rememberWindowState(WindowPlacement.Maximized);
     val snackbarHostState = rememberScaffoldState().snackbarHostState
-    var titleBarHeight by remember { mutableStateOf(0F) }
-    val router = remember { Router(initialRoute = LoginRoute.Core()) }
     val pixelDensity = LocalDensity.current.density
+    val router = remember { Router(initialRoute = LoginRoute.Core()) }
+    var titleBarHeight by remember { mutableStateOf(0F) }
 
-    // TODO: we want undecorated (no title bar), by passing undecorated = true,
-    //       but it seems to cause intermittent crashes on startup (see #40).
-    //       Test if they occur when running the distribution, or only with bazel run :studio-bin-*
-    androidx.compose.ui.window.Window(title = "TypeDB Studio", onCloseRequest = onCloseRequest, state = windowState) {
+    // TODO: we want no title bar, by passing undecorated = true, but it seems to cause intermittent crashes on startup
+    //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
+    Window(title = "TypeDB Studio", onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
         StudioTheme {
             Scaffold(modifier = Modifier.fillMaxSize()
                 .border(BorderStroke(1.dp, SolidColor(StudioTheme.colors.uiElementBorder)))
@@ -70,14 +68,12 @@ fun Studio(onCloseRequest: () -> Unit) {
                     // used to translate from screen coordinates to window coordinates in the visualiser
                     titleBarHeight = window.height - coordinates.size.height / pixelDensity
                 }) {
-
                 when (val routeData = router.currentRoute) {
                     is LoginRoute -> LoginScreen(routeData, router, snackbarHostState)
                     is WorkspaceRoute -> WorkspaceScreen(
                         routeData, router, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
                     )
                 }
-
                 Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.BottomCenter) {
                     StudioSnackbarHost(snackbarHostState)
                 }

@@ -140,7 +140,6 @@ maven(
     vaticle_factory_tracing_artifacts +
     vaticle_force_graph_artifacts +
     vaticle_typedb_studio_artifacts,
-
     fail_on_missing_checksum = False,
 )
 
