@@ -52,22 +52,26 @@ fun StatusBar(modifier: Modifier = Modifier, queryResponseStream: QueryResponseS
     var principalStatus: String by remember { mutableStateOf("Ready") }
 
     Row {
-        Column(modifier = modifier.height(20.dp)) {
-//            Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-            Row(modifier = modifier.fillMaxHeight().background(StudioTheme.colors.background),
+        Column(modifier.height(20.dp)) {
+            Row(
+                modifier.fillMaxHeight().background(StudioTheme.colors.background),
                 verticalAlignment = Alignment.CenterVertically) {
 
-                Spacer(modifier = modifier.width(8.dp))
+                Spacer(modifier.width(8.dp))
                 Text(principalStatus, style = StudioTheme.typography.body2)
 
-                Spacer(modifier = modifier.weight(1F))
+                Spacer(modifier.weight(1F))
 
-                Text("Zoom: ${BigDecimal(visualiserScale * 100.0, mathContext3SigFigures).toPlainString()}%",
-                    style = StudioTheme.typography.body2)
-                Spacer(modifier = modifier.width(11.dp))
-                Text("Vertices: $vertexCount | Edges: $edgeCount | ${queryRunTimeMillis.toDurationString()}",
-                    style = StudioTheme.typography.body2)
-                Spacer(modifier = modifier.width(8.dp))
+                Text(
+                    "Zoom: ${BigDecimal(visualiserScale * 100.0, mathContext3SigFigures).toPlainString()}%",
+                    style = StudioTheme.typography.body2
+                )
+                Spacer(modifier.width(11.dp))
+                Text(
+                    "Vertices: $vertexCount | Edges: $edgeCount | ${queryRunTimeMillis.toDurationString()}",
+                    style = StudioTheme.typography.body2
+                )
+                Spacer(modifier.width(8.dp))
             }
             Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
         }
