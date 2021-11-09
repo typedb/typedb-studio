@@ -129,25 +129,23 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, backgrou
 
 fun Color.toSwingColor() = java.awt.Color(red, green, blue, alpha)
 
-class VaticlePalette {
-    companion object {
-        val Purple0 = Color(0xFF08022E)
-        val Purple1 = Color(0xFF0E053F)
-        val Purple2 = Color(0xFF180F49)
-        val Purple3 = Color(0xFF1D1354)
-        val Purple4 = Color(0xFF261C5E)
-        val Purple5 = Color(0xFF372E6A)
-        val Purple6 = Color(0xFF392D7F)
-        val Purple7 = Color(0xFF544899)
-        val Purple8 = Color(0xFFA488CA)
-        val Green = Color(0xFF02DAC9)
-        val Red1 = Color(0xFFF66B65)
-        val Red2 = Color(0xFFFFA187)
-        val Yellow1 = Color(0xFFF6C94C)
-        val Yellow2 = Color(0xFFFFE4A7)
-        val Pink1 = Color(0xFFF28DD7)
-        val Pink2 = Color(0xFFFFA9E8)
-    }
+object VaticlePalette {
+    val Purple0 = Color(0xFF08022E)
+    val Purple1 = Color(0xFF0E053F)
+    val Purple2 = Color(0xFF180F49)
+    val Purple3 = Color(0xFF1D1354)
+    val Purple4 = Color(0xFF261C5E)
+    val Purple5 = Color(0xFF372E6A)
+    val Purple6 = Color(0xFF392D7F)
+    val Purple7 = Color(0xFF544899)
+    val Purple8 = Color(0xFFA488CA)
+    val Green = Color(0xFF02DAC9)
+    val Red1 = Color(0xFFF66B65)
+    val Red2 = Color(0xFFFFA187)
+    val Yellow1 = Color(0xFFF6C94C)
+    val Yellow2 = Color(0xFFFFE4A7)
+    val Pink1 = Color(0xFFF28DD7)
+    val Pink2 = Color(0xFFFFA9E8)
 }
 
 fun studioDarkColors(

@@ -25,9 +25,9 @@ suspend fun runSimulation(
         val response: Either<GraphData, Exception> = dataStream.drain()
         if (response.isFirst) {
             val graphData: GraphData = response.first()
-            simulation.addVertices(graphData.vertices.map(VertexState.Companion::of))
-            simulation.addEdges(graphData.edges.map(EdgeState.Companion::of))
-            simulation.addVertexExplanations(graphData.explanationVertices.map(VertexExplanationState.Companion::of))
+            simulation.addVertices(graphData.vertices.map(::vertexStateOf))
+            simulation.addEdges(graphData.edges.map(::edgeStateOf))
+            simulation.addVertexExplanations(graphData.explanationVertices.map(::vertexExplanationStateOf))
             if (simulation.alpha() < 0.3) simulation.alpha(0.3)
         } else {
             // TODO: Add some kind of indicator that results may be incomplete
