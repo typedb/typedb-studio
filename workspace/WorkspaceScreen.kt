@@ -261,7 +261,8 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                     onChange = { value -> activeQueryTab.query = value },
                     font = StudioTheme.typography.codeEditorSwing,
                     modifier = Modifier.fillMaxWidth().height(112.dp).background(StudioTheme.colors.editorBackground),
-                    snackbarHostState = snackbarHostState)
+                    snackbarHostState = snackbarHostState
+                )
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 

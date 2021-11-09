@@ -1,13 +1,10 @@
 package com.vaticle.typedb.studio.workspace
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.DisposableEffectResult
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.toSwingColor
-import kotlinx.coroutines.launch
+import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import mu.KotlinLogging.logger
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants
@@ -102,29 +99,24 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
                         add(swingComponent)
                     }
                 } catch (e: Exception) {
-                    snackbarCoroutineScope.launch {
-                        log.error(e) { "An error occurred while attempting to create a SwingPanel in CodeEditor." }
-                        snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                    }
+                    // TODO: ideally we should use our default error handler and log the error properly, but this creates
+                    //       a bug where code editing breaks: see #515
+                    println(e)
                 }
-                return@SwingPanel panel
+                panel
             },
         )
     }
 
-    LaunchedEffect(editorID) {
-        try {
-            // Temporarily "switch off" the document listener so we don't emit an incorrect change event
+    DisposableEffect(editorID) {
+        withErrorHandling({ "An error occurred initialising CodeEditor" }, log, snackbarHostState, snackbarCoroutineScope) {
+            // Temporarily "switch off" the document listener so that setText doesn't emit a change event
             documentListener?.let { textArea.document.removeDocumentListener(it) }
             textArea.text = code
             documentListener = createDocumentListener()
             textArea.document.addDocumentListener(documentListener)
-        } catch (e: Exception) {
-
         }
-    }
 
-    DisposableEffect(Unit) {
         onDispose {
             // We need to deallocate this reference, otherwise after logging out and back in, we'll still be attached
             // to the old, no longer visible instance of RSyntaxTextArea
