@@ -34,7 +34,7 @@ enum class IconSize(val fontSize: TextUnit, val fontFamily: FontFamily) {
 }
 
 enum class Icon(charCode: UShort) {
-    // these codes can be found in resources/icons/blueprint-codepoints-reference.json
+    // these codes can be found in resources/icons/blueprint-icons.md
     CaretUp(0x2303u),
     CaretDown(0x2304u),
     ChevronLeft(0xe694u),

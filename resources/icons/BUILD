@@ -1,7 +1,5 @@
 package(default_visibility = ["//:__pkg__"])
 
-exports_files(["blueprint-codepoints-reference.json"])
-
 filegroup(
     name = "icons",
     srcs = [
