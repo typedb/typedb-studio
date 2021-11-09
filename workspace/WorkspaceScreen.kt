@@ -60,6 +60,7 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
+import com.vaticle.typedb.studio.data.emptyQueryResponseStream
 import com.vaticle.typedb.studio.diagnostics.LogLevel
 import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
 import com.vaticle.typedb.studio.diagnostics.withErrorHandling
@@ -98,7 +99,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
     Column(Modifier.fillMaxSize()) {
 
         // TODO: combine these into meaningful groups of state objects
-        var queryResponseStream: QueryResponseStream by remember { mutableStateOf(QueryResponseStream.EMPTY) }
+        var queryResponseStream: QueryResponseStream by remember { mutableStateOf(emptyQueryResponseStream()) }
         val forceSimulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
         var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
         var visualiserSize by mutableStateOf(Size.Zero)

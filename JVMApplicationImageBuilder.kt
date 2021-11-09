@@ -330,18 +330,15 @@ data class Config(private val config: Map<String, String>) {
 enum class OS {
     WINDOWS,
     MAC,
-    LINUX;
+    LINUX
+}
 
-    companion object {
-        val currentOS: OS
-        get() {
-            val osName = System.getProperty("os.name").lowercase(ENGLISH)
-            return when {
-                "mac" in osName || "darwin" in osName -> MAC
-                "win" in osName -> WINDOWS
-                else -> LINUX
-            }
-        }
+fun getCurrentOS(): OS {
+    val osName = System.getProperty("os.name").lowercase(ENGLISH)
+    return when {
+        "mac" in osName || "darwin" in osName -> MAC
+        "win" in osName -> WINDOWS
+        else -> LINUX
     }
 }
 

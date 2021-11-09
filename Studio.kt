@@ -41,6 +41,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
+import com.vaticle.typedb.studio.appearance.defaultVisualiserTheme
 import com.vaticle.typedb.studio.login.LoginScreen
 import com.vaticle.typedb.studio.routing.LoginRoute
 import com.vaticle.typedb.studio.routing.Router
@@ -73,7 +74,7 @@ fun Studio(onCloseRequest: () -> Unit) {
                 when (val routeData = router.currentRoute) {
                     is LoginRoute -> LoginScreen(routeData, router, snackbarHostState)
                     is WorkspaceRoute -> WorkspaceScreen(
-                        routeData, router, VisualiserTheme.Default, window, titleBarHeight, snackbarHostState
+                        routeData, router, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
                     )
                 }
 

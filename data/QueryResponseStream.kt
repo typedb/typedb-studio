@@ -128,8 +128,6 @@ class QueryResponseStream(completed: Boolean = false) {
     fun isEmpty(): Boolean {
         return vertexStore.isEmpty() && edgeStore.isEmpty() && exception == null
     }
-
-    companion object {
-        val EMPTY = QueryResponseStream(completed = true)
-    }
 }
+
+fun emptyQueryResponseStream(): QueryResponseStream = QueryResponseStream(completed = true)

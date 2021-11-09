@@ -55,7 +55,7 @@ class DB(val client: DBClient, private val dbName: String) {
     private var session: TypeDBSession? by mutableStateOf(null)
     var tx: TypeDBTransaction? by mutableStateOf(null)
         private set
-    private var responseStream: QueryResponseStream = QueryResponseStream.EMPTY
+    private var responseStream: QueryResponseStream = emptyQueryResponseStream()
     var vertexGenerator = VertexGenerator()
     private val incompleteThingEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()
     private val incompleteTypeEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>> = ConcurrentHashMap()

@@ -29,31 +29,24 @@ private val Pink = Color(0xFFE69CFF)
 private val Black = Color(0xFF09022F)
 
 data class VisualiserTheme(
-    val background: Color,
-    val vertex: Map<VertexEncoding, Color>,
-    val edge: Color,
-    val inferred: Color,
-    val explanation: Color,
-    val error: Color,
-    val vertexLabel: Color,
-) {
-    companion object {
-        val Default = VisualiserTheme(
-            background = VaticlePalette.Purple0,
-            vertex = mapOf(
-                THING_TYPE to VaticlePalette.Pink2,
-                ENTITY_TYPE to VaticlePalette.Pink2,
-                RELATION_TYPE to VaticlePalette.Yellow2,
-                ATTRIBUTE_TYPE to Blue,
-                ENTITY to Pink,
-                RELATION to Gold,
-                ATTRIBUTE to SkyBlue,
-            ),
-            edge = Blue,
-            inferred = VaticlePalette.Green,
-            explanation = VaticlePalette.Red1,
-            error = VaticlePalette.Red1,
-            vertexLabel = Black,
-        )
-    }
-}
+    val background: Color, val vertex: Map<VertexEncoding, Color>, val edge: Color,
+    val inferred: Color, val explanation: Color, val error: Color, val vertexLabel: Color,
+)
+
+fun defaultVisualiserTheme() = VisualiserTheme(
+    background = VaticlePalette.Purple0,
+    vertex = mapOf(
+        THING_TYPE to VaticlePalette.Pink2,
+        ENTITY_TYPE to VaticlePalette.Pink2,
+        RELATION_TYPE to VaticlePalette.Yellow2,
+        ATTRIBUTE_TYPE to Blue,
+        ENTITY to Pink,
+        RELATION to Gold,
+        ATTRIBUTE to SkyBlue,
+    ),
+    edge = Blue,
+    inferred = VaticlePalette.Green,
+    explanation = VaticlePalette.Red1,
+    error = VaticlePalette.Red1,
+    vertexLabel = Black,
+)
