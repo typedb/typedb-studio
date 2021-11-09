@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +42,9 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
+import com.vaticle.typedb.studio.diagnostics.LogLevel
+import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
+import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.Icon
@@ -56,7 +58,6 @@ import com.vaticle.typedb.studio.visualiser.TypeDBForceSimulation
 import com.vaticle.typedb.studio.visualiser.TypeDBVisualiser
 import com.vaticle.typedb.studio.visualiser.VertexState
 import com.vaticle.typedb.studio.visualiser.runSimulation
-import kotlinx.coroutines.launch
 import mu.KotlinLogging.logger
 import java.awt.FileDialog
 import java.io.File
@@ -73,6 +74,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
 
     val snackbarCoroutineScope = rememberCoroutineScope()
     val log = remember { logger {} }
+    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
 //    val workspace = remember { workspaceScreenStateOf(routeData) }
 
     Column(Modifier.fillMaxSize()) {
@@ -102,23 +104,19 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
         val temporarilyFrozenNodeIDs = remember { mutableStateListOf<Int>() }
 
         val db = routeData.db
-        val activeQueryTab: QueryTabState = queryTabs[activeQueryTabIndex]
+        val activeQueryTab: QueryTabState? = queryTabs.getOrNull(activeQueryTabIndex)
         val activeExecutionTab: ExecutionTabState = executionTabs[activeExecutionTabIndex]
 
+        // TODO: with this many callbacks, the view becomes unreadable - create a VM (ToolbarViewModel?)
         fun switchWorkspace(dbName: String) {
-            try {
+            withErrorHandling(errorHandler, { "An error occurred while switching workspaces." }) {
                 db.client.closeAllSessions()
                 // TODO: switch workspaces
-            } catch (e: Exception) {
-                snackbarCoroutineScope.launch {
-                    log.error(e) { "An error occurred while switching workspaces." }
-                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                }
             }
         }
 
         fun openOpenQueryDialog() {
-            try {
+            withErrorHandling(errorHandler, { "An error occurred while attempting to open a query file." }) {
                 FileDialog(window, "Open", FileDialog.LOAD).apply {
                     isMultipleMode = false
 
@@ -137,16 +135,16 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                         activeQueryTabIndex = queryTabs.size - 1
                     }
                 }
-            } catch (e: Exception) {
-                snackbarCoroutineScope.launch {
-                    log.error(e) { "An error occurred while attempting to open a query file." }
-                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                }
             }
         }
 
         fun openSaveQueryDialog() {
-            try {
+            if (activeQueryTab == null) {
+                log.warn { "openSaveQueryDialog: activeQueryTab is null!" }
+                return
+            }
+
+            withErrorHandling(errorHandler, { "An error occurred while attempting to save a query file." }) {
                 FileDialog(window, "Save", FileDialog.SAVE).apply {
                     isMultipleMode = false
                     val queryTabFile = activeQueryTab.file
@@ -166,17 +164,23 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                         }
                     }
                 }
-            } catch (e: Exception) {
-                snackbarCoroutineScope.launch {
-                    log.error(e) { "An error occurred while attempting to save a query file." }
-                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                }
             }
         }
 
         fun runQuery() {
-            forceSimulation.init()
-            queryResponseStream = db.matchQuery(query = activeQueryTab.query, enableReasoning = querySettings.enableReasoning)
+            if (activeQueryTab == null) {
+                log.warn { "runQuery: activeQueryTab is null!" }
+                return
+            }
+
+            val query = activeQueryTab.query
+            try {
+                forceSimulation.init()
+                queryResponseStream = db.matchQuery(query, querySettings.enableReasoning)
+            } catch (e: Exception) {
+                errorHandler.handleError(e, { "An error occurred on submitting the query $query" })
+                return
+            }
             visualiserWorldOffset = visualiserSize.center
             visualiserMetricsID = UUID.randomUUID().toString()
             queryStartTimeNanos = System.nanoTime()
@@ -185,8 +189,13 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
         }
 
         fun logout() {
-            db.client.closeAllSessions()
-            router.navigateTo(routeData.loginForm.toRoute())
+            try {
+                db.client.closeAllSessions()
+            } catch (e: Exception) {
+                errorHandler.handleError(e, { "An error occurred on closing sessions" }, LogLevel.WARN, showSnackbar = false)
+            } finally {
+                router.navigateTo(routeData.loginForm.toRoute())
+            }
         }
 
         Toolbar(dbName = db.name, onDBNameChange = { dbName -> switchWorkspace(dbName) },
@@ -257,12 +266,15 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-                CodeEditor(code = activeQueryTab.query, editorID = activeQueryTab.editorID,
-                    onChange = { value -> activeQueryTab.query = value },
-                    font = StudioTheme.typography.codeEditorSwing,
-                    modifier = Modifier.fillMaxWidth().height(112.dp).background(StudioTheme.colors.editorBackground),
-                    snackbarHostState = snackbarHostState
-                )
+                if (activeQueryTab != null) {
+                    CodeEditor(
+                        code = activeQueryTab.query, editorID = activeQueryTab.editorID,
+                        onChange = { value -> activeQueryTab.query = value },
+                        font = StudioTheme.typography.codeEditorSwing,
+                        modifier = Modifier.fillMaxWidth().height(112.dp).background(StudioTheme.colors.editorBackground),
+                        snackbarHostState = snackbarHostState
+                    )
+                }
 
                 Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 

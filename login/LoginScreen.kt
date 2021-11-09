@@ -28,6 +28,8 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
+import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
+import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.login.ServerSoftware.*
 import com.vaticle.typedb.studio.routing.LoginRoute
@@ -43,6 +45,7 @@ import java.util.concurrent.CompletableFuture
 fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: SnackbarHostState) {
     val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
+    var errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
     val form = remember { loginScreenStateOf(routeData) }
     var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
     var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
@@ -73,10 +76,7 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
             } catch (e: Exception) {
                 databasesLastLoadedFromAddress = null
                 form.dbFieldText = "Failed to load databases"
-                snackbarCoroutineScope.launch {
-                    log.error(e) { "Failed to load databases at address ${form.serverAddress}" }
-                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                }
+                errorHandler.handleError(e, { "Failed to load databases at address ${form.serverAddress}" })
             } finally {
                 loadingDatabases = false
             }
@@ -113,14 +113,9 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
     }
 
     fun onSubmit() {
-        try {
+        withErrorHandling(errorHandler, { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
             val submission = form.asSubmission()
             router.navigateTo(WorkspaceRoute(submission))
-        } catch (e: Exception) {
-            snackbarCoroutineScope.launch {
-                log.error(e) { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }
-                snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-            }
         }
     }
 

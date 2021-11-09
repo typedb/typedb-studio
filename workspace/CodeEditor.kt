@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.toSwingColor
+import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
 import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import mu.KotlinLogging.logger
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
@@ -34,6 +35,7 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
                modifier: Modifier = Modifier, snackbarHostState: SnackbarHostState) {
     val log = logger {}
     val snackbarCoroutineScope = rememberCoroutineScope()
+    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
     val textArea = remember { RSyntaxTextArea() }
     var documentListener: DocumentListener? by remember { mutableStateOf(null) }
 
@@ -109,7 +111,7 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
     }
 
     DisposableEffect(editorID) {
-        withErrorHandling({ "An error occurred initialising CodeEditor" }, log, snackbarHostState, snackbarCoroutineScope) {
+        withErrorHandling(errorHandler, { "An error occurred initialising CodeEditor" }) {
             // Temporarily "switch off" the document listener so that setText doesn't emit a change event
             documentListener?.let { textArea.document.removeDocumentListener(it) }
             textArea.text = code

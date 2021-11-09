@@ -1,19 +1,23 @@
 package com.vaticle.typedb.studio.visualiser
 
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.withFrameNanos
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.data.GraphData
 import com.vaticle.typedb.studio.data.QueryResponseStream
+import com.vaticle.typedb.studio.diagnostics.LogLevel
+import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
+import com.vaticle.typedb.studio.diagnostics.withErrorHandling
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import mu.KotlinLogging.logger
 import java.util.concurrent.CompletionException
 
-suspend fun runSimulation(simulation: TypeDBForceSimulation, dataStream: QueryResponseStream,
-                          snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope) {
+suspend fun runSimulation(
+    simulation: TypeDBForceSimulation, dataStream: QueryResponseStream,
+    snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
+) {
     val log = logger {}
+    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
 
     fun fetchNewData() {
         if (dataStream.isEmpty()) return
@@ -31,10 +35,7 @@ suspend fun runSimulation(simulation: TypeDBForceSimulation, dataStream: QueryRe
                 response.second() is CompletionException -> response.second().cause ?: response.second()
                 else -> response.second()
             }
-            snackbarCoroutineScope.launch {
-                log.debug(e) { "Query error" }
-                snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-            }
+            errorHandler.handleError(e, { "Query error" }, LogLevel.DEBUG)
         }
     }
 
@@ -45,15 +46,10 @@ suspend fun runSimulation(simulation: TypeDBForceSimulation, dataStream: QueryRe
             }
             simulation.lastTickStartNanos = System.nanoTime()
 
-            try {
+            withErrorHandling(errorHandler, { "Error in simulation runner coroutine" }) {
                 if (System.nanoTime() - dataStream.lastFetchedNanos > 5e7 /* 50ms */) fetchNewData()
-                if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withFrameNanos
+                if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withErrorHandling
                 simulation.tick()
-            } catch (e: Exception) {
-                snackbarCoroutineScope.launch {
-                    log.error(e) { "Error in simulation runner coroutine" }
-                    snackbarHostState.showSnackbar(e.toString(), actionLabel = "HIDE", SnackbarDuration.Long)
-                }
             }
         }
     }

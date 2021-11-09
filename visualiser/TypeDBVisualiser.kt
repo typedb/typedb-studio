@@ -54,20 +54,15 @@ import kotlin.math.sqrt
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>,
-                     hyperedges: List<HyperedgeState>, vertexExplanations: List<VertexExplanationState>,
-                     theme: VisualiserTheme, worldOffset: Offset, onWorldOffsetChange: (delta: Offset) -> Unit,
-                     scale: Float, onZoom: (delta: Float) -> Unit, selectedVertex: VertexState?,
-                     onSelectVertex: (vertex: VertexState?) -> Unit, selectedVertexNetwork: List<VertexState>,
-                     onVertexDragStart: (vertex: VertexState) -> Unit,
-                     onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
-                     explain: (vertex: VertexState) -> Unit) {
-
-    // We refresh scale and world offset locally because it's smoother than when relying on events (onZoom etc.)
-    // The events are used to update the UI elsewhere in the application.
-    // TODO: add event listeners to receive scale and reposition requests from elsewhere in the application
-//    var scale by remember { mutableStateOf(1F) }
-//    var worldOffset by remember { mutableStateOf(worldOffset) }
+fun TypeDBVisualiser(
+    modifier: Modifier, vertices: List<VertexState>, edges: List<EdgeState>, hyperedges: List<HyperedgeState>,
+    vertexExplanations: List<VertexExplanationState>, theme: VisualiserTheme, worldOffset: Offset,
+    onWorldOffsetChange: (delta: Offset) -> Unit, scale: Float, onZoom: (delta: Float) -> Unit,
+    selectedVertex: VertexState?, onSelectVertex: (vertex: VertexState?) -> Unit,
+    selectedVertexNetwork: List<VertexState>, onVertexDragStart: (vertex: VertexState) -> Unit,
+    onVertexDragMove: (vertex: VertexState, position: Offset) -> Unit, onVertexDragEnd: () -> Unit,
+    explain: (vertex: VertexState) -> Unit
+) {
     var pointerPosition: Offset? by remember { mutableStateOf(null) }
     var hoveredVertexLastCheckDoneTimeNanos: Long by remember { mutableStateOf(0) }
     var viewportSize by remember { mutableStateOf(Size.Zero) }
@@ -103,7 +98,6 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val highlightColor: Color? = if (alpha != null) highlightBaseColor?.copy(alpha) else highlightBaseColor
 
         when (v.encoding) {
-
             VertexEncoding.ENTITY_TYPE, VertexEncoding.THING_TYPE, VertexEncoding.ENTITY -> {
                 if (highlightColor != null) {
                     drawRoundRect(
@@ -159,7 +153,8 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
         val y = (r.top - viewportOffset.y).dp
         val color = theme.vertexLabel
 
-        Column(modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
+        Column(
+            modifier = Modifier.offset(x, y).width(v.width.dp).height(v.height.dp),
             verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = v.shortLabel, style = StudioTheme.typography.code1, color = color, textAlign = TextAlign.Center)
@@ -327,12 +322,6 @@ fun TypeDBVisualiser(modifier: Modifier, vertices: List<VertexState>, edges: Lis
             Text(text = edge.label, style = StudioTheme.typography.code1.copy(color = color, textAlign = TextAlign.Center))
         }
     }
-
-    // Metrics are recalculated on each query run
-    // TODO
-//    LaunchedEffect(metrics.id) {
-//        worldOffset = metrics.worldOffset
-//    }
 
     Box(modifier = modifier
         .graphicsLayer(clip = true)
