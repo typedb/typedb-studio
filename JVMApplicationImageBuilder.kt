@@ -36,7 +36,7 @@ fun main(args: Array<String>) {
     val version = File(config.require("versionFilePath")).readLines()[0]
     val appleCodeSigningPassword = privateConfig["appleCodeSigningPassword"]
 
-    val os = OS.currentOS
+    val os = getCurrentOS()
 
     fun runShell(script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(),
                  expectExitValueNormal: Boolean = true, printParamsEndIndex: Int? = null): ProcessResult {
