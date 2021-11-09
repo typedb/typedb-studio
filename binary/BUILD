@@ -16,6 +16,7 @@
 #
 #
 
+load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz")
 
 exports_files(["typedb-studio"])
@@ -29,4 +30,10 @@ assemble_targz(
         "typedb-studio": "0755",
     },
     visibility = ["//visibility:public"]
+)
+
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*"]),
+    license_type = "agpl",
 )

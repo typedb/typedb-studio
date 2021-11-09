@@ -214,9 +214,7 @@ deploy_brew(
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*", ".grabl/*", ".circleci/**"]),
-    exclude = glob([
-        ".circleci/windows/dependencies.config",
-    ]),
+    exclude = glob(["docs/*", ".circleci/windows/*"]),
     license_type = "agpl",
 )
 
