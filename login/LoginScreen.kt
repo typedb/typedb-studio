@@ -41,12 +41,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
-import com.vaticle.typedb.studio.diagnostics.withUnexpectedErrorHandling
+import com.vaticle.typedb.studio.diagnostics.rememberErrorReporter
+import com.vaticle.typedb.studio.diagnostics.withErrorProtection
 import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
 import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
@@ -62,7 +63,7 @@ import mu.KotlinLogging.logger
 fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
-    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
+    val errorReporter = rememberErrorReporter(log, snackbarHostState, snackbarCoroutineScope)
     val form = remember { loginScreenStateOf(routeData) }
     var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
     var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
@@ -79,23 +80,25 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
 
     fun populateDBListAsync() {
         CompletableFuture.supplyAsync {
-            try {
-                val client = when (form.serverSoftware) {
-                    CORE -> CoreClient(form.serverAddress)
-                    CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
+            withErrorProtection(errorReporter) {
+                try {
+                    val client = when (form.serverSoftware) {
+                        CORE -> CoreClient(form.serverAddress)
+                        CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
+                    }
+                    form.dbClient = client
+                    form.allDBNames.let { dbNames ->
+                        dbNames += client.listDatabases()
+                        if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
+                        else if (!form.databaseSelected) form.dbFieldText = "Select a database"
+                    }
+                } catch (e: TypeDBClientException) {
+                    databasesLastLoadedFromAddress = null
+                    form.dbFieldText = "Failed to load databases"
+                    errorReporter.reportTypeDBClientError(e) { "Failed to load databases at address ${form.serverAddress}" }
+                } finally {
+                    loadingDatabases = false
                 }
-                form.dbClient = client
-                form.allDBNames.let { dbNames ->
-                    dbNames += client.listDatabases()
-                    if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
-                    else if (!form.databaseSelected) form.dbFieldText = "Select a database"
-                }
-            } catch (e: Exception) {
-                databasesLastLoadedFromAddress = null
-                form.dbFieldText = "Failed to load databases"
-                errorHandler.handleError(e, { "Failed to load databases at address ${form.serverAddress}" })
-            } finally {
-                loadingDatabases = false
             }
         }
     }
@@ -131,10 +134,7 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     }
 
     fun onSubmit() {
-        withUnexpectedErrorHandling(
-            errorHandler,
-            { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }
-        ) {
+        withErrorProtection(errorReporter) {
             val submission = form.asSubmission()
             Router.navigateTo(WorkspaceRoute(submission))
         }

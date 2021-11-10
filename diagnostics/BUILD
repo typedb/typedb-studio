@@ -25,6 +25,8 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "@vaticle_typedb_client_java//common",
+
         # Maven
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",

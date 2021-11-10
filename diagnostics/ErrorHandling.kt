@@ -22,59 +22,67 @@ import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.vaticle.typedb.studio.diagnostics.LogLevel.DEBUG
-import com.vaticle.typedb.studio.diagnostics.LogLevel.ERROR
-import com.vaticle.typedb.studio.diagnostics.LogLevel.INFO
-import com.vaticle.typedb.studio.diagnostics.LogLevel.TRACE
-import com.vaticle.typedb.studio.diagnostics.LogLevel.WARN
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KLogger
 
-class ErrorHandler(
+class ErrorReporter(
     val logger: KLogger, private val snackbarHostState: SnackbarHostState,
     private val snackbarCoroutineScope: CoroutineScope
 ) {
-    fun handleError(
-        error: Throwable, message: () -> String = { "An error occurred" }, logLevel: LogLevel = ERROR,
-        showSnackbar: Boolean = logLevel == ERROR, snackbarDuration: SnackbarDuration = SnackbarDuration.Long
-    ) {
+    fun reportIDEError(error: Throwable) {
         snackbarCoroutineScope.launch {
-            when (logLevel) {
-                ERROR -> logger.error(error) { message() }
-                WARN -> logger.warn(error) { message() }
-                INFO -> logger.info(error) { message() }
-                DEBUG -> logger.debug(error) { message() }
-                TRACE -> logger.trace(error) { message() }
+            logger.error("An IDE error occurred", error)
+            val errorMessage = if (error.message?.isNotBlank() == true) error.message!! else error.toString()
+            snackbarHostState.showSnackbar(errorMessage, actionLabel = "HIDE", SnackbarDuration.Long)
+        }
+    }
+
+    fun reportOddBehaviour(error: Throwable) {
+        logger.warn("An unexpected error occurred", error)
+    }
+
+    fun reportUserError(error: Throwable, message: () -> String) {
+        snackbarCoroutineScope.launch {
+            logger.info(error) { message() }
+            val errorMessage = "${message()}\n\n" +
+                    if (error.message?.isNotBlank() == true) error.message!! else error.toString()
+            snackbarHostState.showSnackbar(errorMessage, actionLabel = "HIDE", SnackbarDuration.Long)
+        }
+    }
+
+    fun reportTypeDBClientError(error: TypeDBClientException, message: () -> String = { "An error occurred" }) {
+        snackbarCoroutineScope.launch {
+            logger.info(error) { message() }
+            val errorMessage = when (error.message?.isNotBlank()) {
+                true -> {
+                    val rawMessage = error.message!!
+                    val matchResult: MatchResult? = Regex("^\\[[A-Z]{3}[0-9]+][^:]*:").find(rawMessage)
+                    if (matchResult != null) {
+                        // This converts, for example, "[QRY04] Query Error: Invalid thing write" into
+                        // "[QRY04] Query Error\n\nInvalid thing write"
+                        rawMessage.take(matchResult.range.last) + "\n\n" + rawMessage.drop(matchResult.range.last + 2)
+                    } else {
+                        rawMessage
+                    }
+                }
+                else -> error.toString()
             }
-            if (showSnackbar) {
-                val errorMessage = if (error.message?.isNotBlank() == true) error.message!! else error.toString()
-                snackbarHostState.showSnackbar(errorMessage, actionLabel = "HIDE", snackbarDuration)
-            }
+            snackbarHostState.showSnackbar(errorMessage, actionLabel = "HIDE", SnackbarDuration.Long)
         }
     }
 }
 
 @Composable
-fun rememberErrorHandler(
+fun rememberErrorReporter(
     logger: KLogger, snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
-): ErrorHandler = remember { ErrorHandler(logger, snackbarHostState, snackbarCoroutineScope) }
+): ErrorReporter = remember { ErrorReporter(logger, snackbarHostState, snackbarCoroutineScope) }
 
-fun withUnexpectedErrorHandling(
-    handler: ErrorHandler, message: () -> String = { "An error occurred" }, logLevel: LogLevel = ERROR,
-    showSnackbar: Boolean = logLevel == ERROR, snackbarDuration: SnackbarDuration = SnackbarDuration.Long, action: () -> Unit
-) {
+fun withErrorProtection(reporter: ErrorReporter, action: () -> Unit) {
     try {
         action()
     } catch (e: Exception) {
-        handler.handleError(e, message, logLevel, showSnackbar, snackbarDuration)
+        reporter.reportIDEError(e)
     }
-}
-
-enum class LogLevel {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR
 }
