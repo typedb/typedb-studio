@@ -83,7 +83,7 @@ fun StudioTab(
     Box(modifier = modifier.width(IntrinsicSize.Max)) {
         val (backgroundColor, highlightColor) = when (selected) {
             true -> listOf(StudioTheme.colors.backgroundHighlight, StudioTheme.colors.primary)
-            else -> listOf(StudioTheme.colors.background, StudioTheme.colors.background)
+            false -> listOf(StudioTheme.colors.background, StudioTheme.colors.background)
         }
 
         val highlightAlignment = when (highlight) {

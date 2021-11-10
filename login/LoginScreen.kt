@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,6 +52,7 @@ import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
+import com.vaticle.typedb.studio.ui.elements.Separator
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import java.util.concurrent.CompletableFuture
@@ -150,7 +151,7 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
                 .border(1.dp, StudioTheme.colors.uiElementBorder)
         ) {
 
-            StudioTabs(Modifier.height(24.dp)) {
+            StudioTabs(Modifier.height(32.dp)) {
                 StudioTab(text = CORE.displayName, selected = form.serverSoftware == CORE,
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
                     modifier = Modifier.weight(1f).clickable { selectServerSoftware(CORE) })
@@ -158,9 +159,7 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
                     arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
                     modifier = Modifier.weight(1f).clickable { selectServerSoftware(CLUSTER) })
             }
-
-            Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
-
+            Spacer(modifier = Modifier.fillMaxWidth().height(2.dp).background(StudioTheme.colors.backgroundHighlight))
             when (form.serverSoftware) {
                 CORE -> CoreLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
                 CLUSTER -> ClusterLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
