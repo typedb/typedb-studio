@@ -57,9 +57,11 @@ import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: String) -> Unit, modifier: Modifier = Modifier,
-                      textFieldModifier: Modifier = Modifier, textStyle: TextStyle = StudioTheme.typography.body1,
-                      leadingIcon: (@Composable () -> Unit)? = null) {
+fun StudioDropdownBox(
+    items: List<String>, text: String, onTextChange: (value: String) -> Unit, modifier: Modifier = Modifier,
+    textFieldModifier: Modifier = Modifier, textStyle: TextStyle = StudioTheme.typography.body1,
+    leadingIcon: (@Composable () -> Unit)? = null
+) {
     var expanded by remember { mutableStateOf(false) }
     var textfieldSize by remember { mutableStateOf(Size.Zero)}
     var mouseOverIndex: Int? by remember { mutableStateOf(null) }
@@ -67,7 +69,8 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
 
     Column(modifier) {
         Row {
-            StudioTextField(value = text, onValueChange = { onTextChange(it) },
+            StudioTextField(
+                value = text, onValueChange = { onTextChange(it) },
                 modifier = textFieldModifier
                     .fillMaxSize()
                     .focusable()
@@ -87,22 +90,28 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
                         }
                     }
                     .onGloballyPositioned { coordinates ->
-                    // This is used to keep the DropdownMenu the same width as the TextField
-                    textfieldSize = coordinates.size.toSize()
-                }, readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
-                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerHoverIcon = PointerIconDefaults.Hand)
+                        // This is used to keep the DropdownMenu the same width as the TextField
+                        textfieldSize = coordinates.size.toSize()
+                    },
+                readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
+                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerHoverIcon = PointerIconDefaults.Hand
+            )
         }
 
         Row {
-            DropdownMenu(expanded = expanded && items.isNotEmpty(), onDismissRequest = { expanded = false },
-                modifier = Modifier.width(with(LocalDensity.current) { textfieldSize.width.toDp() })
-                    .background(StudioTheme.colors.uiElementBackground)) {
-
+            DropdownMenu(
+                expanded = expanded && items.isNotEmpty(), onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .width(with(LocalDensity.current) { textfieldSize.width.toDp() })
+                    .background(StudioTheme.colors.uiElementBackground)
+            ) {
                 items.forEachIndexed { idx, label ->
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                        onTextChange(label)
-                    }, contentPadding = PaddingValues(horizontal = 8.dp),
+                    DropdownMenuItem(
+                        onClick = {
+                            expanded = false
+                            onTextChange(label)
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                         modifier = Modifier.height(28.dp)
                             .background(if (idx == mouseOverIndex) StudioTheme.colors.primary else StudioTheme.colors.uiElementBackground)
                             .pointerMoveFilter(onExit = {
@@ -111,7 +120,8 @@ fun StudioDropdownBox(items: List<String>, text: String, onTextChange: (value: S
                             }) /* onEnter = */ {
                                 mouseOverIndex = idx
                                 return@pointerMoveFilter true
-                            }) {
+                            }
+                    ) {
                         Text(label, style = textStyle, color = if (idx == mouseOverIndex) StudioTheme.colors.onPrimary else StudioTheme.colors.text)
                     }
                 }
