@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.ui.elements
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,9 +31,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.ui.elements.IconSize.*
+import java.io.InputStream
 
 @Composable
 fun StudioIcon(icon: Icon, color: Color = StudioTheme.colors.icon, size: IconSize = Size12, modifier: Modifier = Modifier) {
@@ -84,11 +87,22 @@ enum class Icon(charCode: UShort) {
 fun StudioDatabaseIcon() {
     val pixelDensity = LocalDensity.current.density
     when {
-        pixelDensity <= 1f -> Image(painter = painterResource("icons/database.png"),
-            contentDescription = "Database",
-            modifier = Modifier.graphicsLayer(scaleX = pixelDensity, scaleY = pixelDensity))
-        else -> Image(painter = loadSvgPainter(ClassLoader.getSystemResourceAsStream("icons/database.svg")!!, LocalDensity.current),
-            contentDescription = "Database",
-            modifier = Modifier.graphicsLayer(scaleX = 14f / 12f, scaleY = 14f / 12f))
+        pixelDensity <= 1f -> Image(
+            painter = painterResource("icons/databas.png"), contentDescription = "Database",
+            modifier = Modifier.graphicsLayer(scaleX = pixelDensity, scaleY = pixelDensity)
+        )
+        else -> {
+            if (databaseSvgInputStream != null) {
+                Image(
+                    painter = loadSvgPainter(databaseSvgInputStream, LocalDensity.current),
+                    contentDescription = "Database",
+                    modifier = Modifier.graphicsLayer(scaleX = 14f / 12f, scaleY = 14f / 12f)
+                )
+            } else {
+                Text("", Modifier.width(14.dp))
+            }
+        }
     }
 }
+
+private val databaseSvgInputStream: InputStream? = ClassLoader.getSystemResourceAsStream("icons/databas.svg")
