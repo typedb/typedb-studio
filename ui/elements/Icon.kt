@@ -83,14 +83,22 @@ enum class Icon(charCode: UShort) {
     val charString: String = Char(charCode).toString()
 }
 
+// The Blueprint database icon appears blurred when scaled to our icon size, so we use a custom version
 @Composable
 fun StudioDatabaseIcon() {
     val pixelDensity = LocalDensity.current.density
+    // The SVG version looks better on high density displays, the PNG version looks better on low density ones
     when {
-        pixelDensity <= 1f -> Image(
-            painter = painterResource("icons/databas.png"), contentDescription = "Database",
-            modifier = Modifier.graphicsLayer(scaleX = pixelDensity, scaleY = pixelDensity)
-        )
+        pixelDensity <= 1f -> {
+            if (databasePngExists) {
+                Image(
+                    painter = painterResource(DATABASE_ICON_PNG), contentDescription = "Database",
+                    modifier = Modifier.graphicsLayer(scaleX = pixelDensity, scaleY = pixelDensity)
+                )
+            } else {
+                Text("", Modifier.width(14.dp))
+            }
+        }
         else -> {
             if (databaseSvgInputStream != null) {
                 Image(
@@ -105,4 +113,7 @@ fun StudioDatabaseIcon() {
     }
 }
 
-private val databaseSvgInputStream: InputStream? = ClassLoader.getSystemResourceAsStream("icons/databas.svg")
+private const val DATABASE_ICON_PNG = "icons/database.png"
+private const val DATABASE_ICON_SVG = "icons/database.svg"
+private val databasePngExists: Boolean = ClassLoader.getSystemResource(DATABASE_ICON_PNG) != null
+private val databaseSvgInputStream: InputStream? = ClassLoader.getSystemResourceAsStream(DATABASE_ICON_SVG)
