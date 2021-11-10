@@ -40,6 +40,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import java.awt.Font.TRUETYPE_FONT
+import java.awt.Font.createFont
+import javax.swing.JPanel
 
 // Implementation notes: https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:compose/material/material/src/commonMain/kotlin/androidx/compose/material/Colors.kt
 
@@ -96,9 +99,11 @@ object StudioTheme {
 }
 
 @Stable
-class StudioColors(primary: Color, onPrimary: Color, background: Color, backgroundHighlight: Color, uiElementBackground: Color,
+class StudioColors(
+    primary: Color, onPrimary: Color, background: Color, backgroundHighlight: Color, uiElementBackground: Color,
     uiElementBorder: Color, editorBackground: Color, error: Color, windowBackdrop: Color,
-    text: Color, icon: Color) {
+    text: Color, icon: Color
+) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
         private set
     var onPrimary by mutableStateOf(onPrimary, structuralEqualityPolicy())
@@ -122,13 +127,16 @@ class StudioColors(primary: Color, onPrimary: Color, background: Color, backgrou
     var icon by mutableStateOf(icon, structuralEqualityPolicy())
         private set
 
-    fun copy(primary: Color = this.primary, onPrimary: Color = this.onPrimary, background: Color = this.background,
-             backgroundHighlight: Color = this.backgroundHighlight, uiElementBackground: Color = this.uiElementBackground,
-             uiElementBorder: Color = this.uiElementBorder, editorBackground: Color = this.editorBackground,
-             error: Color = this.error, windowBackdrop: Color = this.windowBackdrop, text: Color = this.text,
-             icon: Color = this.icon
-    ): StudioColors = StudioColors(primary, onPrimary, background, backgroundHighlight, uiElementBackground,
-        uiElementBorder, editorBackground, error, windowBackdrop, text, icon)
+    fun copy(
+        primary: Color = this.primary, onPrimary: Color = this.onPrimary, background: Color = this.background,
+        backgroundHighlight: Color = this.backgroundHighlight, uiElementBackground: Color = this.uiElementBackground,
+        uiElementBorder: Color = this.uiElementBorder, editorBackground: Color = this.editorBackground,
+        error: Color = this.error, windowBackdrop: Color = this.windowBackdrop, text: Color = this.text,
+        icon: Color = this.icon
+    ): StudioColors = StudioColors(
+        primary, onPrimary, background, backgroundHighlight, uiElementBackground,
+        uiElementBorder, editorBackground, error, windowBackdrop, text, icon
+    )
 
     fun updateColorsFrom(other: StudioColors) {
         primary = other.primary
@@ -180,9 +188,12 @@ fun studioDarkColors(
     icon: Color = Color(0xFF888DCA),
 ): StudioColors = StudioColors(
     primary, onPrimary, background, backgroundHighlight, uiElementBackground, uiElementBorder, editorBackground, error,
-    windowBackdrop, text, icon)
+    windowBackdrop, text, icon
+)
 
 val LocalColors = staticCompositionLocalOf { studioDarkColors() }
+
+private val systemDefaultFont: java.awt.Font = JPanel().font
 
 @Immutable
 class StudioTypography(
@@ -192,20 +203,23 @@ class StudioTypography(
     body2: TextStyle = TextStyle(fontSize = 11.sp),
     code1: TextStyle = TextStyle(fontSize = 13.sp),
     code2: TextStyle = TextStyle(fontSize = 11.sp),
-    val codeEditorSwing: java.awt.Font = ubuntuMonoSize13Swing,
-    val codeEditorContextMenuSwing: java.awt.Font = titilliumWebSize13Swing,
+    val codeEditorSwing: java.awt.Font = ubuntuMonoSize13Swing ?: systemDefaultFont,
+    val codeEditorContextMenuSwing: java.awt.Font = titilliumWebSize13Swing ?: systemDefaultFont,
 ) {
     val body1 = body1.withDefaultFontFamily(defaultFontFamily)
     val body2 = body2.withDefaultFontFamily(defaultFontFamily)
     val code1 = code1.withDefaultFontFamily(defaultMonospaceFontFamily)
     val code2 = code2.withDefaultFontFamily(defaultMonospaceFontFamily)
 
-    fun copy(defaultFontFamily: FontFamily, defaultMonospaceFontFamily: FontFamily, body1: TextStyle = this.body1,
-             body2: TextStyle = this.body2, code1: TextStyle = this.code1,
-             code2: TextStyle = this.code2, codeEditorSwing: java.awt.Font = this.codeEditorSwing,
-             codeEditorContextMenuSwing: java.awt.Font = this.codeEditorContextMenuSwing): StudioTypography
-    = StudioTypography(defaultFontFamily, defaultMonospaceFontFamily, body1, body2, code1, code2, codeEditorSwing,
-        codeEditorContextMenuSwing)
+    fun copy(
+        defaultFontFamily: FontFamily, defaultMonospaceFontFamily: FontFamily, body1: TextStyle = this.body1,
+        body2: TextStyle = this.body2, code1: TextStyle = this.code1,
+        code2: TextStyle = this.code2, codeEditorSwing: java.awt.Font = this.codeEditorSwing,
+        codeEditorContextMenuSwing: java.awt.Font = this.codeEditorContextMenuSwing
+    ): StudioTypography = StudioTypography(
+        defaultFontFamily, defaultMonospaceFontFamily, body1, body2, code1, code2, codeEditorSwing,
+        codeEditorContextMenuSwing
+    )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -236,21 +250,27 @@ private fun TextStyle.withDefaultFontFamily(default: FontFamily): TextStyle {
     return if (fontFamily != null) this else copy(fontFamily = default)
 }
 
+private const val TITILLIUM_WEB_REGULAR = "fonts/titilliumweb/TitilliumWeb-Regular.ttf"
+private const val TITILLIUM_WEB_SEMI_BOLD = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
+private const val UBUNTU_MONO_REGULAR = "fonts/ubuntumono/UbuntuMono-Regular.ttf"
+
 private val titilliumWeb = FontFamily(
-    Font(resource = "fonts/titilliumweb/TitilliumWeb-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal),
-    Font(resource = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf", weight = FontWeight.SemiBold, style = FontStyle.Normal)
+    Font(TITILLIUM_WEB_REGULAR, FontWeight.Normal, FontStyle.Normal),
+    Font(TITILLIUM_WEB_SEMI_BOLD, FontWeight.SemiBold, FontStyle.Normal)
 )
 
 private val ubuntuMono = FontFamily(
-    Font(resource = "fonts/ubuntumono/UbuntuMono-Regular.ttf", weight = FontWeight.Normal, style = FontStyle.Normal)
+    Font(UBUNTU_MONO_REGULAR, FontWeight.Normal, FontStyle.Normal)
 )
 
-private val ubuntuMonoSize13Swing: java.awt.Font
-get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
-    ClassLoader.getSystemResourceAsStream("fonts/ubuntumono/UbuntuMono-Regular.ttf")).deriveFont(13F)
+private val ubuntuMonoSize13Swing: java.awt.Font? = ClassLoader.getSystemResourceAsStream(UBUNTU_MONO_REGULAR)?.let {
+    createFont(TRUETYPE_FONT, it).deriveFont(13f)
+}
 
-private val titilliumWebSize13Swing: java.awt.Font
-get() = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT,
-    ClassLoader.getSystemResourceAsStream("fonts/titilliumweb/TitilliumWeb-Regular.ttf")).deriveFont(13F)
+private val titilliumWebSize13Swing: java.awt.Font? = ClassLoader.getSystemResourceAsStream(TITILLIUM_WEB_REGULAR)?.let {
+    createFont(TRUETYPE_FONT, it).deriveFont(13f)
+}
 
-val LocalTypography = staticCompositionLocalOf { StudioTypography(defaultFontFamily = titilliumWeb, defaultMonospaceFontFamily = ubuntuMono) }
+val LocalTypography = staticCompositionLocalOf {
+    StudioTypography(defaultFontFamily = titilliumWeb, defaultMonospaceFontFamily = ubuntuMono)
+}
