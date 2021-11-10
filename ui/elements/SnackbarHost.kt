@@ -31,8 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 
 @Composable
-fun StudioSnackbarHost(snackbarHostState: SnackbarHostState){
-
+fun StudioSnackbarHost(snackbarHostState: SnackbarHostState) {
     SnackbarHost(
         hostState = snackbarHostState,
         snackbar = {
@@ -41,18 +40,18 @@ fun StudioSnackbarHost(snackbarHostState: SnackbarHostState){
                 action = {
                     Text(
                         text = snackbarHostState.currentSnackbarData?.actionLabel ?: "",
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .clickable {
-                                snackbarHostState.currentSnackbarData?.dismiss()
-                            },
-                        style = StudioTheme.typography.body1.copy(color = StudioTheme.colors.onPrimary, fontWeight = FontWeight.SemiBold)
+                        modifier = Modifier.padding(16.dp)
+                            .clickable { snackbarHostState.currentSnackbarData?.dismiss() },
+                        style = StudioTheme.typography.body1.copy(
+                            color = StudioTheme.colors.onPrimary, fontWeight = FontWeight.SemiBold
+                        )
                     )
                 },
             ) {
                 Text(
                     text = snackbarHostState.currentSnackbarData?.message ?: "",
-                    style = StudioTheme.typography.body1.copy(color = StudioTheme.colors.onPrimary))
+                    style = StudioTheme.typography.body1.copy(color = StudioTheme.colors.onPrimary)
+                )
             }
         },
     )

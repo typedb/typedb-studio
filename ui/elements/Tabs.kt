@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
@@ -45,26 +43,31 @@ import com.vaticle.typedb.studio.appearance.StudioTheme
 
 @Composable
 fun StudioTabs(modifier: Modifier = Modifier, orientation: TabOrientation = TabOrientation.HORIZONTAL,
-               content: @Composable () -> Unit) {
+               content: @Composable () -> Unit
+) {
     when (orientation) {
         TabOrientation.HORIZONTAL -> {
-            Row(modifier = modifier.background(StudioTheme.colors.background),
-                horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = modifier.background(StudioTheme.colors.background),
+                horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically
+            ) {
                 content()
             }
         }
         else -> {
-            Row(modifier = modifier.background(StudioTheme.colors.background)
-                .requiredWidth(IntrinsicSize.Max)
-                .rotate(if (orientation == TabOrientation.TOP_TO_BOTTOM) 90f else -90f)
-                .layout { measurable, constraints ->
-                    val placeable: Placeable = measurable.measure(constraints)
-                    layout(placeable.width, placeable.height) {
-                        val offsetX = if (orientation == TabOrientation.TOP_TO_BOTTOM) placeable.width / 2 else -placeable.width / 2
-                        placeable.placeRelative(x = offsetX, y = 0)
-                    }
-                },
-                horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = modifier.background(StudioTheme.colors.background)
+                    .requiredWidth(IntrinsicSize.Max)
+                    .rotate(if (orientation == TabOrientation.TOP_TO_BOTTOM) 90f else -90f)
+                    .layout { measurable, constraints ->
+                        val placeable: Placeable = measurable.measure(constraints)
+                        layout(placeable.width, placeable.height) {
+                            val offsetX = if (orientation == TabOrientation.TOP_TO_BOTTOM) placeable.width / 2 else -placeable.width / 2
+                            placeable.placeRelative(x = offsetX, y = 0)
+                        }
+                    },
+                horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically
+            ) {
                 content()
             }
         }
@@ -72,9 +75,11 @@ fun StudioTabs(modifier: Modifier = Modifier, orientation: TabOrientation = TabO
 }
 
 @Composable
-fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier, leadingIcon: (@Composable () -> Unit)? = null,
-              showCloseButton: Boolean = false, onClose: () -> Unit = {}, highlight: TabHighlight = TabHighlight.NONE,
-              arrangement: Arrangement.Horizontal = Arrangement.Start, textStyle: TextStyle = StudioTheme.typography.body2) {
+fun StudioTab(
+    text: String, selected: Boolean, modifier: Modifier = Modifier, leadingIcon: (@Composable () -> Unit)? = null,
+    showCloseButton: Boolean = false, onClose: () -> Unit = {}, highlight: TabHighlight = TabHighlight.NONE,
+    arrangement: Arrangement.Horizontal = Arrangement.Start, textStyle: TextStyle = StudioTheme.typography.body2
+) {
     Box(modifier = modifier.width(IntrinsicSize.Max)) {
         val (backgroundColor, highlightColor) = when (selected) {
             true -> listOf(StudioTheme.colors.backgroundHighlight, StudioTheme.colors.primary)
@@ -87,9 +92,10 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier, le
             else -> Alignment.Center
         }
 
-        Row(modifier = Modifier.fillMaxSize().background(backgroundColor), horizontalArrangement = arrangement,
-            verticalAlignment = Alignment.CenterVertically) {
-
+        Row(
+            modifier = Modifier.fillMaxSize().background(backgroundColor), horizontalArrangement = arrangement,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Spacer(Modifier.width(8.dp))
             if (leadingIcon != null) {
                 leadingIcon()
@@ -107,7 +113,7 @@ fun StudioTab(text: String, selected: Boolean, modifier: Modifier = Modifier, le
         }
 
         if (highlight != TabHighlight.NONE) {
-            Row(modifier = Modifier.align(highlightAlignment).fillMaxWidth().height(2.dp).background(highlightColor)) {}
+            Row(Modifier.align(highlightAlignment).fillMaxWidth().height(2.dp).background(highlightColor)) {}
         }
     }
 }
