@@ -22,9 +22,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-class Router(initialRoute: Route) {
+object Router {
 
-    var currentRoute: Route by mutableStateOf(initialRoute)
+    var currentRoute: Route by mutableStateOf(LoginRoute.Core())
         private set
 
     fun navigateTo(route: Route) {

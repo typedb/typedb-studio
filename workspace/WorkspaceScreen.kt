@@ -88,8 +88,10 @@ import java.util.UUID
 import kotlin.math.pow
 
 @Composable
-fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: VisualiserTheme,
-                    window: ComposeWindow, titleBarHeight: Float, snackbarHostState: SnackbarHostState) {
+fun WorkspaceScreen(
+    routeData: WorkspaceRoute, visualiserTheme: VisualiserTheme, window: ComposeWindow,
+    titleBarHeight: Float, snackbarHostState: SnackbarHostState
+) {
 
     val snackbarCoroutineScope = rememberCoroutineScope()
     val log = remember { logger {} }
@@ -213,7 +215,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
             } catch (e: Exception) {
                 errorHandler.handleError(e, { "An error occurred on closing sessions" }, LogLevel.WARN, showSnackbar = false)
             } finally {
-                router.navigateTo(routeData.loginForm.toRoute())
+                Router.navigateTo(routeData.loginForm.toRoute())
             }
         }
 

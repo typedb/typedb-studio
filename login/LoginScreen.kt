@@ -54,12 +54,12 @@ import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
-import mu.KotlinLogging.logger
 import java.util.concurrent.CompletableFuture
+import mu.KotlinLogging.logger
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: SnackbarHostState) {
+fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
     var errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
@@ -131,9 +131,11 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
     }
 
     fun onSubmit() {
-        withUnexpectedErrorHandling(errorHandler, { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
+        withUnexpectedErrorHandling(
+            errorHandler,
+            { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
             val submission = form.asSubmission()
-            router.navigateTo(WorkspaceRoute(submission))
+            Router.navigateTo(WorkspaceRoute(submission))
         }
     }
 

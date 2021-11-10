@@ -55,7 +55,6 @@ import mu.KotlinLogging.logger
 fun Studio(onCloseRequest: () -> Unit) {
     val snackbarHostState = rememberScaffoldState().snackbarHostState
     val pixelDensity = LocalDensity.current.density
-    val router = remember { Router(initialRoute = LoginRoute.Core()) }
     var titleBarHeight by remember { mutableStateOf(0F) }
 
     // TODO: we want no title bar, by passing undecorated = true, but it seems to cause intermittent crashes on startup
@@ -68,10 +67,10 @@ fun Studio(onCloseRequest: () -> Unit) {
                     // used to translate from screen coordinates to window coordinates in the visualiser
                     titleBarHeight = window.height - coordinates.size.height / pixelDensity
                 }) {
-                when (val routeData = router.currentRoute) {
-                    is LoginRoute -> LoginScreen(routeData, router, snackbarHostState)
+                when (val routeData = Router.currentRoute) {
+                    is LoginRoute -> LoginScreen(routeData, snackbarHostState)
                     is WorkspaceRoute -> WorkspaceScreen(
-                        routeData, router, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
+                        routeData, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
                     )
                 }
                 Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.BottomCenter) {
