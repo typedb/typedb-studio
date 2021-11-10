@@ -37,7 +37,7 @@ class ErrorHandler(
 ) {
     fun handleError(
         error: Throwable, message: () -> String = { "An error occurred" }, logLevel: LogLevel = ERROR,
-        showSnackbar: Boolean = true, snackbarDuration: SnackbarDuration = SnackbarDuration.Long
+        showSnackbar: Boolean = logLevel == ERROR, snackbarDuration: SnackbarDuration = SnackbarDuration.Long
     ) {
         snackbarCoroutineScope.launch {
             when (logLevel) {
@@ -62,7 +62,7 @@ fun rememberErrorHandler(
 
 fun withUnexpectedErrorHandling(
     handler: ErrorHandler, message: () -> String = { "An error occurred" }, logLevel: LogLevel = ERROR,
-    showSnackbar: Boolean = true, snackbarDuration: SnackbarDuration = SnackbarDuration.Long, action: () -> Unit
+    showSnackbar: Boolean = logLevel == ERROR, snackbarDuration: SnackbarDuration = SnackbarDuration.Long, action: () -> Unit
 ) {
     try {
         action()

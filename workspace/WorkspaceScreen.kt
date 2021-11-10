@@ -56,6 +56,7 @@ import androidx.compose.ui.zIndex
 import com.vaticle.force.graph.Link
 import com.vaticle.force.graph.LinkForce
 import com.vaticle.force.graph.Node
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.VisualiserTheme
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
@@ -81,6 +82,7 @@ import mu.KotlinLogging.logger
 import java.awt.FileDialog
 import java.io.File
 import java.io.FilenameFilter
+import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -130,29 +132,42 @@ fun WorkspaceScreen(
 
         // TODO: with this many callbacks, the view becomes unreadable - create a VM (ToolbarViewModel?)
         fun switchWorkspace(dbName: String) {
-            withUnexpectedErrorHandling(errorHandler, { "An error occurred while switching workspaces." }) {
-                db.client.closeAllSessions()
+            withUnexpectedErrorHandling(errorHandler, { "An unexpected error occurred while switching workspaces" }) {
+                try {
+                    db.client.closeAllSessions()
+                } catch (e: TypeDBClientException) {
+                    errorHandler.handleError(e, { "Failed to close sessions" }, LogLevel.WARN)
+                }
                 // TODO: switch workspaces
             }
         }
 
         fun openOpenQueryDialog() {
-            withUnexpectedErrorHandling(errorHandler, { "An error occurred while attempting to open a query file." }) {
+            withUnexpectedErrorHandling(errorHandler, { "An unexpected error occurred while attempting to open a query file." }) {
                 FileDialog(window, "Open", FileDialog.LOAD).apply {
                     isMultipleMode = false
 
-                    // TODO: look into file extension filtering
+                    // TODO: investigate file extension filtering on Windows
 //                // Windows
 //                file = "*.tql"
-//
+                    // TODO: this seems to force the user to ONLY load .tql files and doesn't give them any other option
 //                // Mac, Linux
 //                filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
 
                     isVisible = true
                     file?.let { filename ->
                         val path = Path.of(directory, filename)
-                        val fileContent: String = Files.readString(Path.of(directory, filename))
-                        queryTabs += QueryTabState(title = filename, query = fileContent, file = path.toFile())
+                        try {
+                            val fileContent: String = Files.readString(Path.of(directory, filename))
+                            queryTabs += QueryTabState(title = filename, query = fileContent, file = path.toFile())
+                        } catch (e: Exception) {
+                            when (e) {
+                                is IOException, is SecurityException -> {
+                                    errorHandler.handleError(e, { "Failed to open file" }, LogLevel.DEBUG)
+                                }
+                                else -> throw e
+                            }
+                        }
                         activeQueryTabIndex = queryTabs.size - 1
                     }
                 }
@@ -175,6 +190,7 @@ fun WorkspaceScreen(
                         file = queryTabFile.name
                         directory = queryTabFile.parentFile.absolutePath
                     }
+                    // TODO: test if this has any effect on Windows
                     filenameFilter = FilenameFilter { _, name -> name?.endsWith(".tql") ?: false }
                     isVisible = true
                     file?.let { filename ->
@@ -199,7 +215,7 @@ fun WorkspaceScreen(
                 forceSimulation.init()
                 queryResponseStream = db.matchQuery(query, querySettings.enableReasoning)
             } catch (e: Exception) {
-                errorHandler.handleError(e, { "An error occurred on submitting the query $query" })
+                errorHandler.handleError(e, { "An error occurred when submitting the query $query" })
                 return
             }
             visualiserWorldOffset = visualiserSize.center
@@ -213,7 +229,7 @@ fun WorkspaceScreen(
             try {
                 db.client.closeAllSessions()
             } catch (e: Exception) {
-                errorHandler.handleError(e, { "An error occurred on closing sessions" }, LogLevel.WARN, showSnackbar = false)
+                errorHandler.handleError(e, { "Failed to close sessions" }, LogLevel.WARN)
             } finally {
                 Router.navigateTo(routeData.loginForm.toRoute())
             }
@@ -225,8 +241,7 @@ fun WorkspaceScreen(
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}
 
-        Row(modifier = Modifier.weight(1F)) {
-
+        Row(modifier = Modifier.weight(1f)) {
             var showQuerySettingsPanel by remember { mutableStateOf(true) }
             var showConceptPanel by remember { mutableStateOf(true) }
 

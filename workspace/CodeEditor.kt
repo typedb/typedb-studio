@@ -129,7 +129,7 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
     }
 
     DisposableEffect(editorID) {
-        withUnexpectedErrorHandling(errorHandler, { "An error occurred initialising CodeEditor" }) {
+        withUnexpectedErrorHandling(errorHandler, { "CodeEditor failed to initialise correctly" }) {
             // Temporarily "switch off" the document listener so that setText doesn't emit a change event
             documentListener?.let { textArea.document.removeDocumentListener(it) }
             textArea.text = code

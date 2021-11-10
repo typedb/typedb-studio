@@ -62,7 +62,7 @@ import mu.KotlinLogging.logger
 fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     val log = remember { logger {} }
     val snackbarCoroutineScope = rememberCoroutineScope()
-    var errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
+    val errorHandler = rememberErrorHandler(log, snackbarHostState, snackbarCoroutineScope)
     val form = remember { loginScreenStateOf(routeData) }
     var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
     var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
@@ -133,7 +133,8 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     fun onSubmit() {
         withUnexpectedErrorHandling(
             errorHandler,
-            { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
+            { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }
+        ) {
             val submission = form.asSubmission()
             Router.navigateTo(WorkspaceRoute(submission))
         }
