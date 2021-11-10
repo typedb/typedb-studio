@@ -46,7 +46,7 @@ import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
-import com.vaticle.typedb.studio.diagnostics.withErrorHandling
+import com.vaticle.typedb.studio.diagnostics.withUnexpectedErrorHandling
 import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
 import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
@@ -131,7 +131,7 @@ fun LoginScreen(routeData: LoginRoute, router: Router, snackbarHostState: Snackb
     }
 
     fun onSubmit() {
-        withErrorHandling(errorHandler, { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
+        withUnexpectedErrorHandling(errorHandler, { "Failed to login to ${form.serverSoftware.displayName}:${form.db?.name}" }) {
             val submission = form.asSubmission()
             router.navigateTo(WorkspaceRoute(submission))
         }

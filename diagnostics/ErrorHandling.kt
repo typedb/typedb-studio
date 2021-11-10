@@ -60,7 +60,7 @@ fun rememberErrorHandler(
     logger: KLogger, snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
 ): ErrorHandler = remember { ErrorHandler(logger, snackbarHostState, snackbarCoroutineScope) }
 
-fun withErrorHandling(
+fun withUnexpectedErrorHandling(
     handler: ErrorHandler, message: () -> String = { "An error occurred" }, logLevel: LogLevel = ERROR,
     showSnackbar: Boolean = true, snackbarDuration: SnackbarDuration = SnackbarDuration.Long, action: () -> Unit
 ) {

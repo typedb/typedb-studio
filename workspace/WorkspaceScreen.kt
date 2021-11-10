@@ -63,7 +63,7 @@ import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.data.emptyQueryResponseStream
 import com.vaticle.typedb.studio.diagnostics.LogLevel
 import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
-import com.vaticle.typedb.studio.diagnostics.withErrorHandling
+import com.vaticle.typedb.studio.diagnostics.withUnexpectedErrorHandling
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.Icon
@@ -128,14 +128,14 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
 
         // TODO: with this many callbacks, the view becomes unreadable - create a VM (ToolbarViewModel?)
         fun switchWorkspace(dbName: String) {
-            withErrorHandling(errorHandler, { "An error occurred while switching workspaces." }) {
+            withUnexpectedErrorHandling(errorHandler, { "An error occurred while switching workspaces." }) {
                 db.client.closeAllSessions()
                 // TODO: switch workspaces
             }
         }
 
         fun openOpenQueryDialog() {
-            withErrorHandling(errorHandler, { "An error occurred while attempting to open a query file." }) {
+            withUnexpectedErrorHandling(errorHandler, { "An error occurred while attempting to open a query file." }) {
                 FileDialog(window, "Open", FileDialog.LOAD).apply {
                     isMultipleMode = false
 
@@ -163,7 +163,7 @@ fun WorkspaceScreen(routeData: WorkspaceRoute, router: Router, visualiserTheme: 
                 return
             }
 
-            withErrorHandling(errorHandler, { "An error occurred while attempting to save a query file." }) {
+            withUnexpectedErrorHandling(errorHandler, { "An error occurred while attempting to save a query file." }) {
                 FileDialog(window, "Save", FileDialog.SAVE).apply {
                     isMultipleMode = false
                     val queryTabFile = activeQueryTab.file

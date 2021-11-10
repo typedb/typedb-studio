@@ -32,7 +32,7 @@ import androidx.compose.ui.awt.SwingPanel
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.toSwingColor
 import com.vaticle.typedb.studio.diagnostics.rememberErrorHandler
-import com.vaticle.typedb.studio.diagnostics.withErrorHandling
+import com.vaticle.typedb.studio.diagnostics.withUnexpectedErrorHandling
 import mu.KotlinLogging.logger
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants
@@ -129,7 +129,7 @@ fun CodeEditor(code: String, editorID: String, onChange: (code: String) -> Unit,
     }
 
     DisposableEffect(editorID) {
-        withErrorHandling(errorHandler, { "An error occurred initialising CodeEditor" }) {
+        withUnexpectedErrorHandling(errorHandler, { "An error occurred initialising CodeEditor" }) {
             // Temporarily "switch off" the document listener so that setText doesn't emit a change event
             documentListener?.let { textArea.document.removeDocumentListener(it) }
             textArea.text = code
