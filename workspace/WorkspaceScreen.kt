@@ -63,7 +63,6 @@ import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.data.emptyQueryResponseStream
 import com.vaticle.typedb.studio.diagnostics.rememberErrorReporter
-import com.vaticle.typedb.studio.diagnostics.withErrorProtection
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.ui.elements.Icon
@@ -86,7 +85,6 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.math.pow
 
 @Composable
@@ -107,7 +105,6 @@ fun WorkspaceScreen(
         val forceSimulation: TypeDBForceSimulation by remember { mutableStateOf(TypeDBForceSimulation()) }
         var visualiserWorldOffset by remember { mutableStateOf(Offset.Zero) }
         var visualiserSize by mutableStateOf(Size.Zero)
-        var visualiserMetricsID by remember { mutableStateOf("") }
         var visualiserScale by remember { mutableStateOf(1F) }
         var selectedVertex: VertexState? by remember { mutableStateOf(null) }
         val selectedVertexNetwork: MutableList<VertexState> = remember { mutableStateListOf() }
@@ -132,18 +129,16 @@ fun WorkspaceScreen(
 
         // TODO: with this many callbacks, the view becomes unreadable - create a VM (ToolbarViewModel?)
         fun switchWorkspace(dbName: String) {
-            withErrorProtection(errorReporter) {
-                try {
-                    db.client.closeAllSessions()
-                } catch (e: TypeDBClientException) {
-                    errorReporter.reportOddBehaviour(e)
-                }
-                // TODO: switch workspaces
+            try {
+                db.client.closeAllSessions() // TODO: switch workspaces
+            } catch (e: Exception) {
+                if (e is TypeDBClientException) errorReporter.reportOddBehaviour(e)
+                else errorReporter.reportIDEError(e)
             }
         }
 
         fun openOpenQueryDialog() {
-            withErrorProtection(errorReporter) {
+            try {
                 FileDialog(window, "Open", FileDialog.LOAD).apply {
                     isMultipleMode = false
 
@@ -171,6 +166,8 @@ fun WorkspaceScreen(
                         activeQueryTabIndex = queryTabs.size - 1
                     }
                 }
+            } catch (e: Exception) {
+                errorReporter.reportIDEError(e)
             }
         }
 
@@ -180,7 +177,7 @@ fun WorkspaceScreen(
                 return
             }
 
-            withErrorProtection(errorReporter) {
+            try {
                 FileDialog(window, "Save", FileDialog.SAVE).apply {
                     isMultipleMode = false
                     val queryTabFile = activeQueryTab.file
@@ -210,6 +207,8 @@ fun WorkspaceScreen(
                         }
                     }
                 }
+            } catch (e: Exception) {
+                errorReporter.reportIDEError(e)
             }
         }
 
@@ -228,7 +227,6 @@ fun WorkspaceScreen(
                 return
             }
             visualiserWorldOffset = visualiserSize.center
-            visualiserMetricsID = UUID.randomUUID().toString()
             queryStartTimeNanos = System.nanoTime()
             selectedVertex = null
             selectedVertexNetwork.clear()

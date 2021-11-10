@@ -78,11 +78,3 @@ class ErrorReporter(
 fun rememberErrorReporter(
     logger: KLogger, snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
 ): ErrorReporter = remember { ErrorReporter(logger, snackbarHostState, snackbarCoroutineScope) }
-
-fun withErrorProtection(reporter: ErrorReporter, action: () -> Unit) {
-    try {
-        action()
-    } catch (e: Exception) {
-        reporter.reportIDEError(e)
-    }
-}

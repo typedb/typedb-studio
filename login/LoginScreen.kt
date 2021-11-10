@@ -47,7 +47,6 @@ import com.vaticle.typedb.studio.data.ClusterClient
 import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.diagnostics.rememberErrorReporter
-import com.vaticle.typedb.studio.diagnostics.withErrorProtection
 import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
 import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
@@ -80,25 +79,27 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
 
     fun populateDBListAsync() {
         CompletableFuture.supplyAsync {
-            withErrorProtection(errorReporter) {
-                try {
-                    val client = when (form.serverSoftware) {
-                        CORE -> CoreClient(form.serverAddress)
-                        CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
-                    }
-                    form.dbClient = client
-                    form.allDBNames.let { dbNames ->
-                        dbNames += client.listDatabases()
-                        if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
-                        else if (!form.databaseSelected) form.dbFieldText = "Select a database"
-                    }
-                } catch (e: TypeDBClientException) {
-                    databasesLastLoadedFromAddress = null
-                    form.dbFieldText = "Failed to load databases"
-                    errorReporter.reportTypeDBClientError(e) { "Failed to load databases at address ${form.serverAddress}" }
-                } finally {
-                    loadingDatabases = false
+            try {
+                val client = when (form.serverSoftware) {
+                    CORE -> CoreClient(form.serverAddress)
+                    CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
                 }
+                form.dbClient = client
+                form.allDBNames.let { dbNames ->
+                    dbNames += client.listDatabases()
+                    if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
+                    else if (!form.databaseSelected) form.dbFieldText = "Select a database"
+                }
+            } catch (e: Exception) {
+                databasesLastLoadedFromAddress = null
+                form.dbFieldText = "Failed to load databases"
+                if (e is TypeDBClientException) {
+                    errorReporter.reportTypeDBClientError(e) { "Failed to load databases at address ${form.serverAddress}" }
+                } else {
+                    errorReporter.reportIDEError(e)
+                }
+            } finally {
+                loadingDatabases = false
             }
         }
     }
@@ -134,9 +135,11 @@ fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
     }
 
     fun onSubmit() {
-        withErrorProtection(errorReporter) {
+        try {
             val submission = form.asSubmission()
             Router.navigateTo(WorkspaceRoute(submission))
+        } catch (e: Exception) {
+            errorReporter.reportIDEError(e)
         }
     }
 

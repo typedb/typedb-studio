@@ -25,7 +25,6 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.data.GraphData
 import com.vaticle.typedb.studio.data.QueryResponseStream
 import com.vaticle.typedb.studio.diagnostics.ErrorReporter
-import com.vaticle.typedb.studio.diagnostics.withErrorProtection
 import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging.logger
 import java.util.concurrent.CompletionException
@@ -65,10 +64,12 @@ suspend fun runSimulation(
             }
             simulation.lastTickStartNanos = System.nanoTime()
 
-            withErrorProtection(errorReporter) {
+            try {
                 if (System.nanoTime() - dataStream.lastFetchedNanos > 5e7 /* 50ms */) fetchNewData()
-                if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withErrorProtection
+                if (simulation.isEmpty() || simulation.alpha() < simulation.alphaMin()) return@withFrameNanos
                 simulation.tick()
+            } catch (e: Exception) {
+                errorReporter.reportIDEError(e)
             }
         }
     }
