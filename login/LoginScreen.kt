@@ -52,7 +52,6 @@ import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
-import com.vaticle.typedb.studio.ui.elements.Separator
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import java.util.concurrent.CompletableFuture
