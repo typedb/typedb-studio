@@ -41,15 +41,13 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.PointerIconDefaults
-import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.ui.elements.StudioTextFieldVariant.*
-import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -65,8 +63,7 @@ fun StudioTextField(
     trailingIcon: (@Composable () -> Unit)? = null,
     placeholderText: String = "",
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    // TODO: Currently pointerHoverIcon has no effect - see https://github.com/JetBrains/compose-jb/issues/1315
-    pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+    pointerHoverIcon: PointerIcon = PointerIcon.Text /*PointerIconDefaults.Text*/, // TODO: #516
     textStyle: TextStyle) {
 
     val focusManager = LocalFocusManager.current
@@ -78,7 +75,9 @@ fun StudioTextField(
             .border(1.dp, SolidColor(StudioTheme.colors.uiElementBorder), MaterialTheme.shapes.small)
     }
 
-    BasicTextField(modifier = basicTextFieldModifier.pointerHoverIcon(pointerHoverIcon, overrideDescendants = true)
+    BasicTextField(modifier = basicTextFieldModifier
+        .pointerIcon(pointerHoverIcon)
+        /*.pointerHoverIcon(pointerHoverIcon, overrideDescendants = true)*/ // TODO: #516
         .onPreviewKeyEvent { event: KeyEvent ->
             if (event.nativeKeyEvent.id == java.awt.event.KeyEvent.KEY_RELEASED) return@onPreviewKeyEvent true
             when (event.key) {

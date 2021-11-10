@@ -44,7 +44,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -53,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.ui.elements.IconSize.*
-import java.awt.Cursor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -94,7 +92,8 @@ fun StudioDropdownBox(
                         textfieldSize = coordinates.size.toSize()
                     },
                 readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
-                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) }, pointerHoverIcon = PointerIconDefaults.Hand
+                trailingIcon = { StudioIcon(Icon.CaretDown, size = Size16) },
+                pointerHoverIcon = PointerIcon.Hand /*PointerIconDefaults.Hand*/
             )
         }
 
