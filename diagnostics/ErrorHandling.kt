@@ -77,4 +77,6 @@ class ErrorReporter(
 @Composable
 fun rememberErrorReporter(
     logger: KLogger, snackbarHostState: SnackbarHostState, snackbarCoroutineScope: CoroutineScope
-): ErrorReporter = remember { ErrorReporter(logger, snackbarHostState, snackbarCoroutineScope) }
+): ErrorReporter {
+    return remember { ErrorReporter(logger, snackbarHostState, snackbarCoroutineScope) }
+}

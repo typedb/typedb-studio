@@ -25,13 +25,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.SnackbarHostState
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,138 +44,183 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.appearance.StudioTheme
-import com.vaticle.typedb.studio.data.ClusterClient
-import com.vaticle.typedb.studio.data.CoreClient
-import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.diagnostics.rememberErrorReporter
 import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
 import com.vaticle.typedb.studio.login.ServerSoftware.CORE
 import com.vaticle.typedb.studio.routing.LoginRoute
-import com.vaticle.typedb.studio.routing.Router
-import com.vaticle.typedb.studio.routing.WorkspaceRoute
+import com.vaticle.typedb.studio.ui.elements.StudioButton
+import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioTab
 import com.vaticle.typedb.studio.ui.elements.StudioTabs
-import java.util.concurrent.CompletableFuture
-import mu.KotlinLogging.logger
+import com.vaticle.typedb.studio.ui.elements.StudioTextField
+import mu.KotlinLogging
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun LoginScreen(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
-    val log = remember { logger {} }
-    val snackbarCoroutineScope = rememberCoroutineScope()
-    val errorReporter = rememberErrorReporter(log, snackbarHostState, snackbarCoroutineScope)
-    val form = remember { loginScreenStateOf(routeData) }
-    var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
-    var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
-    var loadingDatabases by remember { mutableStateOf(false) }
+object LoginScreen {
 
-    fun selectServerSoftware(software: ServerSoftware) {
-        if (form.serverSoftware == software) return
-        form.serverSoftware = software
-        form.clearDBList()
-        form.closeClient()
-        databasesLastLoadedFromAddress = null
-        databasesLastLoadedAtMillis = null
-    }
+    private val ColumnScope.labelWeightModifier: Modifier get() = Modifier.weight(2f)
+    private val ColumnScope.fieldWeightModifier: Modifier get() = Modifier.weight(3f)
 
-    fun populateDBListAsync() {
-        CompletableFuture.supplyAsync {
-            try {
-                val client = when (form.serverSoftware) {
-                    CORE -> CoreClient(form.serverAddress)
-                    CLUSTER -> ClusterClient(form.serverAddress, form.username, form.password, form.rootCAPath)
-                }
-                form.dbClient = client
-                form.allDBNames.let { dbNames ->
-                    dbNames += client.listDatabases()
-                    if (dbNames.isEmpty()) form.dbFieldText = "This server has no databases"
-                    else if (!form.databaseSelected) form.dbFieldText = "Select a database"
-                }
-            } catch (e: Exception) {
-                databasesLastLoadedFromAddress = null
-                form.dbFieldText = "Failed to load databases"
-                if (e is TypeDBClientException) {
-                    errorReporter.reportTypeDBClientError(e) { "Failed to load databases at address ${form.serverAddress}" }
-                } else {
-                    errorReporter.reportIDEError(e)
-                }
-            } finally {
-                loadingDatabases = false
-            }
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun Main(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
+        val snackbarCoroutineScope = rememberCoroutineScope()
+        val log = remember { KotlinLogging.logger {} }
+        val errorReporter = rememberErrorReporter(log, snackbarHostState, snackbarCoroutineScope)
+        var databasesLastLoadedFromAddress by remember { mutableStateOf<String?>(null) }
+        var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
+        var loadingDatabases by remember { mutableStateOf(false) }
+        val form = remember {
+            loginScreenStateOf(
+                routeData,
+                errorReporter,
+                databasesLastLoadedFromAddress,
+                databasesLastLoadedAtMillis,
+                loadingDatabases
+            )
         }
-    }
 
-    fun onDatabaseDropdownFocused() {
-        if (loadingDatabases) return
-        val lastLoadedMillis = databasesLastLoadedAtMillis
-        if (form.serverAddress == databasesLastLoadedFromAddress
-            && lastLoadedMillis != null && System.currentTimeMillis() - lastLoadedMillis < 2000
-        ) return
-
-        loadingDatabases = true
-        databasesLastLoadedFromAddress = form.serverAddress
-        databasesLastLoadedAtMillis = System.currentTimeMillis()
-        form.closeClient()
-        if (form.serverAddress.isNotBlank()) {
-            if (!form.databaseSelected) form.dbFieldText = "Loading databases..."
-            form.allDBNames.clear()
-            populateDBListAsync()
-        }
-    }
-
-    fun onSelectDatabase(dbName: String) {
-        form.dbClient.let {
-            if (it != null) {
-                form.dbFieldText = dbName
-                form.db = DB(it, dbName)
-            } else {
-                form.db = null
-                form.clearDBList()
-            }
-        }
-    }
-
-    fun onSubmit() {
-        try {
-            val submission = form.asSubmission()
-            Router.navigateTo(WorkspaceRoute(submission))
-        } catch (e: Exception) {
-            errorReporter.reportIDEError(e)
-        }
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize().background(StudioTheme.colors.windowBackdrop)
-            .border(1.dp, StudioTheme.colors.uiElementBorder), contentAlignment = Alignment.Center
-    ) {
-
-        Column(
-            modifier = Modifier.size(400.dp, 320.dp).background(StudioTheme.colors.background)
-                .border(1.dp, StudioTheme.colors.uiElementBorder)
+        Box(
+            modifier = Modifier.fillMaxSize().background(StudioTheme.colors.windowBackdrop)
+                .border(1.dp, StudioTheme.colors.uiElementBorder), contentAlignment = Alignment.Center
         ) {
 
-            StudioTabs(Modifier.height(32.dp)) {
-                StudioTab(text = CORE.displayName, selected = form.serverSoftware == CORE,
-                    arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectServerSoftware(CORE) })
-                StudioTab(text = CLUSTER.displayName, selected = form.serverSoftware == CLUSTER,
-                    arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
-                    modifier = Modifier.weight(1f).clickable { selectServerSoftware(CLUSTER) })
+            Column(
+                modifier = Modifier.size(400.dp, 320.dp).background(StudioTheme.colors.background)
+                    .border(1.dp, StudioTheme.colors.uiElementBorder)
+            ) {
+
+                StudioTabs(Modifier.height(32.dp)) {
+                    StudioTab(text = CORE.displayName, selected = form.serverSoftware == CORE,
+                        arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
+                        modifier = Modifier.weight(1f).clickable { form.selectServerSoftware(CORE) })
+                    StudioTab(text = CLUSTER.displayName, selected = form.serverSoftware == CLUSTER,
+                        arrangement = Arrangement.Center, textStyle = StudioTheme.typography.body1,
+                        modifier = Modifier.weight(1f).clickable { form.selectServerSoftware(CLUSTER) })
+                }
+                Spacer(
+                    modifier = Modifier.fillMaxWidth().height(2.dp).background(StudioTheme.colors.backgroundHighlight)
+                )
+                when (form.serverSoftware) {
+                    CORE -> TypeDB(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
+                    CLUSTER -> TypeDBCluster(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
+                }
             }
-            Spacer(modifier = Modifier.fillMaxWidth().height(2.dp).background(StudioTheme.colors.backgroundHighlight))
-            when (form.serverSoftware) {
-                CORE -> CoreLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
-                CLUSTER -> ClusterLoginPanel(form, ::onDatabaseDropdownFocused, ::onSelectDatabase, ::onSubmit)
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun TypeDB(
+        form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
+    ) {
+        val focusManager: FocusManager = LocalFocusManager.current
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FormFieldGroup {
+                FormField {
+                    Text("Server address", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioTextField(
+                        value = form.serverAddress, onValueChange = { value -> form.serverAddress = value },
+                        textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp)
+                    )
+                }
+                FormField {
+                    Text("Database", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioDropdownBox(
+                        items = form.allDBNames,
+                        text = form.dbFieldText,
+                        onTextChange = { onDBSelected(it) },
+                        modifier = fieldWeightModifier.height(28.dp),
+                        textFieldModifier = Modifier.onFocusChanged {
+                            // sanity check - for some reason onFocusChanged triggers when switching tabs
+                            if (it.isFocused && form.serverSoftware == CORE) onDBDropdown()
+                        })
+                }
             }
+            StudioButton(text = "Connect to TypeDB", enabled = form.databaseSelected, onClick = { onSubmit() })
+            LaunchedEffect(Unit) { focusManager.moveFocus(FocusDirection.Down) }
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun TypeDBCluster(
+        form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
+    ) {
+        val focusManager: FocusManager = LocalFocusManager.current
+
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+
+            FormFieldGroup {
+                FormField {
+                    Text("Server address", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioTextField(
+                        value = form.serverAddress, onValueChange = { value -> form.serverAddress = value },
+                        textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp)
+                    )
+                }
+                FormField {
+                    Text("Username", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioTextField(
+                        value = form.username, onValueChange = { value -> form.username = value },
+                        textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp)
+                    )
+                }
+                FormField {
+                    Text("Password", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioTextField(
+                        value = form.password, onValueChange = { value -> form.password = value },
+                        textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp),
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+                }
+                FormField {
+                    Text("Root CA path", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioTextField(
+                        value = form.rootCAPath, onValueChange = { value -> form.rootCAPath = value },
+                        textStyle = StudioTheme.typography.body1, modifier = fieldWeightModifier.height(28.dp)
+                    )
+                }
+                FormField {
+                    Text("Database", style = StudioTheme.typography.body1, modifier = labelWeightModifier)
+                    StudioDropdownBox(items = form.allDBNames,
+                        text = form.dbFieldText,
+                        onTextChange = { onDBSelected(it) },
+                        modifier = fieldWeightModifier.height(28.dp),
+                        textFieldModifier = Modifier.onFocusChanged { if (it.isFocused && form.serverSoftware == CLUSTER) onDBDropdown() })
+                }
+            }
+
+            StudioButton(text = "Connect to TypeDB Cluster", enabled = form.databaseSelected, onClick = { onSubmit() })
+
+            LaunchedEffect(Unit) { focusManager.moveFocus(FocusDirection.Down) }
+        }
+    }
+
+    @Composable
+    private fun FormField(content: @Composable () -> Unit) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            content()
+        }
+    }
+
+    @Composable
+    private fun FormFieldGroup(content: @Composable () -> Unit) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            content()
         }
     }
 }
-
-internal val ColumnScope.labelWeightModifier: Modifier
-    get() = Modifier.weight(2f)
-
-internal val ColumnScope.fieldWeightModifier: Modifier
-    get() = Modifier.weight(3f)

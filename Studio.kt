@@ -68,7 +68,7 @@ fun Studio(onCloseRequest: () -> Unit) {
                     titleBarHeight = window.height - coordinates.size.height / pixelDensity
                 }) {
                 when (val routeData = Router.currentRoute) {
-                    is LoginRoute -> LoginScreen(routeData, snackbarHostState)
+                    is LoginRoute -> LoginScreen.Main(routeData, snackbarHostState)
                     is WorkspaceRoute -> WorkspaceScreen(
                         routeData, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
                     )
