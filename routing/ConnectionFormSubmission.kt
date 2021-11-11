@@ -18,10 +18,10 @@
 
 package com.vaticle.typedb.studio.routing
 
-import com.vaticle.typedb.studio.data.ClusterClient
-import com.vaticle.typedb.studio.data.CoreClient
+import com.vaticle.typedb.studio.session.ClusterClient
+import com.vaticle.typedb.studio.session.CoreClient
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.data.DBClient
+import com.vaticle.typedb.studio.session.DBClient
 
 abstract class ConnectionFormSubmission(val serverAddress: String, val db: DB, val allDBNames: List<String>) {
     abstract val dbClient: DBClient

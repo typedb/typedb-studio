@@ -36,13 +36,13 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.data.EdgeDirection.*
 import com.vaticle.typedb.studio.data.EdgeEncoding.*
 import com.vaticle.typedb.studio.data.VertexEncoding.*
+import com.vaticle.typedb.studio.session.CoreClient
+import com.vaticle.typedb.studio.session.DBClient
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
-import com.vaticle.typeql.lang.query.TypeQLQuery
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.Collectors
 import java.util.stream.Stream
 
 class DB(val client: DBClient, private val dbName: String) {

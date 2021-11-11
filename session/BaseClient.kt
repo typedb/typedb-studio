@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.data
+package com.vaticle.typedb.studio.session
 
 import com.vaticle.typedb.client.api.connection.TypeDBClient
 import com.vaticle.typedb.client.api.connection.TypeDBSession
@@ -46,9 +46,8 @@ abstract class BaseClient: DBClient {
     }
 
     override fun session(dbName: String, type: TypeDBSession.Type): TypeDBSession {
-        typeDBClient.session(dbName, type).let {
+        return typeDBClient.session(dbName, type).also {
             sessions += it
-            return it
         }
     }
 }

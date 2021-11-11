@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.data
+package com.vaticle.typedb.studio.session
 
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.connection.TypeDBClient

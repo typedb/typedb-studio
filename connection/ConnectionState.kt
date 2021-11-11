@@ -24,10 +24,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.data.ClusterClient
-import com.vaticle.typedb.studio.data.CoreClient
+import com.vaticle.typedb.studio.session.ClusterClient
+import com.vaticle.typedb.studio.session.CoreClient
 import com.vaticle.typedb.studio.data.DB
-import com.vaticle.typedb.studio.data.DBClient
+import com.vaticle.typedb.studio.session.DBClient
 import com.vaticle.typedb.studio.diagnostics.ErrorReporter
 import com.vaticle.typedb.studio.connection.ServerSoftware.CLUSTER
 import com.vaticle.typedb.studio.connection.ServerSoftware.CORE

@@ -25,6 +25,8 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "//session",
+
         # External dependencies from @vaticle
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api",
