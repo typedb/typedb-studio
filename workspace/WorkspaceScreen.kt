@@ -238,12 +238,12 @@ fun WorkspaceScreen(
             } catch (e: Exception) {
                 errorReporter.reportOddBehaviour(e)
             } finally {
-                Router.navigateTo(routeData.loginForm.toRoute())
+                Router.navigateTo(routeData.connectionForm.toRoute())
             }
         }
 
         Toolbar(dbName = db.name, onDBNameChange = { dbName -> switchWorkspace(dbName) },
-            allDBNames = remember { routeData.loginForm.allDBNames }, onOpen = { openOpenQueryDialog() },
+            allDBNames = remember { routeData.connectionForm.allDBNames }, onOpen = { openOpenQueryDialog() },
             onSave = { openSaveQueryDialog() }, onRun = { runQuery() }, onLogout = { logout() })
 
         Row(modifier = Modifier.fillMaxWidth().height(1.dp).background(StudioTheme.colors.uiElementBorder)) {}

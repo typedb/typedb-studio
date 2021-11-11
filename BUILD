@@ -37,7 +37,7 @@ kt_jvm_library(
         "//appearance",
         "//common",
         "//data",
-        "//login",
+        "//connection:connection",
         "//routing",
         "//storage",
         "//ui/elements",

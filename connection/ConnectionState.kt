@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.login
+package com.vaticle.typedb.studio.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -29,10 +29,10 @@ import com.vaticle.typedb.studio.data.CoreClient
 import com.vaticle.typedb.studio.data.DB
 import com.vaticle.typedb.studio.data.DBClient
 import com.vaticle.typedb.studio.diagnostics.ErrorReporter
-import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
-import com.vaticle.typedb.studio.login.ServerSoftware.CORE
-import com.vaticle.typedb.studio.routing.LoginFormSubmission
-import com.vaticle.typedb.studio.routing.LoginRoute
+import com.vaticle.typedb.studio.connection.ServerSoftware.CLUSTER
+import com.vaticle.typedb.studio.connection.ServerSoftware.CORE
+import com.vaticle.typedb.studio.routing.ConnectionFormSubmission
+import com.vaticle.typedb.studio.routing.ConnectionRoute
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import java.util.concurrent.CompletableFuture
@@ -44,14 +44,14 @@ enum class ServerSoftware(val displayName: String) {
     CLUSTER(displayName = "TypeDB Cluster"),
 }
 
-fun loginScreenStateOf(
-    routeData: LoginRoute,
+fun connectionScreenStateOf(
+    routeData: ConnectionRoute,
     errorReporter: ErrorReporter,
     databasesLastLoadedFromAddress: String?,
     databasesLastLoadedAtMillis: Long?,
     loadingDatabases: Boolean
 ) = when (routeData) {
-    is LoginRoute.Cluster -> LoginState(
+    is ConnectionRoute.Cluster -> ConnectionState(
         serverSoftware = CLUSTER, serverAddress = routeData.serverAddress,
         databasesLastLoadedFromAddress = databasesLastLoadedFromAddress,
         username = routeData.username, rootCAPath = routeData.rootCAPath,
@@ -59,7 +59,7 @@ fun loginScreenStateOf(
         loadingDatabases = loadingDatabases,
         errorReporter = errorReporter
     )
-    else -> LoginState(
+    else -> ConnectionState(
         serverSoftware = CORE,
         serverAddress = routeData.serverAddress,
         databasesLastLoadedFromAddress = databasesLastLoadedFromAddress,
@@ -69,7 +69,7 @@ fun loginScreenStateOf(
     )
 }
 
-class LoginState(
+class ConnectionState(
     serverSoftware: ServerSoftware = CORE,
     serverAddress: String = "127.0.0.1:1729",
     username: String = "",
@@ -117,22 +117,22 @@ class LoginState(
         dbFieldText = ""
     }
 
-    fun asSubmission(): LoginFormSubmission {
+    fun asSubmission(): ConnectionFormSubmission {
         val dbClientSnapshot = requireNotNull(dbClient)
         val dbSnapshot = requireNotNull(db)
 
         return when (serverSoftware) {
             CORE -> {
                 if (dbClientSnapshot !is CoreClient) {
-                    throw IllegalStateException("Core login form expected DBClient of type CoreClient, but was ${dbClientSnapshot.javaClass}")
+                    throw IllegalStateException("Core connection form expected DBClient of type CoreClient, but was ${dbClientSnapshot.javaClass}")
                 }
-                LoginFormSubmission.Core(dbClient = dbClientSnapshot, db = dbSnapshot, allDBNames = allDBNames)
+                ConnectionFormSubmission.Core(dbClient = dbClientSnapshot, db = dbSnapshot, allDBNames = allDBNames)
             }
             CLUSTER -> {
                 if (dbClientSnapshot !is ClusterClient) {
-                    throw IllegalStateException("Cluster login form expected DBClient of type ClusterClient, but was ${dbClientSnapshot.javaClass}")
+                    throw IllegalStateException("Cluster connection form expected DBClient of type ClusterClient, but was ${dbClientSnapshot.javaClass}")
                 }
-                LoginFormSubmission.Cluster(
+                ConnectionFormSubmission.Cluster(
                     dbClient = dbClientSnapshot, username = username, rootCAPath = rootCAPath,
                     db = dbSnapshot, allDBNames = allDBNames
                 )

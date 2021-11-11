@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.login
+package com.vaticle.typedb.studio.connection
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,9 +52,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.diagnostics.rememberErrorReporter
-import com.vaticle.typedb.studio.login.ServerSoftware.CLUSTER
-import com.vaticle.typedb.studio.login.ServerSoftware.CORE
-import com.vaticle.typedb.studio.routing.LoginRoute
+import com.vaticle.typedb.studio.connection.ServerSoftware.CLUSTER
+import com.vaticle.typedb.studio.connection.ServerSoftware.CORE
+import com.vaticle.typedb.studio.routing.ConnectionRoute
 import com.vaticle.typedb.studio.ui.elements.StudioButton
 import com.vaticle.typedb.studio.ui.elements.StudioDropdownBox
 import com.vaticle.typedb.studio.ui.elements.StudioTab
@@ -62,14 +62,14 @@ import com.vaticle.typedb.studio.ui.elements.StudioTabs
 import com.vaticle.typedb.studio.ui.elements.StudioTextField
 import mu.KotlinLogging
 
-object LoginScreen {
+object ConnectionScreen {
 
     private val ColumnScope.labelWeightModifier: Modifier get() = Modifier.weight(2f)
     private val ColumnScope.fieldWeightModifier: Modifier get() = Modifier.weight(3f)
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Main(routeData: LoginRoute, snackbarHostState: SnackbarHostState) {
+    fun Main(routeData: ConnectionRoute, snackbarHostState: SnackbarHostState) {
         val snackbarCoroutineScope = rememberCoroutineScope()
         val log = remember { KotlinLogging.logger {} }
         val errorReporter = rememberErrorReporter(log, snackbarHostState, snackbarCoroutineScope)
@@ -77,7 +77,7 @@ object LoginScreen {
         var databasesLastLoadedAtMillis by remember { mutableStateOf<Long?>(null) }
         var loadingDatabases by remember { mutableStateOf(false) }
         val form = remember {
-            loginScreenStateOf(
+            connectionScreenStateOf(
                 routeData,
                 errorReporter,
                 databasesLastLoadedFromAddress,
@@ -118,7 +118,7 @@ object LoginScreen {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TypeDBPanel(
-        form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
+        form: ConnectionState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
     ) {
         val focusManager: FocusManager = LocalFocusManager.current
         Column(
@@ -155,7 +155,7 @@ object LoginScreen {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TypeDBClusterPanel(
-        form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
+        form: ConnectionState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
     ) {
         val focusManager: FocusManager = LocalFocusManager.current
 

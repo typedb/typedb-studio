@@ -42,8 +42,8 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.appearance.StudioTheme
 import com.vaticle.typedb.studio.appearance.defaultVisualiserTheme
-import com.vaticle.typedb.studio.login.LoginScreen
-import com.vaticle.typedb.studio.routing.LoginRoute
+import com.vaticle.typedb.studio.connection.ConnectionScreen
+import com.vaticle.typedb.studio.routing.ConnectionRoute
 import com.vaticle.typedb.studio.routing.Router
 import com.vaticle.typedb.studio.routing.WorkspaceRoute
 import com.vaticle.typedb.studio.storage.AppData
@@ -68,7 +68,7 @@ fun Studio(onCloseRequest: () -> Unit) {
                     titleBarHeight = window.height - coordinates.size.height / pixelDensity
                 }) {
                 when (val routeData = Router.currentRoute) {
-                    is LoginRoute -> LoginScreen.Main(routeData, snackbarHostState)
+                    is ConnectionRoute -> ConnectionScreen.Main(routeData, snackbarHostState)
                     is WorkspaceRoute -> WorkspaceScreen(
                         routeData, defaultVisualiserTheme(), window, titleBarHeight, snackbarHostState
                     )
