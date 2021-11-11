@@ -108,8 +108,8 @@ object LoginScreen {
                     modifier = Modifier.fillMaxWidth().height(2.dp).background(StudioTheme.colors.backgroundHighlight)
                 )
                 when (form.serverSoftware) {
-                    CORE -> TypeDB(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
-                    CLUSTER -> TypeDBCluster(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
+                    CORE -> TypeDBPanel(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
+                    CLUSTER -> TypeDBClusterPanel(form, form::onDatabaseDropdown, form::onDatabaseSelected, form::onSubmit)
                 }
             }
         }
@@ -117,7 +117,7 @@ object LoginScreen {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TypeDB(
+    private fun TypeDBPanel(
         form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
     ) {
         val focusManager: FocusManager = LocalFocusManager.current
@@ -154,7 +154,7 @@ object LoginScreen {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TypeDBCluster(
+    private fun TypeDBClusterPanel(
         form: LoginState, onDBDropdown: () -> Unit, onDBSelected: (dbName: String) -> Unit, onSubmit: () -> Unit
     ) {
         val focusManager: FocusManager = LocalFocusManager.current
