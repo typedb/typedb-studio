@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 # Copyright (C) 2021 Vaticle
 #
@@ -16,16 +15,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# RUN COMMAND: ./docs/deps.sh //... package-structure
+load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-popd > /dev/null
+package(default_visibility = ["//visibility:public"])
 
-[[ $(readlink $0) ]] && path=$(readlink $0) || path=$0
-OUT_DIR=$(cd "$(dirname "${path}")" && pwd -P)
-pushd "$OUT_DIR" > /dev/null
+kt_jvm_library(
+    name = "common",
+    srcs = glob(["*.kt", "*/*.kt"]),
+    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    deps = [
 
-bazel query "filter('^(?!(//dependencies|@vaticle|//test).*$).*', kind(kt_jvm_library, deps($1)))" --output graph > "$2".dot
-dot -Tpng < "$2".dot > "$2".png
-open "$2".png
+        # External Maven Dependencies
+        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+    ],
+    tags = ["maven_coordinates=com.vaticle.typedb:studio-ui-elements:{pom_version}"],
+)
 
-popd > /dev/null
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*"]),
+    license_type = "agpl",
+)

@@ -34,8 +34,14 @@ kt_jvm_library(
     ],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "//common",
+        "//connection",
+        "//navigator",
+        "//page",
+        "//service",
+        "//toolbar",
 
-        # Maven
+        # External Maven Dependencies
         "@maven//:ch_qos_logback_logback_classic",
         "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -88,26 +94,10 @@ java_binary(
     classpath_resources = ["//resources:logback-test-xml"],
 )
 
-#java_deps(
-#    name = "main-deps-mac",
-#    target = ":main",
-#    java_deps_root = "lib/",
-#    visibility = ["//:__pkg__"],
-#    maven_name = False,
-#)
-
 assemble_files = {
     "//resources:logback-xml": "logback.xml",
     "//:LICENSE": "LICENSE",
 }
-
-#assemble_zip(
-#    name = "assemble-mac-zip",
-#    targets = [":main-deps-mac"],
-#    additional_files = assemble_files,
-#    output_filename = "typedb-studio-mac",
-#    visibility = ["//:__pkg__"]
-#)
 
 kt_jvm_library(
     name = "jvm-application-image-builder-lib",
@@ -171,27 +161,6 @@ deploy_github(
     version_file = ":VERSION",
     draft = False
 )
-
-#deploy_github(
-#    name = "deploy-github-windows",
-#    organisation = deployment_github['github.organisation'],
-#    repository = deployment_github['github.repository'],
-#    title = "TypeDB Studio",
-#    title_append_version = True,
-#    release_description = "//:RELEASE_TEMPLATE.md",
-#    archive = ":application-image",
-##    archive = ":hello-bundle",
-#    version_file = ":VERSION",
-#    draft = True,
-#    windows = True,
-#)
-
-# TODO: add release_validate_deps
-
-#checksum(
-#    name = "checksum",
-#    archive = ":application-image",
-#)
 
 deploy_brew(
     name = "deploy-brew",
