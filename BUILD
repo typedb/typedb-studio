@@ -34,14 +34,6 @@ kt_jvm_library(
     ],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//appearance",
-        "//common",
-        "//data",
-        "//connection:connection",
-        "//routing",
-        "//storage",
-        "//ui/elements",
-        "//workspace",
 
         # Maven
         "@maven//:ch_qos_logback_logback_classic",
