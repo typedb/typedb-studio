@@ -18,12 +18,25 @@
 
 package com.vaticle.typedb.studio
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement.Maximized
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
+import com.vaticle.typedb.studio.common.theme.Theme
+import com.vaticle.typedb.studio.connection.ConnectionWindow
+import com.vaticle.typedb.studio.navigator.NavigatorArea
+import com.vaticle.typedb.studio.page.PageArea
+import com.vaticle.typedb.studio.service.Service
+import com.vaticle.typedb.studio.statusbar.StatusBar
+import com.vaticle.typedb.studio.toolbar.ToolbarArea
 import mu.KotlinLogging.logger
 
 @Composable
@@ -32,23 +45,23 @@ fun Studio(onCloseRequest: () -> Unit) {
     // TODO: we want no title bar, by passing undecorated = true, but it seems to cause intermittent crashes on startup
     //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
     Window(title = "TypeDB Studio", onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
-//        StudioTheme {
-//            Column(modifier = Modifier.fillMaxWidth().background(StudioTheme.colors.background)) {
-//                Toolbar.Area()
-//                Separator.Horizontal()
-//                Row(Modifier.fillMaxWidth().weight(1f)) {
-//                    Navigator.Area()
-//                    Separator.Vertical()
-//                    Page.Area()
-//                }
-//                Separator.Horizontal()
-//                StatusBar.Area()
-//            }
-//        }
+        Theme {
+            Column(modifier = Modifier.fillMaxWidth().background(Theme.colors.background)) {
+                ToolbarArea.Layout()
+                Separator.Horizontal()
+                Row(Modifier.fillMaxWidth().weight(1f)) {
+                    NavigatorArea.Layout()
+                    Separator.Vertical()
+                    PageArea.Layout()
+                }
+                Separator.Horizontal()
+                StatusBar.Area()
+            }
+        }
     }
-//    if (Service.connection.openDialog) {
-//        ConnectionDialog.Window()
-//    }
+    if (Service.connection.openDialog) {
+        ConnectionWindow.Layout()
+    }
 }
 
 fun main() {

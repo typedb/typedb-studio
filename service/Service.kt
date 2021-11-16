@@ -15,3 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+package com.vaticle.typedb.studio.service
+
+object Service {
+
+    val connection: ConnectionService = ConnectionService()
+}

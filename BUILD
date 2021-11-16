@@ -39,6 +39,7 @@ kt_jvm_library(
         "//navigator",
         "//page",
         "//service",
+        "//statusbar",
         "//toolbar",
 
         # External Maven Dependencies

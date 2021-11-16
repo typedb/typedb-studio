@@ -18,30 +18,25 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//:__pkg__"])
 
 kt_jvm_library(
-    name = "common",
-    srcs = glob(["*.kt", "*/*.kt"]),
+    name = "statusbar",
+    srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "//common:common",
 
-        # External Maven Dependencies
-        "@maven//:ch_qos_logback_logback_classic",
-        "@maven//:ch_qos_logback_logback_core",
+        # Maven
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-        "@maven//:org_jetbrains_compose_material_material_desktop",
+        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:studio-ui-elements:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:studio-statusbar:{pom_version}"],
 )
 
 checkstyle_test(
