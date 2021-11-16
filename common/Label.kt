@@ -15,3 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+package com.vaticle.typedb.studio.common
+
+object Label {
+
+    const val STATUS = "Status"
+    const val ADDRESS = "Address"
+    const val CA_CERTIFICATE = "CA Certificate"
+    const val CANCEL = "Cancel"
+    const val CLOSE = "Close"
+    const val CONNECT = "Connect"
+    const val CONNECTING = "Connecting..."
+    const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
+    const val DISCONNECT = "Disonnect"
+    const val PASSWORD = "Password"
+    const val PATH_TO_CA_CERTIFICATE = "path/to/ca/certificate"
+    const val SELECT_DATABASE = "Select database"
+    const val SERVER = "Server"
+    const val USERNAME = "Username"
+}
