@@ -46,14 +46,14 @@ kt_jvm_library(
         "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-        "@maven//:org_slf4j_slf4j_api",
-
-        # NOTE: These dependencies are not required to build the project, but IntelliJ needs them to offer autocompletion
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+        "@maven//:org_slf4j_slf4j_api",
     ],
     resources = [
         "//resources/fonts:titillium-web",

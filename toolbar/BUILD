@@ -31,6 +31,7 @@ kt_jvm_library(
         # Maven
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:studio-toolbar:{pom_version}"],
