@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.common.Label
+import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.service.Service
 
 object ToolbarArea {
@@ -63,10 +65,10 @@ object ToolbarArea {
 
     @Composable
     private fun ConnectionButton() {
-//        StudioButton(
-//            text = Label.CONNECT_TO_TYPEDB,
-//            onClick = { Service.connection.openDialog = true }
-//        )
+        Form.Button(
+            text = Label.CONNECT_TO_TYPEDB,
+            onClick = { Service.connection.openDialog = true }
+        )
     }
 
 
