@@ -37,15 +37,16 @@ import kotlin.io.path.notExists
 import mu.KotlinLogging
 import org.slf4j.LoggerFactory
 
-private const val WIN_ENV_APP_DATA = "AppData"
-private const val UNIX_PROP_USER_HOME = "user.home"
-private const val MAC_DIR_LIBRARY = "Library"
-private const val MAC_DIR_APP_SUPPORT = "Application Support"
-private const val APP_DIR_TYPEDB_STUDIO = "TypeDB Studio"
-private const val APP_LOG = "typedb-studio.log"
-private val LOG = KotlinLogging.logger {}
-
 object UserDataDirectory {
+
+    private const val WIN_ENV_APP_DATA = "AppData"
+    private const val UNIX_PROP_USER_HOME = "user.home"
+    private const val MAC_DIR_LIBRARY = "Library"
+    private const val MAC_DIR_APP_SUPPORT = "Application Support"
+    private const val APP_DIR_TYPEDB_STUDIO = "TypeDB Studio"
+    private const val APP_LOG = "typedb-studio.log"
+    private val LOG = KotlinLogging.logger {}
+
     private val path: Path = when (currentOS()) {
         // Source: https://stackoverflow.com/a/16660314/2902555
         WINDOWS -> Path.of(getenv(WIN_ENV_APP_DATA), APP_DIR_TYPEDB_STUDIO)
