@@ -25,6 +25,7 @@ object Label {
     const val CA_CERTIFICATE = "CA Certificate"
     const val CANCEL = "Cancel"
     const val CLOSE = "Close"
+    const val CLOSING_TYPEDB_STUDIO = "Closing TypeDB Studio"
     const val CONNECT = "Connect"
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
@@ -32,6 +33,7 @@ object Label {
     const val PASSWORD = "Password"
     const val PATH_TO_CA_CERTIFICATE = "path/to/ca/certificate"
     const val SELECT_DATABASE = "Select database"
+    const val TYPEDB_STUDIO = "TypeDB Studio"
     const val SERVER = "Server"
     const val USERNAME = "Username"
 }

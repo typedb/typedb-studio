@@ -28,6 +28,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement.Maximized
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
 import com.vaticle.typedb.studio.common.theme.Theme
@@ -44,7 +45,7 @@ fun Studio(onCloseRequest: () -> Unit) {
 
     // TODO: we want no title bar, by passing undecorated = true, but it seems to cause intermittent crashes on startup
     //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
-    Window(title = "TypeDB Studio", onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
+    Window(title = Label.TYPEDB_STUDIO, onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
         Theme.Material {
             Column(modifier = Modifier.fillMaxWidth().background(Theme.colors.background)) {
                 ToolbarArea.Layout()
@@ -70,7 +71,7 @@ fun main() {
 
     application {
         fun onCloseRequest() {
-            log.debug { "Closing TypeDB Studio" }
+            log.debug { Label.CLOSING_TYPEDB_STUDIO }
             exitApplication() // TODO: I think this is the wrong behaviour on MacOS
         }
         Studio(::onCloseRequest)
