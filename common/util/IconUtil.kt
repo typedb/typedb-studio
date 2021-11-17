@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.common.component
+package com.vaticle.typedb.studio.common.util
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.width
@@ -30,10 +30,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import java.io.InputStream
 
-object Misc {
+object IconUtil {
 
     private const val DATABASE_ICON_PNG = "icons/database.png"
     private const val DATABASE_ICON_SVG = "icons/database.svg"
+
     private val databasePngExists: Boolean = ClassLoader.getSystemResource(DATABASE_ICON_PNG) != null
     private val databaseSvgInputStream: InputStream? = ClassLoader.getSystemResourceAsStream(DATABASE_ICON_SVG)
 

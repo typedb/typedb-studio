@@ -23,26 +23,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
-@Composable
-fun Theme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colors = Theme.colors.materialColors(),
-        typography = Theme.typography.materialTypography(),
-        content = content
-    )
-}
-
 object Theme {
-    val colors: ColorTheme
+
+    private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
+    private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
+
+    val colors: Color.Theme
         @Composable
         @ReadOnlyComposable
-        get() = LocalColors.current
+        get() = ColorsState.current
 
-    val typography: TypographyTheme
+    val typography: Typography.Theme
         @Composable
         @ReadOnlyComposable
-        get() = LocalTypography.current
+        get() = TypographyState.current
 
-    private val LocalColors = staticCompositionLocalOf { ColorTheme.Presets.dark }
-    private val LocalTypography = staticCompositionLocalOf { TypographyTheme.Presets.default }
+    @Composable
+    fun Material(content: @Composable () -> Unit) {
+        MaterialTheme(
+            colors = Color.materialOf(colors),
+            typography = Typography.materialOf(typography),
+            content = content
+        )
+    }
 }

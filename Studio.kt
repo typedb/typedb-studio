@@ -45,7 +45,7 @@ fun Studio(onCloseRequest: () -> Unit) {
     // TODO: we want no title bar, by passing undecorated = true, but it seems to cause intermittent crashes on startup
     //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
     Window(title = "TypeDB Studio", onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
-        Theme {
+        Theme.Material {
             Column(modifier = Modifier.fillMaxWidth().background(Theme.colors.background)) {
                 ToolbarArea.Layout()
                 Separator.Horizontal()

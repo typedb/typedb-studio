@@ -87,7 +87,7 @@ object ConnectionWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Theme {
+            Theme.Material {
                 Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                     Form.FieldGroup {
                         ServerFormField(LABEL_MODIFIER, INPUT_MODIFIER)
