@@ -91,8 +91,8 @@ object Form {
     @Composable
     fun Button(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
         val focusManager = LocalFocusManager.current
-        val backgroundColor = if (enabled) Theme.colors.primary else Theme.colors.uiElementBackground
-        val textColor = if (enabled) Theme.colors.onPrimary else Theme.colors.text.copy(alpha = FADED_OPACITY)
+        val backgroundColor = if (enabled) Theme.colors.primary else Theme.colors.surface
+        val textColor = if (enabled) Theme.colors.onPrimary else Theme.colors.onSurface.copy(alpha = FADED_OPACITY)
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
@@ -145,7 +145,7 @@ object Form {
         BasicTextField(
             modifier = modifier
                 .background(MaterialTheme.colors.surface, ROUNDED_RECTANGLE)
-                .border(1.dp, SolidColor(Theme.colors.uiElementBorder), ROUNDED_RECTANGLE)
+                .border(1.dp, SolidColor(Theme.colors.surface2), ROUNDED_RECTANGLE)
                 .pointerIcon(pointerHoverIcon) // TODO: #516
                 .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
             value = value,

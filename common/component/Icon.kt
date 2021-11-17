@@ -73,7 +73,7 @@ object Icon {
     }
 
     @Composable
-    fun Render(icon: Code, color: Color = Theme.colors.icon, size: Size = Size.Size12, modifier: Modifier = Modifier) {
+    fun Render(icon: Code, color: Color = Theme.colors.primary, size: Size = Size.Size12, modifier: Modifier = Modifier) {
         Text(
             text = icon.charString,
             modifier = modifier,

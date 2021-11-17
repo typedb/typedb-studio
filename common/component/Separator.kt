@@ -36,14 +36,14 @@ object Separator {
     @Composable
     fun Horizontal() {
         Spacer(
-            modifier = Modifier.fillMaxWidth().height(WEIGHT).background(Theme.colors.uiElementBorder)
+            modifier = Modifier.fillMaxWidth().height(WEIGHT).background(Theme.colors.surface2)
         )
     }
 
     @Composable
     fun Vertical() {
         Spacer(
-            modifier = Modifier.fillMaxHeight().width(WEIGHT).background(Theme.colors.uiElementBorder)
+            modifier = Modifier.fillMaxHeight().width(WEIGHT).background(Theme.colors.surface2)
         )
     }
 }
