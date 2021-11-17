@@ -56,9 +56,9 @@ import com.vaticle.typedb.studio.common.theme.Theme
 
 object Form {
 
-    private const val PLACEHOLDER_OPACITY = 0.3f
     private const val LABEL_WEIGHT = 2f
     private const val INPUT_WEIGHT = 3f
+    private const val PLACEHOLDER_OPACITY = 0.3f
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val ICON_SPACING = 4.dp
@@ -80,6 +80,21 @@ object Form {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun TextSelectable(value: String, textStyle: TextStyle, modifier: Modifier = Modifier) {
+        val focusManager = LocalFocusManager.current
+        BasicTextField(
+            modifier = modifier
+                .pointerIcon(PointerIcon.Text) // TODO: #516 .pointerHoverIcon(pointerHoverIcon, overrideDescendants = true)
+                .onPreviewKeyEvent { handleTabKeyEvent(it, focusManager) },
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            cursorBrush = SolidColor(MaterialTheme.colors.primary),
+            textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface)
+        )
+    }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
