@@ -55,7 +55,7 @@ object ConnectionWindow {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 280.dp
 
-    private object FormState {
+    private object State {
         // We keep this static to maintain the values through application lifetime,
         // and easily accessible to all functions in this object without being passed around
 
@@ -92,7 +92,7 @@ object ConnectionWindow {
                     Form.FieldGroup {
                         ServerFormField(LABEL_MODIFIER, INPUT_MODIFIER)
                         AddressFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        if (FormState.server == TYPEDB_CLUSTER) {
+                        if (State.server == TYPEDB_CLUSTER) {
                             UsernameFormField(LABEL_MODIFIER, INPUT_MODIFIER)
                             PasswordFormField(LABEL_MODIFIER, INPUT_MODIFIER)
                             CACertificateFormField(LABEL_MODIFIER, INPUT_MODIFIER)
@@ -119,9 +119,9 @@ object ConnectionWindow {
             Text(text = Label.SERVER, style = Theme.typography.body1, modifier = labelModifier)
 //            Dropdown(
 //                entries = Property.Server.values().associateWith { it.displayName },
-//                selected = FormState.server,
+//                selected = State.server,
 //                modifier = inputModifier,
-//                onSelection = { server -> FormState.server = server },
+//                onSelection = { server -> State.server = server },
 //                enabled = Service.connection.isDisconnected()
 //            )
         }
@@ -133,11 +133,11 @@ object ConnectionWindow {
         Form.Field {
             Text(text = Label.ADDRESS, style = Theme.typography.body1, modifier = labelModifier)
 //            TextField(
-//                value = FormState.address,
+//                value = State.address,
 //                placeholderText = Property.DEFAULT_SERVER_ADDRESS,
 //                modifier = inputModifier,
 //                textStyle = Theme.typography.body1,
-//                onValueChange = { FormState.address = it },
+//                onValueChange = { State.address = it },
 //                enabled = Service.connection.isDisconnected()
 //            )
         }
@@ -149,11 +149,11 @@ object ConnectionWindow {
         Form.Field {
             Text(text = Label.USERNAME, style = Theme.typography.body1, modifier = labelModifier)
 //            TextField(
-//                value = FormState.username,
+//                value = State.username,
 //                placeholderText = Label.USERNAME.lowercase(),
 //                modifier = inputModifier,
 //                textStyle = Theme.typography.body1,
-//                onValueChange = { FormState.username = it },
+//                onValueChange = { State.username = it },
 //                enabled = Service.connection.isDisconnected()
 //            )
         }
@@ -165,11 +165,11 @@ object ConnectionWindow {
         Form.Field {
             Text(text = Label.PASSWORD, style = Theme.typography.body1, modifier = labelModifier)
 //            TextField(
-//                value = FormState.password,
+//                value = State.password,
 //                placeholderText = Label.PASSWORD.lowercase(),
 //                modifier = inputModifier,
 //                textStyle = Theme.typography.body1,
-//                onValueChange = { FormState.password = it },
+//                onValueChange = { State.password = it },
 //                visualTransformation = PasswordVisualTransformation(),
 //                enabled = Service.connection.isDisconnected()
 //            )
@@ -182,11 +182,11 @@ object ConnectionWindow {
         Form.Field {
             Text(text = Label.CA_CERTIFICATE, style = Theme.typography.body1, modifier = labelModifier)
 //            TextField(
-//                value = FormState.caCertificate,
+//                value = State.caCertificate,
 //                placeholderText = Label.PATH_TO_CA_CERTIFICATE,
 //                modifier = inputModifier,
 //                textStyle = Theme.typography.body1,
-//                onValueChange = { FormState.caCertificate = it },
+//                onValueChange = { State.caCertificate = it },
 //                enabled = Service.connection.isDisconnected()
 //            )
         }
@@ -202,7 +202,7 @@ object ConnectionWindow {
     @Composable
     private fun DisconnectedFormButtons() {
 //        StudioButton(text = Label.CANCEL, onClick = { Service.connection.openDialog = false })
-//        StudioButton(text = Label.CONNECT, onClick = { FormState.trySubmit() })
+//        StudioButton(text = Label.CONNECT, onClick = { State.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

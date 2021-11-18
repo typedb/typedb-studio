@@ -52,7 +52,6 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -63,15 +62,12 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.theme.Theme
 import java.awt.event.KeyEvent.KEY_RELEASED
@@ -194,60 +190,63 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Property.Displayable> Dropdown(
-        values: List<T>, selected: T, onSelection: (value: T) -> Unit, modifier: Modifier = Modifier,
-        textFieldModifier: Modifier = Modifier, textStyle: TextStyle = Theme.typography.body1,
-        enabled: Boolean = true, placeholder: String = "", leadingIcon: (@Composable () -> Unit)? = null
+        values: List<T>,
+        selected: T,
+        onSelection: (value: T) -> Unit,
+        placeholder: String = "",
+        enabled: Boolean = true,
+        modifier: Modifier = Modifier,
+        textInputModifier: Modifier = Modifier,
+        textStyle: TextStyle = Theme.typography.body1,
+        leadingIcon: (@Composable () -> Unit)? = null
     ) {
+
+        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16) }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
-        var expanded by remember { mutableStateOf(false) }
-        var textfieldSize by remember { mutableStateOf(Size.Zero) }
-        var mouseOverIndex: Int? by remember { mutableStateOf(null) }
         val focusRequester = FocusRequester()
 
-        Column(modifier) {
-            Row {
-                TextInput(
-                    value = selected.displayName,
-                    onValueChange = {},
-                    modifier = textFieldModifier
-                        .fillMaxSize()
-                        .focusable()
-                        .focusRequester(focusRequester)
-                        .clickable(enabled = enabled) { expanded = !expanded; focusRequester.requestFocus() }
-                        .onKeyEvent { onKeyEvent(it, focusManager) }
-                        .onGloballyPositioned { textfieldSize = it.size.toSize() },
-                    readOnly = true, textStyle = textStyle, leadingIcon = leadingIcon,
-                    trailingIcon = { Icon.Render(Icon.Set.CaretDown, size = Icon.Size.Size16) },
-                    pointerHoverIcon = PointerIcon.Hand, // TODO: Upgrade to 1.0 and use PointerIconDefaults.Hand
-                    placeholder = placeholder,
-                    enabled = enabled
-                )
-            }
+        class State {
+            var expanded by mutableStateOf(false)
+            var mouseIndex: Int? by mutableStateOf(null)
 
-            Row {
-                DropdownMenu(
-                    expanded = expanded && values.isNotEmpty(),
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .width(with(LocalDensity.current) { textfieldSize.width.toDp() })
-                        .background(Theme.colors.surface)
-                ) {
-                    values.forEachIndexed { i, value ->
-                        DropdownMenuItem(
-                            onClick = { expanded = false; onSelection(value) },
-                            contentPadding = PaddingValues(horizontal = CONTENT_PADDING),
-                            modifier = Modifier.height(28.dp)
-                                .background(if (i == mouseOverIndex) Theme.colors.primary else Theme.colors.surface)
-                                .pointerMoveFilter(
-                                    onExit = { if (mouseOverIndex == i) mouseOverIndex = null; false },
-                                    onEnter = { mouseOverIndex = i; true }
-                                )
-                        ) {
-                            Text(
-                                text = value.displayName, style = textStyle,
-                                color = if (i == mouseOverIndex) Theme.colors.onPrimary else Theme.colors.onPrimary
-                            )
-                        }
+            fun toggle() { expanded = !expanded; if (expanded) focusRequester.requestFocus() }
+            fun collapse() { expanded = false }
+            fun isExpanded(): Boolean { return expanded && values.isNotEmpty() }
+            fun select(value: T) { onSelection(value); collapse() }
+            fun mouseOutFrom(index: Int): Boolean { if (mouseIndex == index) mouseIndex = null; return false }
+            fun mouseInTo(index: Int): Boolean { mouseIndex = index; return true }
+        }
+
+        val state = remember { State() }
+
+        Column(modifier) {
+            TextInput(
+                value = selected.displayName, onValueChange = {}, readOnly = true, placeholder = placeholder,
+                enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
+                pointerHoverIcon = PointerIcon.Hand, modifier = textInputModifier
+                    .fillMaxSize()
+                    .focusable(enabled = enabled)
+                    .clickable(enabled = enabled, onClick = state::toggle)
+                    .onKeyEvent { onKeyEvent(it, focusManager) }
+            )
+            DropdownMenu(
+                expanded = state.isExpanded(), onDismissRequest = state::collapse, modifier = Modifier
+                    .background(Theme.colors.surface)
+                    .focusRequester(focusRequester)
+            ) {
+                values.forEachIndexed { i, value ->
+                    DropdownMenuItem(
+                        onClick = { state.select(value) },
+                        contentPadding = PaddingValues(horizontal = CONTENT_PADDING),
+                        modifier = Modifier
+                            .height(FIELD_HEIGHT)
+                            .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
+                            .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
+                    ) {
+                        Text(
+                            text = value.displayName, style = textStyle,
+                            color = if (i == state.mouseIndex) Theme.colors.onPrimary else Theme.colors.onPrimary
+                        )
                     }
                 }
             }
