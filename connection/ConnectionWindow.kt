@@ -42,8 +42,11 @@ import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
 import com.vaticle.typedb.studio.common.component.Form
+import com.vaticle.typedb.studio.common.component.Form.Button
+import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Form.INPUT_MODIFIER
 import com.vaticle.typedb.studio.common.component.Form.LABEL_MODIFIER
+import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
@@ -117,13 +120,13 @@ object ConnectionWindow {
     private fun ServerFormField(labelModifier: Modifier, inputModifier: Modifier) {
         Form.Field {
             Text(text = Label.SERVER, style = Theme.typography.body1, modifier = labelModifier)
-//            Dropdown(
-//                entries = Property.Server.values().associateWith { it.displayName },
-//                selected = State.server,
-//                modifier = inputModifier,
-//                onSelection = { server -> State.server = server },
-//                enabled = Service.connection.isDisconnected()
-//            )
+            Dropdown(
+                values = Property.Server.values().toList(),
+                selected = State.server,
+                modifier = inputModifier,
+                onSelection = { State.server = it },
+                enabled = Service.connection.isDisconnected()
+            )
         }
     }
 
@@ -132,14 +135,14 @@ object ConnectionWindow {
     private fun AddressFormField(labelModifier: Modifier, inputModifier: Modifier) {
         Form.Field {
             Text(text = Label.ADDRESS, style = Theme.typography.body1, modifier = labelModifier)
-//            TextField(
-//                value = State.address,
-//                placeholderText = Property.DEFAULT_SERVER_ADDRESS,
-//                modifier = inputModifier,
-//                textStyle = Theme.typography.body1,
-//                onValueChange = { State.address = it },
-//                enabled = Service.connection.isDisconnected()
-//            )
+            TextInput(
+                value = State.address,
+                placeholder = Property.DEFAULT_SERVER_ADDRESS,
+                modifier = inputModifier,
+                textStyle = Theme.typography.body1,
+                onValueChange = { State.address = it },
+                enabled = Service.connection.isDisconnected()
+            )
         }
     }
 
@@ -148,14 +151,14 @@ object ConnectionWindow {
     private fun UsernameFormField(labelModifier: Modifier, inputModifier: Modifier) {
         Form.Field {
             Text(text = Label.USERNAME, style = Theme.typography.body1, modifier = labelModifier)
-//            TextField(
-//                value = State.username,
-//                placeholderText = Label.USERNAME.lowercase(),
-//                modifier = inputModifier,
-//                textStyle = Theme.typography.body1,
-//                onValueChange = { State.username = it },
-//                enabled = Service.connection.isDisconnected()
-//            )
+            TextInput(
+                value = State.username,
+                placeholder = Label.USERNAME.lowercase(),
+                modifier = inputModifier,
+                textStyle = Theme.typography.body1,
+                onValueChange = { State.username = it },
+                enabled = Service.connection.isDisconnected()
+            )
         }
     }
 
@@ -164,15 +167,15 @@ object ConnectionWindow {
     private fun PasswordFormField(labelModifier: Modifier, inputModifier: Modifier) {
         Form.Field {
             Text(text = Label.PASSWORD, style = Theme.typography.body1, modifier = labelModifier)
-//            TextField(
-//                value = State.password,
-//                placeholderText = Label.PASSWORD.lowercase(),
-//                modifier = inputModifier,
-//                textStyle = Theme.typography.body1,
-//                onValueChange = { State.password = it },
-//                visualTransformation = PasswordVisualTransformation(),
-//                enabled = Service.connection.isDisconnected()
-//            )
+            TextInput(
+                value = State.password,
+                placeholder = Label.PASSWORD.lowercase(),
+                modifier = inputModifier,
+                textStyle = Theme.typography.body1,
+                onValueChange = { State.password = it },
+                enabled = Service.connection.isDisconnected(),
+                isPassword = true
+            )
         }
     }
 
@@ -181,14 +184,14 @@ object ConnectionWindow {
     private fun CACertificateFormField(labelModifier: Modifier, inputModifier: Modifier) {
         Form.Field {
             Text(text = Label.CA_CERTIFICATE, style = Theme.typography.body1, modifier = labelModifier)
-//            TextField(
-//                value = State.caCertificate,
-//                placeholderText = Label.PATH_TO_CA_CERTIFICATE,
-//                modifier = inputModifier,
-//                textStyle = Theme.typography.body1,
-//                onValueChange = { State.caCertificate = it },
-//                enabled = Service.connection.isDisconnected()
-//            )
+            TextInput(
+                value = State.caCertificate,
+                placeholder = Label.PATH_TO_CA_CERTIFICATE,
+                modifier = inputModifier,
+                textStyle = Theme.typography.body1,
+                onValueChange = { State.caCertificate = it },
+                enabled = Service.connection.isDisconnected()
+            )
         }
     }
 
@@ -201,21 +204,21 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-//        StudioButton(text = Label.CANCEL, onClick = { Service.connection.openDialog = false })
-//        StudioButton(text = Label.CONNECT, onClick = { State.trySubmit() })
+        Button(text = Label.CANCEL, onClick = { Service.connection.openDialog = false })
+        Button(text = Label.CONNECT, onClick = { State.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-//        StudioButton(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() })
-//        StudioButton(text = Label.CLOSE, onClick = { Service.connection.openDialog = false })
+        Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() })
+        Button(text = Label.CLOSE, onClick = { Service.connection.openDialog = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-//        StudioButton(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
-//        StudioButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+        Button(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
+        Button(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }

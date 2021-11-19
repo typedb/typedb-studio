@@ -22,11 +22,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
+import com.vaticle.typedb.studio.common.Property.displayableOf
 import com.vaticle.typedb.studio.common.component.Form
+import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.service.Service
 
 object ToolbarArea {
@@ -53,14 +57,14 @@ object ToolbarArea {
 
     @Composable
     private fun DatabaseDropdown() {
-//        Dropdown(
-//            entries = Service.connection.databases.associateBy { displayableOf(it) },
-//            selected = Service.connection.getDatabase()?.let { displayableOf(it) } ?: displayableOf(""),
-//            placeholderText = Label.SELECT_DATABASE,
-//            onSelection = { Service.connection.setDatabase(it.displayName) },
-//            modifier = Modifier.width(120.dp),
-//            textFieldModifier = Modifier.onFocusEvent { Service.connection.refreshDatabases() }
-//        )
+        Dropdown(
+            values = Service.connection.databases.map { displayableOf(it) },
+            selected = Service.connection.getDatabase()?.let { displayableOf(it) } ?: displayableOf(""),
+            placeholder = Label.SELECT_DATABASE,
+            onSelection = { Service.connection.setDatabase(it.displayName) },
+            modifier = Modifier.width(120.dp),
+            textInputModifier = Modifier.onFocusEvent { Service.connection.refreshDatabases() }
+        )
     }
 
     @Composable

@@ -203,13 +203,12 @@ object Form {
 
         val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16) }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
-        val focusRequester = FocusRequester()
 
         class State {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
-            fun toggle() { expanded = !expanded; if (expanded) focusRequester.requestFocus() }
+            fun toggle() { expanded = !expanded}
             fun collapse() { expanded = false }
             fun isExpanded(): Boolean { return expanded && values.isNotEmpty() }
             fun select(value: T) { onSelection(value); collapse() }
@@ -230,9 +229,9 @@ object Form {
                     .onKeyEvent { onKeyEvent(it, focusManager) }
             )
             DropdownMenu(
-                expanded = state.isExpanded(), onDismissRequest = state::collapse, modifier = Modifier
-                    .background(Theme.colors.surface)
-                    .focusRequester(focusRequester)
+                expanded = state.isExpanded(),
+                onDismissRequest = state::collapse,
+                modifier = Modifier.background(Theme.colors.surface)
             ) {
                 values.forEachIndexed { i, value ->
                     DropdownMenuItem(
