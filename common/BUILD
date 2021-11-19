@@ -41,7 +41,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:studio-ui-elements:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:studio-common:{pom_version}"],
 )
 
 checkstyle_test(

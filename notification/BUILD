@@ -18,27 +18,28 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//:__pkg__"])
 
 kt_jvm_library(
-    name = "service",
+    name = "notification",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//common",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//common",
+        "//service",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:studio-service:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:studio-notification:{pom_version}"],
 )
 
 checkstyle_test(

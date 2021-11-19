@@ -37,6 +37,7 @@ kt_jvm_library(
         "//common",
         "//connection",
         "//navigator",
+        "//notification",
         "//page",
         "//service",
         "//statusbar",
