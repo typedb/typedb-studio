@@ -67,7 +67,7 @@ kt_jvm_library(
 
 java_binary(
     name = "studio-bin-mac",
-    main_class = "com.vaticle.typedb.studio.StudioKt",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
@@ -77,7 +77,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-windows",
-    main_class = "com.vaticle.typedb.studio.StudioKt",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_windows_x64",
@@ -87,7 +87,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-linux",
-    main_class = "com.vaticle.typedb.studio.StudioKt",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         ":studio",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_linux_x64",
@@ -133,7 +133,7 @@ jvm_application_image(
         "//conditions:default": ":studio-bin-mac",
     }),
     main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
-    main_class = "com.vaticle.typedb.studio.StudioKt",
+    main_class = "com.vaticle.typedb.studio.Studio",
     deps_use_maven_name = False,
     additional_files = assemble_files,
     mac_entitlements = "//resources:entitlements-mac-plist",
