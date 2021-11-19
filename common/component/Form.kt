@@ -25,7 +25,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -39,7 +38,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +48,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -73,7 +72,7 @@ object Form {
 
     private const val LABEL_WEIGHT = 2f
     private const val INPUT_WEIGHT = 3f
-    private const val FADED_OPACITY = 0.25f
+    private const val FADED_OPACITY = 0.4f
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val BORDER_WIDTH = 1.dp
@@ -87,7 +86,7 @@ object Form {
     @Composable
     fun Field(label: String, fieldInput: @Composable () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = label, style = Theme.typography.body1, modifier = LABEL_MODIFIER)
+            Text(value = label, modifier = LABEL_MODIFIER)
             Column(modifier = INPUT_MODIFIER) { fieldInput() }
         }
     }
@@ -97,6 +96,16 @@ object Form {
         Column(verticalArrangement = Arrangement.spacedBy(FIELD_SPACING)) {
             content()
         }
+    }
+
+    @Composable
+    fun Text(
+        value: String,
+        style: TextStyle = Theme.typography.body1,
+        color: Color = Theme.colors.onPrimary,
+        modifier: Modifier = Modifier
+    ) {
+        androidx.compose.material.Text(text = value, style = style, color = color, modifier = modifier)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -175,8 +184,7 @@ object Form {
                     Box(modifier.offset(y = ICON_SPACING).weight(1f)) {
                         innerTextField()
                         if (value.isEmpty()) Text(
-                            text = placeholder,
-                            style = textStyle.copy(color = Theme.colors.onSurface.copy(alpha = FADED_OPACITY))
+                            value = placeholder, color = Theme.colors.onSurface.copy(alpha = FADED_OPACITY)
                         )
                     }
                     trailingIcon?.let { Spacer(Modifier.width(ICON_SPACING)); trailingIcon() }
@@ -241,7 +249,8 @@ object Form {
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                     ) {
                         Text(
-                            text = value.displayName, style = textStyle,
+                            value = value.displayName,
+                            style = textStyle,
                             color = if (i == state.mouseIndex) Theme.colors.onPrimary else Theme.colors.onPrimary
                         )
                     }

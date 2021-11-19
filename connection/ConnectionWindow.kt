@@ -22,9 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +43,7 @@ import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Form.Button
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
+import com.vaticle.typedb.studio.common.component.Form.Text
 import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
@@ -186,7 +185,7 @@ object ConnectionWindow {
     @Composable
     private fun ServerConnectionStatus() {
         val statusText = "${Label.STATUS}: ${Service.connection.status.name.lowercase()}"
-        Text(text = statusText, style = Theme.typography.body1)
+        Text(value = statusText)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
