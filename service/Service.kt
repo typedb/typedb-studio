@@ -20,5 +20,6 @@ package com.vaticle.typedb.studio.service
 
 object Service {
 
-    val connection: ConnectionService = ConnectionService()
+    val connection = ConnectionService()
+    val notifier = NotifierService()
 }

@@ -36,11 +36,12 @@ object Color {
         val background: Color,
         val surface: Color,
         val surface2: Color,
+        val error: Color,
+        val error2: Color,
         val onPrimary: Color,
         val onBackground: Color,
         val onSurface: Color,
-        val error: Color,
-        val error2: Color,
+        val onError: Color,
         val isLight: Boolean,
     )
 
@@ -75,11 +76,12 @@ object Color {
             background = DarkPalette.Purple1,
             surface = DarkPalette.Purple3,
             surface2 = DarkPalette.Purple6,
+            error = DarkPalette.Red1,
+            error2 = DarkPalette.Red2,
             onPrimary = DarkPalette.White,
             onBackground = DarkPalette.White,
             onSurface = DarkPalette.White,
-            error = DarkPalette.Red1,
-            error2 = DarkPalette.Red2,
+            onError = DarkPalette.White,
             isLight = false
         )
     }

@@ -19,16 +19,20 @@
 package com.vaticle.typedb.studio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement.Maximized
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
+import com.vaticle.typedb.studio.common.component.Notification
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
 import com.vaticle.typedb.studio.common.theme.Theme
@@ -63,9 +67,23 @@ object Studio {
                     Separator.Horizontal()
                     StatusBar.Area()
                 }
-
+                Service.notifier.notifications.mapIndexed { idx, notification ->
+                    Notification.Popup(
+                        text = notification.message, index = idx,
+                        modifier = Modifier.clickable { Service.notifier.dismiss(notification) }
+                    )
+                }
             }
             if (Service.connection.openDialog) ConnectionWindow.Layout()
+        }
+
+        LaunchedEffect(Unit) {
+            Service.notifier.let {
+                it.push("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
+                it.push("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
+                it.push("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
+                it.push("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
+            }
         }
     }
 
