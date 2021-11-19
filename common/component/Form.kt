@@ -38,7 +38,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,8 +49,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -64,7 +61,6 @@ import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -105,8 +101,8 @@ object Form {
     @Composable
     fun Button(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
         val focusManager = LocalFocusManager.current
-        val backgroundColor = if (enabled) Theme.colors.primary else Theme.colors.surface
-        val textColor = if (enabled) Theme.colors.onPrimary else Theme.colors.onSurface.copy(alpha = FADED_OPACITY)
+        val backgroundColor = if (enabled) Theme.colors.primary else Theme.colors.primary.copy(alpha = FADED_OPACITY)
+        val textColor = if (enabled) Theme.colors.onPrimary else Theme.colors.onPrimary.copy(alpha = FADED_OPACITY)
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
@@ -118,7 +114,7 @@ object Form {
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
         ) {
-            Text(text, style = Theme.typography.body1, fontWeight = FontWeight.SemiBold, color = textColor)
+            Text(text, style = Theme.typography.body1, color = textColor)
         }
     }
 
@@ -133,8 +129,8 @@ object Form {
             value = value,
             onValueChange = {},
             readOnly = true,
-            cursorBrush = SolidColor(MaterialTheme.colors.primary),
-            textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface)
+            cursorBrush = SolidColor(Theme.colors.secondary),
+            textStyle = textStyle.copy(color = Theme.colors.onSurface)
         )
     }
 
@@ -158,7 +154,7 @@ object Form {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         BasicTextField(
             modifier = modifier
-                .background(MaterialTheme.colors.surface, ROUNDED_RECTANGLE)
+                .background(Theme.colors.surface, ROUNDED_RECTANGLE)
                 .border(BORDER_WIDTH, SolidColor(Theme.colors.surface2), ROUNDED_RECTANGLE)
                 .pointerIcon(pointerHoverIcon) // TODO: #516
                 .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
@@ -168,17 +164,17 @@ object Form {
             singleLine = singleLine,
             maxLines = maxLines,
             enabled = enabled,
-            cursorBrush = SolidColor(MaterialTheme.colors.primary),
-            textStyle = textStyle.copy(color = MaterialTheme.colors.onSurface),
+            cursorBrush = SolidColor(Theme.colors.secondary),
+            textStyle = textStyle.copy(color = Theme.colors.onSurface),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             decorationBox = { innerTextField ->
                 Row(modifier.padding(horizontal = ICON_SPACING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
                     Box(modifier.offset(y = ICON_SPACING).weight(1f)) {
-                        if (value.isNotEmpty()) innerTextField()
-                        else Text(
+                        innerTextField()
+                        if (value.isEmpty()) Text(
                             text = placeholder,
-                            style = textStyle.copy(color = MaterialTheme.colors.onSurface.copy(alpha = FADED_OPACITY))
+                            style = textStyle.copy(color = Theme.colors.onSurface.copy(alpha = FADED_OPACITY))
                         )
                     }
                     trailingIcon?.let { Spacer(Modifier.width(ICON_SPACING)); trailingIcon() }
@@ -208,7 +204,7 @@ object Form {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
-            fun toggle() { expanded = !expanded}
+            fun toggle() { expanded = !expanded }
             fun collapse() { expanded = false }
             fun isExpanded(): Boolean { return expanded && values.isNotEmpty() }
             fun select(value: T) { onSelection(value); collapse() }

@@ -90,25 +90,23 @@ object ConnectionWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Theme.Material {
-                Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
-                    Form.FieldGroup {
-                        ServerFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        AddressFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        if (State.server == TYPEDB_CLUSTER) {
-                            UsernameFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                            PasswordFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                            CACertificateFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        }
+            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
+                Form.FieldGroup {
+                    ServerFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                    AddressFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                    if (State.server == TYPEDB_CLUSTER) {
+                        UsernameFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                        PasswordFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                        CACertificateFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Row {
+                        ServerConnectionStatus()
                         Spacer(Modifier.weight(1f))
-                        Row {
-                            ServerConnectionStatus()
-                            Spacer(Modifier.weight(1f))
-                            when (Service.connection.status) {
-                                DISCONNECTED -> DisconnectedFormButtons()
-                                CONNECTED -> ConnectedFormButtons()
-                                CONNECTING -> ConnectingFormButtons()
-                            }
+                        when (Service.connection.status) {
+                            DISCONNECTED -> DisconnectedFormButtons()
+                            CONNECTED -> ConnectedFormButtons()
+                            CONNECTING -> ConnectingFormButtons()
                         }
                     }
                 }

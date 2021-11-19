@@ -43,11 +43,15 @@ import mu.KotlinLogging.logger
 object Studio {
 
     @Composable
-    fun Window(onCloseRequest: () -> Unit) {
-        // TODO: we want no title bar, by passing undecorated=true, but it seems to cause intermittent crashes on startup
-        //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
-        Window(title = Label.TYPEDB_STUDIO, onCloseRequest = onCloseRequest, state = rememberWindowState(Maximized)) {
-            Theme.Material {
+    fun Application(onCloseRequest: () -> Unit) {
+        Theme.Material {
+            // TODO: we want no title bar, by passing undecorated=true, but it seems to cause intermittent crashes on startup
+            //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
+            Window(
+                title = Label.TYPEDB_STUDIO,
+                onCloseRequest = onCloseRequest,
+                state = rememberWindowState(Maximized)
+            ) {
                 Column(modifier = Modifier.fillMaxWidth().background(Theme.colors.background)) {
                     ToolbarArea.Layout()
                     Separator.Horizontal()
@@ -59,9 +63,10 @@ object Studio {
                     Separator.Horizontal()
                     StatusBar.Area()
                 }
+
             }
+            if (Service.connection.openDialog) ConnectionWindow.Layout()
         }
-        if (Service.connection.openDialog) ConnectionWindow.Layout()
     }
 
     @JvmStatic
@@ -74,7 +79,7 @@ object Studio {
                 log.debug { Label.CLOSING_TYPEDB_STUDIO }
                 exitApplication() // TODO: I think this is the wrong behaviour on MacOS
             }
-            Window(::onCloseRequest)
+            Application(::onCloseRequest)
         }
     }
 }

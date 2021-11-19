@@ -18,15 +18,28 @@
 
 package com.vaticle.typedb.studio.common.theme
 
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
 object Theme {
 
+    private const val DEFAULT_SELECTION_TRANSPARENCY = 0.7f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
+    private val MaterialThemeOverrides
+        @Composable
+        @ReadOnlyComposable
+        get() = listOf(
+            LocalTextSelectionColors provides TextSelectionColors(
+                backgroundColor = colors.tertiary.copy(alpha = DEFAULT_SELECTION_TRANSPARENCY),
+                handleColor = colors.tertiary
+            ),
+        )
 
     val colors: Color.Theme
         @Composable
@@ -40,10 +53,10 @@ object Theme {
 
     @Composable
     fun Material(content: @Composable () -> Unit) {
-        MaterialTheme(
-            colors = Color.materialOf(colors),
-            typography = Typography.materialOf(typography),
-            content = content
-        )
+        MaterialTheme(colors = Color.materialOf(colors), typography = Typography.materialOf(typography)) {
+            CompositionLocalProvider(*MaterialThemeOverrides.toTypedArray()) {
+                content()
+            }
+        }
     }
 }

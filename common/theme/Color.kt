@@ -27,8 +27,21 @@ object Color {
 
     @Stable
     data class Theme(
-        val primary: Color, val secondary: Color, val background: Color, val surface: Color, val surface2: Color,
-        val onPrimary: Color, val onBackground: Color, val onSurface: Color, val error: Color, val isLight: Boolean
+        val primary: Color,
+        val secondary: Color,
+        val tertiary: Color,
+        val tertiary2: Color,
+        val quaternary: Color,
+        val quaternary2: Color,
+        val background: Color,
+        val surface: Color,
+        val surface2: Color,
+        val onPrimary: Color,
+        val onBackground: Color,
+        val onSurface: Color,
+        val error: Color,
+        val error2: Color,
+        val isLight: Boolean,
     )
 
     private object DarkPalette {
@@ -55,6 +68,10 @@ object Color {
         val DARK = Theme(
             primary = DarkPalette.Purple4,
             secondary = DarkPalette.Green,
+            tertiary = DarkPalette.Pink1,
+            tertiary2 = DarkPalette.Pink2,
+            quaternary = DarkPalette.Yellow1,
+            quaternary2 = DarkPalette.Yellow2,
             background = DarkPalette.Purple1,
             surface = DarkPalette.Purple3,
             surface2 = DarkPalette.Purple6,
@@ -62,6 +79,7 @@ object Color {
             onBackground = DarkPalette.White,
             onSurface = DarkPalette.White,
             error = DarkPalette.Red1,
+            error2 = DarkPalette.Red2,
             isLight = false
         )
     }
