@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -44,8 +45,6 @@ import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Form.Button
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
-import com.vaticle.typedb.studio.common.component.Form.INPUT_MODIFIER
-import com.vaticle.typedb.studio.common.component.Form.LABEL_MODIFIER
 import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
@@ -92,12 +91,12 @@ object ConnectionWindow {
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 Form.FieldGroup {
-                    ServerFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                    AddressFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                    ServerFormField()
+                    AddressFormField()
                     if (State.server == TYPEDB_CLUSTER) {
-                        UsernameFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        PasswordFormField(LABEL_MODIFIER, INPUT_MODIFIER)
-                        CACertificateFormField(LABEL_MODIFIER, INPUT_MODIFIER)
+                        UsernameFormField()
+                        PasswordFormField()
+                        CACertificateFormField()
                     }
                     Spacer(Modifier.weight(1f))
                     Row {
@@ -115,80 +114,71 @@ object ConnectionWindow {
     }
 
     @Composable
-    private fun ServerFormField(labelModifier: Modifier, inputModifier: Modifier) {
-        Form.Field {
-            Text(text = Label.SERVER, style = Theme.typography.body1, modifier = labelModifier)
+    private fun ServerFormField() {
+        Form.Field(label = Label.SERVER) {
             Dropdown(
                 values = Property.Server.values().toList(),
                 selected = State.server,
-                modifier = inputModifier,
                 onSelection = { State.server = it },
-                enabled = Service.connection.isDisconnected()
+                enabled = Service.connection.isDisconnected(),
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun AddressFormField(labelModifier: Modifier, inputModifier: Modifier) {
-        Form.Field {
-            Text(text = Label.ADDRESS, style = Theme.typography.body1, modifier = labelModifier)
+    private fun AddressFormField() {
+        Form.Field(label = Label.ADDRESS) {
             TextInput(
                 value = State.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                modifier = inputModifier,
-                textStyle = Theme.typography.body1,
                 onValueChange = { State.address = it },
-                enabled = Service.connection.isDisconnected()
+                enabled = Service.connection.isDisconnected(),
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun UsernameFormField(labelModifier: Modifier, inputModifier: Modifier) {
-        Form.Field {
-            Text(text = Label.USERNAME, style = Theme.typography.body1, modifier = labelModifier)
+    private fun UsernameFormField() {
+        Form.Field(label = Label.USERNAME) {
             TextInput(
                 value = State.username,
                 placeholder = Label.USERNAME.lowercase(),
-                modifier = inputModifier,
-                textStyle = Theme.typography.body1,
                 onValueChange = { State.username = it },
-                enabled = Service.connection.isDisconnected()
+                enabled = Service.connection.isDisconnected(),
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun PasswordFormField(labelModifier: Modifier, inputModifier: Modifier) {
-        Form.Field {
-            Text(text = Label.PASSWORD, style = Theme.typography.body1, modifier = labelModifier)
+    private fun PasswordFormField() {
+        Form.Field(label = Label.PASSWORD) {
             TextInput(
                 value = State.password,
                 placeholder = Label.PASSWORD.lowercase(),
-                modifier = inputModifier,
-                textStyle = Theme.typography.body1,
                 onValueChange = { State.password = it },
                 enabled = Service.connection.isDisconnected(),
-                isPassword = true
+                isPassword = true,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun CACertificateFormField(labelModifier: Modifier, inputModifier: Modifier) {
-        Form.Field {
-            Text(text = Label.CA_CERTIFICATE, style = Theme.typography.body1, modifier = labelModifier)
+    private fun CACertificateFormField() {
+        Form.Field(label = Label.CA_CERTIFICATE) {
             TextInput(
                 value = State.caCertificate,
                 placeholder = Label.PATH_TO_CA_CERTIFICATE,
-                modifier = inputModifier,
-                textStyle = Theme.typography.body1,
                 onValueChange = { State.caCertificate = it },
-                enabled = Service.connection.isDisconnected()
+                enabled = Service.connection.isDisconnected(),
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }

@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -80,13 +81,14 @@ object Form {
     private val ICON_SPACING = 4.dp
     private val ROUNDED_RECTANGLE = RoundedCornerShape(4.dp)
 
-    val ColumnScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT).height(FIELD_HEIGHT)
-    val ColumnScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
+    private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT).height(FIELD_HEIGHT)
+    private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
     @Composable
-    fun Field(content: @Composable () -> Unit) {
+    fun Field(label: String, fieldInput: @Composable () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            content()
+            Text(text = label, style = Theme.typography.body1, modifier = LABEL_MODIFIER)
+            Column(modifier = INPUT_MODIFIER) { fieldInput() }
         }
     }
 
@@ -140,13 +142,13 @@ object Form {
         value: String,
         placeholder: String,
         onValueChange: (String) -> Unit,
-        textStyle: TextStyle,
-        modifier: Modifier = Modifier,
         maxLines: Int = 1,
         singleLine: Boolean = true,
         readOnly: Boolean = false,
         enabled: Boolean = true,
         isPassword: Boolean = false,
+        modifier: Modifier = Modifier,
+        textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIcon.Text, // TODO: #516 PointerIconDefaults.Text
         trailingIcon: (@Composable () -> Unit)? = null,
         leadingIcon: (@Composable () -> Unit)? = null
