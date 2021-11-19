@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -46,6 +49,7 @@ import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Form.Text
 import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
+import com.vaticle.typedb.studio.service.ConnectionService
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
 import com.vaticle.typedb.studio.service.ConnectionService.Status.DISCONNECTED
@@ -53,8 +57,9 @@ import com.vaticle.typedb.studio.service.Service
 
 object ConnectionWindow {
 
+    private val FORM_SPACING = 12.dp
     private val WINDOW_WIDTH = 500.dp
-    private val WINDOW_HEIGHT = 280.dp
+    private val WINDOW_HEIGHT = 300.dp
 
     private object State {
         // We keep this static to maintain the values through application lifetime,
@@ -88,7 +93,7 @@ object ConnectionWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
+            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(FORM_SPACING)) {
                 Form.FieldGroup {
                     ServerFormField()
                     AddressFormField()
@@ -98,9 +103,9 @@ object ConnectionWindow {
                         CACertificateFormField()
                     }
                     Spacer(Modifier.weight(1f))
-                    Row {
+                    Row(verticalAlignment = Alignment.Bottom) {
                         ServerConnectionStatus()
-                        Spacer(Modifier.weight(1f))
+                        Spacer(modifier = Modifier.weight(1f))
                         when (Service.connection.status) {
                             DISCONNECTED -> DisconnectedFormButtons()
                             CONNECTED -> ConnectedFormButtons()
@@ -185,13 +190,22 @@ object ConnectionWindow {
     @Composable
     private fun ServerConnectionStatus() {
         val statusText = "${Label.STATUS}: ${Service.connection.status.name.lowercase()}"
-        Text(value = statusText)
+        Text(value = statusText, color = colorOf(Service.connection.status))
+    }
+
+    @Composable
+    private fun colorOf(status: ConnectionService.Status): Color {
+        return when (status) {
+            DISCONNECTED -> Theme.colors.error
+            CONNECTING, CONNECTED -> Theme.colors.secondary
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
         Button(text = Label.CANCEL, onClick = { Service.connection.openDialog = false })
+        Spacer(modifier = Modifier.width(FORM_SPACING))
         Button(text = Label.CONNECT, onClick = { State.trySubmit() })
     }
 
@@ -199,6 +213,7 @@ object ConnectionWindow {
     @Composable
     private fun ConnectedFormButtons() {
         Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() })
+        Spacer(modifier = Modifier.width(FORM_SPACING))
         Button(text = Label.CLOSE, onClick = { Service.connection.openDialog = false })
     }
 
@@ -206,6 +221,7 @@ object ConnectionWindow {
     @Composable
     private fun ConnectingFormButtons() {
         Button(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
+        Spacer(modifier = Modifier.width(FORM_SPACING))
         Button(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }

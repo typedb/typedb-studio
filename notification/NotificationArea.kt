@@ -42,7 +42,7 @@ import com.vaticle.typedb.studio.service.NotifierService.MessageType.ERROR
 import com.vaticle.typedb.studio.service.NotifierService.MessageType.INFO
 import com.vaticle.typedb.studio.service.Service
 
-object NotificationPopup {
+object NotificationArea {
 
     private val NOTIFICATION_MARGIN = 30.dp
     private val MESSAGE_WIDTH = 360.dp

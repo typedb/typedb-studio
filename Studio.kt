@@ -36,7 +36,7 @@ import com.vaticle.typedb.studio.common.system.UserDataDirectory
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.connection.ConnectionWindow
 import com.vaticle.typedb.studio.navigator.NavigatorArea
-import com.vaticle.typedb.studio.notification.NotificationPopup
+import com.vaticle.typedb.studio.notification.NotificationArea
 import com.vaticle.typedb.studio.page.PageArea
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.statusbar.StatusBar
@@ -66,7 +66,7 @@ object Studio {
                     Separator.Horizontal()
                     StatusBar.Layout()
                 }
-                NotificationPopup.Layout()
+                NotificationArea.Layout()
             }
             if (Service.connection.openDialog) ConnectionWindow.Layout()
         }

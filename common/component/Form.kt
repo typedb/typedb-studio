@@ -219,34 +219,16 @@ object Form {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
-            fun toggle() {
-                expanded = !expanded
-            }
-
-            fun collapse() {
-                expanded = false
-            }
-
-            fun isExpanded(): Boolean {
-                return expanded && values.isNotEmpty()
-            }
-
-            fun select(value: T) {
-                onSelection(value); collapse()
-            }
-
-            fun mouseOutFrom(index: Int): Boolean {
-                if (mouseIndex == index) mouseIndex = null; return false
-            }
-
-            fun mouseInTo(index: Int): Boolean {
-                mouseIndex = index; return true
-            }
+            fun toggle() { expanded = !expanded }
+            fun collapse() { expanded = false }
+            fun isExpanded(): Boolean { return expanded && values.isNotEmpty() }
+            fun select(value: T) { onSelection(value); collapse() }
+            fun mouseOutFrom(index: Int): Boolean { if (mouseIndex == index) mouseIndex = null; return false }
+            fun mouseInTo(index: Int): Boolean { mouseIndex = index; return true }
         }
 
         val state = remember { State() }
-
-        Column(modifier) {
+        Box(modifier) {
             TextInput(
                 value = selected.displayName, onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
