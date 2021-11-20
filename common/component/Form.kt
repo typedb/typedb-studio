@@ -29,9 +29,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -186,7 +186,7 @@ object Form {
             decorationBox = { innerTextField ->
                 Row(modifier.padding(horizontal = ICON_SPACING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
-                    Box(modifier.offset(y = ICON_SPACING).weight(1f)) {
+                    Box(modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(
                             value = placeholder, color = Theme.colors.onSurface.copy(alpha = FADED_OPACITY)
@@ -228,7 +228,7 @@ object Form {
         }
 
         val state = remember { State() }
-        Box(modifier) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
             TextInput(
                 value = selected.displayName, onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
@@ -252,11 +252,9 @@ object Form {
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                     ) {
-                        Text(
-                            value = value.displayName,
-                            style = textStyle,
-                            color = if (i == state.mouseIndex) Theme.colors.onPrimary else Theme.colors.onPrimary
-                        )
+                        val isSelected = value.displayName == selected.displayName
+                        val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface
+                        Text(value = value.displayName, style = textStyle, color = color)
                     }
                 }
             }

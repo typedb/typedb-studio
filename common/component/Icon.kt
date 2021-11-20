@@ -20,8 +20,11 @@ package com.vaticle.typedb.studio.common.component
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.TextUnit
@@ -72,11 +75,17 @@ object Icon {
         val charString: String = Char(charCode).toString()
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Render(icon: Set, color: Color = Theme.colors.primary, size: Size = Size.Size12, modifier: Modifier = Modifier) {
+    fun Render(
+        icon: Set,
+        size: Size = Size.Size12,
+        color: Color = Theme.colors.icon,
+        modifier: Modifier = Modifier
+    ) {
         Text(
             text = icon.charString,
-            modifier = modifier,
+            modifier = modifier.pointerIcon(PointerIcon.Hand),
             color = color,
             fontSize = size.fontSize,
             fontFamily = size.fontFamily
