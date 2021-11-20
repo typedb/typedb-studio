@@ -25,6 +25,8 @@ kt_jvm_library(
     srcs = glob(["*.kt", "*/*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:ch_qos_logback_logback_classic",

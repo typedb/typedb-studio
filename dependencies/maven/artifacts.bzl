@@ -31,7 +31,6 @@ artifacts = [
     "org.jetbrains.compose.ui:ui-graphics-desktop",
     "org.jetbrains.compose.ui:ui-text-desktop",
     "org.jetbrains.compose.ui:ui-unit-desktop",
-    "org.jetbrains.kotlin:kotlin-reflect",
     "org.jetbrains.kotlin:kotlin-test",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core",
     "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",

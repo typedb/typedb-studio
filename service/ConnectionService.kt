@@ -25,7 +25,7 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.connection.TypeDBClient
 import com.vaticle.typedb.client.api.connection.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import java.lang.Exception
+import com.vaticle.typedb.studio.common.system.ErrorMessage
 
 class ConnectionService {
 
@@ -37,8 +37,12 @@ class ConnectionService {
     var client: TypeDBClient? = null
     var status: Status by mutableStateOf(Status.DISCONNECTED)
     var openDialog: Boolean by mutableStateOf(false)
-    var databases: List<String> by mutableStateOf(listOf("database 1", "database 2", "database 3")); private set
+    var databases: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
+
+    fun isConnected(): Boolean {
+        return status == Status.CONNECTED
+    }
 
     fun isDisconnected(): Boolean {
         return status == Status.DISCONNECTED
@@ -65,10 +69,10 @@ class ConnectionService {
             status = Status.CONNECTED
         } catch (e: TypeDBClientException) {
             status = Status.DISCONNECTED
-            // TODO: StudioState.error.reportUserError(e) {}
-        } catch (e: Exception) {
+            Service.error.userError(ErrorMessage.Connection.UNABLE_TO_CONNECT)
+        } catch (exception: Exception) {
             status = Status.DISCONNECTED
-
+            Service.error.systemError(ErrorMessage.Connection.UNEXPECTED_ERROR, exception)
         }
     }
 

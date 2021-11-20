@@ -88,11 +88,12 @@ object ToolbarArea {
     private fun DatabaseDropdown() {
         Dropdown(
             values = Service.connection.databases.map { displayableOf(it) },
-            selected = Service.connection.getDatabase()?.let { displayableOf(it) } ?: displayableOf("database 2"),
+            selected = Service.connection.getDatabase()?.let { displayableOf(it) } ?: displayableOf(""),
             placeholder = Label.SELECT_DATABASE,
             onSelection = { Service.connection.setDatabase(it.displayName) },
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
-            textInputModifier = Modifier.onFocusEvent { Service.connection.refreshDatabases() }
+            textInputModifier = Modifier.onFocusEvent { Service.connection.refreshDatabases() },
+            enabled = Service.connection.isConnected()
         )
     }
 

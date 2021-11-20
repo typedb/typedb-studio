@@ -174,8 +174,6 @@
 @maven//:org_jetbrains_compose_ui_ui_unit_desktop_1_0_0_alpha3
 @maven//:org_jetbrains_compose_ui_ui_util_desktop
 @maven//:org_jetbrains_compose_ui_ui_util_desktop_1_0_0_alpha3
-@maven//:org_jetbrains_kotlin_kotlin_reflect
-@maven//:org_jetbrains_kotlin_kotlin_reflect_1_5_20
 @maven//:org_jetbrains_kotlin_kotlin_stdlib
 @maven//:org_jetbrains_kotlin_kotlin_stdlib_1_5_30
 @maven//:org_jetbrains_kotlin_kotlin_stdlib_common

@@ -28,11 +28,11 @@ class NotifierService {
 
     val messages: SnapshotStateList<Message> = mutableStateListOf();
 
-    fun onInfo(message: String) {
+    fun info(message: String) {
         messages += Message(MessageType.INFO, message)
     }
 
-    fun onError(message: String) {
+    fun error(message: String) {
         messages += Message(MessageType.ERROR, message)
     }
 

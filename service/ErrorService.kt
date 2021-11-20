@@ -18,10 +18,16 @@
 
 package com.vaticle.typedb.studio.service
 
-object Service {
+import com.vaticle.typedb.studio.common.system.ErrorMessage
 
-    val connection = ConnectionService()
-    val notifier = NotifierService()
-    val error = ErrorService()
+class ErrorService {
+
+    fun userError(message: ErrorMessage.Connection) {
+        TODO("Not yet implemented")
+    }
+
+    fun systemError(message: ErrorMessage.Connection, exception: Exception) {
+        TODO("Not yet implemented")
+    }
 
 }
