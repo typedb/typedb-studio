@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement.Maximized
@@ -39,7 +38,7 @@ import com.vaticle.typedb.studio.navigator.NavigatorArea
 import com.vaticle.typedb.studio.notification.NotificationArea
 import com.vaticle.typedb.studio.page.PageArea
 import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.statusbar.StatusBar
+import com.vaticle.typedb.studio.statusbar.StatusBarArea
 import com.vaticle.typedb.studio.toolbar.ToolbarArea
 import mu.KotlinLogging.logger
 
@@ -64,18 +63,11 @@ object Studio {
                         PageArea.Layout()
                     }
                     Separator.Horizontal()
-                    StatusBar.Layout()
+                    StatusBarArea.Layout()
                 }
                 NotificationArea.Layout()
             }
             if (Service.connection.openDialog) ConnectionWindow.Layout()
-        }
-
-        LaunchedEffect(Unit) {
-            Service.notifier.onInfo("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
-            Service.notifier.onError("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
-            Service.notifier.onInfo("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
-            Service.notifier.onError("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere ligula vel erat ultrices consectetur. Etiam blandit condimentum velit.")
         }
     }
 

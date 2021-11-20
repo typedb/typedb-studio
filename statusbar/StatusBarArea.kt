@@ -25,7 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-object StatusBar {
+object StatusBarArea {
 
     private val HEIGHT = 20.dp
 
