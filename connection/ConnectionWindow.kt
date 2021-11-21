@@ -196,7 +196,7 @@ object ConnectionWindow {
     @Composable
     private fun colorOf(status: ConnectionService.Status): Color {
         return when (status) {
-            DISCONNECTED -> Theme.colors.error
+            DISCONNECTED -> Theme.colors.error2
             CONNECTING, CONNECTED -> Theme.colors.secondary
         }
     }

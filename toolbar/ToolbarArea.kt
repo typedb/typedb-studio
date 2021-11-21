@@ -54,7 +54,7 @@ object ToolbarArea {
             SaveFileButton()
             PlayFileButton()
             Spacer(Modifier.weight(1f))
-//            DatabaseDropdown()
+            DatabaseDropdown()
             Spacer(Modifier.width(4.dp))
             ConnectionButton()
 //            if (Service.connection.isDisconnected()) ConnectionButton()
