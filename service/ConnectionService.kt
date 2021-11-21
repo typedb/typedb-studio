@@ -25,9 +25,16 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.connection.TypeDBClient
 import com.vaticle.typedb.client.api.connection.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.common.system.ErrorMessage
+import com.vaticle.typedb.studio.common.notification.Error
+import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
+import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNEXPECTED_ERROR
+import mu.KotlinLogging
 
 class ConnectionService {
+
+    companion object {
+        val LOG = KotlinLogging.logger {}
+    }
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
@@ -69,10 +76,10 @@ class ConnectionService {
             status = Status.CONNECTED
         } catch (e: TypeDBClientException) {
             status = Status.DISCONNECTED
-            Service.error.userError(ErrorMessage.Connection.UNABLE_TO_CONNECT)
-        } catch (exception: Exception) {
+            Service.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOG)
+        } catch (e: Exception) {
             status = Status.DISCONNECTED
-            Service.error.systemError(ErrorMessage.Connection.UNEXPECTED_ERROR, exception)
+            Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOG)
         }
     }
 

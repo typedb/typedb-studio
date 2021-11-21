@@ -20,6 +20,8 @@ package com.vaticle.typedb.studio.service
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.vaticle.typedb.studio.common.notification.Error
+import mu.KLogger
 
 class NotifierService {
 
@@ -28,12 +30,20 @@ class NotifierService {
 
     val messages: SnapshotStateList<Message> = mutableStateListOf();
 
-    fun info(message: String) {
+    fun info(message: String, logger: KLogger) {
+        logger.info { message }
         messages += Message(MessageType.INFO, message)
     }
 
-    fun error(message: String) {
-        messages += Message(MessageType.ERROR, message)
+    fun userError(error: Error.User, logger: KLogger) {
+        logger.error { error.message }
+        messages += Message(MessageType.ERROR, error.message)
+    }
+
+    fun systemError(error: Error.System, logger: KLogger) {
+        logger.error { error.message }
+        logger.error { error.cause }
+        messages += Message(MessageType.ERROR, error.message)
     }
 
     fun dismiss(message: Message) {

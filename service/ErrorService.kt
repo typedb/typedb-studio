@@ -18,16 +18,7 @@
 
 package com.vaticle.typedb.studio.service
 
-import com.vaticle.typedb.studio.common.system.ErrorMessage
-
 class ErrorService {
 
-    fun userError(message: ErrorMessage.Connection) {
-        TODO("Not yet implemented")
-    }
-
-    fun systemError(message: ErrorMessage.Connection, exception: Exception) {
-        TODO("Not yet implemented")
-    }
 
 }

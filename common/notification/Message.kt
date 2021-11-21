@@ -16,11 +16,13 @@
  *
  */
 
-package com.vaticle.typedb.studio.common.system
+package com.vaticle.typedb.studio.common.notification
+
+import com.vaticle.typedb.common.exception.ErrorMessage
 
 // TODO: if you add a new nested class to ErrorMessage, please make sure to update ErrorMessage.loadClasses()
-abstract class ErrorMessage(codePrefix: String, codeNumber: Int, messagePrefix: String, messageBody: String) :
-    com.vaticle.typedb.common.exception.ErrorMessage(codePrefix, codeNumber, messagePrefix, messageBody) {
+abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: String, messageBody: String) :
+    ErrorMessage(codePrefix, codeNumber, messagePrefix, messageBody) {
 
     companion object {
 
@@ -35,20 +37,16 @@ abstract class ErrorMessage(codePrefix: String, codeNumber: Int, messagePrefix: 
     }
 
     class Connection(codeNumber: Int, messageBody: String) :
-        ErrorMessage(codePrefix, codeNumber, messagePrefix, messageBody) {
+        Message(codePrefix, codeNumber, messagePrefix, messageBody) {
 
         companion object {
             private val codePrefix = "CON"
             private val messagePrefix = "TypeDB Connection Issue"
 
-            val UNEXPECTED_ERROR = Connection(
-                1, "Unexpected error occurred with the " +
-                        "connection to TypeDB server."
-            )
-            val UNABLE_TO_CONNECT = Connection(
-                2, "Unable to connect to server with the " +
-                        "provided address and credentials."
-            )
+            val UNEXPECTED_ERROR =
+                Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
+            val UNABLE_TO_CONNECT =
+                Connection(2, "Unable to connect to server with the provided address and credentials.")
         }
     }
 }

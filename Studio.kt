@@ -31,7 +31,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Separator
-import com.vaticle.typedb.studio.common.system.ErrorMessage
+import com.vaticle.typedb.studio.common.notification.Message
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.connection.ConnectionWindow
@@ -75,7 +75,7 @@ object Studio {
     @JvmStatic
     fun main(args: Array<String>) {
         // TODO: we should wrap this function body in a try-catch block and throw any errors into a native popup window
-        ErrorMessage.loadClasses()
+        Message.loadClasses()
         UserDataDirectory.initialise()
         val log = logger {}
 
