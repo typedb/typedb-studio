@@ -95,7 +95,7 @@ object Studio {
             }
             NotificationArea.Layout()
         }
-        if (Service.connection.openDialog) ConnectionWindow.Layout()
+        if (Service.connection.showWindow) ConnectionWindow.Layout()
     }
 
     @Composable

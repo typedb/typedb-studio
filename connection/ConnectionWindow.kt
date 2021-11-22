@@ -85,7 +85,7 @@ object ConnectionWindow {
     fun Layout() {
         Window(
             title = Label.CONNECT_TO_TYPEDB,
-            onCloseRequest = { Service.connection.openDialog = false },
+            onCloseRequest = { Service.connection.showWindow = false },
             alwaysOnTop = true,
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
@@ -204,7 +204,7 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        Button(text = Label.CANCEL, onClick = { Service.connection.openDialog = false })
+        Button(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
         Spacer(modifier = Modifier.width(FORM_SPACING))
         Button(text = Label.CONNECT, onClick = { State.trySubmit() })
     }
@@ -214,7 +214,7 @@ object ConnectionWindow {
     private fun ConnectedFormButtons() {
         Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() })
         Spacer(modifier = Modifier.width(FORM_SPACING))
-        Button(text = Label.CLOSE, onClick = { Service.connection.openDialog = false })
+        Button(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

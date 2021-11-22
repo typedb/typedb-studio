@@ -42,10 +42,10 @@ class ConnectionService {
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
+    private var client: TypeDBClient? = null
 
-    var client: TypeDBClient? = null
     var status: Status by mutableStateOf(Status.DISCONNECTED)
-    var openDialog: Boolean by mutableStateOf(false)
+    var showWindow: Boolean by mutableStateOf(false)
     var databaseList: List<String> by mutableStateOf(listOf()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
 

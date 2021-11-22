@@ -103,7 +103,7 @@ object ToolbarArea {
         Button(
             text = Label.CONNECT_TO_TYPEDB,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
-            onClick = { Service.connection.openDialog = true }
+            onClick = { Service.connection.showWindow = true }
         )
     }
 
