@@ -99,15 +99,16 @@ object Studio {
             )
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(5.dp)) {
+                val rowVerticalAlignment = Alignment.Top
                 val rowModifier = Modifier.padding(5.dp)
                 val labelModifier = Modifier.width(40.dp)
                 val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
                 val contentColor = Theme.colors.error2
-                Row(verticalAlignment = Alignment.Top, modifier = rowModifier) {
+                Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
                     Form.Text(value = Label.TITLE, modifier = labelModifier, style = labelStyle)
                     exception.message?.let { Form.TextSelectable(value = it, color = contentColor) }
                 }
-                Row(verticalAlignment = Alignment.Top, modifier = rowModifier) {
+                Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
                     Form.Text(value = Label.TRACE, modifier = labelModifier, style = labelStyle)
                     Form.TextSelectable(value = exception.stackTraceToString(), color = contentColor)
                 }
