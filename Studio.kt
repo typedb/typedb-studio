@@ -52,6 +52,17 @@ import mu.KotlinLogging.logger
 
 object Studio {
 
+    @JvmStatic
+    fun main(args: Array<String>) {
+        try {
+            Message.loadClasses()
+            UserDataDirectory.initialise()
+            application { MainWindow(it) }
+        } catch (exception: Exception) {
+            application { ErrorWindow(exception, it) }
+        }
+    }
+
     private fun application(window: @Composable (onExit: () -> Unit) -> Unit) {
         androidx.compose.ui.window.application {
             Theme.Material {
@@ -113,17 +124,6 @@ object Studio {
                     Form.TextSelectable(value = exception.stackTraceToString(), color = contentColor)
                 }
             }
-        }
-    }
-
-    @JvmStatic
-    fun main(args: Array<String>) {
-        try {
-            Message.loadClasses()
-            UserDataDirectory.initialise()
-            application { MainWindow(it) }
-        } catch (exception: Exception) {
-            application { ErrorWindow(exception, it) }
         }
     }
 }
