@@ -37,7 +37,7 @@ object Label {
     const val TITLE = "Title"
     const val TRACE = "Trace"
     const val TYPEDB_STUDIO = "TypeDB Studio"
-    const val TYPEDB_STUDIO_FAILED_TO_START = "TypeDB Studio failed to start"
+    const val TYPEDB_STUDIO_APPLICATION_ERROR = "TypeDB Studio Application Error"
     const val SERVER = "Server"
     const val USERNAME = "Username"
 }

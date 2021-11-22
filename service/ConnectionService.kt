@@ -26,6 +26,7 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.common.notification.Error
+import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNEXPECTED_ERROR
 import mu.KotlinLogging
@@ -35,12 +36,11 @@ class ConnectionService {
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
         private val SESSION_TYPE = TypeDBSession.Type.DATA
-        private val LOG = KotlinLogging.logger {}
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
-    private var _database: String? by mutableStateOf(null)
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
     var client: TypeDBClient? = null
@@ -58,14 +58,17 @@ class ConnectionService {
     }
 
     fun getDatabase(): String? {
-        return _database
+        return session?.database()?.name()
     }
 
-    fun setDatabase(newDatabase: String) {
-        if (_database == newDatabase) return
-        _database = newDatabase
-        session?.close()
-        this.session = client!!.session(this._database, SESSION_TYPE)
+    fun setDatabase(database: String) {
+        if (session?.database()?.name() == database) return
+        closeSession()
+        try {
+            this.session = client!!.session(database, SESSION_TYPE)
+        } catch (exception: TypeDBClientException) {
+            Service.notifier.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
+        }
     }
 
     fun refreshDatabaseList() {
@@ -81,10 +84,10 @@ class ConnectionService {
             status = Status.CONNECTED
         } catch (e: TypeDBClientException) {
             status = Status.DISCONNECTED
-            Service.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOG)
+            Service.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
         } catch (e: Exception) {
             status = Status.DISCONNECTED
-            Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOG)
+            Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
         }
     }
 
@@ -95,7 +98,12 @@ class ConnectionService {
 
     fun disconnect() {
         status = Status.DISCONNECTED
+        closeSession()
         client!!.close()
         client = null
+    }
+
+    private fun closeSession() {
+        session?.let { it.close(); session = null }
     }
 }

@@ -47,6 +47,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
             val UNABLE_TO_CONNECT =
                 Connection(2, "Unable to connect to TypeDB server with the provided address and credentials.")
+            val UNABLE_CREATE_SESSION =
+                Connection(3, "Unable to establish session to database '%s'.")
         }
     }
 }
