@@ -118,7 +118,6 @@ object Studio {
     @JvmStatic
     fun main(args: Array<String>) {
         try {
-            // TODO: we should wrap this function body in a try-catch block and throw any errors into a native popup window
             Message.loadClasses()
             UserDataDirectory.initialise()
             application { MainWindow(it) }
