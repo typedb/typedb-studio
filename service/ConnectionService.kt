@@ -33,18 +33,20 @@ import mu.KotlinLogging
 class ConnectionService {
 
     companion object {
-        val LOG = KotlinLogging.logger {}
+        private const val DATABASE_LIST_REFRESH_RATE_MS = 100
+        private val SESSION_TYPE = TypeDBSession.Type.DATA
+        private val LOG = KotlinLogging.logger {}
     }
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
-    private val sessionType = TypeDBSession.Type.DATA
     private var _database: String? by mutableStateOf(null)
+    private var databaseListRefreshedTime = System.currentTimeMillis()
 
     var client: TypeDBClient? = null
     var status: Status by mutableStateOf(Status.DISCONNECTED)
     var openDialog: Boolean by mutableStateOf(false)
-    var databases: List<String> by mutableStateOf(emptyList()); private set
+    var databaseList: List<String> by mutableStateOf(listOf()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
 
     fun isConnected(): Boolean {
@@ -59,14 +61,17 @@ class ConnectionService {
         return _database
     }
 
-    fun setDatabase(database: String) {
-        _database = database
+    fun setDatabase(newDatabase: String) {
+        if (_database == newDatabase) return
+        _database = newDatabase
         session?.close()
-        this.session = client!!.session(this._database, sessionType)
+        this.session = client!!.session(this._database, SESSION_TYPE)
     }
 
-    fun refreshDatabases() {
-        client?.let { c -> databases = c.databases().all().map { d -> d.name() } }
+    fun refreshDatabaseList() {
+        if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
+        client?.let { c -> databaseList = c.databases().all().map { d -> d.name() } }
+        databaseListRefreshedTime = System.currentTimeMillis()
     }
 
     fun tryConnectToTypeDB(address: String) {
@@ -83,15 +88,14 @@ class ConnectionService {
         }
     }
 
-    fun tryConnectToTypeDBCluster(
-        address: String, username: String, password: String, caPath: String
-    ) {
+    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
         status = Status.CONNECTING
         TODO("Not yet implemented")
     }
 
     fun disconnect() {
         status = Status.DISCONNECTED
-        TODO("Not yet implemented")
+        client!!.close()
+        client = null
     }
 }

@@ -48,6 +48,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
@@ -64,6 +66,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.theme.Theme
 import java.awt.event.KeyEvent.KEY_RELEASED
@@ -214,15 +217,14 @@ object Form {
 
         val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16) }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
+        val focusRequester = FocusRequester()
 
         class State {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
             fun toggle() { expanded = !expanded }
-            fun collapse() { expanded = false }
-            fun isExpanded(): Boolean { return expanded && values.isNotEmpty() }
-            fun select(value: T) { onSelection(value); collapse() }
+            fun select(value: T) { onSelection(value); expanded = false }
             fun mouseOutFrom(index: Int): Boolean { if (mouseIndex == index) mouseIndex = null; return false }
             fun mouseInTo(index: Int): Boolean { mouseIndex = index; return true }
         }
@@ -233,22 +235,25 @@ object Form {
                 value = selected.displayName, onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
                 pointerHoverIcon = PointerIcon.Hand, modifier = textInputModifier
-                    .fillMaxSize()
-                    .focusable(enabled = enabled)
-                    .clickable(enabled = enabled, onClick = state::toggle)
+                    .fillMaxSize().focusable(enabled = enabled).focusRequester(focusRequester)
+                    .clickable(enabled = enabled) { state.toggle(); focusRequester.requestFocus() }
                     .onKeyEvent { onKeyEvent(it, focusManager) }
             )
             DropdownMenu(
-                expanded = state.isExpanded(),
-                onDismissRequest = state::collapse,
+                expanded = state.expanded,
+                onDismissRequest = { state.expanded = false },
                 modifier = Modifier.background(Theme.colors.surface)
             ) {
-                values.forEachIndexed { i, value ->
+                val padding = PaddingValues(horizontal = CONTENT_PADDING)
+                val itemModifier = Modifier.height(FIELD_HEIGHT)
+                if (values.isEmpty()) DropdownMenuItem(
+                    onClick = {}, contentPadding = padding,
+                    modifier = itemModifier.background(Theme.colors.surface)
+                ) {
+                    Text(value = "(${Label.NO_DATABASES})", style = textStyle)
+                } else values.forEachIndexed { i, value ->
                     DropdownMenuItem(
-                        onClick = { state.select(value) },
-                        contentPadding = PaddingValues(horizontal = CONTENT_PADDING),
-                        modifier = Modifier
-                            .height(FIELD_HEIGHT)
+                        onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                     ) {

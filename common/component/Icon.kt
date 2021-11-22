@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.common.component
 
+import androidx.compose.foundation.focusable
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -85,10 +86,10 @@ object Icon {
     ) {
         Text(
             text = icon.charString,
-            modifier = modifier.pointerIcon(PointerIcon.Hand),
             color = color,
             fontSize = size.fontSize,
-            fontFamily = size.fontFamily
+            fontFamily = size.fontFamily,
+            modifier = modifier.pointerIcon(PointerIcon.Hand).focusable(true)
         )
     }
 }
