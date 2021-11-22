@@ -23,12 +23,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
+import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.common.notification.Error
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNEXPECTED_ERROR
+import java.nio.file.Path
 import mu.KotlinLogging
 
 class ConnectionService {
@@ -78,9 +80,25 @@ class ConnectionService {
     }
 
     fun tryConnectToTypeDB(address: String) {
+        tryConnect { TypeDB.coreClient(address) }
+    }
+
+    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, tlsEnabled: Boolean) {
+        tryConnectToTypeDBCluster(address, TypeDBCredential(username, password, tlsEnabled))
+    }
+
+    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
+        tryConnectToTypeDBCluster(address, TypeDBCredential(username, password, Path.of(caPath)))
+    }
+
+    private fun tryConnectToTypeDBCluster(address: String, credentials: TypeDBCredential) {
+        tryConnect { TypeDB.clusterClient(address, credentials) }
+    }
+
+    private fun tryConnect(clientConstructor: () -> TypeDBClient) {
         status = Status.CONNECTING
         try {
-            client = TypeDB.coreClient(address)
+            client = clientConstructor()
             status = Status.CONNECTED
         } catch (e: TypeDBClientException) {
             status = Status.DISCONNECTED
@@ -89,11 +107,6 @@ class ConnectionService {
             status = Status.DISCONNECTED
             Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
         }
-    }
-
-    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
-        status = Status.CONNECTING
-        TODO("Not yet implemented")
     }
 
     fun disconnect() {

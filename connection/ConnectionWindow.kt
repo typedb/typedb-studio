@@ -69,14 +69,18 @@ object ConnectionWindow {
         var address: String by mutableStateOf("")
         var username: String by mutableStateOf("")
         var password: String by mutableStateOf("")
+        var tlsEnabled: Boolean by mutableStateOf(false) // TODO: implement form input
         var caCertificate: String by mutableStateOf("")
 
         fun trySubmit() {
             when (server) {
                 TYPEDB -> Service.connection.tryConnectToTypeDB(address)
-                TYPEDB_CLUSTER -> Service.connection.tryConnectToTypeDBCluster(
-                    address, username, password, caCertificate
-                )
+                TYPEDB_CLUSTER -> when {
+                    caCertificate.isBlank() -> Service.connection.tryConnectToTypeDBCluster(
+                        address, username, password, tlsEnabled
+                    )
+                    else -> Service.connection.tryConnectToTypeDBCluster(address, username, password, caCertificate)
+                }
             }
         }
     }
@@ -179,7 +183,7 @@ object ConnectionWindow {
         Form.Field(label = Label.CA_CERTIFICATE) {
             TextInput(
                 value = State.caCertificate,
-                placeholder = Label.PATH_TO_CA_CERTIFICATE,
+                placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { State.caCertificate = it },
                 enabled = Service.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),

@@ -31,6 +31,7 @@ object Label {
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
     const val DISCONNECT = "Disconnect"
     const val NO_DATABASES = "No Databases"
+    const val OPTIONAL = "Optional"
     const val PASSWORD = "Password"
     const val PATH_TO_CA_CERTIFICATE = "path/to/ca/certificate"
     const val SELECT_DATABASE = "Select Database"
