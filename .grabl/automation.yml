@@ -18,8 +18,8 @@
 config:
   version-candidate: VERSION
   dependencies:
-    dependencies: [build]
-    typedb-client-java: [build, release]
+    dependencies: [ build ]
+    typedb-client-java: [ build, release ]
 
 build:
   correctness:
@@ -29,10 +29,10 @@ build:
         bazel build //...
         bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
         bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=streamed
-    test-unit:
+    test:
       image: vaticle-ubuntu-20.04
       command: |
-        bazel test //visualiser/...
+        bazel test //...
 
 release:
 #  filter:
