@@ -30,6 +30,7 @@ object Label {
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
     const val DISCONNECT = "Disconnect"
+    const val ENABLE_TLS = "Enable TLS"
     const val NO_DATABASES = "No Databases"
     const val OPTIONAL = "Optional"
     const val PASSWORD = "Password"

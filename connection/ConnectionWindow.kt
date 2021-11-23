@@ -19,12 +19,7 @@
 package com.vaticle.typedb.studio.connection
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +29,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPlacement
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowSize
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
@@ -59,7 +50,7 @@ object ConnectionWindow {
 
     private val FORM_SPACING = 12.dp
     private val WINDOW_WIDTH = 500.dp
-    private val WINDOW_HEIGHT = 300.dp
+    private val WINDOW_HEIGHT = 340.dp
 
     private object State {
         // We keep this static to maintain the values through application lifetime,
@@ -104,7 +95,8 @@ object ConnectionWindow {
                     if (State.server == TYPEDB_CLUSTER) {
                         UsernameFormField()
                         PasswordFormField()
-                        CACertificateFormField()
+                        TLSEnabledFormField()
+                        if (State.tlsEnabled) CACertificateFormField()
                     }
                     Spacer(Modifier.weight(1f))
                     Row(verticalAlignment = Alignment.Bottom) {
@@ -173,6 +165,16 @@ object ConnectionWindow {
                 enabled = Service.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+
+    @Composable
+    private fun TLSEnabledFormField() {
+        Form.Field(label = Label.ENABLE_TLS) {
+            Form.Checkbox(
+                checked = State.tlsEnabled,
+                onChange = { State.tlsEnabled = it }
             )
         }
     }

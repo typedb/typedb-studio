@@ -18,46 +18,26 @@
 
 package com.vaticle.typedb.studio.common.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
@@ -66,6 +46,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.theme.Theme
@@ -83,7 +64,7 @@ object Form {
     private val ICON_SPACING = 4.dp
     private val ROUNDED_RECTANGLE = RoundedCornerShape(4.dp)
 
-    private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT).height(FIELD_HEIGHT)
+    private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
     @Composable
@@ -198,6 +179,28 @@ object Form {
                     trailingIcon?.let { Spacer(Modifier.width(ICON_SPACING)); trailingIcon() }
                 }
             },
+        )
+    }
+
+    @Composable
+    fun Checkbox(
+        checked: Boolean,
+        onChange: ((Boolean) -> Unit)?,
+        modifier: Modifier = Modifier,
+        enabled: Boolean = true
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onChange,
+            modifier = modifier.size(FIELD_HEIGHT)
+                .background(color = Theme.colors.surface)
+                .border(BORDER_WIDTH, SolidColor(Theme.colors.surface2), ROUNDED_RECTANGLE),
+            enabled = enabled,
+            colors = CheckboxDefaults.colors(
+                checkedColor = Theme.colors.icon,
+                uncheckedColor = Theme.colors.surface,
+                disabledColor = Theme.colors.surface
+            )
         )
     }
 
