@@ -86,8 +86,7 @@ object NotificationArea {
                 modifier = Modifier
                     .padding(MESSAGE_PADDING)
                     .pointerIcon(PointerIcon.Hand)
-                    .clickable { Service.notifier.dismiss(message) },
-                enabled = false
+                    .clickable { Service.notifier.dismiss(message) }
             )
         }
     }

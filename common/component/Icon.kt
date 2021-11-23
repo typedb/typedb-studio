@@ -84,7 +84,7 @@ object Icon {
         size: Size = Size.Size12,
         color: Color = Theme.colors.icon,
         modifier: Modifier = Modifier,
-        enabled: Boolean
+        enabled: Boolean = true
     ) {
         Text(
             text = icon.charString,

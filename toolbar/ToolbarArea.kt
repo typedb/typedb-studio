@@ -68,8 +68,7 @@ object ToolbarArea {
         Icon.Render(
             icon = Icon.Set.FolderOpen,
             size = Icon.Size.Size14,
-            modifier = Modifier.clickable { },
-            enabled = false
+            modifier = Modifier.clickable { }
         )
     }
 
@@ -79,8 +78,7 @@ object ToolbarArea {
         Icon.Render(
             icon = Icon.Set.FloppyDisk,
             size = Icon.Size.Size12,
-            modifier = Modifier.clickable { },
-            enabled = false
+            modifier = Modifier.clickable { }
         )
     }
 
@@ -91,8 +89,7 @@ object ToolbarArea {
             icon = Icon.Set.Play,
             size = Icon.Size.Size16,
             color = Theme.colors.secondary,
-            modifier = Modifier.clickable { },
-            enabled = false
+            modifier = Modifier.clickable { }
         )
     }
 
