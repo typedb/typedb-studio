@@ -56,9 +56,8 @@ object ToolbarArea {
             Spacer(Modifier.weight(1f))
             DatabaseDropdown()
             Spacer(Modifier.width(4.dp))
-            ConnectionButton()
-//            if (Service.connection.isDisconnected()) ConnectionButton()
-//            else ConnectionStatus()
+            if (Service.connection.isDisconnected()) ConnectionButton()
+            else ConnectionStatus()
             DatabaseIcon()
         }
     }
@@ -109,7 +108,11 @@ object ToolbarArea {
 
     @Composable
     private fun ConnectionStatus() {
-        TODO("Not yet implemented")
+        Button(
+            text = (Service.connection.username?.let { "$it@" } ?: "" ) + Service.connection.address!!,
+            modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
+            onClick = { Service.connection.showWindow = true }
+        )
     }
 
 

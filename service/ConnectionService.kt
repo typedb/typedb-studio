@@ -49,6 +49,8 @@ class ConnectionService {
     var status: Status by mutableStateOf(Status.DISCONNECTED)
     var showWindow: Boolean by mutableStateOf(false)
     var databaseList: List<String> by mutableStateOf(listOf()); private set
+    var address: String? by mutableStateOf(null)
+    var username: String? by mutableStateOf(null)
     var session: TypeDBSession? by mutableStateOf(null); private set
 
     fun isConnected(): Boolean {
@@ -80,25 +82,27 @@ class ConnectionService {
     }
 
     fun tryConnectToTypeDB(address: String) {
-        tryConnect { TypeDB.coreClient(address) }
+        tryConnect(address, null) { TypeDB.coreClient(address) }
     }
 
     fun tryConnectToTypeDBCluster(address: String, username: String, password: String, tlsEnabled: Boolean) {
-        tryConnectToTypeDBCluster(address, TypeDBCredential(username, password, tlsEnabled))
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled))
     }
 
     fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
-        tryConnectToTypeDBCluster(address, TypeDBCredential(username, password, Path.of(caPath)))
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)))
     }
 
-    private fun tryConnectToTypeDBCluster(address: String, credentials: TypeDBCredential) {
-        tryConnect { TypeDB.clusterClient(address, credentials) }
+    private fun tryConnectToTypeDBCluster(address: String, username: String, credentials: TypeDBCredential) {
+        tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
     }
 
-    private fun tryConnect(clientConstructor: () -> TypeDBClient) {
+    private fun tryConnect(newAddres: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
         status = Status.CONNECTING
         try {
             client = clientConstructor()
+            address = newAddres
+            username = newUsername
             status = Status.CONNECTED
         } catch (e: TypeDBClientException) {
             status = Status.DISCONNECTED
@@ -112,6 +116,8 @@ class ConnectionService {
     fun disconnect() {
         status = Status.DISCONNECTED
         closeSession()
+        address = null
+        username = null
         client!!.close()
         client = null
     }
