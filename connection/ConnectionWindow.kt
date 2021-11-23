@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.vaticle.typedb.studio.common.Label
@@ -40,7 +39,6 @@ import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Form.Text
 import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
-import com.vaticle.typedb.studio.service.ConnectionService
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
 import com.vaticle.typedb.studio.service.ConnectionService.Status.DISCONNECTED
@@ -196,15 +194,12 @@ object ConnectionWindow {
     @Composable
     private fun ServerConnectionStatus() {
         val statusText = "${Label.STATUS}: ${Service.connection.status.name.lowercase()}"
-        Text(value = statusText, color = colorOf(Service.connection.status))
-    }
-
-    @Composable
-    private fun colorOf(status: ConnectionService.Status): Color {
-        return when (status) {
-            DISCONNECTED -> Theme.colors.error2
-            CONNECTING, CONNECTED -> Theme.colors.secondary
-        }
+        Text(
+            value = statusText, color = when (Service.connection.status) {
+                DISCONNECTED -> Theme.colors.error2
+                CONNECTING, CONNECTED -> Theme.colors.secondary
+            }
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -218,7 +213,7 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() })
+        Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, color = Theme.colors.error2)
         Spacer(modifier = Modifier.width(FORM_SPACING))
         Button(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
     }

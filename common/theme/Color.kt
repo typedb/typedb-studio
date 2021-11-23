@@ -90,6 +90,12 @@ object Color {
         )
     }
 
+    private const val FADED_OPACITY = 0.4f
+
+    fun fadeable(color: Color, faded: Boolean): Color {
+        return if (faded) color.copy(alpha = FADED_OPACITY) else color
+    }
+
     @Composable
     fun materialOf(colors: Theme): Colors {
         // TODO: replace __UNUSED_COLOUR__ the moment we know where they are used

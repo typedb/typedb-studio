@@ -18,7 +18,10 @@
 
 package com.vaticle.typedb.studio.common.component
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -30,7 +33,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -46,9 +48,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
+import com.vaticle.typedb.studio.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.common.theme.Theme
 import java.awt.event.KeyEvent.KEY_RELEASED
 
@@ -56,7 +58,6 @@ object Form {
 
     private const val LABEL_WEIGHT = 2f
     private const val INPUT_WEIGHT = 3f
-    private const val FADED_OPACITY = 0.4f
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val BORDER_WIDTH = 1.dp
@@ -94,22 +95,26 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Button(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    fun Button(
+        text: String,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        color: Color = Theme.colors.onPrimary,
+        enabled: Boolean = true
+    ) {
         val focusManager = LocalFocusManager.current
-        val backgroundColor = if (enabled) Theme.colors.primary else Theme.colors.primary.copy(alpha = FADED_OPACITY)
-        val textColor = if (enabled) Theme.colors.onPrimary else Theme.colors.onPrimary.copy(alpha = FADED_OPACITY)
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
                 .height(FIELD_HEIGHT)
-                .background(backgroundColor, ROUNDED_RECTANGLE)
+                .background(fadeable(Theme.colors.primary, !enabled), ROUNDED_RECTANGLE)
                 .padding(horizontal = CONTENT_PADDING)
                 .focusable(enabled = enabled)
                 .pointerIcon(icon = PointerIcon.Hand) // TODO: #516
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
         ) {
-            Text(text, style = Theme.typography.body1, color = textColor)
+            Text(text, style = Theme.typography.body1, color = fadeable(color, !enabled))
         }
     }
 
@@ -154,8 +159,8 @@ object Form {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         BasicTextField(
             modifier = modifier
-                .background(Theme.colors.surface, ROUNDED_RECTANGLE)
-                .border(BORDER_WIDTH, SolidColor(Theme.colors.surface2), ROUNDED_RECTANGLE)
+                .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface2, !enabled)), ROUNDED_RECTANGLE)
                 .pointerIcon(pointerHoverIcon) // TODO: #516
                 .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
             value = value,
@@ -165,16 +170,14 @@ object Form {
             maxLines = maxLines,
             enabled = enabled,
             cursorBrush = SolidColor(Theme.colors.secondary),
-            textStyle = textStyle.copy(color = Theme.colors.onSurface),
+            textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             decorationBox = { innerTextField ->
                 Row(modifier.padding(horizontal = ICON_SPACING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
                     Box(modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
-                        if (value.isEmpty()) Text(
-                            value = placeholder, color = Theme.colors.onSurface.copy(alpha = FADED_OPACITY)
-                        )
+                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
                     }
                     trailingIcon?.let { Spacer(Modifier.width(ICON_SPACING)); trailingIcon() }
                 }
@@ -193,13 +196,13 @@ object Form {
             checked = checked,
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
-                .background(color = Theme.colors.surface)
-                .border(BORDER_WIDTH, SolidColor(Theme.colors.surface2), ROUNDED_RECTANGLE),
+                .background(color = fadeable(Theme.colors.surface, !enabled))
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface2, !enabled)), ROUNDED_RECTANGLE),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
-                checkedColor = Theme.colors.icon,
-                uncheckedColor = Theme.colors.surface,
-                disabledColor = Theme.colors.surface
+                checkedColor = fadeable(Theme.colors.icon, !enabled),
+                uncheckedColor = fadeable(Theme.colors.surface, !enabled),
+                disabledColor = fadeable(Theme.colors.surface, !enabled)
             )
         )
     }
@@ -218,7 +221,9 @@ object Form {
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
 
-        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16) }
+        val dropdownIcon: @Composable () -> Unit = {
+            Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16, enabled = enabled)
+        }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         val focusRequester = FocusRequester()
 

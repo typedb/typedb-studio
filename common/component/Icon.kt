@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.vaticle.typedb.studio.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.common.theme.Theme
 
 object Icon {
@@ -82,11 +83,12 @@ object Icon {
         icon: Set,
         size: Size = Size.Size12,
         color: Color = Theme.colors.icon,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        enabled: Boolean
     ) {
         Text(
             text = icon.charString,
-            color = color,
+            color = fadeable(color, !enabled),
             fontSize = size.fontSize,
             fontFamily = size.fontFamily,
             modifier = modifier.pointerIcon(PointerIcon.Hand).focusable(true)

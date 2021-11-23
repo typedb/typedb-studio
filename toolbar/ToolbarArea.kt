@@ -65,13 +65,23 @@ object ToolbarArea {
     @Composable
     private fun OpenFileButton() {
         Spacer(Modifier.width(10.dp))
-        Icon.Render(icon = Icon.Set.FolderOpen, size = Icon.Size.Size14, modifier = Modifier.clickable { })
+        Icon.Render(
+            icon = Icon.Set.FolderOpen,
+            size = Icon.Size.Size14,
+            modifier = Modifier.clickable { },
+            enabled = false
+        )
     }
 
     @Composable
     private fun SaveFileButton() {
         Spacer(Modifier.width(12.dp))
-        Icon.Render(icon = Icon.Set.FloppyDisk, size = Icon.Size.Size12, modifier = Modifier.clickable { })
+        Icon.Render(
+            icon = Icon.Set.FloppyDisk,
+            size = Icon.Size.Size12,
+            modifier = Modifier.clickable { },
+            enabled = false
+        )
     }
 
     @Composable
@@ -79,9 +89,11 @@ object ToolbarArea {
         Spacer(Modifier.width(8.dp))
         Icon.Render(
             icon = Icon.Set.Play,
-            color = Theme.colors.secondary,
             size = Icon.Size.Size16,
-            modifier = Modifier.clickable { })
+            color = Theme.colors.secondary,
+            modifier = Modifier.clickable { },
+            enabled = false
+        )
     }
 
     @Composable
