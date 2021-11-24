@@ -188,7 +188,7 @@ filegroup(
     name = "ci",
     data = [
         "@vaticle_dependencies//tool/checkstyle:test-coverage",
-        "@vaticle_dependencies//tool/release:createnotes:bin",
+        "@vaticle_dependencies//tool/release/createnotes:bin",
         "@vaticle_dependencies//tool/bazelrun:rbe",
     ],
 )
