@@ -30,13 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
-import com.vaticle.typedb.studio.common.Property.displayableOf
-import com.vaticle.typedb.studio.common.component.Form.Button
+import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.common.util.IconUtil
-import com.vaticle.typedb.studio.service.ConnectionService
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
 import com.vaticle.typedb.studio.service.ConnectionService.Status.DISCONNECTED
@@ -54,7 +52,7 @@ object ToolbarArea {
             modifier = Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OpenFileButton()
+            OpenProjectButton()
             SaveFileButton()
             PlayFileButton()
             Spacer(Modifier.weight(1f))
@@ -70,12 +68,11 @@ object ToolbarArea {
     }
 
     @Composable
-    private fun OpenFileButton() {
+    private fun OpenProjectButton() {
         Spacer(Modifier.width(10.dp))
         Icon.Render(
-            icon = Icon.Set.FolderOpen,
-            size = Icon.Size.Size14,
-            modifier = Modifier.clickable { }
+            icon = Icon.Code.FolderOpen,
+            modifier = Modifier.clickable { Service.project.toggleWindow() }
         )
     }
 
@@ -83,8 +80,7 @@ object ToolbarArea {
     private fun SaveFileButton() {
         Spacer(Modifier.width(12.dp))
         Icon.Render(
-            icon = Icon.Set.FloppyDisk,
-            size = Icon.Size.Size12,
+            icon = Icon.Code.FloppyDisk,
             modifier = Modifier.clickable { }
         )
     }
@@ -93,8 +89,7 @@ object ToolbarArea {
     private fun PlayFileButton() {
         Spacer(Modifier.width(8.dp))
         Icon.Render(
-            icon = Icon.Set.Play,
-            size = Icon.Size.Size16,
+            icon = Icon.Code.Play,
             color = Theme.colors.secondary,
             modifier = Modifier.clickable { }
         )
@@ -103,10 +98,10 @@ object ToolbarArea {
     @Composable
     private fun DatabaseDropdown() {
         Dropdown(
-            values = Service.connection.databaseList.map { displayableOf(it) },
-            selected = Service.connection.getDatabase()?.let { displayableOf(it) } ?: displayableOf(""),
+            values = Service.connection.databaseList,
+            selected = Service.connection.getDatabase() ?: "",
             placeholder = Label.SELECT_DATABASE,
-            onSelection = { Service.connection.setDatabase(it.displayName) },
+            onSelection = { Service.connection.setDatabase(it) },
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
             textInputModifier = Modifier.onFocusEvent { Service.connection.refreshDatabaseList() },
             enabled = Service.connection.isConnected()
@@ -115,7 +110,7 @@ object ToolbarArea {
 
     @Composable
     private fun ConnectionButton() {
-        Button(
+        TextButton(
             text = Label.CONNECT_TO_TYPEDB,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true }
@@ -124,7 +119,7 @@ object ToolbarArea {
 
     @Composable
     private fun ConnectionStatus() {
-        Button(
+        TextButton(
             text = (Service.connection.username?.let { "$it@" } ?: "" ) + Service.connection.address!!,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true }

@@ -26,19 +26,23 @@ object Property {
         val displayName: String
     }
 
-    enum class OS(override val displayName: String): Displayable {
+    enum class OS(override val displayName: String) : Displayable {
         WINDOWS("Windows"),
         MAC("MacOS"),
-        LINUX("Linux"),
+        LINUX("Linux");
+
+        override fun toString(): String {
+            return displayName
+        }
     }
 
-    enum class Server(override val displayName: String): Displayable {
+    enum class Server(override val displayName: String) : Displayable {
         TYPEDB("TypeDB"),
         TYPEDB_CLUSTER("TypeDB Cluster");
-    }
 
-    fun displayableOf(displayName: String): Displayable {
-        return object: Displayable { override val displayName = displayName }
+        override fun toString(): String {
+            return displayName
+        }
     }
 
     fun serverOf(displayName: String): Server {

@@ -19,7 +19,12 @@
 package com.vaticle.typedb.studio.connection
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,13 +33,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowSize
+import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
 import com.vaticle.typedb.studio.common.component.Form
-import com.vaticle.typedb.studio.common.component.Form.Button
+import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Form.Text
 import com.vaticle.typedb.studio.common.component.Form.TextInput
@@ -46,11 +55,10 @@ import com.vaticle.typedb.studio.service.Service
 
 object ConnectionWindow {
 
-    private val FORM_SPACING = 12.dp
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 340.dp
 
-    private object State {
+    private object FormState {
         // We keep this static to maintain the values through application lifetime,
         // and easily accessible to all functions in this object without being passed around
 
@@ -86,15 +94,15 @@ object ConnectionWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(FORM_SPACING)) {
+            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
                 Form.FieldGroup {
                     ServerFormField()
                     AddressFormField()
-                    if (State.server == TYPEDB_CLUSTER) {
+                    if (FormState.server == TYPEDB_CLUSTER) {
                         UsernameFormField()
                         PasswordFormField()
                         TLSEnabledFormField()
-                        if (State.tlsEnabled) CACertificateFormField()
+                        if (FormState.tlsEnabled) CACertificateFormField()
                     }
                     Spacer(Modifier.weight(1f))
                     Row(verticalAlignment = Alignment.Bottom) {
@@ -116,8 +124,8 @@ object ConnectionWindow {
         Form.Field(label = Label.SERVER) {
             Dropdown(
                 values = Property.Server.values().toList(),
-                selected = State.server,
-                onSelection = { State.server = it },
+                selected = FormState.server,
+                onSelection = { FormState.server = it },
                 enabled = Service.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -129,9 +137,9 @@ object ConnectionWindow {
     private fun AddressFormField() {
         Form.Field(label = Label.ADDRESS) {
             TextInput(
-                value = State.address,
+                value = FormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { State.address = it },
+                onValueChange = { FormState.address = it },
                 enabled = Service.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -143,9 +151,9 @@ object ConnectionWindow {
     private fun UsernameFormField() {
         Form.Field(label = Label.USERNAME) {
             TextInput(
-                value = State.username,
+                value = FormState.username,
                 placeholder = Label.USERNAME.lowercase(),
-                onValueChange = { State.username = it },
+                onValueChange = { FormState.username = it },
                 enabled = Service.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -157,9 +165,9 @@ object ConnectionWindow {
     private fun PasswordFormField() {
         Form.Field(label = Label.PASSWORD) {
             TextInput(
-                value = State.password,
+                value = FormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
-                onValueChange = { State.password = it },
+                onValueChange = { FormState.password = it },
                 enabled = Service.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
@@ -171,8 +179,8 @@ object ConnectionWindow {
     private fun TLSEnabledFormField() {
         Form.Field(label = Label.ENABLE_TLS) {
             Form.Checkbox(
-                checked = State.tlsEnabled,
-                onChange = { State.tlsEnabled = it }
+                checked = FormState.tlsEnabled,
+                onChange = { FormState.tlsEnabled = it }
             )
         }
     }
@@ -182,9 +190,9 @@ object ConnectionWindow {
     private fun CACertificateFormField() {
         Form.Field(label = Label.CA_CERTIFICATE) {
             TextInput(
-                value = State.caCertificate,
+                value = FormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                onValueChange = { State.caCertificate = it },
+                onValueChange = { FormState.caCertificate = it },
                 enabled = Service.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),
             )
@@ -206,24 +214,24 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        Button(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
-        Spacer(modifier = Modifier.width(FORM_SPACING))
-        Button(text = Label.CONNECT, onClick = { State.trySubmit() })
+        TextButton(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
+        Spacer(modifier = Modifier.width(Form.SPACING))
+        TextButton(text = Label.CONNECT, onClick = { FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        Button(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, color = Theme.colors.error2)
-        Spacer(modifier = Modifier.width(FORM_SPACING))
-        Button(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
+        TextButton(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, color = Theme.colors.error2)
+        Spacer(modifier = Modifier.width(Form.SPACING))
+        TextButton(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        Button(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
-        Spacer(modifier = Modifier.width(FORM_SPACING))
-        Button(text = Label.CONNECTING, onClick = {}, enabled = false)
+        TextButton(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
+        Spacer(modifier = Modifier.width(Form.SPACING))
+        TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }

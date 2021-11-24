@@ -80,8 +80,7 @@ object NotificationArea {
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
             )
             Icon.Render(
-                icon = Icon.Set.Cross,
-                size = Icon.Size.Size12,
+                icon = Icon.Code.Cross,
                 color = colorConfig.foreground,
                 modifier = Modifier
                     .padding(MESSAGE_PADDING)

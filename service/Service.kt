@@ -22,6 +22,6 @@ object Service {
 
     val connection = ConnectionService()
     val notifier = NotifierService()
-    val error = ErrorService()
+    val project = ProjectService()
 
 }

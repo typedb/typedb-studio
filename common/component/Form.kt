@@ -22,14 +22,32 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -39,7 +57,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
@@ -47,16 +70,18 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
-import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.common.theme.Theme
 import java.awt.event.KeyEvent.KEY_RELEASED
 
 object Form {
 
-    private const val LABEL_WEIGHT = 2f
+    val SPACING = 12.dp
+
+    private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
@@ -95,12 +120,39 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Button(
+    fun TextButton(
         text: String,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         color: Color = Theme.colors.onPrimary,
         enabled: Boolean = true
+    ) {
+        BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
+            Text(text, style = Theme.typography.body1, color = fadeable(color, !enabled))
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun IconButton(
+        icon: Icon.Code,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        color: Color = Theme.colors.onPrimary,
+        enabled: Boolean = true
+    ) {
+        BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
+            Icon.Render(icon = icon, color = color)
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun BoxButton(
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        enabled: Boolean = true,
+        content: @Composable BoxScope.() -> Unit
     ) {
         val focusManager = LocalFocusManager.current
         Box(
@@ -114,7 +166,7 @@ object Form {
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
         ) {
-            Text(text, style = Theme.typography.body1, color = fadeable(color, !enabled))
+            content()
         }
     }
 
@@ -157,10 +209,11 @@ object Form {
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
+        val borderBrush = SolidColor(fadeable(Theme.colors.surface2, !enabled))
         BasicTextField(
             modifier = modifier
                 .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface2, !enabled)), ROUNDED_RECTANGLE)
+                .border(width = BORDER_WIDTH, brush = borderBrush, shape = ROUNDED_RECTANGLE)
                 .pointerIcon(pointerHoverIcon) // TODO: #516
                 .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
             value = value,
@@ -209,21 +262,20 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun <T : Property.Displayable> Dropdown(
+    fun <T : Any> Dropdown(
         values: List<T>,
         selected: T,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
         enabled: Boolean = true,
+        dropdownMaxHeight: Dp? = null,
         modifier: Modifier = Modifier,
         textInputModifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
 
-        val dropdownIcon: @Composable () -> Unit = {
-            Icon.Render(icon = Icon.Set.CaretDown, size = Icon.Size.Size16, enabled = enabled)
-        }
+        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CaretDown, enabled = enabled) }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         val focusRequester = FocusRequester()
 
@@ -238,9 +290,11 @@ object Form {
         }
 
         val state = remember { State() }
+        var dropdownModifier = Modifier.background(Theme.colors.surface)
+        if (dropdownMaxHeight != null) dropdownModifier = dropdownModifier.requiredHeightIn(max = dropdownMaxHeight)
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             TextInput(
-                value = selected.displayName, onValueChange = {}, readOnly = true, placeholder = placeholder,
+                value = selected.toString(), onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
                 pointerHoverIcon = PointerIcon.Hand, modifier = textInputModifier
                     .fillMaxSize().focusable(enabled = enabled).focusRequester(focusRequester)
@@ -250,7 +304,7 @@ object Form {
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { state.expanded = false },
-                modifier = Modifier.background(Theme.colors.surface)
+                modifier = dropdownModifier
             ) {
                 val padding = PaddingValues(horizontal = CONTENT_PADDING)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
@@ -258,16 +312,16 @@ object Form {
                     onClick = {}, contentPadding = padding,
                     modifier = itemModifier.background(Theme.colors.surface)
                 ) {
-                    Text(value = "(${Label.NO_DATABASES})", style = textStyle)
+                    Text(value = "(${Label.NONE})", style = textStyle)
                 } else values.forEachIndexed { i, value ->
                     DropdownMenuItem(
                         onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                     ) {
-                        val isSelected = value.displayName == selected.displayName
+                        val isSelected = value == selected
                         val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface
-                        Text(value = value.displayName, style = textStyle, color = color)
+                        Text(value = value.toString(), style = textStyle, color = color)
                     }
                 }
             }

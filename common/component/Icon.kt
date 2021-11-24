@@ -48,31 +48,31 @@ object Icon {
         Size20(fontSize = 20.sp, fontFamily = BLUEPRINT_ICONS_20),
     }
 
-    enum class Set(charCode: UShort) {
+    enum class Code(charCode: UShort, val defaultSize: Size) {
         // these codes can be found in resources/icons/blueprint-icons.md
-        CaretUp(0x2303u),
-        CaretDown(0x2304u),
-        ChevronLeft(0xe694u),
-        ChevronRight(0xe695u),
-        Cog(0xe645u),
-        Cross(0x2717u),
-        DataLineage(0xe908u),
-        Database(0xe683u),
-        FloppyDisk(0xe6b7u),
-        FolderOpen(0xe651u),
-        Graph(0xe673u),
-        Heatmap(0xe614u),
-        HorizontalBarChartDesc(0xe71du),
-        Layout(0xe60cu),
-        LogOut(0xe64cu),
-        Minus(0x2212u),
-        Play(0xe6abu),
-        Plus(0x002bu),
-        SearchAround(0xe608u),
-        Shield(0xe7b2u),
-        Stop(0xe6aau),
-        Table(0xe667u),
-        TimelineBarChart(0xe620u);
+        CaretUp(0x2303u, Size.Size12),
+        CaretDown(0x2304u, Size.Size16),
+        ChevronLeft(0xe694u, Size.Size12),
+        ChevronRight(0xe695u, Size.Size12),
+        Cog(0xe645u, Size.Size12),
+        Cross(0x2717u, Size.Size12),
+        DataLineage(0xe908u, Size.Size12),
+        Database(0xe683u, Size.Size12),
+        FloppyDisk(0xe6b7u, Size.Size12),
+        FolderOpen(0xe651u, Size.Size14),
+        Graph(0xe673u, Size.Size12),
+        Heatmap(0xe614u, Size.Size12),
+        HorizontalBarChartDesc(0xe71du, Size.Size12),
+        Layout(0xe60cu, Size.Size12),
+        LogOut(0xe64cu, Size.Size12),
+        Minus(0x2212u, Size.Size12),
+        Play(0xe6abu, Size.Size16),
+        Plus(0x002bu, Size.Size12),
+        SearchAround(0xe608u, Size.Size12),
+        Shield(0xe7b2u, Size.Size12),
+        Stop(0xe6aau, Size.Size12),
+        Table(0xe667u, Size.Size12),
+        TimelineBarChart(0xe620u, Size.Size12);
 
         val charString: String = Char(charCode).toString()
     }
@@ -80,8 +80,8 @@ object Icon {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Render(
-        icon: Set,
-        size: Size = Size.Size12,
+        icon: Code,
+        size: Size = icon.defaultSize,
         color: Color = Theme.colors.icon,
         modifier: Modifier = Modifier,
         enabled: Boolean = true

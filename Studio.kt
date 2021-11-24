@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.connection.ConnectionWindow
 import com.vaticle.typedb.studio.navigator.NavigatorArea
 import com.vaticle.typedb.studio.notification.NotificationArea
 import com.vaticle.typedb.studio.page.PageArea
+import com.vaticle.typedb.studio.project.ProjectWindow
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.statusbar.StatusBarArea
 import com.vaticle.typedb.studio.toolbar.ToolbarArea
@@ -96,6 +97,7 @@ object Studio {
             NotificationArea.Layout()
         }
         if (Service.connection.showWindow) ConnectionWindow.Layout()
+        if (Service.project.showWindow) ProjectWindow.Layout()
     }
 
     @Composable
