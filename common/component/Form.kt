@@ -79,7 +79,7 @@ import java.awt.event.KeyEvent.KEY_RELEASED
 
 object Form {
 
-    val SPACING = 12.dp
+    val SPACING = 16.dp
 
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
@@ -279,7 +279,7 @@ object Form {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         val focusRequester = FocusRequester()
 
-        class State {
+        class DropdownState {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
@@ -289,7 +289,7 @@ object Form {
             fun mouseInTo(index: Int): Boolean { mouseIndex = index; return true }
         }
 
-        val state = remember { State() }
+        val state = remember { DropdownState() }
         var dropdownModifier = Modifier.background(Theme.colors.surface)
         if (dropdownMaxHeight != null) dropdownModifier = dropdownModifier.requiredHeightIn(max = dropdownMaxHeight)
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -318,6 +318,7 @@ object Form {
                         onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
+                            .pointerIcon(PointerIcon.Hand)
                     ) {
                         val isSelected = value == selected
                         val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface

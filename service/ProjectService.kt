@@ -24,7 +24,18 @@ import androidx.compose.runtime.setValue
 
 class ProjectService {
 
-    val pastDirectories: List<String> by mutableStateOf(listOf("a", "b", "c", "d", "e", "f", "g")) // TODO: initialise from user data
+    // TODO: initialise from user data
+    var pastDirectories: Set<String> by mutableStateOf(
+        setOf(
+            "/Users/haikalpribadi/Workspace/project-g",
+            "/Users/haikalpribadi/Workspace/project-f",
+            "/Users/haikalpribadi/Workspace/project-e",
+            "/Users/haikalpribadi/Workspace/project-d",
+            "/Users/haikalpribadi/Workspace/project-c",
+            "/Users/haikalpribadi/Workspace/project-b",
+            "/Users/haikalpribadi/Workspace/project-a"
+        )
+    )
     val currentDirectory: String? by mutableStateOf(null)
     var showWindow: Boolean by mutableStateOf(false)
 

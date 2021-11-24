@@ -50,12 +50,16 @@ import javax.swing.JFileChooser
 object ProjectWindow {
 
     private val WINDOW_WIDTH = 500.dp
-    private val WINDOW_HEIGHT = 250.dp
-    private val DROPDOWN_MAX_HEIGHT = 120.dp
+    private val WINDOW_HEIGHT = 140.dp
 
     class FormState(currentDirectory: String?) {
 
         var directory: String? by mutableStateOf(currentDirectory)
+
+        fun isValid(): Boolean {
+            return !directory.isNullOrBlank()
+        }
+
         fun tryOpen() {
 
         }
@@ -86,15 +90,15 @@ object ProjectWindow {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun SelectDirectoryField(formState: FormState) {
         Form.Field(label = Label.DIRECTORY) {
             Row {
-                Form.Dropdown(
-                    values = Service.project.pastDirectories,
-                    selected = formState.directory ?: "",
-                    onSelection = { formState.directory = it },
-                    dropdownMaxHeight = DROPDOWN_MAX_HEIGHT,
+                Form.TextInput(
+                    value = formState.directory ?: "",
+                    placeholder = Label.PATH_TO_PROJECT,
+                    onValueChange = { formState.directory = it },
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(Form.SPACING))
@@ -122,6 +126,6 @@ object ProjectWindow {
     private fun OpenProjectButtons(formState: FormState) {
         Form.TextButton(text = Label.CANCEL, onClick = { Service.project.showWindow = false })
         Spacer(modifier = Modifier.width(Form.SPACING))
-        Form.TextButton(text = Label.OPEN, onClick = { formState.tryOpen() })
+        Form.TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.tryOpen() })
     }
 }

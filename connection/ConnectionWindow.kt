@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
+import com.vaticle.typedb.studio.common.Property.serverOf
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
@@ -68,6 +69,13 @@ object ConnectionWindow {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(false) // TODO: implement form input
         var caCertificate: String by mutableStateOf("")
+
+        fun isValid(): Boolean {
+            return when (server) {
+                TYPEDB -> !address.isBlank()
+                TYPEDB_CLUSTER -> !(address.isBlank() || username.isBlank() || password.isBlank())
+            }
+        }
 
         fun trySubmit() {
             when (server) {
@@ -216,7 +224,7 @@ object ConnectionWindow {
     private fun DisconnectedFormButtons() {
         TextButton(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
         Spacer(modifier = Modifier.width(Form.SPACING))
-        TextButton(text = Label.CONNECT, onClick = { FormState.trySubmit() })
+        TextButton(text = Label.CONNECT, enabled = FormState.isValid(), onClick = { FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
