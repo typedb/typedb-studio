@@ -31,6 +31,9 @@ import com.vaticle.typedb.studio.common.notification.Message.Connection.Companio
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNEXPECTED_ERROR
 import java.nio.file.Path
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class ConnectionService {
@@ -97,19 +100,22 @@ class ConnectionService {
         tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun tryConnect(newAddres: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
-        status = Status.CONNECTING
-        try {
-            client = clientConstructor()
-            address = newAddres
-            username = newUsername
-            status = Status.CONNECTED
-        } catch (e: TypeDBClientException) {
-            status = Status.DISCONNECTED
-            Service.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
-        } catch (e: Exception) {
-            status = Status.DISCONNECTED
-            Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
+        GlobalScope.launch { // We use GlobalScope because ConnectionService lifetime is also global
+            status = Status.CONNECTING
+            try {
+                client = clientConstructor()
+                address = newAddres
+                username = newUsername
+                status = Status.CONNECTED
+            } catch (e: TypeDBClientException) {
+                status = Status.DISCONNECTED
+                Service.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
+            } catch (e: Exception) {
+                status = Status.DISCONNECTED
+                Service.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
+            }
         }
     }
 

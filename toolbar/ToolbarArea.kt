@@ -36,6 +36,10 @@ import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.common.util.IconUtil
+import com.vaticle.typedb.studio.service.ConnectionService
+import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
+import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
+import com.vaticle.typedb.studio.service.ConnectionService.Status.DISCONNECTED
 import com.vaticle.typedb.studio.service.Service
 
 object ToolbarArea {
@@ -56,8 +60,11 @@ object ToolbarArea {
             Spacer(Modifier.weight(1f))
             DatabaseDropdown()
             Spacer(Modifier.width(4.dp))
-            if (Service.connection.isDisconnected()) ConnectionButton()
-            else ConnectionStatus()
+            when (Service.connection.status) {
+                DISCONNECTED -> ConnectionButton()
+                CONNECTING -> ConnectionButton() // TODO: replace with connecting status
+                CONNECTED -> ConnectionStatus()
+            }
             DatabaseIcon()
         }
     }

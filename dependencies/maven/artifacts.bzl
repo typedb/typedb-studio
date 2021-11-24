@@ -33,6 +33,7 @@ artifacts = [
     "org.jetbrains.compose.ui:ui-unit-desktop",
     "org.jetbrains.kotlin:kotlin-test",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
     "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64",
     "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",

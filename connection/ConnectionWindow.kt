@@ -197,7 +197,8 @@ object ConnectionWindow {
         Text(
             value = statusText, color = when (Service.connection.status) {
                 DISCONNECTED -> Theme.colors.error2
-                CONNECTING, CONNECTED -> Theme.colors.secondary
+                CONNECTING -> Theme.colors.quaternary
+                CONNECTED -> Theme.colors.secondary
             }
         )
     }
