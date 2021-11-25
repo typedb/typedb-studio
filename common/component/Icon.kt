@@ -51,6 +51,7 @@ object Icon {
         FloppyDisk(0xf0c7u, 14.sp),
         FolderOpen(0xf07cu),
         Play(0xf04bu, offset = Offset((-1).dp, 0.dp)),
+        Stop(0xf04du, 14.sp),
         XMark(0xf00du);
 
         val unicode: String = Char(hex).toString()
