@@ -43,18 +43,27 @@ object Icon {
 
     data class Offset(val x: Dp, val y: Dp)
 
-    enum class Code(hex: UShort, val defaultSize: TextUnit = ICON_DEFAULT_SIZE, val offset: Offset = Offset(0.dp, 0.dp)) {
+    enum class Code(
+        private val hexcode: UShort,
+        val defaultSize: TextUnit = ICON_DEFAULT_SIZE,
+        val offset: Offset = Offset(0.dp, 0.dp)
+    ) {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
-        CaretDown(0xf0d7u),
-        Database(0xf1c0u),
-        FloppyDisk(0xf0c7u, 14.sp),
-        FolderOpen(0xf07cu),
-        Play(0xf04bu, offset = Offset((-1).dp, 0.dp)),
-        Stop(0xf04du, 14.sp),
-        XMark(0xf00du);
+        CARET_DOWN(0xf0d7u),
+        DATABASE(0xf1c0u),
+        DIAGRAM_PROJECT(0xf542u),
+        FLOPPY_DISK(0xf0c7u, 14.sp),
+        FOLDER_OPEN(0xf07cu),
+        FOLDER_BLANK(0xe185u),
+        PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
+        SITEMAP(0xf0e8u),
+        STOP(0xf04du, 14.sp),
+        USER(0xf007u),
+        USER_GROUP(0xf500u),
+        XMARK(0xf00du);
 
-        val unicode: String = Char(hex).toString()
+        val unicode: String = Char(hexcode).toString()
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

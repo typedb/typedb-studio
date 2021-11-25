@@ -22,27 +22,30 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
+import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.component.Separator
 
 object NavigatorArea {
 
     private val AREA_WIDTH = 300.dp
-    private val TAB_HEIGHT = 26.dp
+    private val TAB_HEIGHT = 22.dp
     private val TAB_WIDTH = 100.dp
     private val TAB_OFFSET = (-40).dp
 
@@ -50,11 +53,11 @@ object NavigatorArea {
     fun Layout() {
         Row(Modifier.width(AREA_WIDTH)) {
             Column(Modifier.width(TAB_HEIGHT), verticalArrangement = Arrangement.Top) {
-                Tab(Label.PROJECT)
-                Tab(Label.TYPES)
-                Tab(Label.RULES)
-                Tab(Label.USERS)
-                Tab(Label.ROLES)
+                Tab(Icon.Code.FOLDER_BLANK, Label.PROJECT)
+                Tab(Icon.Code.SITEMAP, Label.TYPES)
+                Tab(Icon.Code.DIAGRAM_PROJECT, Label.RULES)
+                Tab(Icon.Code.USER, Label.USERS)
+                Tab(Icon.Code.USER_GROUP, Label.ROLES)
             }
             Separator.Vertical()
             Column(Modifier.weight(1f)) {
@@ -71,19 +74,20 @@ object NavigatorArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(text: String) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(TAB_WIDTH)
-                .pointerIcon(PointerIcon.Hand)
-        ) {
-            Form.Text(
-                value = text, align = TextAlign.Center, modifier = Modifier
-                    .requiredWidth(TAB_WIDTH)
+    private fun Tab(icon: Icon.Code, text: String) {
+        Box(modifier = Modifier.fillMaxWidth().height(TAB_WIDTH).pointerIcon(PointerIcon.Hand)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.requiredWidth(TAB_WIDTH)
                     .rotate(-90f)
                     .offset(x = TAB_OFFSET)
-            )
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Icon.Render(icon = icon, size = 11.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Form.Text(value = text)
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
         Separator.Horizontal()
     }

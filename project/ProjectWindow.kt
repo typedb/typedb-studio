@@ -99,7 +99,7 @@ object ProjectWindow {
                     modifier = Modifier.weight(1f),
                 )
                 Form.ComponentSpacer()
-                Form.IconButton(icon = Icon.Code.FolderOpen, onClick = { launchFileDialog(formState) })
+                Form.IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState) })
             }
         }
     }

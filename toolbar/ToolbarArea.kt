@@ -53,13 +53,13 @@ object ToolbarArea {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FolderOpen, onClick = { Service.project.toggleWindow() })
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { Service.project.toggleWindow() })
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FloppyDisk, onClick = {})
+            ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.Play, color = Theme.colors.secondary, onClick = {})
+            ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.Stop, color = Theme.colors.error, onClick = {})
+            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
             Spacer(Modifier.weight(1f))
             DatabaseDropdown()
             ToolbarSpace()
@@ -108,7 +108,7 @@ object ToolbarArea {
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true },
-            trailingIcon = Icon.Code.Database,
+            trailingIcon = Icon.Code.DATABASE,
         )
     }
 }

@@ -80,7 +80,7 @@ object NotificationArea {
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
             )
             Icon.Render(
-                icon = Icon.Code.XMark,
+                icon = Icon.Code.XMARK,
                 color = colorConfig.foreground,
                 modifier = Modifier
                     .padding(MESSAGE_PADDING)

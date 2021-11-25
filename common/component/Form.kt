@@ -129,7 +129,13 @@ object Form {
         align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier
     ) {
-        androidx.compose.material.Text(text = value, style = style, color = color, modifier = modifier, textAlign = align)
+        androidx.compose.material.Text(
+            text = value,
+            style = style,
+            color = color,
+            modifier = modifier,
+            textAlign = align,
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -185,7 +191,8 @@ object Form {
     ) {
         val focusManager = LocalFocusManager.current
         var hovered by remember { mutableStateOf(false) }
-        @Composable fun bgColor() = when (enabled) {
+        @Composable
+        fun bgColor() = when (enabled) {
             true -> if (hovered) Theme.colors.surface2 else Theme.colors.primary
             false -> Theme.colors.primary
         }
@@ -311,7 +318,7 @@ object Form {
         leadingIcon: @Composable (() -> Unit)? = null
     ) {
 
-        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CaretDown, enabled = enabled) }
+        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CARET_DOWN, enabled = enabled) }
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         val focusRequester = FocusRequester()
 
