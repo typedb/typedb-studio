@@ -233,7 +233,7 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        TextButton(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, color = Theme.colors.error2)
+        TextButton(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, textColor = Theme.colors.error2)
         Spacer(modifier = Modifier.width(Form.SPACING))
         TextButton(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
     }

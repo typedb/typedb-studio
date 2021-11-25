@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
@@ -126,11 +127,19 @@ object Form {
         text: String,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
-        color: Color = Theme.colors.onPrimary,
+        textColor: Color = Theme.colors.onPrimary,
+        trailingIcon: Icon.Code? = null,
+        iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true
     ) {
         BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
-            Text(text, style = Theme.typography.body1, color = fadeable(color, !enabled))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text, style = Theme.typography.body1, color = fadeable(textColor, !enabled))
+                trailingIcon?.let {
+                    Spacer(Modifier.width(CONTENT_PADDING))
+                    Icon.Render(icon = it, color = iconColor)
+                }
+            }
         }
     }
 

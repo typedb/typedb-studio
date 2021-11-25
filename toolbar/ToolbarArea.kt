@@ -31,8 +31,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
-import com.vaticle.typedb.studio.common.component.Form.Dropdown
-import com.vaticle.typedb.studio.common.component.Form.TextButton
+import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
@@ -43,7 +42,7 @@ import com.vaticle.typedb.studio.service.Service
 object ToolbarArea {
 
     private val TOOLBAR_HEIGHT = 30.dp
-    private val TOOLBAR_COMPONENT_HEIGHT = 25.dp
+    private val TOOLBAR_COMPONENT_HEIGHT = 24.dp
     private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
     @Composable
@@ -57,19 +56,20 @@ object ToolbarArea {
             PlayFileButton()
             Spacer(Modifier.weight(1f))
             DatabaseDropdown()
-            Spacer(Modifier.width(4.dp))
-            when (Service.connection.status) {
-                DISCONNECTED -> ConnectionButton()
-                CONNECTING -> ConnectionButton() // TODO: replace with connecting status
-                CONNECTED -> ConnectionStatus()
-            }
-            DatabaseIcon()
+            ToolbarSpace()
+            ConnectionButtonOrStatus()
+            ToolbarSpace()
         }
     }
 
     @Composable
-    private fun OpenProjectButton() {
+    private fun ToolbarSpace() {
         Spacer(Modifier.width(10.dp))
+    }
+
+    @Composable
+    private fun OpenProjectButton() {
+        ToolbarSpace()
         Icon.Render(
             icon = Icon.Code.FolderOpen,
             modifier = Modifier.clickable { Service.project.toggleWindow() }
@@ -78,7 +78,7 @@ object ToolbarArea {
 
     @Composable
     private fun SaveFileButton() {
-        Spacer(Modifier.width(10.dp))
+        ToolbarSpace()
         Icon.Render(
             icon = Icon.Code.FloppyDisk,
             size = 14.sp,
@@ -88,7 +88,7 @@ object ToolbarArea {
 
     @Composable
     private fun PlayFileButton() {
-        Spacer(Modifier.width(10.dp))
+        ToolbarSpace()
         Icon.Render(
             icon = Icon.Code.Play,
             color = Theme.colors.secondary,
@@ -98,7 +98,7 @@ object ToolbarArea {
 
     @Composable
     private fun DatabaseDropdown() {
-        Dropdown(
+        Form.Dropdown(
             values = Service.connection.databaseList,
             selected = Service.connection.getDatabase() ?: "",
             placeholder = Label.SELECT_DATABASE,
@@ -110,31 +110,31 @@ object ToolbarArea {
     }
 
     @Composable
+    private fun ConnectionButtonOrStatus() {
+        when (Service.connection.status) {
+            DISCONNECTED -> ConnectionButton()
+            CONNECTING -> ConnectionButton() // TODO: replace with connecting status
+            CONNECTED -> ConnectionStatus()
+        }
+    }
+
+    @Composable
     private fun ConnectionButton() {
-        TextButton(
+        Form.TextButton(
             text = Label.CONNECT_TO_TYPEDB,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
-            onClick = { Service.connection.showWindow = true }
+            onClick = { Service.connection.showWindow = true },
+            trailingIcon = Icon.Code.Database,
         )
     }
 
     @Composable
     private fun ConnectionStatus() {
-        TextButton(
+        Form.TextButton(
             text = (Service.connection.username?.let { "$it@" } ?: "") + Service.connection.address!!,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
-            onClick = { Service.connection.showWindow = true }
+            onClick = { Service.connection.showWindow = true },
+            trailingIcon = Icon.Code.Database,
         )
-    }
-
-
-    @Composable
-    private fun DatabaseIcon() {
-        Spacer(Modifier.width(10.dp))
-        Icon.Render(
-            icon = Icon.Code.Database,
-            modifier = Modifier.clickable { }
-        )
-        Spacer(Modifier.width(10.dp))
     }
 }
