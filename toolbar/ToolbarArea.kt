@@ -18,18 +18,18 @@
 
 package com.vaticle.typedb.studio.toolbar
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
@@ -41,8 +41,8 @@ import com.vaticle.typedb.studio.service.Service
 
 object ToolbarArea {
 
-    private val TOOLBAR_HEIGHT = 30.dp
-    private val TOOLBAR_COMPONENT_HEIGHT = 24.dp
+    private val TOOLBAR_HEIGHT = 32.dp
+    private val COMPONENT_HEIGHT = 24.dp
     private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
     @Composable
@@ -51,49 +51,28 @@ object ToolbarArea {
             modifier = Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OpenProjectButton()
-            SaveFileButton()
-            PlayFileButton()
+            ToolbarSpace()
+            ToolbarButton(icon = Icon.Code.FolderOpen, onClick = { Service.project.toggleWindow() })
+            ToolbarSpace()
+            ToolbarButton(icon = Icon.Code.FloppyDisk, onClick = {})
+            ToolbarSpace()
+            ToolbarButton(icon = Icon.Code.Play, color = Theme.colors.secondary, onClick = {})
             Spacer(Modifier.weight(1f))
             DatabaseDropdown()
             ToolbarSpace()
-            ConnectionButtonOrStatus()
+            ConnectionButton()
             ToolbarSpace()
         }
     }
 
     @Composable
     private fun ToolbarSpace() {
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(4.dp))
     }
 
     @Composable
-    private fun OpenProjectButton() {
-        ToolbarSpace()
-        Icon.Render(
-            icon = Icon.Code.FolderOpen,
-            modifier = Modifier.clickable { Service.project.toggleWindow() }
-        )
-    }
-
-    @Composable
-    private fun SaveFileButton() {
-        ToolbarSpace()
-        Icon.Render(
-            icon = Icon.Code.FloppyDisk,
-            size = 14.sp,
-            modifier = Modifier.clickable { }
-        )
-    }
-
-    @Composable
-    private fun PlayFileButton() {
-        ToolbarSpace()
-        Icon.Render(
-            icon = Icon.Code.Play,
-            color = Theme.colors.secondary,
-            modifier = Modifier.clickable { }
-        )
+    private fun ToolbarButton(icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon) {
+        Form.IconButton(icon = icon, onClick = onClick, color = color, modifier = Modifier.size(COMPONENT_HEIGHT))
     }
 
     @Composable
@@ -103,14 +82,14 @@ object ToolbarArea {
             selected = Service.connection.getDatabase() ?: "",
             placeholder = Label.SELECT_DATABASE,
             onSelection = { Service.connection.setDatabase(it) },
-            modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
+            modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
             textInputModifier = Modifier.onFocusChanged { if (it.isFocused) Service.connection.refreshDatabaseList() },
             enabled = Service.connection.isConnected()
         )
     }
 
     @Composable
-    private fun ConnectionButtonOrStatus() {
+    private fun ConnectionButton() {
         when (Service.connection.status) {
             DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
             CONNECTING -> ConnectionButton(Label.CONNECTING)
@@ -124,7 +103,7 @@ object ToolbarArea {
     private fun ConnectionButton(text: String) {
         Form.TextButton(
             text = text,
-            modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
+            modifier = Modifier.height(COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true },
             trailingIcon = Icon.Code.Database,
         )

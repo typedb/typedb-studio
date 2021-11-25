@@ -69,7 +69,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
@@ -105,7 +104,7 @@ object Form {
         val focusManager = LocalFocusManager.current
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = Modifier.onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit)}
+            modifier = Modifier.onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit) }
         ) {
             content()
         }
@@ -133,7 +132,10 @@ object Form {
         enabled: Boolean = true
     ) {
         BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = CONTENT_PADDING)
+            ) {
                 Text(text, style = Theme.typography.body1, color = fadeable(textColor, !enabled))
                 trailingIcon?.let {
                     Spacer(Modifier.width(CONTENT_PADDING))
@@ -152,7 +154,11 @@ object Form {
         color: Color = Theme.colors.icon,
         enabled: Boolean = true
     ) {
-        BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
+        BoxButton(
+            onClick = onClick,
+            modifier = modifier.size(FIELD_HEIGHT),
+            enabled = enabled
+        ) {
             Icon.Render(icon = icon, color = color)
         }
     }
@@ -171,7 +177,6 @@ object Form {
             modifier = modifier
                 .height(FIELD_HEIGHT)
                 .background(fadeable(Theme.colors.primary, !enabled), ROUNDED_RECTANGLE)
-                .padding(horizontal = CONTENT_PADDING)
                 .focusable(enabled = enabled)
                 .pointerIcon(icon = PointerIcon.Hand) // TODO: #516
                 .clickable(enabled = enabled) { onClick() }

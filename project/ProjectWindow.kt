@@ -83,7 +83,7 @@ object ProjectWindow {
             )
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
-                Form.Content (onSubmit = { formState.trySubmitIfValid() }) {
+                Form.Content(onSubmit = { formState.trySubmitIfValid() }) {
                     SelectDirectoryField(formState)
                     Spacer(Modifier.weight(1f))
                     Row(verticalAlignment = Alignment.Bottom) {
