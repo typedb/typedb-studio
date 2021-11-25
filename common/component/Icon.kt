@@ -80,10 +80,7 @@ object Icon {
             color = fadeable(color, !enabled),
             fontSize = size,
             fontFamily = FONT_AWESOME,
-            modifier = modifier
-                .pointerIcon(PointerIcon.Hand)
-                .offset(icon.offset.x, icon.offset.y)
-                .focusable(true)
+            modifier = modifier.offset(icon.offset.x, icon.offset.y)
         )
     }
 }

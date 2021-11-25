@@ -18,17 +18,23 @@
 
 package com.vaticle.typedb.studio.navigator
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -41,32 +47,67 @@ import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.component.Separator
+import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.PROJECT
+import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.ROLES
+import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.RULES
+import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.TYPES
+import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.USERS
 
 object NavigatorArea {
 
     private val AREA_WIDTH = 300.dp
-    private val TAB_HEIGHT = 22.dp
-    private val TAB_WIDTH = 100.dp
+    private val SIDE_TAB_WIDTH = 22.dp
+    private val SIDE_TAB_HEIGHT = 100.dp
+    private val ICON_SIZE = 10.sp
+    private val PANEL_BAR_HEIGHT = 26.dp
+    private val PANEL_BAR_SPACING = 6.dp
     private val TAB_OFFSET = (-40).dp
+
+    private enum class NavigatorType(val label: String, val icon: Icon.Code) {
+        PROJECT(Label.PROJECT, Icon.Code.FOLDER_BLANK),
+        TYPES(Label.TYPES, Icon.Code.SITEMAP),
+        RULES(Label.RULES, Icon.Code.DIAGRAM_PROJECT),
+        USERS(Label.USERS, Icon.Code.USER),
+        ROLES(Label.ROLES, Icon.Code.USER_GROUP)
+    }
+
+    private class NavigatorState(val type: NavigatorType) {
+        var isOpen: Boolean by mutableStateOf(true)
+        val icon; get() = type.icon
+        val label; get() = type.label
+
+        fun toggle() {
+            isOpen = !isOpen
+        }
+    }
+
+    private class AreaState {
+        val navigators = linkedMapOf(
+            PROJECT to NavigatorState(PROJECT),
+            TYPES to NavigatorState(TYPES),
+            RULES to NavigatorState(RULES),
+            USERS to NavigatorState(USERS),
+            ROLES to NavigatorState(ROLES)
+        )
+    }
 
     @Composable
     fun Layout() {
+        val areaState = remember { AreaState() }
         Row(Modifier.width(AREA_WIDTH)) {
-            Column(Modifier.width(TAB_HEIGHT), verticalArrangement = Arrangement.Top) {
-                Tab(Icon.Code.FOLDER_BLANK, Label.PROJECT)
-                Tab(Icon.Code.SITEMAP, Label.TYPES)
-                Tab(Icon.Code.DIAGRAM_PROJECT, Label.RULES)
-                Tab(Icon.Code.USER, Label.USERS)
-                Tab(Icon.Code.USER_GROUP, Label.ROLES)
+            Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
+                areaState.navigators.values.forEach { Tab(it) }
             }
             Separator.Vertical()
             Column(Modifier.weight(1f)) {
-                val panels = arrayOf(1, 2, 3)
-                for ((i, panel) in panels.withIndex()) {
-                    if (i > 0) Separator.Horizontal()
-                    Row(Modifier.fillMaxWidth().weight(1f)) {
+                val openNavigators = areaState.navigators.values.filter { it.isOpen }
+                openNavigators.forEachIndexed { i, navigator ->
+                    Box(Modifier.fillMaxWidth().weight(1f)) {
+                        Panel(navigator) {
 
+                        }
                     }
+                    if (i < openNavigators.size - 1) Separator.Horizontal()
                 }
             }
         }
@@ -74,21 +115,59 @@ object NavigatorArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(icon: Icon.Code, text: String) {
-        Box(modifier = Modifier.fillMaxWidth().height(TAB_WIDTH).pointerIcon(PointerIcon.Hand)) {
+    private fun Tab(navigator: NavigatorState) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(SIDE_TAB_HEIGHT)
+                .pointerIcon(PointerIcon.Hand)
+                .clickable { navigator.toggle() }
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.requiredWidth(TAB_WIDTH)
+                modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
                     .rotate(-90f)
                     .offset(x = TAB_OFFSET)
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                Icon.Render(icon = icon, size = 11.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Form.Text(value = text)
+                Icon.Render(icon = navigator.icon, size = ICON_SIZE)
+                Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
+                Form.Text(value = navigator.label)
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
         Separator.Horizontal()
+    }
+
+    @Composable
+    private fun Panel(navigator: NavigatorState, content: @Composable () -> Unit) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            PanelTitle(navigator)
+            Separator.Horizontal()
+            Box(modifier = Modifier.weight(1f)) {
+                content()
+            }
+        }
+    }
+
+    @Composable
+    private fun PanelTitle(navigator: NavigatorState) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PanelBarSpace()
+            Icon.Render(icon = navigator.icon)
+            PanelBarSpace()
+            Form.Text(value = navigator.label)
+            Spacer(Modifier.weight(1f))
+            Icon.Render(icon = Icon.Code.XMARK, size = ICON_SIZE, modifier = Modifier.clickable { navigator.toggle() })
+            PanelBarSpace()
+        }
+    }
+
+    @Composable
+    private fun PanelBarSpace() {
+        Spacer(Modifier.width(PANEL_BAR_SPACING))
     }
 }

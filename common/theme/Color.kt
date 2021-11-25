@@ -65,7 +65,7 @@ object Color {
         val Yellow2 = Color(0xFFFFE4A7)
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
-        val White = Color.White
+        val White = Color(0xFFd5ccff)
     }
 
     object Themes {
