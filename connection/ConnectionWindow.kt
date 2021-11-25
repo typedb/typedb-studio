@@ -181,7 +181,8 @@ object ConnectionWindow {
         Form.Field(label = Label.ENABLE_TLS) {
             Form.Checkbox(
                 checked = FormState.tlsEnabled,
-                onChange = { FormState.tlsEnabled = it }
+                onChange = { FormState.tlsEnabled = it },
+                enabled = Service.connection.isDisconnected(),
             )
         }
     }

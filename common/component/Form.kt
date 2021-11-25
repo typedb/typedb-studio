@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
@@ -125,9 +126,10 @@ object Form {
         value: String,
         style: TextStyle = Theme.typography.body1,
         color: Color = Theme.colors.onPrimary,
+        align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier
     ) {
-        androidx.compose.material.Text(text = value, style = style, color = color, modifier = modifier)
+        androidx.compose.material.Text(text = value, style = style, color = color, modifier = modifier, textAlign = align)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

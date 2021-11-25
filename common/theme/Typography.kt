@@ -32,6 +32,12 @@ import java.awt.Font
 
 object Typography {
 
+    private const val TITILLIUM_WEB_REGULAR = "fonts/titilliumweb/TitilliumWeb-Regular.ttf"
+    private const val TITILLIUM_WEB_SEMI_BOLD = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
+    private const val UBUNTU_MONO_REGULAR = "fonts/ubuntumono/UbuntuMono-Regular.ttf"
+    private const val DEFAULT_MEDIUM_FONT_SIZE = 13
+    private const val DEFAULT_SMALL_FONT_SIZE = 11
+
     @Stable
     class Theme(
         variableWidthFontFamily: FontFamily, fixedWidthFontFamily: FontFamily,
@@ -43,12 +49,6 @@ object Typography {
         val code2 = TextStyle(fontSize = smallSize.sp, fontFamily = fixedWidthFontFamily)
     }
 
-    private const val TITILLIUM_WEB_REGULAR = "fonts/titilliumweb/TitilliumWeb-Regular.ttf"
-    private const val TITILLIUM_WEB_SEMI_BOLD = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
-    private const val UBUNTU_MONO_REGULAR = "fonts/ubuntumono/UbuntuMono-Regular.ttf"
-    private const val DEFAULT_MEDIUM_FONT_SIZE = 13
-
-    private const val DEFAULT_SMALL_FONT_SIZE = 11
     private val UBUNTU_MONO_FAMILY = FontFamily(
         Font(UBUNTU_MONO_REGULAR, FontWeight.Normal, FontStyle.Normal)
     )
