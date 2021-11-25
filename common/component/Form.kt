@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -268,11 +267,10 @@ object Form {
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
         enabled: Boolean = true,
-        dropdownMaxHeight: Dp? = null,
         modifier: Modifier = Modifier,
         textInputModifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
-        leadingIcon: (@Composable () -> Unit)? = null
+        leadingIcon: @Composable() (() -> Unit)? = null
     ) {
 
         val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CaretDown, enabled = enabled) }
@@ -290,8 +288,6 @@ object Form {
         }
 
         val state = remember { DropdownState() }
-        var dropdownModifier = Modifier.background(Theme.colors.surface)
-        if (dropdownMaxHeight != null) dropdownModifier = dropdownModifier.requiredHeightIn(max = dropdownMaxHeight)
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             TextInput(
                 value = selected.toString(), onValueChange = {}, readOnly = true, placeholder = placeholder,
@@ -304,7 +300,7 @@ object Form {
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { state.expanded = false },
-                modifier = dropdownModifier
+                modifier = Modifier.background(Theme.colors.surface)
             ) {
                 val padding = PaddingValues(horizontal = CONTENT_PADDING)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)

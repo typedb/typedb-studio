@@ -42,7 +42,6 @@ import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
-import com.vaticle.typedb.studio.common.Property.serverOf
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
