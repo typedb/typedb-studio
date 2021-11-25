@@ -37,13 +37,13 @@ interface Error {
     companion object {
 
         fun fromUser(message: Message, vararg params: Any): User {
-            val messageStr = message.message(params)
+            val messageStr = message.message(*params)
             assert(!messageStr.contains("%s"))
             return User(message.code(), messageStr)
         }
 
         fun fromSystem(cause: Throwable, message: Message, vararg params: Any): System {
-            val messageStr = message.message(params)
+            val messageStr = message.message(*params)
             assert(!messageStr.contains("%s"))
             return System(message.code(), messageStr, cause)
         }

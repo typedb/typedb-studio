@@ -33,15 +33,16 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
          */
         fun loadClasses() {
             Connection
+            Project
         }
     }
 
     class Connection(codeNumber: Int, messageBody: String) :
-        Message(codePrefix, codeNumber, messagePrefix, messageBody) {
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
 
         companion object {
-            private val codePrefix = "CON"
-            private val messagePrefix = "TypeDB Connection Issue"
+            private const val CODE_PREFIX = "CON"
+            private const val MESSAGE_PREFIX = "TypeDB Connection Issue"
 
             val UNEXPECTED_ERROR =
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
@@ -49,6 +50,20 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(2, "Unable to connect to TypeDB server with the provided address and credentials.")
             val UNABLE_CREATE_SESSION =
                 Connection(3, "Unable to establish session to database '%s'.")
+        }
+    }
+
+    class Project(codeNumber: Int, messageBody: String) :
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
+
+        companion object {
+            private const val CODE_PREFIX = "PRJ"
+            private const val MESSAGE_PREFIX = "TypeDB Project Issue"
+
+            val PATH_NOT_EXIST =
+                Project(1, "Directory path '%s' does not exist.")
+            val PATH_NOT_READABLE =
+                Project(2, "Directory path '%s' is not readable.")
         }
     }
 }

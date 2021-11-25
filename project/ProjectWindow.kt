@@ -60,14 +60,15 @@ object ProjectWindow {
             return !directory.isNullOrBlank()
         }
 
-        fun tryOpen() {
-
+        fun trySubmit() {
+            assert(!directory.isNullOrBlank())
+            Service.project.tryOpen(directory!!)
         }
     }
 
     @Composable
     fun Layout() {
-        var formState = remember { FormState(Service.project.currentDirectory) }
+        val formState = remember { FormState(Service.project.currentPath?.toString()) }
         Window(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { Service.project.showWindow = false },
@@ -126,6 +127,6 @@ object ProjectWindow {
     private fun OpenProjectButtons(formState: FormState) {
         Form.TextButton(text = Label.CANCEL, onClick = { Service.project.showWindow = false })
         Spacer(modifier = Modifier.width(Form.SPACING))
-        Form.TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.tryOpen() })
+        Form.TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }
 }

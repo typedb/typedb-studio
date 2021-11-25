@@ -21,25 +21,37 @@ package com.vaticle.typedb.studio.service
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.common.notification.Error
+import com.vaticle.typedb.studio.common.notification.Message.Project.Companion.PATH_NOT_EXIST
+import com.vaticle.typedb.studio.common.notification.Message.Project.Companion.PATH_NOT_READABLE
+import java.nio.file.Path
+import kotlin.io.path.isReadable
+import kotlin.io.path.notExists
+import mu.KotlinLogging
 
 class ProjectService {
 
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
+
     // TODO: initialise from user data
-    var pastDirectories: Set<String> by mutableStateOf(
-        setOf(
-            "/Users/haikalpribadi/Workspace/project-g",
-            "/Users/haikalpribadi/Workspace/project-f",
-            "/Users/haikalpribadi/Workspace/project-e",
-            "/Users/haikalpribadi/Workspace/project-d",
-            "/Users/haikalpribadi/Workspace/project-c",
-            "/Users/haikalpribadi/Workspace/project-b",
-            "/Users/haikalpribadi/Workspace/project-a"
-        )
-    )
-    val currentDirectory: String? by mutableStateOf(null)
+    var pastPaths: Set<Path> by mutableStateOf(emptySet())
+    var currentPath: Path? by mutableStateOf(null)
     var showWindow: Boolean by mutableStateOf(false)
 
     fun toggleWindow() {
         showWindow = !showWindow
+    }
+
+    fun tryOpen(directory: String) {
+        val path = Path.of(directory)
+        if (path.notExists()) Service.notifier.userError(Error.fromUser(PATH_NOT_EXIST, directory), LOGGER)
+        else if (!path.isReadable()) Service.notifier.userError(Error.fromUser(PATH_NOT_READABLE, directory), LOGGER)
+        else {
+            currentPath = path
+            pastPaths = pastPaths.plus(path)
+            showWindow = false
+        }
     }
 }
