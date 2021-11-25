@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.service.Service
 object ToolbarArea {
 
     private val TOOLBAR_HEIGHT = 32.dp
+    private val TOOLBAR_SPACING = 4.dp
     private val COMPONENT_HEIGHT = 24.dp
     private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
@@ -67,7 +68,7 @@ object ToolbarArea {
 
     @Composable
     private fun ToolbarSpace() {
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(TOOLBAR_SPACING))
     }
 
     @Composable

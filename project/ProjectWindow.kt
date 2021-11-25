@@ -18,13 +18,8 @@
 
 package com.vaticle.typedb.studio.project
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +37,6 @@ import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
-import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.Service
 import javax.swing.JFileChooser
 
@@ -82,14 +76,12 @@ object ProjectWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
-                Form.Content(onSubmit = { formState.trySubmitIfValid() }) {
-                    SelectDirectoryField(formState)
-                    Spacer(Modifier.weight(1f))
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Spacer(modifier = Modifier.weight(1f))
-                        OpenProjectButtons(formState)
-                    }
+            Form.Content(onSubmit = { formState.trySubmitIfValid() }) {
+                SelectDirectoryField(formState)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    OpenProjectButtons(formState)
                 }
             }
         }
@@ -106,7 +98,7 @@ object ProjectWindow {
                     onValueChange = { formState.directory = it },
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(modifier = Modifier.width(Form.SPACING))
+                Form.ComponentSpacer()
                 Form.IconButton(icon = Icon.Code.FolderOpen, onClick = { launchFileDialog(formState) })
             }
         }
@@ -130,7 +122,7 @@ object ProjectWindow {
     @Composable
     private fun OpenProjectButtons(formState: FormState) {
         Form.TextButton(text = Label.CANCEL, onClick = { Service.project.showWindow = false })
-        Spacer(modifier = Modifier.width(Form.SPACING))
+        Form.ComponentSpacer()
         Form.TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }
 }

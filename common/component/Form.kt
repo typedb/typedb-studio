@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -77,10 +78,10 @@ import java.awt.event.KeyEvent.KEY_RELEASED
 
 object Form {
 
-    val SPACING = 16.dp
-
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
+    private val OUTER_SPACING = 16.dp
+    private val INNER_SPACING = 10.dp
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val BORDER_WIDTH = 1.dp
@@ -100,14 +101,23 @@ object Form {
     }
 
     @Composable
-    fun Content(onSubmit: () -> Unit, content: @Composable () -> Unit) {
+    fun Content(onSubmit: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
         val focusManager = LocalFocusManager.current
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = Modifier.onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit) }
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Theme.colors.background)
+                .padding(OUTER_SPACING)
+                .onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit) }
         ) {
             content()
         }
+    }
+
+    @Composable
+    fun ComponentSpacer() {
+        Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 
     @Composable
@@ -242,13 +252,16 @@ object Form {
             textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             decorationBox = { innerTextField ->
-                Row(modifier.padding(horizontal = ICON_SPACING), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
-                    Box(modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Box(Modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
                     }
-                    trailingIcon?.let { Spacer(Modifier.width(ICON_SPACING)); trailingIcon() }
+                    trailingIcon?.let {
+                        Spacer(Modifier.width(ICON_SPACING))
+                        trailingIcon()
+                    }
                 }
             },
         )
@@ -287,7 +300,7 @@ object Form {
         modifier: Modifier = Modifier,
         textInputModifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
-        leadingIcon: @Composable() (() -> Unit)? = null
+        leadingIcon: @Composable (() -> Unit)? = null
     ) {
 
         val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CaretDown, enabled = enabled) }

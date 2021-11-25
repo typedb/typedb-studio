@@ -43,10 +43,6 @@ import com.vaticle.typedb.studio.common.Property
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.common.Property.Server.TYPEDB_CLUSTER
 import com.vaticle.typedb.studio.common.component.Form
-import com.vaticle.typedb.studio.common.component.Form.TextButton
-import com.vaticle.typedb.studio.common.component.Form.Dropdown
-import com.vaticle.typedb.studio.common.component.Form.Text
-import com.vaticle.typedb.studio.common.component.Form.TextInput
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
@@ -105,25 +101,23 @@ object ConnectionWindow {
                 size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
-                Form.Content( onSubmit = { FormState.trySubmitIfValid() } ) {
-                    ServerFormField()
-                    AddressFormField()
-                    if (FormState.server == TYPEDB_CLUSTER) {
-                        UsernameFormField()
-                        PasswordFormField()
-                        TLSEnabledFormField()
-                        if (FormState.tlsEnabled) CACertificateFormField()
-                    }
-                    Spacer(Modifier.weight(1f))
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        ServerConnectionStatus()
-                        Spacer(modifier = Modifier.weight(1f))
-                        when (Service.connection.status) {
-                            DISCONNECTED -> DisconnectedFormButtons()
-                            CONNECTED -> ConnectedFormButtons()
-                            CONNECTING -> ConnectingFormButtons()
-                        }
+            Form.Content(onSubmit = { FormState.trySubmitIfValid() }) {
+                ServerFormField()
+                AddressFormField()
+                if (FormState.server == TYPEDB_CLUSTER) {
+                    UsernameFormField()
+                    PasswordFormField()
+                    TLSEnabledFormField()
+                    if (FormState.tlsEnabled) CACertificateFormField()
+                }
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    ServerConnectionStatus()
+                    Spacer(modifier = Modifier.weight(1f))
+                    when (Service.connection.status) {
+                        DISCONNECTED -> DisconnectedFormButtons()
+                        CONNECTED -> ConnectedFormButtons()
+                        CONNECTING -> ConnectingFormButtons()
                     }
                 }
             }
@@ -133,7 +127,7 @@ object ConnectionWindow {
     @Composable
     private fun ServerFormField() {
         Form.Field(label = Label.SERVER) {
-            Dropdown(
+            Form.Dropdown(
                 values = Property.Server.values().toList(),
                 selected = FormState.server,
                 onSelection = { FormState.server = it },
@@ -147,7 +141,7 @@ object ConnectionWindow {
     @Composable
     private fun AddressFormField() {
         Form.Field(label = Label.ADDRESS) {
-            TextInput(
+            Form.TextInput(
                 value = FormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { FormState.address = it },
@@ -161,7 +155,7 @@ object ConnectionWindow {
     @Composable
     private fun UsernameFormField() {
         Form.Field(label = Label.USERNAME) {
-            TextInput(
+            Form.TextInput(
                 value = FormState.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { FormState.username = it },
@@ -175,7 +169,7 @@ object ConnectionWindow {
     @Composable
     private fun PasswordFormField() {
         Form.Field(label = Label.PASSWORD) {
-            TextInput(
+            Form.TextInput(
                 value = FormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { FormState.password = it },
@@ -200,7 +194,7 @@ object ConnectionWindow {
     @Composable
     private fun CACertificateFormField() {
         Form.Field(label = Label.CA_CERTIFICATE) {
-            TextInput(
+            Form.TextInput(
                 value = FormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { FormState.caCertificate = it },
@@ -213,7 +207,7 @@ object ConnectionWindow {
     @Composable
     private fun ServerConnectionStatus() {
         val statusText = "${Label.STATUS}: ${Service.connection.status.name.lowercase()}"
-        Text(
+        Form.Text(
             value = statusText, color = when (Service.connection.status) {
                 DISCONNECTED -> Theme.colors.error2
                 CONNECTING -> Theme.colors.quaternary
@@ -225,24 +219,28 @@ object ConnectionWindow {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
-        Spacer(modifier = Modifier.width(Form.SPACING))
-        TextButton(text = Label.CONNECT, enabled = FormState.isValid(), onClick = { FormState.trySubmit() })
+        Form.TextButton(text = Label.CANCEL, onClick = { Service.connection.showWindow = false })
+        Form.ComponentSpacer()
+        Form.TextButton(text = Label.CONNECT, enabled = FormState.isValid(), onClick = { FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        TextButton(text = Label.DISCONNECT, onClick = { Service.connection.disconnect() }, textColor = Theme.colors.error2)
-        Spacer(modifier = Modifier.width(Form.SPACING))
-        TextButton(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
+        Form.TextButton(
+            text = Label.DISCONNECT,
+            onClick = { Service.connection.disconnect() },
+            textColor = Theme.colors.error2
+        )
+        Form.ComponentSpacer()
+        Form.TextButton(text = Label.CLOSE, onClick = { Service.connection.showWindow = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
-        Spacer(modifier = Modifier.width(Form.SPACING))
-        TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+        Form.TextButton(text = Label.CANCEL, onClick = { Service.connection.disconnect() })
+        Form.ComponentSpacer()
+        Form.TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }
