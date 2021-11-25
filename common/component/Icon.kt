@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.common.component
 
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -28,7 +29,9 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.common.theme.Theme
@@ -38,14 +41,16 @@ object Icon {
     private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
     private val FONT_AWESOME = FontFamily(Font(resource = "icons/fontawesome/font-awesome-6-pro-solid-900.otf"))
 
-    enum class Code(hex: UShort, val defaultSize: TextUnit = ICON_DEFAULT_SIZE) {
+    data class Offset(val x: Dp, val y: Dp)
+
+    enum class Code(hex: UShort, val defaultSize: TextUnit = ICON_DEFAULT_SIZE, val offset: Offset = Offset(0.dp, 0.dp)) {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
         CaretDown(0xf0d7u),
         Database(0xf1c0u),
         FloppyDisk(0xf0c7u, 14.sp),
         FolderOpen(0xf07cu),
-        Play(0xf04bu),
+        Play(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         XMark(0xf00du);
 
         val unicode: String = Char(hex).toString()
@@ -65,7 +70,10 @@ object Icon {
             color = fadeable(color, !enabled),
             fontSize = size,
             fontFamily = FONT_AWESOME,
-            modifier = modifier.pointerIcon(PointerIcon.Hand).focusable(true)
+            modifier = modifier
+                .pointerIcon(PointerIcon.Hand)
+                .offset(icon.offset.x, icon.offset.y)
+                .focusable(true)
         )
     }
 }
