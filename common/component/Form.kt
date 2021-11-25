@@ -182,15 +182,21 @@ object Form {
         content: @Composable BoxScope.() -> Unit
     ) {
         val focusManager = LocalFocusManager.current
+        var hovered by remember { mutableStateOf(false) }
+        @Composable fun bgColor() = when (enabled) {
+            true -> if (hovered) Theme.colors.surface2 else Theme.colors.primary
+            false -> Theme.colors.primary
+        }
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
                 .height(FIELD_HEIGHT)
-                .background(fadeable(Theme.colors.primary, !enabled), ROUNDED_RECTANGLE)
+                .background(fadeable(bgColor(), !enabled), ROUNDED_RECTANGLE)
                 .focusable(enabled = enabled)
                 .pointerIcon(icon = PointerIcon.Hand) // TODO: #516
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
+                .pointerMoveFilter(onEnter = { hovered = true; true }, onExit = { hovered = false; true })
         ) {
             content()
         }
@@ -235,7 +241,7 @@ object Form {
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
-        val borderBrush = SolidColor(fadeable(Theme.colors.surface2, !enabled))
+        val borderBrush = SolidColor(fadeable(Theme.colors.surface3, !enabled))
         BasicTextField(
             modifier = modifier
                 .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
@@ -279,7 +285,7 @@ object Form {
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
                 .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface2, !enabled)), ROUNDED_RECTANGLE),
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface3, !enabled)), ROUNDED_RECTANGLE),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = fadeable(Theme.colors.icon, !enabled),
