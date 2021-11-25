@@ -30,11 +30,11 @@ import com.vaticle.typedb.studio.common.notification.Error
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.common.notification.Message.Connection.Companion.UNEXPECTED_ERROR
-import java.nio.file.Path
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import java.nio.file.Path
 
 class ConnectionService {
 

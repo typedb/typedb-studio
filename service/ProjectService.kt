@@ -50,7 +50,7 @@ class ProjectService {
         else if (!path.isReadable()) Service.notifier.userError(Error.fromUser(PATH_NOT_READABLE, directory), LOGGER)
         else {
             currentPath = path
-            pastPaths = pastPaths.plus(path)
+            pastPaths = pastPaths + path
             showWindow = false
         }
     }

@@ -27,11 +27,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
-import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
+import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.common.util.IconUtil
@@ -103,7 +104,7 @@ object ToolbarArea {
             placeholder = Label.SELECT_DATABASE,
             onSelection = { Service.connection.setDatabase(it) },
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
-            textInputModifier = Modifier.onFocusEvent { Service.connection.refreshDatabaseList() },
+            textInputModifier = Modifier.onFocusChanged { if (it.isFocused) Service.connection.refreshDatabaseList() },
             enabled = Service.connection.isConnected()
         )
     }
@@ -120,7 +121,7 @@ object ToolbarArea {
     @Composable
     private fun ConnectionStatus() {
         TextButton(
-            text = (Service.connection.username?.let { "$it@" } ?: "" ) + Service.connection.address!!,
+            text = (Service.connection.username?.let { "$it@" } ?: "") + Service.connection.address!!,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true }
         )
