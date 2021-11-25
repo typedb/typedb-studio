@@ -112,26 +112,18 @@ object ToolbarArea {
     @Composable
     private fun ConnectionButtonOrStatus() {
         when (Service.connection.status) {
-            DISCONNECTED -> ConnectionButton()
-            CONNECTING -> ConnectionButton() // TODO: replace with connecting status
-            CONNECTED -> ConnectionStatus()
+            DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
+            CONNECTING -> ConnectionButton(Label.CONNECTING)
+            CONNECTED -> ConnectionButton(
+                (Service.connection.username?.let { "$it@" } ?: "") + Service.connection.address!!
+            )
         }
     }
 
     @Composable
-    private fun ConnectionButton() {
+    private fun ConnectionButton(text: String) {
         Form.TextButton(
-            text = Label.CONNECT_TO_TYPEDB,
-            modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
-            onClick = { Service.connection.showWindow = true },
-            trailingIcon = Icon.Code.Database,
-        )
-    }
-
-    @Composable
-    private fun ConnectionStatus() {
-        Form.TextButton(
-            text = (Service.connection.username?.let { "$it@" } ?: "") + Service.connection.address!!,
+            text = text,
             modifier = Modifier.height(TOOLBAR_COMPONENT_HEIGHT),
             onClick = { Service.connection.showWindow = true },
             trailingIcon = Icon.Code.Database,
