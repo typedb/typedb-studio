@@ -69,7 +69,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
@@ -101,8 +100,12 @@ object Form {
     }
 
     @Composable
-    fun FieldGroup(content: @Composable () -> Unit) {
-        Column(verticalArrangement = Arrangement.spacedBy(FIELD_SPACING)) {
+    fun Content(onSubmit: () -> Unit, content: @Composable () -> Unit) {
+        val focusManager = LocalFocusManager.current
+        Column(
+            verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
+            modifier = Modifier.onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit)}
+        ) {
             content()
         }
     }
@@ -137,7 +140,7 @@ object Form {
         icon: Icon.Code,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
-        color: Color = Theme.colors.onPrimary,
+        color: Color = Theme.colors.icon,
         enabled: Boolean = true
     ) {
         BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
@@ -327,14 +330,14 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     private fun onKeyEvent(
-        event: KeyEvent, focusManager: FocusManager, onClick: (() -> Unit)? = null, enabled: Boolean = true
+        event: KeyEvent, focusManager: FocusManager, onEnter: (() -> Unit)? = null, enabled: Boolean = true
     ): Boolean {
         return when {
             event.nativeKeyEvent.id == KEY_RELEASED -> false
             !enabled -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {
-                    onClick?.let { onClick(); true } ?: false
+                    onEnter?.let { onEnter(); true } ?: false
                 }
                 Key.Tab -> {
                     focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Up else FocusDirection.Down); true

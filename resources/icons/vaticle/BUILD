@@ -21,7 +21,7 @@ package(default_visibility = ["//:__pkg__"])
 
 filegroup(
     name = "vaticle-bot-linux",
-    srcs = ["256x256.png"],
+    srcs = ["256x256.png"], # this file name has to be 256x256.png to work in Linux
 )
 
 filegroup(

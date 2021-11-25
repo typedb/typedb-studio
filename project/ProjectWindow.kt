@@ -60,6 +60,10 @@ object ProjectWindow {
             return !directory.isNullOrBlank()
         }
 
+        fun trySubmitIfValid() {
+            if (isValid()) trySubmit()
+        }
+
         fun trySubmit() {
             assert(!directory.isNullOrBlank())
             Service.project.tryOpen(directory!!)
@@ -79,7 +83,7 @@ object ProjectWindow {
             )
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
-                Form.FieldGroup {
+                Form.Content (onSubmit = { formState.trySubmitIfValid() }) {
                     SelectDirectoryField(formState)
                     Spacer(Modifier.weight(1f))
                     Row(verticalAlignment = Alignment.Bottom) {
@@ -100,7 +104,7 @@ object ProjectWindow {
                     value = formState.directory ?: "",
                     placeholder = Label.PATH_TO_PROJECT,
                     onValueChange = { formState.directory = it },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(Form.SPACING))
                 Form.IconButton(icon = Icon.Code.FolderOpen, onClick = { launchFileDialog(formState) })

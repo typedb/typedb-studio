@@ -28,14 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.common.component.Form.TextButton
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.theme.Theme
-import com.vaticle.typedb.studio.common.util.IconUtil
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTED
 import com.vaticle.typedb.studio.service.ConnectionService.Status.CONNECTING
 import com.vaticle.typedb.studio.service.ConnectionService.Status.DISCONNECTED
@@ -79,16 +78,17 @@ object ToolbarArea {
 
     @Composable
     private fun SaveFileButton() {
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Icon.Render(
             icon = Icon.Code.FloppyDisk,
+            size = 14.sp,
             modifier = Modifier.clickable { }
         )
     }
 
     @Composable
     private fun PlayFileButton() {
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
         Icon.Render(
             icon = Icon.Code.Play,
             color = Theme.colors.secondary,
@@ -130,8 +130,11 @@ object ToolbarArea {
 
     @Composable
     private fun DatabaseIcon() {
-        Spacer(Modifier.width(8.dp))
-        IconUtil.DatabaseIcon() // TODO: do we really need this? should we perhaps find a better icon?
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
+        Icon.Render(
+            icon = Icon.Code.Database,
+            modifier = Modifier.clickable { }
+        )
+        Spacer(Modifier.width(10.dp))
     }
 }

@@ -35,62 +35,36 @@ import com.vaticle.typedb.studio.common.theme.Theme
 
 object Icon {
 
-    private val BLUEPRINT_ICONS_16 = FontFamily(Font(resource = "icons/blueprint-icons-16.ttf"))
-    private val BLUEPRINT_ICONS_20 = FontFamily(Font(resource = "icons/blueprint-icons-20.ttf"))
+    private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
+    private val FONT_AWESOME = FontFamily(Font(resource = "icons/fontawesome/font-awesome-6-pro-solid-900.otf"))
 
-    enum class Size(val fontSize: TextUnit, val fontFamily: FontFamily) {
-        // WARNING: Blueprint recommends against using this nonstandard size
-        Size12(fontSize = 12.sp, fontFamily = BLUEPRINT_ICONS_16),
-        Size14(fontSize = 14.sp, fontFamily = BLUEPRINT_ICONS_16),
-        Size16(fontSize = 16.sp, fontFamily = BLUEPRINT_ICONS_16),
-        Size16Light(fontSize = 16.sp, fontFamily = BLUEPRINT_ICONS_20), // TODO: why do we need this exception?
-        Size18(fontSize = 18.sp, fontFamily = BLUEPRINT_ICONS_20),
-        Size20(fontSize = 20.sp, fontFamily = BLUEPRINT_ICONS_20),
-    }
+    enum class Code(hex: UShort, val defaultSize: TextUnit = ICON_DEFAULT_SIZE) {
+        // These codes can be found at https://fontawesome.com/v6.0/icons
+        // The icon names in Font Awesome would be the kebab-case version of our names below
+        CaretDown(0xf0d7u),
+        Database(0xf1c0u),
+        FloppyDisk(0xf0c7u, 14.sp),
+        FolderOpen(0xf07cu),
+        Play(0xf04bu),
+        XMark(0xf00du);
 
-    enum class Code(charCode: UShort, val defaultSize: Size) {
-        // these codes can be found in resources/icons/blueprint-icons.md
-        CaretUp(0x2303u, Size.Size12),
-        CaretDown(0x2304u, Size.Size16),
-        ChevronLeft(0xe694u, Size.Size12),
-        ChevronRight(0xe695u, Size.Size12),
-        Cog(0xe645u, Size.Size12),
-        Cross(0x2717u, Size.Size12),
-        DataLineage(0xe908u, Size.Size12),
-        Database(0xe683u, Size.Size12),
-        FloppyDisk(0xe6b7u, Size.Size12),
-        FolderOpen(0xe651u, Size.Size14),
-        Graph(0xe673u, Size.Size12),
-        Heatmap(0xe614u, Size.Size12),
-        HorizontalBarChartDesc(0xe71du, Size.Size12),
-        Layout(0xe60cu, Size.Size12),
-        LogOut(0xe64cu, Size.Size12),
-        Minus(0x2212u, Size.Size12),
-        Play(0xe6abu, Size.Size16),
-        Plus(0x002bu, Size.Size12),
-        SearchAround(0xe608u, Size.Size12),
-        Shield(0xe7b2u, Size.Size12),
-        Stop(0xe6aau, Size.Size12),
-        Table(0xe667u, Size.Size12),
-        TimelineBarChart(0xe620u, Size.Size12);
-
-        val charString: String = Char(charCode).toString()
+        val unicode: String = Char(hex).toString()
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Render(
         icon: Code,
-        size: Size = icon.defaultSize,
+        size: TextUnit = icon.defaultSize,
         color: Color = Theme.colors.icon,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {
         Text(
-            text = icon.charString,
+            text = icon.unicode,
             color = fadeable(color, !enabled),
-            fontSize = size.fontSize,
-            fontFamily = size.fontFamily,
+            fontSize = size,
+            fontFamily = FONT_AWESOME,
             modifier = modifier.pointerIcon(PointerIcon.Hand).focusable(true)
         )
     }

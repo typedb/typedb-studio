@@ -76,6 +76,10 @@ object ConnectionWindow {
             }
         }
 
+        fun trySubmitIfValid() {
+            if (isValid()) trySubmit()
+        }
+
         fun trySubmit() {
             when (server) {
                 TYPEDB -> Service.connection.tryConnectToTypeDB(address)
@@ -102,7 +106,7 @@ object ConnectionWindow {
             )
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Form.SPACING)) {
-                Form.FieldGroup {
+                Form.Content( onSubmit = { FormState.trySubmitIfValid() } ) {
                     ServerFormField()
                     AddressFormField()
                     if (FormState.server == TYPEDB_CLUSTER) {

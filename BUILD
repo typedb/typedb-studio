@@ -63,7 +63,7 @@ kt_jvm_library(
     resources = [
         "//resources/fonts:titillium-web",
         "//resources/fonts:ubuntu-mono",
-        "//resources/icons:icons",
+        "//resources/icons/fontawesome:icons",
     ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:studio:{pom_version}"],
@@ -120,9 +120,9 @@ java_binary(
 jvm_application_image(
     name = "application-image",
     application_name = "TypeDB Studio",
-    icon_mac = "//resources/icons/application:vaticle-bot-mac",
-    icon_linux = "//resources/icons/application:vaticle-bot-linux",
-    icon_windows = "//resources/icons/application:vaticle-bot-windows",
+    icon_mac = "//resources/icons/vaticle:vaticle-bot-mac",
+    icon_linux = "//resources/icons/vaticle:vaticle-bot-linux",
+    icon_windows = "//resources/icons/vaticle:vaticle-bot-windows",
     filename = "typedb-studio-" + select({
         "@vaticle_dependencies//util/platform:is_mac": "mac",
         "@vaticle_dependencies//util/platform:is_linux": "linux",
