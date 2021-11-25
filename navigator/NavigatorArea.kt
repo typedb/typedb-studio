@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.navigator
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.unit.dp
@@ -47,6 +49,7 @@ import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.component.Separator
+import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.PROJECT
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.ROLES
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.RULES
@@ -58,9 +61,9 @@ object NavigatorArea {
     private val AREA_WIDTH = 300.dp
     private val SIDE_TAB_WIDTH = 22.dp
     private val SIDE_TAB_HEIGHT = 100.dp
-    private val ICON_SIZE = 10.sp
     private val PANEL_BAR_HEIGHT = 26.dp
-    private val PANEL_BAR_SPACING = 6.dp
+    private val PANEL_BAR_SPACING = 8.dp
+    private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 
     private enum class NavigatorType(val label: String, val icon: Icon.Code) {
@@ -71,8 +74,8 @@ object NavigatorArea {
         ROLES(Label.ROLES, Icon.Code.USER_GROUP)
     }
 
-    private class NavigatorState(val type: NavigatorType) {
-        var isOpen: Boolean by mutableStateOf(true)
+    private class NavigatorState(val type: NavigatorType, initOpen: Boolean = false) {
+        var isOpen: Boolean by mutableStateOf(initOpen)
         val icon; get() = type.icon
         val label; get() = type.label
 
@@ -83,8 +86,8 @@ object NavigatorArea {
 
     private class AreaState {
         val navigators = linkedMapOf(
-            PROJECT to NavigatorState(PROJECT),
-            TYPES to NavigatorState(TYPES),
+            PROJECT to NavigatorState(PROJECT, true),
+            TYPES to NavigatorState(TYPES, true),
             RULES to NavigatorState(RULES),
             USERS to NavigatorState(USERS),
             ROLES to NavigatorState(ROLES)
@@ -116,6 +119,10 @@ object NavigatorArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(navigator: NavigatorState) {
+
+        @Composable
+        fun bgColor(): Color = if (navigator.isOpen) Theme.colors.surface else Theme.colors.background2
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -128,6 +135,7 @@ object NavigatorArea {
                 modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
                     .rotate(-90f)
                     .offset(x = TAB_OFFSET)
+                    .background(color = bgColor())
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Icon.Render(icon = navigator.icon, size = ICON_SIZE)
@@ -153,7 +161,7 @@ object NavigatorArea {
     @Composable
     private fun PanelTitle(navigator: NavigatorState) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT),
+            modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
             verticalAlignment = Alignment.CenterVertically
         ) {
             PanelBarSpace()
