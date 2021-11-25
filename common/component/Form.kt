@@ -177,7 +177,7 @@ object Form {
             modifier = modifier.size(FIELD_HEIGHT),
             enabled = enabled
         ) {
-            Icon.Render(icon = icon, color = color)
+            Icon.Render(icon = icon, color = color, enabled = enabled)
         }
     }
 
