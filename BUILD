@@ -16,7 +16,7 @@
 #
 
 load("//:deployment.bzl", deployment_github = "deployment")
-load("//:rules.bzl", "jvm_application_image")
+#load("//:rules.bzl", "jvm_application_image")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
@@ -26,6 +26,7 @@ load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
+load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 
 kt_jvm_library(
     name = "studio",
@@ -99,46 +100,41 @@ java_binary(
     classpath_resources = ["//resources:logback-test-xml"],
 )
 
+java_deps(
+    name = "assemble-deps",
+    target = select({
+        "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
+        "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
+        "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
+        "//conditions:default": ":studio-bin-mac",
+    }),
+    java_deps_root = "lib/",
+)
+
 assemble_files = {
     "//resources:logback-xml": "logback.xml",
     "//:LICENSE": "LICENSE",
 }
 
-kt_jvm_library(
-    name = "jvm-application-image-builder-lib",
-    srcs = ["JVMApplicationImageBuilder.kt"],
-    deps = ["@maven//:org_zeroturnaround_zt_exec"],
-)
-
-java_binary(
-    name = "jvm-application-image-builder-bin",
-    runtime_deps = [":jvm-application-image-builder-lib"],
-    main_class = "com.vaticle.typedb.studio.JVMApplicationImageBuilderKt",
-)
-
-# TODO: Create a MANIFEST file in the jvm_binary and read it to determine the main jar and main class
-jvm_application_image(
-    name = "application-image",
-    application_name = "TypeDB Studio",
-    icon_mac = "//resources/icons/vaticle:vaticle-bot-mac",
-    icon_linux = "//resources/icons/vaticle:vaticle-bot-linux",
-    icon_windows = "//resources/icons/vaticle:vaticle-bot-windows",
-    filename = "typedb-studio-" + select({
+assemble_jvm_platform(
+    name = "assemble",
+    image_name = "TypeDB Studio",
+    image_filename = "typedb-studio-" + select({
         "@vaticle_dependencies//util/platform:is_mac": "mac",
         "@vaticle_dependencies//util/platform:is_linux": "linux",
         "@vaticle_dependencies//util/platform:is_windows": "windows",
         "//conditions:default": "mac",
     }),
     version_file = ":VERSION",
-    jvm_binary = select({
-        "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
-        "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
-        "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
-        "//conditions:default": ":studio-bin-mac",
+    java_deps = ":assemble-deps",
+    icon = select({
+        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
+        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
+        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+        "//conditions:default": "mac",
     }),
     main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
     main_class = "com.vaticle.typedb.studio.Studio",
-    deps_use_maven_name = False,
     additional_files = assemble_files,
     mac_entitlements = "//resources:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
@@ -148,10 +144,10 @@ jvm_application_image(
 # if built on Mac, and fail to produce anything useful if built on Windows.
 assemble_targz(
     name = "linux-java-binary",
-    targets = [":application-image-deps", "//binary:assemble-bash-targz"],
+    targets = [":assemble-deps", "//binary:assemble-bash-targz"],
     additional_files = assemble_files,
     output_filename = "typedb-studio-linux-java-binary",
-    visibility = ["//:__pkg__"]
+    visibility = ["//:__pkg__"],
 )
 
 deploy_github(
@@ -161,8 +157,7 @@ deploy_github(
     title = "TypeDB Studio",
     title_append_version = True,
     release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":application-image",
-#    archive = ":hello-bundle",
+    archive = ":assemble",
     version_file = ":VERSION",
     draft = False
 )
