@@ -19,6 +19,9 @@
 package com.vaticle.typedb.studio.common.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation.Horizontal
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -34,11 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.awt.Cursor
+import java.awt.Cursor.E_RESIZE_CURSOR
+import kotlin.math.roundToInt
 
 object Resizable {
 
@@ -46,7 +51,8 @@ object Resizable {
 
     class RowItemState {
         var width: Dp? by mutableStateOf(null)
-        val isResizable by mutableStateOf(true)
+        var delta: Float by mutableStateOf(0f)
+        var isResizable by mutableStateOf(true)
     }
 
     class RowState(splitCount: Int) {
@@ -68,9 +74,10 @@ object Resizable {
             }
             androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth()) {
                 rowState.rowItems.forEachIndexed { i, itemState ->
-                    val subtract = if (i == 0) (DRAG_WIDTH / 2) else DRAG_WIDTH
-                    Box(Modifier.width(itemState.width?.let { w -> w - subtract } ?: 0.dp))
-//                    if (itemState.isResizable) DraggableVerticalSeparator(itemState, separatorWidth)
+                    val itemWidth = itemState.width?.let { it + itemState.delta.roundToInt().dp } ?: 0.dp
+                    val draggableWidth = if (i == 0) (DRAG_WIDTH / 2) else DRAG_WIDTH
+                    Box(Modifier.width(itemWidth - draggableWidth))
+                    if (itemState.isResizable) DraggableVerticalSeparator(itemState, separatorWidth)
                 }
             }
         }
@@ -78,11 +85,18 @@ object Resizable {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun DraggableVerticalSeparator(state: RowItemState, separatorWidth: Dp?) {
-        val width = if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH
+    private fun DraggableVerticalSeparator(itemState: RowItemState, separatorWidth: Dp?) {
+        val pixelDensity = LocalDensity.current.density
+
+        fun updateItemStateWidth(delta: Float) {
+            itemState.width = itemState.width!! + (delta / pixelDensity).roundToInt().dp
+        }
+
         Box(
-            modifier = Modifier.fillMaxHeight().width(width).pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                .background(color = Color.Red.copy(alpha = 0.2f), shape = RectangleShape)
+            modifier = Modifier.fillMaxHeight()
+                .width(if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH)
+                .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
+                .draggable(orientation = Horizontal, state = rememberDraggableState { updateItemStateWidth(it) })
         )
     }
 }
