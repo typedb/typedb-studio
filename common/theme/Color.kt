@@ -50,7 +50,7 @@ object Color {
     )
 
     private object DarkPalette {
-        val Purple0 = Color(0xFF08022E)
+        val Purple0 = Color(0xFF080226)
         val Purple1 = Color(0xFF0E053F)
         val Purple2 = Color(0xFF180F49)
         val Purple3 = Color(0xFF1D1354)
