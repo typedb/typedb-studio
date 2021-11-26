@@ -92,22 +92,32 @@ object NavigatorArea {
             USERS to NavigatorState(USERS),
             ROLES to NavigatorState(ROLES)
         )
+
+        fun openedNavigators(): List<NavigatorState> {
+            return navigators.values.filter { it.isOpen }
+        }
     }
 
     @Composable
     fun Layout() {
         val areaState = remember { AreaState() }
-        Row(Modifier.width(AREA_WIDTH)) {
+        Row(Modifier.width(if (areaState.openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }
             Separator.Vertical()
             Column(Modifier.weight(1f)) {
-                val openNavigators = areaState.navigators.values.filter { it.isOpen }
+                val openNavigators: List<NavigatorState> = areaState.openedNavigators()
                 openNavigators.forEachIndexed { i, navigator ->
                     Box(Modifier.fillMaxWidth().weight(1f)) {
                         Panel(navigator) {
-
+                            when (navigator.type) {
+                                PROJECT -> ProjectNavigator.Layout()
+                                TYPES -> TypeNavigator.Layout()
+                                RULES -> RuleNavigator.Layout()
+                                USERS -> UserNavigator.Layout()
+                                ROLES -> RolesNavigator.Layout()
+                            }
                         }
                     }
                     if (i < openNavigators.size - 1) Separator.Horizontal()
@@ -119,10 +129,8 @@ object NavigatorArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(navigator: NavigatorState) {
-
         @Composable
         fun bgColor(): Color = if (navigator.isOpen) Theme.colors.surface else Theme.colors.background2
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -158,6 +166,7 @@ object NavigatorArea {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun PanelTitle(navigator: NavigatorState) {
         Row(
@@ -169,7 +178,10 @@ object NavigatorArea {
             PanelBarSpace()
             Form.Text(value = navigator.label)
             Spacer(Modifier.weight(1f))
-            Icon.Render(icon = Icon.Code.XMARK, size = ICON_SIZE, modifier = Modifier.clickable { navigator.toggle() })
+            Icon.Render(
+                icon = Icon.Code.XMARK,
+                size = ICON_SIZE,
+                modifier = Modifier.pointerIcon(PointerIcon.Hand).clickable { navigator.toggle() })
             PanelBarSpace()
         }
     }
