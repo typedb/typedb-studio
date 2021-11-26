@@ -66,7 +66,8 @@ object Color {
         val Yellow2 = Color(0xFFFFE4A7)
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
-        val White = Color(0xFFd5ccff)
+        val White = Color(0xFFFFFFFF)
+        val White2 = Color(0xFFd5ccff)
     }
 
     object Themes {
@@ -85,10 +86,10 @@ object Color {
             icon = DarkPalette.Purple8,
             error = DarkPalette.Red1,
             error2 = DarkPalette.Red2,
-            onPrimary = DarkPalette.White,
+            onPrimary = DarkPalette.White2,
             onSecondary = DarkPalette.White,
-            onBackground = DarkPalette.White,
-            onSurface = DarkPalette.White,
+            onBackground = DarkPalette.White2,
+            onSurface = DarkPalette.White2,
             onError = DarkPalette.White,
             isLight = false
         )
