@@ -19,15 +19,25 @@
 package com.vaticle.typedb.studio
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowSize
+import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
+import com.vaticle.typedb.studio.common.component.Resizable
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.notification.Message
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
@@ -86,8 +96,12 @@ object Studio {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 ToolbarArea.Layout()
                 Separator.Horizontal()
-                Row(Modifier.fillMaxWidth().weight(1f)) {
-                    NavigatorArea.Layout()
+                Resizable.Row(
+                    splitCount = 2,
+                    separatorWidth = Separator.WEIGHT,
+                    modifier = Modifier.fillMaxWidth().weight(1f)
+                ) { rowState: Resizable.RowState ->
+                    NavigatorArea.Layout(rowState.rowItems[0])
                     Separator.Vertical()
                     PageArea.Layout()
                 }

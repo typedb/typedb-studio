@@ -31,7 +31,7 @@ import com.vaticle.typedb.studio.common.theme.Theme
 
 object Separator {
 
-    private val WEIGHT = 1.dp
+    val WEIGHT = 1.dp
 
     @Composable
     fun Horizontal() {

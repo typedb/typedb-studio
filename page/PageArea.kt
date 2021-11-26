@@ -37,7 +37,7 @@ object PageArea {
 
     @Composable
     fun Layout() {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 val tabs = arrayOf(1, 2, 3, 4, 5)
                 for ((i, tab) in tabs.withIndex()) {

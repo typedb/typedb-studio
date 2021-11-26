@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
+import com.vaticle.typedb.studio.common.component.Resizable
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.PROJECT
@@ -99,9 +100,12 @@ object NavigatorArea {
     }
 
     @Composable
-    fun Layout() {
+    fun Layout(rowItemState: Resizable.RowItemState) {
         val areaState = remember { AreaState() }
-        Row(Modifier.width(if (areaState.openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH)) {
+        if (rowItemState.width == null) {
+            rowItemState.width = if (areaState.openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH
+        }
+        Row(Modifier.width(rowItemState.width!!)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }
