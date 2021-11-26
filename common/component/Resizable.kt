@@ -34,9 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerIcon
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import java.awt.Cursor
 
 object Resizable {
 
@@ -79,7 +81,7 @@ object Resizable {
     private fun DraggableVerticalSeparator(state: RowItemState, separatorWidth: Dp?) {
         val width = if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH
         Box(
-            modifier = Modifier.fillMaxHeight().width(width).pointerIcon(PointerIcon.Crosshair)
+            modifier = Modifier.fillMaxHeight().width(width).pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                 .background(color = Color.Red.copy(alpha = 0.2f), shape = RectangleShape)
         )
     }

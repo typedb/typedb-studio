@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -64,7 +65,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerIcon
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -202,7 +204,7 @@ object Form {
                 .height(FIELD_HEIGHT)
                 .background(fadeable(bgColor(), !enabled), ROUNDED_RECTANGLE)
                 .focusable(enabled = enabled)
-                .pointerIcon(icon = PointerIcon.Hand) // TODO: #516
+                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
                 .pointerMoveFilter(onEnter = { hovered = true; true }, onExit = { hovered = false; true })
@@ -222,7 +224,7 @@ object Form {
         val focusManager = LocalFocusManager.current
         BasicTextField(
             modifier = modifier
-                .pointerIcon(PointerIcon.Text) // TODO: #516
+                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .onPreviewKeyEvent { onKeyEvent(it, focusManager) },
             value = value,
             onValueChange = {},
@@ -245,7 +247,7 @@ object Form {
         isPassword: Boolean = false,
         modifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
-        pointerHoverIcon: PointerIcon = PointerIcon.Text, // TODO: #516 PointerIconDefaults.Text
+        pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         trailingIcon: (@Composable () -> Unit)? = null,
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
@@ -255,7 +257,7 @@ object Form {
             modifier = modifier
                 .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
                 .border(width = BORDER_WIDTH, brush = borderBrush, shape = ROUNDED_RECTANGLE)
-                .pointerIcon(pointerHoverIcon) // TODO: #516
+                .pointerHoverIcon(pointerHoverIcon)
                 .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
             value = value,
             onValueChange = onValueChange,
@@ -337,7 +339,7 @@ object Form {
             TextInput(
                 value = selected.toString(), onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
-                pointerHoverIcon = PointerIcon.Hand, modifier = textInputModifier
+                pointerHoverIcon = PointerIconDefaults.Hand, modifier = textInputModifier
                     .fillMaxSize().focusable(enabled = enabled).focusRequester(focusRequester)
                     .clickable(enabled = enabled) { state.toggle(); focusRequester.requestFocus() }
                     .onKeyEvent { onKeyEvent(it, focusManager) }
@@ -359,7 +361,7 @@ object Form {
                         onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
-                            .pointerIcon(PointerIcon.Hand)
+                            .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     ) {
                         val isSelected = value == selected
                         val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface
@@ -375,7 +377,7 @@ object Form {
         event: KeyEvent, focusManager: FocusManager, onEnter: (() -> Unit)? = null, enabled: Boolean = true
     ): Boolean {
         return when {
-            event.nativeKeyEvent.id == KEY_RELEASED -> false
+            event.awtEvent.id == KEY_RELEASED -> false
             !enabled -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {

@@ -18,15 +18,12 @@
 
 package com.vaticle.typedb.studio.common.component
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.Dp
@@ -44,7 +41,7 @@ object Icon {
     data class Offset(val x: Dp, val y: Dp)
 
     enum class Code(
-        private val hexcode: UShort,
+        hexcode: UShort,
         val defaultSize: TextUnit = ICON_DEFAULT_SIZE,
         val offset: Offset = Offset(0.dp, 0.dp)
     ) {
