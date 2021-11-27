@@ -89,7 +89,7 @@ object NavigatorArea {
 
     private class AreaState(val layoutState: Layout.MemberState) {
         val navigators = linkedMapOf(
-            PROJECT to NavigatorState(PROJECT, this,true),
+            PROJECT to NavigatorState(PROJECT, this, true),
             TYPES to NavigatorState(TYPES, this, true),
             RULES to NavigatorState(RULES, this),
             USERS to NavigatorState(USERS, this),

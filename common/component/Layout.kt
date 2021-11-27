@@ -19,13 +19,17 @@
 package com.vaticle.typedb.studio.common.component
 
 import androidx.compose.foundation.gestures.Orientation.Horizontal
+import androidx.compose.foundation.gestures.Orientation.Vertical
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,7 +40,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -45,6 +48,7 @@ import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import java.awt.Cursor
 import java.awt.Cursor.E_RESIZE_CURSOR
+import java.awt.Cursor.N_RESIZE_CURSOR
 import kotlin.math.roundToInt
 
 object Layout {
@@ -91,7 +95,7 @@ object Layout {
                 return size
             }
 
-        fun constraintWidth(maxSize: Dp) {
+        fun constraint(maxSize: Dp) {
             var i = members.size - 1
             var size = currentSize
             while (size > maxSize && i >= 0) {
@@ -102,6 +106,10 @@ object Layout {
         }
     }
 
+    private fun toDP(pixel: Int, pixelDensity: Float): Dp {
+        return (pixel / pixelDensity).roundToInt().dp
+    }
+
     @Composable
     fun ResizableRow(
         members: Int,
@@ -110,20 +118,35 @@ object Layout {
         content: @Composable (RowScope.(AreaState) -> Unit)
     ) {
         assert(members >= 2)
-        val layoutState = remember { AreaState(members, separatorWidth) }
+        val state = remember { AreaState(members, separatorWidth) }
         val pixelDensity = LocalDensity.current.density
-        fun updateLayoutWidth(coord: LayoutCoordinates) {
-            layoutState.constraintWidth((coord.size.width / pixelDensity).toInt().dp)
-        }
-
-        Box(modifier = modifier.onGloballyPositioned { updateLayoutWidth(it) }) {
+        Box(modifier = modifier.onGloballyPositioned { state.constraint(toDP(it.size.width, pixelDensity)) }) {
+            Row(modifier = Modifier.fillMaxWidth()) { content(state) }
             Row(modifier = Modifier.fillMaxWidth()) {
-                content(layoutState)
-            }
-            Row(modifier = Modifier.fillMaxWidth()) {
-                layoutState.members.filter { !it.isLast }.forEach {
+                state.members.filter { !it.isLast }.forEach {
                     Box(Modifier.width(it.nonDraggableSize))
-                    if (it.freezeSize == null) VerticalSeparator(it, separatorWidth)
+                    VerticalSeparator(it, separatorWidth)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ResizableColumn(
+        members: Int,
+        separatorHeight: Dp? = null,
+        modifier: Modifier = Modifier,
+        content: @Composable (ColumnScope.(AreaState) -> Unit)
+    ) {
+        assert(members >= 2)
+        val state = remember { AreaState(members, separatorHeight) }
+        val pixelDensity = LocalDensity.current.density
+        Box(modifier = modifier.onGloballyPositioned { state.constraint(toDP(it.size.height, pixelDensity)) }) {
+            Column(modifier = Modifier.fillMaxHeight()) { content(state) }
+            Column(modifier = Modifier.fillMaxHeight()) {
+                state.members.filter { !it.isLast }.forEach {
+                    Box(Modifier.height(it.nonDraggableSize))
+                    HorizontalSeparator(it, separatorHeight)
                 }
             }
         }
@@ -132,14 +155,36 @@ object Layout {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun VerticalSeparator(memberState: MemberState, separatorWidth: Dp?) {
-        val pixelDensity = LocalDensity.current.density
-        Box(
-            modifier = Modifier.fillMaxHeight()
-                .width(if (separatorWidth != null) DRAG_SIZE + separatorWidth else DRAG_SIZE)
-                .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
-                .draggable(orientation = Horizontal, state = rememberDraggableState {
-                    memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
-                })
-        )
+        if (memberState.freezeSize != null) {
+            if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
+        } else {
+            val pixelDensity = LocalDensity.current.density
+            Box(
+                modifier = Modifier.fillMaxHeight()
+                    .width(if (separatorWidth != null) DRAG_SIZE + separatorWidth else DRAG_SIZE)
+                    .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
+                    .draggable(orientation = Horizontal, state = rememberDraggableState {
+                        memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
+                    })
+            )
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun HorizontalSeparator(memberState: MemberState, separatorHeight: Dp?) {
+        if (memberState.freezeSize != null) {
+            if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))
+        } else {
+            val pixelDensity = LocalDensity.current.density
+            Box(
+                modifier = Modifier.fillMaxWidth()
+                    .height(if (separatorHeight != null) DRAG_SIZE + separatorHeight else DRAG_SIZE)
+                    .pointerHoverIcon(icon = PointerIcon(Cursor(N_RESIZE_CURSOR)))
+                    .draggable(orientation = Vertical, state = rememberDraggableState {
+                        memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
+                    })
+            )
+        }
     }
 }
