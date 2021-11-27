@@ -36,9 +36,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import java.awt.Cursor
 import java.awt.Cursor.E_RESIZE_CURSOR
 import kotlin.math.roundToInt
@@ -62,20 +66,40 @@ object Layout {
                 _size = value
             }
 
-        fun resize(delta: Dp) {
-            assert(!isLast)
-            if (_size + delta > minSize && next!!._size - delta > next!!.minSize) {
-                _size += delta
-                next!!._size -= delta
-            }
+        fun tryResize(delta: Dp) {
+            _size += max(delta, minSize - _size)
+        }
+
+        fun tryResizeSelfAndNext(delta: Dp) {
+            assert(!isLast && next != null)
+            val cappedDelta = min(max(delta, minSize - _size), next!!.size - next!!.minSize)
+            _size += cappedDelta
+            next!!.size -= cappedDelta
         }
 
         val nonDraggableSize: Dp
             get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAG_SIZE / 2) else DRAG_SIZE))
     }
 
-    class AreaState(members: Int) {
+    class AreaState(members: Int, private val separatorSize: Dp?) {
         val members: List<MemberState> = (0 until members).map { MemberState(this, it, it == members - 1) }
+        private val currentSize: Dp
+            get() {
+                var size = 0.dp
+                members.map { size += it.size }
+                separatorSize?.let { size += it * (members.size - 1) }
+                return size
+            }
+
+        fun constraintWidth(maxSize: Dp) {
+            var i = members.size - 1
+            var size = currentSize
+            while (size > maxSize && i >= 0) {
+                members[i].tryResize(maxSize - size)
+                size = currentSize
+                i--
+            }
+        }
     }
 
     @Composable
@@ -86,9 +110,16 @@ object Layout {
         content: @Composable (RowScope.(AreaState) -> Unit)
     ) {
         assert(members >= 2)
-        val layoutState = remember { AreaState(members) }
-        Box(modifier = modifier) {
-            Row(modifier = Modifier.fillMaxWidth()) { content(layoutState) }
+        val layoutState = remember { AreaState(members, separatorWidth) }
+        val pixelDensity = LocalDensity.current.density
+        fun updateLayoutWidth(coord: LayoutCoordinates) {
+            layoutState.constraintWidth((coord.size.width / pixelDensity).toInt().dp)
+        }
+
+        Box(modifier = modifier.onGloballyPositioned { updateLayoutWidth(it) }) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                content(layoutState)
+            }
             Row(modifier = Modifier.fillMaxWidth()) {
                 layoutState.members.filter { !it.isLast }.forEach {
                     Box(Modifier.width(it.nonDraggableSize))
@@ -107,7 +138,7 @@ object Layout {
                 .width(if (separatorWidth != null) DRAG_SIZE + separatorWidth else DRAG_SIZE)
                 .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
                 .draggable(orientation = Horizontal, state = rememberDraggableState {
-                    memberState.resize((it / pixelDensity).roundToInt().dp)
+                    memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
                 })
         )
     }

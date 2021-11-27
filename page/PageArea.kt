@@ -52,7 +52,7 @@ object PageArea {
     fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
         val pixelDensity = LocalDensity.current.density
-        fun updateLayoutWidth(coord: LayoutCoordinates){
+        fun updateLayoutWidth(coord: LayoutCoordinates) {
             layoutState.size = (coord.size.width / pixelDensity).toInt().dp
         }
 
