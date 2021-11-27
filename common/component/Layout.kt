@@ -22,6 +22,7 @@ import androidx.compose.foundation.gestures.Orientation.Horizontal
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,17 +48,34 @@ object Layout {
     private val DRAG_WIDTH = 6.dp
     private val MIN_WIDTH = 10.dp
 
-    class RowItemState {
+    class ItemState(val index: Int, val isLast: Boolean, val rowState: RowState) {
+
+        private val isFirst: Boolean = index == 0
+        private val next: ItemState? get() = if (isLast) null else rowState.items[index + 1]
         private var _width: Dp by mutableStateOf(0.dp)
+
         var minWidth: Dp by mutableStateOf(MIN_WIDTH)
         var freezeWidth: Dp? by mutableStateOf(null)
         var width: Dp
             get() = freezeWidth ?: _width
-            set(width) { _width = if (width > minWidth) width else minWidth }
+            set(value) {
+                _width = value
+            }
+
+        fun resize(delta: Dp) {
+            assert(!isLast)
+            if (_width + delta > minWidth && next!!._width - delta > next!!.minWidth) {
+                _width += delta
+                next!!._width -= delta
+            }
+        }
+
+        val nonDraggableWidth: Dp
+            get() = freezeWidth ?: (_width - (if (isFirst || isLast) (DRAG_WIDTH / 2) else DRAG_WIDTH))
     }
 
     class RowState(splitCount: Int) {
-        val rowItems: List<RowItemState> = (1 until splitCount).map { RowItemState() }
+        val items: List<ItemState> = (0 until splitCount).map { ItemState(it, it == splitCount - 1, this) }
     }
 
     @Composable
@@ -70,13 +88,11 @@ object Layout {
         assert(splitCount >= 2)
         val rowState = remember { RowState(splitCount) }
         Box(modifier = modifier) {
-            androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth()) {
-                content(rowState)
-            }
-            androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth()) {
-                rowState.rowItems.forEachIndexed { i, itemState ->
-                    Box(Modifier.width(itemState.width - (if (i == 0) (DRAG_WIDTH / 2) else DRAG_WIDTH)))
-                    if (itemState.freezeWidth == null) VerticalSeparator(itemState, separatorWidth)
+            Row(modifier = Modifier.fillMaxWidth()) { content(rowState) }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                rowState.items.filter { !it.isLast }.forEach {
+                    Box(Modifier.width(it.nonDraggableWidth))
+                    if (it.freezeWidth == null) VerticalSeparator(it, separatorWidth)
                 }
             }
         }
@@ -84,14 +100,15 @@ object Layout {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun VerticalSeparator(itemState: RowItemState, separatorWidth: Dp?) {
+    private fun VerticalSeparator(itemState: ItemState, separatorWidth: Dp?) {
         val pixelDensity = LocalDensity.current.density
-        fun updateWidth(delta: Float) { itemState.width = itemState.width + (delta / pixelDensity).roundToInt().dp }
         Box(
             modifier = Modifier.fillMaxHeight()
                 .width(if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH)
                 .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
-                .draggable(orientation = Horizontal, state = rememberDraggableState { updateWidth(it) })
+                .draggable(orientation = Horizontal, state = rememberDraggableState {
+                    itemState.resize((it / pixelDensity).roundToInt().dp)
+                })
         )
     }
 }

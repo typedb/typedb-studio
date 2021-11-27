@@ -87,7 +87,7 @@ object NavigatorArea {
         }
     }
 
-    private class AreaState(val rowItemState: Layout.RowItemState) {
+    private class AreaState(val layoutState: Layout.ItemState) {
         val navigators = linkedMapOf(
             PROJECT to NavigatorState(PROJECT, this,true),
             TYPES to NavigatorState(TYPES, this, true),
@@ -97,8 +97,9 @@ object NavigatorArea {
         )
 
         init {
-            rowItemState.width = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH
-            rowItemState.minWidth = AREA_MIN_WIDTH
+            layoutState.width = AREA_WIDTH
+            layoutState.minWidth = AREA_MIN_WIDTH
+            recomputeWidth()
         }
 
         fun openedNavigators(): List<NavigatorState> {
@@ -106,14 +107,14 @@ object NavigatorArea {
         }
 
         fun recomputeWidth() {
-            rowItemState.freezeWidth = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
+            layoutState.freezeWidth = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
         }
     }
 
     @Composable
-    fun Layout(rowItemState: Layout.RowItemState) {
-        val areaState = remember { AreaState(rowItemState) }
-        Row(Modifier.width(rowItemState.width!!)) {
+    fun Layout(layoutState: Layout.ItemState) {
+        val areaState = remember { AreaState(layoutState) }
+        Row(Modifier.width(layoutState.width)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }

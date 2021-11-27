@@ -101,9 +101,9 @@ object Studio {
                     separatorWidth = Separator.WEIGHT,
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 ) { rowState: Layout.RowState ->
-                    NavigatorArea.Layout(rowState.rowItems[0])
+                    NavigatorArea.Layout(rowState.items[0])
                     Separator.Vertical()
-                    PageArea.Layout()
+                    PageArea.Layout(rowState.items[1])
                 }
                 Separator.Horizontal()
                 StatusBarArea.Layout()
