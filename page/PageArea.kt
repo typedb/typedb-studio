@@ -44,7 +44,7 @@ object PageArea {
     private class AreaState(val layoutState: Layout.MemberState) {
 
         init {
-            layoutState.minWidth = MIN_WIDTH
+            layoutState.minSize = MIN_WIDTH
         }
     }
 
@@ -53,7 +53,7 @@ object PageArea {
         val areaState = remember { AreaState(layoutState) }
         val pixelDensity = LocalDensity.current.density
         fun updateLayoutWidth(coord: LayoutCoordinates){
-            layoutState.width = (coord.size.width / pixelDensity).toInt().dp
+            layoutState.size = (coord.size.width / pixelDensity).toInt().dp
         }
 
         Column(modifier = Modifier.fillMaxWidth().onGloballyPositioned { updateLayoutWidth(it) }) {

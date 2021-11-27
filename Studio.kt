@@ -97,12 +97,12 @@ object Studio {
                 ToolbarArea.Layout()
                 Separator.Horizontal()
                 Layout.ResizableRow(
-                    splitCount = 2, separatorWidth = Separator.WEIGHT,
+                    members = 2, separatorWidth = Separator.WEIGHT,
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 ) { layoutState: Layout.AreaState ->
-                    NavigatorArea.Layout(layoutState.items[0])
+                    NavigatorArea.Layout(layoutState.members[0])
                     Separator.Vertical()
-                    PageArea.Layout(layoutState.items[1])
+                    PageArea.Layout(layoutState.members[1])
                 }
                 Separator.Horizontal()
                 StatusBarArea.Layout()

@@ -97,8 +97,8 @@ object NavigatorArea {
         )
 
         init {
-            layoutState.width = AREA_WIDTH
-            layoutState.minWidth = AREA_MIN_WIDTH
+            layoutState.size = AREA_WIDTH
+            layoutState.minSize = AREA_MIN_WIDTH
             recomputeWidth()
         }
 
@@ -107,14 +107,14 @@ object NavigatorArea {
         }
 
         fun recomputeWidth() {
-            layoutState.freezeWidth = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
+            layoutState.freezeSize = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
         }
     }
 
     @Composable
     fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
-        Row(Modifier.width(layoutState.width)) {
+        Row(Modifier.width(layoutState.size)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }

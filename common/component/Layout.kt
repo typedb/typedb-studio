@@ -45,54 +45,54 @@ import kotlin.math.roundToInt
 
 object Layout {
 
-    private val DRAG_WIDTH = 6.dp
-    private val MIN_WIDTH = 10.dp
+    private val DRAG_SIZE = 6.dp
+    private val MIN_SIZE = 10.dp
 
     class MemberState(private val layoutState: AreaState, private val index: Int, val isLast: Boolean) {
 
         private val isFirst: Boolean = index == 0
-        private val next: MemberState? get() = if (isLast) null else layoutState.items[index + 1]
-        private var _width: Dp by mutableStateOf(0.dp)
+        private val next: MemberState? get() = if (isLast) null else layoutState.members[index + 1]
+        private var _size: Dp by mutableStateOf(0.dp)
 
-        var minWidth: Dp by mutableStateOf(MIN_WIDTH)
-        var freezeWidth: Dp? by mutableStateOf(null)
-        var width: Dp
-            get() = freezeWidth ?: _width
+        var minSize: Dp by mutableStateOf(MIN_SIZE)
+        var freezeSize: Dp? by mutableStateOf(null)
+        var size: Dp
+            get() = freezeSize ?: _size
             set(value) {
-                _width = value
+                _size = value
             }
 
         fun resize(delta: Dp) {
             assert(!isLast)
-            if (_width + delta > minWidth && next!!._width - delta > next!!.minWidth) {
-                _width += delta
-                next!!._width -= delta
+            if (_size + delta > minSize && next!!._size - delta > next!!.minSize) {
+                _size += delta
+                next!!._size -= delta
             }
         }
 
-        val nonDraggableWidth: Dp
-            get() = freezeWidth ?: (_width - (if (isFirst || isLast) (DRAG_WIDTH / 2) else DRAG_WIDTH))
+        val nonDraggableSize: Dp
+            get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAG_SIZE / 2) else DRAG_SIZE))
     }
 
-    class AreaState(splitCount: Int) {
-        val items: List<MemberState> = (0 until splitCount).map { MemberState(this, it, it == splitCount - 1) }
+    class AreaState(members: Int) {
+        val members: List<MemberState> = (0 until members).map { MemberState(this, it, it == members - 1) }
     }
 
     @Composable
     fun ResizableRow(
-        splitCount: Int,
+        members: Int,
         separatorWidth: Dp? = null,
         modifier: Modifier = Modifier,
         content: @Composable (RowScope.(AreaState) -> Unit)
     ) {
-        assert(splitCount >= 2)
-        val layoutState = remember { AreaState(splitCount) }
+        assert(members >= 2)
+        val layoutState = remember { AreaState(members) }
         Box(modifier = modifier) {
             Row(modifier = Modifier.fillMaxWidth()) { content(layoutState) }
             Row(modifier = Modifier.fillMaxWidth()) {
-                layoutState.items.filter { !it.isLast }.forEach {
-                    Box(Modifier.width(it.nonDraggableWidth))
-                    if (it.freezeWidth == null) VerticalSeparator(it, separatorWidth)
+                layoutState.members.filter { !it.isLast }.forEach {
+                    Box(Modifier.width(it.nonDraggableSize))
+                    if (it.freezeSize == null) VerticalSeparator(it, separatorWidth)
                 }
             }
         }
@@ -104,7 +104,7 @@ object Layout {
         val pixelDensity = LocalDensity.current.density
         Box(
             modifier = Modifier.fillMaxHeight()
-                .width(if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH)
+                .width(if (separatorWidth != null) DRAG_SIZE + separatorWidth else DRAG_SIZE)
                 .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
                 .draggable(orientation = Horizontal, state = rememberDraggableState {
                     memberState.resize((it / pixelDensity).roundToInt().dp)
