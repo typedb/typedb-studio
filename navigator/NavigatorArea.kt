@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
-import com.vaticle.typedb.studio.common.component.Resizable
+import com.vaticle.typedb.studio.common.component.Layout
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.PROJECT
@@ -60,6 +60,7 @@ import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.USERS
 object NavigatorArea {
 
     private val AREA_WIDTH = 300.dp
+    private val AREA_MIN_WIDTH = 120.dp
     private val SIDE_TAB_WIDTH = 22.dp
     private val SIDE_TAB_HEIGHT = 100.dp
     private val PANEL_BAR_HEIGHT = 26.dp
@@ -75,36 +76,43 @@ object NavigatorArea {
         ROLES(Label.ROLES, Icon.Code.USER_GROUP)
     }
 
-    private class NavigatorState(val type: NavigatorType, initOpen: Boolean = false) {
+    private class NavigatorState(val type: NavigatorType, val areaState: AreaState, initOpen: Boolean = false) {
         var isOpen: Boolean by mutableStateOf(initOpen)
         val icon; get() = type.icon
         val label; get() = type.label
 
         fun toggle() {
             isOpen = !isOpen
+            areaState.recomputeWidth()
         }
     }
 
-    private class AreaState {
+    private class AreaState(val rowItemState: Layout.RowItemState) {
         val navigators = linkedMapOf(
-            PROJECT to NavigatorState(PROJECT, true),
-            TYPES to NavigatorState(TYPES, true),
-            RULES to NavigatorState(RULES),
-            USERS to NavigatorState(USERS),
-            ROLES to NavigatorState(ROLES)
+            PROJECT to NavigatorState(PROJECT, this,true),
+            TYPES to NavigatorState(TYPES, this, true),
+            RULES to NavigatorState(RULES, this),
+            USERS to NavigatorState(USERS, this),
+            ROLES to NavigatorState(ROLES, this)
         )
+
+        init {
+            rowItemState.width = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH
+            rowItemState.minWidth = AREA_MIN_WIDTH
+        }
 
         fun openedNavigators(): List<NavigatorState> {
             return navigators.values.filter { it.isOpen }
         }
+
+        fun recomputeWidth() {
+            rowItemState.freezeWidth = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
+        }
     }
 
     @Composable
-    fun Layout(rowItemState: Resizable.RowItemState) {
-        val areaState = remember { AreaState() }
-        if (rowItemState.width == null) {
-            rowItemState.width = if (areaState.openedNavigators().isEmpty()) SIDE_TAB_WIDTH else AREA_WIDTH
-        }
+    fun Layout(rowItemState: Layout.RowItemState) {
+        val areaState = remember { AreaState(rowItemState) }
         Row(Modifier.width(rowItemState.width!!)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }

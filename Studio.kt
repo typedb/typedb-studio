@@ -37,7 +37,7 @@ import androidx.compose.ui.window.WindowSize
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
-import com.vaticle.typedb.studio.common.component.Resizable
+import com.vaticle.typedb.studio.common.component.Layout
 import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.notification.Message
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
@@ -96,11 +96,11 @@ object Studio {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 ToolbarArea.Layout()
                 Separator.Horizontal()
-                Resizable.Row(
+                Layout.ResizableRow(
                     splitCount = 2,
                     separatorWidth = Separator.WEIGHT,
                     modifier = Modifier.fillMaxWidth().weight(1f)
-                ) { rowState: Resizable.RowState ->
+                ) { rowState: Layout.RowState ->
                     NavigatorArea.Layout(rowState.rowItems[0])
                     Separator.Vertical()
                     PageArea.Layout()
