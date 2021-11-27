@@ -41,7 +41,7 @@ object PageArea {
     private val TAB_HEIGHT = 26.dp
     private val TAB_WIDTH = 100.dp
 
-    private class AreaState(val layoutState: Layout.ItemState) {
+    private class AreaState(val layoutState: Layout.MemberState) {
 
         init {
             layoutState.minWidth = MIN_WIDTH
@@ -49,7 +49,7 @@ object PageArea {
     }
 
     @Composable
-    fun Layout(layoutState: Layout.ItemState) {
+    fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
         val pixelDensity = LocalDensity.current.density
         fun updateLayoutWidth(coord: LayoutCoordinates){

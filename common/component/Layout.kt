@@ -48,10 +48,10 @@ object Layout {
     private val DRAG_WIDTH = 6.dp
     private val MIN_WIDTH = 10.dp
 
-    class ItemState(val index: Int, val isLast: Boolean, val rowState: RowState) {
+    class MemberState(private val layoutState: AreaState, private val index: Int, val isLast: Boolean) {
 
         private val isFirst: Boolean = index == 0
-        private val next: ItemState? get() = if (isLast) null else rowState.items[index + 1]
+        private val next: MemberState? get() = if (isLast) null else layoutState.items[index + 1]
         private var _width: Dp by mutableStateOf(0.dp)
 
         var minWidth: Dp by mutableStateOf(MIN_WIDTH)
@@ -74,8 +74,8 @@ object Layout {
             get() = freezeWidth ?: (_width - (if (isFirst || isLast) (DRAG_WIDTH / 2) else DRAG_WIDTH))
     }
 
-    class RowState(splitCount: Int) {
-        val items: List<ItemState> = (0 until splitCount).map { ItemState(it, it == splitCount - 1, this) }
+    class AreaState(splitCount: Int) {
+        val items: List<MemberState> = (0 until splitCount).map { MemberState(this, it, it == splitCount - 1) }
     }
 
     @Composable
@@ -83,14 +83,14 @@ object Layout {
         splitCount: Int,
         separatorWidth: Dp? = null,
         modifier: Modifier = Modifier,
-        content: @Composable (RowScope.(RowState) -> Unit)
+        content: @Composable (RowScope.(AreaState) -> Unit)
     ) {
         assert(splitCount >= 2)
-        val rowState = remember { RowState(splitCount) }
+        val layoutState = remember { AreaState(splitCount) }
         Box(modifier = modifier) {
-            Row(modifier = Modifier.fillMaxWidth()) { content(rowState) }
+            Row(modifier = Modifier.fillMaxWidth()) { content(layoutState) }
             Row(modifier = Modifier.fillMaxWidth()) {
-                rowState.items.filter { !it.isLast }.forEach {
+                layoutState.items.filter { !it.isLast }.forEach {
                     Box(Modifier.width(it.nonDraggableWidth))
                     if (it.freezeWidth == null) VerticalSeparator(it, separatorWidth)
                 }
@@ -100,14 +100,14 @@ object Layout {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun VerticalSeparator(itemState: ItemState, separatorWidth: Dp?) {
+    private fun VerticalSeparator(memberState: MemberState, separatorWidth: Dp?) {
         val pixelDensity = LocalDensity.current.density
         Box(
             modifier = Modifier.fillMaxHeight()
                 .width(if (separatorWidth != null) DRAG_WIDTH + separatorWidth else DRAG_WIDTH)
                 .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
                 .draggable(orientation = Horizontal, state = rememberDraggableState {
-                    itemState.resize((it / pixelDensity).roundToInt().dp)
+                    memberState.resize((it / pixelDensity).roundToInt().dp)
                 })
         )
     }

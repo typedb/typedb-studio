@@ -50,9 +50,9 @@ import com.vaticle.typedb.studio.project.ProjectWindow
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.statusbar.StatusBarArea
 import com.vaticle.typedb.studio.toolbar.ToolbarArea
+import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
-import kotlin.system.exitProcess
 
 object Studio {
 
@@ -97,13 +97,12 @@ object Studio {
                 ToolbarArea.Layout()
                 Separator.Horizontal()
                 Layout.ResizableRow(
-                    splitCount = 2,
-                    separatorWidth = Separator.WEIGHT,
+                    splitCount = 2, separatorWidth = Separator.WEIGHT,
                     modifier = Modifier.fillMaxWidth().weight(1f)
-                ) { rowState: Layout.RowState ->
-                    NavigatorArea.Layout(rowState.items[0])
+                ) { layoutState: Layout.AreaState ->
+                    NavigatorArea.Layout(layoutState.items[0])
                     Separator.Vertical()
-                    PageArea.Layout(rowState.items[1])
+                    PageArea.Layout(layoutState.items[1])
                 }
                 Separator.Horizontal()
                 StatusBarArea.Layout()

@@ -87,7 +87,7 @@ object NavigatorArea {
         }
     }
 
-    private class AreaState(val layoutState: Layout.ItemState) {
+    private class AreaState(val layoutState: Layout.MemberState) {
         val navigators = linkedMapOf(
             PROJECT to NavigatorState(PROJECT, this,true),
             TYPES to NavigatorState(TYPES, this, true),
@@ -112,7 +112,7 @@ object NavigatorArea {
     }
 
     @Composable
-    fun Layout(layoutState: Layout.ItemState) {
+    fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
         Row(Modifier.width(layoutState.width)) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
