@@ -44,6 +44,9 @@ kt_jvm_library(
         "//statusbar",
         "//toolbar",
 
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
         # External Maven Dependencies
         "@maven//:ch_qos_logback_logback_classic",
         "@maven//:ch_qos_logback_logback_core",

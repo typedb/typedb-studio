@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -58,8 +59,8 @@ import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.USERS
 
 object NavigatorArea {
 
-    private val AREA_WIDTH = 300.dp
-    private val AREA_MIN_WIDTH = 120.dp
+    val WIDTH = 300.dp
+    val MIN_WIDTH = 120.dp
     private val SIDE_TAB_WIDTH = 22.dp
     private val SIDE_TAB_HEIGHT = 100.dp
     private val PANEL_BAR_HEIGHT = 26.dp
@@ -96,8 +97,6 @@ object NavigatorArea {
         )
 
         init {
-            layoutState.size = AREA_WIDTH
-            layoutState.minSize = AREA_MIN_WIDTH
             mayHidePanelArea()
         }
 
@@ -114,7 +113,7 @@ object NavigatorArea {
     @Composable
     fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
-        Row(Modifier.width(layoutState.size)) {
+        Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }

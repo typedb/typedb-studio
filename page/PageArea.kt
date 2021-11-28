@@ -28,35 +28,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.common.component.Layout
 import com.vaticle.typedb.studio.common.component.Separator
 
 object PageArea {
 
-    private val MIN_WIDTH = 100.dp
+    val MIN_WIDTH = 100.dp
     private val TAB_HEIGHT = 26.dp
     private val TAB_WIDTH = 100.dp
 
-    private class AreaState(val layoutState: Layout.MemberState) {
+    private class AreaState {
 
-        init {
-            layoutState.minSize = MIN_WIDTH
-        }
     }
 
     @Composable
-    fun Layout(layoutState: Layout.MemberState) {
-        val areaState = remember { AreaState(layoutState) }
-        val pixelDensity = LocalDensity.current.density
-        fun updateLayoutWidth(coord: LayoutCoordinates) {
-            layoutState.size = (coord.size.width / pixelDensity).toInt().dp
-        }
-
-        Column(modifier = Modifier.fillMaxWidth().onGloballyPositioned { updateLayoutWidth(it) }) {
+    fun Layout() {
+        val areaState = remember { AreaState() }
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 val tabs = arrayOf(1, 2, 3, 4, 5)
                 for ((i, tab) in tabs.withIndex()) {

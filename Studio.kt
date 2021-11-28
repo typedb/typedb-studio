@@ -35,6 +35,8 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowSize
 import androidx.compose.ui.window.rememberWindowState
+import com.vaticle.typedb.common.collection.Either.first
+import com.vaticle.typedb.common.collection.Either.second
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Layout
@@ -97,13 +99,11 @@ object Studio {
                 ToolbarArea.Layout()
                 Separator.Horizontal()
                 Layout.ResizableRow(
-                    members = 2, separatorWidth = Separator.WEIGHT,
-                    modifier = Modifier.fillMaxWidth().weight(1f)
-                ) { layoutState: Layout.AreaState ->
-                    NavigatorArea.Layout(layoutState.members[0])
-                    Separator.Vertical()
-                    PageArea.Layout(layoutState.members[1])
-                }
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    separator = Layout.Separator.of(Separator.WEIGHT) { Separator.Vertical() },
+                    Layout.Member.of(first(NavigatorArea.WIDTH), NavigatorArea.MIN_WIDTH) { NavigatorArea.Layout(it) },
+                    Layout.Member.of(second(1f), PageArea.MIN_WIDTH) { PageArea.Layout() }
+                )
                 Separator.Horizontal()
                 StatusBarArea.Layout()
             }
