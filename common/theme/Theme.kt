@@ -25,6 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
 object Theme {
 
@@ -58,5 +61,9 @@ object Theme {
                 content()
             }
         }
+    }
+
+    fun toDP(pixel: Number, pixelDensity: Float): Dp {
+        return (pixel.toDouble() / pixelDensity).roundToInt().dp
     }
 }

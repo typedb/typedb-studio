@@ -46,10 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.common.theme.Theme.toDP
 import java.awt.Cursor
 import java.awt.Cursor.E_RESIZE_CURSOR
 import java.awt.Cursor.N_RESIZE_CURSOR
-import kotlin.math.roundToInt
 
 object Layout {
 
@@ -146,8 +146,7 @@ object Layout {
                 return size
             }
 
-        fun onSizeChanged(size: Int, pixD: Float) {
-            val maxSize = toDP(size, pixD)
+        fun onSizeChanged(maxSize: Dp) {
             if (!resized) mayInitialise(maxSize)
             mayShrinkOrExpand(maxSize)
         }
@@ -176,16 +175,12 @@ object Layout {
         }
     }
 
-    private fun toDP(pixel: Int, pixelDensity: Float): Dp {
-        return (pixel / pixelDensity).roundToInt().dp
-    }
-
     @Composable
     fun ResizableRow(modifier: Modifier = Modifier, separator: Separator? = null, vararg members: Member) {
         assert(members.size >= 2)
         val areaState = remember { AreaState(members.toList(), separator?.size) }
-        val pixD = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(it.width, pixD) }) {
+        val pixelDensity = LocalDensity.current.density
+        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(toDP(it.width, pixelDensity)) }) {
             Row(modifier = Modifier.fillMaxSize()) {
                 areaState.members.forEach { member ->
                     Box(Modifier.fillMaxHeight().width(member.size)) { member.composable(member) }
@@ -205,8 +200,8 @@ object Layout {
     fun ResizableColumn(modifier: Modifier = Modifier, separator: Separator? = null, vararg members: Member) {
         assert(members.size >= 2)
         val areaState = remember { AreaState(members.toList(), separator?.size) }
-        val pixD = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(it.height, pixD) }) {
+        val pixelDensity = LocalDensity.current.density
+        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(toDP(it.height, pixelDensity)) }) {
             Column(modifier = Modifier.fillMaxSize()) {
                 areaState.members.forEach { member ->
                     Box(Modifier.fillMaxWidth().height(member.size)) { member.composable(member) }
@@ -234,7 +229,7 @@ object Layout {
                     .width(if (separatorWidth != null) DRAG_SIZE + separatorWidth else DRAG_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
                     .draggable(orientation = Horizontal, state = rememberDraggableState {
-                        memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
+                        memberState.tryResizeSelfAndNext(toDP(it, pixelDensity))
                     })
             )
         }
@@ -252,7 +247,7 @@ object Layout {
                     .height(if (separatorHeight != null) DRAG_SIZE + separatorHeight else DRAG_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(N_RESIZE_CURSOR)))
                     .draggable(orientation = Vertical, state = rememberDraggableState {
-                        memberState.tryResizeSelfAndNext((it / pixelDensity).roundToInt().dp)
+                        memberState.tryResizeSelfAndNext(toDP(it, pixelDensity))
                     })
             )
         }
