@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -198,11 +199,11 @@ object NavigatorArea {
             PanelBarSpace()
             Form.Text(value = navigator.label)
             Spacer(Modifier.weight(1f))
-            Icon.Render(
-                icon = Icon.Code.XMARK,
-                size = ICON_SIZE,
-                modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand).clickable { navigator.toggle() })
-            PanelBarSpace()
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(PANEL_BAR_HEIGHT)
+                .pointerHoverIcon(PointerIconDefaults.Hand)
+                .clickable { navigator.toggle() }) {
+                Icon.Render(icon = Icon.Code.XMARK, size = ICON_SIZE)
+            }
         }
     }
 
