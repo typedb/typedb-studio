@@ -82,7 +82,7 @@ object NavigatorArea {
 
         fun toggle() {
             isOpen = !isOpen
-            areaState.recomputeWidth()
+            areaState.mayHidePanelArea()
         }
     }
 
@@ -98,15 +98,16 @@ object NavigatorArea {
         init {
             layoutState.size = AREA_WIDTH
             layoutState.minSize = AREA_MIN_WIDTH
-            recomputeWidth()
+            mayHidePanelArea()
         }
 
         fun openedNavigators(): List<NavigatorState> {
             return navigators.values.filter { it.isOpen }
         }
 
-        fun recomputeWidth() {
-            layoutState.freezeSize = if (openedNavigators().isEmpty()) SIDE_TAB_WIDTH else null
+        fun mayHidePanelArea() {
+            if (openedNavigators().isEmpty()) layoutState.freeze(SIDE_TAB_WIDTH)
+            else layoutState.unfreeze()
         }
     }
 

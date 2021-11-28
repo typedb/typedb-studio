@@ -61,14 +61,16 @@ object Layout {
         private val isFirst: Boolean = index == 0
         private val next: MemberState? get() = if (isLast) null else layoutState.members[index + 1]
         private var _size: Dp by mutableStateOf(0.dp)
-
+        internal var freezeSize: Dp? by mutableStateOf(null); private set
         var minSize: Dp by mutableStateOf(MIN_SIZE)
-        var freezeSize: Dp? by mutableStateOf(null)
         var size: Dp
             get() = freezeSize ?: _size
             set(value) {
                 _size = value
             }
+
+        val nonDraggableSize: Dp
+            get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAG_SIZE / 2) else DRAG_SIZE))
 
         fun tryResize(delta: Dp) {
             _size += max(delta, minSize - _size)
@@ -81,8 +83,13 @@ object Layout {
             next!!.size -= cappedDelta
         }
 
-        val nonDraggableSize: Dp
-            get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAG_SIZE / 2) else DRAG_SIZE))
+        fun freeze(size: Dp) {
+            freezeSize = size
+        }
+
+        fun unfreeze() {
+            freezeSize = null
+        }
     }
 
     class AreaState(members: Int, private val separatorSize: Dp?) {
