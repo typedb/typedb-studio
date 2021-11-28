@@ -166,7 +166,8 @@ object Layout {
         private fun mayShrinkOrExpand(maxSize: Dp) {
             var i = members.size - 1
             var size = currentSize
-            while (size > maxSize && i >= 0) {
+            // we add 2.dp only to accommodate for rounding errors never reaching equals
+            while (size > maxSize + 1.dp && i >= 0) {
                 members[i].tryOverride(maxSize - size)
                 size = currentSize
                 i--
