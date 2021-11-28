@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +46,7 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaticle.typedb.common.collection.Either.second
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
@@ -59,12 +61,14 @@ import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.USERS
 
 object NavigatorArea {
 
+    const val ID = "NAVIGATOR_AREA"
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
     private val SIDE_TAB_WIDTH = 22.dp
     private val SIDE_TAB_HEIGHT = 100.dp
     private val PANEL_BAR_HEIGHT = 26.dp
     private val PANEL_BAR_SPACING = 8.dp
+    private val PANEL_MIN_HEIGHT = 60.dp
     private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 
@@ -113,25 +117,25 @@ object NavigatorArea {
     @Composable
     fun Layout(layoutState: Layout.MemberState) {
         val areaState = remember { AreaState(layoutState) }
+        val openedNavigators = areaState.openedNavigators()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 areaState.navigators.values.forEach { Tab(it) }
             }
-            Separator.Vertical()
-            Column(Modifier.weight(1f)) {
-                val openNavigators: List<NavigatorState> = areaState.openedNavigators()
-                openNavigators.forEachIndexed { i, navigator ->
-                    Panel(navigator = navigator, modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        when (navigator.type) {
-                            PROJECT -> ProjectNavigator.Layout()
-                            TYPES -> TypeNavigator.Layout()
-                            RULES -> RuleNavigator.Layout()
-                            USERS -> UserNavigator.Layout()
-                            ROLES -> RolesNavigator.Layout()
-                        }
-                    }
-                    if (i < openNavigators.size - 1) Separator.Horizontal()
-                }
+            if (openedNavigators.isNotEmpty()) {
+                Separator.Vertical()
+                if (openedNavigators.size == 1) Panel(openedNavigators.first())
+                else Layout.ResizableColumn(
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    separator = Layout.Separator.of(Separator.WEIGHT) { Separator.Horizontal() },
+                    *openedNavigators.map { navigator ->
+                        Layout.Member.of(
+                            id = navigator.label,
+                            initSize = second(1f),
+                            minSize = PANEL_MIN_HEIGHT
+                        ) { memberState -> Panel(navigator) }
+                    }.toTypedArray()
+                )
             }
         }
     }
@@ -166,12 +170,18 @@ object NavigatorArea {
     }
 
     @Composable
-    private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier) {
         Column(modifier = modifier) {
             PanelTitle(navigator)
             Separator.Horizontal()
             Box(modifier = Modifier.weight(1f)) {
-                content()
+                when (navigator.type) {
+                    PROJECT -> ProjectNavigator.Layout()
+                    TYPES -> TypeNavigator.Layout()
+                    RULES -> RuleNavigator.Layout()
+                    USERS -> UserNavigator.Layout()
+                    ROLES -> RolesNavigator.Layout()
+                }
             }
         }
     }

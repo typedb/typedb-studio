@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.common.component.Separator
 
 object PageArea {
 
+    const val ID = "PAGE_AREA"
     val MIN_WIDTH = 100.dp
     private val TAB_HEIGHT = 26.dp
     private val TAB_WIDTH = 100.dp

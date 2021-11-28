@@ -28,6 +28,9 @@ kt_jvm_library(
         "//common",
         "//service",
 
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",

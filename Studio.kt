@@ -35,8 +35,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowSize
 import androidx.compose.ui.window.rememberWindowState
-import com.vaticle.typedb.common.collection.Either.first
-import com.vaticle.typedb.common.collection.Either.second
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Layout
@@ -101,8 +100,16 @@ object Studio {
                 Layout.ResizableRow(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Layout.Separator.of(Separator.WEIGHT) { Separator.Vertical() },
-                    Layout.Member.of(first(NavigatorArea.WIDTH), NavigatorArea.MIN_WIDTH) { NavigatorArea.Layout(it) },
-                    Layout.Member.of(second(1f), PageArea.MIN_WIDTH) { PageArea.Layout() }
+                    Layout.Member.of(
+                        id = NavigatorArea.ID,
+                        initSize = Either.first(NavigatorArea.WIDTH),
+                        minSize = NavigatorArea.MIN_WIDTH
+                    ) { NavigatorArea.Layout(it) },
+                    Layout.Member.of(
+                        id = PageArea.ID,
+                        initSize = Either.second(1f),
+                        minSize = PageArea.MIN_WIDTH
+                    ) { PageArea.Layout() }
                 )
                 Separator.Horizontal()
                 StatusBarArea.Layout()
