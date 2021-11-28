@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -122,15 +121,13 @@ object NavigatorArea {
             Column(Modifier.weight(1f)) {
                 val openNavigators: List<NavigatorState> = areaState.openedNavigators()
                 openNavigators.forEachIndexed { i, navigator ->
-                    Box(Modifier.fillMaxWidth().weight(1f)) {
-                        Panel(navigator) {
-                            when (navigator.type) {
-                                PROJECT -> ProjectNavigator.Layout()
-                                TYPES -> TypeNavigator.Layout()
-                                RULES -> RuleNavigator.Layout()
-                                USERS -> UserNavigator.Layout()
-                                ROLES -> RolesNavigator.Layout()
-                            }
+                    Panel(navigator = navigator, modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        when (navigator.type) {
+                            PROJECT -> ProjectNavigator.Layout()
+                            TYPES -> TypeNavigator.Layout()
+                            RULES -> RuleNavigator.Layout()
+                            USERS -> UserNavigator.Layout()
+                            ROLES -> RolesNavigator.Layout()
                         }
                     }
                     if (i < openNavigators.size - 1) Separator.Horizontal()
@@ -169,8 +166,8 @@ object NavigatorArea {
     }
 
     @Composable
-    private fun Panel(navigator: NavigatorState, content: @Composable () -> Unit) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+        Column(modifier = modifier) {
             PanelTitle(navigator)
             Separator.Horizontal()
             Box(modifier = Modifier.weight(1f)) {
