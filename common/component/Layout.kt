@@ -23,8 +23,10 @@ import androidx.compose.foundation.gestures.Orientation.Vertical
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -184,16 +186,37 @@ object Layout {
         val areaState = remember { AreaState(members.toList(), separator?.size) }
         val pixD = LocalDensity.current.density
         Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(it.width, pixD) }) {
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxSize()) {
                 areaState.members.forEach { member ->
                     Box(Modifier.fillMaxHeight().width(member.size)) { member.composable(member) }
                     separator?.let { if (!member.isLast) it.composable() }
                 }
             }
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxSize()) {
                 areaState.members.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxHeight().width(it.nonDraggableSize))
                     VerticalSeparator(it, separator?.size)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ResizableColumn(modifier: Modifier = Modifier, separator: Separator? = null, vararg members: Member) {
+        assert(members.size >= 2)
+        val areaState = remember { AreaState(members.toList(), separator?.size) }
+        val pixD = LocalDensity.current.density
+        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(it.height, pixD) }) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                areaState.members.forEach { member ->
+                    Box(Modifier.fillMaxWidth().height(member.size)) { member.composable(member) }
+                    separator?.let { if (!member.isLast) it.composable() }
+                }
+            }
+            Column(modifier = Modifier.fillMaxSize()) {
+                areaState.members.filter { !it.isLast }.forEach {
+                    Box(Modifier.fillMaxWidth().height(it.nonDraggableSize))
+                    HorizontalSeparator(it, separator?.size)
                 }
             }
         }
