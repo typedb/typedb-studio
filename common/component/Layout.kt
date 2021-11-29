@@ -56,16 +56,16 @@ object Layout {
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val MEMBER_MIN_SIZE = 10.dp
 
-    data class Separator(val size: Dp, val composable: @Composable () -> Unit)
+    data class Separator(val size: Dp, val content: @Composable () -> Unit)
 
-    data class Member(
+    data class Item(
         val id: String,
         val initSize: Either<Dp, Float>,
         val minSize: Dp = MEMBER_MIN_SIZE,
-        val composable: @Composable (MemberState) -> Unit
+        val content: @Composable (ItemState) -> Unit
     )
 
-    class MemberState internal constructor(
+    class ItemState internal constructor(
         private val layoutState: AreaState,
         private val index: Int,
         val id: String,
@@ -73,12 +73,12 @@ object Layout {
         val minSize: Dp = MEMBER_MIN_SIZE,
         currentSize: Dp = 0.dp,
         currentFreezeSize: Dp? = null,
-        val composable: @Composable (MemberState) -> Unit
+        val content: @Composable (ItemState) -> Unit
     ) {
         internal val isFirst: Boolean get() = index == 0
-        internal val isLast: Boolean get() = index == layoutState.members.size - 1
-        internal val previous: MemberState? get() = if (isFirst) null else layoutState.members[index - 1]
-        internal val next: MemberState? get() = if (isLast) null else layoutState.members[index + 1]
+        internal val isLast: Boolean get() = index == layoutState.contents.size - 1
+        internal val previous: ItemState? get() = if (isFirst) null else layoutState.contents[index - 1]
+        internal val next: ItemState? get() = if (isLast) null else layoutState.contents[index + 1]
         internal var _size: Dp by mutableStateOf(currentSize)
         internal var freezeSize: Dp? by mutableStateOf(currentFreezeSize); private set
         internal var size: Dp
@@ -114,40 +114,40 @@ object Layout {
     internal class AreaState(private val separatorSize: Dp?) {
         var resized: Boolean = false
         var maxSize: Dp by mutableStateOf(0.dp)
-        var members: List<MemberState> by mutableStateOf(emptyList())
+        var contents: List<ItemState> by mutableStateOf(emptyList())
         private val currentSize: Dp
             get() {
                 var size = 0.dp
-                members.map { size += it.size }
-                separatorSize?.let { size += it * (members.size - 1) }
+                contents.map { size += it.size }
+                separatorSize?.let { size += it * (contents.size - 1) }
                 return size
             }
 
-        internal fun sync(inputs: List<Member>) {
+        internal fun sync(inputs: List<Item>) {
             val inputIDs = inputs.map { it.id }.toSet()
-            val removedIDs = members.map { it.id }.filter { !inputIDs.contains(it) }.toSet()
-            if (removedIDs.isNotEmpty()) removeMembers(removedIDs)
-            if (inputs.size > members.size) updateMembers(inputs)
+            val removedIDs = contents.map { it.id }.filter { !inputIDs.contains(it) }.toSet()
+            if (removedIDs.isNotEmpty()) removeItems(removedIDs)
+            if (inputs.size > contents.size) replaceItems(inputs)
         }
 
-        private fun removeMembers(removedIDs: Set<String>) {
-            members.filter { removedIDs.contains(it.id) }.forEach {
+        private fun removeItems(removedIDs: Set<String>) {
+            contents.filter { removedIDs.contains(it.id) }.forEach {
                 if (it.isFirst) it.next!!.size += it.size
                 else it.previous!!.size += it.size
             }
-            members = members.filter { !removedIDs.contains(it.id) }.mapIndexed { i, member ->
-                MemberState(
+            contents = contents.filter { !removedIDs.contains(it.id) }.mapIndexed { i, member ->
+                ItemState(
                     layoutState = this, index = i, id = member.id, minSize = member.minSize,
-                    currentSize = member._size, currentFreezeSize = member.freezeSize, composable = member.composable
+                    currentSize = member._size, currentFreezeSize = member.freezeSize, content = member.content
                 )
             }
         }
 
-        private fun updateMembers(inputs: List<Member>) {
-            members = inputs.mapIndexed { i, input ->
-                MemberState(
+        private fun replaceItems(inputs: List<Item>) {
+            contents = inputs.mapIndexed { i, input ->
+                ItemState(
                     layoutState = this, index = i, id = input.id, initSize = input.initSize,
-                    minSize = input.minSize, composable = input.composable
+                    minSize = input.minSize, content = input.content
                 )
             }
             mayInitialiseSizes()
@@ -161,68 +161,68 @@ object Layout {
 
         private fun mayInitialiseSizes() {
             var fixedSize: Dp = 0.dp
-            members.filter { it.initSize.isFirst }.forEach {
+            contents.filter { it.initSize.isFirst }.forEach {
                 it.size = it.initSize.first()
                 fixedSize += it.initSize.first()
             }
-            val weightedMembers = members.filter { it.initSize.isSecond }
+            val weightedItems = contents.filter { it.initSize.isSecond }
             val weightedSize = maxSize - fixedSize
-            val weightedTotal = weightedMembers.sumOf { it.initSize.second().toDouble() }.toFloat()
-            weightedMembers.forEach { it.size = max(it.minSize, weightedSize * (it.initSize.second() / weightedTotal)) }
+            val weightedTotal = weightedItems.sumOf { it.initSize.second().toDouble() }.toFloat()
+            weightedItems.forEach { it.size = max(it.minSize, weightedSize * (it.initSize.second() / weightedTotal)) }
         }
 
         private fun mayShrinkOrExpandSizes() {
-            var i = members.size - 1
+            var i = contents.size - 1
             var size = currentSize
             // we add 1.dp only to accommodate for rounding errors never reaching equals
             while (size > maxSize + 1.dp && i >= 0) {
-                members[i].tryOverride(maxSize - size)
+                contents[i].tryOverride(maxSize - size)
                 size = currentSize
                 i--
             }
-            if (size < maxSize) members.last().tryOverride(maxSize - size)
+            if (size < maxSize) contents.last().tryOverride(maxSize - size)
         }
     }
 
     @Composable
-    fun ResizableRow(modifier: Modifier = Modifier, separator: Separator? = null, vararg members: Member) {
-        assert(members.size >= 2)
+    fun ResizableRow(modifier: Modifier = Modifier, separator: Separator? = null, vararg items: Item) {
+        assert(items.size >= 2)
         val pixelDensity = LocalDensity.current.density
         val areaState = remember { AreaState(separator?.size) }
-        areaState.sync(members.toList())
+        areaState.sync(items.toList())
         Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(toDP(it.width, pixelDensity)) }) {
             Row(modifier = Modifier.fillMaxSize()) {
-                areaState.members.forEach { member ->
-                    Box(Modifier.fillMaxHeight().width(member.size)) { member.composable(member) }
-                    separator?.let { if (!member.isLast) it.composable() }
+                areaState.contents.forEach { member ->
+                    Box(Modifier.fillMaxHeight().width(member.size)) { member.content(member) }
+                    separator?.let { if (!member.isLast) it.content() }
                 }
             }
             Row(modifier = Modifier.fillMaxSize()) {
-                areaState.members.filter { !it.isLast }.forEach {
+                areaState.contents.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxHeight().width(it.nonDraggableSize))
-                    VerticalSeparator(it, separator?.size)
+                    RowItemResizer(it, separator?.size)
                 }
             }
         }
     }
 
     @Composable
-    fun ResizableColumn(modifier: Modifier = Modifier, separator: Separator? = null, vararg members: Member) {
-        assert(members.size >= 2)
+    fun ResizableColumn(modifier: Modifier = Modifier, separator: Separator? = null, vararg items: Item) {
+        assert(items.size >= 2)
         val pixelDensity = LocalDensity.current.density
         val areaState = remember { AreaState(separator?.size) }
-        areaState.sync(members.toList())
+        areaState.sync(items.toList())
         Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(toDP(it.height, pixelDensity)) }) {
             Column(modifier = Modifier.fillMaxSize()) {
-                areaState.members.forEach { member ->
-                    Box(Modifier.fillMaxWidth().height(member.size)) { member.composable(member) }
-                    separator?.let { if (!member.isLast) it.composable() }
+                areaState.contents.forEach { member ->
+                    Box(Modifier.fillMaxWidth().height(member.size)) { member.content(member) }
+                    separator?.let { if (!member.isLast) it.content() }
                 }
             }
             Column(modifier = Modifier.fillMaxSize()) {
-                areaState.members.filter { !it.isLast }.forEach {
+                areaState.contents.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxWidth().height(it.nonDraggableSize))
-                    HorizontalSeparator(it, separator?.size)
+                    ColumnItemResizer(it, separator?.size)
                 }
             }
         }
@@ -230,8 +230,8 @@ object Layout {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun VerticalSeparator(memberState: MemberState, separatorWidth: Dp?) {
-        if (memberState.freezeSize != null) {
+    private fun RowItemResizer(itemState: ItemState, separatorWidth: Dp?) {
+        if (itemState.freezeSize != null) {
             if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
         } else {
             val pixelDensity = LocalDensity.current.density
@@ -240,7 +240,7 @@ object Layout {
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(E_RESIZE_CURSOR)))
                     .draggable(orientation = Horizontal, state = rememberDraggableState {
-                        memberState.tryResizeSelfAndNext(toDP(it, pixelDensity))
+                        itemState.tryResizeSelfAndNext(toDP(it, pixelDensity))
                     })
             )
         }
@@ -248,8 +248,8 @@ object Layout {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun HorizontalSeparator(memberState: MemberState, separatorHeight: Dp?) {
-        if (memberState.freezeSize != null) {
+    private fun ColumnItemResizer(itemState: ItemState, separatorHeight: Dp?) {
+        if (itemState.freezeSize != null) {
             if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))
         } else {
             val pixelDensity = LocalDensity.current.density
@@ -258,7 +258,7 @@ object Layout {
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(N_RESIZE_CURSOR)))
                     .draggable(orientation = Vertical, state = rememberDraggableState {
-                        memberState.tryResizeSelfAndNext(toDP(it, pixelDensity))
+                        itemState.tryResizeSelfAndNext(toDP(it, pixelDensity))
                     })
             )
         }

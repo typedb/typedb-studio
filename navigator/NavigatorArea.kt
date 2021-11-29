@@ -92,7 +92,7 @@ object NavigatorArea {
         }
     }
 
-    private class AreaState(val layoutState: Layout.MemberState) {
+    private class AreaState(val layoutState: Layout.ItemState) {
         val navigators = linkedMapOf(
             PROJECT to NavigatorState(PROJECT, this, true),
             TYPES to NavigatorState(TYPES, this, true),
@@ -116,7 +116,7 @@ object NavigatorArea {
     }
 
     @Composable
-    fun Layout(layoutState: Layout.MemberState) {
+    fun Layout(layoutState: Layout.ItemState) {
         val areaState = remember { AreaState(layoutState) }
         val openedNavigators = areaState.openedNavigators()
         Row(Modifier.fillMaxSize()) {
@@ -130,7 +130,7 @@ object NavigatorArea {
                     modifier = Modifier.fillMaxHeight().weight(1f),
                     separator = Layout.Separator(Separator.WEIGHT) { Separator.Horizontal() },
                     *openedNavigators.map { navigator ->
-                        Layout.Member(
+                        Layout.Item(
                             id = navigator.label,
                             initSize = second(1f),
                             minSize = PANEL_MIN_HEIGHT
