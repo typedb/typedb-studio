@@ -339,6 +339,7 @@ object Form {
         ) {
             TextButton(
                 text = selected.toString().ifBlank { placeholder },
+                textColor = fadeable(Theme.colors.onPrimary, selected.toString().isBlank()),
                 onClick = { state.toggle() },
                 trailingIcon = CARET_DOWN,
                 enabled = enabled,
