@@ -189,22 +189,14 @@ object Form {
         enabled: Boolean = true,
         content: @Composable BoxScope.() -> Unit
     ) {
-        var hovered by remember { mutableStateOf(false) }
-
-        @Composable
-        fun bgColor() = when (enabled) {
-            true -> if (hovered) Theme.colors.surface2 else Theme.colors.primary
-            false -> Theme.colors.primary
-        }
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
                 .height(FIELD_HEIGHT)
-                .background(fadeable(bgColor(), !enabled), ROUNDED_RECTANGLE)
+                .background(fadeable(Theme.colors.primary, !enabled), ROUNDED_RECTANGLE)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
-                .pointerMoveFilter(onEnter = { hovered = true; true }, onExit = { hovered = false; true })
         ) {
             content()
         }
