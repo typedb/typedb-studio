@@ -99,13 +99,13 @@ object Studio {
                 Separator.Horizontal()
                 Layout.ResizableRow(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Layout.Separator.of(Separator.WEIGHT) { Separator.Vertical() },
-                    Layout.Member.of(
+                    separator = Layout.Separator(Separator.WEIGHT) { Separator.Vertical() },
+                    Layout.Member(
                         id = NavigatorArea.ID,
                         initSize = Either.first(NavigatorArea.WIDTH),
                         minSize = NavigatorArea.MIN_WIDTH
                     ) { NavigatorArea.Layout(it) },
-                    Layout.Member.of(
+                    Layout.Member(
                         id = PageArea.ID,
                         initSize = Either.second(1f),
                         minSize = PageArea.MIN_WIDTH

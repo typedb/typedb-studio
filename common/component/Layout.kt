@@ -56,42 +56,14 @@ object Layout {
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val MEMBER_MIN_SIZE = 10.dp
 
-    interface Separator {
-        val size: Dp
-        val composable: @Composable () -> Unit
+    data class Separator(val size: Dp, val composable: @Composable () -> Unit)
 
-        companion object {
-            fun of(size: Dp, composable: @Composable () -> Unit): Separator {
-                return object : Separator {
-                    override val size = size
-                    override val composable = composable
-                }
-            }
-        }
-    }
-
-    interface Member {
-        val id: String
-        val initSize: Either<Dp, Float>
-        val minSize: Dp
+    data class Member(
+        val id: String,
+        val initSize: Either<Dp, Float>,
+        val minSize: Dp = MEMBER_MIN_SIZE,
         val composable: @Composable (MemberState) -> Unit
-
-        companion object {
-            fun of(
-                id: String,
-                initSize: Either<Dp, Float>,
-                minSize: Dp = MEMBER_MIN_SIZE,
-                composable: @Composable (MemberState) -> Unit
-            ): Member {
-                return object : Member {
-                    override val id = id
-                    override val initSize = initSize
-                    override val minSize = minSize
-                    override val composable = composable
-                }
-            }
-        }
-    }
+    )
 
     class MemberState internal constructor(
         private val layoutState: AreaState,
@@ -202,7 +174,7 @@ object Layout {
         private fun mayShrinkOrExpandSizes() {
             var i = members.size - 1
             var size = currentSize
-            // we add 2.dp only to accommodate for rounding errors never reaching equals
+            // we add 1.dp only to accommodate for rounding errors never reaching equals
             while (size > maxSize + 1.dp && i >= 0) {
                 members[i].tryOverride(maxSize - size)
                 size = currentSize
