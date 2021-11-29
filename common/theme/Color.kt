@@ -20,12 +20,10 @@ package com.vaticle.typedb.studio.common.theme
 
 import androidx.compose.material.Colors
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 
 object Color {
 
-    @Stable
     data class Theme(
         val primary: Color,
         val secondary: Color,
