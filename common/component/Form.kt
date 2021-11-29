@@ -252,7 +252,7 @@ object Form {
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
         val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
-        val borderBrush = SolidColor(fadeable(Theme.colors.surface3, !enabled))
+        val borderBrush = SolidColor(fadeable(Theme.colors.border, !enabled))
         BasicTextField(
             modifier = modifier
                 .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
@@ -296,7 +296,7 @@ object Form {
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
                 .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.surface3, !enabled)), ROUNDED_RECTANGLE),
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = fadeable(Theme.colors.icon, !enabled),

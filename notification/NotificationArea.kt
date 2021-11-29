@@ -93,7 +93,7 @@ object NotificationArea {
     @Composable
     private fun colorConfigOf(type: NotifierService.MessageType): ColorConfig {
         return when (type) {
-            INFO -> ColorConfig(Theme.colors.surface3, Theme.colors.onSurface)
+            INFO -> ColorConfig(Theme.colors.border, Theme.colors.onSurface)
             ERROR -> ColorConfig(Theme.colors.error, Theme.colors.onError)
         }
     }

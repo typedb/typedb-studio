@@ -61,7 +61,7 @@ object Layout {
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val MEMBER_MIN_SIZE = 10.dp
 
-    data class Separator(val size: Dp, val color: @Composable () -> Color = { Theme.colors.surface3 })
+    data class Separator(val size: Dp, val color: @Composable () -> Color = { Theme.colors.border })
 
     data class Item(
         val id: String,
@@ -190,12 +190,12 @@ object Layout {
     }
 
     @Composable
-    fun HorizontalSeparator(height: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.surface3) {
+    fun HorizontalSeparator(height: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.border) {
         Spacer(modifier = Modifier.fillMaxWidth().height(height = height).background(color = color))
     }
 
     @Composable
-    fun VerticalSeparator(width: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.surface3) {
+    fun VerticalSeparator(width: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.border) {
         Spacer(modifier = Modifier.fillMaxHeight().width(width = width).background(color = color))
     }
 
