@@ -30,6 +30,6 @@ filegroup(
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
-    exclude = glob(["*.ttf"]),
+    exclude = glob(["*.ttf", "UFL.txt"]),
     license_type = "agpl",
 )

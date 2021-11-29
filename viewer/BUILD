@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//:__pkg__"])
@@ -53,4 +54,10 @@ kt_jvm_library(
     ],
     resource_strip_prefix = "resources",
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-viewer:{pom_version}"],
+)
+
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*"]),
+    license_type = "agpl",
 )
