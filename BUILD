@@ -94,7 +94,7 @@ jvm_application_image(
         "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
         "//conditions:default": ":studio-bin-mac",
     }),
-    main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
+    main_jar = "com-vaticle-typedb-typedb-studio-viewer-0.0.0.jar",
     main_class = "com.vaticle.typedb.studio.viewer.Studio",
     deps_use_maven_name = False,
     additional_files = assemble_files,
