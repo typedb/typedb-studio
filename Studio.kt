@@ -39,7 +39,6 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Layout
-import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.notification.Message
 import com.vaticle.typedb.studio.common.system.UserDataDirectory
 import com.vaticle.typedb.studio.common.theme.Theme
@@ -51,9 +50,9 @@ import com.vaticle.typedb.studio.project.ProjectWindow
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.statusbar.StatusBarArea
 import com.vaticle.typedb.studio.toolbar.ToolbarArea
-import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
+import kotlin.system.exitProcess
 
 object Studio {
 
@@ -96,10 +95,10 @@ object Studio {
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 ToolbarArea.Layout()
-                Separator.Horizontal()
+                Layout.HorizontalSeparator()
                 Layout.ResizableRow(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Layout.Separator(Separator.WEIGHT) { Separator.Vertical() },
+                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT) { Layout.VerticalSeparator() },
                     Layout.Item(
                         id = NavigatorArea.ID,
                         initSize = Either.first(NavigatorArea.WIDTH),
@@ -111,7 +110,7 @@ object Studio {
                         minSize = PageArea.MIN_WIDTH
                     ) { PageArea.Layout() }
                 )
-                Separator.Horizontal()
+                Layout.HorizontalSeparator()
                 StatusBarArea.Layout()
             }
             NotificationArea.Layout()

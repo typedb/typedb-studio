@@ -29,7 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.common.component.Separator
+import com.vaticle.typedb.studio.common.component.Layout
 
 object PageArea {
 
@@ -49,13 +49,13 @@ object PageArea {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 val tabs = arrayOf(1, 2, 3, 4, 5)
                 for ((i, tab) in tabs.withIndex()) {
-                    if (i > 0) Separator.Vertical()
+                    if (i > 0) Layout.VerticalSeparator()
                     Column(Modifier.fillMaxHeight().width(TAB_WIDTH)) {
 
                     }
                 }
             }
-            Separator.Horizontal()
+            Layout.HorizontalSeparator()
             Row(Modifier.fillMaxWidth()) {
 
             }

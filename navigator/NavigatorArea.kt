@@ -52,7 +52,6 @@ import com.vaticle.typedb.studio.common.Label
 import com.vaticle.typedb.studio.common.component.Form
 import com.vaticle.typedb.studio.common.component.Icon
 import com.vaticle.typedb.studio.common.component.Layout
-import com.vaticle.typedb.studio.common.component.Separator
 import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.PROJECT
 import com.vaticle.typedb.studio.navigator.NavigatorArea.NavigatorType.ROLES
@@ -124,11 +123,11 @@ object NavigatorArea {
                 areaState.navigators.values.forEach { Tab(it) }
             }
             if (openedNavigators.isNotEmpty()) {
-                Separator.Vertical()
+                Layout.VerticalSeparator()
                 if (openedNavigators.size == 1) Panel(openedNavigators.first())
                 else Layout.ResizableColumn(
                     modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Layout.Separator(Separator.WEIGHT) { Separator.Horizontal() },
+                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT) { Layout.HorizontalSeparator() },
                     *openedNavigators.map { navigator ->
                         Layout.Item(
                             id = navigator.label,
@@ -167,14 +166,14 @@ object NavigatorArea {
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
-        Separator.Horizontal()
+        Layout.HorizontalSeparator()
     }
 
     @Composable
     private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier) {
         Column(modifier = modifier) {
             PanelTitle(navigator)
-            Separator.Horizontal()
+            Layout.HorizontalSeparator()
             Box(modifier = Modifier.weight(1f)) {
                 when (navigator.type) {
                     PROJECT -> ProjectNavigator.Layout()

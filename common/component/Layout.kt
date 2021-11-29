@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.common.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation.Horizontal
 import androidx.compose.foundation.gestures.Orientation.Vertical
 import androidx.compose.foundation.gestures.draggable
@@ -25,6 +26,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.common.theme.Theme
 import com.vaticle.typedb.studio.common.theme.Theme.toDP
 import java.awt.Cursor
 import java.awt.Cursor.E_RESIZE_CURSOR
@@ -53,6 +56,7 @@ import java.awt.Cursor.N_RESIZE_CURSOR
 
 object Layout {
 
+    val SEPARATOR_WEIGHT = 1.dp
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val MEMBER_MIN_SIZE = 10.dp
 
@@ -182,6 +186,20 @@ object Layout {
             }
             if (size < maxSize) contents.last().tryOverride(maxSize - size)
         }
+    }
+
+    @Composable
+    fun HorizontalSeparator() {
+        Spacer(
+            modifier = Modifier.fillMaxWidth().height(SEPARATOR_WEIGHT).background(Theme.colors.surface3)
+        )
+    }
+
+    @Composable
+    fun VerticalSeparator() {
+        Spacer(
+            modifier = Modifier.fillMaxHeight().width(SEPARATOR_WEIGHT).background(Theme.colors.surface3)
+        )
     }
 
     @Composable
