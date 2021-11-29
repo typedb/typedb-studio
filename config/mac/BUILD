@@ -19,7 +19,10 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 package(default_visibility = ["//:__pkg__"])
 
-exports_files(["typedb-studio.rb"])
+filegroup(
+    name = "entitlements-mac-plist",
+    srcs = ["entitlements.mac.plist"],
+)
 
 checkstyle_test(
     name = "checkstyle",

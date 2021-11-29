@@ -16,13 +16,26 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//:__pkg__"])
+package(default_visibility = ["//controller:__subpackages__", "//viewer:__subpackages__"])
 
-exports_files(["typedb-studio.rb"])
+kt_jvm_library(
+    name = "model",
+    srcs = glob(["*.kt", "*/*.kt"]),
+    deps = [
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
+        # External Maven Dependencies
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_slf4j_slf4j_api",
+    ],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-model:{pom_version}"],
+)
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*"]),
+    include = glob(["*", "*/*"]),
     license_type = "agpl",
 )

@@ -19,6 +19,8 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz")
 
+package(default_visibility = ["//:__pkg__"])
+
 exports_files(["typedb-studio"])
 
 assemble_targz(

@@ -19,7 +19,15 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 package(default_visibility = ["//:__pkg__"])
 
-exports_files(["typedb-studio.rb"])
+filegroup(
+    name = "logback-test-xml",
+    srcs = ["logback-test.xml"],
+)
+
+filegroup(
+    name = "logback-xml",
+    srcs = ["logback.xml"],
+)
 
 checkstyle_test(
     name = "checkstyle",

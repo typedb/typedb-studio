@@ -17,6 +17,8 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
+package(default_visibility = ["//:__pkg__"])
+
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
