@@ -127,7 +127,7 @@ object NavigatorArea {
                 if (openedNavigators.size == 1) Panel(openedNavigators.first())
                 else Layout.ResizableColumn(
                     modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT) { Layout.HorizontalSeparator() },
+                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT),
                     *openedNavigators.map { navigator ->
                         Layout.Item(
                             id = navigator.label,

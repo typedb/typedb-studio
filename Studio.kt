@@ -98,7 +98,7 @@ object Studio {
                 Layout.HorizontalSeparator()
                 Layout.ResizableRow(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT) { Layout.VerticalSeparator() },
+                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT),
                     Layout.Item(
                         id = NavigatorArea.ID,
                         initSize = Either.first(NavigatorArea.WIDTH),

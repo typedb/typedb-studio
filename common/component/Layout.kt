@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -60,7 +61,7 @@ object Layout {
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val MEMBER_MIN_SIZE = 10.dp
 
-    data class Separator(val size: Dp, val content: @Composable () -> Unit)
+    data class Separator(val size: Dp, val color: @Composable () -> Color = { Theme.colors.surface3 })
 
     data class Item(
         val id: String,
@@ -189,17 +190,13 @@ object Layout {
     }
 
     @Composable
-    fun HorizontalSeparator() {
-        Spacer(
-            modifier = Modifier.fillMaxWidth().height(SEPARATOR_WEIGHT).background(Theme.colors.surface3)
-        )
+    fun HorizontalSeparator(height: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.surface3) {
+        Spacer(modifier = Modifier.fillMaxWidth().height(height = height).background(color = color))
     }
 
     @Composable
-    fun VerticalSeparator() {
-        Spacer(
-            modifier = Modifier.fillMaxHeight().width(SEPARATOR_WEIGHT).background(Theme.colors.surface3)
-        )
+    fun VerticalSeparator(width: Dp = SEPARATOR_WEIGHT, color: Color = Theme.colors.surface3) {
+        Spacer(modifier = Modifier.fillMaxHeight().width(width = width).background(color = color))
     }
 
     @Composable
@@ -212,7 +209,7 @@ object Layout {
             Row(modifier = Modifier.fillMaxSize()) {
                 areaState.contents.forEach { member ->
                     Box(Modifier.fillMaxHeight().width(member.size)) { member.content(member) }
-                    separator?.let { if (!member.isLast) it.content() }
+                    separator?.let { if (!member.isLast) VerticalSeparator(it.size, it.color()) }
                 }
             }
             Row(modifier = Modifier.fillMaxSize()) {
@@ -234,7 +231,7 @@ object Layout {
             Column(modifier = Modifier.fillMaxSize()) {
                 areaState.contents.forEach { member ->
                     Box(Modifier.fillMaxWidth().height(member.size)) { member.content(member) }
-                    separator?.let { if (!member.isLast) it.content() }
+                    separator?.let { if (!member.isLast) HorizontalSeparator(it.size, it.color()) }
                 }
             }
             Column(modifier = Modifier.fillMaxSize()) {
