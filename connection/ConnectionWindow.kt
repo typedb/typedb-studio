@@ -180,7 +180,7 @@ object ConnectionWindow {
     private fun TLSEnabledFormField() {
         Form.Field(label = Label.ENABLE_TLS) {
             Form.Checkbox(
-                checked = FormState.tlsEnabled,
+                value = FormState.tlsEnabled,
                 onChange = { FormState.tlsEnabled = it },
                 enabled = Service.connection.isDisconnected(),
             )

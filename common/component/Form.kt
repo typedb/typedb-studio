@@ -195,7 +195,7 @@ object Form {
                 .background(fadeable(bgColor(), !enabled), ROUNDED_RECTANGLE)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .clickable(enabled = enabled) { onClick() }
-                .onKeyEvent { onKeyEvent(event = it, onEnter = onClick, enabled = enabled) }
+                .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
                 .pointerMoveFilter(onEnter = { hovered = true; true }, onExit = { hovered = false; true })
         ) {
             content()
@@ -271,17 +271,18 @@ object Form {
 
     @Composable
     fun Checkbox(
-        checked: Boolean,
-        onChange: ((Boolean) -> Unit)?,
+        value: Boolean,
+        onChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {
         Checkbox(
-            checked = checked,
+            checked = value,
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
                 .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE),
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE)
+                .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
             enabled = enabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = fadeable(Theme.colors.icon, !enabled),
@@ -365,14 +366,18 @@ object Form {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(event: KeyEvent, onEnter: (() -> Unit)? = null, enabled: Boolean = true): Boolean {
+    private fun onKeyEvent(
+        event: KeyEvent,
+        enabled: Boolean = true,
+        onEnter: (() -> Unit)? = null,
+        onSpace: (() -> Unit)? = null
+    ): Boolean {
         return when {
             event.awtEvent.id == KEY_RELEASED -> false
             !enabled -> false
             else -> when (event.key) {
-                Key.Enter, Key.NumPadEnter -> {
-                    onEnter?.let { onEnter(); true } ?: false
-                }
+                Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false
+                Key.Spacebar -> onSpace?.let { it(); true } ?: false
                 else -> false
             }
         }
