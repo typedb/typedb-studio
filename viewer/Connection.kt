@@ -42,7 +42,14 @@ import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECT
 import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECTING
 import com.vaticle.typedb.studio.controller.connection.Connection.Status.DISCONNECTED
 import com.vaticle.typedb.studio.viewer.common.Label
-import com.vaticle.typedb.studio.viewer.common.component.Form
+import com.vaticle.typedb.studio.viewer.common.component.Form.Checkbox
+import com.vaticle.typedb.studio.viewer.common.component.Form.ComponentSpacer
+import com.vaticle.typedb.studio.viewer.common.component.Form.Dropdown
+import com.vaticle.typedb.studio.viewer.common.component.Form.Field
+import com.vaticle.typedb.studio.viewer.common.component.Form.Submission
+import com.vaticle.typedb.studio.viewer.common.component.Form.Text
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextButton
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextInput
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
 
 object Connection {
@@ -97,7 +104,7 @@ object Connection {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Form.Content(onSubmit = { FormState.trySubmitIfValid() }) {
+            Submission(onSubmit = { FormState.trySubmitIfValid() }) {
                 ServerFormField()
                 AddressFormField()
                 if (FormState.server == TYPEDB_CLUSTER) {
@@ -122,8 +129,8 @@ object Connection {
 
     @Composable
     private fun ServerFormField() {
-        Form.Field(label = Label.SERVER) {
-            Form.Dropdown(
+        Field(label = Label.SERVER) {
+            Dropdown(
                 values = Property.Server.values().toList(),
                 selected = FormState.server,
                 onSelection = { FormState.server = it },
@@ -136,8 +143,8 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun AddressFormField() {
-        Form.Field(label = Label.ADDRESS) {
-            Form.TextInput(
+        Field(label = Label.ADDRESS) {
+            TextInput(
                 value = FormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { FormState.address = it },
@@ -150,8 +157,8 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun UsernameFormField() {
-        Form.Field(label = Label.USERNAME) {
-            Form.TextInput(
+        Field(label = Label.USERNAME) {
+            TextInput(
                 value = FormState.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { FormState.username = it },
@@ -164,8 +171,8 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun PasswordFormField() {
-        Form.Field(label = Label.PASSWORD) {
-            Form.TextInput(
+        Field(label = Label.PASSWORD) {
+            TextInput(
                 value = FormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { FormState.password = it },
@@ -178,8 +185,8 @@ object Connection {
 
     @Composable
     private fun TLSEnabledFormField() {
-        Form.Field(label = Label.ENABLE_TLS) {
-            Form.Checkbox(
+        Field(label = Label.ENABLE_TLS) {
+            Checkbox(
                 value = FormState.tlsEnabled,
                 onChange = { FormState.tlsEnabled = it },
                 enabled = Controller.connection.isDisconnected(),
@@ -190,8 +197,8 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun CACertificateFormField() {
-        Form.Field(label = Label.CA_CERTIFICATE) {
-            Form.TextInput(
+        Field(label = Label.CA_CERTIFICATE) {
+            TextInput(
                 value = FormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { FormState.caCertificate = it },
@@ -204,7 +211,7 @@ object Connection {
     @Composable
     private fun ServerConnectionStatus() {
         val statusText = "${Label.STATUS}: ${Controller.connection.status.name.lowercase()}"
-        Form.Text(
+        Text(
             value = statusText, color = when (Controller.connection.status) {
                 DISCONNECTED -> Theme.colors.error2
                 CONNECTING -> Theme.colors.quaternary
@@ -216,28 +223,28 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        Form.TextButton(text = Label.CANCEL, onClick = { Controller.connection.showWindow = false })
-        Form.ComponentSpacer()
-        Form.TextButton(text = Label.CONNECT, enabled = FormState.isValid(), onClick = { FormState.trySubmit() })
+        TextButton(text = Label.CANCEL, onClick = { Controller.connection.showWindow = false })
+        ComponentSpacer()
+        TextButton(text = Label.CONNECT, enabled = FormState.isValid(), onClick = { FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        Form.TextButton(
+        TextButton(
             text = Label.DISCONNECT,
             onClick = { Controller.connection.disconnect() },
             textColor = Theme.colors.error2
         )
-        Form.ComponentSpacer()
-        Form.TextButton(text = Label.CLOSE, onClick = { Controller.connection.showWindow = false })
+        ComponentSpacer()
+        TextButton(text = Label.CLOSE, onClick = { Controller.connection.showWindow = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        Form.TextButton(text = Label.CANCEL, onClick = { Controller.connection.disconnect() })
-        Form.ComponentSpacer()
-        Form.TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+        TextButton(text = Label.CANCEL, onClick = { Controller.connection.disconnect() })
+        ComponentSpacer()
+        TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }

@@ -40,8 +40,11 @@ import com.vaticle.typedb.studio.controller.Controller
 import com.vaticle.typedb.studio.controller.common.UserDataDirectory
 import com.vaticle.typedb.studio.controller.notification.Message
 import com.vaticle.typedb.studio.viewer.common.Label
-import com.vaticle.typedb.studio.viewer.common.component.Form
+import com.vaticle.typedb.studio.viewer.common.component.Form.Text
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.viewer.common.component.Layout
+import com.vaticle.typedb.studio.viewer.common.component.Layout.HorizontalSeparator
+import com.vaticle.typedb.studio.viewer.common.component.Layout.Resizable
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
 import com.vaticle.typedb.studio.viewer.navigator.Navigator
 import kotlin.system.exitProcess
@@ -89,22 +92,22 @@ object Studio {
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 Toolbar.Area()
-                Layout.HorizontalSeparator()
-                Layout.ResizableRow(
+                HorizontalSeparator()
+                Resizable.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT),
-                    Layout.Item(
+                    separator = Resizable.Separator(Layout.SEPARATOR_WEIGHT),
+                    Resizable.Item(
                         id = Navigator.ID,
                         initSize = Either.first(Navigator.WIDTH),
                         minSize = Navigator.MIN_WIDTH
                     ) { Navigator.Area(it) },
-                    Layout.Item(
+                    Resizable.Item(
                         id = Page.ID,
                         initSize = Either.second(1f),
                         minSize = Page.MIN_WIDTH
                     ) { Page.Area() }
                 )
-                Layout.HorizontalSeparator()
+                HorizontalSeparator()
                 StatusBar.Area()
             }
             Notification.Area()
@@ -131,12 +134,12 @@ object Studio {
                 val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
                 val contentColor = Theme.colors.error2
                 Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Form.Text(value = "${Label.TITLE}:", modifier = labelModifier, style = labelStyle)
-                    exception.message?.let { Form.TextSelectable(value = it, color = contentColor) }
+                    Text(value = "${Label.TITLE}:", modifier = labelModifier, style = labelStyle)
+                    exception.message?.let { TextSelectable(value = it, color = contentColor) }
                 }
                 Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Form.Text(value = "${Label.TRACE}:", modifier = labelModifier, style = labelStyle)
-                    Form.TextSelectable(value = exception.stackTraceToString(), color = contentColor)
+                    Text(value = "${Label.TRACE}:", modifier = labelModifier, style = labelStyle)
+                    TextSelectable(value = exception.stackTraceToString(), color = contentColor)
                 }
             }
         }

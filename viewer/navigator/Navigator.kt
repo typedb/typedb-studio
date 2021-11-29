@@ -49,9 +49,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.common.collection.Either.second
 import com.vaticle.typedb.studio.viewer.common.Label
-import com.vaticle.typedb.studio.viewer.common.component.Form
+import com.vaticle.typedb.studio.viewer.common.component.Form.IconButton
+import com.vaticle.typedb.studio.viewer.common.component.Form.Text
 import com.vaticle.typedb.studio.viewer.common.component.Icon
 import com.vaticle.typedb.studio.viewer.common.component.Layout
+import com.vaticle.typedb.studio.viewer.common.component.Layout.Resizable
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
 import com.vaticle.typedb.studio.viewer.navigator.Navigator.NavigatorType.PROJECT
 import com.vaticle.typedb.studio.viewer.navigator.Navigator.NavigatorType.ROLES
@@ -91,7 +93,7 @@ object Navigator {
         }
     }
 
-    private class AreaState(val layoutState: Layout.ItemState) {
+    private class AreaState(val layoutState: Resizable.ItemState) {
         val navigators = linkedMapOf(
             PROJECT to NavigatorState(PROJECT, this, true),
             TYPES to NavigatorState(TYPES, this, true),
@@ -115,7 +117,7 @@ object Navigator {
     }
 
     @Composable
-    fun Area(layoutState: Layout.ItemState) {
+    fun Area(layoutState: Resizable.ItemState) {
         val areaState = remember { AreaState(layoutState) }
         val openedNavigators = areaState.openedNavigators()
         Row(Modifier.fillMaxSize()) {
@@ -125,15 +127,15 @@ object Navigator {
             if (openedNavigators.isNotEmpty()) {
                 Layout.VerticalSeparator()
                 if (openedNavigators.size == 1) Panel(openedNavigators.first())
-                else Layout.ResizableColumn(
+                else Resizable.Column(
                     modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Layout.Separator(Layout.SEPARATOR_WEIGHT),
+                    separator = Resizable.Separator(Layout.SEPARATOR_WEIGHT),
                     *openedNavigators.map { navigator ->
-                        Layout.Item(
+                        Resizable.Item(
                             id = navigator.label,
                             initSize = second(1f),
                             minSize = PANEL_MIN_HEIGHT
-                        ) { memberState -> Panel(navigator) }
+                        ) { Panel(navigator) }
                     }.toTypedArray()
                 )
             }
@@ -162,7 +164,7 @@ object Navigator {
                 Spacer(modifier = Modifier.weight(1f))
                 Icon.Render(icon = navigator.icon, size = ICON_SIZE)
                 Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
-                Form.Text(value = navigator.label)
+                Text(value = navigator.label)
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
@@ -196,9 +198,9 @@ object Navigator {
             PanelBarSpace()
             Icon.Render(icon = navigator.icon)
             PanelBarSpace()
-            Form.Text(value = navigator.label)
+            Text(value = navigator.label)
             Spacer(Modifier.weight(1f))
-            Form.IconButton(
+            IconButton(
                 icon = Icon.Code.XMARK,
                 onClick = { navigator.toggle() },
                 bgColor = Color.Transparent,

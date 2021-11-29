@@ -103,7 +103,7 @@ object Form {
     }
 
     @Composable
-    fun Content(onSubmit: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    fun Submission(onSubmit: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier

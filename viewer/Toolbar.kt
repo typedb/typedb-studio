@@ -34,7 +34,9 @@ import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECT
 import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECTING
 import com.vaticle.typedb.studio.controller.connection.Connection.Status.DISCONNECTED
 import com.vaticle.typedb.studio.viewer.common.Label
-import com.vaticle.typedb.studio.viewer.common.component.Form
+import com.vaticle.typedb.studio.viewer.common.component.Form.Dropdown
+import com.vaticle.typedb.studio.viewer.common.component.Form.IconButton
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextButton
 import com.vaticle.typedb.studio.viewer.common.component.Icon
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
 
@@ -74,12 +76,12 @@ object Toolbar {
 
     @Composable
     private fun ToolbarButton(icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon) {
-        Form.IconButton(icon = icon, onClick = onClick, iconColor = color, modifier = Modifier.size(COMPONENT_HEIGHT))
+        IconButton(icon = icon, onClick = onClick, iconColor = color, modifier = Modifier.size(COMPONENT_HEIGHT))
     }
 
     @Composable
     private fun DatabaseDropdown() {
-        Form.Dropdown(
+        Dropdown(
             values = Controller.connection.databaseList,
             selected = Controller.connection.getDatabase() ?: "",
             onRefresh = { Controller.connection.refreshDatabaseList() },
@@ -103,7 +105,7 @@ object Toolbar {
 
     @Composable
     private fun ConnectionButton(text: String) {
-        Form.TextButton(
+        TextButton(
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
             onClick = { Controller.connection.showWindow = true },

@@ -36,7 +36,12 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.controller.Controller
 import com.vaticle.typedb.studio.viewer.common.Label
-import com.vaticle.typedb.studio.viewer.common.component.Form
+import com.vaticle.typedb.studio.viewer.common.component.Form.ComponentSpacer
+import com.vaticle.typedb.studio.viewer.common.component.Form.Field
+import com.vaticle.typedb.studio.viewer.common.component.Form.IconButton
+import com.vaticle.typedb.studio.viewer.common.component.Form.Submission
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextButton
+import com.vaticle.typedb.studio.viewer.common.component.Form.TextInput
 import com.vaticle.typedb.studio.viewer.common.component.Icon
 import javax.swing.JFileChooser
 
@@ -76,7 +81,7 @@ object Project {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Form.Content(onSubmit = { formState.trySubmitIfValid() }) {
+            Submission(onSubmit = { formState.trySubmitIfValid() }) {
                 SelectDirectoryField(formState)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -90,16 +95,16 @@ object Project {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun SelectDirectoryField(formState: FormState) {
-        Form.Field(label = Label.DIRECTORY) {
+        Field(label = Label.DIRECTORY) {
             Row {
-                Form.TextInput(
+                TextInput(
                     value = formState.directory ?: "",
                     placeholder = Label.PATH_TO_PROJECT,
                     onValueChange = { formState.directory = it },
                     modifier = Modifier.weight(1f),
                 )
-                Form.ComponentSpacer()
-                Form.IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState) })
+                ComponentSpacer()
+                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState) })
             }
         }
     }
@@ -121,8 +126,8 @@ object Project {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun OpenProjectButtons(formState: FormState) {
-        Form.TextButton(text = Label.CANCEL, onClick = { Controller.project.showWindow = false })
-        Form.ComponentSpacer()
-        Form.TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
+        TextButton(text = Label.CANCEL, onClick = { Controller.project.showWindow = false })
+        ComponentSpacer()
+        TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }
 }
