@@ -16,16 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.controller
+package com.vaticle.typedb.studio.controller.project
 
-import com.vaticle.typedb.studio.controller.connection.Connection
-import com.vaticle.typedb.studio.controller.notification.Notifier
-import com.vaticle.typedb.studio.controller.project.Project
-
-object Controller {
-
-    val notifier = Notifier()
-    val connection = Connection(notifier)
-    val project = Project(notifier)
-
+class File {
 }

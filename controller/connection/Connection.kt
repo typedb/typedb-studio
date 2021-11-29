@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.controller
+package com.vaticle.typedb.studio.controller.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,17 +26,18 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.model.notification.Error
-import com.vaticle.typedb.studio.model.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
-import com.vaticle.typedb.studio.model.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
-import com.vaticle.typedb.studio.model.notification.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.controller.notification.Error
+import com.vaticle.typedb.studio.controller.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
+import com.vaticle.typedb.studio.controller.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
+import com.vaticle.typedb.studio.controller.notification.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.controller.notification.Notifier
+import java.nio.file.Path
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.nio.file.Path
 
-class Connection {
+class Connection(private val notifier: Notifier) {
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
@@ -74,7 +75,7 @@ class Connection {
         try {
             this.session = client!!.session(database, SESSION_TYPE)
         } catch (exception: TypeDBClientException) {
-            Controller.notifier.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
+            notifier.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
         }
     }
 
@@ -111,10 +112,10 @@ class Connection {
                 status = Status.CONNECTED
             } catch (e: TypeDBClientException) {
                 status = Status.DISCONNECTED
-                Controller.notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
+                notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
             } catch (e: Exception) {
                 status = Status.DISCONNECTED
-                Controller.notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
+                notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
             }
         }
     }

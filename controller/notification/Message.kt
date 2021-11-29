@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.model.notification
+package com.vaticle.typedb.studio.controller.notification
 
 import com.vaticle.typedb.common.exception.ErrorMessage
 

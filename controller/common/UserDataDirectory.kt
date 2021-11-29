@@ -25,17 +25,16 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
-import com.vaticle.typedb.studio.model.common.Property
-import com.vaticle.typedb.studio.model.common.Property.OS.LINUX
-import com.vaticle.typedb.studio.model.common.Property.OS.MAC
-import com.vaticle.typedb.studio.model.common.Property.OS.WINDOWS
-import mu.KotlinLogging
-import org.slf4j.LoggerFactory
+import com.vaticle.typedb.studio.controller.common.Property.OS.LINUX
+import com.vaticle.typedb.studio.controller.common.Property.OS.MAC
+import com.vaticle.typedb.studio.controller.common.Property.OS.WINDOWS
 import java.lang.System.getProperty
 import java.lang.System.getenv
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.notExists
+import mu.KotlinLogging
+import org.slf4j.LoggerFactory
 
 object UserDataDirectory {
 

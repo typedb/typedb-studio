@@ -29,24 +29,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowSize
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.controller.Controller
 import com.vaticle.typedb.studio.controller.common.UserDataDirectory
-import com.vaticle.typedb.studio.model.notification.Message
+import com.vaticle.typedb.studio.controller.notification.Message
 import com.vaticle.typedb.studio.viewer.common.Label
 import com.vaticle.typedb.studio.viewer.common.component.Form
 import com.vaticle.typedb.studio.viewer.common.component.Layout
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
 import com.vaticle.typedb.studio.viewer.navigator.Navigator
+import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
-import kotlin.system.exitProcess
 
 object Studio {
 
@@ -121,7 +121,7 @@ object Studio {
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = WindowSize(ERROR_WINDOW_WIDTH, ERROR_WINDOW_HEIGHT),
+                size = DpSize(ERROR_WINDOW_WIDTH, ERROR_WINDOW_HEIGHT),
             )
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(5.dp)) {

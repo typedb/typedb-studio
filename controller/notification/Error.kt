@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.model.notification
+package com.vaticle.typedb.studio.controller.notification
 
 interface Error {
     val code: String

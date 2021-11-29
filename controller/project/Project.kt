@@ -16,20 +16,21 @@
  *
  */
 
-package com.vaticle.typedb.studio.controller
+package com.vaticle.typedb.studio.controller.project
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.model.notification.Error
-import com.vaticle.typedb.studio.model.notification.Message.Project.Companion.PATH_NOT_EXIST
-import com.vaticle.typedb.studio.model.notification.Message.Project.Companion.PATH_NOT_READABLE
-import mu.KotlinLogging
+import com.vaticle.typedb.studio.controller.notification.Error
+import com.vaticle.typedb.studio.controller.notification.Message.Project.Companion.PATH_NOT_EXIST
+import com.vaticle.typedb.studio.controller.notification.Message.Project.Companion.PATH_NOT_READABLE
+import com.vaticle.typedb.studio.controller.notification.Notifier
 import java.nio.file.Path
 import kotlin.io.path.isReadable
 import kotlin.io.path.notExists
+import mu.KotlinLogging
 
-class Project {
+class Project(private val notifier: Notifier) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -46,8 +47,8 @@ class Project {
 
     fun tryOpen(directory: String) {
         val path = Path.of(directory)
-        if (path.notExists()) Controller.notifier.userError(Error.fromUser(PATH_NOT_EXIST, directory), LOGGER)
-        else if (!path.isReadable()) Controller.notifier.userError(Error.fromUser(PATH_NOT_READABLE, directory), LOGGER)
+        if (path.notExists()) notifier.userError(Error.fromUser(PATH_NOT_EXIST, directory), LOGGER)
+        else if (!path.isReadable()) notifier.userError(Error.fromUser(PATH_NOT_READABLE, directory), LOGGER)
         else {
             currentPath = path
             pastPaths = pastPaths + path

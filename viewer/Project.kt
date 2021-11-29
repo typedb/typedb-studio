@@ -28,11 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowSize
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.studio.controller.Controller
 import com.vaticle.typedb.studio.viewer.common.Label
@@ -73,7 +73,7 @@ object Project {
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = WindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+                size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
             Form.Content(onSubmit = { formState.trySubmitIfValid() }) {

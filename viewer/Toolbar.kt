@@ -27,13 +27,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.controller.Connection.Status.CONNECTED
-import com.vaticle.typedb.studio.controller.Connection.Status.CONNECTING
-import com.vaticle.typedb.studio.controller.Connection.Status.DISCONNECTED
 import com.vaticle.typedb.studio.controller.Controller
+import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECTED
+import com.vaticle.typedb.studio.controller.connection.Connection.Status.CONNECTING
+import com.vaticle.typedb.studio.controller.connection.Connection.Status.DISCONNECTED
 import com.vaticle.typedb.studio.viewer.common.Label
 import com.vaticle.typedb.studio.viewer.common.component.Form
 import com.vaticle.typedb.studio.viewer.common.component.Icon
@@ -83,11 +82,11 @@ object Toolbar {
         Form.Dropdown(
             values = Controller.connection.databaseList,
             selected = Controller.connection.getDatabase() ?: "",
+            onRefresh = { Controller.connection.refreshDatabaseList() },
             onSelection = { Controller.connection.setDatabase(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = Controller.connection.isConnected(),
             modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH)
-                .onFocusChanged { if (it.isFocused) Controller.connection.refreshDatabaseList() }
         )
     }
 

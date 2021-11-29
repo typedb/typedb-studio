@@ -16,11 +16,10 @@
  *
  */
 
-package com.vaticle.typedb.studio.controller
+package com.vaticle.typedb.studio.controller.notification
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.vaticle.typedb.studio.model.notification.Error
 import mu.KLogger
 
 class Notifier {

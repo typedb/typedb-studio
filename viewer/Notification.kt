@@ -35,9 +35,9 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.controller.Controller
-import com.vaticle.typedb.studio.controller.Notifier
-import com.vaticle.typedb.studio.controller.Notifier.MessageType.ERROR
-import com.vaticle.typedb.studio.controller.Notifier.MessageType.INFO
+import com.vaticle.typedb.studio.controller.notification.Notifier
+import com.vaticle.typedb.studio.controller.notification.Notifier.MessageType.ERROR
+import com.vaticle.typedb.studio.controller.notification.Notifier.MessageType.INFO
 import com.vaticle.typedb.studio.viewer.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.viewer.common.component.Icon
 import com.vaticle.typedb.studio.viewer.common.theme.Theme

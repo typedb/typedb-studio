@@ -21,13 +21,13 @@ package com.vaticle.typedb.studio
 import com.vaticle.typedb.studio.OS.LINUX
 import com.vaticle.typedb.studio.OS.MAC
 import com.vaticle.typedb.studio.OS.WINDOWS
-import org.zeroturnaround.exec.ProcessExecutor
-import org.zeroturnaround.exec.ProcessResult
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Locale.ENGLISH
+import org.zeroturnaround.exec.ProcessExecutor
+import org.zeroturnaround.exec.ProcessResult
 
 fun main(args: Array<String>) {
     val config = parseConfig(args[0])

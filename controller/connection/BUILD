@@ -18,22 +18,29 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//viewer:__subpackages__"])
+package(default_visibility = [
+    "//controller:__subpackages__",
+    "//viewer:__subpackages__"
+])
 
 kt_jvm_library(
-    name = "controller",
+    name = "connection",
     srcs = glob(["*.kt"]),
     deps = [
-        "//controller/common:common",
-        "//controller/connection:connection",
         "//controller/notification:notification",
-        "//controller/project:project",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_client_java//common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-controller:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-controller-connection:{pom_version}"],
 )
 
 checkstyle_test(
