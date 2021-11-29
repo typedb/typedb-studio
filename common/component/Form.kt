@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.common.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -52,15 +51,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -68,7 +62,6 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -105,17 +98,14 @@ object Form {
 
     @Composable
     fun Content(onSubmit: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-        val focusManager = LocalFocusManager.current
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier
                 .fillMaxSize()
                 .background(Theme.colors.background)
                 .padding(OUTER_SPACING)
-                .onKeyEvent { onKeyEvent(event = it, focusManager = focusManager, onEnter = onSubmit) }
-        ) {
-            content()
-        }
+                .onKeyEvent { onKeyEvent(event = it, onEnter = onSubmit) }
+        ) { content() }
     }
 
     @Composable
@@ -191,7 +181,6 @@ object Form {
         enabled: Boolean = true,
         content: @Composable BoxScope.() -> Unit
     ) {
-        val focusManager = LocalFocusManager.current
         var hovered by remember { mutableStateOf(false) }
 
         @Composable
@@ -204,10 +193,9 @@ object Form {
             modifier = modifier
                 .height(FIELD_HEIGHT)
                 .background(fadeable(bgColor(), !enabled), ROUNDED_RECTANGLE)
-                .focusable(enabled = enabled)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .clickable(enabled = enabled) { onClick() }
-                .onKeyEvent { onKeyEvent(it, focusManager, onClick, enabled) }
+                .onKeyEvent { onKeyEvent(event = it, onEnter = onClick, enabled = enabled) }
                 .pointerMoveFilter(onEnter = { hovered = true; true }, onExit = { hovered = false; true })
         ) {
             content()
@@ -222,11 +210,8 @@ object Form {
         color: Color = Theme.colors.onSurface,
         modifier: Modifier = Modifier
     ) {
-        val focusManager = LocalFocusManager.current
         BasicTextField(
-            modifier = modifier
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                .onPreviewKeyEvent { onKeyEvent(it, focusManager) },
+            modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
             value = value,
             onValueChange = {},
             readOnly = true,
@@ -252,14 +237,13 @@ object Form {
         trailingIcon: (@Composable () -> Unit)? = null,
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
-        val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
         val borderBrush = SolidColor(fadeable(Theme.colors.border, !enabled))
         BasicTextField(
             modifier = modifier
                 .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
                 .border(width = BORDER_WIDTH, brush = borderBrush, shape = ROUNDED_RECTANGLE)
                 .pointerHoverIcon(pointerHoverIcon)
-                .onPreviewKeyEvent { onKeyEvent(event = it, focusManager = focusManager, enabled = enabled) },
+                .onPreviewKeyEvent { onKeyEvent(event = it, enabled = enabled) },
             value = value,
             onValueChange = onValueChange,
             readOnly = readOnly,
@@ -322,8 +306,6 @@ object Form {
     ) {
 
         val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CARET_DOWN, enabled = enabled) }
-        val focusManager = LocalFocusManager.current // for @Composable to be called in lambda
-        val focusRequester = FocusRequester()
 
         class DropdownState {
             var expanded by mutableStateOf(false)
@@ -351,10 +333,8 @@ object Form {
             TextInput(
                 value = selected.toString(), onValueChange = {}, readOnly = true, placeholder = placeholder,
                 enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
-                pointerHoverIcon = PointerIconDefaults.Hand, modifier = textInputModifier
-                    .fillMaxSize().focusable(enabled = enabled).focusRequester(focusRequester)
-                    .clickable(enabled = enabled) { state.toggle(); focusRequester.requestFocus() }
-                    .onKeyEvent { onKeyEvent(it, focusManager) }
+                pointerHoverIcon = PointerIconDefaults.Hand, modifier = textInputModifier.fillMaxSize()
+                    .clickable(enabled = enabled) { state.toggle() }
             )
             DropdownMenu(
                 expanded = state.expanded,
@@ -385,18 +365,13 @@ object Form {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(
-        event: KeyEvent, focusManager: FocusManager, onEnter: (() -> Unit)? = null, enabled: Boolean = true
-    ): Boolean {
+    private fun onKeyEvent(event: KeyEvent, onEnter: (() -> Unit)? = null, enabled: Boolean = true): Boolean {
         return when {
             event.awtEvent.id == KEY_RELEASED -> false
             !enabled -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {
                     onEnter?.let { onEnter(); true } ?: false
-                }
-                Key.Tab -> {
-                    focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Up else FocusDirection.Down); true
                 }
                 else -> false
             }
