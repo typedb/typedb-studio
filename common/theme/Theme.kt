@@ -20,6 +20,8 @@ package com.vaticle.typedb.studio.common.theme
 
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.LocalMinimumTouchTargetEnforcement
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,10 +36,13 @@ object Theme {
     private const val DEFAULT_SELECTION_TRANSPARENCY = 0.7f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
+
+    @OptIn(ExperimentalMaterialApi::class)
     private val MaterialThemeOverrides
         @Composable
         @ReadOnlyComposable
         get() = listOf(
+            LocalMinimumTouchTargetEnforcement provides false,
             LocalTextSelectionColors provides TextSelectionColors(
                 backgroundColor = colors.tertiary.copy(alpha = DEFAULT_SELECTION_TRANSPARENCY),
                 handleColor = colors.tertiary

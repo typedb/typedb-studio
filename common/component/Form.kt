@@ -193,6 +193,7 @@ object Form {
     ) {
         val focusManager = LocalFocusManager.current
         var hovered by remember { mutableStateOf(false) }
+
         @Composable
         fun bgColor() = when (enabled) {
             true -> if (hovered) Theme.colors.surface2 else Theme.colors.primary
@@ -328,10 +329,21 @@ object Form {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
 
-            fun toggle() { expanded = !expanded }
-            fun select(value: T) { onSelection(value); expanded = false }
-            fun mouseOutFrom(index: Int): Boolean { if (mouseIndex == index) mouseIndex = null; return false }
-            fun mouseInTo(index: Int): Boolean { mouseIndex = index; return true }
+            fun toggle() {
+                expanded = !expanded
+            }
+
+            fun select(value: T) {
+                onSelection(value); expanded = false
+            }
+
+            fun mouseOutFrom(index: Int): Boolean {
+                if (mouseIndex == index) mouseIndex = null; return false
+            }
+
+            fun mouseInTo(index: Int): Boolean {
+                mouseIndex = index; return true
+            }
         }
 
         val state = remember { DropdownState() }
