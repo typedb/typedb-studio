@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -62,14 +63,19 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.common.Label
+import com.vaticle.typedb.studio.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.common.theme.Theme
+import com.vaticle.typedb.studio.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
 
 object Form {
@@ -139,7 +145,8 @@ object Form {
         textColor: Color = Theme.colors.onPrimary,
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        wideMode: Boolean = false,
     ) {
         BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
             Row(
@@ -147,6 +154,7 @@ object Form {
                 modifier = Modifier.padding(horizontal = CONTENT_PADDING)
             ) {
                 Text(text, style = Theme.typography.body1, color = fadeable(textColor, !enabled))
+                if (wideMode) Spacer(Modifier.weight(1f))
                 trailingIcon?.let {
                     Spacer(Modifier.width(CONTENT_PADDING))
                     Icon.Render(icon = it, color = iconColor)
@@ -301,16 +309,12 @@ object Form {
         placeholder: String = "",
         enabled: Boolean = true,
         modifier: Modifier = Modifier,
-        textInputModifier: Modifier = Modifier,
-        textStyle: TextStyle = Theme.typography.body1,
-        leadingIcon: @Composable (() -> Unit)? = null
     ) {
-
-        val dropdownIcon: @Composable () -> Unit = { Icon.Render(icon = Icon.Code.CARET_DOWN, enabled = enabled) }
 
         class DropdownState {
             var expanded by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
+            var width: Dp by mutableStateOf(0.dp)
 
             fun toggle() {
                 expanded = !expanded
@@ -329,18 +333,23 @@ object Form {
             }
         }
 
+        val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            TextInput(
-                value = selected.toString(), onValueChange = {}, readOnly = true, placeholder = placeholder,
-                enabled = enabled, textStyle = textStyle, leadingIcon = leadingIcon, trailingIcon = dropdownIcon,
-                pointerHoverIcon = PointerIconDefaults.Hand, modifier = textInputModifier.fillMaxSize()
-                    .clickable(enabled = enabled) { state.toggle() }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }
+        ) {
+            TextButton(
+                text = selected.toString().ifBlank { placeholder },
+                onClick = { state.toggle() },
+                trailingIcon = CARET_DOWN,
+                enabled = enabled,
+                wideMode = true,
             )
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { state.expanded = false },
-                modifier = Modifier.background(Theme.colors.surface)
+                modifier = Modifier.background(Theme.colors.surface).defaultMinSize(minWidth = state.width)
             ) {
                 val padding = PaddingValues(horizontal = CONTENT_PADDING)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
@@ -348,7 +357,7 @@ object Form {
                     onClick = {}, contentPadding = padding,
                     modifier = itemModifier.background(Theme.colors.surface)
                 ) {
-                    Text(value = "(${Label.NONE})", style = textStyle)
+                    Text(value = "(${Label.NONE})")
                 } else values.forEachIndexed { i, value ->
                     DropdownMenuItem(
                         onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
@@ -358,7 +367,7 @@ object Form {
                     ) {
                         val isSelected = value == selected
                         val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface
-                        Text(value = value.toString(), style = textStyle, color = color)
+                        Text(value = value.toString(), color = color)
                     }
                 }
             }

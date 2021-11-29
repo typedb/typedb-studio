@@ -83,11 +83,11 @@ object ToolbarArea {
         Form.Dropdown(
             values = Service.connection.databaseList,
             selected = Service.connection.getDatabase() ?: "",
-            placeholder = Label.SELECT_DATABASE,
             onSelection = { Service.connection.setDatabase(it) },
-            modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH),
-            textInputModifier = Modifier.onFocusChanged { if (it.isFocused) Service.connection.refreshDatabaseList() },
-            enabled = Service.connection.isConnected()
+            placeholder = Label.SELECT_DATABASE,
+            enabled = Service.connection.isConnected(),
+            modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH)
+                .onFocusChanged { if (it.isFocused) Service.connection.refreshDatabaseList() }
         )
     }
 
