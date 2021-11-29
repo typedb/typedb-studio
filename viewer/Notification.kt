@@ -83,7 +83,7 @@ object Notification {
                 icon = Icon.Code.XMARK,
                 onClick = { Controller.notifier.dismiss(message) },
                 iconColor = colorConfig.foreground,
-                bgColor = colorConfig.background,
+                bgColor = Color.Transparent,
                 modifier = Modifier.size(MESSAGE_CLOSE_SIZE)
             )
         }

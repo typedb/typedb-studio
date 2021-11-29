@@ -198,11 +198,12 @@ object Navigator {
             PanelBarSpace()
             Form.Text(value = navigator.label)
             Spacer(Modifier.weight(1f))
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(PANEL_BAR_HEIGHT)
-                .pointerHoverIcon(PointerIconDefaults.Hand)
-                .clickable { navigator.toggle() }) {
-                Icon.Render(icon = Icon.Code.XMARK, size = ICON_SIZE)
-            }
+            Form.IconButton(
+                icon = Icon.Code.XMARK,
+                onClick = { navigator.toggle() },
+                bgColor = Color.Transparent,
+                modifier = Modifier.size(PANEL_BAR_HEIGHT)
+            )
         }
     }
 
