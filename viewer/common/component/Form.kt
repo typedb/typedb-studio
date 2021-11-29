@@ -143,12 +143,13 @@ object Form {
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
+        bgColor: Color = Theme.colors.primary,
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
         wideMode: Boolean = false,
     ) {
-        BoxButton(onClick = onClick, modifier = modifier, enabled = enabled) {
+        BoxButton(onClick = onClick, color = bgColor, modifier = modifier, enabled = enabled) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = CONTENT_PADDING)
@@ -169,15 +170,17 @@ object Form {
         icon: Icon.Code,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
-        color: Color = Theme.colors.icon,
+        iconColor: Color = Theme.colors.icon,
+        bgColor: Color = Theme.colors.primary,
         enabled: Boolean = true
     ) {
         BoxButton(
             onClick = onClick,
+            color = bgColor,
             modifier = modifier.size(FIELD_HEIGHT),
             enabled = enabled
         ) {
-            Icon.Render(icon = icon, color = color, enabled = enabled)
+            Icon.Render(icon = icon, color = iconColor, enabled = enabled)
         }
     }
 
@@ -185,6 +188,7 @@ object Form {
     @Composable
     private fun BoxButton(
         onClick: () -> Unit,
+        color: Color = Theme.colors.primary,
         modifier: Modifier = Modifier,
         enabled: Boolean = true,
         content: @Composable BoxScope.() -> Unit
@@ -193,7 +197,7 @@ object Form {
             contentAlignment = Alignment.Center,
             modifier = modifier
                 .height(FIELD_HEIGHT)
-                .background(fadeable(Theme.colors.primary, !enabled), ROUNDED_RECTANGLE)
+                .background(fadeable(color, !enabled), ROUNDED_RECTANGLE)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                 .clickable(enabled = enabled) { onClick() }
                 .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }

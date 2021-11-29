@@ -19,11 +19,11 @@
 package com.vaticle.typedb.studio.viewer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -31,13 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIconDefaults
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.controller.Controller
 import com.vaticle.typedb.studio.controller.notification.Notifier
 import com.vaticle.typedb.studio.controller.notification.Notifier.MessageType.ERROR
 import com.vaticle.typedb.studio.controller.notification.Notifier.MessageType.INFO
+import com.vaticle.typedb.studio.viewer.common.component.Form.IconButton
 import com.vaticle.typedb.studio.viewer.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.viewer.common.component.Icon
 import com.vaticle.typedb.studio.viewer.common.theme.Theme
@@ -48,6 +47,7 @@ object Notification {
     private val MESSAGE_WIDTH = 360.dp
     private val MESSAGE_HEIGHT = 80.dp
     private val MESSAGE_PADDING = 8.dp
+    private val MESSAGE_CLOSE_SIZE = 26.dp
     private val MESSAGE_SHAPE = RoundedCornerShape(4.dp)
 
     data class ColorConfig(val background: Color, val foreground: Color)
@@ -79,13 +79,12 @@ object Notification {
                 color = colorConfig.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
             )
-            Icon.Render(
+            IconButton(
                 icon = Icon.Code.XMARK,
-                color = colorConfig.foreground,
-                modifier = Modifier
-                    .padding(MESSAGE_PADDING)
-                    .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                    .clickable { Controller.notifier.dismiss(message) }
+                onClick = { Controller.notifier.dismiss(message) },
+                iconColor = colorConfig.foreground,
+                bgColor = colorConfig.background,
+                modifier = Modifier.size(MESSAGE_CLOSE_SIZE)
             )
         }
     }

@@ -74,7 +74,7 @@ object Toolbar {
 
     @Composable
     private fun ToolbarButton(icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon) {
-        Form.IconButton(icon = icon, onClick = onClick, color = color, modifier = Modifier.size(COMPONENT_HEIGHT))
+        Form.IconButton(icon = icon, onClick = onClick, iconColor = color, modifier = Modifier.size(COMPONENT_HEIGHT))
     }
 
     @Composable
