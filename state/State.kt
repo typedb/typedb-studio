@@ -26,6 +26,6 @@ object State {
 
     val notifier = Notifier()
     val connection = Connection(notifier)
-    val project = Project(notifier)
+    val project = Project(notifier,)
 
 }

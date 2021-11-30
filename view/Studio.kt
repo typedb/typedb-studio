@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -53,8 +54,10 @@ import kotlin.system.exitProcess
 
 object Studio {
 
-    private val ERROR_WINDOW_WIDTH = 1000.dp
-    private val ERROR_WINDOW_HEIGHT = 610.dp
+    private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
+    private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
+    private val mainWindowTitle: String
+        get() = "${Label.TYPEDB_STUDIO}${State.project.windowTitle?.let { " — $it" } ?: ""}"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -86,7 +89,7 @@ object Studio {
         // TODO: we want no title bar, by passing undecorated=true, but it seems to cause intermittent crashes on startup
         //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
         Window(
-            title = Label.TYPEDB_STUDIO,
+            title = mainWindowTitle,
             onCloseRequest = { onClose() },
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {

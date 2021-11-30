@@ -42,7 +42,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
         companion object {
             private const val CODE_PREFIX = "CON"
-            private const val MESSAGE_PREFIX = "TypeDB Connection Issue"
+            private const val MESSAGE_PREFIX = "TypeDB Connection Error"
 
             val UNEXPECTED_ERROR =
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
@@ -58,12 +58,14 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
         companion object {
             private const val CODE_PREFIX = "PRJ"
-            private const val MESSAGE_PREFIX = "TypeDB Project Issue"
+            private const val MESSAGE_PREFIX = "TypeDB Project Error"
 
             val PATH_NOT_EXIST =
-                Project(1, "Directory path '%s' does not exist.")
+                Project(1, "Project path '%s' does not exist.")
             val PATH_NOT_READABLE =
-                Project(2, "Directory path '%s' is not readable.")
+                Project(2, "Project path '%s' is not readable.")
+            val PATH_NOT_DIRECTORY =
+                Project(3, "Project path '%s' is not a directory.")
         }
     }
 }

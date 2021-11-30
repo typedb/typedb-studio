@@ -22,11 +22,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.Error
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.Notifier
 import mu.KotlinLogging
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.notExists
 
@@ -36,22 +39,23 @@ class Project(private val notifier: Notifier) {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    // TODO: initialise from user data
-    var pastPaths: Set<Path> by mutableStateOf(emptySet())
-    var currentPath: Path? by mutableStateOf(null)
+    var directory: Path? by mutableStateOf(null)
+    var pastDirectories: Set<Path> by mutableStateOf(emptySet()) // TODO: initialise from user data
     var showWindow: Boolean by mutableStateOf(false)
+    val windowTitle: String? get() = directory?.let { "${it.fileName}" }
 
     fun toggleWindow() {
         showWindow = !showWindow
     }
 
-    fun tryOpen(directory: String) {
-        val path = Path.of(directory)
-        if (path.notExists()) notifier.userError(Error.fromUser(PATH_NOT_EXIST, directory), LOGGER)
-        else if (!path.isReadable()) notifier.userError(Error.fromUser(PATH_NOT_READABLE, directory), LOGGER)
+    fun tryOpen(newDirectory: String) {
+        val path = Path.of(newDirectory)
+        if (!path.exists()) notifier.userError(Error.fromUser(PATH_NOT_EXIST, newDirectory), LOGGER)
+        else if (!path.isReadable()) notifier.userError(Error.fromUser(PATH_NOT_READABLE, newDirectory), LOGGER)
+        else if (!path.isDirectory()) notifier.userError(Error.fromUser(PATH_NOT_DIRECTORY, newDirectory), LOGGER)
         else {
-            currentPath = path
-            pastPaths = pastPaths + path
+            directory = path
+            pastDirectories = pastDirectories + path
             showWindow = false
         }
     }

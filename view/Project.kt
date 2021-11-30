@@ -71,7 +71,7 @@ object Project {
 
     @Composable
     fun Window() {
-        val formState = remember { FormState(State.project.currentPath?.toString()) }
+        val formState = remember { FormState(State.project.directory?.toString()) }
         Window(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { State.project.showWindow = false },

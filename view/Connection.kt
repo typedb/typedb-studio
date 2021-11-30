@@ -109,10 +109,7 @@ object Connection {
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(
-                    WINDOW_WIDTH,
-                    WINDOW_HEIGHT
-                )
+                size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
             Submission(onSubmit = { FormState.trySubmitIfValid() }) {
