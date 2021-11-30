@@ -70,7 +70,7 @@ object Navigator {
     private val SIDE_TAB_HEIGHT = 100.dp
     private val PANEL_BAR_HEIGHT = 26.dp
     private val PANEL_BAR_SPACING = 8.dp
-    private val PANEL_MIN_HEIGHT = 60.dp
+    private val PANEL_MIN_HEIGHT = 80.dp
     private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 

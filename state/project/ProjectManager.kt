@@ -22,7 +22,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.state.notification.Message
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_DIRECTORY
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import mu.KotlinLogging
 import java.nio.file.Path
@@ -43,21 +45,11 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         showWindow = !showWindow
     }
 
-    fun tryOpenDirectory(newDirectory: String) {
-        val path = Path.of(newDirectory)
-        if (!path.exists()) notificationMgr.userError(Error.fromUser(Message.Project.PATH_NOT_EXIST, newDirectory), LOGGER)
-        else if (!path.isReadable()) notificationMgr.userError(
-            Error.fromUser(
-                Message.Project.PATH_NOT_READABLE,
-                newDirectory
-            ), LOGGER
-        )
-        else if (!path.isDirectory()) notificationMgr.userError(
-            Error.fromUser(
-                Message.Project.PATH_NOT_DIRECTORY,
-                newDirectory
-            ), LOGGER
-        )
+    fun tryOpenDirectory(newDir: String) {
+        val path = Path.of(newDir)
+        if (!path.exists()) notificationMgr.userError(Error.fromUser(PATH_NOT_EXIST, newDir), LOGGER)
+        else if (!path.isReadable()) notificationMgr.userError(Error.fromUser(PATH_NOT_READABLE, newDir), LOGGER)
+        else if (!path.isDirectory()) notificationMgr.userError(Error.fromUser(PATH_NOT_DIRECTORY, newDir), LOGGER)
         else {
             current?.close()
             current = Project(path, notificationMgr)

@@ -144,6 +144,7 @@ object Form {
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
+        leadingIcon: Icon.Code? = null,
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
@@ -154,10 +155,17 @@ object Form {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = CONTENT_PADDING)
             ) {
+                @Composable
+                fun iconSpacing() {
+                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(CONTENT_PADDING))
+                }
+                leadingIcon?.let {
+                    Icon.Render(icon = it, color = iconColor)
+                    iconSpacing()
+                }
                 Text(text, style = Theme.typography.body1, color = fadeable(textColor, !enabled))
-                if (wideMode) Spacer(Modifier.weight(1f))
                 trailingIcon?.let {
-                    Spacer(Modifier.width(CONTENT_PADDING))
+                    iconSpacing()
                     Icon.Render(icon = it, color = iconColor)
                 }
             }

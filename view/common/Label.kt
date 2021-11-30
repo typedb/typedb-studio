@@ -34,6 +34,7 @@ object Label {
     const val ENABLE_TLS = "Enable TLS"
     const val NONE = "None"
     const val OPEN = "Open"
+    const val OPEN_PROJECT = "Open Project"
     const val OPEN_PROJECT_DIRECTORY = "Open Project Directory"
     const val OPTIONAL = "Optional"
     const val PASSWORD = "Password"

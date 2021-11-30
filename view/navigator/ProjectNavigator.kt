@@ -18,12 +18,40 @@
 
 package com.vaticle.typedb.studio.view.navigator
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ProjectNavigator {
 
     @Composable
     fun Layout() {
+        if (State.project.current == null) {
+            OpenProjectHelper()
+        } else {
 
+        }
+    }
+
+    @Composable
+    private fun OpenProjectHelper() {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+        ) {
+            Form.TextButton(
+                text = Label.OPEN_PROJECT,
+                onClick = { State.project.showWindow = true },
+                leadingIcon = Icon.Code.FOLDER_OPEN
+            )
+        }
     }
 }
