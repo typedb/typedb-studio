@@ -21,24 +21,17 @@ package com.vaticle.typedb.studio.state.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
-import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
-import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
-import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.Notifier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.nio.file.Path
-import kotlin.coroutines.EmptyCoroutineContext
 
-class Connection(private val notifier: Notifier) {
+class Connection internal constructor(
+    private val client: TypeDBClient, val address: String, val username: String?, val notifier: Notifier
+) {
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
@@ -46,26 +39,11 @@ class Connection(private val notifier: Notifier) {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
-
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    private var databaseListRefreshedTime = System.currentTimeMillis()
-    private var client: TypeDBClient? = null
-
-    var status: Status by mutableStateOf(Status.DISCONNECTED)
-    var showWindow: Boolean by mutableStateOf(false)
+    var isOpen: Boolean by mutableStateOf(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    var address: String? by mutableStateOf(null)
-    var username: String? by mutableStateOf(null)
     var session: TypeDBSession? by mutableStateOf(null); private set
 
-    fun isConnected(): Boolean {
-        return status == Status.CONNECTED
-    }
-
-    fun isDisconnected(): Boolean {
-        return status == Status.DISCONNECTED
-    }
+    private var databaseListRefreshedTime = System.currentTimeMillis()
 
     fun getDatabase(): String? {
         return session?.database()?.name()
@@ -87,51 +65,14 @@ class Connection(private val notifier: Notifier) {
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun tryConnectToTypeDB(address: String) {
-        tryConnect(address, null) { TypeDB.coreClient(address) }
-    }
-
-    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, tlsEnabled: Boolean) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled))
-    }
-
-    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)))
-    }
-
-    private fun tryConnectToTypeDBCluster(address: String, username: String, credentials: TypeDBCredential) {
-        tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun tryConnect(newAddres: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
-        coroutineScope.launch {
-            status = Status.CONNECTING
-            try {
-                client = clientConstructor()
-                address = newAddres
-                username = newUsername
-                status = Status.CONNECTED
-            } catch (e: TypeDBClientException) {
-                status = Status.DISCONNECTED
-                notifier.userError(Error.fromUser(UNABLE_TO_CONNECT), LOGGER)
-            } catch (e: Exception) {
-                status = Status.DISCONNECTED
-                notifier.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
-            }
-        }
-    }
-
-    fun disconnect() {
-        status = Status.DISCONNECTED
-        closeSession()
-        address = null
-        username = null
-        client!!.close()
-        client = null
-    }
 
     private fun closeSession() {
         session?.let { it.close(); session = null }
+    }
+
+    internal fun close() {
+        isOpen = false
+        closeSession()
+        client.close()
     }
 }

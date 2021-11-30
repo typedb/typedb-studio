@@ -301,7 +301,7 @@ object Form {
     fun <T : Any> Dropdown(
         values: List<T>,
         selected: T,
-        onRefresh: (() -> Unit)? = null,
+        onExpand: (() -> Unit)? = null,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
         enabled: Boolean = true,
@@ -315,7 +315,7 @@ object Form {
 
             fun toggle() {
                 expanded = !expanded
-                if (expanded && onRefresh != null) onRefresh()
+                if (expanded && onExpand != null) onExpand()
             }
 
             fun select(value: T) {

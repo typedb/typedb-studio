@@ -30,9 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.state.connection.Connection.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.Connection.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.Connection.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
@@ -82,10 +82,10 @@ object Toolbar {
     @Composable
     private fun DatabaseDropdown() {
         Dropdown(
-            values = State.connection.databaseList,
-            selected = State.connection.getDatabase() ?: "",
-            onRefresh = { State.connection.refreshDatabaseList() },
-            onSelection = { State.connection.setDatabase(it) },
+            values = State.connection.current?.databaseList ?: emptyList(),
+            selected = State.connection.current?.getDatabase() ?: "",
+            onExpand = { State.connection.current?.refreshDatabaseList() },
+            onSelection = { State.connection.current?.setDatabase(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = State.connection.isConnected(),
             modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH)
@@ -98,7 +98,7 @@ object Toolbar {
             DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
             CONNECTING -> ConnectionButton(Label.CONNECTING)
             CONNECTED -> ConnectionButton(
-                (State.connection.username?.let { "$it@" } ?: "") + State.connection.address!!
+                (State.connection.current!!.username?.let { "$it@" } ?: "") + State.connection.current!!.address
             )
         }
     }

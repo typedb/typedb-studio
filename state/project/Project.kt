@@ -67,7 +67,7 @@ class Project(val path: Path, private val notifier: Notifier) {
         coroutineScope.cancel(PROJECT_CLOSED.message(directory!!.path.toAbsolutePath()))
     }
 
-    fun close() {
+    internal fun close() {
         cancelDirectoryWatcher()
     }
 }
