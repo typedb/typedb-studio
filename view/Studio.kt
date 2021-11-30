@@ -114,9 +114,9 @@ object Studio {
                 StatusBar.Area()
             }
             Notification.Area()
+            if (State.connection.showWindow) Connection.Dialog()
+            if (State.project.showWindow) Project.Dialog()
         }
-        if (State.connection.showWindow) com.vaticle.typedb.studio.view.Connection.Window()
-        if (State.project.showWindow) Project.Window()
     }
 
     @Composable

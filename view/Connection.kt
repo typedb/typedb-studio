@@ -30,10 +30,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB
@@ -101,13 +100,11 @@ object Connection {
     }
 
     @Composable
-    fun Window() {
-        Window(
+    fun Dialog() {
+        Dialog(
             title = Label.CONNECT_TO_TYPEDB,
             onCloseRequest = { State.connection.showWindow = false },
-            alwaysOnTop = true,
-            state = rememberWindowState(
-                placement = WindowPlacement.Floating,
+            state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )

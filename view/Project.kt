@@ -30,10 +30,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
@@ -70,13 +69,12 @@ object Project {
     }
 
     @Composable
-    fun Window() {
+    fun Dialog() {
         val formState = remember { FormState() }
-        Window(
+        Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { State.project.showWindow = false },
-            state = rememberWindowState(
-                placement = WindowPlacement.Floating,
+            state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
