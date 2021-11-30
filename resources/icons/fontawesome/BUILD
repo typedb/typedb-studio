@@ -17,7 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-package(default_visibility = ["//viewer:__pkg__"])
+package(default_visibility = ["//view:__pkg__"])
 
 filegroup(
     name = "icons",

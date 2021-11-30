@@ -29,9 +29,9 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 
 java_binary(
     name = "studio-bin-mac",
-    main_class = "com.vaticle.typedb.studio.viewer.Studio",
+    main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
-        "//viewer:viewer",
+        "//view:view",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -39,9 +39,9 @@ java_binary(
 
 java_binary(
     name = "studio-bin-windows",
-    main_class = "com.vaticle.typedb.studio.viewer.Studio",
+    main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
-        "//viewer:viewer",
+        "//view:view",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_windows_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -49,9 +49,9 @@ java_binary(
 
 java_binary(
     name = "studio-bin-linux",
-    main_class = "com.vaticle.typedb.studio.viewer.Studio",
+    main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
-        "//viewer:viewer",
+        "//view:view",
         "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_linux_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -94,8 +94,8 @@ jvm_application_image(
         "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
         "//conditions:default": ":studio-bin-mac",
     }),
-    main_jar = "com-vaticle-typedb-typedb-studio-viewer-0.0.0.jar",
-    main_class = "com.vaticle.typedb.studio.viewer.Studio",
+    main_jar = "com-vaticle-typedb-typedb-studio-view-0.0.0.jar",
+    main_class = "com.vaticle.typedb.studio.view.Studio",
     deps_use_maven_name = False,
     additional_files = assemble_files,
     mac_entitlements = "//config/mac:entitlements-mac-plist",

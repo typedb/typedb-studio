@@ -16,27 +16,28 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//:__pkg__", "//view:__pkg__"])
+package(default_visibility = ["//view:__subpackages__"])
 
-filegroup(
-    name = "vaticle-bot-linux",
-    srcs = ["256x256.png"], # this file name has to be 256x256.png to work in Linux
-)
+kt_jvm_library(
+    name = "state",
+    srcs = glob(["*.kt"]),
+    deps = [
+        "//state/common:common",
+        "//state/connection:connection",
+        "//state/notification:notification",
+        "//state/project:project",
 
-filegroup(
-    name = "vaticle-bot-mac",
-    srcs = ["vaticle-bot.icns"],
-)
-
-filegroup(
-    name = "vaticle-bot-windows",
-    srcs = ["vaticle-bot.ico"],
+        # External Maven Dependencies
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_slf4j_slf4j_api",
+    ],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state:{pom_version}"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*"]),
-    exclude = glob(["*.png", "*.icns", "*.ico"]),
+    include = glob(["*", "*/*"]),
     license_type = "agpl",
 )
