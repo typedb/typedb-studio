@@ -18,5 +18,16 @@
 
 package com.vaticle.typedb.studio.state.project
 
-class File {
+import com.vaticle.typedb.studio.state.common.Property
+import java.nio.file.Path
+import kotlin.io.path.extension
+import kotlin.io.path.isSymbolicLink
+
+class File(val path: Path) {
+
+    val name: String = path.fileName.toString()
+    val absolutePath = path.toAbsolutePath()
+    val isSymbolicLink: Boolean = path.isSymbolicLink()
+    val type: String = path.extension
+    val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
 }

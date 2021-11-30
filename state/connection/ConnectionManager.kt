@@ -34,7 +34,7 @@ import mu.KotlinLogging
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 
-class ConnectionManager(val notificationMgr: NotificationManager) {
+class ConnectionManager(private val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

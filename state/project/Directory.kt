@@ -20,24 +20,50 @@ package com.vaticle.typedb.studio.state.project
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
 import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 import java.nio.file.WatchService
+import kotlin.io.path.forEachDirectoryEntry
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isSymbolicLink
 
 class Directory(val path: Path) {
 
-    val name: String get() = path.fileName.toString()
-    val absolutePath: Path get() = path.toAbsolutePath()
-    val isExpanded: Boolean by mutableStateOf(false)
-    val directories: List<Directory> by mutableStateOf(emptyList())
-    val files: List<File> by mutableStateOf(emptyList())
+    val name: String = path.fileName.toString()
+    val absolutePath: Path = path.toAbsolutePath()
+    val isSymbolicLink: Boolean = path.isSymbolicLink()
+    var isExpanded: Boolean by mutableStateOf(false); private set
+    var directories: List<Directory> by mutableStateOf(emptyList())
+    var files: List<File> by mutableStateOf(emptyList())
 
     fun watchService(): WatchService {
         val watchService = FileSystems.getDefault().newWatchService()
         path.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
         return watchService
+    }
+
+    fun expand() {
+        loadEntries()
+        isExpanded = true
+    }
+
+    fun collapse() {
+        isExpanded = false
+    }
+
+    fun loadEntries() {
+        val dirList: MutableList<Directory> = mutableListOf()
+        val fileList: MutableList<File> = mutableListOf()
+        path.forEachDirectoryEntry { entry ->
+            if (entry.isDirectory()) dirList.add(Directory((entry)))
+            else if (entry.isRegularFile()) fileList.add(File(entry))
+        }
+        directories = dirList.sortedBy { it.name }
+        files = fileList.sortedBy { it.name }
     }
 }

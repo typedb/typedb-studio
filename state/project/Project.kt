@@ -51,11 +51,11 @@ class Project internal constructor(path: Path, private val notificationMgr: Noti
         coroutineScope.launch {
             try {
                 while (true) {
-                    val watchkey = async(Dispatchers.IO) { watcher.take() }.await()
-                    for (event in watchkey.pollEvents()) {
+                    val watchKey = async(Dispatchers.IO) { watcher.take() }.await()
+                    for (event in watchKey.pollEvents()) {
                         println() // TODO
                     }
-                    watchkey.reset()
+                    watchKey.reset()
                 }
             } catch (e: Exception) {
                 notificationMgr.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)

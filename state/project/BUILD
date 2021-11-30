@@ -27,6 +27,7 @@ kt_jvm_library(
     name = "project",
     srcs = glob(["*.kt"]),
     deps = [
+        "//state/common:common",
         "//state/notification:notification",
 
         # External Vaticle Dependencies

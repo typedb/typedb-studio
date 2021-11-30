@@ -22,11 +22,7 @@ object Property {
 
     const val DEFAULT_SERVER_ADDRESS: String = "localhost:1729"
 
-    interface Displayable {
-        val displayName: String
-    }
-
-    enum class OS(override val displayName: String) : Displayable {
+    enum class OS(val displayName: String) {
         WINDOWS("Windows"),
         MAC("MacOS"),
         LINUX("Linux");
@@ -36,7 +32,7 @@ object Property {
         }
     }
 
-    enum class Server(override val displayName: String) : Displayable {
+    enum class Server(val displayName: String) {
         TYPEDB("TypeDB"),
         TYPEDB_CLUSTER("TypeDB Cluster");
 
@@ -44,6 +40,13 @@ object Property {
             return displayName
         }
     }
+
+    enum class File(vararg extensionStrs: String) {
+        TYPEQL("tql", "typeql");
+
+        val extensions = extensionStrs.toSet()
+    }
+
 
     fun serverOf(displayName: String): Server {
         return when (displayName) {
