@@ -69,31 +69,31 @@ object Connection {
         var caCertificate: String by mutableStateOf("")
 
         fun isValid(): Boolean {
-            return when (com.vaticle.typedb.studio.view.Connection.FormState.server) {
-                TYPEDB -> !com.vaticle.typedb.studio.view.Connection.FormState.address.isBlank()
-                TYPEDB_CLUSTER -> !(com.vaticle.typedb.studio.view.Connection.FormState.address.isBlank() || com.vaticle.typedb.studio.view.Connection.FormState.username.isBlank() || com.vaticle.typedb.studio.view.Connection.FormState.password.isBlank())
+            return when (server) {
+                TYPEDB -> !address.isBlank()
+                TYPEDB_CLUSTER -> !(address.isBlank() || username.isBlank() || password.isBlank())
             }
         }
 
         fun trySubmitIfValid() {
-            if (com.vaticle.typedb.studio.view.Connection.FormState.isValid()) com.vaticle.typedb.studio.view.Connection.FormState.trySubmit()
+            if (isValid()) trySubmit()
         }
 
         fun trySubmit() {
-            when (com.vaticle.typedb.studio.view.Connection.FormState.server) {
-                TYPEDB -> State.connection.tryConnectToTypeDB(com.vaticle.typedb.studio.view.Connection.FormState.address)
+            when (server) {
+                TYPEDB -> State.connection.tryConnectToTypeDB(address)
                 TYPEDB_CLUSTER -> when {
-                    com.vaticle.typedb.studio.view.Connection.FormState.caCertificate.isBlank() -> State.connection.tryConnectToTypeDBCluster(
-                        com.vaticle.typedb.studio.view.Connection.FormState.address,
-                        com.vaticle.typedb.studio.view.Connection.FormState.username,
-                        com.vaticle.typedb.studio.view.Connection.FormState.password,
-                        com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled
+                    caCertificate.isBlank() -> State.connection.tryConnectToTypeDBCluster(
+                        address,
+                        username,
+                        password,
+                        tlsEnabled
                     )
                     else -> State.connection.tryConnectToTypeDBCluster(
-                        com.vaticle.typedb.studio.view.Connection.FormState.address,
-                        com.vaticle.typedb.studio.view.Connection.FormState.username,
-                        com.vaticle.typedb.studio.view.Connection.FormState.password,
-                        com.vaticle.typedb.studio.view.Connection.FormState.caCertificate
+                        address,
+                        username,
+                        password,
+                        caCertificate
                     )
                 }
             }
@@ -110,28 +110,28 @@ object Connection {
                 placement = WindowPlacement.Floating,
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(
-                    com.vaticle.typedb.studio.view.Connection.WINDOW_WIDTH,
-                    com.vaticle.typedb.studio.view.Connection.WINDOW_HEIGHT
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT
                 )
             )
         ) {
-            Submission(onSubmit = { com.vaticle.typedb.studio.view.Connection.FormState.trySubmitIfValid() }) {
-                com.vaticle.typedb.studio.view.Connection.ServerFormField()
-                com.vaticle.typedb.studio.view.Connection.AddressFormField()
-                if (com.vaticle.typedb.studio.view.Connection.FormState.server == TYPEDB_CLUSTER) {
-                    com.vaticle.typedb.studio.view.Connection.UsernameFormField()
-                    com.vaticle.typedb.studio.view.Connection.PasswordFormField()
-                    com.vaticle.typedb.studio.view.Connection.TLSEnabledFormField()
-                    if (com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled) com.vaticle.typedb.studio.view.Connection.CACertificateFormField()
+            Submission(onSubmit = { FormState.trySubmitIfValid() }) {
+                ServerFormField()
+                AddressFormField()
+                if (FormState.server == TYPEDB_CLUSTER) {
+                    UsernameFormField()
+                    PasswordFormField()
+                    TLSEnabledFormField()
+                    if (FormState.tlsEnabled) CACertificateFormField()
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
-                    com.vaticle.typedb.studio.view.Connection.ServerConnectionStatus()
+                    ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
                     when (State.connection.status) {
-                        DISCONNECTED -> com.vaticle.typedb.studio.view.Connection.DisconnectedFormButtons()
-                        CONNECTED -> com.vaticle.typedb.studio.view.Connection.ConnectedFormButtons()
-                        CONNECTING -> com.vaticle.typedb.studio.view.Connection.ConnectingFormButtons()
+                        DISCONNECTED -> DisconnectedFormButtons()
+                        CONNECTED -> ConnectedFormButtons()
+                        CONNECTING -> ConnectingFormButtons()
                     }
                 }
             }
@@ -143,8 +143,8 @@ object Connection {
         Field(label = Label.SERVER) {
             Dropdown(
                 values = Property.Server.values().toList(),
-                selected = com.vaticle.typedb.studio.view.Connection.FormState.server,
-                onSelection = { com.vaticle.typedb.studio.view.Connection.FormState.server = it },
+                selected = FormState.server,
+                onSelection = { FormState.server = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -156,9 +156,9 @@ object Connection {
     private fun AddressFormField() {
         Field(label = Label.ADDRESS) {
             TextInput(
-                value = com.vaticle.typedb.studio.view.Connection.FormState.address,
+                value = FormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.address = it },
+                onValueChange = { FormState.address = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -170,9 +170,9 @@ object Connection {
     private fun UsernameFormField() {
         Field(label = Label.USERNAME) {
             TextInput(
-                value = com.vaticle.typedb.studio.view.Connection.FormState.username,
+                value = FormState.username,
                 placeholder = Label.USERNAME.lowercase(),
-                onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.username = it },
+                onValueChange = { FormState.username = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -184,9 +184,9 @@ object Connection {
     private fun PasswordFormField() {
         Field(label = Label.PASSWORD) {
             TextInput(
-                value = com.vaticle.typedb.studio.view.Connection.FormState.password,
+                value = FormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
-                onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.password = it },
+                onValueChange = { FormState.password = it },
                 enabled = State.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
@@ -198,8 +198,8 @@ object Connection {
     private fun TLSEnabledFormField() {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
-                value = com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled,
-                onChange = { com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled = it },
+                value = FormState.tlsEnabled,
+                onChange = { FormState.tlsEnabled = it },
                 enabled = State.connection.isDisconnected(),
             )
         }
@@ -210,9 +210,9 @@ object Connection {
     private fun CACertificateFormField() {
         Field(label = Label.CA_CERTIFICATE) {
             TextInput(
-                value = com.vaticle.typedb.studio.view.Connection.FormState.caCertificate,
+                value = FormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.caCertificate = it },
+                onValueChange = { FormState.caCertificate = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),
             )
@@ -238,8 +238,8 @@ object Connection {
         ComponentSpacer()
         TextButton(
             text = Label.CONNECT,
-            enabled = com.vaticle.typedb.studio.view.Connection.FormState.isValid(),
-            onClick = { com.vaticle.typedb.studio.view.Connection.FormState.trySubmit() })
+            enabled = FormState.isValid(),
+            onClick = { FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
