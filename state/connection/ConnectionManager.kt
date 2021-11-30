@@ -28,11 +28,11 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.nio.file.Path
-import kotlin.coroutines.EmptyCoroutineContext
 
 class ConnectionManager(private val notificationMgr: NotificationManager) {
 

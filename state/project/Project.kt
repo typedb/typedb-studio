@@ -22,15 +22,15 @@ import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.nio.file.Path
+import java.nio.file.WatchService
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.nio.file.Path
-import java.nio.file.WatchService
-import kotlin.coroutines.EmptyCoroutineContext
 
 class Project internal constructor(path: Path, private val notificationMgr: NotificationManager) {
 

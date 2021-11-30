@@ -28,13 +28,13 @@ import ch.qos.logback.core.util.FileSize
 import com.vaticle.typedb.studio.state.common.Property.OS.LINUX
 import com.vaticle.typedb.studio.state.common.Property.OS.MAC
 import com.vaticle.typedb.studio.state.common.Property.OS.WINDOWS
-import mu.KotlinLogging
-import org.slf4j.LoggerFactory
 import java.lang.System.getProperty
 import java.lang.System.getenv
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.notExists
+import mu.KotlinLogging
+import org.slf4j.LoggerFactory
 
 object UserDataDirectory {
 

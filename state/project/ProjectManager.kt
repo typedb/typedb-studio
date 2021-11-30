@@ -26,11 +26,11 @@ import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PA
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import mu.KotlinLogging
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
+import mu.KotlinLogging
 
 class ProjectManager(private val notificationMgr: NotificationManager) {
 

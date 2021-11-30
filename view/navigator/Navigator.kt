@@ -52,8 +52,8 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Layout
-import com.vaticle.typedb.studio.view.common.component.Layout.Resizable
+import com.vaticle.typedb.studio.view.common.component.Resizable
+import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.PROJECT
 import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.ROLES
@@ -125,11 +125,11 @@ object Navigator {
                 areaState.navigators.values.forEach { Tab(it) }
             }
             if (openedNavigators.isNotEmpty()) {
-                Layout.VerticalSeparator()
+                Separator.Vertical()
                 if (openedNavigators.size == 1) Panel(openedNavigators.first())
                 else Resizable.Column(
                     modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Resizable.Separator(Layout.SEPARATOR_WEIGHT),
+                    separator = Resizable.SeparatorArgs(Separator.WEIGHT),
                     *openedNavigators.map { navigator ->
                         Resizable.Item(
                             id = navigator.label,
@@ -168,14 +168,14 @@ object Navigator {
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
-        Layout.HorizontalSeparator()
+        Separator.Horizontal()
     }
 
     @Composable
     private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier) {
         Column(modifier = modifier) {
             PanelTitle(navigator)
-            Layout.HorizontalSeparator()
+            Separator.Horizontal()
             Box(modifier = Modifier.weight(1f)) {
                 when (navigator.type) {
                     PROJECT -> ProjectNavigator.Layout()
