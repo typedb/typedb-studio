@@ -31,11 +31,12 @@ import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.Notifier
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
 class Connection(private val notifier: Notifier) {
 
@@ -47,6 +48,7 @@ class Connection(private val notifier: Notifier) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     private var databaseListRefreshedTime = System.currentTimeMillis()
     private var client: TypeDBClient? = null
 
@@ -103,7 +105,7 @@ class Connection(private val notifier: Notifier) {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun tryConnect(newAddres: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
-        GlobalScope.launch { // We use GlobalScope because ConnectionService lifetime is also global
+        coroutineScope.launch {
             status = Status.CONNECTING
             try {
                 client = clientConstructor()
