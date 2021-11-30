@@ -51,9 +51,9 @@ object Project {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 140.dp
 
-    class FormState(currentDirectory: String?) {
+    class FormState {
 
-        var directory: String? by mutableStateOf(currentDirectory)
+        var directory: String? by mutableStateOf(State.project.current?.directory?.absolutePath?.toString())
 
         fun isValid(): Boolean {
             return !directory.isNullOrBlank()
@@ -71,7 +71,7 @@ object Project {
 
     @Composable
     fun Window() {
-        val formState = remember { FormState(State.project.directory?.toString()) }
+        val formState = remember { FormState() }
         Window(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { State.project.showWindow = false },

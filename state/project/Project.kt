@@ -18,13 +18,8 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_DIRECTORY
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
+import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
 import com.vaticle.typedb.studio.state.notification.Notifier
 import kotlinx.coroutines.CoroutineScope
@@ -36,61 +31,43 @@ import mu.KotlinLogging
 import java.nio.file.Path
 import java.nio.file.WatchService
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isReadable
 
-class Project(private val notifier: Notifier) {
+class Project(val path: Path, private val notifier: Notifier) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    var directory: Directory? by mutableStateOf(null)
-    var pastDirectories: Set<Directory> by mutableStateOf(emptySet()) // TODO: initialise from user data
-    var showWindow: Boolean by mutableStateOf(false)
+    val directory: Directory = Directory(path)
+    val name: String get() = directory.name
+    private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    private var coroutineScope: CoroutineScope? = null
-
-
-    fun toggleWindow() {
-        showWindow = !showWindow
-    }
-
-    fun tryOpenDirectory(newDirectory: String) {
-        val path = Path.of(newDirectory)
-        if (!path.exists()) notifier.userError(Error.fromUser(PATH_NOT_EXIST, newDirectory), LOGGER)
-        else if (!path.isReadable()) notifier.userError(Error.fromUser(PATH_NOT_READABLE, newDirectory), LOGGER)
-        else if (!path.isDirectory()) notifier.userError(Error.fromUser(PATH_NOT_DIRECTORY, newDirectory), LOGGER)
-        else {
-            cancelDirectoryWatcher()
-            openNewDirectory(path)
-        }
-    }
-
-    private fun openNewDirectory(path: Path) {
-        showWindow = false
-        directory = Directory(path)
-        pastDirectories = pastDirectories + directory!!
-        initDirectoryWatcher(directory!!)
+    init {
+        initDirectoryWatcher(directory)
     }
 
     private fun initDirectoryWatcher(directory: Directory) {
         val watcher: WatchService = directory.watchService()
-        coroutineScope = CoroutineScope(EmptyCoroutineContext).also {
-            it.launch {
-                while(true) {
+        coroutineScope.launch {
+            try {
+                while (true) {
                     val watchkey = async(Dispatchers.IO) { watcher.take() }.await()
                     for (event in watchkey.pollEvents()) {
                         println() // TODO
                     }
                     watchkey.reset()
                 }
+            } catch (e: Exception) {
+                notifier.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
             }
         }
     }
 
     private fun cancelDirectoryWatcher() {
-        coroutineScope?.cancel(PROJECT_CLOSED.message(directory!!.path.toAbsolutePath()))
+        coroutineScope.cancel(PROJECT_CLOSED.message(directory!!.path.toAbsolutePath()))
+    }
+
+    fun close() {
+        cancelDirectoryWatcher()
     }
 }

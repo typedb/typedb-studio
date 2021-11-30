@@ -57,7 +57,7 @@ object Studio {
     private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
     private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
     private val mainWindowTitle: String
-        get() = "${Label.TYPEDB_STUDIO}${State.project.directory?.let { " — ${it.name}" } ?: ""}"
+        get() = "${Label.TYPEDB_STUDIO}${State.project.current?.let { " — ${it.name}" } ?: ""}"
 
     @JvmStatic
     fun main(args: Array<String>) {

@@ -30,6 +30,7 @@ import java.nio.file.WatchService
 class Directory(val path: Path) {
 
     val name: String get() = path.fileName.toString()
+    val absolutePath: Path get() = path.toAbsolutePath()
     val isExpanded: Boolean by mutableStateOf(false)
     val directories: List<Directory> by mutableStateOf(emptyList())
     val files: List<File> by mutableStateOf(emptyList())
