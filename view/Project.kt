@@ -34,7 +34,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
-import com.vaticle.typedb.studio.state.Controller
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Field
@@ -65,16 +65,16 @@ object Project {
 
         fun trySubmit() {
             assert(!directory.isNullOrBlank())
-            Controller.project.tryOpen(directory!!)
+            State.project.tryOpen(directory!!)
         }
     }
 
     @Composable
     fun Window() {
-        val formState = remember { FormState(Controller.project.currentPath?.toString()) }
+        val formState = remember { FormState(State.project.currentPath?.toString()) }
         Window(
             title = Label.OPEN_PROJECT_DIRECTORY,
-            onCloseRequest = { Controller.project.showWindow = false },
+            onCloseRequest = { State.project.showWindow = false },
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
                 position = WindowPosition.Aligned(Alignment.Center),
@@ -126,7 +126,7 @@ object Project {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun OpenProjectButtons(formState: FormState) {
-        TextButton(text = Label.CANCEL, onClick = { Controller.project.showWindow = false })
+        TextButton(text = Label.CANCEL, onClick = { State.project.showWindow = false })
         ComponentSpacer()
         TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }

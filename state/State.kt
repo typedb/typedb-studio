@@ -22,7 +22,7 @@ import com.vaticle.typedb.studio.state.connection.Connection
 import com.vaticle.typedb.studio.state.notification.Notifier
 import com.vaticle.typedb.studio.state.project.Project
 
-object Controller {
+object State {
 
     val notifier = Notifier()
     val connection = Connection(notifier)

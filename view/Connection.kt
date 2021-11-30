@@ -34,7 +34,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
-import com.vaticle.typedb.studio.state.Controller
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB_CLUSTER
@@ -81,15 +81,15 @@ object Connection {
 
         fun trySubmit() {
             when (com.vaticle.typedb.studio.view.Connection.FormState.server) {
-                TYPEDB -> Controller.connection.tryConnectToTypeDB(com.vaticle.typedb.studio.view.Connection.FormState.address)
+                TYPEDB -> State.connection.tryConnectToTypeDB(com.vaticle.typedb.studio.view.Connection.FormState.address)
                 TYPEDB_CLUSTER -> when {
-                    com.vaticle.typedb.studio.view.Connection.FormState.caCertificate.isBlank() -> Controller.connection.tryConnectToTypeDBCluster(
+                    com.vaticle.typedb.studio.view.Connection.FormState.caCertificate.isBlank() -> State.connection.tryConnectToTypeDBCluster(
                         com.vaticle.typedb.studio.view.Connection.FormState.address,
                         com.vaticle.typedb.studio.view.Connection.FormState.username,
                         com.vaticle.typedb.studio.view.Connection.FormState.password,
                         com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled
                     )
-                    else -> Controller.connection.tryConnectToTypeDBCluster(
+                    else -> State.connection.tryConnectToTypeDBCluster(
                         com.vaticle.typedb.studio.view.Connection.FormState.address,
                         com.vaticle.typedb.studio.view.Connection.FormState.username,
                         com.vaticle.typedb.studio.view.Connection.FormState.password,
@@ -104,7 +104,7 @@ object Connection {
     fun Window() {
         Window(
             title = Label.CONNECT_TO_TYPEDB,
-            onCloseRequest = { Controller.connection.showWindow = false },
+            onCloseRequest = { State.connection.showWindow = false },
             alwaysOnTop = true,
             state = rememberWindowState(
                 placement = WindowPlacement.Floating,
@@ -128,7 +128,7 @@ object Connection {
                 Row(verticalAlignment = Alignment.Bottom) {
                     com.vaticle.typedb.studio.view.Connection.ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
-                    when (Controller.connection.status) {
+                    when (State.connection.status) {
                         DISCONNECTED -> com.vaticle.typedb.studio.view.Connection.DisconnectedFormButtons()
                         CONNECTED -> com.vaticle.typedb.studio.view.Connection.ConnectedFormButtons()
                         CONNECTING -> com.vaticle.typedb.studio.view.Connection.ConnectingFormButtons()
@@ -145,7 +145,7 @@ object Connection {
                 values = Property.Server.values().toList(),
                 selected = com.vaticle.typedb.studio.view.Connection.FormState.server,
                 onSelection = { com.vaticle.typedb.studio.view.Connection.FormState.server = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -159,7 +159,7 @@ object Connection {
                 value = com.vaticle.typedb.studio.view.Connection.FormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.address = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -173,7 +173,7 @@ object Connection {
                 value = com.vaticle.typedb.studio.view.Connection.FormState.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.username = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -187,7 +187,7 @@ object Connection {
                 value = com.vaticle.typedb.studio.view.Connection.FormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.password = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -200,7 +200,7 @@ object Connection {
             Checkbox(
                 value = com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled,
                 onChange = { com.vaticle.typedb.studio.view.Connection.FormState.tlsEnabled = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
             )
         }
     }
@@ -213,7 +213,7 @@ object Connection {
                 value = com.vaticle.typedb.studio.view.Connection.FormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { com.vaticle.typedb.studio.view.Connection.FormState.caCertificate = it },
-                enabled = Controller.connection.isDisconnected(),
+                enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -221,9 +221,9 @@ object Connection {
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText = "${Label.STATUS}: ${Controller.connection.status.name.lowercase()}"
+        val statusText = "${Label.STATUS}: ${State.connection.status.name.lowercase()}"
         Text(
-            value = statusText, color = when (Controller.connection.status) {
+            value = statusText, color = when (State.connection.status) {
                 DISCONNECTED -> Theme.colors.error2
                 CONNECTING -> Theme.colors.quaternary
                 CONNECTED -> Theme.colors.secondary
@@ -234,9 +234,12 @@ object Connection {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { Controller.connection.showWindow = false })
+        TextButton(text = Label.CANCEL, onClick = { State.connection.showWindow = false })
         ComponentSpacer()
-        TextButton(text = Label.CONNECT, enabled = com.vaticle.typedb.studio.view.Connection.FormState.isValid(), onClick = { com.vaticle.typedb.studio.view.Connection.FormState.trySubmit() })
+        TextButton(
+            text = Label.CONNECT,
+            enabled = com.vaticle.typedb.studio.view.Connection.FormState.isValid(),
+            onClick = { com.vaticle.typedb.studio.view.Connection.FormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -244,17 +247,17 @@ object Connection {
     private fun ConnectedFormButtons() {
         TextButton(
             text = Label.DISCONNECT,
-            onClick = { Controller.connection.disconnect() },
+            onClick = { State.connection.disconnect() },
             textColor = Theme.colors.error2
         )
         ComponentSpacer()
-        TextButton(text = Label.CLOSE, onClick = { Controller.connection.showWindow = false })
+        TextButton(text = Label.CLOSE, onClick = { State.connection.showWindow = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { Controller.connection.disconnect() })
+        TextButton(text = Label.CANCEL, onClick = { State.connection.disconnect() })
         ComponentSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }

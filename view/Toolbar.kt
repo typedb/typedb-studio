@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.Controller
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.connection.Connection.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.Connection.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.Connection.Status.DISCONNECTED
@@ -54,7 +54,7 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { Controller.project.toggleWindow() })
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { State.project.toggleWindow() })
             ToolbarSpace()
             ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
             ToolbarSpace()
@@ -82,23 +82,23 @@ object Toolbar {
     @Composable
     private fun DatabaseDropdown() {
         Dropdown(
-            values = Controller.connection.databaseList,
-            selected = Controller.connection.getDatabase() ?: "",
-            onRefresh = { Controller.connection.refreshDatabaseList() },
-            onSelection = { Controller.connection.setDatabase(it) },
+            values = State.connection.databaseList,
+            selected = State.connection.getDatabase() ?: "",
+            onRefresh = { State.connection.refreshDatabaseList() },
+            onSelection = { State.connection.setDatabase(it) },
             placeholder = Label.SELECT_DATABASE,
-            enabled = Controller.connection.isConnected(),
+            enabled = State.connection.isConnected(),
             modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH)
         )
     }
 
     @Composable
     private fun ConnectionButton() {
-        when (Controller.connection.status) {
+        when (State.connection.status) {
             DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
             CONNECTING -> ConnectionButton(Label.CONNECTING)
             CONNECTED -> ConnectionButton(
-                (Controller.connection.username?.let { "$it@" } ?: "") + Controller.connection.address!!
+                (State.connection.username?.let { "$it@" } ?: "") + State.connection.address!!
             )
         }
     }
@@ -108,7 +108,7 @@ object Toolbar {
         TextButton(
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
-            onClick = { Controller.connection.showWindow = true },
+            onClick = { State.connection.showWindow = true },
             trailingIcon = Icon.Code.DATABASE,
         )
     }

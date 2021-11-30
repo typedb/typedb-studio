@@ -31,11 +31,11 @@ import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.Notifier
-import java.nio.file.Path
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import java.nio.file.Path
 
 class Connection(private val notifier: Notifier) {
 

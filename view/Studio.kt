@@ -36,7 +36,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.Controller
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.common.UserDataDirectory
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.view.common.Label
@@ -47,9 +47,9 @@ import com.vaticle.typedb.studio.view.common.component.Layout.HorizontalSeparato
 import com.vaticle.typedb.studio.view.common.component.Layout.Resizable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.navigator.Navigator
-import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
+import kotlin.system.exitProcess
 
 object Studio {
 
@@ -112,8 +112,8 @@ object Studio {
             }
             Notification.Area()
         }
-        if (Controller.connection.showWindow) com.vaticle.typedb.studio.view.Connection.Window()
-        if (Controller.project.showWindow) Project.Window()
+        if (State.connection.showWindow) com.vaticle.typedb.studio.view.Connection.Window()
+        if (State.project.showWindow) Project.Window()
     }
 
     @Composable

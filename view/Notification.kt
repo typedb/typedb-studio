@@ -32,7 +32,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.Controller
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.notification.Notifier
 import com.vaticle.typedb.studio.state.notification.Notifier.MessageType.ERROR
 import com.vaticle.typedb.studio.state.notification.Notifier.MessageType.INFO
@@ -56,7 +56,7 @@ object Notification {
     fun Area() {
         androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
-                Controller.notifier.messages.forEach { notification ->
+                State.notifier.messages.forEach { notification ->
                     Message(message = notification)
                 }
             }
@@ -81,7 +81,7 @@ object Notification {
             )
             IconButton(
                 icon = Icon.Code.XMARK,
-                onClick = { Controller.notifier.dismiss(message) },
+                onClick = { State.notifier.dismiss(message) },
                 iconColor = colorConfig.foreground,
                 bgColor = Color.Transparent,
                 modifier = Modifier.size(MESSAGE_CLOSE_SIZE)

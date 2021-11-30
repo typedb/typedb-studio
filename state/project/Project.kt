@@ -25,10 +25,10 @@ import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.Notifier
+import mu.KotlinLogging
 import java.nio.file.Path
 import kotlin.io.path.isReadable
 import kotlin.io.path.notExists
-import mu.KotlinLogging
 
 class Project(private val notifier: Notifier) {
 
