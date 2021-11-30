@@ -18,5 +18,25 @@
 
 package com.vaticle.typedb.studio.state.project
 
-class Directory {
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
+import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
+import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
+import java.nio.file.WatchService
+
+class Directory(val path: Path) {
+
+    val name: String get() = path.fileName.toString()
+    val isExpanded: Boolean by mutableStateOf(false)
+    val directories: List<Directory> by mutableStateOf(emptyList())
+    val files: List<File> by mutableStateOf(emptyList())
+
+    fun watchService(): WatchService {
+        val watchService = FileSystems.getDefault().newWatchService()
+        path.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
+        return watchService
+    }
 }

@@ -29,9 +29,13 @@ kt_jvm_library(
     deps = [
         "//state/notification:notification",
 
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-project:{pom_version}"],

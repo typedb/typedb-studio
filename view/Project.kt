@@ -65,7 +65,7 @@ object Project {
 
         fun trySubmit() {
             assert(!directory.isNullOrBlank())
-            State.project.tryOpen(directory!!)
+            State.project.tryOpenDirectory(directory!!)
         }
     }
 

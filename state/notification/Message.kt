@@ -66,6 +66,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(2, "Project path '%s' is not readable.")
             val PATH_NOT_DIRECTORY =
                 Project(3, "Project path '%s' is not a directory.")
+            val PROJECT_CLOSED =
+                Project(4, "Project path '%s' has been closed.")
         }
     }
 }
