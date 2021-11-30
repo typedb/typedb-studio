@@ -16,15 +16,9 @@
  *
  */
 
-package com.vaticle.typedb.studio.state
+package com.vaticle.typedb.studio.state.notification
 
-import com.vaticle.typedb.studio.state.connection.ConnectionManager
-import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.project.ProjectManager
-
-object State {
-
-    val notification = NotificationManager()
-    val connection = ConnectionManager(notification)
-    val project = ProjectManager(notification)
+// not data class, because each object has to be unique
+class Notification internal constructor(val type: Type, val text: String) {
+    enum class Type { INFO, ERROR }
 }

@@ -26,11 +26,14 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
-import com.vaticle.typedb.studio.state.notification.Notifier
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import mu.KotlinLogging
 
 class Connection internal constructor(
-    private val client: TypeDBClient, val address: String, val username: String?, val notifier: Notifier
+    private val client: TypeDBClient,
+    val address: String,
+    val username: String?,
+    private val notificationMgr: NotificationManager
 ) {
 
     companion object {
@@ -53,18 +56,17 @@ class Connection internal constructor(
         if (session?.database()?.name() == database) return
         closeSession()
         try {
-            this.session = client!!.session(database, SESSION_TYPE)
+            this.session = client.session(database, SESSION_TYPE)
         } catch (exception: TypeDBClientException) {
-            notifier.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
+            notificationMgr.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
         }
     }
 
     fun refreshDatabaseList() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
-        client?.let { c -> databaseList = c.databases().all().map { d -> d.name() } }
+        client.let { c -> databaseList = c.databases().all().map { d -> d.name() } }
         databaseListRefreshedTime = System.currentTimeMillis()
     }
-
 
     private fun closeSession() {
         session?.let { it.close(); session = null }

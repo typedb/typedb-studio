@@ -33,9 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.state.notification.Notifier
-import com.vaticle.typedb.studio.state.notification.Notifier.MessageType.ERROR
-import com.vaticle.typedb.studio.state.notification.Notifier.MessageType.INFO
+import com.vaticle.typedb.studio.state.notification.Notification
+import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
+import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -56,8 +56,8 @@ object Notification {
     fun Area() {
         androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
-                State.notifier.messages.forEach { notification ->
-                    Message(message = notification)
+                State.notification.messages.forEach { notification ->
+                    Message(notification = notification)
                 }
             }
         }
@@ -65,8 +65,8 @@ object Notification {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Message(message: Notifier.Message, modifier: Modifier = Modifier) {
-        val colorConfig = colorConfigOf(message.type)
+    private fun Message(notification: Notification, modifier: Modifier = Modifier) {
+        val colorConfig = colorConfigOf(notification.type)
         Row(
             modifier = modifier
                 .width(MESSAGE_WIDTH)
@@ -75,13 +75,13 @@ object Notification {
                 .background(color = colorConfig.background, shape = MESSAGE_SHAPE)
         ) {
             TextSelectable(
-                value = message.text,
+                value = notification.text,
                 color = colorConfig.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
             )
             IconButton(
                 icon = Icon.Code.XMARK,
-                onClick = { State.notifier.dismiss(message) },
+                onClick = { State.notification.dismiss(notification) },
                 iconColor = colorConfig.foreground,
                 bgColor = Color.Transparent,
                 modifier = Modifier.size(MESSAGE_CLOSE_SIZE)
@@ -90,7 +90,7 @@ object Notification {
     }
 
     @Composable
-    private fun colorConfigOf(type: Notifier.MessageType): ColorConfig {
+    private fun colorConfigOf(type: Notification.Type): ColorConfig {
         return when (type) {
             INFO -> ColorConfig(Theme.colors.border, Theme.colors.onSurface)
             ERROR -> ColorConfig(Theme.colors.error, Theme.colors.onError)

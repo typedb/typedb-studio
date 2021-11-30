@@ -22,30 +22,27 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import mu.KLogger
 
-class Notifier {
+class NotificationManager {
 
-    enum class MessageType { INFO, ERROR }
-    class Message(val type: MessageType, val text: String) // not data class, because each object has to be unique
-
-    val messages: SnapshotStateList<Message> = mutableStateListOf();
+    val messages: SnapshotStateList<Notification> = mutableStateListOf();
 
     fun info(message: String, logger: KLogger) {
         logger.info { message }
-        messages += Message(MessageType.INFO, message)
+        messages += Notification(Notification.Type.INFO, message)
     }
 
     fun userError(error: Error.User, logger: KLogger) {
         logger.error { error.message }
-        messages += Message(MessageType.ERROR, error.message)
+        messages += Notification(Notification.Type.ERROR, error.message)
     }
 
     fun systemError(error: Error.System, logger: KLogger) {
         logger.error { error.message }
         logger.error { error.cause }
-        messages += Message(MessageType.ERROR, error.message)
+        messages += Notification(Notification.Type.ERROR, error.message)
     }
 
-    fun dismiss(message: Message) {
+    fun dismiss(message: Notification) {
         messages -= message
     }
 }

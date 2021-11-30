@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
-import com.vaticle.typedb.studio.state.notification.Notifier
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -32,7 +32,7 @@ import java.nio.file.Path
 import java.nio.file.WatchService
 import kotlin.coroutines.EmptyCoroutineContext
 
-class Project(val path: Path, private val notifier: Notifier) {
+class Project internal constructor(path: Path, private val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -58,13 +58,13 @@ class Project(val path: Path, private val notifier: Notifier) {
                     watchkey.reset()
                 }
             } catch (e: Exception) {
-                notifier.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
+                notificationMgr.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
             }
         }
     }
 
     private fun cancelDirectoryWatcher() {
-        coroutineScope.cancel(PROJECT_CLOSED.message(directory!!.path.toAbsolutePath()))
+        coroutineScope.cancel(PROJECT_CLOSED.message(directory.path.toAbsolutePath()))
     }
 
     internal fun close() {

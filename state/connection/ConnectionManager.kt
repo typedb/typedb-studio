@@ -27,15 +27,14 @@ import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
-import com.vaticle.typedb.studio.state.notification.Notifier
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 
-class ConnectionManager(val notifier: Notifier) {
+class ConnectionManager(val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -77,20 +76,19 @@ class ConnectionManager(val notifier: Notifier) {
         tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun tryConnect(newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
         coroutineScope.launch {
             disconnect()
             status = Status.CONNECTING
             try {
-                current = Connection(clientConstructor(), newAddress, newUsername, notifier)
+                current = Connection(clientConstructor(), newAddress, newUsername, notificationMgr)
                 status = Status.CONNECTED
             } catch (e: TypeDBClientException) {
                 status = Status.DISCONNECTED
-                notifier.userError(Error.fromUser(Message.Connection.UNABLE_TO_CONNECT), LOGGER)
+                notificationMgr.userError(Error.fromUser(Message.Connection.UNABLE_TO_CONNECT), LOGGER)
             } catch (e: Exception) {
                 status = Status.DISCONNECTED
-                notifier.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
+                notificationMgr.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
             }
         }
     }
