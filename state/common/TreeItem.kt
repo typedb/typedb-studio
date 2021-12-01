@@ -25,7 +25,7 @@ interface TreeItem<T : TreeItem<T>> {
     fun asExpandable(): Expandable<T>
 
     interface Expandable<T : TreeItem<T>> : TreeItem<T> {
-        
+
         val isExpanded: Boolean
         val children: List<T>
         fun toggle()

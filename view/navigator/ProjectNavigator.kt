@@ -41,20 +41,6 @@ object ProjectNavigator {
         else Tree.Layout(items = listOf(State.project.current!!.directory), icon = { projectItemIcon(it) })
     }
 
-    private fun projectItemIcon(item: ProjectTreeItem): IconArgs {
-        return when {
-            item.isDirectory -> when {
-                item.asDirectory().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
-                else -> IconArgs(Icon.Code.FOLDER_BLANK)
-            }
-            item.isFile -> when {
-                item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
-                else -> IconArgs(Icon.Code.FILE_LINES)
-            }
-            else -> throw IllegalStateException("unreachable")
-        }
-    }
-
     @Composable
     private fun OpenProjectHelper() {
         Box(
@@ -66,6 +52,20 @@ object ProjectNavigator {
                 onClick = { State.project.showWindow = true },
                 leadingIcon = Icon.Code.FOLDER_OPEN
             )
+        }
+    }
+
+    private fun projectItemIcon(item: ProjectTreeItem): IconArgs {
+        return when {
+            item.isDirectory -> when {
+                item.asDirectory().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
+                else -> IconArgs(Icon.Code.FOLDER_BLANK)
+            }
+            item.isFile -> when {
+                item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                else -> IconArgs(Icon.Code.FILE_LINES)
+            }
+            else -> throw IllegalStateException("unreachable")
         }
     }
 }
