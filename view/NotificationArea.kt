@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object Notification {
+object NotificationArea {
 
     private val NOTIFICATION_MARGIN = 30.dp
     private val MESSAGE_WIDTH = 360.dp
@@ -53,7 +53,7 @@ object Notification {
     data class ColorConfig(val background: Color, val foreground: Color)
 
     @Composable
-    fun Area() {
+    fun Layout() {
         androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
                 State.notification.queue.forEach { notification ->

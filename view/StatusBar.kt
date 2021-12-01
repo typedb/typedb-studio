@@ -30,7 +30,7 @@ object StatusBar {
     private val HEIGHT = 20.dp
 
     @Composable
-    fun Area() {
+    fun Layout() {
         Row(Modifier.fillMaxWidth().height(HEIGHT)) {
 
         }

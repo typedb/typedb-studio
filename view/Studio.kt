@@ -46,8 +46,8 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.Connection
-import com.vaticle.typedb.studio.view.dialog.Project
+import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
+import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.navigator.NavigatorArea
 import kotlin.system.exitProcess
 import mu.KLogger
@@ -95,7 +95,7 @@ object Studio {
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
-                Toolbar.Area()
+                Toolbar.Layout()
                 Separator.Horizontal()
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
@@ -112,11 +112,11 @@ object Studio {
                     ) { PageArea.Area() }
                 )
                 Separator.Horizontal()
-                StatusBar.Area()
+                StatusBar.Layout()
             }
-            Notification.Area()
-            if (State.connection.showWindow) Connection.Dialog()
-            if (State.project.showWindow) Project.Dialog()
+            NotificationArea.Layout()
+            if (State.connection.showWindow) ConnectionDialog.Layout()
+            if (State.project.showWindow) ProjectDialog.Layout()
         }
     }
 

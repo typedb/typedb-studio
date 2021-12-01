@@ -45,7 +45,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import javax.swing.JFileChooser
 
 
-object Project {
+object ProjectDialog {
 
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 140.dp
@@ -69,7 +69,7 @@ object Project {
     }
 
     @Composable
-    fun Dialog() {
+    fun Layout() {
         val formState = remember { FormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,

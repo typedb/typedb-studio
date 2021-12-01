@@ -51,7 +51,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object Connection {
+object ConnectionDialog {
 
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 340.dp
@@ -100,7 +100,7 @@ object Connection {
     }
 
     @Composable
-    fun Dialog() {
+    fun Layout() {
         Dialog(
             title = Label.CONNECT_TO_TYPEDB,
             onCloseRequest = { State.connection.showWindow = false },

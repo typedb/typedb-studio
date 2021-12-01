@@ -48,7 +48,7 @@ object Toolbar {
     private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
     @Composable
-    fun Area() {
+    fun Layout() {
         Row(
             modifier = Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
