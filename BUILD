@@ -125,19 +125,33 @@ assemble_jvm_platform(
         "@vaticle_dependencies//util/platform:is_windows": "windows",
         "//conditions:default": "mac",
     }),
+    description = "TypeDB's Integrated Development Environment",
+    vendor = "Vaticle Ltd",
+    copyright = "Copyright (C) 2021 Vaticle",
+    license_file = ":LICENSE",
     version_file = ":VERSION",
-    java_deps = ":assemble-deps",
     icon = select({
         "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
         "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
         "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
         "//conditions:default": "mac",
     }),
-    main_jar = "com-vaticle-typedb-studio-0.0.0.jar",
+    java_deps = ":assemble-deps",
+    # TODO: document that, if the user gets "The configured main jar does not exist xxx.jar in the input directory",
+    #       they should ensure java_deps_root is set the same as in the java_deps, and that the main JAR name is set
+    #       to the Maven name (x-y-z-0.0.0.jar where x-y-z is the main class's package address in kebab-case)
+    java_deps_root = "lib/",
+    main_jar_path = "com-vaticle-typedb-studio-0.0.0.jar",
     main_class = "com.vaticle.typedb.studio.Studio",
     additional_files = assemble_files,
+    verbose = True,
+    linux_app_category = "database",
+    linux_menu_group = "Utility;Development;IDE;",
+    mac_app_id = "com.vaticle.typedb.studio",
     mac_entitlements = "//resources:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
+    mac_deep_sign_jars_regex = ".*(io-netty-netty|skiko-jvm-runtime).*",
+    windows_menu_group = "TypeDB Studio",
 )
 
 # A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
