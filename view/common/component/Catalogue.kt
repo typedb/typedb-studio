@@ -61,14 +61,14 @@ object Catalogue {
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
 
-    private class AreaState {
+    private class CatalogueState {
         var minWidth by mutableStateOf(0.dp)
     }
 
     @Composable
     fun <T : CatalogueItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
         val density = LocalDensity.current.density
-        val state = remember { AreaState() }
+        val state = remember { CatalogueState() }
         Box(
             modifier = Modifier.fillMaxSize()
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
@@ -84,7 +84,7 @@ object Catalogue {
         items: List<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp,
-        state: AreaState,
+        state: CatalogueState,
     ) {
         val density = LocalDensity.current.density
 
