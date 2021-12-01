@@ -19,79 +19,104 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.TreeItem
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
 object Tree {
 
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
-    private val AREA_PADDING = 4.dp
+    private val ICON_SPACING = 4.dp
+    private val AREA_PADDING = 8.dp
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
 
+    class TreeState {
+        var minWidth by mutableStateOf(0.dp)
+    }
+
     @Composable
-    fun <T : TreeItem<T>> Layout(items: List<T>, icon: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
-        List(
-            items = items,
-            icon = icon,
-            itemHeight = itemHeight,
-            modifier = Modifier
-                .fillMaxWidth().padding(PaddingValues(start = AREA_PADDING, top = AREA_PADDING))
-        )
+    fun <T : TreeItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
+        val density = LocalDensity.current.density
+        val state = remember { TreeState() }
+        Box(
+            modifier = Modifier.fillMaxSize()
+                .onSizeChanged { state.minWidth = toDP(it.width, density) }
+                .verticalScroll(rememberScrollState())
+                .horizontalScroll(rememberScrollState())
+        ) { List(0, items, iconArgs, itemHeight, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : TreeItem<T>> List(items: List<T>, icon: (T) -> IconArgs, itemHeight: Dp, modifier: Modifier) {
-        Column(modifier = modifier) { // .border(1.dp, Color.Red, RectangleShape)
+    private fun <T : TreeItem<T>> List(
+        indent: Int,
+        items: List<T>,
+        iconArgs: (T) -> IconArgs,
+        itemHeight: Dp,
+        state: TreeState,
+    ) {
+        val density = LocalDensity.current.density
+
+        fun increaseToAtLeast(widthSize: Int) {
+            val newWidth = toDP(widthSize, density)
+            if (newWidth > state.minWidth) state.minWidth = newWidth
+        }
+
+        Column(modifier = Modifier.onSizeChanged { increaseToAtLeast(it.width) }.widthIn(min = state.minWidth)) {
             items.forEach { item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.height(itemHeight).pointerHoverIcon(PointerIconDefaults.Hand).clickable { }
+                    modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
+                        .pointerHoverIcon(PointerIconDefaults.Hand)
+                        .onSizeChanged { increaseToAtLeast(it.width) }
+                        .clickable { }
                 ) {
+                    if (indent > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * indent))
                     ExpandOrCollapseOrNoButton(item)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-                        Icon.Render(icon = icon(item).code, color = icon(item).color())
-                    }
-                    Spacer(Modifier.width(4.dp))
+                    Icon(item, iconArgs)
+                    Spacer(Modifier.width(ICON_SPACING))
                     Text(value = item.name, modifier = Modifier.height(ICON_WIDTH).offset(y = (-1).dp))
+                    Spacer(modifier = Modifier.width(AREA_PADDING))
                     Spacer(modifier = Modifier.weight(1f))
                 }
-                if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedList(items = item.asExpandable().children, icon = icon, itemHeight = itemHeight)
-                }
+                if (isExpanded(item)) List(indent + 1, item.asExpandable().children, iconArgs, itemHeight, state)
             }
         }
     }
 
-    @Composable
-    private fun <T : TreeItem<T>> NestedList(items: List<T>, icon: (T) -> IconArgs, itemHeight: Dp) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Spacer(modifier = Modifier.width(ICON_WIDTH))
-            List(items = items, icon = icon, itemHeight = itemHeight, modifier = Modifier.weight(1f))
-        }
+    private fun <T : TreeItem<T>> isExpanded(item: T): Boolean {
+        return item.isExpandable && item.asExpandable().isExpanded
     }
 
     @Composable
@@ -103,5 +128,12 @@ object Tree {
             modifier = Modifier.size(ICON_WIDTH)
         )
         else Spacer(Modifier.size(ICON_WIDTH))
+    }
+
+    @Composable
+    private fun <T : TreeItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
+            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
+        }
     }
 }

@@ -38,7 +38,7 @@ object ProjectNavigator {
     @Composable
     fun Layout() {
         if (State.project.current == null) OpenProjectHelper()
-        else Tree.Layout(items = listOf(State.project.current!!.directory), icon = { projectItemIcon(it) })
+        else Tree.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
     }
 
     @Composable

@@ -82,6 +82,7 @@ object Theme {
         }
     }
 
+    // TODO: this may be more suitable in a utility class when we have one
     fun toDP(pixel: Number, density: Float): Dp {
         return (pixel.toDouble() / density).roundToInt().dp
     }
