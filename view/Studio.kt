@@ -46,6 +46,8 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.dialog.Connection
+import com.vaticle.typedb.studio.view.dialog.Project
 import com.vaticle.typedb.studio.view.navigator.NavigatorArea
 import kotlin.system.exitProcess
 import mu.KLogger

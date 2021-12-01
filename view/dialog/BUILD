@@ -18,28 +18,22 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//:__pkg__"])
+package(default_visibility = ["//view:__subpackages__"])
 
 kt_jvm_library(
-    name = "view",
+    name = "dialog",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/common:common",
         "//state/connection:connection",
-        "//state/notification:notification",
         "//state/project:project",
+        "//state/view:view",
         "//state:state",
         "//view/common:common",
-        "//view/dialog:dialog",
-        "//view/navigator:navigator",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
@@ -48,13 +42,8 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    resources = [
-        "//resources/fonts/titilliumweb:titillium-web",
-        "//resources/fonts/ubuntumono:ubuntu-mono",
-        "//resources/icons/fontawesome:icons",
-    ],
     resource_strip_prefix = "resources",
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-dialog:{pom_version}"],
 )
 
 checkstyle_test(

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view
+package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
