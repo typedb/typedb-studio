@@ -18,11 +18,11 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.TreeItem
+import com.vaticle.typedb.studio.state.common.CatalogueItem
 import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 
-abstract class ProjectTreeItem(val path: Path) : TreeItem<ProjectTreeItem> {
+abstract class ProjectItem(val path: Path) : CatalogueItem<ProjectItem> {
 
     override val name: String = path.fileName.toString()
 
@@ -35,7 +35,7 @@ abstract class ProjectTreeItem(val path: Path) : TreeItem<ProjectTreeItem> {
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
 
-    override fun asExpandable(): TreeItem.Expandable<ProjectTreeItem> {
+    override fun asExpandable(): CatalogueItem.Expandable<ProjectItem> {
         return asDirectory()
     }
 }

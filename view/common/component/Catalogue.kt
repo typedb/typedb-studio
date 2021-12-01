@@ -47,12 +47,12 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.TreeItem
+import com.vaticle.typedb.studio.state.common.CatalogueItem
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
-object Tree {
+object Catalogue {
 
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
@@ -61,30 +61,30 @@ object Tree {
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
 
-    class TreeState {
+    private class AreaState {
         var minWidth by mutableStateOf(0.dp)
     }
 
     @Composable
-    fun <T : TreeItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
+    fun <T : CatalogueItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
         val density = LocalDensity.current.density
-        val state = remember { TreeState() }
+        val state = remember { AreaState() }
         Box(
             modifier = Modifier.fillMaxSize()
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { List(0, items, iconArgs, itemHeight, state) }
+        ) { NestedCatalogue(0, items, iconArgs, itemHeight, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : TreeItem<T>> List(
-        indent: Int,
+    private fun <T : CatalogueItem<T>> NestedCatalogue(
+        depth: Int,
         items: List<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp,
-        state: TreeState,
+        state: AreaState,
     ) {
         val density = LocalDensity.current.density
 
@@ -93,7 +93,7 @@ object Tree {
             if (newWidth > state.minWidth) state.minWidth = newWidth
         }
 
-        Column(modifier = Modifier.onSizeChanged { increaseToAtLeast(it.width) }.widthIn(min = state.minWidth)) {
+        Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -102,7 +102,7 @@ object Tree {
                         .onSizeChanged { increaseToAtLeast(it.width) }
                         .clickable { }
                 ) {
-                    if (indent > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * indent))
+                    if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
                     ExpandOrCollapseOrNoButton(item)
                     Icon(item, iconArgs)
                     Spacer(Modifier.width(ICON_SPACING))
@@ -110,17 +110,15 @@ object Tree {
                     Spacer(modifier = Modifier.width(AREA_PADDING))
                     Spacer(modifier = Modifier.weight(1f))
                 }
-                if (isExpanded(item)) List(indent + 1, item.asExpandable().children, iconArgs, itemHeight, state)
+                if (item.isExpandable && item.asExpandable().isExpanded) {
+                    NestedCatalogue(depth + 1, item.asExpandable().children, iconArgs, itemHeight, state)
+                }
             }
         }
     }
 
-    private fun <T : TreeItem<T>> isExpanded(item: T): Boolean {
-        return item.isExpandable && item.asExpandable().isExpanded
-    }
-
     @Composable
-    private fun <T : TreeItem<T>> ExpandOrCollapseOrNoButton(item: TreeItem<T>) {
+    private fun <T : CatalogueItem<T>> ExpandOrCollapseOrNoButton(item: CatalogueItem<T>) {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
@@ -131,7 +129,7 @@ object Tree {
     }
 
     @Composable
-    private fun <T : TreeItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
+    private fun <T : CatalogueItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }

@@ -19,9 +19,7 @@
 package com.vaticle.typedb.studio.view.navigator
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +33,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +43,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -56,17 +51,17 @@ import com.vaticle.typedb.common.collection.Either.second
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
+import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Resizable
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.PROJECT
-import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.ROLES
-import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.RULES
-import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.TYPES
-import com.vaticle.typedb.studio.view.navigator.Navigator.NavigatorType.USERS
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea.NavigatorState.Type.PROJECT
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea.NavigatorState.Type.ROLES
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea.NavigatorState.Type.RULES
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea.NavigatorState.Type.TYPES
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea.NavigatorState.Type.USERS
 
-object Navigator {
+object NavigatorArea {
 
     const val ID = "NAVIGATOR_AREA"
     val WIDTH = 300.dp
@@ -79,15 +74,16 @@ object Navigator {
     private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 
-    private enum class NavigatorType(val label: String, val icon: Icon.Code) {
-        PROJECT(Label.PROJECT, Icon.Code.FOLDER_BLANK),
-        TYPES(Label.TYPES, Icon.Code.SITEMAP),
-        RULES(Label.RULES, Icon.Code.DIAGRAM_PROJECT),
-        USERS(Label.USERS, Icon.Code.USER),
-        ROLES(Label.ROLES, Icon.Code.USER_GROUP)
-    }
+    internal class NavigatorState(val type: Type, val areaState: AreaState, initOpen: Boolean = false) {
 
-    private class NavigatorState(val type: NavigatorType, val areaState: AreaState, initOpen: Boolean = false) {
+        internal enum class Type(val label: String, val icon: Icon.Code) {
+            PROJECT(Label.PROJECT, Icon.Code.FOLDER_BLANK),
+            TYPES(Label.TYPES, Icon.Code.SITEMAP),
+            RULES(Label.RULES, Icon.Code.DIAGRAM_PROJECT),
+            USERS(Label.USERS, Icon.Code.USER),
+            ROLES(Label.ROLES, Icon.Code.USER_GROUP)
+        }
+
         var isOpen: Boolean by mutableStateOf(initOpen)
         val icon; get() = type.icon
         val label; get() = type.label
@@ -98,7 +94,7 @@ object Navigator {
         }
     }
 
-    private class AreaState(val layoutState: Resizable.ItemState) {
+    internal class AreaState(private val paneState: Frame.PaneState) {
         val navigators = linkedMapOf(
             PROJECT to NavigatorState(PROJECT, this, true),
             TYPES to NavigatorState(TYPES, this, true),
@@ -116,14 +112,14 @@ object Navigator {
         }
 
         fun mayHidePanelArea() {
-            if (openedNavigators().isEmpty()) layoutState.freeze(SIDE_TAB_WIDTH)
-            else layoutState.unfreeze()
+            if (openedNavigators().isEmpty()) paneState.freeze(SIDE_TAB_WIDTH)
+            else paneState.unfreeze()
         }
     }
 
     @Composable
-    fun Area(layoutState: Resizable.ItemState) {
-        val areaState = remember { AreaState(layoutState) }
+    fun Layout(paneState: Frame.PaneState) {
+        val areaState = remember { AreaState(paneState) }
         val openedNavigators = areaState.openedNavigators()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
@@ -132,11 +128,11 @@ object Navigator {
             if (openedNavigators.isNotEmpty()) {
                 Separator.Vertical()
                 if (openedNavigators.size == 1) Panel(openedNavigators.first())
-                else Resizable.Column(
+                else Frame.Column(
                     modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Resizable.SeparatorArgs(Separator.WEIGHT),
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
                     *openedNavigators.map { navigator ->
-                        Resizable.Item(
+                        Frame.Pane(
                             id = navigator.label,
                             initSize = second(1f),
                             minSize = PANEL_MIN_HEIGHT

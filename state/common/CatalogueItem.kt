@@ -18,13 +18,13 @@
 
 package com.vaticle.typedb.studio.state.common
 
-interface TreeItem<T : TreeItem<T>> {
+interface CatalogueItem<T : CatalogueItem<T>> {
 
     val name: String
     val isExpandable: Boolean
     fun asExpandable(): Expandable<T>
 
-    interface Expandable<T : TreeItem<T>> : TreeItem<T> {
+    interface Expandable<T : CatalogueItem<T>> : CatalogueItem<T> {
 
         val isExpanded: Boolean
         val children: List<T>

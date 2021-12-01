@@ -43,11 +43,10 @@ import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
-import com.vaticle.typedb.studio.view.common.component.Resizable
+import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.component.Separator.Horizontal
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.navigator.Navigator
+import com.vaticle.typedb.studio.view.navigator.NavigatorArea
 import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
@@ -95,22 +94,22 @@ object Studio {
         ) {
             Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
                 Toolbar.Area()
-                Horizontal()
-                Resizable.Row(
+                Separator.Horizontal()
+                Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Resizable.SeparatorArgs(Separator.WEIGHT),
-                    Resizable.Item(
-                        id = Navigator.ID,
-                        initSize = Either.first(Navigator.WIDTH),
-                        minSize = Navigator.MIN_WIDTH
-                    ) { Navigator.Area(it) },
-                    Resizable.Item(
-                        id = Page.ID,
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                    Frame.Pane(
+                        id = NavigatorArea.ID,
+                        initSize = Either.first(NavigatorArea.WIDTH),
+                        minSize = NavigatorArea.MIN_WIDTH
+                    ) { NavigatorArea.Layout(it) },
+                    Frame.Pane(
+                        id = PageArea.ID,
                         initSize = Either.second(1f),
-                        minSize = Page.MIN_WIDTH
-                    ) { Page.Area() }
+                        minSize = PageArea.MIN_WIDTH
+                    ) { PageArea.Area() }
                 )
-                Horizontal()
+                Separator.Horizontal()
                 StatusBar.Area()
             }
             Notification.Area()

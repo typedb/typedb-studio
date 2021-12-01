@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.common.TreeItem
+import com.vaticle.typedb.studio.state.common.CatalogueItem
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
@@ -32,11 +32,11 @@ import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
-class Directory(path: Path) : TreeItem.Expandable<ProjectTreeItem>, ProjectTreeItem(path) {
+class Directory(path: Path) : CatalogueItem.Expandable<ProjectItem>, ProjectItem(path) {
 
     override val isExpandable: Boolean = true
     override var isExpanded: Boolean by mutableStateOf(false); private set
-    override var children: List<ProjectTreeItem> by mutableStateOf(emptyList())
+    override var children: List<ProjectItem> by mutableStateOf(emptyList())
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 

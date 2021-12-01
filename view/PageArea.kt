@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.component.Separator
 
-object Page {
+object PageArea {
 
     const val ID = "PAGE_AREA"
     val MIN_WIDTH = 100.dp

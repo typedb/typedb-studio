@@ -22,6 +22,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,34 +49,34 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.Cursor
 
-object Resizable {
+object Frame {
 
     private val DRAGGABLE_BAR_SIZE = 8.dp
-    private val MEMBER_MIN_SIZE = 10.dp
+    private val PANE_MIN_SIZE = 10.dp
 
     data class SeparatorArgs(val size: Dp, val color: @Composable () -> Color = { Theme.colors.border })
 
-    data class Item(
+    data class Pane(
         val id: String,
         val initSize: Either<Dp, Float>,
-        val minSize: Dp = MEMBER_MIN_SIZE,
-        val content: @Composable (ItemState) -> Unit
+        val minSize: Dp = PANE_MIN_SIZE,
+        val content: @Composable (PaneState) -> Unit
     )
 
-    class ItemState internal constructor(
-        private val layoutState: AreaState,
+    class PaneState internal constructor(
+        private val frameState: FrameState,
         private val index: Int,
         val id: String,
         val initSize: Either<Dp, Float> = Either.second(1f),
-        val minSize: Dp = MEMBER_MIN_SIZE,
+        val minSize: Dp = PANE_MIN_SIZE,
         currentSize: Dp = 0.dp,
         currentFreezeSize: Dp? = null,
-        val content: @Composable (ItemState) -> Unit
+        val content: @Composable (PaneState) -> Unit
     ) {
         internal val isFirst: Boolean get() = index == 0
-        internal val isLast: Boolean get() = index == layoutState.contents.size - 1
-        internal val previous: ItemState? get() = if (isFirst) null else layoutState.contents[index - 1]
-        internal val next: ItemState? get() = if (isLast) null else layoutState.contents[index + 1]
+        internal val isLast: Boolean get() = index == frameState.panes.size - 1
+        internal val previous: PaneState? get() = if (isFirst) null else frameState.panes[index - 1]
+        internal val next: PaneState? get() = if (isLast) null else frameState.panes[index + 1]
         internal var _size: Dp by mutableStateOf(currentSize)
         internal var freezeSize: Dp? by mutableStateOf(currentFreezeSize); private set
         internal var size: Dp
@@ -93,7 +95,7 @@ object Resizable {
 
         internal fun tryResizeSelfAndNext(delta: Dp) {
             assert(!isLast && next != null)
-            layoutState.resized = true
+            frameState.resized = true
             val cappedDelta = min(max(delta, minSize - _size), next!!.size - next!!.minSize)
             _size += cappedDelta
             next!!.size -= cappedDelta
@@ -108,42 +110,42 @@ object Resizable {
         }
     }
 
-    internal class AreaState(private val separatorSize: Dp?) {
+    internal class FrameState(private val separatorSize: Dp?) {
         var resized: Boolean = false
         var maxSize: Dp by mutableStateOf(0.dp)
-        var contents: List<ItemState> by mutableStateOf(emptyList())
+        var panes: List<PaneState> by mutableStateOf(emptyList())
         private val currentSize: Dp
             get() {
                 var size = 0.dp
-                contents.map { size += it.size }
-                separatorSize?.let { size += it * (contents.size - 1) }
+                panes.map { size += it.size }
+                separatorSize?.let { size += it * (panes.size - 1) }
                 return size
             }
 
-        internal fun sync(inputs: List<Item>) {
+        internal fun sync(inputs: List<Pane>) {
             val inputIDs = inputs.map { it.id }.toSet()
-            val removedIDs = contents.map { it.id }.filter { !inputIDs.contains(it) }.toSet()
-            if (removedIDs.isNotEmpty()) removeItems(removedIDs)
-            if (inputs.size > contents.size) replaceItems(inputs)
+            val removedIDs = panes.map { it.id }.filter { !inputIDs.contains(it) }.toSet()
+            if (removedIDs.isNotEmpty()) remove(removedIDs)
+            if (inputs.size > panes.size) replace(inputs)
         }
 
-        private fun removeItems(removedIDs: Set<String>) {
-            contents.filter { removedIDs.contains(it.id) }.forEach {
+        private fun remove(removedPaneIDs: Set<String>) {
+            panes.filter { removedPaneIDs.contains(it.id) }.forEach {
                 if (it.isFirst) it.next!!.size += it.size
                 else it.previous!!.size += it.size
             }
-            contents = contents.filter { !removedIDs.contains(it.id) }.mapIndexed { i, member ->
-                ItemState(
-                    layoutState = this, index = i, id = member.id, minSize = member.minSize,
-                    currentSize = member._size, currentFreezeSize = member.freezeSize, content = member.content
+            panes = panes.filter { !removedPaneIDs.contains(it.id) }.mapIndexed { i, pane ->
+                PaneState(
+                    frameState = this, index = i, id = pane.id, minSize = pane.minSize,
+                    currentSize = pane._size, currentFreezeSize = pane.freezeSize, content = pane.content
                 )
             }
         }
 
-        private fun replaceItems(inputs: List<Item>) {
-            contents = inputs.mapIndexed { i, input ->
-                ItemState(
-                    layoutState = this, index = i, id = input.id, initSize = input.initSize,
+        private fun replace(newPanes: List<Pane>) {
+            panes = newPanes.mapIndexed { i, input ->
+                PaneState(
+                    frameState = this, index = i, id = input.id, initSize = input.initSize,
                     minSize = input.minSize, content = input.content
                 )
             }
@@ -158,29 +160,29 @@ object Resizable {
 
         private fun mayInitialiseSizes() {
             var fixedSize: Dp = 0.dp
-            contents.filter { it.initSize.isFirst }.forEach {
+            panes.filter { it.initSize.isFirst }.forEach {
                 it.size = it.initSize.first()
                 fixedSize += it.initSize.first()
             }
-            val weightedItems = contents.filter { it.initSize.isSecond }
+            val weightedPanes = panes.filter { it.initSize.isSecond }
             val weightedSize = maxSize - fixedSize
-            val weightedTotal = weightedItems.sumOf { it.initSize.second().toDouble() }.toFloat()
-            weightedItems.forEach {
+            val weightedTotal = weightedPanes.sumOf { it.initSize.second().toDouble() }.toFloat()
+            weightedPanes.forEach {
                 it.size =
                     max(it.minSize, weightedSize * (it.initSize.second() / weightedTotal))
             }
         }
 
         private fun mayShrinkOrExpandSizes() {
-            var i = contents.size - 1
+            var i = panes.size - 1
             var size = currentSize
             // we add 1.dp only to accommodate for rounding errors never reaching equals
             while (size > maxSize + 1.dp && i >= 0) {
-                contents[i].tryOverride(maxSize - size)
+                panes[i].tryOverride(maxSize - size)
                 size = currentSize
                 i--
             }
-            if (size < maxSize) contents.last().tryOverride(maxSize - size)
+            if (size < maxSize) panes.last().tryOverride(maxSize - size)
         }
     }
 
@@ -188,23 +190,23 @@ object Resizable {
     fun Row(
         modifier: Modifier = Modifier,
         separator: SeparatorArgs? = null,
-        vararg items: Item
+        vararg panes: Pane
     ) {
-        assert(items.size >= 2)
+        assert(panes.size >= 2)
         val pixelDensity = LocalDensity.current.density
-        val areaState = remember { AreaState(separator?.size) }
-        areaState.sync(items.toList())
-        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(Theme.toDP(it.width, pixelDensity)) }) {
-            androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxSize()) {
-                areaState.contents.forEach { member ->
-                    Box(Modifier.fillMaxHeight().width(member.size)) { member.content(member) }
-                    separator?.let { if (!member.isLast) Separator.Vertical(it.size, it.color()) }
+        val frameState = remember { FrameState(separator?.size) }
+        frameState.sync(panes.toList())
+        Box(modifier = modifier.onSizeChanged { frameState.onSizeChanged(Theme.toDP(it.width, pixelDensity)) }) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                frameState.panes.forEach { pane ->
+                    Box(Modifier.fillMaxHeight().width(pane.size)) { pane.content(pane) }
+                    separator?.let { if (!pane.isLast) Separator.Vertical(it.size, it.color()) }
                 }
             }
-            androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxSize()) {
-                areaState.contents.filter { !it.isLast }.forEach {
+            Row(modifier = Modifier.fillMaxSize()) {
+                frameState.panes.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxHeight().width(it.nonDraggableSize))
-                    RowItemResizer(it, separator?.size)
+                    RowPaneResizer(it, separator?.size)
                 }
             }
         }
@@ -214,23 +216,23 @@ object Resizable {
     fun Column(
         modifier: Modifier = Modifier,
         separator: SeparatorArgs? = null,
-        vararg items: Item
+        vararg panes: Pane
     ) {
-        assert(items.size >= 2)
+        assert(panes.size >= 2)
         val pixelDensity = LocalDensity.current.density
-        val areaState = remember { AreaState(separator?.size) }
-        areaState.sync(items.toList())
-        Box(modifier = modifier.onSizeChanged { areaState.onSizeChanged(Theme.toDP(it.height, pixelDensity)) }) {
-            androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
-                areaState.contents.forEach { member ->
-                    Box(Modifier.fillMaxWidth().height(member.size)) { member.content(member) }
-                    separator?.let { if (!member.isLast) Separator.Horizontal(it.size, it.color()) }
+        val frameState = remember { FrameState(separator?.size) }
+        frameState.sync(panes.toList())
+        Box(modifier = modifier.onSizeChanged { frameState.onSizeChanged(Theme.toDP(it.height, pixelDensity)) }) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                frameState.panes.forEach { pane ->
+                    Box(Modifier.fillMaxWidth().height(pane.size)) { pane.content(pane) }
+                    separator?.let { if (!pane.isLast) Separator.Horizontal(it.size, it.color()) }
                 }
             }
-            androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
-                areaState.contents.filter { !it.isLast }.forEach {
+            Column(modifier = Modifier.fillMaxSize()) {
+                frameState.panes.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxWidth().height(it.nonDraggableSize))
-                    ColumnItemResizer(it, separator?.size)
+                    ColumnPaneResizer(it, separator?.size)
                 }
             }
         }
@@ -238,8 +240,8 @@ object Resizable {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun RowItemResizer(itemState: ItemState, separatorWidth: Dp?) {
-        if (itemState.freezeSize != null) {
+    private fun RowPaneResizer(paneState: PaneState, separatorWidth: Dp?) {
+        if (paneState.freezeSize != null) {
             if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
         } else {
             val pixelDensity = LocalDensity.current.density
@@ -248,7 +250,7 @@ object Resizable {
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
-                        itemState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
+                        paneState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
                     })
             )
         }
@@ -256,8 +258,8 @@ object Resizable {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ColumnItemResizer(itemState: ItemState, separatorHeight: Dp?) {
-        if (itemState.freezeSize != null) {
+    private fun ColumnPaneResizer(paneState: PaneState, separatorHeight: Dp?) {
+        if (paneState.freezeSize != null) {
             if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))
         } else {
             val pixelDensity = LocalDensity.current.density
@@ -266,7 +268,7 @@ object Resizable {
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
-                        itemState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
+                        paneState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
                     })
             )
         }
