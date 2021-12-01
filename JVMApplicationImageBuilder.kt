@@ -18,14 +18,16 @@
 
 package com.vaticle.typedb.studio
 
-import com.vaticle.typedb.studio.OS.*
+import com.vaticle.typedb.studio.OS.LINUX
+import com.vaticle.typedb.studio.OS.MAC
+import com.vaticle.typedb.studio.OS.WINDOWS
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Locale.ENGLISH
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
-import java.nio.file.Files
-import java.util.Locale.ENGLISH
 
 fun main(args: Array<String>) {
     val config = parseConfig(args[0])
@@ -38,8 +40,10 @@ fun main(args: Array<String>) {
 
     val os = getCurrentOS()
 
-    fun runShell(script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(),
-                 expectExitValueNormal: Boolean = true, printParamsEndIndex: Int? = null): ProcessResult {
+    fun runShell(
+        script: List<String>, baseDir: Path = Paths.get("."), env: Map<String, String> = mapOf(),
+        expectExitValueNormal: Boolean = true, printParamsEndIndex: Int? = null
+    ): ProcessResult {
         var builder = ProcessExecutor(script)
             .readOutput(true)
             .redirectError(System.err)
@@ -52,7 +56,12 @@ fun main(args: Array<String>) {
         if (execution.exitValue != 0 || verboseLoggingEnabled) {
             val loggedScript = when (printParamsEndIndex) {
                 null -> "$script"
-                else -> "${script.subList(0, printParamsEndIndex)} (+${script.size - printParamsEndIndex} hidden argument(s))"
+                else -> "${
+                    script.subList(
+                        0,
+                        printParamsEndIndex
+                    )
+                } (+${script.size - printParamsEndIndex} hidden argument(s))"
             }
             println("Execution of $loggedScript finished with status code '${execution.exitValue}'")
         }
@@ -61,10 +70,13 @@ fun main(args: Array<String>) {
 
     fun signFile(file: File, keychainName: String, deep: Boolean = false, replaceExisting: Boolean = false) {
         if (!replaceExisting) {
-            val verifySignatureResult = runShell(listOf("codesign", "-v", "--strict", file.path), expectExitValueNormal = false)
+            val verifySignatureResult =
+                runShell(listOf("codesign", "-v", "--strict", file.path), expectExitValueNormal = false)
             if (verifySignatureResult.exitValue == 0) return // file is already signed, skip
-            if (verifySignatureResult.exitValue != 1) throw IllegalStateException("Command 'codesign' failed with exit code " +
-                    "${verifySignatureResult.exitValue} and output: ${verifySignatureResult.outputString()}")
+            if (verifySignatureResult.exitValue != 1) throw IllegalStateException(
+                "Command 'codesign' failed with exit code " +
+                        "${verifySignatureResult.exitValue} and output: ${verifySignatureResult.outputString()}"
+            )
         }
 
         file.setWritable(true)
@@ -76,7 +88,8 @@ fun main(args: Array<String>) {
             "--options", "runtime",
             "--timestamp",
             "--keychain", keychainName,
-            file.path)
+            file.path
+        )
         if (deep) signCommand += "--deep"
         if (verboseLoggingEnabled) signCommand += "-vvv"
         runShell(signCommand)
@@ -87,14 +100,20 @@ fun main(args: Array<String>) {
     val jdkArchivePath = config.require("jdkPath")
     when (os) {
         MAC, LINUX -> runShell(script = listOf("tar", "-xf", jdkArchivePath, "-C", "jdk"))
-        WINDOWS -> runShell(script = listOf("jar", "xf", Path.of("..", jdkArchivePath).toString()), baseDir = Path.of("jdk"))
+        WINDOWS -> runShell(
+            script = listOf("jar", "xf", Path.of("..", jdkArchivePath).toString()),
+            baseDir = Path.of("jdk")
+        )
     }
 
     // On Windows, extract WiX Toolset and add it to the PATH
     if (os == WINDOWS) {
         Files.createDirectory(Path.of("wixtoolset"))
         val wixToolsetPath = config.require("windowsWixToolsetPath")
-        runShell(script = listOf("jar", "xf", Path.of("..", wixToolsetPath).toString()), baseDir = Path.of("wixtoolset"))
+        runShell(
+            script = listOf("jar", "xf", Path.of("..", wixToolsetPath).toString()),
+            baseDir = Path.of("wixtoolset")
+        )
     }
 
     val jpackageBinaryName = if (os == WINDOWS) "jpackage.exe" else "jpackage"
@@ -102,8 +121,10 @@ fun main(args: Array<String>) {
         ?: throw IllegalStateException("Could not locate '$jpackageBinaryName' in the provided JDK")
 
     Files.createDirectory(Path.of("src-temp"))
-    runShell(script = listOf("jar", "xf", Path.of("..", config.require("srcFilename")).toString()),
-        baseDir = Path.of("src-temp"))
+    runShell(
+        script = listOf("jar", "xf", Path.of("..", config.require("srcFilename")).toString()),
+        baseDir = Path.of("src-temp")
+    )
 //    unzip(archivePath = config.require("srcFilename"), outputPath = "src-temp")
 //
     // Emulate the behaviour of `tar -xf --strip-components=1`
@@ -117,8 +138,10 @@ fun main(args: Array<String>) {
 
     if (os == MAC) {
         if (appleCodeSigningPassword == null) {
-            println("Skipping MacOS code signing step: variable APPLE_CODE_SIGNING_PASSWORD is not set " +
-                    "(it should only be set when deploying a distribution)")
+            println(
+                "Skipping MacOS code signing step: variable APPLE_CODE_SIGNING_PASSWORD is not set " +
+                        "(it should only be set when deploying a distribution)"
+            )
         } else {
             val appleCodeSigningCertPath = config.require("appleCodeSigningCertificatePath")
             val keychainPassword = "jvm-application-image-builder"
@@ -127,12 +150,41 @@ fun main(args: Array<String>) {
             // These checks ensure the script doesn't fail if run twice on the same machine, e.g in local testing
             val keychainListInfo = runShell(listOf("security", "list-keychains")).outputString()
             if (keychainName in keychainListInfo) runShell(listOf("security", "delete-keychain", keychainName))
-            runShell(listOf("security", "create-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
+            runShell(
+                listOf("security", "create-keychain", "-p", keychainPassword, keychainName),
+                printParamsEndIndex = 2
+            )
             runShell(listOf("security", "default-keychain", "-s", keychainName))
             runShell(listOf("security", "list-keychains", "-d", "user", "-s", "login.keychain", keychainName))
-            runShell(listOf("security", "unlock-keychain", "-p", keychainPassword, keychainName), printParamsEndIndex = 2)
-            runShell(listOf("security", "import", appleCodeSigningCertPath, "-k", keychainName, "-P", appleCodeSigningPassword, "-T", "/usr/bin/codesign"), printParamsEndIndex = 5)
-            runShell(listOf("security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", keychainPassword, keychainName), printParamsEndIndex = 4)
+            runShell(
+                listOf("security", "unlock-keychain", "-p", keychainPassword, keychainName),
+                printParamsEndIndex = 2
+            )
+            runShell(
+                listOf(
+                    "security",
+                    "import",
+                    appleCodeSigningCertPath,
+                    "-k",
+                    keychainName,
+                    "-P",
+                    appleCodeSigningPassword,
+                    "-T",
+                    "/usr/bin/codesign"
+                ), printParamsEndIndex = 5
+            )
+            runShell(
+                listOf(
+                    "security",
+                    "set-key-partition-list",
+                    "-S",
+                    "apple-tool:,apple:,codesign:",
+                    "-s",
+                    "-k",
+                    keychainPassword,
+                    keychainName
+                ), printParamsEndIndex = 4
+            )
 
             for (file in File("src").listFilesRecursively()) {
                 if (!file.isFile) continue
@@ -177,7 +229,8 @@ fun main(args: Array<String>) {
         "--input", "src",
         "--main-jar", config.require("mainJar"),
         "--main-class", config.require("mainClass"),
-        "-d", "dist")
+        "-d", "dist"
+    )
 
     if ("iconPath" in config) {
         jpackageScript += listOf("--icon", config.require("iconPath"))
@@ -191,17 +244,20 @@ fun main(args: Array<String>) {
     jpackageScript += when (os) {
         MAC -> listOf(
             "--type", "app-image",
-            "--mac-package-name", config.require("applicationName"))
+            "--mac-package-name", config.require("applicationName")
+        )
         LINUX -> listOf(
             "--type", "deb",
             "--linux-menu-group", "Utility;Development;IDE;",
             "--linux-shortcut",
-            "--linux-app-category", "database")
+            "--linux-app-category", "database"
+        )
         WINDOWS -> listOf(
             "--type", "exe",
             "--win-menu",
             "--win-menu-group", "TypeDB Studio",
-            "--win-shortcut")
+            "--win-shortcut"
+        )
     }
 
     if (verboseLoggingEnabled) jpackageScript += "--verbose"
@@ -222,17 +278,20 @@ fun main(args: Array<String>) {
             signFile(File("dist/$applicationFilename.app"), keychainName, replaceExisting = true)
         }
 
-        runShell(listOf(
-            jpackage.path,
-            "--name", applicationFilename,
-            "--app-version", shortVersion,
-            "--description", config["description"] ?: "",
-            "--vendor", config["vendor"] ?: "",
-            "--copyright", config["copyrightNotice"] ?: "",
-            "--license-file", "dist/$applicationFilename.app/Contents/app/LICENSE",
-            "--type", "dmg",
-            "--app-image", "dist/$applicationFilename.app",
-            "-d", "dist"))
+        runShell(
+            listOf(
+                jpackage.path,
+                "--name", applicationFilename,
+                "--app-version", shortVersion,
+                "--description", config["description"] ?: "",
+                "--vendor", config["vendor"] ?: "",
+                "--copyright", config["copyrightNotice"] ?: "",
+                "--license-file", "dist/$applicationFilename.app/Contents/app/LICENSE",
+                "--type", "dmg",
+                "--app-image", "dist/$applicationFilename.app",
+                "-d", "dist"
+            )
+        )
 
         File("dist/$applicationFilename.app").deleteRecursively()
         val distFile = File("dist").listFiles()!![0]
@@ -252,16 +311,21 @@ fun main(args: Array<String>) {
 
             // TODO: xcrun altool --notarize-app is being deprecated in Xcode 13: see
             //       https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow?preferredLanguage=occ
-            val notarizeAppProcess = runShell(listOf(
-                "xcrun", "altool", "--notarize-app",
-                "--primary-bundle-id", "com.vaticle.typedb.studio",
-                "--username", appleID,
-                "--password", appleIDPassword,
-                "--file", dmgFilePath))
+            val notarizeAppProcess = runShell(
+                listOf(
+                    "xcrun", "altool", "--notarize-app",
+                    "--primary-bundle-id", "com.vaticle.typedb.studio",
+                    "--username", appleID,
+                    "--password", appleIDPassword,
+                    "--file", dmgFilePath
+                )
+            )
             val notarizeAppResult = notarizeAppProcess.outputString()
             val requestUUID = Regex("RequestUUID = ([a-z0-9\\-]{36})").find(notarizeAppResult)?.groupValues?.get(1)
-                ?: throw IllegalStateException("Notarization failed: the response $notarizeAppResult from " +
-                        "'xcrun altool --notarize-app' does not contain a valid RequestUUID")
+                ?: throw IllegalStateException(
+                    "Notarization failed: the response $notarizeAppResult from " +
+                            "'xcrun altool --notarize-app' does not contain a valid RequestUUID"
+                )
             println("Notarization request UUID: $requestUUID")
 
             var retries = 0
@@ -269,11 +333,14 @@ fun main(args: Array<String>) {
             while (retries < maxRetries) {
                 Thread.sleep(30000)
 
-                val infoProcess = runShell(listOf(
-                    "xcrun", "altool", "--notarization-info",
-                    requestUUID,
-                    "--username", appleID,
-                    "--password", appleIDPassword))
+                val infoProcess = runShell(
+                    listOf(
+                        "xcrun", "altool", "--notarization-info",
+                        requestUUID,
+                        "--username", appleID,
+                        "--password", appleIDPassword
+                    )
+                )
                 val info = infoProcess.outputString()
 
                 if ("Status Message: Package Approved" in info) {
@@ -294,8 +361,10 @@ fun main(args: Array<String>) {
         }
     }
 
-    runShell(script = listOf("jar", "cMf", Path.of("..", config.require("outFilename")).toString(), "."),
-        baseDir = Path.of("dist"))
+    runShell(
+        script = listOf("jar", "cMf", Path.of("..", config.require("outFilename")).toString(), "."),
+        baseDir = Path.of("dist")
+    )
 }
 
 fun parseConfig(config: String, verboseLoggingEnabled: Boolean = false, private: Boolean = false): Config {

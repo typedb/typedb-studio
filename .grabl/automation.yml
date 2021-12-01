@@ -35,13 +35,13 @@ build:
         bazel test //...
 
 release:
-#  filter:
-#    owner: vaticle
-#    branch: master
-#  validation:
-#    validate-dependencies:
-#      image: vaticle-ubuntu-20.04
-#      command: bazel test //:release-validate-nodejs-deps --test_output=streamed
+  #  filter:
+  #    owner: vaticle
+  #    branch: master
+  #  validation:
+  #    validate-dependencies:
+  #      image: vaticle-ubuntu-20.04
+  #      command: bazel test //:release-validate-nodejs-deps --test_output=streamed
   deployment:
     trigger-release-circleci:
       image: vaticle-ubuntu-20.04

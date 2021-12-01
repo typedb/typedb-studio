@@ -25,7 +25,8 @@ def vaticle_dependencies():
 #    )
     native.local_repository(
         name = "vaticle_dependencies",
-        path = "../dependencies",
+        remote = "https://github.com/alexjpwalker/dependencies", # TODO: update to vaticle/dependencies
+        commit = "a017725d8dfafb4978456bd5e7c31ebfdb15bf60", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
 def vaticle_force_graph():

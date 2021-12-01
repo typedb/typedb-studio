@@ -1,7 +1,5 @@
 ---
-name: Bug Report
-about: Report a bug here, or visit forum.vaticle.com for troubleshooting discussions
-labels: bug
+name: Bug Report about: Report a bug here, or visit forum.vaticle.com for troubleshooting discussions labels: bug
 ---
 
 Please replace every line in curly brackets ( { like this } ) with appropriate answers, and remove this line.
@@ -21,6 +19,7 @@ Please replace every line in curly brackets ( { like this } ) with appropriate a
 ## Reproducible Steps
 
 Steps to create the smallest reproducible scenario:
+
 1. { e.g. Run ... }
 2. { e.g. Load ... }
 3. { e.g. Query ... }
@@ -33,7 +32,7 @@ Steps to create the smallest reproducible scenario:
 ## Actual Output
 
 { Please describe what actually happened. }
- 
+
 ## Additional information
 
 { Any additional information, including logs or screenshots if you have any. }

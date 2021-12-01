@@ -17,6 +17,8 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
+package(default_visibility = ["//:__pkg__"])
+
 exports_files(["typedb-studio.rb"])
 
 checkstyle_test(
