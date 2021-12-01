@@ -16,7 +16,6 @@
 #
 
 load("//:deployment.bzl", deployment_github = "deployment")
-#load("//:rules.bzl", "jvm_application_image")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
