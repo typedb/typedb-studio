@@ -45,6 +45,7 @@ object Color {
         val onBackground: Color,
         val onSurface: Color,
         val onError: Color,
+        val indicationBase: Color,
         val isLight: Boolean,
     )
 
@@ -91,6 +92,7 @@ object Color {
             onBackground = DarkPalette.White2,
             onSurface = DarkPalette.White2,
             onError = DarkPalette.White,
+            indicationBase = DarkPalette.White,
             isLight = false
         )
     }

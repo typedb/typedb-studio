@@ -18,6 +18,14 @@
 
 package com.vaticle.typedb.studio.view.common.theme
 
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.IndicationInstance
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.ExperimentalMaterialApi
@@ -26,13 +34,18 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 object Theme {
 
+    const val ROUNDED_CORNER_RADIUS = 4f
+    val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
     private const val DEFAULT_SELECTION_TRANSPARENCY = 0.7f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
@@ -43,10 +56,11 @@ object Theme {
         @ReadOnlyComposable
         get() = listOf(
             LocalMinimumTouchTargetEnforcement provides false,
+            LocalIndication provides rectangleIndication(color = colors.indicationBase),
             LocalTextSelectionColors provides TextSelectionColors(
                 backgroundColor = colors.tertiary.copy(alpha = DEFAULT_SELECTION_TRANSPARENCY),
                 handleColor = colors.tertiary
-            ),
+            )
         )
 
     val colors: Color.Theme
@@ -68,7 +82,48 @@ object Theme {
         }
     }
 
-    fun toDP(pixel: Number, pixelDensity: Float): Dp {
-        return (pixel.toDouble() / pixelDensity).roundToInt().dp
+    fun toDP(pixel: Number, density: Float): Dp {
+        return (pixel.toDouble() / density).roundToInt().dp
+    }
+
+    fun roundedCornerRadius(density: Float): CornerRadius {
+        return CornerRadius(x = ROUNDED_CORNER_RADIUS * density, y = ROUNDED_CORNER_RADIUS * density)
+    }
+
+    fun roundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
+        return rawIndication { isPressed, isHovered, isFocused ->
+            if (isHovered.value || isFocused.value) drawRoundRect(
+                color = color.copy(0.1f), size = size, cornerRadius = roundedCornerRadius(density)
+            )
+            else if (isPressed.value) drawRoundRect(
+                color = color.copy(0.25f), size = size, cornerRadius = roundedCornerRadius(density)
+            )
+        }
+    }
+
+    fun rectangleIndication(color: androidx.compose.ui.graphics.Color): Indication {
+        return rawIndication { isPressed, isHovered, isFocused ->
+            if (isHovered.value || isFocused.value) drawRect(color = color.copy(0.1f), size = size)
+            else if (isPressed.value) drawRect(color = color.copy(0.25f), size = size)
+        }
+    }
+
+    private fun rawIndication(
+        indication: ContentDrawScope.(isPressed: State<Boolean>, isHovered: State<Boolean>, isFocused: State<Boolean>) -> Unit
+    ): Indication {
+        return object : Indication {
+            @Composable
+            override fun rememberUpdatedInstance(src: InteractionSource): IndicationInstance {
+                val isPressed = src.collectIsPressedAsState()
+                val isHovered = src.collectIsHoveredAsState()
+                val isFocused = src.collectIsFocusedAsState()
+                return object : IndicationInstance {
+                    override fun ContentDrawScope.drawIndication() {
+                        drawContent()
+                        indication(isPressed, isHovered, isFocused)
+                    }
+                }
+            }
+        }
     }
 }

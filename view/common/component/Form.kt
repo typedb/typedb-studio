@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,6 +45,7 @@ import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +77,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
 
@@ -89,7 +92,7 @@ object Form {
     private val BORDER_WIDTH = 1.dp
     private val CONTENT_PADDING = 8.dp
     private val ICON_SPACING = 4.dp
-    private val ROUNDED_RECTANGLE = RoundedCornerShape(4.dp)
+    private val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
@@ -201,16 +204,20 @@ object Form {
         enabled: Boolean = true,
         content: @Composable BoxScope.() -> Unit
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = modifier
-                .height(FIELD_HEIGHT)
-                .background(fadeable(color, !enabled), ROUNDED_RECTANGLE)
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                .clickable(enabled = enabled) { onClick() }
-                .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
+        CompositionLocalProvider(
+            LocalIndication provides roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
         ) {
-            content()
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = modifier
+                    .height(FIELD_HEIGHT)
+                    .background(fadeable(color, !enabled), ROUNDED_RECTANGLE)
+                    .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                    .clickable(enabled = enabled) { onClick() }
+                    .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
+            ) {
+                content()
+            }
         }
     }
 
