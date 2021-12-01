@@ -24,25 +24,25 @@ import mu.KLogger
 
 class NotificationManager {
 
-    val messages: SnapshotStateList<Notification> = mutableStateListOf();
+    val queue: SnapshotStateList<Notification> = mutableStateListOf();
 
     fun info(message: String, logger: KLogger) {
         logger.info { message }
-        messages += Notification(Notification.Type.INFO, message)
+        queue += Notification(Notification.Type.INFO, message)
     }
 
     fun userError(error: Error.User, logger: KLogger) {
         logger.error { error.message }
-        messages += Notification(Notification.Type.ERROR, error.message)
+        queue += Notification(Notification.Type.ERROR, error.message)
     }
 
     fun systemError(error: Error.System, logger: KLogger) {
         logger.error { error.message }
         logger.error { error.cause }
-        messages += Notification(Notification.Type.ERROR, error.message)
+        queue += Notification(Notification.Type.ERROR, error.message)
     }
 
     fun dismiss(message: Notification) {
-        messages -= message
+        queue -= message
     }
 }

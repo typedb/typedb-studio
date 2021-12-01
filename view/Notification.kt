@@ -56,8 +56,8 @@ object Notification {
     fun Area() {
         androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
-                State.notification.messages.forEach { notification ->
-                    Message(notification = notification)
+                State.notification.queue.forEach { notification ->
+                    Notification(notification = notification)
                 }
             }
         }
@@ -65,7 +65,7 @@ object Notification {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Message(notification: Notification, modifier: Modifier = Modifier) {
+    private fun Notification(notification: Notification, modifier: Modifier = Modifier) {
         val colorConfig = colorConfigOf(notification.type)
         Row(
             modifier = modifier

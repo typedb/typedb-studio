@@ -18,25 +18,24 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.TreeItem
 import java.nio.file.Path
-import kotlin.io.path.extension
+import kotlin.io.path.isSymbolicLink
 
-class File(path: Path) : TreeItem<ProjectTreeItem>, ProjectTreeItem(path) {
+abstract class ProjectTreeItem(val path: Path) : TreeItem<ProjectTreeItem> {
 
-    override val isExpandable: Boolean = false
-    override val isDirectory: Boolean = false
-    override val isFile: Boolean = true
+    override val name: String = path.fileName.toString()
 
-    val type: String = path.extension
-    val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
+    abstract val isDirectory: Boolean
+    abstract val isFile: Boolean
 
-    override fun asDirectory(): Directory {
-        throw TypeCastException("Invalid casting of File to Directory") // TODO: generalise
-    }
+    val absolutePath = path.toAbsolutePath()
+    val isSymbolicLink: Boolean = path.isSymbolicLink()
 
-    override fun asFile(): File {
-        return this
+    abstract fun asDirectory(): Directory
+    abstract fun asFile(): File
+
+    override fun asExpandable(): TreeItem.Expandable<ProjectTreeItem> {
+        return asDirectory()
     }
 }

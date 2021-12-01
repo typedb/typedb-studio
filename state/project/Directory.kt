@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.TreeItem
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
@@ -30,30 +31,35 @@ import java.nio.file.WatchService
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.isSymbolicLink
 
-class Directory(val path: Path) {
+class Directory(path: Path) : TreeItem.Expandable<ProjectTreeItem>, ProjectTreeItem(path) {
 
-    val name: String = path.fileName.toString()
-    val absolutePath: Path = path.toAbsolutePath()
-    val isSymbolicLink: Boolean = path.isSymbolicLink()
-    var isExpanded: Boolean by mutableStateOf(false); private set
+    override val isExpandable: Boolean = true
+    override var isExpanded: Boolean by mutableStateOf(false); private set
+    override var children: List<ProjectTreeItem> by mutableStateOf(emptyList())
+    override val isDirectory: Boolean = true
+    override val isFile: Boolean = false
+
     var directories: List<Directory> by mutableStateOf(emptyList())
     var files: List<File> by mutableStateOf(emptyList())
+
+    override fun toggle() {
+        isExpanded = !isExpanded
+        if (isExpanded) loadEntries()
+    }
+
+    override fun asDirectory(): Directory {
+        return this
+    }
+
+    override fun asFile(): File {
+        throw TypeCastException("Invalid casting of Directory to File") // TODO: generalise
+    }
 
     fun watchService(): WatchService {
         val watchService = FileSystems.getDefault().newWatchService()
         path.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
         return watchService
-    }
-
-    fun expand() {
-        loadEntries()
-        isExpanded = true
-    }
-
-    fun collapse() {
-        isExpanded = false
     }
 
     fun loadEntries() {
@@ -65,5 +71,6 @@ class Directory(val path: Path) {
         }
         directories = dirList.sortedBy { it.name }
         files = fileList.sortedBy { it.name }
+        children = directories + files
     }
 }

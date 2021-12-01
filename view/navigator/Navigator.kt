@@ -174,7 +174,7 @@ object Navigator {
     @Composable
     private fun Panel(navigator: NavigatorState, modifier: Modifier = Modifier) {
         Column(modifier = modifier) {
-            PanelTitle(navigator)
+            PanelBar(navigator)
             Separator.Horizontal()
             Box(modifier = Modifier.weight(1f)) {
                 when (navigator.type) {
@@ -190,7 +190,7 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun PanelTitle(navigator: NavigatorState) {
+    private fun PanelBar(navigator: NavigatorState) {
         Row(
             modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
             verticalAlignment = Alignment.CenterVertically

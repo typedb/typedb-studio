@@ -25,19 +25,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.project.ProjectTreeItem
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Tree
+import com.vaticle.typedb.studio.view.common.component.Tree.IconArgs
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ProjectNavigator {
 
     @Composable
     fun Layout() {
-        if (State.project.current == null) {
-            OpenProjectHelper()
-        } else {
+        if (State.project.current == null) OpenProjectHelper()
+        else Tree.Layout(items = listOf(State.project.current!!.directory), icon = { projectItemIcon(it) })
+    }
 
+    private fun projectItemIcon(item: ProjectTreeItem): IconArgs {
+        return when {
+            item.isDirectory -> when {
+                item.asDirectory().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
+                else -> IconArgs(Icon.Code.FOLDER_BLANK)
+            }
+            item.isFile -> when {
+                item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                else -> IconArgs(Icon.Code.FILE_LINES)
+            }
+            else -> throw IllegalStateException("unreachable")
         }
     }
 

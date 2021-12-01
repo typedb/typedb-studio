@@ -48,12 +48,17 @@ object Icon {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
         CARET_DOWN(0xf0d7u),
+        CARET_RIGHT(0xf0dau),
+        CHEVRON_RIGHT(0xf054u),
+        CHEVRON_DOWN(0xf078u),
         DATABASE(0xf1c0u),
         DIAGRAM_PROJECT(0xf542u),
+        FILE_LINES(0xf15cu),
         FLOPPY_DISK(0xf0c7u, 13.sp),
         FOLDER_OPEN(0xf07cu),
         FOLDER_BLANK(0xe185u),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
+        RECTANGLE_CODE(0Xe322U),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
         USER(0xf007u),

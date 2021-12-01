@@ -43,6 +43,8 @@ class Project internal constructor(path: Path, private val notificationMgr: Noti
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
+        assert(!directory.isExpanded)
+        directory.toggle()
         initDirectoryWatcher(directory)
     }
 
