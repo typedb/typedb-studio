@@ -32,10 +32,8 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 
-class Directory internal constructor(dirPath: Path, projectPath: Path) :
-    CatalogItem.Expandable<ProjectItem>, ProjectItem(dirPath, projectPath) {
-
-    internal constructor(path: Path) : this(path, path)
+class Directory internal constructor(dirPath: Path, project: Project) :
+    CatalogItem.Expandable<ProjectItem>, ProjectItem(dirPath, project) {
 
     override val isExpandable: Boolean = true
     override var isExpanded: Boolean by mutableStateOf(false); private set
@@ -43,11 +41,19 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 
+    internal fun expandAndReloadEntries() {
+        toggle(true)
+    }
+
+    internal fun collapse() {
+        toggle(false)
+    }
+
     override fun toggle() {
         toggle(!isExpanded)
     }
 
-    internal fun toggle(isExpanded: Boolean) {
+    private fun toggle(isExpanded: Boolean) {
         this.isExpanded = isExpanded
         if (isExpanded) reloadEntries()
     }
@@ -58,14 +64,6 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
 
     override fun asFile(): File {
         throw TypeCastException("Invalid casting of Directory to File") // TODO: generalise
-    }
-
-    fun toggleRecursively(isExpanded: Boolean) {
-        toggle(isExpanded)
-        entries.filterIsInstance<Directory>().forEach {
-            it.toggle(isExpanded)
-            it.toggleRecursively(isExpanded)
-        }
     }
 
     internal fun watchService(): WatchService {
@@ -87,7 +85,7 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
         val deleted = old - new
         val added = new - old
         return entries.filterIsInstance<Directory>().filter { !(deleted).contains(it.path) } +
-                (added).map { Directory(it, projectPath) }
+                (added).map { Directory(it, project) }
     }
 
     private fun updatedFiles(new: Set<Path>): List<File> {
@@ -95,6 +93,6 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
         val deleted = old - new
         val added = new - old
         return entries.filterIsInstance<File>().filter { !(deleted).contains(it.path) } +
-                (added).map { File(it, projectPath) }
+                (added).map { File(it, project) }
     }
 }

@@ -20,10 +20,12 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.nio.file.WatchService
+import java.util.*
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -33,27 +35,49 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class Project internal constructor(path: Path, private val notificationMgr: NotificationManager) {
+class Project internal constructor(val path: Path, val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+        private const val MAX_ITEM_EXPANDED = 256
     }
 
-    val directory: Directory = Directory(path)
+    val directory: Directory = Directory(path, this)
     val name: String get() = directory.name
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
-        directory.toggle(true)
+        directory.expandAndReloadEntries()
         initDirectoryWatcher(directory)
     }
 
     fun expand() {
-        directory.toggleRecursively(true)
+        toggle(true)
     }
 
     fun collapse() {
-        directory.toggleRecursively(false)
+        toggle(false)
+    }
+
+    private fun toggle(isExpanded: Boolean) {
+        var i = 1
+        val directories: LinkedList<Directory> = LinkedList()
+        directories.add(directory)
+
+        while (directories.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
+            val dir = directories.pop()
+            if (isExpanded) {
+                dir.expandAndReloadEntries()
+                i += dir.entries.count()
+                directories.addAll(dir.entries.filterIsInstance<Directory>())
+            } else {
+                dir.collapse()
+                directories.addAll(dir.entries.filterIsInstance<Directory>().filter { it.isExpanded })
+            }
+        }
+        if (directories.isNotEmpty()) {
+            notificationMgr.userError(Error.fromUser(MAX_DIR_EXPANDED_REACHED, path, MAX_ITEM_EXPANDED), LOGGER)
+        }
     }
 
     private fun initDirectoryWatcher(directory: Directory) {
