@@ -94,9 +94,6 @@ assemble_jvm_platform(
         "//conditions:default": "mac",
     }),
     java_deps = ":assemble-deps",
-    # TODO: document that, if the user gets "The configured main jar does not exist xxx.jar in the input directory",
-    #       they should ensure java_deps_root is set the same as in the java_deps, and that the main JAR name is set
-    #       to the Maven name (x-y-z-0.0.0.jar where x-y-z is the main class's package address in kebab-case)
     java_deps_root = "lib/",
     main_jar_path = "com-vaticle-typedb-typedb-studio-view-0.0.0.jar",
     main_class = "com.vaticle.typedb.studio.view.Studio",
