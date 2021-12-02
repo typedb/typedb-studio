@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Catalogue
-import com.vaticle.typedb.studio.view.common.component.Catalogue.IconArgs
+import com.vaticle.typedb.studio.view.common.component.Catalog
+import com.vaticle.typedb.studio.view.common.component.Catalog.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -38,7 +38,7 @@ object ProjectNavigator {
     @Composable
     fun Layout() {
         if (State.project.current == null) OpenProjectHelper()
-        else Catalogue.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
+        else Catalog.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
     }
 
     @Composable

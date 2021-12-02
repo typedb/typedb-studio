@@ -47,12 +47,12 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.CatalogueItem
+import com.vaticle.typedb.studio.state.common.CatalogItem
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
-object Catalogue {
+object Catalog {
 
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
@@ -61,30 +61,30 @@ object Catalogue {
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
 
-    private class CatalogueState {
+    private class CatalogState {
         var minWidth by mutableStateOf(0.dp)
     }
 
     @Composable
-    fun <T : CatalogueItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
+    fun <T : CatalogItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
         val density = LocalDensity.current.density
-        val state = remember { CatalogueState() }
+        val state = remember { CatalogState() }
         Box(
             modifier = Modifier.fillMaxSize()
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalogue(0, items, iconArgs, itemHeight, state) }
+        ) { NestedCatalog(0, items, iconArgs, itemHeight, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : CatalogueItem<T>> NestedCatalogue(
+    private fun <T : CatalogItem<T>> NestedCatalog(
         depth: Int,
         items: List<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp,
-        state: CatalogueState,
+        state: CatalogState,
     ) {
         val density = LocalDensity.current.density
 
@@ -111,14 +111,14 @@ object Catalogue {
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedCatalogue(depth + 1, item.asExpandable().children, iconArgs, itemHeight, state)
+                    NestedCatalog(depth + 1, item.asExpandable().children, iconArgs, itemHeight, state)
                 }
             }
         }
     }
 
     @Composable
-    private fun <T : CatalogueItem<T>> ExpandOrCollapseOrNoButton(item: CatalogueItem<T>) {
+    private fun <T : CatalogItem<T>> ExpandOrCollapseOrNoButton(item: CatalogItem<T>) {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
@@ -129,7 +129,7 @@ object Catalogue {
     }
 
     @Composable
-    private fun <T : CatalogueItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
+    private fun <T : CatalogItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }
