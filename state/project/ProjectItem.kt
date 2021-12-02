@@ -23,7 +23,7 @@ import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val path: Path, val project: Project) : CatalogItem<ProjectItem> {
+sealed class ProjectItem(val path: Path) : CatalogItem<ProjectItem> {
 
     abstract val isDirectory: Boolean
     abstract val isFile: Boolean

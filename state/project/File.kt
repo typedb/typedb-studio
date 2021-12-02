@@ -23,13 +23,13 @@ import com.vaticle.typedb.studio.state.common.Property
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-class File(filePath: Path, project: Project) : CatalogItem<ProjectItem>, ProjectItem(filePath, project) {
+class File(path: Path) : CatalogItem<ProjectItem>, ProjectItem(path) {
 
     override val isExpandable: Boolean = false
     override val isDirectory: Boolean = false
     override val isFile: Boolean = true
 
-    val type: String = path.extension
+    val type: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
 
     override fun asDirectory(): Directory {

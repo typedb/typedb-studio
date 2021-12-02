@@ -42,7 +42,7 @@ class Project internal constructor(val path: Path, val notificationMgr: Notifica
         private const val MAX_ITEM_EXPANDED = 256
     }
 
-    val directory: Directory = Directory(path, this)
+    val directory: Directory = Directory(path)
     val name: String get() = directory.name
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 

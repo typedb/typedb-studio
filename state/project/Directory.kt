@@ -32,8 +32,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 
-class Directory internal constructor(dirPath: Path, project: Project) :
-    CatalogItem.Expandable<ProjectItem>, ProjectItem(dirPath, project) {
+class Directory internal constructor(path: Path) : CatalogItem.Expandable<ProjectItem>, ProjectItem(path) {
 
     override val isExpandable: Boolean = true
     override var isExpanded: Boolean by mutableStateOf(false); private set
@@ -85,14 +84,13 @@ class Directory internal constructor(dirPath: Path, project: Project) :
         val deleted = old - new
         val added = new - old
         return entries.filterIsInstance<Directory>().filter { !(deleted).contains(it.path) } +
-                (added).map { Directory(it, project) }
+                (added).map { Directory(it) }
     }
 
     private fun updatedFiles(new: Set<Path>): List<File> {
         val old = entries.filter { it.isFile }.map { it.path }.toSet()
         val deleted = old - new
         val added = new - old
-        return entries.filterIsInstance<File>().filter { !(deleted).contains(it.path) } +
-                (added).map { File(it, project) }
+        return entries.filterIsInstance<File>().filter { !(deleted).contains(it.path) } + (added).map { File(it) }
     }
 }
