@@ -28,7 +28,6 @@ kt_jvm_library(
         "//state/common:common",
         "//state/connection:connection",
         "//state/project:project",
-        "//state/view:view",
         "//state:state",
         "//view/common:common",
 

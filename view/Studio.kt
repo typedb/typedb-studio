@@ -38,7 +38,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.state.common.UserDataDirectory
+import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text

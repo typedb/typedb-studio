@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.view
+package com.vaticle.typedb.studio.state.common
 
 interface CatalogueItem<T : CatalogueItem<T>> {
 

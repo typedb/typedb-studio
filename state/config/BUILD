@@ -24,14 +24,18 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "view",
+    name = "config",
     srcs = glob(["*.kt"]),
     deps = [
+        "//state/common:common",
+
         # External Maven Dependencies
+        "@maven//:ch_qos_logback_logback_classic",
+        "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-view:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-config:{pom_version}"],
 )
 
 checkstyle_test(

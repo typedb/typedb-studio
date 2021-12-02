@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.view.CatalogueItem
+import com.vaticle.typedb.studio.state.common.CatalogueItem
 import java.nio.file.Path
 import kotlin.io.path.extension
 

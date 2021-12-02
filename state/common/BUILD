@@ -28,8 +28,6 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         # External Maven Dependencies
-        "@maven//:ch_qos_logback_logback_classic",
-        "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
