@@ -36,7 +36,7 @@ class Directory(path: Path) : CatalogItem.Expandable<ProjectItem>, ProjectItem(p
 
     override val isExpandable: Boolean = true
     override var isExpanded: Boolean by mutableStateOf(false); private set
-    override var children: List<ProjectItem> by mutableStateOf(emptyList())
+    override var entries: List<ProjectItem> by mutableStateOf(emptyList())
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 
@@ -71,6 +71,6 @@ class Directory(path: Path) : CatalogItem.Expandable<ProjectItem>, ProjectItem(p
         }
         directories = dirList.sortedBy { it.name }
         files = fileList.sortedBy { it.name }
-        children = directories + files
+        entries = directories + files
     }
 }

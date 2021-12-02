@@ -27,7 +27,7 @@ interface CatalogItem<T : CatalogItem<T>> {
     interface Expandable<T : CatalogItem<T>> : CatalogItem<T> {
 
         val isExpanded: Boolean
-        val children: List<T>
+        val entries: List<T>
         fun toggle()
     }
 }

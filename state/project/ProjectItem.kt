@@ -22,7 +22,7 @@ import com.vaticle.typedb.studio.state.common.CatalogItem
 import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 
-abstract class ProjectItem(val path: Path) : CatalogItem<ProjectItem> {
+sealed class ProjectItem(val path: Path) : CatalogItem<ProjectItem> {
 
     override val name: String = path.fileName.toString()
 

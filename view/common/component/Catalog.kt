@@ -111,7 +111,7 @@ object Catalog {
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedCatalog(depth + 1, item.asExpandable().children, iconArgs, itemHeight, state)
+                    NestedCatalog(depth + 1, item.asExpandable().entries, iconArgs, itemHeight, state)
                 }
             }
         }

@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.project.Directory
+import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Catalog
@@ -56,16 +58,15 @@ object ProjectNavigator {
     }
 
     private fun projectItemIcon(item: ProjectItem): IconArgs {
-        return when {
-            item.isDirectory -> when {
-                item.asDirectory().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
+        return when (item) {
+            is Directory -> when {
+                item.isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
                 else -> IconArgs(Icon.Code.FOLDER_BLANK)
             }
-            item.isFile -> when {
-                item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+            is File -> when {
+                item.isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
                 else -> IconArgs(Icon.Code.FILE_LINES)
             }
-            else -> throw IllegalStateException("unreachable")
         }
     }
 }
