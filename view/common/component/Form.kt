@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
+import com.vaticle.typedb.studio.view.common.state.FormState
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
@@ -106,14 +107,14 @@ object Form {
     }
 
     @Composable
-    fun Submission(onSubmit: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    fun Submission(formState: FormState, content: @Composable() (ColumnScope.() -> Unit)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier
                 .fillMaxSize()
                 .background(Theme.colors.background)
                 .padding(OUTER_SPACING)
-                .onKeyEvent { onKeyEvent(event = it, onEnter = onSubmit) }
+                .onKeyEvent { onKeyEvent(event = it, onEnter = { formState.trySubmitIfValid() }) }
         ) { content() }
     }
 

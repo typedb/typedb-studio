@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.state.FormState
 import javax.swing.JFileChooser
 
 
@@ -50,19 +51,19 @@ object ProjectDialog {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 140.dp
 
-    class FormState {
+    class ProjectFormState: FormState {
 
         var directory: String? by mutableStateOf(State.project.current?.directory?.absolutePath?.toString())
 
-        fun isValid(): Boolean {
+        override fun isValid(): Boolean {
             return !directory.isNullOrBlank()
         }
 
-        fun trySubmitIfValid() {
+        override fun trySubmitIfValid() {
             if (isValid()) trySubmit()
         }
 
-        fun trySubmit() {
+        override fun trySubmit() {
             assert(!directory.isNullOrBlank())
             State.project.tryOpenDirectory(directory!!)
         }
@@ -70,7 +71,7 @@ object ProjectDialog {
 
     @Composable
     fun Layout() {
-        val formState = remember { FormState() }
+        val formState = remember { ProjectFormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { State.project.showWindow = false },
@@ -79,7 +80,7 @@ object ProjectDialog {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Submission(onSubmit = { formState.trySubmitIfValid() }) {
+            Submission(formState = formState) {
                 SelectDirectoryField(formState)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -92,7 +93,7 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(formState: FormState) {
+    private fun SelectDirectoryField(formState: ProjectFormState) {
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
@@ -107,7 +108,7 @@ object ProjectDialog {
         }
     }
 
-    private fun launchFileDialog(formState: FormState) {
+    private fun launchFileDialog(formState: ProjectFormState) {
         val directoryChooser = JFileChooser().apply {
             dialogTitle = Label.OPEN_PROJECT_DIRECTORY
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
@@ -123,7 +124,7 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun OpenProjectButtons(formState: FormState) {
+    private fun OpenProjectButtons(formState: ProjectFormState) {
         TextButton(text = Label.CANCEL, onClick = { State.project.showWindow = false })
         ComponentSpacer()
         TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })

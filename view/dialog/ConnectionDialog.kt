@@ -49,6 +49,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
+import com.vaticle.typedb.studio.view.common.state.FormState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ConnectionDialog {
@@ -56,7 +57,7 @@ object ConnectionDialog {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 340.dp
 
-    private object FormState {
+    private object ConnectionFormState : FormState {
         // We keep this static to maintain the values through application lifetime,
         // and easily accessible to all functions in this object without being passed around
 
@@ -67,32 +68,26 @@ object ConnectionDialog {
         var tlsEnabled: Boolean by mutableStateOf(false)
         var caCertificate: String by mutableStateOf("")
 
-        fun isValid(): Boolean {
+        override fun isValid(): Boolean {
             return when (server) {
                 TYPEDB -> !address.isBlank()
                 TYPEDB_CLUSTER -> !(address.isBlank() || username.isBlank() || password.isBlank())
             }
         }
 
-        fun trySubmitIfValid() {
+        override fun trySubmitIfValid() {
             if (isValid()) trySubmit()
         }
 
-        fun trySubmit() {
+        override fun trySubmit() {
             when (server) {
                 TYPEDB -> State.connection.tryConnectToTypeDB(address)
                 TYPEDB_CLUSTER -> when {
                     caCertificate.isBlank() -> State.connection.tryConnectToTypeDBCluster(
-                        address,
-                        username,
-                        password,
-                        tlsEnabled
+                        address, username, password, tlsEnabled
                     )
                     else -> State.connection.tryConnectToTypeDBCluster(
-                        address,
-                        username,
-                        password,
-                        caCertificate
+                        address, username, password, caCertificate
                     )
                 }
             }
@@ -109,14 +104,14 @@ object ConnectionDialog {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Submission(onSubmit = { FormState.trySubmitIfValid() }) {
+            Submission(formState = ConnectionFormState) {
                 ServerFormField()
                 AddressFormField()
-                if (FormState.server == TYPEDB_CLUSTER) {
+                if (ConnectionFormState.server == TYPEDB_CLUSTER) {
                     UsernameFormField()
                     PasswordFormField()
                     TLSEnabledFormField()
-                    if (FormState.tlsEnabled) CACertificateFormField()
+                    if (ConnectionFormState.tlsEnabled) CACertificateFormField()
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -137,8 +132,8 @@ object ConnectionDialog {
         Field(label = Label.SERVER) {
             Dropdown(
                 values = Property.Server.values().toList(),
-                selected = FormState.server,
-                onSelection = { FormState.server = it },
+                selected = ConnectionFormState.server,
+                onSelection = { ConnectionFormState.server = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -150,9 +145,9 @@ object ConnectionDialog {
     private fun AddressFormField() {
         Field(label = Label.ADDRESS) {
             TextInput(
-                value = FormState.address,
+                value = ConnectionFormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { FormState.address = it },
+                onValueChange = { ConnectionFormState.address = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -164,9 +159,9 @@ object ConnectionDialog {
     private fun UsernameFormField() {
         Field(label = Label.USERNAME) {
             TextInput(
-                value = FormState.username,
+                value = ConnectionFormState.username,
                 placeholder = Label.USERNAME.lowercase(),
-                onValueChange = { FormState.username = it },
+                onValueChange = { ConnectionFormState.username = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
@@ -178,9 +173,9 @@ object ConnectionDialog {
     private fun PasswordFormField() {
         Field(label = Label.PASSWORD) {
             TextInput(
-                value = FormState.password,
+                value = ConnectionFormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
-                onValueChange = { FormState.password = it },
+                onValueChange = { ConnectionFormState.password = it },
                 enabled = State.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
@@ -192,8 +187,8 @@ object ConnectionDialog {
     private fun TLSEnabledFormField() {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
-                value = FormState.tlsEnabled,
-                onChange = { FormState.tlsEnabled = it },
+                value = ConnectionFormState.tlsEnabled,
+                onChange = { ConnectionFormState.tlsEnabled = it },
                 enabled = State.connection.isDisconnected(),
             )
         }
@@ -204,9 +199,9 @@ object ConnectionDialog {
     private fun CACertificateFormField() {
         Field(label = Label.CA_CERTIFICATE) {
             TextInput(
-                value = FormState.caCertificate,
+                value = ConnectionFormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                onValueChange = { FormState.caCertificate = it },
+                onValueChange = { ConnectionFormState.caCertificate = it },
                 enabled = State.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),
             )
@@ -232,8 +227,8 @@ object ConnectionDialog {
         ComponentSpacer()
         TextButton(
             text = Label.CONNECT,
-            enabled = FormState.isValid(),
-            onClick = { FormState.trySubmit() })
+            enabled = ConnectionFormState.isValid(),
+            onClick = { ConnectionFormState.trySubmit() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
