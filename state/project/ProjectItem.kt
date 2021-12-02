@@ -21,16 +21,19 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.CatalogItem
 import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.readSymbolicLink
+import kotlin.io.path.relativeTo
 
-sealed class ProjectItem(val path: Path) : CatalogItem<ProjectItem> {
-
-    override val name: String = path.fileName.toString()
+sealed class ProjectItem(val path: Path, val projectPath: Path) : CatalogItem<ProjectItem> {
 
     abstract val isDirectory: Boolean
     abstract val isFile: Boolean
 
     val absolutePath = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
+
+    override val name: String = path.fileName.toString()
+    override val info: String? = if (isSymbolicLink) "→ " + path.readSymbolicLink().toString() else null
 
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File

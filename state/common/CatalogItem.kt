@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.common
 interface CatalogItem<T : CatalogItem<T>> {
 
     val name: String
+    val info: String?
     val isExpandable: Boolean
     fun asExpandable(): Expandable<T>
 

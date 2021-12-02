@@ -57,6 +57,7 @@ object Icon {
         FLOPPY_DISK(0xf0c7u, 13.sp),
         FOLDER_OPEN(0xf07cu),
         FOLDER_BLANK(0xe185u),
+        LINK_SIMPLE(0xe1cdu),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         RECTANGLE_CODE(0Xe322U),
         SITEMAP(0xf0e8u),

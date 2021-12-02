@@ -60,11 +60,14 @@ object ProjectNavigator {
     private fun projectItemIcon(item: ProjectItem): IconArgs {
         return when (item) {
             is Directory -> when {
+                item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
                 item.isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
                 else -> IconArgs(Icon.Code.FOLDER_BLANK)
             }
             is File -> when {
+                item.isTypeQL && item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE) { Theme.colors.secondary }
                 item.isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
                 else -> IconArgs(Icon.Code.FILE_LINES)
             }
         }

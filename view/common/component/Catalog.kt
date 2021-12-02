@@ -48,7 +48,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.CatalogItem
-import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
@@ -56,7 +55,7 @@ object Catalog {
 
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
-    private val ICON_SPACING = 4.dp
+    private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
@@ -103,10 +102,10 @@ object Catalog {
                         .clickable { }
                 ) {
                     if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                    ExpandOrCollapseOrNoButton(item)
-                    Icon(item, iconArgs)
-                    Spacer(Modifier.width(ICON_SPACING))
-                    Text(value = item.name, modifier = Modifier.height(ICON_WIDTH).offset(y = (-1).dp))
+                    ItemButton(item)
+                    ItemIcon(item, iconArgs)
+                    Spacer(Modifier.width(TEXT_SPACING))
+                    ItemText(item)
                     Spacer(modifier = Modifier.width(AREA_PADDING))
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -118,7 +117,7 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> ExpandOrCollapseOrNoButton(item: CatalogItem<T>) {
+    private fun <T : CatalogItem<T>> ItemButton(item: CatalogItem<T>) {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
@@ -129,7 +128,18 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> Icon(item: T, iconArgs: (T) -> IconArgs) {
+    private fun <T : CatalogItem<T>> ItemText(item: CatalogItem<T>) {
+        Row(modifier = Modifier.height(ICON_WIDTH).offset(y = (-1).dp)) {
+            Form.Text(value = item.name)
+            item.info?.let {
+                Spacer(Modifier.width(TEXT_SPACING))
+                Form.Text(value = "( $it )", alpha = 0.4f)
+            }
+        }
+    }
+
+    @Composable
+    private fun <T : CatalogItem<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }

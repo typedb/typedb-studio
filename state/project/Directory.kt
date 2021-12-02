@@ -32,7 +32,10 @@ import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
-class Directory(path: Path) : CatalogItem.Expandable<ProjectItem>, ProjectItem(path) {
+class Directory internal constructor(dirPath: Path, projectPath: Path) :
+    CatalogItem.Expandable<ProjectItem>, ProjectItem(dirPath, projectPath) {
+
+    internal constructor(path: Path) : this(path, path)
 
     override val isExpandable: Boolean = true
     override var isExpanded: Boolean by mutableStateOf(false); private set
@@ -66,8 +69,8 @@ class Directory(path: Path) : CatalogItem.Expandable<ProjectItem>, ProjectItem(p
         val dirList: MutableList<Directory> = mutableListOf()
         val fileList: MutableList<File> = mutableListOf()
         path.forEachDirectoryEntry { entry ->
-            if (entry.isDirectory()) dirList.add(Directory((entry)))
-            else if (entry.isRegularFile()) fileList.add(File(entry))
+            if (entry.isDirectory()) dirList.add(Directory(entry, projectPath))
+            else if (entry.isRegularFile()) fileList.add(File(entry, projectPath))
         }
         directories = dirList.sortedBy { it.name }
         files = fileList.sortedBy { it.name }

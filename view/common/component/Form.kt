@@ -134,13 +134,14 @@ object Form {
         value: String,
         style: TextStyle = Theme.typography.body1,
         color: Color = Theme.colors.onPrimary,
+        alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier
     ) {
         androidx.compose.material.Text(
             text = value,
             style = style,
-            color = color,
+            color = alpha?.let { color.copy(alpha = alpha) } ?: color,
             modifier = modifier,
             textAlign = align,
         )
