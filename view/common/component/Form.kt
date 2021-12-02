@@ -75,7 +75,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
-import com.vaticle.typedb.studio.view.common.state.FormState
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
@@ -98,6 +97,13 @@ object Form {
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
+    interface State {
+
+        fun isValid(): Boolean
+        fun trySubmit()
+        fun trySubmitIfValid()
+    }
+
     @Composable
     fun Field(label: String, fieldInput: @Composable () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -107,14 +113,14 @@ object Form {
     }
 
     @Composable
-    fun Submission(formState: FormState, content: @Composable() (ColumnScope.() -> Unit)) {
+    fun Submission(state: State, content: @Composable() (ColumnScope.() -> Unit)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier
                 .fillMaxSize()
                 .background(Theme.colors.background)
                 .padding(OUTER_SPACING)
-                .onKeyEvent { onKeyEvent(event = it, onEnter = { formState.trySubmitIfValid() }) }
+                .onKeyEvent { onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() }) }
         ) { content() }
     }
 

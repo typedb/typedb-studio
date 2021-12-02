@@ -35,6 +35,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Field
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
@@ -42,7 +43,6 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.state.FormState
 import javax.swing.JFileChooser
 
 
@@ -51,7 +51,7 @@ object ProjectDialog {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 140.dp
 
-    class ProjectFormState: FormState {
+    class ProjectFormState : Form.State {
 
         var directory: String? by mutableStateOf(State.project.current?.directory?.absolutePath?.toString())
 
@@ -80,7 +80,7 @@ object ProjectDialog {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Submission(formState = formState) {
+            Submission(state = formState) {
                 SelectDirectoryField(formState)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {

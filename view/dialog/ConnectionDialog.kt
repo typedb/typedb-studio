@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNE
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Checkbox
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
@@ -49,7 +50,6 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
-import com.vaticle.typedb.studio.view.common.state.FormState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ConnectionDialog {
@@ -57,7 +57,7 @@ object ConnectionDialog {
     private val WINDOW_WIDTH = 500.dp
     private val WINDOW_HEIGHT = 340.dp
 
-    private object ConnectionFormState : FormState {
+    private object ConnectionFormState : Form.State {
         // We keep this static to maintain the values through application lifetime,
         // and easily accessible to all functions in this object without being passed around
 
@@ -104,7 +104,7 @@ object ConnectionDialog {
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Submission(formState = ConnectionFormState) {
+            Submission(state = ConnectionFormState) {
                 ServerFormField()
                 AddressFormField()
                 if (ConnectionFormState.server == TYPEDB_CLUSTER) {
