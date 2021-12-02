@@ -19,17 +19,18 @@
 package com.vaticle.typedb.studio.view.navigator
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.Dp
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Icon
 
-object RolesNavigator {
+internal class RoleNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Navigator(areaState, initOpen) {
+
+    override val icon: Icon.Code = Icon.Code.USER_GROUP
+    override val label: String = Label.ROLES
+    override val buttons: List<ButtonArgs> = listOf()
 
     @Composable
-    fun Layout() {
-
-    }
-
-    @Composable
-    fun Buttons(height: Dp) {
+    override fun Catalog() {
 
     }
 }

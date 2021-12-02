@@ -21,12 +21,9 @@ package com.vaticle.typedb.studio.view.navigator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
@@ -38,30 +35,20 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object ProjectNavigator {
+internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Navigator(areaState, initOpen) {
+
+    override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
+    override val label: String = Label.PROJECT
+    override val buttons: List<ButtonArgs> = listOf(
+        ButtonArgs(Icon.Code.CHEVRONS_DOWN) { State.project.current?.expand() },
+        ButtonArgs(Icon.Code.CHEVRONS_UP) { State.project.current?.collapse() }
+    )
 
     @Composable
-    fun Layout() {
+    override fun Catalog() {
         if (State.project.current == null) OpenProjectHelper()
         else Catalog.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
-    }
-
-    @Composable
-    fun Buttons(size: Dp) {
-        Form.IconButton(
-            icon = Icon.Code.CHEVRONS_DOWN,
-            onClick = { State.project.current?.expand() },
-            bgColor = Color.Transparent,
-            modifier = Modifier.size(size),
-            enabled = State.project.current != null
-        )
-        Form.IconButton(
-            icon = Icon.Code.CHEVRONS_UP,
-            onClick = { State.project.current?.collapse() },
-            bgColor = Color.Transparent,
-            modifier = Modifier.size(size),
-            enabled = State.project.current != null
-        )
     }
 
     @Composable

@@ -22,7 +22,6 @@ import com.vaticle.typedb.studio.state.common.CatalogItem
 import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
-import kotlin.io.path.relativeTo
 
 sealed class ProjectItem(val path: Path, val projectPath: Path) : CatalogItem<ProjectItem> {
 

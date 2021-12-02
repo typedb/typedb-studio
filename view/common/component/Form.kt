@@ -55,6 +55,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -191,12 +192,14 @@ object Form {
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
         bgColor: Color = Theme.colors.primary,
+        rounded: Boolean = true,
         enabled: Boolean = true
     ) {
         BoxButton(
             onClick = onClick,
             color = bgColor,
             modifier = modifier.size(FIELD_HEIGHT),
+            rounded = rounded,
             enabled = enabled
         ) {
             Icon.Render(icon = icon, color = iconColor, enabled = enabled)
@@ -209,17 +212,22 @@ object Form {
         onClick: () -> Unit,
         color: Color = Theme.colors.primary,
         modifier: Modifier = Modifier,
+        rounded: Boolean = true,
         enabled: Boolean = true,
         content: @Composable BoxScope.() -> Unit
     ) {
+        val hoverIndication = when {
+            rounded -> roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
+            else -> Theme.rectangleIndication(Theme.colors.indicationBase)
+        }
         CompositionLocalProvider(
-            LocalIndication provides roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
+            LocalIndication provides hoverIndication
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .height(FIELD_HEIGHT)
-                    .background(fadeable(color, !enabled), ROUNDED_RECTANGLE)
+                    .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
                     .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     .clickable(enabled = enabled) { onClick() }
                     .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }

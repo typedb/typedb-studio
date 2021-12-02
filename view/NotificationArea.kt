@@ -82,9 +82,9 @@ object NotificationArea {
             IconButton(
                 icon = Icon.Code.XMARK,
                 onClick = { State.notification.dismiss(notification) },
+                modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
                 iconColor = colorConfig.foreground,
-                bgColor = Color.Transparent,
-                modifier = Modifier.size(MESSAGE_CLOSE_SIZE)
+                bgColor = Color.Transparent
             )
         }
     }

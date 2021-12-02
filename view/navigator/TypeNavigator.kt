@@ -19,17 +19,18 @@
 package com.vaticle.typedb.studio.view.navigator
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.Dp
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Icon
 
-object TypeNavigator {
+internal class TypeNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Navigator(areaState, initOpen) {
+
+    override val icon: Icon.Code = Icon.Code.SITEMAP
+    override val label: String = Label.TYPES
+    override val buttons: List<ButtonArgs> = listOf()
 
     @Composable
-    fun Layout() {
-
-    }
-
-    @Composable
-    fun Buttons(height: Dp) {
+    override fun Catalog() {
 
     }
 }

@@ -73,40 +73,40 @@ assemble_files = {
     "//:LICENSE": "LICENSE",
 }
 
-assemble_jvm_platform(
-    name = "assemble",
-    image_name = "TypeDB Studio",
-    image_filename = "typedb-studio-" + select({
-        "@vaticle_dependencies//util/platform:is_mac": "mac",
-        "@vaticle_dependencies//util/platform:is_linux": "linux",
-        "@vaticle_dependencies//util/platform:is_windows": "windows",
-        "//conditions:default": "mac",
-    }),
-    description = "TypeDB's Integrated Development Environment",
-    vendor = "Vaticle Ltd",
-    copyright = "Copyright (C) 2021 Vaticle",
-    license_file = ":LICENSE",
-    version_file = ":VERSION",
-    icon = select({
-        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
-        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
-        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
-        "//conditions:default": "mac",
-    }),
-    java_deps = ":assemble-deps",
-    java_deps_root = "lib/",
-    main_jar_path = "com-vaticle-typedb-typedb-studio-view-0.0.0.jar",
-    main_class = "com.vaticle.typedb.studio.view.Studio",
-    additional_files = assemble_files,
-    verbose = True,
-    linux_app_category = "database",
-    linux_menu_group = "Utility;Development;IDE;",
-    mac_app_id = "com.vaticle.typedb.studio",
-    mac_entitlements = "//config/mac:entitlements-mac-plist",
-    mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
-    mac_deep_sign_jars_regex = ".*(io-netty-netty|skiko-jvm-runtime).*",
-    windows_menu_group = "TypeDB Studio",
-)
+#assemble_jvm_platform(
+#    name = "assemble",
+#    image_name = "TypeDB Studio",
+#    image_filename = "typedb-studio-" + select({
+#        "@vaticle_dependencies//util/platform:is_mac": "mac",
+#        "@vaticle_dependencies//util/platform:is_linux": "linux",
+#        "@vaticle_dependencies//util/platform:is_windows": "windows",
+#        "//conditions:default": "mac",
+#    }),
+#    description = "TypeDB's Integrated Development Environment",
+#    vendor = "Vaticle Ltd",
+#    copyright = "Copyright (C) 2021 Vaticle",
+#    license_file = ":LICENSE",
+#    version_file = ":VERSION",
+#    icon = select({
+#        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
+#        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
+#        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+#        "//conditions:default": "mac",
+#    }),
+#    java_deps = ":assemble-deps",
+#    java_deps_root = "lib/",
+#    main_jar_path = "com-vaticle-typedb-typedb-studio-view-0.0.0.jar",
+#    main_class = "com.vaticle.typedb.studio.view.Studio",
+#    additional_files = assemble_files,
+#    verbose = True,
+#    linux_app_category = "database",
+#    linux_menu_group = "Utility;Development;IDE;",
+#    mac_app_id = "com.vaticle.typedb.studio",
+#    mac_entitlements = "//config/mac:entitlements-mac-plist",
+#    mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
+#    mac_deep_sign_jars_regex = ".*(io-netty-netty|skiko-jvm-runtime).*",
+#    windows_menu_group = "TypeDB Studio",
+#)
 
 # A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
 # if built on Mac, and fail to produce anything useful if built on Windows.
@@ -118,17 +118,17 @@ assemble_targz(
     visibility = ["//:__pkg__"],
 )
 
-deploy_github(
-    name = "deploy-github",
-    organisation = deployment_github['github.organisation'],
-    repository = deployment_github['github.repository'],
-    title = "TypeDB Studio",
-    title_append_version = True,
-    release_description = "//:RELEASE_TEMPLATE.md",
-    archive = ":assemble",
-    version_file = ":VERSION",
-    draft = False
-)
+#deploy_github(
+#    name = "deploy-github",
+#    organisation = deployment_github['github.organisation'],
+#    repository = deployment_github['github.repository'],
+#    title = "TypeDB Studio",
+#    title_append_version = True,
+#    release_description = "//:RELEASE_TEMPLATE.md",
+#    archive = ":assemble",
+#    version_file = ":VERSION",
+#    draft = False
+#)
 
 deploy_brew(
     name = "deploy-brew",

@@ -121,8 +121,8 @@ object Catalog {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
-            bgColor = Color.Transparent,
-            modifier = Modifier.size(ICON_WIDTH)
+            modifier = Modifier.size(ICON_WIDTH),
+            bgColor = Color.Transparent
         )
         else Spacer(Modifier.size(ICON_WIDTH))
     }
