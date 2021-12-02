@@ -54,9 +54,7 @@ class Project internal constructor(path: Path, private val notificationMgr: Noti
             try {
                 while (true) {
                     val watchKey = async(Dispatchers.IO) { watcher.take() }.await()
-                    for (event in watchKey.pollEvents()) {
-                        println() // TODO
-                    }
+                    directory.reloadEntries()
                     watchKey.reset()
                 }
             } catch (e: Exception) {

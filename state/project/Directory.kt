@@ -31,6 +31,7 @@ import java.nio.file.WatchService
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 
 class Directory internal constructor(dirPath: Path, projectPath: Path) :
     CatalogItem.Expandable<ProjectItem>, ProjectItem(dirPath, projectPath) {
@@ -43,12 +44,16 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 
-    var directories: List<Directory> by mutableStateOf(emptyList())
-    var files: List<File> by mutableStateOf(emptyList())
+//    var directories: List<Directory> by mutableStateOf(emptyList())
+//    var files: List<File> by mutableStateOf(emptyList())
+
+    init {
+//        if (isExpanded) reloadEntries()
+    }
 
     override fun toggle() {
         isExpanded = !isExpanded
-        if (isExpanded) loadEntries()
+        if (isExpanded) reloadEntries()
     }
 
     override fun asDirectory(): Directory {
@@ -59,21 +64,33 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
         throw TypeCastException("Invalid casting of Directory to File") // TODO: generalise
     }
 
-    fun watchService(): WatchService {
+    internal fun watchService(): WatchService {
         val watchService = FileSystems.getDefault().newWatchService()
         path.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
         return watchService
     }
 
-    fun loadEntries() {
-        val dirList: MutableList<Directory> = mutableListOf()
-        val fileList: MutableList<File> = mutableListOf()
-        path.forEachDirectoryEntry { entry ->
-            if (entry.isDirectory()) dirList.add(Directory(entry, projectPath))
-            else if (entry.isRegularFile()) fileList.add(File(entry, projectPath))
-        }
-        directories = dirList.sortedBy { it.name }
-        files = fileList.sortedBy { it.name }
-        entries = directories + files
+    internal fun reloadEntries() {
+        val newPaths = path.listDirectoryEntries()
+        val updatedDirs = updatedDirs(newPaths.filter { it.isDirectory() }.toSet())
+        val updatedFiles = updatedFiles(newPaths.filter { it.isRegularFile() }.toSet())
+        entries = updatedDirs.sortedBy { it.name } + updatedFiles.sortedBy { it.name }
+        entries.filterIsInstance<Directory>().filter { it.isExpanded }.forEach { it.reloadEntries() }
+    }
+
+    private fun updatedDirs(new: Set<Path>): List<Directory> {
+        val old = entries.filter { it.isDirectory }.map { it.path }.toSet()
+        val deleted = old - new
+        val added = new - old
+        return entries.filterIsInstance<Directory>().filter { !(deleted).contains(it.path) } +
+                (added).map { Directory(it, projectPath) }
+    }
+
+    private fun updatedFiles(new: Set<Path>): List<File> {
+        val old = entries.filter { it.isFile }.map { it.path }.toSet()
+        val deleted = old - new
+        val added = new - old
+        return entries.filterIsInstance<File>().filter { !(deleted).contains(it.path) } +
+                (added).map { File(it, projectPath) }
     }
 }

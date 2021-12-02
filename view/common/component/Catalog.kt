@@ -128,6 +128,13 @@ object Catalog {
     }
 
     @Composable
+    private fun <T : CatalogItem<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
+            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
+        }
+    }
+
+    @Composable
     private fun <T : CatalogItem<T>> ItemText(item: CatalogItem<T>) {
         Row(modifier = Modifier.height(ICON_WIDTH).offset(y = (-1).dp)) {
             Form.Text(value = item.name)
@@ -135,13 +142,6 @@ object Catalog {
                 Spacer(Modifier.width(TEXT_SPACING))
                 Form.Text(value = "( $it )", alpha = 0.4f)
             }
-        }
-    }
-
-    @Composable
-    private fun <T : CatalogItem<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }
     }
 }
