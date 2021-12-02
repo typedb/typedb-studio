@@ -44,7 +44,7 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
 
     var current: Connection? by mutableStateOf(null)
     var status: Status by mutableStateOf(Status.DISCONNECTED)
-    var showWindow: Boolean by mutableStateOf(false)
+    var showDialog: Boolean by mutableStateOf(false)
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 

@@ -115,8 +115,8 @@ object Studio {
                 StatusBar.Layout()
             }
             NotificationArea.Layout()
-            if (State.connection.showWindow) ConnectionDialog.Layout()
-            if (State.project.showWindow) ProjectDialog.Layout()
+            if (State.connection.showDialog) ConnectionDialog.Layout()
+            if (State.project.showDialog) ProjectDialog.Layout()
         }
     }
 

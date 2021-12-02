@@ -39,10 +39,10 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     }
 
     var current: Project? by mutableStateOf(null)
-    var showWindow: Boolean by mutableStateOf(false)
+    var showDialog: Boolean by mutableStateOf(false)
 
-    fun toggleWindow() {
-        showWindow = !showWindow
+    fun toggleDialog() {
+        showDialog = !showDialog
     }
 
     fun tryOpenDirectory(newDir: String) {
@@ -53,7 +53,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         else {
             current?.close()
             current = Project(path, notificationMgr)
-            showWindow = false
+            showDialog = false
         }
     }
 }

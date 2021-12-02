@@ -19,11 +19,17 @@
 package com.vaticle.typedb.studio.view.navigator
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
 
 object TypeNavigator {
 
     @Composable
     fun Layout() {
+
+    }
+
+    @Composable
+    fun Buttons(height: Dp) {
 
     }
 }

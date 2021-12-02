@@ -201,12 +201,24 @@ object NavigatorArea {
             PanelBarSpace()
             Text(value = navigator.label)
             Spacer(Modifier.weight(1f))
+            NavigatorButtons(navigator)
             IconButton(
                 icon = Icon.Code.XMARK,
                 onClick = { navigator.toggle() },
                 bgColor = Color.Transparent,
                 modifier = Modifier.size(PANEL_BAR_HEIGHT)
             )
+        }
+    }
+
+    @Composable
+    private fun NavigatorButtons(navigator: NavigatorState) {
+        when (navigator.type) {
+            PROJECT -> ProjectNavigator.Buttons(PANEL_BAR_HEIGHT)
+            TYPES -> TypeNavigator.Buttons(PANEL_BAR_HEIGHT)
+            RULES -> RuleNavigator.Buttons(PANEL_BAR_HEIGHT)
+            USERS -> UserNavigator.Buttons(PANEL_BAR_HEIGHT)
+            ROLES -> RolesNavigator.Buttons(PANEL_BAR_HEIGHT)
         }
     }
 

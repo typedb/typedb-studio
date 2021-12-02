@@ -54,7 +54,7 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { State.project.toggleWindow() })
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { State.project.toggleDialog() })
             ToolbarSpace()
             ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
             ToolbarSpace()
@@ -108,7 +108,7 @@ object Toolbar {
         TextButton(
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
-            onClick = { State.connection.showWindow = true },
+            onClick = { State.connection.showDialog = true },
             trailingIcon = Icon.Code.DATABASE,
         )
     }

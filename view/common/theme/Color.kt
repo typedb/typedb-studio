@@ -100,7 +100,9 @@ object Color {
     private const val FADED_OPACITY = 0.4f
 
     fun fadeable(color: Color, faded: Boolean): Color {
-        return if (faded) color.copy(alpha = FADED_OPACITY) else color
+        return if (color == Color.Transparent) color
+        else if (faded) color.copy(alpha = FADED_OPACITY)
+        else color
     }
 
     @Composable

@@ -28,7 +28,6 @@ import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
 import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 import java.nio.file.WatchService
-import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -44,15 +43,12 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 
-//    var directories: List<Directory> by mutableStateOf(emptyList())
-//    var files: List<File> by mutableStateOf(emptyList())
-
-    init {
-//        if (isExpanded) reloadEntries()
+    override fun toggle() {
+        toggle(!isExpanded)
     }
 
-    override fun toggle() {
-        isExpanded = !isExpanded
+    internal fun toggle(isExpanded: Boolean) {
+        this.isExpanded = isExpanded
         if (isExpanded) reloadEntries()
     }
 
@@ -62,6 +58,14 @@ class Directory internal constructor(dirPath: Path, projectPath: Path) :
 
     override fun asFile(): File {
         throw TypeCastException("Invalid casting of Directory to File") // TODO: generalise
+    }
+
+    fun toggleRecursively(isExpanded: Boolean) {
+        toggle(isExpanded)
+        entries.filterIsInstance<Directory>().forEach {
+            it.toggle(isExpanded)
+            it.toggleRecursively(isExpanded)
+        }
     }
 
     internal fun watchService(): WatchService {

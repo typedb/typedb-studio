@@ -21,9 +21,12 @@ package com.vaticle.typedb.studio.view.navigator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
@@ -44,6 +47,24 @@ object ProjectNavigator {
     }
 
     @Composable
+    fun Buttons(size: Dp) {
+        Form.IconButton(
+            icon = Icon.Code.CHEVRONS_DOWN,
+            onClick = { State.project.current?.expand() },
+            bgColor = Color.Transparent,
+            modifier = Modifier.size(size),
+            enabled = State.project.current != null
+        )
+        Form.IconButton(
+            icon = Icon.Code.CHEVRONS_UP,
+            onClick = { State.project.current?.collapse() },
+            bgColor = Color.Transparent,
+            modifier = Modifier.size(size),
+            enabled = State.project.current != null
+        )
+    }
+
+    @Composable
     private fun OpenProjectHelper() {
         Box(
             contentAlignment = Alignment.Center,
@@ -51,7 +72,7 @@ object ProjectNavigator {
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                onClick = { State.project.showWindow = true },
+                onClick = { State.project.showDialog = true },
                 leadingIcon = Icon.Code.FOLDER_OPEN
             )
         }

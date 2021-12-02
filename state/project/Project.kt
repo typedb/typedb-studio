@@ -25,6 +25,7 @@ import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.nio.file.WatchService
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -43,9 +44,16 @@ class Project internal constructor(path: Path, private val notificationMgr: Noti
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
-        assert(!directory.isExpanded)
-        directory.toggle()
+        directory.toggle(true)
         initDirectoryWatcher(directory)
+    }
+
+    fun expand() {
+        directory.toggleRecursively(true)
+    }
+
+    fun collapse() {
+        directory.toggleRecursively(false)
     }
 
     private fun initDirectoryWatcher(directory: Directory) {
@@ -57,8 +65,9 @@ class Project internal constructor(path: Path, private val notificationMgr: Noti
                     directory.reloadEntries()
                     watchKey.reset()
                 }
+            } catch (e: CancellationException) {
             } catch (e: Exception) {
-                notificationMgr.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
+                notificationMgr.systemError(Error.fromSystem(e, Message.Project.UNEXPECTED_ERROR), LOGGER)
             }
         }
     }

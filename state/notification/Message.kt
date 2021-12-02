@@ -60,14 +60,16 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val CODE_PREFIX = "PRJ"
             private const val MESSAGE_PREFIX = "TypeDB Project Error"
 
+            val UNEXPECTED_ERROR =
+                Project(1, "Unexpected error occurred with the project directory file system.")
             val PATH_NOT_EXIST =
-                Project(1, "Project path '%s' does not exist.")
+                Project(2, "Project path '%s' does not exist.")
             val PATH_NOT_READABLE =
-                Project(2, "Project path '%s' is not readable.")
+                Project(3, "Project path '%s' is not readable.")
             val PATH_NOT_DIRECTORY =
-                Project(3, "Project path '%s' is not a directory.")
+                Project(4, "Project path '%s' is not a directory.")
             val PROJECT_CLOSED =
-                Project(4, "Project path '%s' has been closed.")
+                Project(5, "Project path '%s' has been closed.")
         }
     }
 }

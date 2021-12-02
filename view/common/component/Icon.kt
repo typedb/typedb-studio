@@ -49,8 +49,10 @@ object Icon {
         // The icon names in Font Awesome would be the kebab-case version of our names below
         CARET_DOWN(0xf0d7u),
         CARET_RIGHT(0xf0dau),
-        CHEVRON_RIGHT(0xf054u),
         CHEVRON_DOWN(0xf078u),
+        CHEVRON_RIGHT(0xf054u),
+        CHEVRONS_DOWN(0xf322u),
+        CHEVRONS_UP(0xf325u),
         DATABASE(0xf1c0u),
         DIAGRAM_PROJECT(0xf542u),
         FILE_LINES(0xf15cu),
