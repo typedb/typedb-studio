@@ -102,7 +102,7 @@ object Catalog {
                         .clickable { }
                 ) {
                     if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                    ItemButton(item)
+                    ItemButton(item, itemHeight)
                     ItemIcon(item, iconArgs)
                     Spacer(Modifier.width(TEXT_SPACING))
                     ItemText(item)
@@ -117,14 +117,15 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> ItemButton(item: CatalogItem<T>) {
+    private fun <T : CatalogItem<T>> ItemButton(item: T, size: Dp) {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
-            modifier = Modifier.size(ICON_WIDTH),
-            bgColor = Color.Transparent
+            modifier = Modifier.size(size),
+            bgColor = Color.Transparent,
+            rounded = false
         )
-        else Spacer(Modifier.size(ICON_WIDTH))
+        else Spacer(Modifier.size(size))
     }
 
     @Composable
@@ -136,7 +137,7 @@ object Catalog {
 
     @Composable
     private fun <T : CatalogItem<T>> ItemText(item: CatalogItem<T>) {
-        Row(modifier = Modifier.height(ICON_WIDTH).offset(y = (-1).dp)) {
+        Row(modifier = Modifier.height(ICON_WIDTH)) {
             Form.Text(value = item.name)
             item.info?.let {
                 Spacer(Modifier.width(TEXT_SPACING))
