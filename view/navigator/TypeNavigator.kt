@@ -25,8 +25,9 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 internal class TypeNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
     Navigator(areaState, initOpen) {
 
-    override val icon: Icon.Code = Icon.Code.SITEMAP
     override val label: String = Label.TYPES
+    override val icon: Icon.Code = Icon.Code.SITEMAP
+    override val isActive: Boolean get() = false // TODO
     override val buttons: List<ButtonArgs> = listOf()
 
     @Composable

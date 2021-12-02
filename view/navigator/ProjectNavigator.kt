@@ -38,8 +38,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
     Navigator(areaState, initOpen) {
 
-    override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
     override val label: String = Label.PROJECT
+    override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
+    override val isActive: Boolean get() = State.project.current != null
     override val buttons: List<ButtonArgs> = listOf(
         ButtonArgs(Icon.Code.CHEVRONS_DOWN) { State.project.current?.expand() },
         ButtonArgs(Icon.Code.CHEVRONS_UP) { State.project.current?.collapse() }
@@ -47,7 +48,7 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
 
     @Composable
     override fun Catalog() {
-        if (State.project.current == null) OpenProjectHelper()
+        if (!isActive) OpenProjectHelper()
         else Catalog.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
     }
 

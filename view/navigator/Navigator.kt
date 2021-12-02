@@ -51,8 +51,9 @@ sealed class Navigator(private val areaState: NavigatorArea.AreaState, initOpen:
 
     data class ButtonArgs(val icon: Icon.Code, val onClick: () -> Unit)
 
-    internal abstract val icon: Icon.Code
     internal abstract val label: String
+    internal abstract val icon: Icon.Code
+    internal abstract val isActive: Boolean
     internal abstract val buttons: List<ButtonArgs>
 
     internal var isOpen: Boolean by mutableStateOf(initOpen)
@@ -100,6 +101,7 @@ sealed class Navigator(private val areaState: NavigatorArea.AreaState, initOpen:
                 modifier = Modifier.size(BAR_HEIGHT),
                 bgColor = Color.Transparent,
                 rounded = false,
+                enabled = isActive
             )
         }
     }
