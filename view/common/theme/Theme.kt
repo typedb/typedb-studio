@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.common.theme
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.IndicationInstance
 import androidx.compose.foundation.LocalIndication
@@ -44,13 +45,15 @@ import kotlin.math.roundToInt
 
 object Theme {
 
-    const val ROUNDED_CORNER_RADIUS = 4f
+    private const val ROUNDED_CORNER_RADIUS = 4f
+    private const val SELECTION_ALPHA = 0.7f
+    private const val INDICATION_PRESSED_ALPHA = 0.25f
+    const val INDICATION_HOVER_ALPHA = 0.1f
     val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
-    private const val DEFAULT_SELECTION_TRANSPARENCY = 0.7f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
-    @OptIn(ExperimentalMaterialApi::class)
+    @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
     private val MaterialThemeOverrides
         @Composable
         @ReadOnlyComposable
@@ -58,7 +61,7 @@ object Theme {
             LocalMinimumTouchTargetEnforcement provides false,
             LocalIndication provides rectangleIndication(color = colors.indicationBase),
             LocalTextSelectionColors provides TextSelectionColors(
-                backgroundColor = colors.tertiary.copy(alpha = DEFAULT_SELECTION_TRANSPARENCY),
+                backgroundColor = colors.tertiary.copy(alpha = SELECTION_ALPHA),
                 handleColor = colors.tertiary
             )
         )
@@ -94,10 +97,10 @@ object Theme {
     fun roundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
             if (isHovered.value || isFocused.value) drawRoundRect(
-                color = color.copy(0.1f), size = size, cornerRadius = roundedCornerRadius(density)
+                color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
             )
             else if (isPressed.value) drawRoundRect(
-                color = color.copy(0.25f), size = size, cornerRadius = roundedCornerRadius(density)
+                color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
             )
         }
     }

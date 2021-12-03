@@ -88,12 +88,13 @@ sealed class Navigator(private val areaState: NavigatorArea.AreaState, initOpen:
             Spacer(Modifier.width(BAR_SPACING))
             Form.Text(value = label)
             Spacer(Modifier.weight(1f))
-            Buttons(buttons + ButtonArgs(Icon.Code.XMARK) { toggle() })
+            Buttons(*buttons.toTypedArray(), isActive = isActive)
+            Buttons(ButtonArgs(Icon.Code.XMARK) { toggle() }, isActive = true)
         }
     }
 
     @Composable
-    private fun Buttons(buttons: List<ButtonArgs>) {
+    private fun Buttons(vararg buttons: ButtonArgs, isActive: Boolean) {
         buttons.forEach {
             Form.IconButton(
                 icon = it.icon,

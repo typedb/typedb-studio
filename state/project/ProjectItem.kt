@@ -40,4 +40,12 @@ sealed class ProjectItem(val path: Path) : CatalogItem<ProjectItem> {
     override fun asExpandable(): CatalogItem.Expandable<ProjectItem> {
         return asDirectory()
     }
+
+    override fun select() {
+        // TODO
+    }
+
+    fun delete() {
+        // TODO
+    }
 }

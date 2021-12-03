@@ -18,7 +18,8 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +27,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -65,7 +65,12 @@ object Catalog {
     }
 
     @Composable
-    fun <T : CatalogItem<T>> Layout(items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT) {
+    fun <T : CatalogItem<T>> Layout(
+        items: List<T>,
+        iconArgs: (T) -> IconArgs,
+        itemHeight: Dp = ITEM_HEIGHT,
+        contextMenuItems: ((T) -> List<ContextMenu.Item>)? = null
+    ) {
         val density = LocalDensity.current.density
         val state = remember { CatalogState() }
         Box(
@@ -73,17 +78,18 @@ object Catalog {
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalog(0, items, iconArgs, itemHeight, state) }
+        ) { NestedCatalog(0, items, iconArgs, itemHeight, contextMenuItems, state) }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
+    @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : CatalogItem<T>> NestedCatalog(
         depth: Int,
         items: List<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp,
-        state: CatalogState,
+        contextMenuItems: ((T) -> List<ContextMenu.Item>)?,
+        state: CatalogState
     ) {
         val density = LocalDensity.current.density
 
@@ -94,23 +100,26 @@ object Catalog {
 
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
-                        .pointerHoverIcon(PointerIconDefaults.Hand)
-                        .onSizeChanged { increaseToAtLeast(it.width) }
-                        .clickable { }
-                ) {
-                    if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                    ItemButton(item, itemHeight)
-                    ItemIcon(item, iconArgs)
-                    Spacer(Modifier.width(TEXT_SPACING))
-                    ItemText(item)
-                    Spacer(modifier = Modifier.width(AREA_PADDING))
-                    Spacer(modifier = Modifier.weight(1f))
+                val menuItems = contextMenuItems?.let { it(item) }
+                ContextMenu.Area(items = menuItems, enabled = !menuItems.isNullOrEmpty()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
+                            .pointerHoverIcon(PointerIconDefaults.Hand)
+                            .onSizeChanged { increaseToAtLeast(it.width) }
+                            .combinedClickable(onClick = { item.select() }, onDoubleClick = { item.open() })
+                    ) {
+                        if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+                        ItemButton(item, itemHeight)
+                        ItemIcon(item, iconArgs)
+                        Spacer(Modifier.width(TEXT_SPACING))
+                        ItemText(item)
+                        Spacer(modifier = Modifier.width(AREA_PADDING))
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedCatalog(depth + 1, item.asExpandable().entries, iconArgs, itemHeight, state)
+                    NestedCatalog(depth + 1, item.asExpandable().entries, iconArgs, itemHeight, contextMenuItems, state)
                 }
             }
         }

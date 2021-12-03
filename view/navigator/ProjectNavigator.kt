@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.navigator
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,7 @@ import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Catalog
 import com.vaticle.typedb.studio.view.common.component.Catalog.IconArgs
+import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -49,7 +51,11 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
     @Composable
     override fun Catalog() {
         if (!isActive) OpenProjectHelper()
-        else Catalog.Layout(items = listOf(State.project.current!!.directory), iconArgs = { projectItemIcon(it) })
+        else Catalog.Layout(
+            items = listOf(State.project.current!!.directory),
+            iconArgs = { projectItemIcon(it) },
+            contextMenuItems = { contextMenuItems(it) }
+        )
     }
 
     @Composable
@@ -80,5 +86,31 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
                 else -> IconArgs(Icon.Code.FILE_LINES)
             }
         }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun contextMenuItems(item: ProjectItem): List<ContextMenu.Item> {
+        return when (item) {
+            is Directory -> directoryContextMenuItems(item)
+            is File -> fileContextMenuItems(item)
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun directoryContextMenuItems(directory: Directory): List<ContextMenu.Item> {
+        return listOf(
+            ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { directory.toggle() },
+            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {  }, // TODO
+            ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { directory.delete() }
+        )
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun fileContextMenuItems(file: File): List<ContextMenu.Item> {
+        return listOf(
+            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { file.open() },
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { file.delete() }
+        )
     }
 }

@@ -23,6 +23,8 @@ interface CatalogItem<T : CatalogItem<T>> {
     val name: String
     val info: String?
     val isExpandable: Boolean
+    fun select()
+    fun open()
     fun asExpandable(): Expandable<T>
 
     interface Expandable<T : CatalogItem<T>> : CatalogItem<T> {

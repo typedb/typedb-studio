@@ -32,6 +32,10 @@ class File(path: Path) : CatalogItem<ProjectItem>, ProjectItem(path) {
     val type: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
 
+    override fun open() {
+        // TODO
+    }
+
     override fun asDirectory(): Directory {
         throw TypeCastException("Invalid casting of File to Directory") // TODO: generalise
     }

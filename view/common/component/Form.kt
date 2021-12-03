@@ -90,10 +90,10 @@ object Form {
     private val INNER_SPACING = 10.dp
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
-    private val BORDER_WIDTH = 1.dp
     private val CONTENT_PADDING = 8.dp
     private val ICON_SPACING = 4.dp
     private val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
+    internal val BORDER_WIDTH = 1.dp
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
