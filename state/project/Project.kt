@@ -56,7 +56,7 @@ class Project internal constructor(val path: Path, val notificationMgr: Notifica
     }
 
     override fun select(item: ProjectItem) {
-        // TODO
+        println("Selected: ${item.path}") // TODO
     }
 
     override fun selectNext() {

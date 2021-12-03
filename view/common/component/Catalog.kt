@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,8 +40,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -108,7 +113,15 @@ object Catalog {
                         modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
                             .pointerHoverIcon(PointerIconDefaults.Hand)
                             .onSizeChanged { increaseToAtLeast(it.width) }
-                            .combinedClickable(onClick = { catalog.select(item) }, onDoubleClick = { item.open() })
+                            .onPointerEvent(PointerEventType.Press) {
+                                when (it.awtEvent.clickCount) {
+                                    1 -> if (it.buttons.isPrimaryPressed || it.buttons.isSecondaryPressed) {
+                                        catalog.select(item)
+                                    }
+                                    2 -> if (it.buttons.isPrimaryPressed) item.open()
+                                }
+                            }
+                            .clickable {  } // Keep this to enable mouse hovering behaviour
                     ) {
                         if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
                         ItemButton(item, itemHeight)

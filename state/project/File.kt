@@ -33,7 +33,7 @@ class File(path: Path) : Catalog.Item<ProjectItem>, ProjectItem(path) {
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
 
     override fun open() {
-        // TODO
+        println("Opened File: $path") // TODO
     }
 
     override fun asDirectory(): Directory {

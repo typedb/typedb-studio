@@ -41,7 +41,7 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
     override val isFile: Boolean = false
 
     override fun open() {
-        expandAndReloadEntries()
+        toggle()
     }
 
     override fun toggle() {
