@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
@@ -35,20 +36,35 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class Project internal constructor(val path: Path, val notificationMgr: NotificationManager) {
+class Project internal constructor(val path: Path, val notificationMgr: NotificationManager) : Catalog<ProjectItem> {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
         private const val MAX_ITEM_EXPANDED = 256
     }
 
+    override val items: List<ProjectItem> get() = listOf(directory)
+
     val directory: Directory = Directory(path)
     val name: String get() = directory.name
+
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
         directory.expandAndReloadEntries()
         initDirectoryWatcher(directory)
+    }
+
+    override fun select(item: ProjectItem) {
+        // TODO
+    }
+
+    override fun selectNext() {
+        // TODO
+    }
+
+    override fun selectPrevious() {
+        // TODO
     }
 
     fun expand() {

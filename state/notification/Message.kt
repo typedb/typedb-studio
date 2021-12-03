@@ -71,7 +71,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val PROJECT_CLOSED =
                 Project(5, "Project path '%s' has been closed.")
             val MAX_DIR_EXPANDED_REACHED =
-                Project(6, "Project path '%s' reached the recommended maximum number of expanded file/directory (%s). We recommend opening a slightly smaller directory for better performance.")
+                Project(
+                    6,
+                    "Project path '%s' reached the recommended maximum number of expanded file/directory (%s). We recommend opening a slightly smaller directory for better performance."
+                )
         }
     }
 }

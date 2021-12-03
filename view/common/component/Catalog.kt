@@ -47,7 +47,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.CatalogItem
+import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
@@ -65,8 +65,8 @@ object Catalog {
     }
 
     @Composable
-    fun <T : CatalogItem<T>> Layout(
-        items: List<T>,
+    fun <T : Catalog.Item<T>> Layout(
+        catalog: Catalog<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp = ITEM_HEIGHT,
         contextMenuItems: ((T) -> List<ContextMenu.Item>)? = null
@@ -78,13 +78,14 @@ object Catalog {
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalog(0, items, iconArgs, itemHeight, contextMenuItems, state) }
+        ) { NestedCatalog(0, catalog, catalog.items, iconArgs, itemHeight, contextMenuItems, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun <T : CatalogItem<T>> NestedCatalog(
+    private fun <T : Catalog.Item<T>> NestedCatalog(
         depth: Int,
+        catalog: Catalog<T>,
         items: List<T>,
         iconArgs: (T) -> IconArgs,
         itemHeight: Dp,
@@ -107,7 +108,7 @@ object Catalog {
                         modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
                             .pointerHoverIcon(PointerIconDefaults.Hand)
                             .onSizeChanged { increaseToAtLeast(it.width) }
-                            .combinedClickable(onClick = { item.select() }, onDoubleClick = { item.open() })
+                            .combinedClickable(onClick = { catalog.select(item) }, onDoubleClick = { item.open() })
                     ) {
                         if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
                         ItemButton(item, itemHeight)
@@ -119,14 +120,22 @@ object Catalog {
                     }
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedCatalog(depth + 1, item.asExpandable().entries, iconArgs, itemHeight, contextMenuItems, state)
+                    NestedCatalog(
+                        depth = depth + 1,
+                        catalog = catalog,
+                        items = item.asExpandable().entries,
+                        iconArgs = iconArgs,
+                        itemHeight = itemHeight,
+                        contextMenuItems = contextMenuItems,
+                        state = state
+                    )
                 }
             }
         }
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> ItemButton(item: T, size: Dp) {
+    private fun <T : Catalog.Item<T>> ItemButton(item: T, size: Dp) {
         if (item.isExpandable) Form.IconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
@@ -138,14 +147,14 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
+    private fun <T : Catalog.Item<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }
     }
 
     @Composable
-    private fun <T : CatalogItem<T>> ItemText(item: CatalogItem<T>) {
+    private fun <T : Catalog.Item<T>> ItemText(item: Catalog.Item<T>) {
         Row(modifier = Modifier.height(ICON_WIDTH)) {
             Form.Text(value = item.name)
             item.info?.let {

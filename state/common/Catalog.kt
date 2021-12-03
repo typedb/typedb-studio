@@ -18,19 +18,28 @@
 
 package com.vaticle.typedb.studio.state.common
 
-interface CatalogItem<T : CatalogItem<T>> {
+interface Catalog<T : Catalog.Item<T>> {
 
-    val name: String
-    val info: String?
-    val isExpandable: Boolean
-    fun select()
-    fun open()
-    fun asExpandable(): Expandable<T>
+    val items: List<T>
 
-    interface Expandable<T : CatalogItem<T>> : CatalogItem<T> {
+    fun select(item: T)
+    fun selectNext()
+    fun selectPrevious()
 
-        val isExpanded: Boolean
-        val entries: List<T>
-        fun toggle()
+    interface Item<U : Item<U>> {
+
+        val name: String
+        val info: String?
+        val isExpandable: Boolean
+
+        fun open()
+        fun asExpandable(): Expandable<U>
+
+        interface Expandable<V : Item<V>> : Item<V> {
+
+            val isExpanded: Boolean
+            val entries: List<V>
+            fun toggle()
+        }
     }
 }

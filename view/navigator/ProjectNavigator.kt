@@ -52,7 +52,7 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
     override fun Catalog() {
         if (!isActive) OpenProjectHelper()
         else Catalog.Layout(
-            items = listOf(State.project.current!!.directory),
+            catalog = State.project.current!!,
             iconArgs = { projectItemIcon(it) },
             contextMenuItems = { contextMenuItems(it) }
         )
@@ -100,7 +100,7 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
     private fun directoryContextMenuItems(directory: Directory): List<ContextMenu.Item> {
         return listOf(
             ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { directory.toggle() },
-            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {  }, // TODO
+            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
             ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { directory.delete() }
         )
