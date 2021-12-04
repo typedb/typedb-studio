@@ -42,6 +42,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.isPrimaryPressed
@@ -113,14 +114,7 @@ object Catalog {
                         modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
                             .pointerHoverIcon(PointerIconDefaults.Hand)
                             .onSizeChanged { increaseToAtLeast(it.width) }
-                            .onPointerEvent(PointerEventType.Press) {
-                                when (it.awtEvent.clickCount) {
-                                    1 -> if (it.buttons.isPrimaryPressed || it.buttons.isSecondaryPressed) {
-                                        catalog.select(item)
-                                    }
-                                    2 -> if (it.buttons.isPrimaryPressed) item.open()
-                                }
-                            }
+                            .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, catalog, item) }
                             .clickable {  } // Keep this to enable mouse hovering behaviour
                     ) {
                         if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
@@ -144,6 +138,16 @@ object Catalog {
                     )
                 }
             }
+        }
+    }
+
+    private fun <T : Catalog.Item<T>> onPointerEvent(event: PointerEvent, catalog: Catalog<T>, item: T) {
+        when {
+            event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
+                1 -> catalog.select(item)
+                2 -> item.open()
+            }
+            event.buttons.isSecondaryPressed -> catalog.select(item)
         }
     }
 
