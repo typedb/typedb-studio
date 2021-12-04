@@ -24,9 +24,10 @@ import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
 import java.nio.file.WatchService
-import java.util.*
+import java.util.LinkedList
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +37,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class Project internal constructor(val path: Path, val notificationMgr: NotificationManager) : Catalog<ProjectItem> {
+class Project internal constructor(val path: Path, val pageMgr: PageManager, val notificationMgr: NotificationManager) :
+    Catalog<ProjectItem> {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -53,6 +55,13 @@ class Project internal constructor(val path: Path, val notificationMgr: Notifica
     init {
         directory.expandAndReloadEntries()
         initDirectoryWatcher(directory)
+    }
+
+    override fun open(item: ProjectItem) {
+        when (item) {
+            is Directory -> item.toggle()
+            is File -> pageMgr.open(item)
+        }
     }
 
     override fun select(item: ProjectItem) {

@@ -115,7 +115,7 @@ object Catalog {
                             .pointerHoverIcon(PointerIconDefaults.Hand)
                             .onSizeChanged { increaseToAtLeast(it.width) }
                             .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, catalog, item) }
-                            .clickable {  } // Keep this to enable mouse hovering behaviour
+                            .clickable { } // Keep this to enable mouse hovering behaviour
                     ) {
                         if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
                         ItemButton(item, itemHeight)
@@ -145,7 +145,7 @@ object Catalog {
         when {
             event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
                 1 -> catalog.select(item)
-                2 -> item.open()
+                2 -> catalog.open(item)
             }
             event.buttons.isSecondaryPressed -> catalog.select(item)
         }

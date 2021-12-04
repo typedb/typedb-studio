@@ -16,30 +16,14 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.page
 
-interface Catalog<T : Catalog.Item<T>> {
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 
-    val items: List<T>
+class PageManager(val notification: NotificationManager) {
 
-    fun open(item: T)
-    fun select(item: T)
-    fun selectNext()
-    fun selectPrevious()
-
-    interface Item<U : Item<U>> {
-
-        val name: String
-        val info: String?
-        val isExpandable: Boolean
-
-        fun asExpandable(): Expandable<U>
-
-        interface Expandable<V : Item<V>> : Item<V> {
-
-            val isExpanded: Boolean
-            val entries: List<V>
-            fun toggle()
-        }
+    fun open(page: Page) {
+        // TODO
+        println(page)
     }
 }

@@ -20,10 +20,11 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.page.Page
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-class File(path: Path) : Catalog.Item<ProjectItem>, ProjectItem(path) {
+class File(path: Path) : Catalog.Item<ProjectItem>, ProjectItem(path), Page {
 
     override val isExpandable: Boolean = false
     override val isDirectory: Boolean = false
@@ -32,15 +33,15 @@ class File(path: Path) : Catalog.Item<ProjectItem>, ProjectItem(path) {
     val type: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
 
-    override fun open() {
-        println("Opened File: $path") // TODO
-    }
-
     override fun asDirectory(): Directory {
         throw TypeCastException("Invalid casting of File to Directory") // TODO: generalise
     }
 
     override fun asFile(): File {
         return this
+    }
+
+    override fun toString(): String {
+        return path.toString()
     }
 }

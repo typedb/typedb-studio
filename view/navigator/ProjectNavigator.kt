@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.Project
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Catalog
@@ -54,7 +55,7 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
         else Catalog.Layout(
             catalog = State.project.current!!,
             iconArgs = { projectItemIcon(it) },
-            contextMenuItems = { contextMenuItems(it) }
+            contextMenuItems = { contextMenuItems(State.project.current!!, it) }
         )
     }
 
@@ -89,15 +90,15 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun contextMenuItems(item: ProjectItem): List<ContextMenu.Item> {
+    private fun contextMenuItems(project: Project, item: ProjectItem): List<ContextMenu.Item> {
         return when (item) {
-            is Directory -> directoryContextMenuItems(item)
-            is File -> fileContextMenuItems(item)
+            is Directory -> directoryContextMenuItems(project, item)
+            is File -> fileContextMenuItems(project, item)
         }
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun directoryContextMenuItems(directory: Directory): List<ContextMenu.Item> {
+    private fun directoryContextMenuItems(project: Project, directory: Directory): List<ContextMenu.Item> {
         return listOf(
             ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { directory.toggle() },
             ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
@@ -107,9 +108,9 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun fileContextMenuItems(file: File): List<ContextMenu.Item> {
+    private fun fileContextMenuItems(project: Project, file: File): List<ContextMenu.Item> {
         return listOf(
-            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { file.open() },
+            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { project.open(file) },
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { file.delete() }
         )
     }

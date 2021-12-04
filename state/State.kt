@@ -20,11 +20,13 @@ package com.vaticle.typedb.studio.state
 
 import com.vaticle.typedb.studio.state.connection.ConnectionManager
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager
 
 object State {
 
     val notification = NotificationManager()
     val connection = ConnectionManager(notification)
-    val project = ProjectManager(notification)
+    val page = PageManager(notification)
+    val project = ProjectManager(page, notification)
 }

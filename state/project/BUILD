@@ -29,6 +29,7 @@ kt_jvm_library(
     deps = [
         "//state/common:common",
         "//state/notification:notification",
+        "//state/page:page",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
