@@ -18,9 +18,6 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
@@ -41,7 +38,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Project internal constructor(val path: Path, val pageMgr: PageManager, val notificationMgr: NotificationManager) :
-    Catalog<ProjectItem> {
+    Catalog<ProjectItem>() {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -53,7 +50,6 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
     val directory: Directory = Directory(path)
     val name: String get() = directory.name
 
-    private var selected: ProjectItem? by mutableStateOf(null)
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
@@ -66,22 +62,6 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
             is Directory -> item.toggle()
             is File -> pageMgr.open(item)
         }
-    }
-
-    override fun select(item: ProjectItem) {
-        selected = item
-    }
-
-    override fun selectNext() {
-        println("Select next from: $selected")
-    }
-
-    override fun selectPrevious() {
-        println("Select previous from: $selected")
-    }
-
-    override fun isSelected(item: ProjectItem): Boolean {
-        return selected == item
     }
 
     fun expand() {

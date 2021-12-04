@@ -166,19 +166,21 @@ object Catalog {
                     true
                 }
                 Key.DirectionLeft -> {
-                    if (item.isExpandable) item.asExpandable().collapse()
+                    if (item.isExpandable && item.asExpandable().isExpanded) item.asExpandable().collapse()
+                    else catalog.selectParent(item)
                     true
                 }
                 Key.DirectionRight -> {
-                    if (item.isExpandable) item.asExpandable().expand()
+                    if (item.isExpandable && !item.asExpandable().isExpanded) item.asExpandable().expand()
+                    else catalog.selectNext(item)
                     true
                 }
                 Key.DirectionUp -> {
-                    catalog.selectPrevious()
+                    catalog.selectPrevious(item)
                     true
                 }
                 Key.DirectionDown -> {
-                    catalog.selectNext()
+                    catalog.selectNext(item)
                     true
                 }
                 else -> false

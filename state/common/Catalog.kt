@@ -18,15 +18,11 @@
 
 package com.vaticle.typedb.studio.state.common
 
-interface Catalog<T : Catalog.Item<T>> {
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
-    val items: List<T>
-
-    fun open(item: T)
-    fun select(item: T)
-    fun selectNext()
-    fun selectPrevious()
-    fun isSelected(item: T): Boolean
+abstract class Catalog<T : Catalog.Item<T>> {
 
     interface Item<U : Item<U>> {
 
@@ -44,5 +40,30 @@ interface Catalog<T : Catalog.Item<T>> {
             fun expand()
             fun collapse()
         }
+    }
+
+    abstract val items: List<T>
+    abstract fun open(item: T)
+
+    private var selected: T? by mutableStateOf(null)
+
+    fun select(item: T) {
+        selected = item
+    }
+
+    fun isSelected(item: T): Boolean {
+        return selected == item
+    }
+
+    fun selectNext(item: T) {
+        println("Select next from: $selected")
+    }
+
+    fun selectPrevious(item: T) {
+        println("Select previous from: $selected")
+    }
+
+    fun selectParent(item: T) {
+        println("Select parent from: $selected")
     }
 }
