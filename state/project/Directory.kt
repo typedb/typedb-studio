@@ -86,6 +86,7 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
     }
 
     internal fun checkForUpdate() {
+        if (!isExpanded) return
         val new = path.listDirectoryEntries().toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) reloadEntries()
