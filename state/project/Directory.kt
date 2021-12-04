@@ -22,12 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Catalog
-import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
-import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
-import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
-import java.nio.file.WatchService
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -67,12 +62,6 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
         if (isExpanded) reloadEntries()
     }
 
-    internal fun watchService(): WatchService {
-        val watchService = FileSystems.getDefault().newWatchService()
-        path.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
-        return watchService
-    }
-
     internal fun reloadEntries() {
         val newPaths = path.listDirectoryEntries()
         val updatedDirs = updatedDirs(newPaths.filter { it.isDirectory() }.toSet())
@@ -94,5 +83,12 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
         val deleted = old - new
         val added = new - old
         return entries.filterIsInstance<File>().filter { !(deleted).contains(it.path) } + (added).map { File(it) }
+    }
+
+    internal fun checkForUpdate() {
+        val new = path.listDirectoryEntries().toSet()
+        val old = entries.map { it.path }.toSet()
+        if (new != old) reloadEntries()
+        entries.filterIsInstance<Directory>().filter { it.isExpanded }.forEach { it.checkForUpdate() }
     }
 }

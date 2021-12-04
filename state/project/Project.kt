@@ -26,14 +26,14 @@ import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
-import java.nio.file.WatchService
 import java.util.LinkedList
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
@@ -41,6 +41,8 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
     Catalog<ProjectItem>() {
 
     companion object {
+        @OptIn(ExperimentalTime::class)
+        private val DIRECTORY_REFRESH_RATE = Duration.seconds(2)
         private val LOGGER = KotlinLogging.logger {}
         private const val MAX_ITEM_EXPANDED = 256
     }
@@ -93,15 +95,14 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun initDirectoryWatcher(directory: Directory) {
-        val watcher: WatchService = directory.watchService()
         coroutineScope.launch {
             try {
-                while (true) {
-                    val watchKey = async(Dispatchers.IO) { watcher.take() }.await()
-                    directory.reloadEntries()
-                    watchKey.reset()
-                }
+                do {
+                    delay(DIRECTORY_REFRESH_RATE) // TODO: is there better way?
+                    directory.checkForUpdate()
+                } while (true)
             } catch (e: CancellationException) {
             } catch (e: Exception) {
                 notificationMgr.systemError(Error.fromSystem(e, Message.Project.UNEXPECTED_ERROR), LOGGER)
