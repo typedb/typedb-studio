@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -108,10 +109,16 @@ object Catalog {
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
                 val menuItems = contextMenuItems?.let { it(item) }
+                val bgColor = when {
+                    catalog.isSelected(item) -> Theme.colors.surface2
+                    else -> Color.Transparent
+                }
+
                 ContextMenu.Area(items = menuItems, enabled = !menuItems.isNullOrEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
+                            .background(color = bgColor)
                             .pointerHoverIcon(PointerIconDefaults.Hand)
                             .onSizeChanged { increaseToAtLeast(it.width) }
                             .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, catalog, item) }

@@ -24,6 +24,6 @@ class PageManager(val notification: NotificationManager) {
 
     fun open(page: Page) {
         // TODO
-        println(page)
+        println("Open: $page")
     }
 }

@@ -26,6 +26,7 @@ interface Catalog<T : Catalog.Item<T>> {
     fun select(item: T)
     fun selectNext()
     fun selectPrevious()
+    fun isSelected(item: T): Boolean
 
     interface Item<U : Item<U>> {
 

@@ -18,6 +18,9 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
@@ -50,6 +53,7 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
     val directory: Directory = Directory(path)
     val name: String get() = directory.name
 
+    private var selected: ProjectItem? by mutableStateOf(null)
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
@@ -65,7 +69,7 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
     }
 
     override fun select(item: ProjectItem) {
-        println("Selected: ${item.path}") // TODO
+        selected = item
     }
 
     override fun selectNext() {
@@ -74,6 +78,10 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
 
     override fun selectPrevious() {
         // TODO
+    }
+
+    override fun isSelected(item: ProjectItem): Boolean {
+        return selected == item
     }
 
     fun expand() {
