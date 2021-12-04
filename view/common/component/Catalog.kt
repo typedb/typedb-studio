@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.common.component
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +43,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIconDefaults
@@ -57,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.awt.event.KeyEvent.KEY_RELEASED
 
 object Catalog {
 
@@ -108,20 +116,19 @@ object Catalog {
 
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
+                val focusReq = FocusRequester()
                 val menuItems = contextMenuItems?.let { it(item) }
-                val bgColor = when {
-                    catalog.isSelected(item) -> Theme.colors.surface2
-                    else -> Color.Transparent
-                }
-
+                val bgColor = if (catalog.isSelected(item)) Theme.colors.primary else Color.Transparent
                 ContextMenu.Area(items = menuItems, enabled = !menuItems.isNullOrEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.widthIn(min = state.minWidth).height(itemHeight)
-                            .background(color = bgColor)
-                            .pointerHoverIcon(PointerIconDefaults.Hand)
+                        modifier = Modifier.background(color = bgColor)
+                            .widthIn(min = state.minWidth).height(itemHeight)
                             .onSizeChanged { increaseToAtLeast(it.width) }
-                            .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, catalog, item) }
+                            .focusable(enabled = true).focusRequester(focusReq)
+                            .onKeyEvent { onKeyEvent(it, catalog, item) }
+                            .pointerHoverIcon(PointerIconDefaults.Hand)
+                            .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
                             .clickable { } // Keep this to enable mouse hovering behaviour
                     ) {
                         if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
@@ -148,10 +155,46 @@ object Catalog {
         }
     }
 
-    private fun <T : Catalog.Item<T>> onPointerEvent(event: PointerEvent, catalog: Catalog<T>, item: T) {
+    @OptIn(ExperimentalComposeUiApi::class)
+    private fun <T : Catalog.Item<T>> onKeyEvent(event: KeyEvent, catalog: Catalog<T>, item: T): Boolean {
+        return when (event.awtEvent.id) {
+            KEY_RELEASED -> false
+            else -> when (event.key) {
+                Key.Enter, Key.NumPadEnter -> {
+                    if (catalog.isSelected(item)) catalog.open(item)
+                    else catalog.select(item)
+                    true
+                }
+                Key.DirectionLeft -> {
+                    if (item.isExpandable) item.asExpandable().collapse()
+                    true
+                }
+                Key.DirectionRight -> {
+                    if (item.isExpandable) item.asExpandable().expand()
+                    true
+                }
+                Key.DirectionUp -> {
+                    catalog.selectPrevious()
+                    true
+                }
+                Key.DirectionDown -> {
+                    catalog.selectNext()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun <T : Catalog.Item<T>> onPointerEvent(
+        event: PointerEvent, focusRequester: FocusRequester, catalog: Catalog<T>, item: T
+    ) {
         when {
             event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
-                1 -> catalog.select(item)
+                1 -> {
+                    catalog.select(item)
+                    focusRequester.requestFocus()
+                }
                 2 -> catalog.open(item)
             }
             event.buttons.isSecondaryPressed -> catalog.select(item)

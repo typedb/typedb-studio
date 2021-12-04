@@ -41,6 +41,8 @@ interface Catalog<T : Catalog.Item<T>> {
             val isExpanded: Boolean
             val entries: List<V>
             fun toggle()
+            fun expand()
+            fun collapse()
         }
     }
 }

@@ -118,7 +118,6 @@ object ProjectDialog {
             val directory = directoryChooser.selectedFile
             assert(directory.isDirectory)
             formState.directory = directory.absolutePath
-            println(formState.directory)
         }
     }
 

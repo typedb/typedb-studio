@@ -40,10 +40,6 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
     override val isDirectory: Boolean = true
     override val isFile: Boolean = false
 
-    override fun toggle() {
-        toggle(!isExpanded)
-    }
-
     override fun asDirectory(): Directory {
         return this
     }
@@ -52,12 +48,18 @@ class Directory internal constructor(path: Path) : Catalog.Item.Expandable<Proje
         throw TypeCastException("Invalid casting of Directory to File") // TODO: generalise
     }
 
-    internal fun expandAndReloadEntries() {
-        toggle(true)
+    override fun toggle() {
+        toggle(!isExpanded)
     }
 
-    internal fun collapse() {
+    override fun expand() = expandAndReloadEntries()
+
+    override fun collapse() {
         toggle(false)
+    }
+
+    internal fun expandAndReloadEntries() {
+        toggle(true)
     }
 
     private fun toggle(isExpanded: Boolean) {

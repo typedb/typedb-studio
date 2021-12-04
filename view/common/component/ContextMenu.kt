@@ -132,8 +132,8 @@ object ContextMenu {
     }
 
     @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(it: KeyEvent, state: ContextMenuState): Boolean {
-        return when (it.key) {
+    private fun onKeyEvent(event: KeyEvent, state: ContextMenuState): Boolean {
+        return when (event.key) {
             Key.Escape -> {
                 state.status = ContextMenuState.Status.Closed; true
             }

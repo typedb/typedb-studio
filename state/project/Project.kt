@@ -73,11 +73,11 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
     }
 
     override fun selectNext() {
-        // TODO
+        println("Select next from: $selected")
     }
 
     override fun selectPrevious() {
-        // TODO
+        println("Select previous from: $selected")
     }
 
     override fun isSelected(item: ProjectItem): Boolean {
