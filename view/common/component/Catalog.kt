@@ -94,10 +94,7 @@ object Catalog {
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
         ) {
-            ContextMenu.Area(
-                itemsFn = contextMenuItems?.let { { it(catalog.selected!!) } },
-                enabled = contextMenuItems != null
-            ) {
+            ContextMenu.Area(contextMenuItems?.let { { it(catalog.selected!!) } }, contextMenuItems != null) {
                 NestedCatalog(0, catalog, catalog.entries, iconArgs, itemHeight, state)
             }
         }
