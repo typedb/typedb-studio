@@ -18,37 +18,54 @@
 
 package com.vaticle.typedb.studio.state.common
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-
-abstract class Catalog<T : Catalog.Item<T>> {
+interface Catalog<T : Catalog.Item<T>> {
 
     interface Item<U : Item<U>> {
 
         val name: String
+        val parent: U?
         val info: String?
-        val isExpandable: Boolean
+        var focusFn: (() -> Unit)?
+        val isExpandable: Boolean get() = false
 
-        fun asExpandable(): Expandable<U>
+        fun asExpandable(): Expandable<U> {
+            throw TypeCastException("Illegal cast of Catalog.Item to Catalog.Item.Expandable")
+        }
 
         interface Expandable<V : Item<V>> : Item<V> {
 
             val isExpanded: Boolean
             val entries: List<V>
-            fun toggle()
-            fun expand()
-            fun collapse()
+            override val isExpandable: Boolean get() = true
+
+            override fun asExpandable(): Expandable<V> {
+                return this
+            }
+
+            fun toggle(isExpanded: Boolean)
+
+            fun toggle() {
+                toggle(!isExpanded)
+            }
+
+            fun expand() {
+                toggle(true)
+            }
+
+            fun collapse() {
+                toggle(false)
+            }
         }
     }
 
-    abstract val items: List<T>
-    abstract fun open(item: T)
+    val entries: List<T>
+    var selected: T?
 
-    private var selected: T? by mutableStateOf(null)
+    fun open(item: T)
 
     fun select(item: T) {
         selected = item
+        item.focusFn?.let { it() }
     }
 
     fun isSelected(item: T): Boolean {
@@ -56,14 +73,14 @@ abstract class Catalog<T : Catalog.Item<T>> {
     }
 
     fun selectNext(item: T) {
-        println("Select next from: $selected")
+        println("Select next from: $selected") // TODO
     }
 
     fun selectPrevious(item: T) {
-        println("Select previous from: $selected")
+        println("Select previous from: $selected") // TODO
     }
 
     fun selectParent(item: T) {
-        println("Select parent from: $selected")
+        item.parent?.let { select(it) }
     }
 }

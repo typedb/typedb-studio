@@ -93,7 +93,7 @@ object Catalog {
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalog(0, catalog, catalog.items, iconArgs, itemHeight, contextMenuItems, state) }
+        ) { NestedCatalog(0, catalog, catalog.entries, iconArgs, itemHeight, contextMenuItems, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
@@ -116,7 +116,7 @@ object Catalog {
 
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
-                val focusReq = FocusRequester()
+                val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
                 val menuItems = contextMenuItems?.let { it(item) }
                 val bgColor = if (catalog.isSelected(item)) Theme.colors.primary else Color.Transparent
                 ContextMenu.Area(items = menuItems, enabled = !menuItems.isNullOrEmpty()) {
@@ -189,13 +189,13 @@ object Catalog {
     }
 
     private fun <T : Catalog.Item<T>> onPointerEvent(
-        event: PointerEvent, focusRequester: FocusRequester, catalog: Catalog<T>, item: T
+        event: PointerEvent, focusReq: FocusRequester, catalog: Catalog<T>, item: T
     ) {
         when {
             event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
                 1 -> {
                     catalog.select(item)
-                    focusRequester.requestFocus()
+                    focusReq.requestFocus()
                 }
                 2 -> catalog.open(item)
             }

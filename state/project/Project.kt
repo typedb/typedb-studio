@@ -18,6 +18,9 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
@@ -38,7 +41,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Project internal constructor(val path: Path, val pageMgr: PageManager, val notificationMgr: NotificationManager) :
-    Catalog<ProjectItem>() {
+    Catalog<ProjectItem> {
 
     companion object {
         @OptIn(ExperimentalTime::class)
@@ -47,15 +50,16 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
         private const val MAX_ITEM_EXPANDED = 256
     }
 
-    override val items: List<ProjectItem> get() = listOf(directory)
+    override val entries: List<ProjectItem> get() = listOf(directory)
+    override var selected: ProjectItem? by mutableStateOf(null)
 
-    val directory: Directory = Directory(path)
+    val directory: Directory = Directory(path, null)
     val name: String get() = directory.name
 
     private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
-        directory.expandAndReloadEntries()
+        directory.expand()
         initDirectoryWatcher(directory)
     }
 
@@ -82,7 +86,7 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
         while (directories.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
             val dir = directories.pop()
             if (isExpanded) {
-                dir.expandAndReloadEntries()
+                dir.expand()
                 i += dir.entries.count()
                 directories.addAll(dir.entries.filterIsInstance<Directory>())
             } else {

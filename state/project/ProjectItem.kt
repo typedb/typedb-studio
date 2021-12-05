@@ -23,23 +23,19 @@ import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val path: Path) : Catalog.Item<ProjectItem> {
+sealed class ProjectItem(val path: Path, override val parent: Directory?) : Catalog.Item<ProjectItem> {
 
-    abstract val isDirectory: Boolean
-    abstract val isFile: Boolean
+    override val name = path.fileName.toString()
+    override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
+    override var focusFn: (() -> Unit)? = null
 
-    val absolutePath = path.toAbsolutePath()
+    val absolutePath: Path = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-
-    override val name: String = path.fileName.toString()
-    override val info: String? = if (isSymbolicLink) "→ " + path.readSymbolicLink().toString() else null
+    open val isDirectory: Boolean = true
+    open val isFile: Boolean = false
 
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
-
-    override fun asExpandable(): Catalog.Item.Expandable<ProjectItem> {
-        return asDirectory()
-    }
 
     fun delete() {
         // TODO

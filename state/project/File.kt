@@ -18,16 +18,13 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.page.Page
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-class File(path: Path) : Catalog.Item<ProjectItem>, ProjectItem(path), Page {
+class File(path: Path, parent: Directory) : ProjectItem(path, parent), Page {
 
-    override val isExpandable: Boolean = false
-    override val isDirectory: Boolean = false
     override val isFile: Boolean = true
 
     val type: String = this.path.extension
