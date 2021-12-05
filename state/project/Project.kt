@@ -24,12 +24,10 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Catalog
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
-import java.util.LinkedList
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -47,7 +45,6 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
         @OptIn(ExperimentalTime::class)
         private val DIRECTORY_REFRESH_RATE = Duration.seconds(2)
         private val LOGGER = KotlinLogging.logger {}
-        private const val MAX_ITEM_EXPANDED = 256
     }
 
     override val entries: List<ProjectItem> get() = listOf(directory)
@@ -67,35 +64,6 @@ class Project internal constructor(val path: Path, val pageMgr: PageManager, val
         when (item) {
             is Directory -> item.toggle()
             is File -> pageMgr.open(item)
-        }
-    }
-
-    fun expand() {
-        toggle(true)
-    }
-
-    fun collapse() {
-        toggle(false)
-    }
-
-    private fun toggle(isExpanded: Boolean) {
-        var i = 1
-        val directories: LinkedList<Directory> = LinkedList()
-        directories.add(directory)
-
-        while (directories.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
-            val dir = directories.pop()
-            if (isExpanded) {
-                dir.expand()
-                i += dir.entries.count()
-                directories.addAll(dir.entries.filterIsInstance<Directory>())
-            } else {
-                dir.collapse()
-                directories.addAll(dir.entries.filterIsInstance<Directory>().filter { it.isExpanded })
-            }
-        }
-        if (directories.isNotEmpty()) {
-            notificationMgr.userError(Error.fromUser(MAX_DIR_EXPANDED_REACHED, path, MAX_ITEM_EXPANDED), LOGGER)
         }
     }
 

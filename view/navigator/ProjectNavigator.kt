@@ -26,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.common.Catalog.Companion.MAX_ITEM_EXPANDED
+import com.vaticle.typedb.studio.state.notification.Error
+import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.Project
@@ -37,17 +40,27 @@ import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import mu.KotlinLogging
 
 internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
     Navigator(areaState, initOpen) {
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
     override val isActive: Boolean get() = State.project.current != null
     override val buttons: List<ButtonArgs> = listOf(
-        ButtonArgs(Icon.Code.CHEVRONS_DOWN) { State.project.current?.expand() },
+        ButtonArgs(Icon.Code.CHEVRONS_DOWN) { State.project.current?.expand { onExpandLimitReached() } },
         ButtonArgs(Icon.Code.CHEVRONS_UP) { State.project.current?.collapse() }
     )
+
+    private fun onExpandLimitReached() {
+        val error = Error.fromUser(MAX_DIR_EXPANDED_REACHED, State.project.current!!.path, MAX_ITEM_EXPANDED)
+        State.notification.userError(error, LOGGER)
+    }
 
     @Composable
     override fun Catalog() {

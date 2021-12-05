@@ -18,6 +18,8 @@
 
 package com.vaticle.typedb.studio.state.common
 
+import java.util.LinkedList
+
 interface Catalog<T : Catalog.Item<T>> {
 
     interface Item<U : Item<U>> {
@@ -58,10 +60,40 @@ interface Catalog<T : Catalog.Item<T>> {
         }
     }
 
+    companion object {
+        const val MAX_ITEM_EXPANDED = 512
+    }
+
     val entries: List<T>
     var selected: T?
 
     fun open(item: T)
+
+    fun expand(onExpandLimitReached: () -> Unit) {
+        val isWithinLimits = toggle(true)
+        if (!isWithinLimits) onExpandLimitReached()
+    }
+
+    fun collapse() {
+        toggle(false)
+    }
+
+    private fun toggle(isExpanded: Boolean): Boolean {
+        var i = 0
+        val queue: LinkedList<Item.Expandable<T>> = LinkedList(entries.filterIsInstance<Item.Expandable<T>>())
+
+        while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
+            val item = queue.pop()
+            item.toggle(isExpanded)
+            if (isExpanded) {
+                i += item.entries.count()
+                queue.addAll(item.entries.filterIsInstance<Item.Expandable<T>>())
+            } else {
+                queue.addAll(item.entries.filterIsInstance<Item.Expandable<T>>().filter { it.isExpanded })
+            }
+        }
+        return queue.isEmpty()
+    }
 
     fun select(item: T) {
         selected = item
