@@ -98,8 +98,7 @@ object Theme {
         return rawIndication { isPressed, isHovered, isFocused ->
             if (isHovered.value || isFocused.value) drawRoundRect(
                 color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-            )
-            else if (isPressed.value) drawRoundRect(
+            ) else if (isPressed.value) drawRoundRect(
                 color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
             )
         }

@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.view.common.component
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +78,7 @@ object Catalog {
         var minWidth by mutableStateOf(0.dp)
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun <T : Catalog.Item<T>> Layout(
         catalog: Catalog<T>,
@@ -93,19 +93,20 @@ object Catalog {
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalog(0, catalog, catalog.entries, iconArgs, itemHeight, contextMenuItems, state) }
+        ) {
+            ContextMenu.Area(
+                itemsFn = contextMenuItems?.let { { it(catalog.selected!!) } },
+                enabled = contextMenuItems != null
+            ) {
+                NestedCatalog(0, catalog, catalog.entries, iconArgs, itemHeight, state)
+            }
+        }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Catalog.Item<T>> NestedCatalog(
-        depth: Int,
-        catalog: Catalog<T>,
-        items: List<T>,
-        iconArgs: (T) -> IconArgs,
-        itemHeight: Dp,
-        contextMenuItems: ((T) -> List<ContextMenu.Item>)?,
-        state: CatalogState
+        depth: Int, catalog: Catalog<T>, items: List<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp, state: CatalogState
     ) {
         val density = LocalDensity.current.density
 
@@ -117,39 +118,28 @@ object Catalog {
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
                 val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
-                val menuItems = contextMenuItems?.let { it(item) }
                 val bgColor = if (catalog.isSelected(item)) Theme.colors.primary else Color.Transparent
-                ContextMenu.Area(items = menuItems, enabled = !menuItems.isNullOrEmpty()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.background(color = bgColor)
-                            .widthIn(min = state.minWidth).height(itemHeight)
-                            .onSizeChanged { increaseToAtLeast(it.width) }
-                            .focusable(enabled = true).focusRequester(focusReq)
-                            .onKeyEvent { onKeyEvent(it, catalog, item) }
-                            .pointerHoverIcon(PointerIconDefaults.Hand)
-                            .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
-                            .clickable { } // Keep this to enable mouse hovering behaviour
-                    ) {
-                        if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                        ItemButton(item, itemHeight)
-                        ItemIcon(item, iconArgs)
-                        Spacer(Modifier.width(TEXT_SPACING))
-                        ItemText(item)
-                        Spacer(modifier = Modifier.width(AREA_PADDING))
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.background(color = bgColor)
+                        .widthIn(min = state.minWidth).height(itemHeight)
+                        .onSizeChanged { increaseToAtLeast(it.width) }
+                        .focusRequester(focusReq)
+                        .onKeyEvent { onKeyEvent(it, catalog, item) }
+                        .pointerHoverIcon(PointerIconDefaults.Hand)
+                        .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
+                        .clickable { } // Keep this to enable mouse hovering behaviour
+                ) {
+                    if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+                    ItemButton(item, itemHeight)
+                    ItemIcon(item, iconArgs)
+                    Spacer(Modifier.width(TEXT_SPACING))
+                    ItemText(item)
+                    Spacer(modifier = Modifier.width(AREA_PADDING))
+                    Spacer(modifier = Modifier.weight(1f))
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) {
-                    NestedCatalog(
-                        depth = depth + 1,
-                        catalog = catalog,
-                        items = item.asExpandable().entries,
-                        iconArgs = iconArgs,
-                        itemHeight = itemHeight,
-                        contextMenuItems = contextMenuItems,
-                        state = state
-                    )
+                    NestedCatalog(depth + 1, catalog, item.asExpandable().entries, iconArgs, itemHeight, state)
                 }
             }
         }
@@ -211,8 +201,7 @@ object Catalog {
             modifier = Modifier.size(size),
             bgColor = Color.Transparent,
             rounded = false
-        )
-        else Spacer(Modifier.size(size))
+        ) else Spacer(Modifier.size(size))
     }
 
     @Composable

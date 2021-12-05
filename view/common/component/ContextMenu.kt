@@ -68,10 +68,10 @@ object ContextMenu {
 
     @Composable
     @ExperimentalFoundationApi
-    fun Area(items: List<Item>?, enabled: Boolean = true, content: @Composable () -> Unit) {
+    fun Area(itemsFn: (() -> List<Item>)?, enabled: Boolean = true, content: @Composable () -> Unit) {
         val state: ContextMenuState = remember { ContextMenuState() }
         Box(Modifier.contextMenuDetector(state, enabled), propagateMinConstraints = true) { content() }
-        if (enabled && !items.isNullOrEmpty()) MenuPopup(state, items)
+        if (enabled && itemsFn != null) MenuPopup(state, itemsFn)
     }
 
     @OptIn(ExperimentalFoundationApi::class)
@@ -98,7 +98,7 @@ object ContextMenu {
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun MenuPopup(state: ContextMenuState, items: List<Item>) {
+    private fun MenuPopup(state: ContextMenuState, itemsFn: () -> List<Item>) {
         if (state.status is ContextMenuState.Status.Open) {
             Popup(
                 focusable = true,
@@ -112,7 +112,7 @@ object ContextMenu {
                         .border(Form.BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
-                    items.forEach {
+                    itemsFn().forEach {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
