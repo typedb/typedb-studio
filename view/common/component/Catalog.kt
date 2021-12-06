@@ -147,6 +147,33 @@ object Catalog {
         }
     }
 
+    @Composable
+    private fun <T : Catalog.Item<T>> ItemButton(item: T, size: Dp) {
+        if (item.isExpandable) Form.RawClickableIcon(
+            icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
+            onClick = { item.asExpandable().toggle() },
+            modifier = Modifier.size(size)
+        ) else Spacer(Modifier.size(size))
+    }
+
+    @Composable
+    private fun <T : Catalog.Item<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
+            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
+        }
+    }
+
+    @Composable
+    private fun <T : Catalog.Item<T>> ItemText(item: Catalog.Item<T>) {
+        Row(modifier = Modifier.height(ICON_WIDTH)) {
+            Form.Text(value = item.name)
+            item.info?.let {
+                Spacer(Modifier.width(TEXT_SPACING))
+                Form.Text(value = "( $it )", alpha = 0.4f)
+            }
+        }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     private fun <T : Catalog.Item<T>> onKeyEvent(event: KeyEvent, catalog: Catalog<T>, item: T): Boolean {
         return when (event.awtEvent.id) {
@@ -190,33 +217,6 @@ object Catalog {
                     focusReq.requestFocus()
                 }
                 2 -> catalog.open(item)
-            }
-        }
-    }
-
-    @Composable
-    private fun <T : Catalog.Item<T>> ItemButton(item: T, size: Dp) {
-        if (item.isExpandable) Form.RawClickableIcon(
-            icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
-            onClick = { item.asExpandable().toggle() },
-            modifier = Modifier.size(size)
-        ) else Spacer(Modifier.size(size))
-    }
-
-    @Composable
-    private fun <T : Catalog.Item<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
-        }
-    }
-
-    @Composable
-    private fun <T : Catalog.Item<T>> ItemText(item: Catalog.Item<T>) {
-        Row(modifier = Modifier.height(ICON_WIDTH)) {
-            Form.Text(value = item.name)
-            item.info?.let {
-                Spacer(Modifier.width(TEXT_SPACING))
-                Form.Text(value = "( $it )", alpha = 0.4f)
             }
         }
     }
