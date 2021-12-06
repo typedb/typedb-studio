@@ -62,8 +62,11 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
@@ -201,9 +204,7 @@ object Form {
             modifier = modifier.size(FIELD_HEIGHT),
             rounded = rounded,
             enabled = enabled
-        ) {
-            Icon.Render(icon = icon, color = iconColor, enabled = enabled)
-        }
+        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -235,6 +236,23 @@ object Form {
                 content()
             }
         }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun RawClickableIcon(
+        icon: Icon.Code,
+        onClick: () -> Unit,
+        modifier: Modifier,
+        iconColor: Color = Theme.colors.icon,
+        enabled: Boolean = true
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier.height(FIELD_HEIGHT)
+                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .onPointerEvent(PointerEventType.Press) { if (it.buttons.isPrimaryPressed) onClick() }
+        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
