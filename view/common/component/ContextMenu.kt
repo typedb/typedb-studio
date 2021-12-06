@@ -68,19 +68,22 @@ object ContextMenu {
 
     @Composable
     @ExperimentalFoundationApi
-    fun Area(itemsFn: (() -> List<Item>)?, enabled: Boolean = true, content: @Composable () -> Unit) {
+    fun Area(itemsFn: (() -> List<Item>)?, onOpen: () -> Unit, content: @Composable () -> Unit) {
         val state: ContextMenuState = remember { ContextMenuState() }
-        Box(Modifier.contextMenuDetector(state, enabled), propagateMinConstraints = true) { content() }
-        if (enabled && itemsFn != null) MenuPopup(state, itemsFn)
+        Box(Modifier.contextMenuDetector(state, itemsFn != null, onOpen)) { content() }
+        if (itemsFn != null) MenuPopup(state, itemsFn)
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun Modifier.contextMenuDetector(state: ContextMenuState, enabled: Boolean = true): Modifier {
+    private fun Modifier.contextMenuDetector(
+        state: ContextMenuState, enabled: Boolean = true, onOpen: () -> Unit
+    ): Modifier {
         return if (enabled && state.status == ContextMenuState.Status.Closed) this.pointerInput(state) {
             forEachGesture {
                 awaitPointerEventScope {
                     val event = awaitEventFirstDown()
                     if (event.buttons.isSecondaryPressed) {
+                        onOpen()
                         event.changes.forEach { it.consumeDownChange() }
                         state.status = ContextMenuState.Status.Open(Rect(event.changes[0].position, 0f))
                     }

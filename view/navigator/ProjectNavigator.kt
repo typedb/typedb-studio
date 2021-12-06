@@ -68,7 +68,7 @@ internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Bo
         else Catalog.Layout(
             catalog = State.project.current!!,
             iconArgs = { projectItemIcon(it) },
-            contextMenuItems = { contextMenuItems(State.project.current!!, it) }
+            contextMenuFn = { contextMenuItems(State.project.current!!, it) }
         )
     }
 

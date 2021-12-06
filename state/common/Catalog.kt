@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.common
 
-import java.util.LinkedList
+import java.util.*
 
 interface Catalog<T : Catalog.Item<T>> {
 
@@ -61,7 +61,7 @@ interface Catalog<T : Catalog.Item<T>> {
     }
 
     companion object {
-        const val MAX_ITEM_EXPANDED = 256
+        const val MAX_ITEM_EXPANDED = 512
     }
 
     val entries: List<T>
