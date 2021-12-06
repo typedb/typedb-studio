@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,9 +79,7 @@ object Catalog {
 
     @Composable
     fun <T : Catalog.Item<T>> Layout(
-        catalog: Catalog<T>,
-        iconArgs: (T) -> IconArgs,
-        itemHeight: Dp = ITEM_HEIGHT,
+        catalog: Catalog<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT,
         contextMenuFn: ((T) -> List<ContextMenu.Item>)? = null
     ) {
         val density = LocalDensity.current.density
@@ -97,49 +95,55 @@ object Catalog {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Catalog.Item<T>> NestedCatalog(
-        depth: Int,
-        catalog: Catalog<T>,
-        items: List<T>,
-        iconArgs: (T) -> IconArgs,
-        itemHeight: Dp,
-        contextMenuFn: ((T) -> List<ContextMenu.Item>)?,
-        state: CatalogState
+        depth: Int, catalog: Catalog<T>, items: List<T>, iconArgs: (T) -> IconArgs,
+        itemHeight: Dp, contextMenuFn: ((T) -> List<ContextMenu.Item>)?, state: CatalogState
     ) {
         val density = LocalDensity.current.density
-
         fun increaseToAtLeast(widthSize: Int) {
             val newWidth = toDP(widthSize, density)
             if (newWidth > state.minWidth) state.minWidth = newWidth
         }
-
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
-                val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
-                val bgColor = if (catalog.isSelected(item)) Theme.colors.primary else Color.Transparent
                 ContextMenu.Area(contextMenuFn?.let { { it(item) } }, { catalog.select(item) }) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.background(color = bgColor)
-                            .widthIn(min = state.minWidth).height(itemHeight)
-                            .onSizeChanged { increaseToAtLeast(it.width) }
-                            .focusRequester(focusReq).focusable(true)
-                            .onKeyEvent { onKeyEvent(it, catalog, item) }
-                            .pointerHoverIcon(PointerIconDefaults.Hand)
-                            .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
-                    ) {
-                        if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                        ItemButton(item, itemHeight)
-                        ItemIcon(item, iconArgs)
-                        Spacer(Modifier.width(TEXT_SPACING))
-                        ItemText(item)
-                        Spacer(modifier = Modifier.width(AREA_PADDING))
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                    ItemLayout(depth, catalog, item, iconArgs, itemHeight, { increaseToAtLeast(it) }, state)
                 }
                 if (item.isExpandable && item.asExpandable().isExpanded) NestedCatalog(
                     depth + 1, catalog, item.asExpandable().entries, iconArgs, itemHeight, contextMenuFn, state
                 )
             }
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+    @Composable
+    private fun <T : Catalog.Item<T>> ItemLayout(
+        depth: Int, catalog: Catalog<T>, item: T, iconArgs: (T) -> IconArgs,
+        itemHeight: Dp, onSizeChanged: (Int) -> Unit, state: CatalogState
+    ) {
+        val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
+        val bgColor = when {
+            catalog.isSelected(item) -> Theme.colors.primary
+            else -> Color.Transparent
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.background(color = bgColor)
+                .widthIn(min = state.minWidth).height(itemHeight)
+                .onSizeChanged { onSizeChanged(it.width) }
+                .focusRequester(focusReq)
+                .onKeyEvent { onKeyEvent(it, catalog, item) }
+                .pointerHoverIcon(PointerIconDefaults.Hand)
+                .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
+                .clickable { }
+        ) {
+            if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+            ItemButton(item, itemHeight)
+            ItemIcon(item, iconArgs)
+            Spacer(Modifier.width(TEXT_SPACING))
+            ItemText(item)
+            Spacer(modifier = Modifier.width(AREA_PADDING))
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 
