@@ -22,8 +22,8 @@ import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class TypeNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
-    Navigator(areaState, initOpen) {
+internal class TypeBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Browser(areaState, initOpen) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP

@@ -22,8 +22,8 @@ import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class RoleNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
-    Navigator(areaState, initOpen) {
+internal class RoleBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Browser(areaState, initOpen) {
 
     override val label: String = Label.ROLES
     override val icon: Icon.Code = Icon.Code.USER_GROUP

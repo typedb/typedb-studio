@@ -42,8 +42,8 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import mu.KotlinLogging
 
-internal class ProjectNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
-    Navigator(areaState, initOpen) {
+internal class ProjectBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Browser(areaState, initOpen) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

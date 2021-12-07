@@ -22,11 +22,11 @@ import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class UserNavigator(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
-    Navigator(areaState, initOpen) {
+internal class RuleBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+    Browser(areaState, initOpen) {
 
-    override val label: String = Label.USERS
-    override val icon: Icon.Code = Icon.Code.USER
+    override val label: String = Label.RULES
+    override val icon: Icon.Code = Icon.Code.DIAGRAM_PROJECT
     override val isActive: Boolean get() = false // TODO
     override val buttons: List<ButtonArgs> = listOf()
 

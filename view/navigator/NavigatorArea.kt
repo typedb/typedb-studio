@@ -63,18 +63,18 @@ object NavigatorArea {
 
     internal class AreaState(private val paneState: Frame.PaneState) {
         val navigators = listOf(
-            ProjectNavigator(this, true),
-            TypeNavigator(this, true),
-            RuleNavigator(this),
-            UserNavigator(this),
-            RoleNavigator(this)
+            ProjectBrowser(this, true),
+            TypeBrowser(this, true),
+            RuleBrowser(this),
+            UserBrowser(this),
+            RoleBrowser(this)
         )
 
         init {
             mayHidePanelArea()
         }
 
-        fun openedNavigators(): List<Navigator> {
+        fun openedNavigators(): List<Browser> {
             return navigators.filter { it.isOpen }
         }
 
@@ -102,7 +102,7 @@ object NavigatorArea {
                         Frame.Pane(
                             id = navigator.label,
                             initSize = second(1f),
-                            minSize = Navigator.MIN_HEIGHT
+                            minSize = Browser.MIN_HEIGHT
                         ) { navigator.Layout() }
                     }.toTypedArray()
                 )
@@ -112,15 +112,15 @@ object NavigatorArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(navigator: Navigator) {
+    private fun Tab(browser: Browser) {
         @Composable
-        fun bgColor(): Color = if (navigator.isOpen) Theme.colors.surface else Theme.colors.background2
+        fun bgColor(): Color = if (browser.isOpen) Theme.colors.surface else Theme.colors.background2
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(SIDE_TAB_HEIGHT)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                .clickable { navigator.toggle() }
+                .clickable { browser.toggle() }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -130,9 +130,9 @@ object NavigatorArea {
                     .background(color = bgColor())
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                Icon.Render(icon = navigator.icon, size = ICON_SIZE)
+                Icon.Render(icon = browser.icon, size = ICON_SIZE)
                 Spacer(modifier = Modifier.width(SIDE_TAB_SPACING))
-                Text(value = navigator.label)
+                Text(value = browser.label)
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
