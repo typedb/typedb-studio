@@ -33,7 +33,7 @@ kt_jvm_library(
         "//state:state",
         "//view/common:common",
         "//view/dialog:dialog",
-        "//view/navigator:navigator",
+        "//view/browser:browser",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

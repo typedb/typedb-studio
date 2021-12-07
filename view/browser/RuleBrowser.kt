@@ -16,13 +16,13 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.navigator
+package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class RuleBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+internal class RuleBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean = false) :
     Browser(areaState, initOpen) {
 
     override val label: String = Label.RULES

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.navigator
+package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-sealed class Browser(private val areaState: NavigatorArea.AreaState, initOpen: Boolean = false) {
+sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boolean = false) {
 
     companion object {
         internal val MIN_HEIGHT = 80.dp

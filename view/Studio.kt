@@ -48,7 +48,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
-import com.vaticle.typedb.studio.view.navigator.NavigatorArea
+import com.vaticle.typedb.studio.view.browser.BrowserArea
 import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
@@ -101,10 +101,10 @@ object Studio {
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
                     Frame.Pane(
-                        id = NavigatorArea.ID,
-                        initSize = Either.first(NavigatorArea.WIDTH),
-                        minSize = NavigatorArea.MIN_WIDTH
-                    ) { NavigatorArea.Layout(it) },
+                        id = BrowserArea.ID,
+                        initSize = Either.first(BrowserArea.WIDTH),
+                        minSize = BrowserArea.MIN_WIDTH
+                    ) { BrowserArea.Layout(it) },
                     Frame.Pane(
                         id = PageArea.ID,
                         initSize = Either.second(1f),

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.navigator
+package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -42,7 +42,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import mu.KotlinLogging
 
-internal class ProjectBrowser(areaState: NavigatorArea.AreaState, initOpen: Boolean = false) :
+internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean = false) :
     Browser(areaState, initOpen) {
 
     companion object {

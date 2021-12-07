@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.navigator
+package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,9 +50,9 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object NavigatorArea {
+object BrowserArea {
 
-    const val ID = "NAVIGATOR_AREA"
+    const val ID = "BROWSER_AREA"
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
     private val SIDE_TAB_WIDTH = 22.dp
@@ -62,7 +62,7 @@ object NavigatorArea {
     private val TAB_OFFSET = (-40).dp
 
     internal class AreaState(private val paneState: Frame.PaneState) {
-        val navigators = listOf(
+        val browsers = listOf(
             ProjectBrowser(this, true),
             TypeBrowser(this, true),
             RuleBrowser(this),
@@ -74,12 +74,12 @@ object NavigatorArea {
             mayHidePanelArea()
         }
 
-        fun openedNavigators(): List<Browser> {
-            return navigators.filter { it.isOpen }
+        fun openedBrowsers(): List<Browser> {
+            return browsers.filter { it.isOpen }
         }
 
         fun mayHidePanelArea() {
-            if (openedNavigators().isEmpty()) paneState.freeze(SIDE_TAB_WIDTH)
+            if (openedBrowsers().isEmpty()) paneState.freeze(SIDE_TAB_WIDTH)
             else paneState.unfreeze()
         }
     }
@@ -87,23 +87,23 @@ object NavigatorArea {
     @Composable
     fun Layout(paneState: Frame.PaneState) {
         val areaState = remember { AreaState(paneState) }
-        val openedNavigators = areaState.openedNavigators()
+        val openedBrowsers = areaState.openedBrowsers()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
-                areaState.navigators.forEach { Tab(it) }
+                areaState.browsers.forEach { Tab(it) }
             }
-            if (openedNavigators.isNotEmpty()) {
+            if (openedBrowsers.isNotEmpty()) {
                 Separator.Vertical()
-                if (openedNavigators.size == 1) openedNavigators.first().Layout()
+                if (openedBrowsers.size == 1) openedBrowsers.first().Layout()
                 else Frame.Column(
                     modifier = Modifier.fillMaxHeight().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    *openedNavigators.map { navigator ->
+                    *openedBrowsers.map { browser ->
                         Frame.Pane(
-                            id = navigator.label,
+                            id = browser.label,
                             initSize = second(1f),
                             minSize = Browser.MIN_HEIGHT
-                        ) { navigator.Layout() }
+                        ) { browser.Layout() }
                     }.toTypedArray()
                 )
             }
