@@ -59,12 +59,12 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.Catalog
+import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
 
-object Catalog {
+object Navigator {
 
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
@@ -73,30 +73,30 @@ object Catalog {
 
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
 
-    private class CatalogState {
+    private class NavigatorState {
         var minWidth by mutableStateOf(0.dp)
     }
 
     @Composable
-    fun <T : Catalog.Item<T>> Layout(
-        catalog: Catalog<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT,
+    fun <T : Navigable.Item<T>> Layout(
+        navigable: Navigable<T>, iconArgs: (T) -> IconArgs, itemHeight: Dp = ITEM_HEIGHT,
         contextMenuFn: ((T) -> List<ContextMenu.Item>)? = null
     ) {
         val density = LocalDensity.current.density
-        val state = remember { CatalogState() }
+        val state = remember { NavigatorState() }
         Box(
             modifier = Modifier.fillMaxSize()
                 .onSizeChanged { state.minWidth = toDP(it.width, density) }
                 .verticalScroll(rememberScrollState())
                 .horizontalScroll(rememberScrollState())
-        ) { NestedCatalog(0, catalog, catalog.entries, iconArgs, itemHeight, contextMenuFn, state) }
+        ) { NestedNavigator(0, navigable, navigable.entries, iconArgs, itemHeight, contextMenuFn, state) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun <T : Catalog.Item<T>> NestedCatalog(
-        depth: Int, catalog: Catalog<T>, items: List<T>, iconArgs: (T) -> IconArgs,
-        itemHeight: Dp, contextMenuFn: ((T) -> List<ContextMenu.Item>)?, state: CatalogState
+    private fun <T : Navigable.Item<T>> NestedNavigator(
+        depth: Int, navigable: Navigable<T>, items: List<T>, iconArgs: (T) -> IconArgs,
+        itemHeight: Dp, contextMenuFn: ((T) -> List<ContextMenu.Item>)?, state: NavigatorState
     ) {
         val density = LocalDensity.current.density
         fun increaseToAtLeast(widthSize: Int) {
@@ -105,11 +105,11 @@ object Catalog {
         }
         Column(modifier = Modifier.widthIn(min = state.minWidth).onSizeChanged { increaseToAtLeast(it.width) }) {
             items.forEach { item ->
-                ContextMenu.Area(contextMenuFn?.let { { it(item) } }, { catalog.select(item) }) {
-                    ItemLayout(depth, catalog, item, iconArgs, itemHeight, { increaseToAtLeast(it) }, state)
+                ContextMenu.Area(contextMenuFn?.let { { it(item) } }, { navigable.select(item) }) {
+                    ItemLayout(depth, navigable, item, iconArgs, itemHeight, { increaseToAtLeast(it) }, state)
                 }
-                if (item.isExpandable && item.asExpandable().isExpanded) NestedCatalog(
-                    depth + 1, catalog, item.asExpandable().entries, iconArgs, itemHeight, contextMenuFn, state
+                if (item.isExpandable && item.asExpandable().isExpanded) NestedNavigator(
+                    depth + 1, navigable, item.asExpandable().entries, iconArgs, itemHeight, contextMenuFn, state
                 )
             }
         }
@@ -117,13 +117,13 @@ object Catalog {
 
     @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Catalog.Item<T>> ItemLayout(
-        depth: Int, catalog: Catalog<T>, item: T, iconArgs: (T) -> IconArgs,
-        itemHeight: Dp, onSizeChanged: (Int) -> Unit, state: CatalogState
+    private fun <T : Navigable.Item<T>> ItemLayout(
+        depth: Int, navigable: Navigable<T>, item: T, iconArgs: (T) -> IconArgs,
+        itemHeight: Dp, onSizeChanged: (Int) -> Unit, state: NavigatorState
     ) {
         val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
         val bgColor = when {
-            catalog.isSelected(item) -> Theme.colors.primary
+            navigable.isSelected(item) -> Theme.colors.primary
             else -> Color.Transparent
         }
         Row(
@@ -132,9 +132,9 @@ object Catalog {
                 .widthIn(min = state.minWidth).height(itemHeight)
                 .onSizeChanged { onSizeChanged(it.width) }
                 .focusRequester(focusReq)
-                .onKeyEvent { onKeyEvent(it, catalog, item) }
+                .onKeyEvent { onKeyEvent(it, navigable, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, catalog, item) }
+                .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, navigable, item) }
                 .clickable { }
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
@@ -148,7 +148,7 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : Catalog.Item<T>> ItemButton(item: T, size: Dp) {
+    private fun <T : Navigable.Item<T>> ItemButton(item: T, size: Dp) {
         if (item.isExpandable) Form.RawClickableIcon(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
@@ -157,14 +157,14 @@ object Catalog {
     }
 
     @Composable
-    private fun <T : Catalog.Item<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
+    private fun <T : Navigable.Item<T>> ItemIcon(item: T, iconArgs: (T) -> IconArgs) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
         }
     }
 
     @Composable
-    private fun <T : Catalog.Item<T>> ItemText(item: Catalog.Item<T>) {
+    private fun <T : Navigable.Item<T>> ItemText(item: Navigable.Item<T>) {
         Row(modifier = Modifier.height(ICON_WIDTH)) {
             Form.Text(value = item.name)
             item.info?.let {
@@ -175,31 +175,31 @@ object Catalog {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun <T : Catalog.Item<T>> onKeyEvent(event: KeyEvent, catalog: Catalog<T>, item: T): Boolean {
+    private fun <T : Navigable.Item<T>> onKeyEvent(event: KeyEvent, navigable: Navigable<T>, item: T): Boolean {
         return when (event.awtEvent.id) {
             KEY_RELEASED -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {
-                    if (catalog.isSelected(item)) catalog.open(item)
-                    else catalog.select(item)
+                    if (navigable.isSelected(item)) navigable.open(item)
+                    else navigable.select(item)
                     true
                 }
                 Key.DirectionLeft -> {
                     if (item.isExpandable && item.asExpandable().isExpanded) item.asExpandable().collapse()
-                    else catalog.selectParent(item)
+                    else navigable.selectParent(item)
                     true
                 }
                 Key.DirectionRight -> {
                     if (item.isExpandable && !item.asExpandable().isExpanded) item.asExpandable().expand()
-                    else catalog.selectNext(item)
+                    else navigable.selectNext(item)
                     true
                 }
                 Key.DirectionUp -> {
-                    catalog.selectPrevious(item)
+                    navigable.selectPrevious(item)
                     true
                 }
                 Key.DirectionDown -> {
-                    catalog.selectNext(item)
+                    navigable.selectNext(item)
                     true
                 }
                 else -> false
@@ -207,16 +207,16 @@ object Catalog {
         }
     }
 
-    private fun <T : Catalog.Item<T>> onPointerEvent(
-        event: PointerEvent, focusReq: FocusRequester, catalog: Catalog<T>, item: T
+    private fun <T : Navigable.Item<T>> onPointerEvent(
+        event: PointerEvent, focusReq: FocusRequester, navigable: Navigable<T>, item: T
     ) {
         when {
             event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
                 1 -> {
-                    catalog.select(item)
+                    navigable.select(item)
                     focusReq.requestFocus()
                 }
-                2 -> catalog.open(item)
+                2 -> navigable.open(item)
             }
         }
     }

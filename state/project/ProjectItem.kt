@@ -18,12 +18,12 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Catalog
+import com.vaticle.typedb.studio.state.common.Navigable
 import java.nio.file.Path
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val path: Path, override val parent: Directory?) : Catalog.Item<ProjectItem> {
+sealed class ProjectItem(val path: Path, override val parent: Directory?) : Navigable.Item<ProjectItem> {
 
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null

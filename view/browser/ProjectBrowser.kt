@@ -26,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.state.common.Catalog.Companion.MAX_ITEM_EXPANDED
+import com.vaticle.typedb.studio.state.common.Navigable.Companion.MAX_ITEM_EXPANDED
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.MAX_DIR_EXPANDED_REACHED
 import com.vaticle.typedb.studio.state.project.Directory
@@ -34,11 +34,11 @@ import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.Project
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Catalog
-import com.vaticle.typedb.studio.view.common.component.Catalog.IconArgs
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Navigator
+import com.vaticle.typedb.studio.view.common.component.Navigator.IconArgs
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import mu.KotlinLogging
 
@@ -63,10 +63,10 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolea
     }
 
     @Composable
-    override fun Catalog() {
+    override fun Navigator() {
         if (!isActive) OpenProjectHelper()
-        else Catalog.Layout(
-            catalog = State.project.current!!,
+        else Navigator.Layout(
+            navigable = State.project.current!!,
             iconArgs = { projectItemIcon(it) },
             contextMenuFn = { contextMenuItems(State.project.current!!, it) }
         )

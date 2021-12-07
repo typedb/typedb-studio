@@ -40,6 +40,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.state.notification.Message
+import com.vaticle.typedb.studio.view.browser.BrowserArea
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
@@ -48,7 +49,6 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
-import com.vaticle.typedb.studio.view.browser.BrowserArea
 import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger

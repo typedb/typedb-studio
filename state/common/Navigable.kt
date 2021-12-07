@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.common
 
 import java.util.*
 
-interface Catalog<T : Catalog.Item<T>> {
+interface Navigable<T : Navigable.Item<T>> {
 
     interface Item<U : Item<U>> {
 
@@ -31,7 +31,7 @@ interface Catalog<T : Catalog.Item<T>> {
         val isExpandable: Boolean get() = false
 
         fun asExpandable(): Expandable<U> {
-            throw TypeCastException("Illegal cast of Catalog.Item to Catalog.Item.Expandable")
+            throw TypeCastException("Illegal cast of Navigable.Item to Navigable.Item.Expandable")
         }
 
         interface Expandable<V : Item<V>> : Item<V> {

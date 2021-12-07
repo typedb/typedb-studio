@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.common.Catalog
+import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PROJECT_CLOSED
@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Project internal constructor(val path: Path, val pageMgr: PageManager, val notificationMgr: NotificationManager) :
-    Catalog<ProjectItem> {
+    Navigable<ProjectItem> {
 
     companion object {
         @OptIn(ExperimentalTime::class)

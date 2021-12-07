@@ -59,7 +59,7 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boo
     internal var isOpen: Boolean by mutableStateOf(initOpen)
 
     @Composable
-    abstract fun Catalog()
+    abstract fun Navigator()
 
     fun toggle() {
         isOpen = !isOpen
@@ -72,7 +72,7 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boo
         Column {
             Bar()
             Separator.Horizontal()
-            Box(modifier = Modifier.weight(1f)) { Catalog() }
+            Box(modifier = Modifier.weight(1f)) { Navigator() }
         }
     }
 

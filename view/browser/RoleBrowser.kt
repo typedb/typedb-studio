@@ -31,7 +31,7 @@ internal class RoleBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean =
     override val buttons: List<ButtonArgs> = listOf()
 
     @Composable
-    override fun Catalog() {
+    override fun Navigator() {
 
     }
 }

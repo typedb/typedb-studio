@@ -21,14 +21,14 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.common.Catalog
+import com.vaticle.typedb.studio.state.common.Navigable
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 
 class Directory internal constructor(path: Path, parent: Directory?) :
-    Catalog.Item.Expandable<ProjectItem>, ProjectItem(path, parent) {
+    Navigable.Item.Expandable<ProjectItem>, ProjectItem(path, parent) {
 
     override var isExpanded: Boolean by mutableStateOf(false); private set
     override var entries: List<ProjectItem> by mutableStateOf(emptyList())
