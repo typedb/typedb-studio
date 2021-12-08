@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.browser
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,7 @@ import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
@@ -66,7 +68,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolea
             ) { projectItemOpen(it) }
             State.project.onChange = { state.replaceRoot(it) }
             buttons = state.buttons
-            Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) })
+            Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) }) { contextMenuItems(it) }
         }
     }
 
@@ -105,5 +107,31 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolea
                 else -> IconArgs(Icon.Code.FILE_LINES)
             }
         }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
+        return when (itemState.item) {
+            is Directory -> directoryContextMenuItems(itemState)
+            is File -> fileContextMenuItems(itemState)
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
+        return listOf(
+            ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
+            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
+            ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
+        )
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
+        return listOf(
+            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { State.page.open(itemState.item.asFile()) },
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
+        )
     }
 }
