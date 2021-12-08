@@ -24,7 +24,7 @@ import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(private val type: Type, val path: Path, final override val container: Directory?) :
+sealed class ProjectItem(val type: Type, val path: Path, final override val container: Directory?) :
     Navigable.Item<ProjectItem> {
 
     enum class Type(val index: Int) {

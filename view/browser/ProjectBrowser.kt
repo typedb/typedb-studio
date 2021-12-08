@@ -28,9 +28,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.project.Directory
+import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
 import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
@@ -54,15 +58,15 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolea
         if (!isActive) OpenProjectHelper()
         else {
             val state = rememberNavigatorState(
-                navigable = State.project.current!!,
+                root = State.project.current!!,
                 title = Label.PROJECT_BROWSER,
                 initExpandDepth = 1,
                 reloadOnExpand = true,
                 liveUpdate = true
-            )
+            ) { projectItemOpen(it) }
             State.project.onChange = { state.replaceRoot(it) }
             buttons = state.buttons
-            Navigator.Layout(state = state)
+            Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) })
         }
     }
 
@@ -77,6 +81,29 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, initOpen: Boolea
                 onClick = { State.project.showDialog = true },
                 leadingIcon = Icon.Code.FOLDER_OPEN
             )
+        }
+    }
+
+    private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
+        when (itemState.item) {
+            is Directory -> itemState.asExpandable().toggle()
+            is File -> State.page.open(itemState.item.asFile())
+        }
+    }
+
+    private fun projectItemIcon(itemState: Navigator.ItemState<ProjectItem>): IconArgs {
+        return when (itemState.item) {
+            is Directory -> when {
+                itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
+                itemState.asExpandable().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
+                else -> IconArgs(Icon.Code.FOLDER_BLANK)
+            }
+            is File -> when {
+                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE) { Theme.colors.secondary }
+                itemState.item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
+                else -> IconArgs(Icon.Code.FILE_LINES)
+            }
         }
     }
 }

@@ -18,8 +18,17 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
@@ -27,7 +36,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
@@ -35,8 +61,9 @@ import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMI
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.util.LinkedList
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -59,17 +86,14 @@ object Navigator {
     private val AREA_PADDING = 8.dp
     private val LOGGER = KotlinLogging.logger {}
 
-    enum class Type(val label: String) {
-        PROJECT(Label.PROJECT);
-    }
-
     open class ItemState<T : Navigable.Item<T>> internal constructor(
-        open val item: Navigable.Item<T>, val container: Expandable<T>?
+        open val item: T, val container: Expandable<T>?
     ) : Comparable<ItemState<T>> {
 
         open val isExpandable: Boolean = false
         val name get() = item.name
         val info get() = item.info
+        var focusFn: (() -> Unit)? = null
 
         open fun asExpandable(): Expandable<T> {
             throw TypeCastException(ILLEGAL_CAST.message(ItemState::class.simpleName, Expandable::class.simpleName))
@@ -80,8 +104,8 @@ object Navigator {
         }
 
         class Expandable<T : Navigable.Item<T>> internal constructor(
-            override val item: Navigable.Container<T>, container: Expandable<T>?, private val reloadOnExpand: Boolean
-        ) : ItemState<T>(item, container) {
+            val expandable: Navigable.Container<T>, container: Expandable<T>?, private val reloadOnExpand: Boolean
+        ) : ItemState<T>(expandable as T, container) {
 
             override val isExpandable: Boolean = true
             var isExpanded: Boolean by mutableStateOf(false)
@@ -89,6 +113,11 @@ object Navigator {
 
             override fun asExpandable(): Expandable<T> {
                 return this
+            }
+
+            fun toggle() {
+                if (isExpanded) collapse()
+                else expand()
             }
 
             fun collapse() {
@@ -112,8 +141,8 @@ object Navigator {
             }
 
             private fun reloadEntries() {
-                item.reloadEntries()
-                val new = item.entries.toSet()
+                item.asContainer().reloadEntries()
+                val new = item.asContainer().entries.toSet()
                 val old = entries.map { it.item }.toSet()
                 if (new != old) {
                     val deleted = old - new
@@ -127,12 +156,12 @@ object Navigator {
 
             internal fun checkForUpdate() {
                 if (!isExpanded) return
-                item.reloadEntries()
-                if (item.entries.toSet() != entries.map { it.item }.toSet()) reloadEntries()
+                item.asContainer().reloadEntries()
+                if (item.asContainer().entries.toSet() != entries.map { it.item }.toSet()) reloadEntries()
                 entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.checkForUpdate() }
             }
 
-            private fun itemStateOf(item: Navigable.Item<T>): ItemState<T> {
+            private fun itemStateOf(item: T): ItemState<T> {
                 return if (item.isContainer) Expandable(item.asContainer(), this, reloadOnExpand)
                 else ItemState(item, this)
             }
@@ -140,16 +169,18 @@ object Navigator {
     }
 
     class NavigatorState<T : Navigable.Item<T>> internal constructor(
-        newRoot: Navigable.Container<T>,
+        root: Navigable.Container<T>,
         private val title: String,
         private val initExpandDepth: Int,
         private val reloadOnExpand: Boolean,
-        private val liveUpdate: Boolean
+        private val liveUpdate: Boolean,
+        private val openFn: (ItemState<T>) -> Unit
     ) {
 
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
+        private var selected: ItemState<T>? by mutableStateOf(null)
         var minWidth by mutableStateOf(0.dp)
-        var root: Expandable<T> by mutableStateOf(newRootOf(newRoot)); private set
+        var root: Expandable<T> by mutableStateOf(newRootOf(root)); private set
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
             Form.ButtonArgs(Icon.Code.CHEVRONS_UP) { collapse() }
@@ -205,40 +236,175 @@ object Navigator {
                 queue.addAll(item.entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded })
             }
         }
+
+        fun open(item: ItemState<T>) {
+            openFn(item)
+        }
+
+        fun isSelected(item: ItemState<T>): Boolean {
+            return selected == item
+        }
+
+        fun select(item: ItemState<T>) {
+            selected = item
+            item.focusFn?.let { it() }
+        }
+
+        fun selectNext(item: ItemState<T>) {
+            println("Select next from: $selected") // TODO
+        }
+
+        fun selectPrevious(item: ItemState<T>) {
+            println("Select previous from: $selected") // TODO
+        }
+
+        fun selectContainer(item: ItemState<T>) {
+            item.container?.let { if (!it.expandable.isRoot) select(it) }
+        }
     }
 
     @Composable
     fun <T : Navigable.Item<T>> rememberNavigatorState(
-        navigable: Navigable.Container<T>, title: String,
-        initExpandDepth: Int, reloadOnExpand: Boolean, liveUpdate: Boolean
+        root: Navigable.Container<T>, title: String,
+        initExpandDepth: Int, reloadOnExpand: Boolean, liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
-        return remember { NavigatorState(navigable, title, initExpandDepth, reloadOnExpand, liveUpdate) }
+        return remember { NavigatorState(root, title, initExpandDepth, reloadOnExpand, liveUpdate, openFn) }
     }
 
     @Composable
-    fun <T : Navigable.Item<T>> Layout(state: NavigatorState<T>) {
+    fun <T : Navigable.Item<T>> Layout(
+        state: NavigatorState<T>,
+        itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs
+    ) {
         LazyColumn(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-            expandedItemLayouts(state, state.root.entries, 0).forEach { item { it() } }
+            expandedItemLayouts(state, state.root.entries, 0, itemHeight, iconArgs).forEach {
+                item { it() }
+            }
         }
     }
 
     private fun <T : Navigable.Item<T>> expandedItemLayouts(
-        state: NavigatorState<T>,
-        entries: List<ItemState<T>>,
-        depth: Int
+        state: NavigatorState<T>, entries: List<ItemState<T>>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs
     ): List<@Composable () -> Unit> {
         val itemLayouts: MutableList<@Composable () -> Unit> = mutableListOf()
         entries.forEach { item ->
-            itemLayouts.add { ItemLayout(state, item, depth) }
+            itemLayouts.add { ItemLayout(state, item, depth, itemHeight, iconArgs) }
             if (item.isExpandable && item.asExpandable().isExpanded) {
-                itemLayouts.addAll(expandedItemLayouts(state, item.asExpandable().entries, depth + 1))
+                val nestedEntries = item.asExpandable().entries
+                val nestedDepth = depth + 1
+                itemLayouts.addAll(expandedItemLayouts(state, nestedEntries, nestedDepth, itemHeight, iconArgs))
             }
         }
         return itemLayouts
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemLayout(state: NavigatorState<T>, item: ItemState<T>, depth: Int) {
-        Form.Text(value = "-".repeat(depth) + item.name)
+    private fun <T : Navigable.Item<T>> ItemLayout(
+        state: NavigatorState<T>, item: ItemState<T>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs
+    ) {
+        val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
+        val bgColor = when {
+            state.isSelected(item) -> Theme.colors.primary
+            else -> Color.Transparent
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.background(color = bgColor)
+                .widthIn(min = state.minWidth).height(itemHeight)
+//                .onSizeChanged { onSizeChanged(it.width) }
+                .focusRequester(focusReq)
+                .onKeyEvent { onKeyEvent(it, state, item) }
+                .pointerHoverIcon(PointerIconDefaults.Hand)
+                .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, state, item) }
+                .clickable { }
+        ) {
+            if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+            ItemButton(item, itemHeight)
+            ItemIcon(item, iconArgs)
+            Spacer(Modifier.width(TEXT_SPACING))
+            ItemText(item)
+            Spacer(modifier = Modifier.width(AREA_PADDING))
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+
+    @Composable
+    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>, size: Dp) {
+        if (item.isExpandable) Form.RawClickableIcon(
+            icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
+            onClick = { item.asExpandable().toggle() },
+            modifier = Modifier.size(size)
+        ) else Spacer(Modifier.size(size))
+    }
+
+    @Composable
+    private fun <T : Navigable.Item<T>> ItemIcon(item: ItemState<T>, iconArgs: (ItemState<T>) -> IconArgs) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
+            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
+        }
+    }
+
+    @Composable
+    private fun <T : Navigable.Item<T>> ItemText(item: ItemState<T>) {
+        Row(modifier = Modifier.height(ICON_WIDTH)) {
+            Form.Text(value = item.name)
+            item.info?.let {
+                Spacer(Modifier.width(TEXT_SPACING))
+                Form.Text(value = "( $it )", alpha = 0.4f)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    private fun <T : Navigable.Item<T>> onKeyEvent(
+        event: KeyEvent, state: NavigatorState<T>, item: ItemState<T>
+    ): Boolean {
+        return when (event.awtEvent.id) {
+            java.awt.event.KeyEvent.KEY_RELEASED -> false
+            else -> when (event.key) {
+                Key.Enter, Key.NumPadEnter -> {
+                    if (state.isSelected(item)) state.open(item)
+                    else state.select(item)
+                    true
+                }
+                Key.DirectionLeft -> {
+                    if (item.isExpandable && item.asExpandable().isExpanded) item.asExpandable().collapse()
+                    else state.selectContainer(item)
+                    true
+                }
+                Key.DirectionRight -> {
+                    if (item.isExpandable && !item.asExpandable().isExpanded) item.asExpandable().expand()
+                    else state.selectNext(item)
+                    true
+                }
+                Key.DirectionUp -> {
+                    state.selectPrevious(item)
+                    true
+                }
+                Key.DirectionDown -> {
+                    state.selectNext(item)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun <T : Navigable.Item<T>> onPointerEvent(
+        event: PointerEvent, focusReq: FocusRequester, state: NavigatorState<T>, item: ItemState<T>
+    ) {
+        when {
+            event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
+                1 -> {
+                    state.select(item)
+                    focusReq.requestFocus()
+                }
+                2 -> state.open(item)
+            }
+        }
     }
 }
