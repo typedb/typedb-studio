@@ -24,7 +24,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +53,8 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.State
@@ -251,11 +253,11 @@ object Navigator {
         }
 
         fun selectNext(item: ItemState<T>) {
-            println("Select next from: $selected") // TODO
+            println("Select next from: ${item.item}") // TODO
         }
 
         fun selectPrevious(item: ItemState<T>) {
-            println("Select previous from: $selected") // TODO
+            println("Select previous from: ${item.item}") // TODO
         }
 
         fun selectContainer(item: ItemState<T>) {
@@ -277,24 +279,31 @@ object Navigator {
         itemHeight: Dp = ITEM_HEIGHT,
         iconArgs: (ItemState<T>) -> IconArgs
     ) {
-        LazyColumn(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-            expandedItemLayouts(state, state.root.entries, 0, itemHeight, iconArgs).forEach {
-                item { it() }
+        val density = LocalDensity.current.density
+        fun minWidth(width: Int) {
+            val newWidth = Theme.toDP(width, density)
+            if (newWidth > state.minWidth) state.minWidth = newWidth
+        }
+        Box(modifier = Modifier.fillMaxSize().onSizeChanged { minWidth(it.width) }) {
+            LazyColumn(modifier = Modifier.widthIn(min = state.minWidth).horizontalScroll(rememberScrollState())) {
+                expandedItemLayouts(state, state.root.entries, 0, itemHeight, iconArgs, { minWidth(it) }).forEach {
+                    item { it() }
+                }
             }
         }
     }
 
     private fun <T : Navigable.Item<T>> expandedItemLayouts(
         state: NavigatorState<T>, entries: List<ItemState<T>>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs
+        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ): List<@Composable () -> Unit> {
         val itemLayouts: MutableList<@Composable () -> Unit> = mutableListOf()
         entries.forEach { item ->
-            itemLayouts.add { ItemLayout(state, item, depth, itemHeight, iconArgs) }
+            itemLayouts.add { ItemLayout(state, item, depth, itemHeight, iconArgs, onSizeChanged) }
             if (item.isExpandable && item.asExpandable().isExpanded) {
-                val nestedEntries = item.asExpandable().entries
-                val nestedDepth = depth + 1
-                itemLayouts.addAll(expandedItemLayouts(state, nestedEntries, nestedDepth, itemHeight, iconArgs))
+                val ent = item.asExpandable().entries
+                val dep = depth + 1
+                itemLayouts.addAll(expandedItemLayouts(state, ent, dep, itemHeight, iconArgs, onSizeChanged))
             }
         }
         return itemLayouts
@@ -304,7 +313,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs
+        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ) {
         val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
         val bgColor = when {
@@ -315,7 +324,7 @@ object Navigator {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(color = bgColor)
                 .widthIn(min = state.minWidth).height(itemHeight)
-//                .onSizeChanged { onSizeChanged(it.width) }
+                .onSizeChanged { onSizeChanged(it.width) }
                 .focusRequester(focusReq)
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
