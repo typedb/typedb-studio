@@ -45,6 +45,7 @@ object Label {
     const val PATH_TO_CA_CERTIFICATE = "/path/to/ca/certificate"
     const val PATH_TO_PROJECT = "/path/to/project"
     const val PROJECT = "Project"
+    const val PROJECT_BROWSER = "Project Browser"
     const val ROLES = "Roles"
     const val RULES = "Rules"
     const val SELECT_DATABASE = "Select Database"

@@ -25,8 +25,8 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext

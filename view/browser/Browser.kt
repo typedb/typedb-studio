@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -49,8 +50,6 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boo
         private val BAR_SPACING = 8.dp
     }
 
-    data class ButtonArgs(val icon: Icon.Code, val onClick: () -> Unit)
-
     internal abstract val label: String
     internal abstract val icon: Icon.Code
     internal abstract val isActive: Boolean
@@ -59,7 +58,7 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boo
     internal var isOpen: Boolean by mutableStateOf(initOpen)
 
     @Composable
-    abstract fun Navigator()
+    abstract fun NavigatorLayout()
 
     fun toggle() {
         isOpen = !isOpen
@@ -72,7 +71,7 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boo
         Column {
             Bar()
             Separator.Horizontal()
-            Box(modifier = Modifier.weight(1f)) { Navigator() }
+            Box(modifier = Modifier.weight(1f)) { NavigatorLayout() }
         }
     }
 

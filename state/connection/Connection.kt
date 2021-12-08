@@ -24,8 +24,8 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.state.notification.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import mu.KotlinLogging
 

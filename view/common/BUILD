@@ -26,6 +26,8 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/common:common",
+        "//state/notification:notification",
+        "//state:state",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
@@ -42,6 +44,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-common:{pom_version}"],

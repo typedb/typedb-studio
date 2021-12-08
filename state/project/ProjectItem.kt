@@ -20,24 +20,54 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Navigable
 import java.nio.file.Path
+import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val path: Path, override val parent: Directory?) : Navigable.Item<ProjectItem> {
+sealed class ProjectItem(private val type: Type, val path: Path, final override val container: Directory?) :
+    Navigable.Item<ProjectItem> {
 
+    enum class Type(val index: Int) {
+        DIRECTORY(0),
+        FILE(1);
+    }
+
+    private val hash = Objects.hash(path, container)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
-    override var focusFn: (() -> Unit)? = null
 
     val absolutePath: Path = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-    open val isDirectory: Boolean = true
-    open val isFile: Boolean = false
+    val isDirectory: Boolean = type == Type.DIRECTORY
+    val isFile: Boolean = type == Type.FILE
 
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
 
     fun delete() {
         // TODO
+    }
+
+    override fun toString(): String {
+        return path.toString()
+    }
+
+    override fun compareTo(other: Navigable.Item<ProjectItem>): Int {
+        other as ProjectItem
+        return if (this.type == other.type) this.path.compareTo(other.path)
+        else this.type.index.compareTo(other.type.index)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as ProjectItem
+        if (path != other.path) return false
+        if (container != other.container) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return hash
     }
 }

@@ -18,6 +18,8 @@
 
 package com.vaticle.typedb.studio.state.notification
 
+import com.vaticle.typedb.studio.state.common.Message
+
 interface Error {
     val code: String
     val message: String

@@ -18,27 +18,22 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.page.Page
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-class File(path: Path, parent: Directory) : ProjectItem(path, parent), Page {
+class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent), Page {
 
-    override val isFile: Boolean = true
-
-    val type: String = this.path.extension
-    val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(type)
+    val extension: String = this.path.extension
+    val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(extension)
 
     override fun asDirectory(): Directory {
-        throw TypeCastException("Invalid casting of File to Directory") // TODO: generalise
+        throw TypeCastException(ILLEGAL_CAST.message(File::class.simpleName, Directory::class.simpleName))
     }
 
     override fun asFile(): File {
         return this
-    }
-
-    override fun toString(): String {
-        return path.toString()
     }
 }

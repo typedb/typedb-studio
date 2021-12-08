@@ -18,101 +18,32 @@
 
 package com.vaticle.typedb.studio.state.common
 
-import java.util.*
+import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 
-interface Navigable<T : Navigable.Item<T>> {
 
-    interface Item<U : Item<U>> {
+object Navigable {
+
+    interface Item<T : Item<T>> : Comparable<Item<T>> {
 
         val name: String
-        val parent: U?
+        val container: Container<T>?
         val info: String?
-        var focusFn: (() -> Unit)?
-        val isExpandable: Boolean get() = false
+        val isContainer: Boolean get() = false
 
-        fun asExpandable(): Expandable<U> {
-            throw TypeCastException("Illegal cast of Navigable.Item to Navigable.Item.Expandable")
-        }
-
-        interface Expandable<V : Item<V>> : Item<V> {
-
-            val isExpanded: Boolean
-            val entries: List<V>
-            override val isExpandable: Boolean get() = true
-
-            override fun asExpandable(): Expandable<V> {
-                return this
-            }
-
-            fun toggle(isExpanded: Boolean)
-
-            fun toggle() {
-                toggle(!isExpanded)
-            }
-
-            fun expand() {
-                toggle(true)
-            }
-
-            fun collapse() {
-                toggle(false)
-            }
+        fun asContainer(): Container<T> {
+            throw TypeCastException(ILLEGAL_CAST.message(Item::class.simpleName, Container::class.simpleName))
         }
     }
 
-    companion object {
-        const val MAX_ITEM_EXPANDED = 512
-    }
+    interface Container<T : Item<T>> : Item<T> {
 
-    val entries: List<T>
-    var selected: T?
-
-    fun open(item: T)
-
-    fun expand(onExpandLimitReached: () -> Unit) {
-        val isWithinLimits = toggle(true)
-        if (!isWithinLimits) onExpandLimitReached()
-    }
-
-    fun collapse() {
-        toggle(false)
-    }
-
-    private fun toggle(isExpanded: Boolean): Boolean {
-        var i = 0
-        val queue: LinkedList<Item.Expandable<T>> = LinkedList(entries.filterIsInstance<Item.Expandable<T>>())
-
-        while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
-            val item = queue.pop()
-            item.toggle(isExpanded)
-            if (isExpanded) {
-                i += item.entries.count()
-                queue.addAll(item.entries.filterIsInstance<Item.Expandable<T>>())
-            } else {
-                queue.addAll(item.entries.filterIsInstance<Item.Expandable<T>>().filter { it.isExpanded })
-            }
+        override val isContainer: Boolean get() = true
+        override fun asContainer(): Container<T> {
+            return this
         }
-        return queue.isEmpty()
-    }
 
-    fun select(item: T) {
-        selected = item
-        item.focusFn?.let { it() }
-    }
-
-    fun isSelected(item: T): Boolean {
-        return selected == item
-    }
-
-    fun selectNext(item: T) {
-        println("Select next from: $selected") // TODO
-    }
-
-    fun selectPrevious(item: T) {
-        println("Select previous from: $selected") // TODO
-    }
-
-    fun selectParent(item: T) {
-        item.parent?.let { select(it) }
+        val isRoot: Boolean
+        val entries: List<T>
+        fun reloadEntries()
     }
 }

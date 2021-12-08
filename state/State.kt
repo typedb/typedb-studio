@@ -28,5 +28,5 @@ object State {
     val notification = NotificationManager()
     val connection = ConnectionManager(notification)
     val page = PageManager(notification)
-    val project = ProjectManager(page, notification)
+    val project = ProjectManager(notification)
 }

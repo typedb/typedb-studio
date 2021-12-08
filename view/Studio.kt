@@ -38,8 +38,8 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.config.UserDataDirectory
-import com.vaticle.typedb.studio.state.notification.Message
 import com.vaticle.typedb.studio.view.browser.BrowserArea
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text
@@ -58,7 +58,7 @@ object Studio {
     private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
     private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
     private val mainWindowTitle: String
-        get() = "${Label.TYPEDB_STUDIO}${State.project.current?.let { " — ${it.name}" } ?: ""}"
+        get() = "${Label.TYPEDB_STUDIO}${State.project.current?.let { " — ${it.directory.name}" } ?: ""}"
 
     @JvmStatic
     fun main(args: Array<String>) {

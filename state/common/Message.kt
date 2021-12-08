@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.notification
+package com.vaticle.typedb.studio.state.common
 
 import com.vaticle.typedb.common.exception.ErrorMessage
 
@@ -32,8 +32,35 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
          * function with every new nested class added into ErrorMessage.
          */
         fun loadClasses() {
-            Connection
-            Project
+            System; View; Connection; Project
+        }
+    }
+
+    class System(codeNumber: Int, messageBody: String) :
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
+
+        companion object {
+            private const val CODE_PREFIX = "SYS"
+            private const val MESSAGE_PREFIX = "TypeDB Studio System"
+
+            val ILLEGAL_CAST = System(1, "Illegal cast of %s to %s")
+        }
+    }
+
+    class View(codeNumber: Int, messageBody: String) :
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
+
+        companion object {
+            private const val CODE_PREFIX = "VIW"
+            private const val MESSAGE_PREFIX = "TypeDB Studio View"
+
+            val UNEXPECTED_ERROR =
+                View(1, "Unexpected error occurred with TypeDB Studio view library.")
+            val EXPAND_LIMIT_REACHED =
+                View(
+                    2, "%s navigator reached the recommended limit of expanded items (%s). " +
+                            "Automated expansion is limited to improve performance."
+                )
         }
     }
 
@@ -42,7 +69,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
         companion object {
             private const val CODE_PREFIX = "CON"
-            private const val MESSAGE_PREFIX = "TypeDB Connection Error"
+            private const val MESSAGE_PREFIX = "TypeDB Connection"
 
             val UNEXPECTED_ERROR =
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
@@ -58,7 +85,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
         companion object {
             private const val CODE_PREFIX = "PRJ"
-            private const val MESSAGE_PREFIX = "TypeDB Project Error"
+            private const val MESSAGE_PREFIX = "TypeDB Studio Project"
 
             val UNEXPECTED_ERROR =
                 Project(1, "Unexpected error occurred with the project directory file system.")
@@ -70,11 +97,6 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(4, "Project path '%s' is not a directory.")
             val PROJECT_CLOSED =
                 Project(5, "Project path '%s' has been closed.")
-            val MAX_DIR_EXPANDED_REACHED =
-                Project(
-                    6,
-                    "Project path '%s' reached the recommended maximum number of expanded file/directory (%s). We recommend opening a slightly smaller directory for better performance."
-                )
         }
     }
 }

@@ -21,26 +21,32 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.Error
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_DIRECTORY
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_EXIST
-import com.vaticle.typedb.studio.state.notification.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import mu.KotlinLogging
 
-class ProjectManager(val pageMgr: PageManager, private val notificationMgr: NotificationManager) {
+class ProjectManager(private val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    var current: Project? by mutableStateOf(null)
+    var _current: Project? by mutableStateOf(null)
+    var current: Project?
+        get() = _current
+        set(value) {
+            _current = value
+            onChange?.let { it(_current!!) }
+        }
     var showDialog: Boolean by mutableStateOf(false)
+    var onChange: ((Project) -> Unit)? = null
 
     fun toggleDialog() {
         showDialog = !showDialog
@@ -52,8 +58,7 @@ class ProjectManager(val pageMgr: PageManager, private val notificationMgr: Noti
         else if (!path.isReadable()) notificationMgr.userError(Error.fromUser(PATH_NOT_READABLE, newDir), LOGGER)
         else if (!path.isDirectory()) notificationMgr.userError(Error.fromUser(PATH_NOT_DIRECTORY, newDir), LOGGER)
         else {
-            current?.close()
-            current = Project(path, pageMgr, notificationMgr)
+            current = Project(path)
             showDialog = false
         }
     }

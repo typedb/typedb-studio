@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 
 internal class TypeBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean = false) :
@@ -31,7 +32,7 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean =
     override val buttons: List<ButtonArgs> = listOf()
 
     @Composable
-    override fun Navigator() {
+    override fun NavigatorLayout() {
 
     }
 }
