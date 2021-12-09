@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
-import androidx.compose.foundation.ContextMenuState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,12 +33,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -47,11 +49,12 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.consumeDownChange
+import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
@@ -66,48 +69,69 @@ object ContextMenu {
 
     data class Item(val label: String, val icon: Icon.Code? = null, val onClick: () -> Unit)
 
-    @Composable
-    @ExperimentalFoundationApi
-    fun Area(itemsFn: (() -> List<Item>)?, onOpen: () -> Unit, content: @Composable () -> Unit) {
-        val state: ContextMenuState = remember { ContextMenuState() }
-        Box(Modifier.contextMenuDetector(state, itemsFn != null, onOpen)) { content() }
-        if (itemsFn != null) MenuPopup(state, itemsFn)
-    }
+    class State internal constructor() {
 
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun Modifier.contextMenuDetector(
-        state: ContextMenuState, enabled: Boolean = true, onOpen: () -> Unit
-    ): Modifier {
-        return if (enabled && state.status == ContextMenuState.Status.Closed) this.pointerInput(state) {
-            forEachGesture {
+        internal var isOpen by mutableStateOf(false)
+
+        suspend fun onPointerInput(
+            pointerInputScope: PointerInputScope,
+            onSinglePrimaryClick: () -> Unit,
+            onDoublePrimaryClick: () -> Unit,
+            onSecondaryClick: () -> Unit
+        ) {
+            pointerInputScope.forEachGesture {
                 awaitPointerEventScope {
                     val event = awaitEventFirstDown()
-                    if (event.buttons.isSecondaryPressed) {
-                        onOpen()
-                        event.changes.forEach { it.consumeDownChange() }
-                        state.status = ContextMenuState.Status.Open(Rect(event.changes[0].position, 0f))
+                    event.changes.forEach { it.consumeDownChange() }
+                    when {
+                        event.buttons.isPrimaryPressed -> {
+                            when (event.awtEvent.clickCount) {
+                                2 -> onDoublePrimaryClick()
+                                else -> onSinglePrimaryClick()
+                            }
+                        }
+                        event.buttons.isSecondaryPressed -> {
+                            onSecondaryClick()
+                            isOpen = true
+                        }
                     }
                 }
             }
-        } else Modifier
+        }
+
+        private suspend fun AwaitPointerEventScope.awaitEventFirstDown(): PointerEvent {
+            var event: PointerEvent
+            do event = awaitPointerEvent()
+            while (!event.changes.all { it.changedToDown() })
+            return event
+        }
+
+        @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+        internal fun onKeyEvent(event: KeyEvent): Boolean {
+            return when (event.key) {
+                Key.Escape -> {
+                    isOpen = false
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
-    private suspend fun AwaitPointerEventScope.awaitEventFirstDown(): PointerEvent {
-        var event: PointerEvent
-        do event = awaitPointerEvent()
-        while (!event.changes.all { it.changedToDown() })
-        return event
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun MenuPopup(state: ContextMenuState, itemsFn: () -> List<Item>) {
-        if (state.status is ContextMenuState.Status.Open) {
+    fun rememberState(): State {
+        return remember { State() }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun MenuPopup(state: State, itemsFn: () -> List<Item>) {
+        if (state.isOpen) {
             Popup(
                 focusable = true,
                 popupPositionProvider = rememberCursorPositionProvider(),
-                onDismissRequest = { state.status = ContextMenuState.Status.Closed },
-                onKeyEvent = { onKeyEvent(it, state) },
+                onDismissRequest = { state.isOpen = false },
+                onKeyEvent = { state.onKeyEvent(it) },
             ) {
                 Column(
                     modifier = Modifier.shadow(POPUP_SHADOW)
@@ -120,7 +144,7 @@ object ContextMenu {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                                .clickable { state.status = ContextMenuState.Status.Closed; it.onClick() }
+                                .clickable { state.isOpen = false; it.onClick() }
                                 .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
                         ) {
                             Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
@@ -131,16 +155,6 @@ object ContextMenu {
                     }
                 }
             }
-        }
-    }
-
-    @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(event: KeyEvent, state: ContextMenuState): Boolean {
-        return when (event.key) {
-            Key.Escape -> {
-                state.status = ContextMenuState.Status.Closed; true
-            }
-            else -> false
         }
     }
 }

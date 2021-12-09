@@ -20,7 +20,6 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -48,12 +47,10 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.pointer.PointerEvent
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIconDefaults
-import androidx.compose.ui.input.pointer.isPrimaryPressed
-import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -181,8 +178,8 @@ object Navigator {
     ) {
 
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-        private var selected: ItemState<T>? by mutableStateOf(null)
         var minWidth by mutableStateOf(0.dp)
+        var selected: ItemState<T>? by mutableStateOf(null)
         var root: Expandable<T> by mutableStateOf(newRootOf(root)); private set
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
@@ -287,15 +284,17 @@ object Navigator {
             if (newWidth > state.minWidth) state.minWidth = newWidth
         }
         Box(modifier = Modifier.fillMaxSize().onSizeChanged { minWidth(it.width) }) {
+            val contextMenuState = ContextMenu.rememberState()
+            ContextMenu.MenuPopup(contextMenuState, contextMenuFn.let { { it(state.selected!!) } })
             LazyColumn(modifier = Modifier.widthIn(min = state.minWidth).horizontalScroll(rememberScrollState())) {
                 expandedItemLayouts(
-                    state = state,
+                    navigatorState = state,
+                    contextMenuState = contextMenuState,
                     entries = state.root.entries,
                     depth = 0,
                     itemHeight = itemHeight,
                     iconArgs = iconArgs,
                     onSizeChanged = { minWidth(it) },
-                    contextMenuFn = contextMenuFn
                 ).forEach {
                     item { it() }
                 }
@@ -304,22 +303,32 @@ object Navigator {
     }
 
     private fun <T : Navigable.Item<T>> expandedItemLayouts(
-        state: NavigatorState<T>, entries: List<ItemState<T>>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit,
-        contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
+        navigatorState: NavigatorState<T>, contextMenuState: ContextMenu.State,
+        entries: List<ItemState<T>>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ): List<@Composable () -> Unit> {
         val itemLayouts: MutableList<@Composable () -> Unit> = mutableListOf()
         entries.forEach { item ->
-            itemLayouts.add { ItemLayout(state, item, depth, itemHeight, iconArgs, onSizeChanged, contextMenuFn) }
+            itemLayouts.add {
+                ItemLayout(
+                    navigatorState = navigatorState,
+                    contextMenuState = contextMenuState,
+                    item = item,
+                    depth = depth,
+                    itemHeight = itemHeight,
+                    iconArgs = iconArgs,
+                    onSizeChanged = onSizeChanged
+                )
+            }
             if (item.isExpandable && item.asExpandable().isExpanded) itemLayouts.addAll(
                 expandedItemLayouts(
-                    state = state,
+                    navigatorState = navigatorState,
+                    contextMenuState = contextMenuState,
                     entries = item.asExpandable().entries,
                     depth = depth + 1,
                     itemHeight = itemHeight,
                     iconArgs = iconArgs,
-                    onSizeChanged = onSizeChanged,
-                    contextMenuFn = contextMenuFn
+                    onSizeChanged = onSizeChanged
                 )
             )
         }
@@ -329,39 +338,36 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        state: NavigatorState<T>,
+        navigatorState: NavigatorState<T>,
+        contextMenuState: ContextMenu.State,
         item: ItemState<T>,
         depth: Int,
         itemHeight: Dp = ITEM_HEIGHT,
         iconArgs: (ItemState<T>) -> IconArgs,
-        onSizeChanged: (Int) -> Unit,
-        contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
+        onSizeChanged: (Int) -> Unit
     ) {
         val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
         val bgColor = when {
-            state.isSelected(item) -> Theme.colors.primary
+            navigatorState.isSelected(item) -> Theme.colors.primary
             else -> Color.Transparent
         }
-        ContextMenu.Area(contextMenuFn.let { { it(item) } }, { state.select(item) }) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.background(color = bgColor)
-                    .widthIn(min = state.minWidth).height(itemHeight)
-                    .onSizeChanged { onSizeChanged(it.width) }
-                    .focusRequester(focusReq)
-                    .onKeyEvent { onKeyEvent(it, state, item) }
-                    .pointerHoverIcon(PointerIconDefaults.Hand)
-                    .onPointerEvent(PointerEventType.Press) { onPointerEvent(it, focusReq, state, item) }
-                    .clickable { }
-            ) {
-                if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                ItemButton(item, itemHeight)
-                ItemIcon(item, iconArgs)
-                Spacer(Modifier.width(TEXT_SPACING))
-                ItemText(item)
-                Spacer(modifier = Modifier.width(AREA_PADDING))
-                Spacer(modifier = Modifier.weight(1f))
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.background(color = bgColor)
+                .widthIn(min = navigatorState.minWidth).height(itemHeight)
+                .onSizeChanged { onSizeChanged(it.width) }
+                .focusRequester(focusReq)
+                .onKeyEvent { onKeyEvent(it, navigatorState, item) }
+                .pointerHoverIcon(PointerIconDefaults.Hand)
+                .pointerInput(item) { onPointerInput(contextMenuState, navigatorState, focusReq, item) }
+        ) {
+            if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+            ItemButton(item, itemHeight)
+            ItemIcon(item, iconArgs)
+            Spacer(Modifier.width(TEXT_SPACING))
+            ItemText(item)
+            Spacer(modifier = Modifier.width(AREA_PADDING))
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 
@@ -390,6 +396,18 @@ object Navigator {
                 Form.Text(value = "( $it )", alpha = 0.4f)
             }
         }
+    }
+
+    private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
+        contextMenuState: ContextMenu.State, navigatorState: NavigatorState<T>,
+        focusReq: FocusRequester, item: ItemState<T>
+    ) {
+        contextMenuState.onPointerInput(
+            pointerInputScope = this,
+            onSinglePrimaryClick = { navigatorState.select(item); focusReq.requestFocus() },
+            onDoublePrimaryClick = { navigatorState.open(item) },
+            onSecondaryClick = { navigatorState.select(item) }
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -423,20 +441,6 @@ object Navigator {
                     true
                 }
                 else -> false
-            }
-        }
-    }
-
-    private fun <T : Navigable.Item<T>> onPointerEvent(
-        event: PointerEvent, focusReq: FocusRequester, state: NavigatorState<T>, item: ItemState<T>
-    ) {
-        when {
-            event.buttons.isPrimaryPressed -> when (event.awtEvent.clickCount) {
-                1 -> {
-                    state.select(item)
-                    focusReq.requestFocus()
-                }
-                2 -> state.open(item)
             }
         }
     }
