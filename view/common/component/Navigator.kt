@@ -62,7 +62,6 @@ import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_C
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
-import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -212,8 +211,8 @@ object Navigator {
                         root.checkForUpdate()
                     } while (true)
                 } catch (e: CancellationException) {
-                } catch (e: Exception) {
-                    State.notification.systemError(Error.fromSystem(e, UNEXPECTED_ERROR), LOGGER)
+                } catch (e: java.lang.Exception) {
+                    State.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
                 }
             }
         }
@@ -228,8 +227,7 @@ object Navigator {
                 queue.addAll(item.entries.filterIsInstance<Expandable<T>>())
             }
             if (!queue.isEmpty()) {
-                val error = Error.fromUser(EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
-                State.notification.userError(error, LOGGER)
+                State.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
         }
 

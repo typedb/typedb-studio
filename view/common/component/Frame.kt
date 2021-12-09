@@ -141,7 +141,7 @@ object Frame {
         }
 
         private fun add(added: List<Pane>) {
-            panes = (panes + added.map{
+            panes = (panes + added.map {
                 PaneState(
                     frameState = this, index = 0, id = it.id, initSize = it.initSize,
                     minSize = it.minSize, order = it.order, content = it.content

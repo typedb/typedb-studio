@@ -25,8 +25,8 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.state.common.Message
-import com.vaticle.typedb.studio.state.notification.Error
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_CONNECT
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
@@ -85,10 +85,10 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
                 status = Status.CONNECTED
             } catch (e: TypeDBClientException) {
                 status = Status.DISCONNECTED
-                notificationMgr.userError(Error.fromUser(Message.Connection.UNABLE_TO_CONNECT), LOGGER)
-            } catch (e: Exception) {
+                notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
+            } catch (e: java.lang.Exception) {
                 status = Status.DISCONNECTED
-                notificationMgr.systemError(Error.fromSystem(e, Message.Connection.UNEXPECTED_ERROR), LOGGER)
+                notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
             }
         }
     }

@@ -59,7 +59,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val EXPAND_LIMIT_REACHED =
                 View(
                     2, "%s navigator reached the recommended limit of expanded items (%s). " +
-                            "Automated expansion is limited to improve performance."
+                            "Automated expansion beyond the limit is disabled to improve performance."
                 )
         }
     }

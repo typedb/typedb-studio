@@ -20,29 +20,59 @@ package com.vaticle.typedb.studio.state.notification
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
+import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import mu.KLogger
 
 class NotificationManager {
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf();
 
-    fun info(message: String, logger: KLogger) {
+    fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
-        queue += Notification(Notification.Type.INFO, message)
+        queue += Notification(INFO, message.code(), stringOf(message, *params))
     }
 
-    fun userError(error: Error.User, logger: KLogger) {
-        logger.error { error.message }
-        queue += Notification(Notification.Type.ERROR, error.message)
+    fun userError(logger: KLogger, message: Message, vararg params: Any) {
+        userNotification(logger, ERROR, message.code(), stringOf(message, *params))
+
     }
 
-    fun systemError(error: Error.System, logger: KLogger) {
-        logger.error { error.message }
-        logger.error { error.cause }
-        queue += Notification(Notification.Type.ERROR, error.message)
+    fun userWarning(logger: KLogger, message: Message, vararg params: Any) {
+        userNotification(logger, WARNING, message.code(), stringOf(message, *params))
+    }
+
+    fun systemWarning(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
+        systemNotification(logger, cause, WARNING, message.code(), stringOf(message, *params))
+    }
+
+    fun systemError(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
+        systemNotification(logger, cause, ERROR, message.code(), stringOf(message, *params))
     }
 
     fun dismiss(message: Notification) {
         queue -= message
+    }
+
+    private fun userNotification(logger: KLogger, type: Notification.Type, code: String, message: String) {
+        logger.error { message }
+        queue += Notification(type, code, message)
+    }
+
+    private fun systemNotification(
+        logger: KLogger, cause: Throwable, type: Notification.Type,
+        code: String, message: String
+    ) {
+        logger.error { message }
+        logger.error { cause }
+        queue += Notification(type, code, message)
+    }
+
+    private fun stringOf(message: Message, vararg params: Any): String {
+        val messageStr = message.message(*params)
+        assert(!messageStr.contains("%s"))
+        return messageStr
     }
 }

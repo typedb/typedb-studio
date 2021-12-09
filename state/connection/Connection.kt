@@ -25,7 +25,6 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
-import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import mu.KotlinLogging
 
@@ -58,7 +57,7 @@ class Connection internal constructor(
         try {
             this.session = client.session(database, SESSION_TYPE)
         } catch (exception: TypeDBClientException) {
-            notificationMgr.userError(Error.fromUser(UNABLE_CREATE_SESSION, database), LOGGER)
+            notificationMgr.userError(LOGGER, UNABLE_CREATE_SESSION, database)
         }
     }
 

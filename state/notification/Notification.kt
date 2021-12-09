@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.notification
 
-// not data class, because each object has to be unique
-class Notification internal constructor(val type: Type, val text: String) {
-    enum class Type { INFO, ERROR }
+// not a data class, because each object has to be unique
+class Notification internal constructor(val type: Type, val code: String, val message: String) {
+    enum class Type { INFO, WARNING, ERROR }
 }

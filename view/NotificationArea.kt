@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.state.notification.Notification
 import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -57,7 +58,7 @@ object NotificationArea {
         androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
                 State.notification.queue.forEach { notification ->
-                    Notification(notification = notification)
+                    NotificationLayout(notification = notification)
                 }
             }
         }
@@ -65,7 +66,7 @@ object NotificationArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Notification(notification: Notification, modifier: Modifier = Modifier) {
+    private fun NotificationLayout(notification: Notification, modifier: Modifier = Modifier) {
         val colorConfig = colorConfigOf(notification.type)
         Row(
             modifier = modifier
@@ -75,7 +76,7 @@ object NotificationArea {
                 .background(color = colorConfig.background, shape = MESSAGE_SHAPE)
         ) {
             TextSelectable(
-                value = notification.text,
+                value = notification.message,
                 color = colorConfig.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
             )
@@ -93,6 +94,7 @@ object NotificationArea {
     private fun colorConfigOf(type: Notification.Type): ColorConfig {
         return when (type) {
             INFO -> ColorConfig(Theme.colors.border, Theme.colors.onSurface)
+            WARNING -> ColorConfig(Theme.colors.quaternary, Theme.colors.onSecondary)
             ERROR -> ColorConfig(Theme.colors.error, Theme.colors.onError)
         }
     }
