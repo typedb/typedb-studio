@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -356,7 +357,7 @@ object Navigator {
             modifier = Modifier.background(color = bgColor)
                 .widthIn(min = navigatorState.minWidth).height(itemHeight)
                 .onSizeChanged { onSizeChanged(it.width) }
-                .focusRequester(focusReq)
+                .focusRequester(focusReq).focusable(true)
                 .onKeyEvent { onKeyEvent(it, navigatorState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(contextMenuState, navigatorState, focusReq, item) }
