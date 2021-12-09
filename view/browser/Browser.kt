@@ -42,7 +42,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-sealed class Browser(private val areaState: BrowserArea.AreaState, initOpen: Boolean = false) {
+sealed class Browser(private val areaState: BrowserArea.AreaState, internal val order: Int, initOpen: Boolean = false) {
 
     companion object {
         internal val MIN_HEIGHT = 80.dp

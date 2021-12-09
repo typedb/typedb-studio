@@ -63,11 +63,11 @@ object BrowserArea {
 
     internal class AreaState(private val paneState: Frame.PaneState) {
         val browsers = listOf(
-            ProjectBrowser(this, true),
-            TypeBrowser(this, true),
-            RuleBrowser(this),
-            UserBrowser(this),
-            RoleBrowser(this)
+            ProjectBrowser(this, 1, true),
+            TypeBrowser(this, 2, true),
+            RuleBrowser(this, 3),
+            UserBrowser(this, 4),
+            RoleBrowser(this, 5)
         )
 
         init {
@@ -94,15 +94,15 @@ object BrowserArea {
             }
             if (openedBrowsers.isNotEmpty()) {
                 Separator.Vertical()
-                if (openedBrowsers.size == 1) openedBrowsers.first().Layout()
-                else Frame.Column(
+                Frame.Column(
                     modifier = Modifier.fillMaxHeight().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
                     *openedBrowsers.map { browser ->
                         Frame.Pane(
                             id = browser.label,
                             initSize = second(1f),
-                            minSize = Browser.MIN_HEIGHT
+                            minSize = Browser.MIN_HEIGHT,
+                            order = browser.order
                         ) { browser.Layout() }
                     }.toTypedArray()
                 )

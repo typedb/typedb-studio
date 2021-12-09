@@ -23,8 +23,8 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class UserBrowser(areaState: BrowserArea.AreaState, initOpen: Boolean = false) :
-    Browser(areaState, initOpen) {
+internal class UserBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
+    Browser(areaState, order, initOpen) {
 
     override val label: String = Label.USERS
     override val icon: Icon.Code = Icon.Code.USER

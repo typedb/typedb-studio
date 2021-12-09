@@ -60,15 +60,17 @@ object Frame {
         val id: String,
         val initSize: Either<Dp, Float>,
         val minSize: Dp = PANE_MIN_SIZE,
+        val order: Int = 0,
         val content: @Composable (PaneState) -> Unit
     )
 
     class PaneState internal constructor(
         private val frameState: FrameState,
-        private val index: Int,
+        internal var index: Int,
         val id: String,
         val initSize: Either<Dp, Float> = Either.second(1f),
         val minSize: Dp = PANE_MIN_SIZE,
+        val order: Int,
         currentSize: Dp = 0.dp,
         currentFreezeSize: Dp? = null,
         val content: @Composable (PaneState) -> Unit
@@ -86,8 +88,7 @@ object Frame {
             }
 
         internal val nonDraggableSize: Dp
-            get() = freezeSize
-                ?: (_size - (if (isFirst || isLast) (DRAGGABLE_BAR_SIZE / 2) else DRAGGABLE_BAR_SIZE))
+            get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAGGABLE_BAR_SIZE / 2) else DRAGGABLE_BAR_SIZE))
 
         internal fun tryOverride(delta: Dp) {
             _size += max(delta, minSize - _size)
@@ -123,32 +124,29 @@ object Frame {
             }
 
         internal fun sync(inputs: List<Pane>) {
-            val inputIDs = inputs.map { it.id }.toSet()
-            val removedIDs = panes.map { it.id }.filter { !inputIDs.contains(it) }.toSet()
-            if (removedIDs.isNotEmpty()) remove(removedIDs)
-            if (inputs.size > panes.size) replace(inputs)
+            val new = inputs.map { it.id }.toSet()
+            val old = panes.map { it.id }.toSet()
+            val deleted = old - new
+            val added = new - old
+            if (deleted.isNotEmpty()) remove(deleted)
+            if (added.isNotEmpty()) add(inputs.filter { added.contains(it.id) })
         }
 
-        private fun remove(removedPaneIDs: Set<String>) {
-            panes.filter { removedPaneIDs.contains(it.id) }.forEach {
+        private fun remove(deletedPaneIDs: Set<String>) {
+            panes.filter { deletedPaneIDs.contains(it.id) }.forEach {
                 if (it.isFirst) it.next!!.size += it.size
                 else it.previous!!.size += it.size
             }
-            panes = panes.filter { !removedPaneIDs.contains(it.id) }.mapIndexed { i, pane ->
-                PaneState(
-                    frameState = this, index = i, id = pane.id, minSize = pane.minSize,
-                    currentSize = pane._size, currentFreezeSize = pane.freezeSize, content = pane.content
-                )
-            }
+            panes = panes.filter { !deletedPaneIDs.contains(it.id) }.onEachIndexed { i, pane -> pane.index = i }
         }
 
-        private fun replace(newPanes: List<Pane>) {
-            panes = newPanes.mapIndexed { i, input ->
+        private fun add(added: List<Pane>) {
+            panes = (panes + added.map{
                 PaneState(
-                    frameState = this, index = i, id = input.id, initSize = input.initSize,
-                    minSize = input.minSize, content = input.content
+                    frameState = this, index = 0, id = it.id, initSize = it.initSize,
+                    minSize = it.minSize, order = it.order, content = it.content
                 )
-            }
+            }).sortedBy { it.order }.onEachIndexed { i, pane -> pane.index = i }
             mayInitialiseSizes()
         }
 
@@ -218,7 +216,6 @@ object Frame {
         separator: SeparatorArgs? = null,
         vararg panes: Pane
     ) {
-        assert(panes.size >= 2)
         val pixelDensity = LocalDensity.current.density
         val frameState = remember { FrameState(separator?.size) }
         frameState.sync(panes.toList())
