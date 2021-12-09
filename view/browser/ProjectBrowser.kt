@@ -68,7 +68,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
             ) { projectItemOpen(it) }
             State.project.onChange = { state.replaceRoot(it) }
             buttons = state.buttons
-            Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) }) { contextMenuItems(it) }
+            Navigator.Layout(navState = state, iconArgs = { projectItemIcon(it) }) { contextMenuItems(it) }
         }
     }
 

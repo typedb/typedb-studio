@@ -52,6 +52,7 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -65,6 +66,8 @@ import com.vaticle.typedb.studio.state.notification.Error
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
+import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.util.LinkedList
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -179,8 +182,9 @@ object Navigator {
     ) {
 
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-        var minWidth by mutableStateOf(0.dp)
-        var selected: ItemState<T>? by mutableStateOf(null)
+        var minWidth by mutableStateOf(0.dp); private set
+        var selected: ItemState<T>? by mutableStateOf(null); private set
+        var hovered: ItemState<T>? by mutableStateOf(null)
         var root: Expandable<T> by mutableStateOf(newRootOf(root)); private set
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
@@ -238,12 +242,12 @@ object Navigator {
             }
         }
 
-        fun open(item: ItemState<T>) {
-            openFn(item)
+        fun mayIncreaseMinWidth(width: Dp) {
+            if (width > minWidth) minWidth = width
         }
 
-        fun isSelected(item: ItemState<T>): Boolean {
-            return selected == item
+        fun open(item: ItemState<T>) {
+            openFn(item)
         }
 
         fun select(item: ItemState<T>) {
@@ -266,39 +270,36 @@ object Navigator {
 
     @Composable
     fun <T : Navigable.Item<T>> rememberNavigatorState(
-        root: Navigable.Container<T>, title: String,
-        initExpandDepth: Int, reloadOnExpand: Boolean, liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
+        root: Navigable.Container<T>, title: String, initExpandDepth: Int,
+        reloadOnExpand: Boolean, liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
         return remember { NavigatorState(root, title, initExpandDepth, reloadOnExpand, liveUpdate, openFn) }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Navigable.Item<T>> Layout(
-        state: NavigatorState<T>,
-        itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs,
-        contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
+        navState: NavigatorState<T>, itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs, contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
     ) {
         val density = LocalDensity.current.density
-        fun minWidth(width: Int) {
-            val newWidth = Theme.toDP(width, density)
-            if (newWidth > state.minWidth) state.minWidth = newWidth
-        }
-        Box(modifier = Modifier.fillMaxSize().onSizeChanged { minWidth(it.width) }) {
-            val contextMenuState = ContextMenu.rememberState()
-            ContextMenu.MenuPopup(contextMenuState, contextMenuFn.let { { it(state.selected!!) } })
-            LazyColumn(modifier = Modifier.widthIn(min = state.minWidth).horizontalScroll(rememberScrollState())) {
+        Box(modifier = Modifier.fillMaxSize().onSizeChanged { navState.mayIncreaseMinWidth(toDP(it.width, density)) }) {
+            val ctmState = ContextMenu.rememberState()
+            ContextMenu.Popup(ctmState, contextMenuFn.let { { it(navState.selected!!) } })
+            LazyColumn(
+                modifier = Modifier.widthIn(min = navState.minWidth)
+                    .horizontalScroll(rememberScrollState())
+                    .pointerMoveFilter(onExit = { navState.hovered = null; false })
+            ) {
                 expandedItemLayouts(
-                    navigatorState = state,
-                    contextMenuState = contextMenuState,
-                    entries = state.root.entries,
+                    navigatorState = navState,
+                    contextMenuState = ctmState,
+                    entries = navState.root.entries,
                     depth = 0,
                     itemHeight = itemHeight,
                     iconArgs = iconArgs,
-                    onSizeChanged = { minWidth(it) },
-                ).forEach {
-                    item { it() }
-                }
+                    onSizeChanged = { navState.mayIncreaseMinWidth(toDP(it, density)) },
+                ).forEach { item { it() } }
             }
         }
     }
@@ -312,7 +313,7 @@ object Navigator {
         entries.forEach { item ->
             itemLayouts.add {
                 ItemLayout(
-                    navigatorState = navigatorState,
+                    navState = navigatorState,
                     contextMenuState = contextMenuState,
                     item = item,
                     depth = depth,
@@ -339,7 +340,7 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        navigatorState: NavigatorState<T>,
+        navState: NavigatorState<T>,
         contextMenuState: ContextMenu.State,
         item: ItemState<T>,
         depth: Int,
@@ -349,18 +350,20 @@ object Navigator {
     ) {
         val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
         val bgColor = when {
-            navigatorState.isSelected(item) -> Theme.colors.primary
+            navState.selected == item -> Theme.colors.primary
+            navState.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
             else -> Color.Transparent
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(color = bgColor)
-                .widthIn(min = navigatorState.minWidth).height(itemHeight)
+                .widthIn(min = navState.minWidth).height(itemHeight)
                 .onSizeChanged { onSizeChanged(it.width) }
                 .focusRequester(focusReq).focusable(true)
-                .onKeyEvent { onKeyEvent(it, navigatorState, item) }
+                .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(contextMenuState, navigatorState, focusReq, item) }
+                .pointerInput(item) { onPointerInput(contextMenuState, navState, focusReq, item) }
+                .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
             ItemButton(item, itemHeight)
@@ -419,7 +422,7 @@ object Navigator {
             java.awt.event.KeyEvent.KEY_RELEASED -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {
-                    if (state.isSelected(item)) state.open(item)
+                    if (state.selected == item) state.open(item)
                     else state.select(item)
                     true
                 }

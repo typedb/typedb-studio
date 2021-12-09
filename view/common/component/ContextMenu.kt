@@ -125,7 +125,7 @@ object ContextMenu {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun MenuPopup(state: State, itemsFn: () -> List<Item>) {
+    fun Popup(state: State, itemsFn: () -> List<Item>) {
         if (state.isOpen) {
             Popup(
                 focusable = true,
