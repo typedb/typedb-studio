@@ -64,6 +64,7 @@ import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
+import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Owner
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -97,6 +98,9 @@ object Navigator {
         val name get() = item.name
         val info get() = item.info
         var focusFn: (() -> Unit)? = null
+        var next: ItemState<T>? by mutableStateOf(null)
+        var previous: ItemState<T>? by mutableStateOf(null)
+        var depth: Int = 0
 
         open fun asExpandable(): Expandable<T> {
             throw TypeCastException(ILLEGAL_CAST.message(ItemState::class.simpleName, Expandable::class.simpleName))
@@ -106,8 +110,12 @@ object Navigator {
             return item.compareTo(other.item)
         }
 
-        class Expandable<T : Navigable.Item<T>> internal constructor(
-            val expandable: Navigable.Container<T>, container: Expandable<T>?, private val reloadOnExpand: Boolean
+        internal open fun navigables(depth: Int): List<ItemState<T>> {
+            return listOf(this)
+        }
+
+        open class Expandable<T : Navigable.Item<T>> internal constructor(
+            expandable: Navigable.Container<T>, container: Expandable<T>?, private val navState: NavigatorState<T>
         ) : ItemState<T>(expandable as T, container) {
 
             override val isExpandable: Boolean = true
@@ -118,26 +126,42 @@ object Navigator {
                 return this
             }
 
+            override fun navigables(depth: Int): List<ItemState<T>> {
+                val list: MutableList<ItemState<T>> = mutableListOf(this)
+                if (isExpanded) list.addAll(navigableChildren(depth + 1))
+                return list
+            }
+
+            protected fun navigableChildren(depth: Int): List<ItemState<T>> {
+                return entries.onEach { it.depth = depth }.map { it.navigables(depth) }.flatten()
+            }
+
             fun toggle() {
                 if (isExpanded) collapse()
                 else expand()
             }
 
-            fun collapse() {
+            fun collapse(recomputeNavigator: Boolean = true) {
                 isExpanded = false
+                if (recomputeNavigator) navState.recomputeList()
             }
 
-            fun expand() {
-                expand(1)
+            fun expand(recomputeNavigator: Boolean = true) {
+                expand(recomputeNavigator, 1)
             }
 
             internal fun expand(depth: Int) {
+                expand(true, depth)
+            }
+
+            internal fun expand(recomputeNavigator: Boolean, depth: Int) {
                 expand(1, depth)
+                if (recomputeNavigator) navState.recomputeList()
             }
 
             private fun expand(currentDepth: Int, maxDepth: Int) {
                 isExpanded = true
-                if (reloadOnExpand) reloadEntries()
+                reloadEntries()
                 if (currentDepth < maxDepth) {
                     entries.filterIsInstance<Expandable<T>>().forEach { it.expand(currentDepth + 1, maxDepth) }
                 }
@@ -164,46 +188,65 @@ object Navigator {
                 entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.checkForUpdate() }
             }
 
-            private fun itemStateOf(item: T): ItemState<T> {
-                return if (item.isContainer) Expandable(item.asContainer(), this, reloadOnExpand)
+            internal open fun itemStateOf(item: T): ItemState<T> {
+                return if (item.isContainer) Expandable(item.asContainer(), this, navState)
                 else ItemState(item, this)
+            }
+
+            internal class Owner<T : Navigable.Item<T>> internal constructor(
+                expandable: Navigable.Container<T>, val navState: NavigatorState<T>
+            ) : Expandable<T>(expandable, null, navState) {
+
+                fun navigables(): List<ItemState<T>> {
+                    return navigableChildren(0)
+                }
+
+                override fun itemStateOf(item: T): ItemState<T> {
+                    return if (item.isContainer) Expandable(item.asContainer(), null, navState)
+                    else ItemState(item, this)
+                }
             }
         }
     }
 
     class NavigatorState<T : Navigable.Item<T>> internal constructor(
-        root: Navigable.Container<T>,
+        owner: Navigable.Owner<T>,
         private val title: String,
         private val initExpandDepth: Int,
-        private val reloadOnExpand: Boolean,
         private val liveUpdate: Boolean,
         private val openFn: (ItemState<T>) -> Unit
     ) {
 
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-        var minWidth by mutableStateOf(0.dp); private set
-        var selected: ItemState<T>? by mutableStateOf(null); private set
-        var hovered: ItemState<T>? by mutableStateOf(null)
-        var root: Expandable<T> by mutableStateOf(newRootOf(root)); private set
+        private var owner: Owner<T> by mutableStateOf(Owner(owner, this)); private set
+        internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
+        internal var minWidth by mutableStateOf(0.dp); private set
+        internal var selected: ItemState<T>? by mutableStateOf(null); private set
+        internal var hovered: ItemState<T>? by mutableStateOf(null)
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
             Form.ButtonArgs(Icon.Code.CHEVRONS_UP) { collapse() }
         )
 
-        fun replaceRoot(newRoot: Navigable.Container<T>) {
-            coroutineScope.cancel()
-            coroutineScope = CoroutineScope(EmptyCoroutineContext)
-            root = newRootOf(newRoot)
+        init {
+            initialiseOwner()
         }
 
-        private fun newRootOf(newRoot: Navigable.Container<T>): Expandable<T> {
-            return Expandable(newRoot, null, reloadOnExpand)
-                .also { it.expand(1 + initExpandDepth) }
-                .also { if (liveUpdate) initWatcher(it) }
+        private fun initialiseOwner() {
+            owner.expand(false,1 + initExpandDepth)
+            if (liveUpdate) initWatcher(owner)
+            recomputeList()
+        }
+
+        fun replaceOwner(newOwner: Navigable.Owner<T>) {
+            coroutineScope.cancel()
+            coroutineScope = CoroutineScope(EmptyCoroutineContext)
+            owner = Owner(newOwner, this)
+            initialiseOwner()
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun initWatcher(root: Expandable<T>) {
+        private fun initWatcher(root: Owner<T>) {
             coroutineScope.launch {
                 try {
                     do {
@@ -219,25 +262,38 @@ object Navigator {
 
         private fun expand() {
             var i = 0
-            val queue = LinkedList(root.entries.filterIsInstance<Expandable<T>>())
+            val queue = LinkedList(owner.entries.filterIsInstance<Expandable<T>>())
             while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
                 val item = queue.pop()
-                item.expand()
+                item.expand(false)
                 i += 1 + item.entries.count { !it.isExpandable }
                 queue.addAll(item.entries.filterIsInstance<Expandable<T>>())
             }
+            recomputeList()
             if (!queue.isEmpty()) {
                 State.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
         }
 
         private fun collapse() {
-            val queue = LinkedList(root.entries.filterIsInstance<Expandable<T>>())
+            val queue = LinkedList(owner.entries.filterIsInstance<Expandable<T>>())
             while (queue.isNotEmpty()) {
                 val item = queue.pop()
-                item.collapse()
+                item.collapse(false)
                 queue.addAll(item.entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded })
             }
+            recomputeList()
+        }
+
+        internal fun recomputeList() {
+            var previous: ItemState<T>? = null
+            entries = owner.navigables().onEach { item ->
+                previous?.let { it.next = item }
+                item.previous = previous
+                previous = item
+            }
+            previous?.next = null
+
         }
 
         fun mayIncreaseMinWidth(width: Dp) {
@@ -254,24 +310,24 @@ object Navigator {
         }
 
         fun selectNext(item: ItemState<T>) {
-            println("Select next from: ${item.item}") // TODO
+            item.next?.let { select(it) }
         }
 
         fun selectPrevious(item: ItemState<T>) {
-            println("Select previous from: ${item.item}") // TODO
+            item.previous?.let { select(it) }
         }
 
         fun selectContainer(item: ItemState<T>) {
-            item.container?.let { if (!it.expandable.isRoot) select(it) }
+            item.container?.let { select(it) }
         }
     }
 
     @Composable
     fun <T : Navigable.Item<T>> rememberNavigatorState(
-        root: Navigable.Container<T>, title: String, initExpandDepth: Int,
-        reloadOnExpand: Boolean, liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
+        owner: Navigable.Owner<T>, title: String, initExpandDepth: Int,
+        liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
-        return remember { NavigatorState(root, title, initExpandDepth, reloadOnExpand, liveUpdate, openFn) }
+        return remember { NavigatorState(owner, title, initExpandDepth, liveUpdate, openFn) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -289,62 +345,23 @@ object Navigator {
                     .horizontalScroll(rememberScrollState())
                     .pointerMoveFilter(onExit = { navState.hovered = null; false })
             ) {
-                expandedItemLayouts(
-                    navigatorState = navState,
-                    contextMenuState = ctmState,
-                    entries = navState.root.entries,
-                    depth = 0,
-                    itemHeight = itemHeight,
-                    iconArgs = iconArgs,
-                    onSizeChanged = { navState.mayIncreaseMinWidth(toDP(it, density)) },
-                ).forEach { item { it() } }
+                navState.entries.forEach {
+                    item {
+                        ItemLayout(navState, ctmState, it, it.depth, itemHeight, iconArgs) {
+                            navState.mayIncreaseMinWidth(toDP(it, density))
+                        }
+                    }
+                }
             }
         }
-    }
-
-    private fun <T : Navigable.Item<T>> expandedItemLayouts(
-        navigatorState: NavigatorState<T>, contextMenuState: ContextMenu.State,
-        entries: List<ItemState<T>>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
-    ): List<@Composable () -> Unit> {
-        val itemLayouts: MutableList<@Composable () -> Unit> = mutableListOf()
-        entries.forEach { item ->
-            itemLayouts.add {
-                ItemLayout(
-                    navState = navigatorState,
-                    contextMenuState = contextMenuState,
-                    item = item,
-                    depth = depth,
-                    itemHeight = itemHeight,
-                    iconArgs = iconArgs,
-                    onSizeChanged = onSizeChanged
-                )
-            }
-            if (item.isExpandable && item.asExpandable().isExpanded) itemLayouts.addAll(
-                expandedItemLayouts(
-                    navigatorState = navigatorState,
-                    contextMenuState = contextMenuState,
-                    entries = item.asExpandable().entries,
-                    depth = depth + 1,
-                    itemHeight = itemHeight,
-                    iconArgs = iconArgs,
-                    onSizeChanged = onSizeChanged
-                )
-            )
-        }
-        return itemLayouts
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        navState: NavigatorState<T>,
-        contextMenuState: ContextMenu.State,
-        item: ItemState<T>,
-        depth: Int,
-        itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs,
-        onSizeChanged: (Int) -> Unit
+        navState: NavigatorState<T>, contextMenuState: ContextMenu.State,
+        item: ItemState<T>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
+        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ) {
         val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
         val bgColor = when {

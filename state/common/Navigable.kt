@@ -42,8 +42,13 @@ object Navigable {
             return this
         }
 
-        val isRoot: Boolean
+        val isOwner: Boolean get() = false
         val entries: List<T>
         fun reloadEntries()
+    }
+
+    interface Owner<T : Item<T>> : Container<T> {
+
+        override val isOwner: Boolean get() = true
     }
 }

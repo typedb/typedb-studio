@@ -27,7 +27,6 @@ import kotlin.io.path.listDirectoryEntries
 class Directory internal constructor(path: Path, parent: Directory?) :
     Navigable.Container<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent) {
 
-    override val isRoot: Boolean = false
     override var entries: List<ProjectItem> = emptyList()
 
     override fun asDirectory(): Directory {

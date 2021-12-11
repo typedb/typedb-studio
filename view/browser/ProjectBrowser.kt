@@ -60,13 +60,12 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
         if (!isActive) OpenProjectHelper()
         else {
             val state = rememberNavigatorState(
-                root = State.project.current!!,
+                owner = State.project.current!!,
                 title = Label.PROJECT_BROWSER,
                 initExpandDepth = 1,
-                reloadOnExpand = true,
                 liveUpdate = true
             ) { projectItemOpen(it) }
-            State.project.onChange = { state.replaceRoot(it) }
+            State.project.onChange = { state.replaceOwner(it) }
             buttons = state.buttons
             Navigator.Layout(navState = state, iconArgs = { projectItemIcon(it) }) { contextMenuItems(it) }
         }
