@@ -97,7 +97,7 @@ object Navigator {
         open val isExpandable: Boolean = false
         val name get() = item.name
         val info get() = item.info
-        var focusFn: (() -> Unit)? = null
+        var focusReq: FocusRequester? = null
         var next: ItemState<T>? by mutableStateOf(null)
         var previous: ItemState<T>? by mutableStateOf(null)
         var depth: Int = 0
@@ -217,6 +217,7 @@ object Navigator {
         private val openFn: (ItemState<T>) -> Unit
     ) {
 
+        var hasFocus: Boolean by mutableStateOf(false)
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
         private var container: Container<T> by mutableStateOf(Container(container, this)); private set
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
@@ -306,7 +307,7 @@ object Navigator {
 
         fun select(item: ItemState<T>) {
             selected = item
-            item.focusFn?.let { it() }
+            item.focusReq?.requestFocus()
         }
 
         fun selectNext(item: ItemState<T>) {
@@ -363,7 +364,7 @@ object Navigator {
         item: ItemState<T>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
         iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ) {
-        val focusReq = remember { FocusRequester() }.also { item.focusFn = { it.requestFocus() } }
+        item.focusReq = remember { FocusRequester() }
         val bgColor = when {
             navState.selected == item -> Theme.colors.primary
             navState.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
@@ -374,10 +375,10 @@ object Navigator {
             modifier = Modifier.background(color = bgColor)
                 .widthIn(min = navState.minWidth).height(itemHeight)
                 .onSizeChanged { onSizeChanged(it.width) }
-                .focusRequester(focusReq).focusable(true)
+                .focusRequester(item.focusReq!!).focusable()
                 .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(contextMenuState, navState, focusReq, item) }
+                .pointerInput(item) { onPointerInput(contextMenuState, navState, item.focusReq!!, item) }
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
