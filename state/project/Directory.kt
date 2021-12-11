@@ -25,7 +25,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 
 class Directory internal constructor(path: Path, parent: Directory?) :
-    Navigable.Container<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent) {
+    Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent) {
 
     override var entries: List<ProjectItem> = emptyList()
 

@@ -64,7 +64,7 @@ import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
-import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Owner
+import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Container
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -91,7 +91,7 @@ object Navigator {
     private val LOGGER = KotlinLogging.logger {}
 
     open class ItemState<T : Navigable.Item<T>> internal constructor(
-        open val item: T, val container: Expandable<T>?
+        open val item: T, val parent: Expandable<T>?
     ) : Comparable<ItemState<T>> {
 
         open val isExpandable: Boolean = false
@@ -115,8 +115,8 @@ object Navigator {
         }
 
         open class Expandable<T : Navigable.Item<T>> internal constructor(
-            expandable: Navigable.Container<T>, container: Expandable<T>?, private val navState: NavigatorState<T>
-        ) : ItemState<T>(expandable as T, container) {
+            expandable: Navigable.ExpandableItem<T>, parent: Expandable<T>?, private val navState: NavigatorState<T>
+        ) : ItemState<T>(expandable as T, parent) {
 
             override val isExpandable: Boolean = true
             var isExpanded: Boolean by mutableStateOf(false)
@@ -168,8 +168,8 @@ object Navigator {
             }
 
             private fun reloadEntries() {
-                item.asContainer().reloadEntries()
-                val new = item.asContainer().entries.toSet()
+                item.asExpandable().reloadEntries()
+                val new = item.asExpandable().entries.toSet()
                 val old = entries.map { it.item }.toSet()
                 if (new != old) {
                     val deleted = old - new
@@ -183,18 +183,18 @@ object Navigator {
 
             internal fun checkForUpdate() {
                 if (!isExpanded) return
-                item.asContainer().reloadEntries()
-                if (item.asContainer().entries.toSet() != entries.map { it.item }.toSet()) reloadEntries()
+                item.asExpandable().reloadEntries()
+                if (item.asExpandable().entries.toSet() != entries.map { it.item }.toSet()) reloadEntries()
                 entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.checkForUpdate() }
             }
 
             internal open fun itemStateOf(item: T): ItemState<T> {
-                return if (item.isContainer) Expandable(item.asContainer(), this, navState)
+                return if (item.isExpandable) Expandable(item.asExpandable(), this, navState)
                 else ItemState(item, this)
             }
 
-            internal class Owner<T : Navigable.Item<T>> internal constructor(
-                expandable: Navigable.Container<T>, val navState: NavigatorState<T>
+            internal class Container<T : Navigable.Item<T>> internal constructor(
+                expandable: Navigable.ExpandableItem<T>, val navState: NavigatorState<T>
             ) : Expandable<T>(expandable, null, navState) {
 
                 fun navigables(): List<ItemState<T>> {
@@ -202,7 +202,7 @@ object Navigator {
                 }
 
                 override fun itemStateOf(item: T): ItemState<T> {
-                    return if (item.isContainer) Expandable(item.asContainer(), null, navState)
+                    return if (item.isExpandable) Expandable(item.asExpandable(), null, navState)
                     else ItemState(item, this)
                 }
             }
@@ -210,7 +210,7 @@ object Navigator {
     }
 
     class NavigatorState<T : Navigable.Item<T>> internal constructor(
-        owner: Navigable.Owner<T>,
+        container: Navigable.Container<T>,
         private val title: String,
         private val initExpandDepth: Int,
         private val liveUpdate: Boolean,
@@ -218,7 +218,7 @@ object Navigator {
     ) {
 
         private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-        private var owner: Owner<T> by mutableStateOf(Owner(owner, this)); private set
+        private var container: Container<T> by mutableStateOf(Container(container, this)); private set
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var minWidth by mutableStateOf(0.dp); private set
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
@@ -229,24 +229,24 @@ object Navigator {
         )
 
         init {
-            initialiseOwner()
+            initialiseContainer()
         }
 
-        private fun initialiseOwner() {
-            owner.expand(false,1 + initExpandDepth)
-            if (liveUpdate) initWatcher(owner)
+        private fun initialiseContainer() {
+            container.expand(false, 1 + initExpandDepth)
+            if (liveUpdate) initWatcher(container)
             recomputeList()
         }
 
-        fun replaceOwner(newOwner: Navigable.Owner<T>) {
+        fun replaceContainer(newContainer: Navigable.Container<T>) {
             coroutineScope.cancel()
             coroutineScope = CoroutineScope(EmptyCoroutineContext)
-            owner = Owner(newOwner, this)
-            initialiseOwner()
+            container = Container(newContainer, this)
+            initialiseContainer()
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun initWatcher(root: Owner<T>) {
+        private fun initWatcher(root: Container<T>) {
             coroutineScope.launch {
                 try {
                     do {
@@ -262,7 +262,7 @@ object Navigator {
 
         private fun expand() {
             var i = 0
-            val queue = LinkedList(owner.entries.filterIsInstance<Expandable<T>>())
+            val queue = LinkedList(container.entries.filterIsInstance<Expandable<T>>())
             while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
                 val item = queue.pop()
                 item.expand(false)
@@ -276,7 +276,7 @@ object Navigator {
         }
 
         private fun collapse() {
-            val queue = LinkedList(owner.entries.filterIsInstance<Expandable<T>>())
+            val queue = LinkedList(container.entries.filterIsInstance<Expandable<T>>())
             while (queue.isNotEmpty()) {
                 val item = queue.pop()
                 item.collapse(false)
@@ -287,7 +287,7 @@ object Navigator {
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null
-            entries = owner.navigables().onEach { item ->
+            entries = container.navigables().onEach { item ->
                 previous?.let { it.next = item }
                 item.previous = previous
                 previous = item
@@ -317,17 +317,17 @@ object Navigator {
             item.previous?.let { select(it) }
         }
 
-        fun selectContainer(item: ItemState<T>) {
-            item.container?.let { select(it) }
+        fun selectParent(item: ItemState<T>) {
+            item.parent?.let { select(it) }
         }
     }
 
     @Composable
     fun <T : Navigable.Item<T>> rememberNavigatorState(
-        owner: Navigable.Owner<T>, title: String, initExpandDepth: Int,
+        container: Navigable.Container<T>, title: String, initExpandDepth: Int,
         liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
-        return remember { NavigatorState(owner, title, initExpandDepth, liveUpdate, openFn) }
+        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, openFn) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -443,7 +443,7 @@ object Navigator {
                 }
                 Key.DirectionLeft -> {
                     if (item.isExpandable && item.asExpandable().isExpanded) item.asExpandable().collapse()
-                    else state.selectContainer(item)
+                    else state.selectParent(item)
                     true
                 }
                 Key.DirectionRight -> {

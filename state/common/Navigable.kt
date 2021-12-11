@@ -26,29 +26,29 @@ object Navigable {
     interface Item<T : Item<T>> : Comparable<Item<T>> {
 
         val name: String
-        val container: Container<T>?
+        val parent: ExpandableItem<T>?
         val info: String?
-        val isContainer: Boolean get() = false
+        val isExpandable: Boolean get() = false
 
-        fun asContainer(): Container<T> {
-            throw TypeCastException(ILLEGAL_CAST.message(Item::class.simpleName, Container::class.simpleName))
+        fun asExpandable(): ExpandableItem<T> {
+            throw TypeCastException(ILLEGAL_CAST.message(Item::class.simpleName, ExpandableItem::class.simpleName))
         }
     }
 
-    interface Container<T : Item<T>> : Item<T> {
+    interface ExpandableItem<T : Item<T>> : Item<T> {
 
-        override val isContainer: Boolean get() = true
-        override fun asContainer(): Container<T> {
+        override val isExpandable: Boolean get() = true
+        override fun asExpandable(): ExpandableItem<T> {
             return this
         }
 
-        val isOwner: Boolean get() = false
+        val isContainer: Boolean get() = false
         val entries: List<T>
         fun reloadEntries()
     }
 
-    interface Owner<T : Item<T>> : Container<T> {
+    interface Container<T : Item<T>> : ExpandableItem<T> {
 
-        override val isOwner: Boolean get() = true
+        override val isContainer: Boolean get() = true
     }
 }

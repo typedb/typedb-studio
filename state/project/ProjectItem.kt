@@ -24,7 +24,7 @@ import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val type: Type, val path: Path, final override val container: Directory?) :
+sealed class ProjectItem(val type: Type, val path: Path, final override val parent: Directory?) :
     Navigable.Item<ProjectItem> {
 
     enum class Type(val index: Int) {
@@ -32,7 +32,7 @@ sealed class ProjectItem(val type: Type, val path: Path, final override val cont
         FILE(1);
     }
 
-    private val hash = Objects.hash(path, container)
+    private val hash = Objects.hash(path, parent)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
 
@@ -63,7 +63,7 @@ sealed class ProjectItem(val type: Type, val path: Path, final override val cont
         if (javaClass != other?.javaClass) return false
         other as ProjectItem
         if (path != other.path) return false
-        if (container != other.container) return false
+        if (parent != other.parent) return false
         return true
     }
 

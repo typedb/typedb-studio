@@ -21,12 +21,12 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.Navigable
 import java.nio.file.Path
 
-class Project internal constructor(val path: Path) : Navigable.Owner<ProjectItem> {
+class Project internal constructor(val path: Path) : Navigable.Container<ProjectItem> {
 
     val directory: Directory = Directory(path, null)
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
-    override val container: Navigable.Container<ProjectItem>? = null
+    override val parent: Navigable.ExpandableItem<ProjectItem>? = null
     override val entries = listOf(directory)
 
     override fun reloadEntries() {
