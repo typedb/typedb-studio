@@ -43,8 +43,6 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
     override val isActive: Boolean get() = State.connection.hasDatabase()
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
-    var showSelectDatabaseDialog by mutableStateOf(false)
-
     @Composable
     override fun NavigatorLayout() {
         val selectDBDialogState = SelectDatabaseDialog.rememberState()
@@ -70,7 +68,7 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
     }
 
     @Composable
-    private fun SelectDBHelper(selectDBDialogState: SelectDatabaseDialog.State) {
+    private fun SelectDBHelper(selectDBDialogState: SelectDatabaseDialog.DialogState) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)

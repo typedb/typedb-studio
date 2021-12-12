@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
+import com.vaticle.typedb.studio.state.State
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 
@@ -40,20 +41,20 @@ object SelectDatabaseDialog {
     private val WINDOW_WIDTH = 400.dp
     private val WINDOW_HEIGHT = 200.dp
 
-    class State {
+    class DialogState {
         var showDialog by mutableStateOf(false)
     }
 
     @Composable
-    fun rememberState(): State {
-        return remember { State() }
+    fun rememberState(): DialogState {
+        return remember { DialogState() }
     }
 
     @Composable
-    fun Layout(state: State) {
+    fun Layout(dialogState: DialogState) {
         Dialog(
             title = Label.SELECT_DATABASE,
-            onCloseRequest = { state.showDialog = false },
+            onCloseRequest = { dialogState.showDialog = false },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -64,7 +65,7 @@ object SelectDatabaseDialog {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CLOSE, onClick = { state.showDialog = false })
+                    Form.TextButton(text = Label.CLOSE, onClick = { dialogState.showDialog = false })
                 }
             }
         }
@@ -73,12 +74,12 @@ object SelectDatabaseDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier) {
         Form.Dropdown(
-            values = com.vaticle.typedb.studio.state.State.connection.current?.databaseList ?: emptyList(),
-            selected = com.vaticle.typedb.studio.state.State.connection.current?.getDatabase() ?: "",
-            onExpand = { com.vaticle.typedb.studio.state.State.connection.current?.refreshDatabaseList() },
-            onSelection = { com.vaticle.typedb.studio.state.State.connection.current?.setDatabase(it) },
+            values = State.connection.current?.databaseList ?: emptyList(),
+            selected = State.connection.current?.getDatabase() ?: "",
+            onExpand = { State.connection.current?.refreshDatabaseList() },
+            onSelection = { State.connection.current?.setDatabase(it) },
             placeholder = Label.SELECT_DATABASE,
-            enabled = com.vaticle.typedb.studio.state.State.connection.isConnected(),
+            enabled = State.connection.isConnected(),
             modifier = modifier
         )
     }
