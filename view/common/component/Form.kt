@@ -120,14 +120,14 @@ object Form {
     }
 
     @Composable
-    fun Submission(state: State, content: @Composable() (ColumnScope.() -> Unit)) {
+    fun Submission(state: State? = null, content: @Composable() (ColumnScope.() -> Unit)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier
                 .fillMaxSize()
                 .background(Theme.colors.background)
                 .padding(OUTER_SPACING)
-                .onKeyEvent { onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() }) }
+                .onKeyEvent { onKeyEvent(event = it, onEnter = { state?.trySubmitIfValid() }) }
         ) { content() }
     }
 

@@ -48,6 +48,10 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    fun hasDatabase(): Boolean {
+        return isConnected() && current!!.hasDatabase()
+    }
+
     fun isConnected(): Boolean {
         return status == Status.CONNECTED
     }

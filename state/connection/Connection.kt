@@ -47,6 +47,10 @@ class Connection internal constructor(
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
+    fun hasDatabase(): Boolean {
+        return session?.database() != null
+    }
+
     fun getDatabase(): String? {
         return session?.database()?.name()
     }

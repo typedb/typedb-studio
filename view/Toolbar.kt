@@ -34,11 +34,11 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNE
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.dialog.SelectDatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
@@ -62,7 +62,7 @@ object Toolbar {
             ToolbarSpace()
             ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
             Spacer(Modifier.weight(1f))
-            DatabaseDropdown()
+            DatabaseDropdown(Modifier.height(COMPONENT_HEIGHT).width(DATABASE_DROPDOWN_WIDTH))
             ToolbarSpace()
             ConnectionButton()
             ToolbarSpace()
@@ -77,19 +77,6 @@ object Toolbar {
     @Composable
     private fun ToolbarButton(icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon) {
         IconButton(icon = icon, onClick = onClick, modifier = Modifier.size(COMPONENT_HEIGHT), iconColor = color)
-    }
-
-    @Composable
-    private fun DatabaseDropdown() {
-        Dropdown(
-            values = State.connection.current?.databaseList ?: emptyList(),
-            selected = State.connection.current?.getDatabase() ?: "",
-            onExpand = { State.connection.current?.refreshDatabaseList() },
-            onSelection = { State.connection.current?.setDatabase(it) },
-            placeholder = Label.SELECT_DATABASE,
-            enabled = State.connection.isConnected(),
-            modifier = Modifier.height(COMPONENT_HEIGHT).width(width = DATABASE_DROPDOWN_WIDTH)
-        )
     }
 
     @Composable
