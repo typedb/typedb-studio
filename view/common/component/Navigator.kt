@@ -31,11 +31,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -68,13 +71,14 @@ import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expan
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.lang.Integer.max
+import java.lang.Integer.min
 import java.util.LinkedList
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.floor
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -83,11 +87,12 @@ object Navigator {
 
     @OptIn(ExperimentalTime::class)
     private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(3)
-    private const val MAX_ITEM_EXPANDED = 5000
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
+    private const val MAX_ITEM_EXPANDED = 5000
+    private const val SCROLL_ITEM_OFFSET = 3
     private val LOGGER = KotlinLogging.logger {}
 
     open class ItemState<T : Navigable.Item<T>> internal constructor(
@@ -100,7 +105,8 @@ object Navigator {
         var focusReq: FocusRequester? = null
         var next: ItemState<T>? by mutableStateOf(null)
         var previous: ItemState<T>? by mutableStateOf(null)
-        var depth: Int = 0
+        var index: Int by mutableStateOf(0)
+        var depth: Int by mutableStateOf(0)
 
         open fun asExpandable(): Expandable<T> {
             throw TypeCastException(ILLEGAL_CAST.message(ItemState::class.simpleName, Expandable::class.simpleName))
@@ -214,14 +220,13 @@ object Navigator {
         private val title: String,
         private val initExpandDepth: Int,
         private val liveUpdate: Boolean,
-        private val openFn: (ItemState<T>) -> Unit
+        private val openFn: (ItemState<T>) -> Unit,
+        private var coroutineScope: CoroutineScope
     ) {
-
-        var hasFocus: Boolean by mutableStateOf(false)
-        private var coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
         private var container: Container<T> by mutableStateOf(Container(container, this)); private set
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var minWidth by mutableStateOf(0.dp); private set
+        internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
         val buttons: List<Form.ButtonArgs> = listOf(
@@ -240,8 +245,6 @@ object Navigator {
         }
 
         fun replaceContainer(newContainer: Navigable.Container<T>) {
-            coroutineScope.cancel()
-            coroutineScope = CoroutineScope(EmptyCoroutineContext)
             container = Container(newContainer, this)
             initialiseContainer()
         }
@@ -253,7 +256,7 @@ object Navigator {
                     do {
                         delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
                         root.checkForUpdate()
-                    } while (true)
+                    } while (root == container)
                 } catch (e: CancellationException) {
                 } catch (e: java.lang.Exception) {
                     State.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
@@ -288,38 +291,60 @@ object Navigator {
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null
-            entries = container.navigables().onEach { item ->
+            entries = container.navigables().onEachIndexed { i, item ->
                 previous?.let { it.next = item }
                 item.previous = previous
+                item.index = i
                 previous = item
             }
             previous?.next = null
-
         }
 
-        fun mayIncreaseMinWidth(width: Dp) {
+        internal fun mayIncreaseMinWidth(width: Dp) {
             if (width > minWidth) minWidth = width
         }
 
-        fun open(item: ItemState<T>) {
+        internal fun open(item: ItemState<T>) {
             openFn(item)
         }
 
-        fun select(item: ItemState<T>) {
-            selected = item
-            item.focusReq?.requestFocus()
-        }
-
-        fun selectNext(item: ItemState<T>) {
+        internal fun selectNext(item: ItemState<T>) {
             item.next?.let { select(it) }
         }
 
-        fun selectPrevious(item: ItemState<T>) {
+        internal fun selectPrevious(item: ItemState<T>) {
             item.previous?.let { select(it) }
         }
 
-        fun selectParent(item: ItemState<T>) {
+        internal fun selectParent(item: ItemState<T>) {
             item.parent?.let { select(it) }
+        }
+
+        internal fun select(item: ItemState<T>) {
+            selected = item
+            mayScrollToAndFocusOnSelected()
+        }
+
+        private fun mayScrollToAndFocusOnSelected() {
+            var scrollTo = -1
+            val layout = viewState!!.layoutInfo
+            if (layout.visibleItemsInfo.isNotEmpty()) {
+                val visible = max(layout.visibleItemsInfo.size - 1, 1)
+                val offset = min(SCROLL_ITEM_OFFSET, floor(visible / 2.0).toInt())
+                val firstInc = viewState!!.firstVisibleItemIndex
+                val startInc = firstInc + offset
+                val lastExc = firstInc + visible
+                val endExc = lastExc - offset
+                val target = selected!!.index
+
+                if (target < startInc) scrollTo = max(target - offset, 0)
+                else if (target >= endExc) scrollTo = min(target + offset + 1, layout.totalItemsCount) - visible
+            }
+
+            if (scrollTo >= 0) coroutineScope.launch {
+                if (scrollTo >= 0) viewState!!.animateScrollToItem(scrollTo)
+                selected!!.focusReq?.requestFocus()
+            } else selected!!.focusReq?.requestFocus()
         }
     }
 
@@ -328,27 +353,31 @@ object Navigator {
         container: Navigable.Container<T>, title: String, initExpandDepth: Int,
         liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
-        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, openFn) }
+        val coroutineScope = rememberCoroutineScope()
+        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, openFn, coroutineScope) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Navigable.Item<T>> Layout(
-        navState: NavigatorState<T>, itemHeight: Dp = ITEM_HEIGHT,
-        iconArgs: (ItemState<T>) -> IconArgs, contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
+        navState: NavigatorState<T>,
+        iconArgs: (ItemState<T>) -> IconArgs,
+        contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
     ) {
         val density = LocalDensity.current.density
+        val ctmState = ContextMenu.rememberState()
+        val lazyListState = rememberLazyListState()
+        navState.viewState = lazyListState
         Box(modifier = Modifier.fillMaxSize().onSizeChanged { navState.mayIncreaseMinWidth(toDP(it.width, density)) }) {
-            val ctmState = ContextMenu.rememberState()
-            ContextMenu.Popup(ctmState, contextMenuFn.let { { it(navState.selected!!) } })
+            ContextMenu.Popup(ctmState) { contextMenuFn(navState.selected!!) }
             LazyColumn(
-                modifier = Modifier.widthIn(min = navState.minWidth)
-                    .horizontalScroll(rememberScrollState())
+                state = lazyListState, modifier = Modifier.widthIn(min = navState.minWidth)
+                    .horizontalScroll(state = rememberScrollState())
                     .pointerMoveFilter(onExit = { navState.hovered = null; false })
             ) {
                 navState.entries.forEach {
                     item {
-                        ItemLayout(navState, ctmState, it, it.depth, itemHeight, iconArgs) {
+                        ItemLayout(navState, ctmState, it, it.depth, iconArgs) {
                             navState.mayIncreaseMinWidth(toDP(it, density))
                         }
                     }
@@ -360,8 +389,7 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        navState: NavigatorState<T>, contextMenuState: ContextMenu.State,
-        item: ItemState<T>, depth: Int, itemHeight: Dp = ITEM_HEIGHT,
+        navState: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
         iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
     ) {
         item.focusReq = remember { FocusRequester() }
@@ -373,7 +401,7 @@ object Navigator {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(color = bgColor)
-                .widthIn(min = navState.minWidth).height(itemHeight)
+                .widthIn(min = navState.minWidth).height(ITEM_HEIGHT)
                 .onSizeChanged { onSizeChanged(it.width) }
                 .focusRequester(item.focusReq!!).focusable()
                 .onKeyEvent { onKeyEvent(it, navState, item) }
@@ -382,7 +410,7 @@ object Navigator {
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-            ItemButton(item, itemHeight)
+            ItemButton(item)
             ItemIcon(item, iconArgs)
             Spacer(Modifier.width(TEXT_SPACING))
             ItemText(item)
@@ -392,12 +420,12 @@ object Navigator {
     }
 
     @Composable
-    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>, size: Dp) {
+    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
         if (item.isExpandable) Form.RawClickableIcon(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
-            modifier = Modifier.size(size)
-        ) else Spacer(Modifier.size(size))
+            modifier = Modifier.size(ITEM_HEIGHT)
+        ) else Spacer(Modifier.size(ITEM_HEIGHT))
     }
 
     @Composable
