@@ -20,11 +20,14 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.page.Page
+import com.vaticle.typedb.studio.state.page.Editable
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 
-class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent), Page {
+class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent), Editable {
+
+    override var content: String = ""
 
     val extension: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(extension)
@@ -35,5 +38,9 @@ class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent)
 
     override fun asFile(): File {
         return this
+    }
+
+    override fun load() {
+        content = Files.readString(path)
     }
 }

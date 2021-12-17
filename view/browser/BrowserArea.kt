@@ -119,7 +119,7 @@ object BrowserArea {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(SIDE_TAB_HEIGHT)
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .pointerHoverIcon(PointerIconDefaults.Hand)
                 .clickable { browser.toggle() }
         ) {
             Row(

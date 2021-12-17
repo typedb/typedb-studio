@@ -16,19 +16,12 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.util
+package com.vaticle.typedb.studio.state.page
 
-import androidx.compose.ui.graphics.Color
-import java.awt.Font
-import javax.swing.JPanel
+interface Editable {
 
-object SwingUtil {
+    val content: String
 
-    fun Color.toSwingColor() = java.awt.Color(red, green, blue, alpha)
+    fun load()
 
-    fun swingFontOf(filePath: String, fontSize: Float): Font {
-        return ClassLoader.getSystemResourceAsStream(filePath)?.let {
-            Font.createFont(Font.TRUETYPE_FONT, it).deriveFont(fontSize)
-        } ?: JPanel().font.deriveFont(fontSize)
-    }
 }

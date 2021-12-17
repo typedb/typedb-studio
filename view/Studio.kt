@@ -49,6 +49,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
+import com.vaticle.typedb.studio.view.page.PageArea
 import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger

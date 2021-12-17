@@ -64,8 +64,8 @@ object Typography {
             fixedWidthFontFamily = UBUNTU_MONO_FAMILY,
             mediumSize = DEFAULT_MEDIUM_FONT_SIZE,
             smallSize = DEFAULT_SMALL_FONT_SIZE,
-            body1SwingFont = SwingUtil.swingFontOf(TITILLIUM_WEB_REGULAR, DEFAULT_MEDIUM_FONT_SIZE),
-            code1SwingFont = SwingUtil.swingFontOf(UBUNTU_MONO_REGULAR, DEFAULT_MEDIUM_FONT_SIZE),
+            body1SwingFont = SwingUtil.swingFontOf(TITILLIUM_WEB_REGULAR, DEFAULT_MEDIUM_FONT_SIZE.toFloat()),
+            code1SwingFont = SwingUtil.swingFontOf(UBUNTU_MONO_REGULAR, DEFAULT_MEDIUM_FONT_SIZE.toFloat()),
         )
     }
 

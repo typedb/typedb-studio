@@ -31,9 +31,10 @@ kt_jvm_library(
         "//state/notification:notification",
         "//state/project:project",
         "//state:state",
+        "//view/browser:browser",
         "//view/common:common",
         "//view/dialog:dialog",
-        "//view/browser:browser",
+        "//view/page:page",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

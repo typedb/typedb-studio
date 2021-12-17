@@ -18,12 +18,33 @@
 
 package com.vaticle.typedb.studio.state.page
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.lang.Integer.max
 
 class PageManager(val notification: NotificationManager) {
 
-    fun open(page: Page) {
-        // TODO
-        println("Open: $page")
+    val openedPages: MutableList<Editable> = mutableStateListOf()
+    var selectedPage: Editable? by mutableStateOf(null)
+
+    fun isSelected(page: Editable): Boolean {
+        return selectedPage == page
+    }
+
+    fun open(page: Editable) {
+        if (page !in openedPages) {
+            page.load()
+            openedPages.add(page)
+        }
+        selectedPage = page
+    }
+
+    fun close(page: Editable) {
+        val newPageIndex = max(openedPages.indexOf(page) - 1, 0)
+        openedPages.remove(page)
+        selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
 }
