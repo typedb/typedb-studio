@@ -37,8 +37,8 @@ class FilePage(val file: File) : Page(file) {
 
     @Composable
     override fun Layout() {
-        FileEditor(
-            code = file.content, editorID = file.path.toString(),
+        FileEditor.Area(
+            content = file.content,
             onChange = { file.content = it },
             modifier = Modifier.fillMaxSize()
         )

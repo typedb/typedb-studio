@@ -33,13 +33,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -75,27 +76,33 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(page: Page) {
+        val focusReq = remember { FocusRequester() }
+
         @Composable
         fun bgColor(): Color = when {
             State.page.isSelected(page.editable) -> Theme.colors.surface
             else -> Theme.colors.background
         }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.background(color = bgColor())
+            modifier = Modifier.focusRequester(focusReq)
+                .background(color = bgColor())
                 .height(TAB_HEIGHT)
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .clickable { State.page.selectedPage = page.editable }
+                .clickable {
+                    State.page.selectedPage = page.editable
+                    focusReq.requestFocus() // TODO: This should be replaced with focusing on the page content
+                }
         ) {
             Spacer(modifier = Modifier.width(TAB_SPACING))
             Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
             Spacer(modifier = Modifier.width(TAB_SPACING))
             Text(value = page.label)
             Spacer(modifier = Modifier.width(TAB_SPACING))
-            val button = Form.ButtonArgs(Icon.Code.XMARK) { State.page.close(page.editable) }
             IconButton(
-                icon = button.icon,
-                onClick = { button.onClick() },
+                icon = Icon.Code.XMARK,
+                onClick = { State.page.close(page.editable) },
                 modifier = Modifier.size(TAB_HEIGHT),
                 bgColor = Color.Transparent,
                 rounded = false,
