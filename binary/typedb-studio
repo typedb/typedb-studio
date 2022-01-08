@@ -45,7 +45,7 @@ exit_if_java_not_found
 
 LIB_DIR="${STUDIO_HOME}/lib"
 CLASSPATH="${LIB_DIR}/*"
-MAIN_CLASS=com.vaticle.typedb.studio.MainKt
+MAIN_CLASS=com.vaticle.typedb.studio.view.StudioKt
 
 # exec replaces current shell process with java so no commands after this one will ever get executed
 exec $JAVA_BIN ${JAVAOPTS} -cp "${CLASSPATH}" ${MAIN_CLASS} "${@:1}"
