@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.view.common.component.FileEditor
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -38,8 +37,7 @@ class FilePage(val file: File) : Page(file) {
     @Composable
     override fun Layout() {
         FileEditor.Area(
-            content = file.content,
-            onChange = { file.content = it },
+            state = FileEditor.State(file.content, { file.content = it }, FileEditor.defaultTypography()),
             modifier = Modifier.fillMaxSize()
         )
     }

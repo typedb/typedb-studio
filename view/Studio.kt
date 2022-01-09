@@ -65,6 +65,7 @@ object Studio {
     fun main(args: Array<String>) {
         var logger: KLogger? = null
         try {
+            enableAntiAliasing()
             Message.loadClasses()
             UserDataDirectory.initialise()
             logger = logger {}
@@ -75,6 +76,11 @@ object Studio {
             logger?.debug { Label.CLOSING_TYPEDB_STUDIO }
             exitProcess(0)
         }
+    }
+
+    private fun enableAntiAliasing() {
+        System.setProperty("awt.useSystemAAFontSettings", "on")
+        System.setProperty("swing.aatext", "true")
     }
 
     private fun application(window: @Composable (onExit: () -> Unit) -> Unit) {

@@ -27,26 +27,26 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.view.common.util.SwingUtil
-import java.awt.Font
 
 object Typography {
 
     private const val TITILLIUM_WEB_REGULAR = "fonts/titilliumweb/TitilliumWeb-Regular.ttf"
     private const val TITILLIUM_WEB_SEMI_BOLD = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
     private const val UBUNTU_MONO_REGULAR = "fonts/ubuntumono/UbuntuMono-Regular.ttf"
-    private const val DEFAULT_MEDIUM_FONT_SIZE = 13
-    private const val DEFAULT_SMALL_FONT_SIZE = 11
+    private const val DEFAULT_BODY_FONT_SIZE_MEDIUM = 13
+    private const val DEFAULT_BODY_FONT_SIZE_SMALL = 11
+    private const val DEFAULT_CODE_FONT_SIZE_MEDIUM = 14
+    private const val DEFAULT_CODE_FONT_SIZE_SMALL = 12
 
     @Stable
     class Theme(
         variableWidthFontFamily: FontFamily, fixedWidthFontFamily: FontFamily,
-        mediumSize: Int, smallSize: Int, val body1SwingFont: Font, val code1SwingFont: Font,
+        bodySizeMedium: Int, bodySizeSmall: Int, codeSizeMedium: Int, codeSizeSmall: Int
     ) {
-        val body1 = TextStyle(fontSize = mediumSize.sp, fontFamily = variableWidthFontFamily)
-        val body2 = TextStyle(fontSize = smallSize.sp, fontFamily = variableWidthFontFamily)
-        val code1 = TextStyle(fontSize = mediumSize.sp, fontFamily = fixedWidthFontFamily)
-        val code2 = TextStyle(fontSize = smallSize.sp, fontFamily = fixedWidthFontFamily)
+        val body1 = TextStyle(fontSize = bodySizeMedium.sp, fontFamily = variableWidthFontFamily)
+        val body2 = TextStyle(fontSize = bodySizeSmall.sp, fontFamily = variableWidthFontFamily)
+        val code1 = TextStyle(fontSize = codeSizeMedium.sp, fontFamily = fixedWidthFontFamily)
+        val code2 = TextStyle(fontSize = codeSizeSmall.sp, fontFamily = fixedWidthFontFamily)
     }
 
     private val UBUNTU_MONO_FAMILY = FontFamily(
@@ -62,10 +62,10 @@ object Typography {
         val DEFAULT = Theme(
             variableWidthFontFamily = TITILLIUM_WEB_FAMILY,
             fixedWidthFontFamily = UBUNTU_MONO_FAMILY,
-            mediumSize = DEFAULT_MEDIUM_FONT_SIZE,
-            smallSize = DEFAULT_SMALL_FONT_SIZE,
-            body1SwingFont = SwingUtil.swingFontOf(TITILLIUM_WEB_REGULAR, DEFAULT_MEDIUM_FONT_SIZE.toFloat()),
-            code1SwingFont = SwingUtil.swingFontOf(UBUNTU_MONO_REGULAR, DEFAULT_MEDIUM_FONT_SIZE.toFloat()),
+            bodySizeMedium = DEFAULT_BODY_FONT_SIZE_MEDIUM,
+            bodySizeSmall = DEFAULT_BODY_FONT_SIZE_SMALL,
+            codeSizeMedium = DEFAULT_CODE_FONT_SIZE_MEDIUM,
+            codeSizeSmall = DEFAULT_CODE_FONT_SIZE_SMALL,
         )
     }
 

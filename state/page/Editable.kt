@@ -20,8 +20,6 @@ package com.vaticle.typedb.studio.state.page
 
 interface Editable {
 
-    val content: String
-
     fun load()
 
 }
