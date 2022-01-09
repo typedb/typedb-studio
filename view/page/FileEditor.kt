@@ -65,13 +65,24 @@ object FileEditor {
         return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
     }
 
-    data class Typography(val font: TextStyle, val lineHeight: Dp)
+    @Composable
+    fun createState(content: String, onChange: (String) -> Unit): State {
+        val font = Theme.typography.code1
+        val currentDensity = LocalDensity.current
+        val lineHeightDP = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
+        val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
+        return State(content, content.split("\n").size, onChange, font.copy(lineHeight = lineHeightSP), lineHeightDP)
+    }
 
-    class State(content: String, val onChange: (String) -> Unit, val typography: Typography) {
-        internal var value: TextFieldValue by mutableStateOf(highlight(content))
-        internal var lineCount by mutableStateOf(content.split("\n").size)
-        internal var editorHeight: Dp by mutableStateOf(calcContentHeight(content, typography.lineHeight)); private set
-        private var contentHeight: Dp by mutableStateOf(calcContentHeight(content, typography.lineHeight))
+    class State internal constructor(
+        initContent: String, initLineCount: Int,
+        val onChange: (String) -> Unit, val font: TextStyle,
+        private val lineHeight: Dp,
+    ) {
+        internal var value: TextFieldValue by mutableStateOf(highlight(initContent))
+        internal var lineCount by mutableStateOf(initLineCount)
+        internal var editorHeight: Dp by mutableStateOf(lineHeight * initLineCount); private set
+        private var contentHeight: Dp by mutableStateOf(lineHeight * initLineCount)
         private var areaHeight: Dp by mutableStateOf(0.dp)
 
         internal fun updateValue(newValue: TextFieldValue) {
@@ -81,7 +92,7 @@ object FileEditor {
             val newLineCount = newValue.text.split("\n").size
             if (oldLineCount != newLineCount) {
                 lineCount = newLineCount
-                contentHeight = calcContentHeight(lineCount, typography.lineHeight)
+                contentHeight = calcContentHeight(lineCount, lineHeight)
                 mayUpdateDisplayHeight()
             }
         }
@@ -100,15 +111,6 @@ object FileEditor {
     }
 
     @Composable
-    fun defaultTypography(): Typography {
-        val font = Theme.typography.code1
-        val currentDensity = LocalDensity.current
-        val lineHeightDP = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
-        return Typography(font.copy(lineHeight = lineHeightSP), lineHeightDP)
-    }
-
-    @Composable
     fun Area(state: State, modifier: Modifier = Modifier) {
         val pixD = LocalDensity.current.density
         val scrollState = rememberScrollState()
@@ -123,7 +125,7 @@ object FileEditor {
 
     @Composable
     private fun LineNumbers(state: State) {
-        val fontStyle = state.typography.font.copy(Theme.colors.onBackground.copy(0.5f))
+        val fontStyle = state.font.copy(Theme.colors.onBackground.copy(0.5f))
         Column(
             modifier = Modifier.height(state.editorHeight)
                 .defaultMinSize(minWidth = LINE_NUMBER_MIN_WIDTH)
@@ -145,7 +147,7 @@ object FileEditor {
                 value = editorState.value,
                 onValueChange = { editorState.updateValue(it) },
                 cursorBrush = SolidColor(Theme.colors.secondary),
-                textStyle = editorState.typography.font.copy(Theme.colors.onBackground),
+                textStyle = editorState.font.copy(Theme.colors.onBackground),
                 modifier = Modifier.height(editorState.editorHeight)
                     .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
