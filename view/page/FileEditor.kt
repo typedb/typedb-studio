@@ -92,7 +92,6 @@ object FileEditor {
         internal fun updateContent(newContent: TextFieldValue) {
             onChange(newContent.text)
             content = newContent
-            println(newContent.selection)
         }
 
         internal fun updateLayout(newLayout: TextLayoutResult) {
