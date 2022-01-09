@@ -32,12 +32,15 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -89,6 +92,7 @@ object FileEditor {
         internal fun updateContent(newContent: TextFieldValue) {
             onChange(newContent.text)
             content = newContent
+            println(newContent.selection)
         }
 
         internal fun updateLayout(newLayout: TextLayoutResult) {
@@ -141,6 +145,7 @@ object FileEditor {
     private fun TextArea(editorState: State) {
         val pixD = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(4096.dp) }
+        val focusReq = FocusRequester()
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .onSizeChanged { minWidth = toDP(it.width, pixD) }
@@ -154,8 +159,11 @@ object FileEditor {
                 modifier = Modifier.height(editorState.editorHeight)
                     .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
+                    .focusRequester(focusReq)
             )
         }
+
+        LaunchedEffect(editorState) { focusReq.requestFocus() }
     }
 
     private fun highlight(content: String): TextFieldValue {
