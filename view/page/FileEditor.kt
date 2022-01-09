@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
@@ -73,7 +74,7 @@ object FileEditor {
         val onChange: (String) -> Unit, val font: TextStyle,
         private val lineHeight: Dp,
     ) {
-        internal var value: TextFieldValue by mutableStateOf(highlight(initContent))
+        internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var lineCount by mutableStateOf(initLineCount)
         internal var editorHeight: Dp by mutableStateOf(initContentHeight); private set
         private var contentHeight: Dp by mutableStateOf(initContentHeight)
@@ -85,16 +86,17 @@ object FileEditor {
             }
         }
 
-        internal fun updateValue(newValue: TextFieldValue) {
-            onChange(newValue.text)
-            value = newValue
-            val oldLineCount = lineCount
-            val newLineCount = newValue.text.split("\n").size
-            if (oldLineCount != newLineCount) {
-                lineCount = newLineCount
-                contentHeight = calcContentHeight(lineCount, lineHeight)
-                mayUpdateDisplayHeight()
-            }
+        internal fun updateContent(newContent: TextFieldValue) {
+            onChange(newContent.text)
+            content = newContent
+        }
+
+        internal fun updateLayout(newLayout: TextLayoutResult) {
+            if (lineCount == newLayout.lineCount) return
+
+            lineCount = newLayout.lineCount
+            contentHeight = calcContentHeight(lineCount, lineHeight)
+            mayUpdateDisplayHeight()
         }
 
         internal fun updateAreaHeight(newHeight: Dp) {
@@ -144,8 +146,9 @@ object FileEditor {
             .onSizeChanged { minWidth = toDP(it.width, pixD) }
             .horizontalScroll(rememberScrollState())) {
             BasicTextField(
-                value = editorState.value,
-                onValueChange = { editorState.updateValue(it) },
+                value = editorState.content,
+                onValueChange = { editorState.updateContent(it) },
+                onTextLayout = { editorState.updateLayout(it) },
                 cursorBrush = SolidColor(Theme.colors.secondary),
                 textStyle = editorState.font.copy(Theme.colors.onBackground),
                 modifier = Modifier.height(editorState.editorHeight)
