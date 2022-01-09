@@ -63,22 +63,24 @@ object FileEditor {
         val currentDensity = LocalDensity.current
         val lineHeightDP = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
-        return State(content, content.split("\n").size, onChange, font.copy(lineHeight = lineHeightSP), lineHeightDP)
+        val lineCount = content.split("\n").size
+        val contentHeight = State.calcContentHeight(lineCount, lineHeightDP)
+        return State(content, lineCount, contentHeight, onChange, font.copy(lineHeight = lineHeightSP), lineHeightDP)
     }
 
     class State internal constructor(
-        initContent: String, initLineCount: Int,
+        initContent: String, initLineCount: Int, initContentHeight: Dp,
         val onChange: (String) -> Unit, val font: TextStyle,
         private val lineHeight: Dp,
     ) {
         internal var value: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var lineCount by mutableStateOf(initLineCount)
-        internal var editorHeight: Dp by mutableStateOf(calcContentHeight(initLineCount, lineHeight)); private set
-        private var contentHeight: Dp by mutableStateOf(calcContentHeight(initLineCount, lineHeight))
+        internal var editorHeight: Dp by mutableStateOf(initContentHeight); private set
+        private var contentHeight: Dp by mutableStateOf(initContentHeight)
         private var areaHeight: Dp by mutableStateOf(0.dp)
 
         companion object {
-            private fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
+            internal fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
                 return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
             }
         }
