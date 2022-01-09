@@ -46,7 +46,7 @@ sealed class Browser(private val areaState: BrowserArea.AreaState, internal val 
 
     companion object {
         internal val MIN_HEIGHT = 80.dp
-        private val BAR_HEIGHT = 26.dp
+        private val BAR_HEIGHT = 28.dp
         private val BAR_SPACING = 8.dp
     }
 

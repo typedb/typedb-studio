@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,11 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.State
@@ -51,8 +51,9 @@ object PageArea {
 
     const val ID = "PAGE_AREA"
     val MIN_WIDTH = 100.dp
-    private val TAB_HEIGHT = 26.dp
     private val TAB_SPACING = 8.dp
+    private val TAB_HEIGHT = 28.dp
+    private val TAB_UNDERLINE_HEIGHT = 2.dp
     private val ICON_SIZE = 10.sp
 
     internal class AreaState {
@@ -76,37 +77,32 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(page: Page) {
-        val focusReq = remember { FocusRequester() }
+        val isSelected = State.page.isSelected(page.editable)
+        val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
+        val tabHeight = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
 
-        @Composable
-        fun bgColor(): Color = when {
-            State.page.isSelected(page.editable) -> Theme.colors.surface
-            else -> Theme.colors.background
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.focusRequester(focusReq)
-                .background(color = bgColor())
-                .height(TAB_HEIGHT)
-                .pointerHoverIcon(PointerIconDefaults.Hand)
-                .clickable {
-                    State.page.selectedPage = page.editable
-                    focusReq.requestFocus() // TODO: This should be replaced with focusing on the page content
-                }
-        ) {
-            Spacer(modifier = Modifier.width(TAB_SPACING))
-            Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
-            Spacer(modifier = Modifier.width(TAB_SPACING))
-            Text(value = page.label)
-            Spacer(modifier = Modifier.width(TAB_SPACING))
-            IconButton(
-                icon = Icon.Code.XMARK,
-                onClick = { State.page.close(page.editable) },
-                modifier = Modifier.size(TAB_HEIGHT),
-                bgColor = Color.Transparent,
-                rounded = false,
-            )
+        Column(modifier = Modifier.width(intrinsicSize = IntrinsicSize.Min)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.height(tabHeight)
+                    .background(color = bgColor)
+                    .pointerHoverIcon(PointerIconDefaults.Hand)
+                    .clickable { State.page.selectedPage = page.editable }
+            ) {
+                Spacer(modifier = Modifier.width(TAB_SPACING))
+                Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
+                Spacer(modifier = Modifier.width(TAB_SPACING))
+                Text(value = page.label)
+                Spacer(modifier = Modifier.width(TAB_SPACING))
+                IconButton(
+                    icon = Icon.Code.XMARK,
+                    onClick = { State.page.close(page.editable) },
+                    modifier = Modifier.size(TAB_HEIGHT),
+                    bgColor = Color.Transparent,
+                    rounded = false,
+                )
+            }
+            if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary)
         }
         Separator.Vertical()
     }
