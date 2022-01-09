@@ -18,7 +18,6 @@
 artifacts = [
     "ch.qos.logback:logback-classic",
     "ch.qos.logback:logback-core",
-    "com.fifesoft:rsyntaxtextarea",
     "io.github.microutils:kotlin-logging-jvm",
     "junit:junit",
     "org.jetbrains.compose.desktop:desktop-jvm",

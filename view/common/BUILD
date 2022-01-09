@@ -33,7 +33,6 @@ kt_jvm_library(
         "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
-        "@maven//:com_fifesoft_rsyntaxtextarea",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
