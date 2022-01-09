@@ -19,11 +19,12 @@
 package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +34,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,9 +70,9 @@ object FileEditor {
     class State(content: String, val onChange: (String) -> Unit, val typography: Typography) {
         internal var value: TextFieldValue by mutableStateOf(highlight(content))
         internal var lineCount by mutableStateOf(content.split("\n").size)
-        private var areaHeight: Dp by mutableStateOf(0.dp)
-        private var contentHeight: Dp by mutableStateOf(calcContentHeight(content, typography.lineHeight))
         internal var editorHeight: Dp by mutableStateOf(calcContentHeight(content, typography.lineHeight)); private set
+        private var contentHeight: Dp by mutableStateOf(calcContentHeight(content, typography.lineHeight))
+        private var areaHeight: Dp by mutableStateOf(0.dp)
 
         internal fun updateValue(newValue: TextFieldValue) {
             onChange(newValue.text)
@@ -84,7 +86,7 @@ object FileEditor {
             }
         }
 
-        internal fun areaHeight(newHeight: Dp) {
+        internal fun updateAreaHeight(newHeight: Dp) {
             if (areaHeight != newHeight) {
                 areaHeight = newHeight
                 mayUpdateDisplayHeight()
@@ -109,7 +111,9 @@ object FileEditor {
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier) {
         val pixD = LocalDensity.current.density
-        Row(modifier.verticalScroll(rememberScrollState()).onSizeChanged { state.areaHeight(toDP(it.height, pixD)) }) {
+        Row(modifier = modifier
+            .onSizeChanged { state.updateAreaHeight(toDP(it.height, pixD)) }
+            .verticalScroll(rememberScrollState())) {
             LineNumbers(state, state.typography.font.copy(Theme.colors.onBackground.copy(0.5f)))
             Separator.Vertical(modifier = Modifier.height(state.editorHeight))
             TextArea(state, state.typography.font.copy(Theme.colors.onBackground))
@@ -129,13 +133,19 @@ object FileEditor {
 
     @Composable
     private fun TextArea(state: State, fontStyle: TextStyle) {
-        Box(modifier = Modifier.background(Theme.colors.background2)) {
+        val pixD = LocalDensity.current.density
+        var minWidth by remember { mutableStateOf(4096.dp) }
+        Box(modifier = Modifier.fillMaxSize()
+            .background(Theme.colors.background2)
+            .onSizeChanged { minWidth = toDP(it.width, pixD) }
+            .horizontalScroll(rememberScrollState())) {
             BasicTextField(
                 value = state.value,
                 onValueChange = { state.updateValue(it) },
                 cursorBrush = SolidColor(Theme.colors.secondary),
                 textStyle = fontStyle,
-                modifier = Modifier.fillMaxWidth().height(state.editorHeight)
+                modifier = Modifier.height(state.editorHeight)
+                    .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
             )
         }
