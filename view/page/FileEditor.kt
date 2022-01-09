@@ -111,17 +111,19 @@ object FileEditor {
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier) {
         val pixD = LocalDensity.current.density
+        val scrollState = rememberScrollState()
         Row(modifier = modifier
             .onSizeChanged { state.updateAreaHeight(toDP(it.height, pixD)) }
-            .verticalScroll(rememberScrollState())) {
-            LineNumbers(state, state.typography.font.copy(Theme.colors.onBackground.copy(0.5f)))
+            .verticalScroll(scrollState)) {
+            LineNumbers(state)
             Separator.Vertical(modifier = Modifier.height(state.editorHeight))
-            TextArea(state, state.typography.font.copy(Theme.colors.onBackground))
+            TextArea(state)
         }
     }
 
     @Composable
-    private fun LineNumbers(state: State, fontStyle: TextStyle) {
+    private fun LineNumbers(state: State) {
+        val fontStyle = state.typography.font.copy(Theme.colors.onBackground.copy(0.5f))
         Column(
             modifier = Modifier.height(state.editorHeight)
                 .defaultMinSize(minWidth = LINE_NUMBER_MIN_WIDTH)
@@ -132,7 +134,7 @@ object FileEditor {
     }
 
     @Composable
-    private fun TextArea(state: State, fontStyle: TextStyle) {
+    private fun TextArea(editorState: State) {
         val pixD = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(4096.dp) }
         Box(modifier = Modifier.fillMaxSize()
@@ -140,11 +142,11 @@ object FileEditor {
             .onSizeChanged { minWidth = toDP(it.width, pixD) }
             .horizontalScroll(rememberScrollState())) {
             BasicTextField(
-                value = state.value,
-                onValueChange = { state.updateValue(it) },
+                value = editorState.value,
+                onValueChange = { editorState.updateValue(it) },
                 cursorBrush = SolidColor(Theme.colors.secondary),
-                textStyle = fontStyle,
-                modifier = Modifier.height(state.editorHeight)
+                textStyle = editorState.typography.font.copy(Theme.colors.onBackground),
+                modifier = Modifier.height(editorState.editorHeight)
                     .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
             )
