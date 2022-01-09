@@ -57,14 +57,6 @@ object FileEditor {
     private val AREA_PADDING_VERTICAL = 3.dp
     private val LINE_NUMBER_MIN_WIDTH = 40.dp
 
-    private fun calcContentHeight(content: String, lineHeight: Dp): Dp {
-        return calcContentHeight(content.split("\n").size, lineHeight)
-    }
-
-    private fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
-        return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
-    }
-
     @Composable
     fun createState(content: String, onChange: (String) -> Unit): State {
         val font = Theme.typography.code1
@@ -81,9 +73,15 @@ object FileEditor {
     ) {
         internal var value: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var lineCount by mutableStateOf(initLineCount)
-        internal var editorHeight: Dp by mutableStateOf(lineHeight * initLineCount); private set
-        private var contentHeight: Dp by mutableStateOf(lineHeight * initLineCount)
+        internal var editorHeight: Dp by mutableStateOf(calcContentHeight(initLineCount, lineHeight)); private set
+        private var contentHeight: Dp by mutableStateOf(calcContentHeight(initLineCount, lineHeight))
         private var areaHeight: Dp by mutableStateOf(0.dp)
+
+        companion object {
+            private fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
+                return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
+            }
+        }
 
         internal fun updateValue(newValue: TextFieldValue) {
             onChange(newValue.text)
