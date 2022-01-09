@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -34,11 +35,11 @@ class FilePage(val file: File) : Page(file) {
         else -> Form.IconArgs(Icon.Code.FILE_LINES)
     }
 
+    private var editorState: FileEditor.State? = null
+
     @Composable
     override fun Layout() {
-        FileEditor.Area(
-            state = FileEditor.createState(file.content) { file.content = it },
-            modifier = Modifier.fillMaxSize()
-        )
+        if (editorState == null) editorState = FileEditor.createState(file.content) { file.content = it }
+        FileEditor.Area(state = editorState!!, modifier = Modifier.fillMaxSize())
     }
 }

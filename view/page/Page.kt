@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.state.page.Editable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 
-abstract class Page(val editable: Editable) {
+abstract class Page(val data: Editable) {
 
     abstract val label: String
     abstract val icon: Form.IconArgs

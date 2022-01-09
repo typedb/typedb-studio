@@ -37,10 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.page.Editable
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -57,27 +57,27 @@ object PageArea {
     private val ICON_SIZE = 10.sp
 
     internal class AreaState {
-
+        val cachedPages: MutableMap<Editable, Page> = mutableMapOf()
     }
 
     @Composable
     fun Area() {
-        val areaState = remember { AreaState() }
+        val state = remember { AreaState() }
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
-                State.page.openedPages.forEach { Tab(Page.of(it)) }
+                State.page.openedPages.forEach { Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }) }
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
-                State.page.selectedPage?.let { Page.of(it).Layout() }
+                State.page.selectedPage?.let { state.cachedPages[it]?.Layout() }
             }
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(page: Page) {
-        val isSelected = State.page.isSelected(page.editable)
+    private fun Tab(areaState: AreaState, page: Page) {
+        val isSelected = State.page.isSelected(page.data)
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
         val tabHeight = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
 
@@ -87,7 +87,7 @@ object PageArea {
                 modifier = Modifier.height(tabHeight)
                     .background(color = bgColor)
                     .pointerHoverIcon(PointerIconDefaults.Hand)
-                    .clickable { State.page.selectedPage = page.editable }
+                    .clickable { State.page.selectedPage = page.data }
             ) {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
@@ -96,7 +96,7 @@ object PageArea {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
-                    onClick = { State.page.close(page.editable) },
+                    onClick = { State.page.close(page.data); areaState.cachedPages.remove(page.data) },
                     modifier = Modifier.size(TAB_HEIGHT),
                     bgColor = Color.Transparent,
                     rounded = false,
