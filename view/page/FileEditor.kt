@@ -58,7 +58,7 @@ object FileEditor {
 
     private const val LINE_HEIGHT = 1.5f
     private val AREA_PADDING_HORIZONTAL = 6.dp
-    private val AREA_PADDING_VERTICAL = 3.dp
+    private val AREA_PADDING_VERTICAL = 0.dp
     private val LINE_NUMBER_MIN_WIDTH = 40.dp
 
     @Composable
@@ -77,8 +77,10 @@ object FileEditor {
         val onChange: (String) -> Unit, val font: TextStyle,
         private val lineHeight: Dp,
     ) {
-        internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
+        internal var lineNumber by mutableStateOf(0)
         internal var lineCount by mutableStateOf(initLineCount)
+        internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
+        internal var layout: TextLayoutResult? by mutableStateOf(null)
         internal var editorHeight: Dp by mutableStateOf(initContentHeight); private set
         private var contentHeight: Dp by mutableStateOf(initContentHeight)
         private var areaHeight: Dp by mutableStateOf(0.dp)
@@ -87,14 +89,25 @@ object FileEditor {
             internal fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
                 return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
             }
+
+            private fun calcLineNumber(string: String, cursor: Int): Int {
+                var pos = cursor
+                string.split("\n").forEachIndexed { index, line ->
+                    pos -= line.length
+                    if (pos <= 0) return index
+                }
+                return 0
+            }
         }
 
         internal fun updateContent(newContent: TextFieldValue) {
             onChange(newContent.text)
             content = newContent
+            lineNumber = calcLineNumber(content.text, content.selection.end)
         }
 
         internal fun updateLayout(newLayout: TextLayoutResult) {
+            layout = newLayout
             if (lineCount == newLayout.lineCount) return
 
             lineCount = newLayout.lineCount
