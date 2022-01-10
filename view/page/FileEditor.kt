@@ -71,15 +71,21 @@ object FileEditor {
         val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
         val lineCount = content.split("\n").size
         val contentHeight = State.calcContentHeight(lineCount, lineHeightDP)
-        return State(content, lineCount, contentHeight, onChange, font.copy(lineHeight = lineHeightSP), lineHeightDP)
+        val fontStyle = font.copy(lineHeight = lineHeightSP)
+        return State(content, lineCount, contentHeight, onChange, fontStyle, lineHeightDP, currentDensity.density)
     }
 
     class State internal constructor(
-        initContent: String, initLineCount: Int, initContentHeight: Dp,
-        internal val onChange: (String) -> Unit, internal val font: TextStyle, internal val lineHeight: Dp,
+        initContent: String,
+        initLineCount: Int,
+        initContentHeight: Dp,
+        internal val onChange: (String) -> Unit,
+        internal val font: TextStyle,
+        internal val lineHeight: Dp,
+        internal val pixelDensity: Float,
     ) {
         internal var lineCount by mutableStateOf(initLineCount)
-        private var currentLineIndex by mutableStateOf(0)
+        internal var currentLineIndex by mutableStateOf(0)
         internal val currentLineOffset get() = lineHeight * currentLineIndex + AREA_PADDING_VERTICAL
         internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var layout: TextLayoutResult? by mutableStateOf(null)
@@ -142,31 +148,41 @@ object FileEditor {
     }
 
     @Composable
-    private fun LineNumbers(state: State) {
-        val fontStyle = state.font.copy(Theme.colors.onBackground.copy(0.5f))
-        Column(
-            modifier = Modifier.height(state.editorHeight)
-                .defaultMinSize(minWidth = LINE_NUMBER_MIN_WIDTH)
-                .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL)
-                .background(Theme.colors.background),
-            horizontalAlignment = Alignment.End
-        ) { for (i in 1..state.lineCount) Text(text = i.toString(), style = fontStyle) }
+    private fun LineNumbers(editorState: State) {
+        val fontStyle = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
+        var actualWidth by remember { mutableStateOf(LINE_NUMBER_MIN_WIDTH) }
+        Box(modifier = Modifier.background(Theme.colors.background)) {
+            Box(
+                modifier = Modifier.offset(y = editorState.currentLineOffset)
+                    .height(editorState.lineHeight + 2.dp)
+                    .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
+                    .background(Theme.colors.primary)
+            )
+            Column(
+                modifier = Modifier.height(editorState.editorHeight)
+                    .defaultMinSize(minWidth = LINE_NUMBER_MIN_WIDTH)
+                    .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL)
+                    .onSizeChanged { actualWidth = toDP(it.width, editorState.pixelDensity) },
+                horizontalAlignment = Alignment.End
+            ) { for (i in 1..editorState.lineCount) Text(text = i.toString(), style = fontStyle) }
+        }
     }
 
     @Composable
     private fun TextArea(editorState: State) {
-        val pixD = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(4096.dp) }
         var actualWidth by remember { mutableStateOf(4096.dp) }
         val focusReq = FocusRequester()
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
-            .onSizeChanged { minWidth = toDP(it.width, pixD) }
+            .onSizeChanged { minWidth = toDP(it.width, editorState.pixelDensity) }
             .horizontalScroll(rememberScrollState())) {
-            Box(modifier = Modifier.offset(y = editorState.currentLineOffset)
-                .height(editorState.lineHeight + 2.dp)
-                .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
-                .background(Theme.colors.primary))
+            Box(
+                modifier = Modifier.offset(y = editorState.currentLineOffset)
+                    .height(editorState.lineHeight + 2.dp)
+                    .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
+                    .background(Theme.colors.primary)
+            )
             BasicTextField(
                 value = editorState.content,
                 onValueChange = { editorState.updateContent(it) },
@@ -177,7 +193,7 @@ object FileEditor {
                     .height(editorState.editorHeight)
                     .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
-                    .onSizeChanged { actualWidth = toDP(it.width, pixD) }
+                    .onSizeChanged { actualWidth = toDP(it.width, editorState.pixelDensity) }
             )
         }
         LaunchedEffect(editorState) { focusReq.requestFocus() }
