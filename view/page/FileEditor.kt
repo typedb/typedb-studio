@@ -26,7 +26,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -74,11 +76,11 @@ object FileEditor {
 
     class State internal constructor(
         initContent: String, initLineCount: Int, initContentHeight: Dp,
-        val onChange: (String) -> Unit, val font: TextStyle,
-        private val lineHeight: Dp,
+        internal val onChange: (String) -> Unit, internal val font: TextStyle, internal val lineHeight: Dp,
     ) {
-        internal var lineNumber by mutableStateOf(0)
         internal var lineCount by mutableStateOf(initLineCount)
+        private var currentLineIndex by mutableStateOf(0)
+        internal val currentLineOffset get() = lineHeight * currentLineIndex + AREA_PADDING_VERTICAL
         internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var layout: TextLayoutResult? by mutableStateOf(null)
         internal var editorHeight: Dp by mutableStateOf(initContentHeight); private set
@@ -89,25 +91,28 @@ object FileEditor {
             internal fun calcContentHeight(lineCount: Int, lineHeight: Dp): Dp {
                 return lineHeight * lineCount + AREA_PADDING_VERTICAL * 2
             }
+        }
 
-            private fun calcLineNumber(string: String, cursor: Int): Int {
-                var pos = cursor
-                string.split("\n").forEachIndexed { index, line ->
-                    pos -= line.length
-                    if (pos <= 0) return index
-                }
-                return 0
-            }
+        private fun updateCurrentLinePos() {
+            currentLineIndex = layout?.getLineForOffset(content.selection.end) ?: 0
+        }
+
+        private fun mayUpdateDisplayHeight() {
+            if (areaHeight > contentHeight && areaHeight != editorHeight) editorHeight = areaHeight
+            else if (contentHeight >= areaHeight && contentHeight != editorHeight) editorHeight = contentHeight
         }
 
         internal fun updateContent(newContent: TextFieldValue) {
+            val oldText = content.text
             onChange(newContent.text)
             content = newContent
-            lineNumber = calcLineNumber(content.text, content.selection.end)
+            if (oldText == newContent.text) updateCurrentLinePos()
+            // else, text have changed and updateLayout() will be called
         }
 
         internal fun updateLayout(newLayout: TextLayoutResult) {
             layout = newLayout
+            updateCurrentLinePos()
             if (lineCount == newLayout.lineCount) return
 
             lineCount = newLayout.lineCount
@@ -120,11 +125,6 @@ object FileEditor {
                 areaHeight = newHeight
                 mayUpdateDisplayHeight()
             }
-        }
-
-        private fun mayUpdateDisplayHeight() {
-            if (areaHeight > contentHeight && areaHeight != editorHeight) editorHeight = areaHeight
-            else if (contentHeight >= areaHeight && contentHeight != editorHeight) editorHeight = contentHeight
         }
     }
 
@@ -157,24 +157,29 @@ object FileEditor {
     private fun TextArea(editorState: State) {
         val pixD = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(4096.dp) }
+        var actualWidth by remember { mutableStateOf(4096.dp) }
         val focusReq = FocusRequester()
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .onSizeChanged { minWidth = toDP(it.width, pixD) }
             .horizontalScroll(rememberScrollState())) {
+            Box(modifier = Modifier.offset(y = editorState.currentLineOffset)
+                .height(editorState.lineHeight + 2.dp)
+                .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
+                .background(Theme.colors.primary))
             BasicTextField(
                 value = editorState.content,
                 onValueChange = { editorState.updateContent(it) },
                 onTextLayout = { editorState.updateLayout(it) },
                 cursorBrush = SolidColor(Theme.colors.secondary),
                 textStyle = editorState.font.copy(Theme.colors.onBackground),
-                modifier = Modifier.height(editorState.editorHeight)
+                modifier = Modifier.focusRequester(focusReq)
+                    .height(editorState.editorHeight)
                     .defaultMinSize(minWidth = minWidth)
                     .padding(horizontal = AREA_PADDING_HORIZONTAL, vertical = AREA_PADDING_VERTICAL)
-                    .focusRequester(focusReq)
+                    .onSizeChanged { actualWidth = toDP(it.width, pixD) }
             )
         }
-
         LaunchedEffect(editorState) { focusReq.requestFocus() }
     }
 
