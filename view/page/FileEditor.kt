@@ -105,7 +105,10 @@ object FileEditor {
         private fun updateCurrentLineAndCursor() {
             val cursorOffsetRaw = when {
                 content.selection.end < content.text.length -> layout?.getBoundingBox(content.selection.end)?.left
-                else -> layout?.getBoundingBox(content.selection.end - 1)?.right
+                else -> when {
+                    content.text.endsWith("\n") -> 0
+                    else -> layout?.getBoundingBox(content.selection.end - 1)?.right
+                }
             } ?: 0
             cursorOffset = toDP(cursorOffsetRaw, pixelDensity)
             currentLineIndex = layout?.getLineForOffset(content.selection.end) ?: 0
