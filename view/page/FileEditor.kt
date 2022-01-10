@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -62,6 +63,7 @@ object FileEditor {
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val AREA_PADDING_VERTICAL = 0.dp
     private val LINE_NUMBER_MIN_WIDTH = 40.dp
+    private val FONT_WIDTH = 14
 
     @Composable
     fun createState(content: String, onChange: (String) -> Unit): State {
@@ -84,8 +86,9 @@ object FileEditor {
         internal val lineHeight: Dp,
         internal val pixelDensity: Float,
     ) {
+        internal var cursorOffset by mutableStateOf(0.dp)
         internal var lineCount by mutableStateOf(initLineCount)
-        internal var currentLineIndex by mutableStateOf(0)
+        private var currentLineIndex by mutableStateOf(0)
         internal val currentLineOffset get() = lineHeight * currentLineIndex + AREA_PADDING_VERTICAL
         internal var content: TextFieldValue by mutableStateOf(highlight(initContent))
         internal var layout: TextLayoutResult? by mutableStateOf(null)
@@ -99,7 +102,12 @@ object FileEditor {
             }
         }
 
-        private fun updateCurrentLinePos() {
+        private fun updateCurrentLineAndCursor() {
+            val cursorOffsetRaw = when {
+                content.selection.end < content.text.length -> layout?.getBoundingBox(content.selection.end)?.left
+                else -> layout?.getBoundingBox(content.selection.end - 1)?.right
+            } ?: 0
+            cursorOffset = toDP(cursorOffsetRaw, pixelDensity)
             currentLineIndex = layout?.getLineForOffset(content.selection.end) ?: 0
         }
 
@@ -112,13 +120,13 @@ object FileEditor {
             val oldText = content.text
             onChange(newContent.text)
             content = newContent
-            if (oldText == newContent.text) updateCurrentLinePos()
+            if (oldText == newContent.text) updateCurrentLineAndCursor()
             // else, text have changed and updateLayout() will be called
         }
 
         internal fun updateLayout(newLayout: TextLayoutResult) {
             layout = newLayout
-            updateCurrentLinePos()
+            updateCurrentLineAndCursor()
             if (lineCount == newLayout.lineCount) return
 
             lineCount = newLayout.lineCount
@@ -152,12 +160,7 @@ object FileEditor {
         val fontStyle = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
         var actualWidth by remember { mutableStateOf(LINE_NUMBER_MIN_WIDTH) }
         Box(modifier = Modifier.background(Theme.colors.background)) {
-            Box(
-                modifier = Modifier.offset(y = editorState.currentLineOffset)
-                    .height(editorState.lineHeight + 2.dp)
-                    .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
-                    .background(Theme.colors.primary)
-            )
+            CurrentLineHighlighter(editorState, actualWidth)
             Column(
                 modifier = Modifier.height(editorState.editorHeight)
                     .defaultMinSize(minWidth = LINE_NUMBER_MIN_WIDTH)
@@ -177,17 +180,13 @@ object FileEditor {
             .background(Theme.colors.background2)
             .onSizeChanged { minWidth = toDP(it.width, editorState.pixelDensity) }
             .horizontalScroll(rememberScrollState())) {
-            Box(
-                modifier = Modifier.offset(y = editorState.currentLineOffset)
-                    .height(editorState.lineHeight + 2.dp)
-                    .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
-                    .background(Theme.colors.primary)
-            )
+            CurrentLineHighlighter(editorState, actualWidth)
+            Cursor(editorState)
             BasicTextField(
                 value = editorState.content,
                 onValueChange = { editorState.updateContent(it) },
                 onTextLayout = { editorState.updateLayout(it) },
-                cursorBrush = SolidColor(Theme.colors.secondary),
+                cursorBrush = SolidColor(Color.Transparent),
                 textStyle = editorState.font.copy(Theme.colors.onBackground),
                 modifier = Modifier.focusRequester(focusReq)
                     .height(editorState.editorHeight)
@@ -197,6 +196,28 @@ object FileEditor {
             )
         }
         LaunchedEffect(editorState) { focusReq.requestFocus() }
+    }
+
+    @Composable
+    private fun CurrentLineHighlighter(editorState: State, actualWidth: Dp) {
+        Box(
+            modifier = Modifier.offset(y = editorState.currentLineOffset)
+                .height(editorState.lineHeight + 2.dp)
+                .width(actualWidth + AREA_PADDING_HORIZONTAL * 2)
+                .background(Theme.colors.primary)
+        )
+    }
+
+    @Composable
+    private fun Cursor(editorState: State) {
+        val x = editorState.cursorOffset + AREA_PADDING_HORIZONTAL
+        val y = editorState.currentLineOffset + 2.dp
+        Box(
+            modifier = Modifier.offset(x, y)
+                .height(editorState.lineHeight - 2.dp)
+                .width(toDP(FONT_WIDTH, editorState.pixelDensity))
+                .background(Theme.colors.secondary)
+        )
     }
 
     private fun highlight(content: String): TextFieldValue {
