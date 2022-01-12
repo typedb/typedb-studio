@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.page
+package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -57,7 +57,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
-object FileEditor {
+object TextEditor {
 
     private const val LINE_HEIGHT = 1.5f
     private val AREA_PADDING_HORIZONTAL = 6.dp
