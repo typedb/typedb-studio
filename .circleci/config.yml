@@ -107,8 +107,8 @@ jobs:
       - run:
           name: "Create GitHub release notes"
           command: |
-            export CREATE_NOTES_TOKEN=$REPO_GITHUB_TOKEN
-            bazel run @vaticle_dependencies//tool/release/createnotes:bin -- \
+            export NOTES_CREATE_TOKEN=$REPO_GITHUB_TOKEN
+            bazel run @vaticle_dependencies//tool/release/notes:create -- \
               vaticle $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $(cat VERSION) ./RELEASE_TEMPLATE.md
       - run:
           name: "Publish Draft Release on GitHub"

@@ -21,7 +21,7 @@ def vaticle_dependencies():
     git_repository(
         name = "vaticle_dependencies",
         remote = "https://github.com/vaticle/dependencies",
-        commit = "ddd655a1c111e507b0257cdc22ccf6c606174a76", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        commit = "06a7aa4eb5e941364ddef61c12251cf53cc468d4", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
 def vaticle_force_graph():
@@ -35,5 +35,5 @@ def vaticle_typedb_client_java():
     git_repository(
         name = "vaticle_typedb_client_java",
         remote = "https://github.com/vaticle/client-java",
-        commit = "471e668e0c3b815a172e1f491610bb2619bec65d",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+        commit = "af4e664473cb5ea9f1f5d0d213b5c20bcef73a9b",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
