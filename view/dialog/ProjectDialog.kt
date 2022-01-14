@@ -44,6 +44,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import javax.swing.JFileChooser
+import javax.swing.UIManager
 
 
 object ProjectDialog {
@@ -109,6 +110,7 @@ object ProjectDialog {
     }
 
     private fun launchFileDialog(formState: ProjectFormState) {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
         val directoryChooser = JFileChooser().apply {
             dialogTitle = Label.OPEN_PROJECT_DIRECTORY
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
