@@ -50,6 +50,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
+import javax.swing.UIManager
 import kotlin.system.exitProcess
 import mu.KLogger
 import mu.KotlinLogging.logger
@@ -65,7 +66,7 @@ object Studio {
     fun main(args: Array<String>) {
         var logger: KLogger? = null
         try {
-            enableAntiAliasing()
+            setConfigurations()
             Message.loadClasses()
             UserDataDirectory.initialise()
             logger = logger {}
@@ -78,9 +79,12 @@ object Studio {
         }
     }
 
-    private fun enableAntiAliasing() {
+    private fun setConfigurations() {
+        // Enable anti-aliasing
         System.setProperty("awt.useSystemAAFontSettings", "on")
         System.setProperty("swing.aatext", "true")
+        // Enable native Windows UI style
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
     }
 
     private fun application(window: @Composable (onExit: () -> Unit) -> Unit) {
