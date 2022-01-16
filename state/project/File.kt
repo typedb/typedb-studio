@@ -27,7 +27,7 @@ import kotlin.io.path.extension
 
 class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent), Editable {
 
-    var content: String = ""
+    var content: MutableList<String> = mutableListOf()
     val extension: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(extension)
 
@@ -40,6 +40,10 @@ class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent)
     }
 
     override fun load() {
-        content = Files.readString(path)
+        content = Files.readAllLines(path)
+    }
+
+    fun save() {
+        Files.write(path, content)
     }
 }
