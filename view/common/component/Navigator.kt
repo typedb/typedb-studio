@@ -341,9 +341,11 @@ object Navigator {
                 else if (target >= endExc) scrollTo = min(target + offset + 1, layout.totalItemsCount) - visible
             }
 
-            if (scrollTo >= 0) coroutineScope.launch {
-                if (scrollTo >= 0) viewState!!.animateScrollToItem(scrollTo)
-                selected!!.focusReq?.requestFocus()
+            if (scrollTo >= 0) {
+                coroutineScope.launch {
+                    if (scrollTo >= 0) viewState!!.animateScrollToItem(scrollTo)
+                    selected!!.focusReq?.requestFocus()
+                }
             } else selected!!.focusReq?.requestFocus()
         }
     }
