@@ -19,37 +19,31 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.mouse.MouseScrollEvent
-import androidx.compose.ui.input.mouse.MouseScrollOrientation.Vertical
-import androidx.compose.ui.input.mouse.MouseScrollUnit
-import androidx.compose.ui.input.mouse.mouseScrollFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -71,27 +65,17 @@ object TextEditor2 {
     }
 
     class State internal constructor(val file: File, val font: TextStyle, val lineHeight: Dp, val density: Float) {
-        val lineCount: Int get() = file.content.size
         val content: MutableList<String> get() = file.content
-        val contentHeight: Dp = lineHeight * lineCount
-        var contentWidth: Dp by mutableStateOf(0.dp)
-        var scrollOffsetY: Dp by mutableStateOf(0.dp)
-
-        @OptIn(ExperimentalComposeUiApi::class)
-        fun updateScrollOffset(event: MouseScrollEvent, bounds: IntSize) {
-            if (event.delta is MouseScrollUnit.Line && event.orientation == Vertical) {
-                val delta = lineHeight * (event.delta as MouseScrollUnit.Line).value
-                val min = toDP(bounds.height, density) - contentHeight
-                scrollOffsetY = (scrollOffsetY - delta).coerceIn(min, 0.dp)
-            }
-        }
+        var lineCount: Int by mutableStateOf(file.content.size)
+        val contentHeight: Dp by mutableStateOf(lineHeight * lineCount)
+        var contentAreaWidth: Dp by mutableStateOf(0.dp)
+        val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier) {
-        Row(modifier = modifier.clipToBounds()
-            .mouseScrollFilter { event, bounds -> state.updateScrollOffset(event, bounds); true }) {
+        Row(modifier = modifier) {
             LineNumbers(state)
             Separator.Vertical()
             TextArea(state, state.density)
@@ -101,36 +85,49 @@ object TextEditor2 {
     @Composable
     private fun LineNumbers(editorState: State) {
         val font = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
-        Box(
-            modifier = Modifier.offset(y = editorState.scrollOffsetY)
-                .height(editorState.contentHeight)
-                .border(1.dp, Color.Red, RectangleShape)
-        ) {
-            Column(modifier = Modifier.background(Theme.colors.background)) {
-                for (i in 1..editorState.lineCount) Text(text = i.toString(), style = font)
-            }
-        }
+        val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
+            items = (1..editorState.lineCount).map { it.toString() },
+            scroller = editorState.scroller
+        )
+        LazyColumn.Area(
+            state = lazyColumnState,
+            modifier = Modifier.background(Theme.colors.background).padding(
+                horizontal = AREA_PADDING_HORIZONTAL,
+                vertical = AREA_PADDING_VERTICAL
+            ),
+            horizontalAlignment = Alignment.End
+        ) { item -> Text(text = item, style = font) }
     }
 
     @Composable
     private fun TextArea(editorState: State, density: Float) {
-        Box(modifier = Modifier.offset(y = editorState.scrollOffsetY)
-            .height(editorState.contentHeight)
+        var minWidth by remember { mutableStateOf(4096.dp) }
+        val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
+            items = editorState.content,
+            scroller = editorState.scroller
+        )
+
+        fun mayUpdateMinWidth(newWidth: Dp) {
+            if (newWidth > minWidth) minWidth = newWidth
+        }
+
+        Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
-            .border(1.dp, Color.Yellow, RectangleShape)
-            .onSizeChanged { editorState.contentWidth = toDP(it.width, density) }) {
-            Column(modifier = Modifier) {
-                for (i in 0 until editorState.lineCount) TextLine(editorState, i)
+            .onSizeChanged { mayUpdateMinWidth(toDP(it.width, density)) }) {
+            LazyColumn.Area(
+                state = lazyColumnState,
+                modifier = Modifier.fillMaxHeight().defaultMinSize(minWidth = minWidth).padding(
+                    horizontal = AREA_PADDING_HORIZONTAL,
+                    vertical = AREA_PADDING_VERTICAL
+                ),
+            ) { item ->
+                Text(
+                    text = AnnotatedString(item),
+                    style = editorState.font.copy(Theme.colors.onBackground),
+                    modifier = Modifier.onSizeChanged { mayUpdateMinWidth(toDP(it.width, density)) }
+                )
             }
         }
-    }
-
-    @Composable
-    private fun TextLine(editorState: State, line: Int) {
-        Text(
-            text = AnnotatedString(editorState.content[line]),
-            style = editorState.font.copy(Theme.colors.onBackground)
-        )
     }
 }
