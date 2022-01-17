@@ -19,8 +19,7 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.mouse.MouseScrollEvent
 import androidx.compose.ui.input.mouse.MouseScrollOrientation
@@ -53,7 +51,7 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(private val itemHeight: Dp, val itemCount: Int) {
+    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: Int) {
         private val contentHeight: Dp = itemHeight * itemCount
         private var offset: Dp by mutableStateOf(0.dp); private set
         internal var height: Dp by mutableStateOf(0.dp); private set
@@ -120,16 +118,12 @@ object LazyColumn {
         itemFn: @Composable (item: T) -> Unit
     ) {
         val density = LocalDensity.current.density
-        Box(modifier = modifier.clipToBounds()
+        Box(modifier = modifier.fillMaxHeight().clipToBounds()
             .onSizeChanged { state.scroller.updateHeight(toDP(it.height, density)) }
             .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
-            Column(
-                horizontalAlignment = horizontalAlignment,
-                modifier = Modifier.offset(y = -state.scroller.firstVisibleOffset)
-                    .height(state.scroller.height + state.scroller.firstVisibleOffset)
-            ) {
-                for (i in state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex) {
-                    itemFn(state.items[i])
+            (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEachIndexed { i, item ->
+                Box(Modifier.offset(y = state.scroller.itemHeight * i - state.scroller.firstVisibleOffset)) {
+                    itemFn(state.items[item])
                 }
             }
         }

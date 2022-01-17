@@ -116,8 +116,7 @@ object TextEditor2 {
             .onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }) {
             LazyColumn.Area(
                 state = lazyColumnState,
-                modifier = Modifier.fillMaxHeight()
-                    .defaultMinSize(minWidth = minWidth)
+                modifier = Modifier.defaultMinSize(minWidth = minWidth)
                     .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL),
             ) { item ->
                 Text(
