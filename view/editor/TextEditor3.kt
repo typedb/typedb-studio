@@ -18,15 +18,17 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,20 +38,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.mouse.mouseScrollFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
-object TextEditor2 {
+object TextEditor3 {
 
     private const val LINE_HEIGHT = 1.5f
     private val AREA_PADDING_HORIZONTAL = 6.dp
@@ -61,7 +61,7 @@ object TextEditor2 {
         val currentDensity = LocalDensity.current
         val lineHeightDP = with(currentDensity) { fontDefault.fontSize.toDp() * LINE_HEIGHT }
         val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
-        val fontStyle = fontDefault.copy(lineHeight = lineHeightSP)
+        val fontStyle = fontDefault.copy(color = Theme.colors.onBackground, lineHeight = lineHeightSP)
         return State(file, fontStyle, lineHeightDP, currentDensity.density)
     }
 
@@ -69,43 +69,43 @@ object TextEditor2 {
         val content: MutableList<String> get() = file.content
         var lineCount: Int by mutableStateOf(file.content.size)
         val contentHeight: Dp by mutableStateOf(lineHeight * lineCount)
-        var contentAreaWidth: Dp by mutableStateOf(0.dp)
-        val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
+    }
+
+    @Composable
+    fun Area(state: State, modifier: Modifier) {
+        val lineNumberScroller = rememberScrollState()
+        val textAreaScroller = rememberScrollState()
+        Row(modifier = modifier) {
+            LineNumbers(state, lineNumberScroller, textAreaScroller)
+            Separator.Vertical()
+            TextArea(state, lineNumberScroller, textAreaScroller, state.density)
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Area(state: State, modifier: Modifier = Modifier) {
-        Row(modifier = modifier) {
-            LineNumbers(state)
-            Separator.Vertical()
-            TextArea(state)
-        }
-    }
-
-    @Composable
-    private fun LineNumbers(editorState: State) {
+    private fun LineNumbers(editorState: State, lineNumberScroller: ScrollState, textAreaScroller: ScrollState) {
         val font = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
-        val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
-            items = (1..editorState.lineCount).map { it.toString() },
-            scroller = editorState.scroller
-        )
-        LazyColumn.Area(
-            state = lazyColumnState,
+        Column(
             horizontalAlignment = Alignment.End,
             modifier = Modifier.background(Theme.colors.background)
                 .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL)
-        ) { item -> Text(text = item, style = font) }
+                .verticalScroll(state = lineNumberScroller)
+                .mouseScrollFilter { event, bounds ->
+                    println(lineNumberScroller.value); false
+                }
+        ) { for (i in 1..editorState.lineCount) Text(text = i.toString(), style = font) }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(editorState: State) {
+    private fun TextArea(
+        editorState: State,
+        lineNumberScroller: ScrollState,
+        textAreaScroller: ScrollState,
+        density: Float
+    ) {
         var minWidth by remember { mutableStateOf(4096.dp) }
-        val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
-            items = editorState.content,
-            scroller = editorState.scroller
-        )
-
         fun mayUpdateMinWidth(newWidth: Dp) {
             if (newWidth > minWidth) minWidth = newWidth
         }
@@ -113,18 +113,19 @@ object TextEditor2 {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
-            .onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }) {
-            LazyColumn.Area(
-                state = lazyColumnState,
-                modifier = Modifier.fillMaxHeight()
-                    .defaultMinSize(minWidth = minWidth)
-                    .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL),
-            ) { item ->
-                Text(
-                    text = AnnotatedString(item),
-                    style = editorState.font.copy(Theme.colors.onBackground),
-                    modifier = Modifier.onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }
-                )
+            .onSizeChanged { mayUpdateMinWidth(Theme.toDP(it.width, density)) }) {
+            Column(
+                modifier = Modifier.defaultMinSize(minWidth = minWidth)
+                    .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL)
+                    .verticalScroll(textAreaScroller)
+            ) {
+                editorState.content.forEach {
+                    Text(
+                        text = it,
+                        style = editorState.font,
+                        modifier = Modifier.onSizeChanged { mayUpdateMinWidth(toDP(it.width, density)) }
+                    )
+                }
             }
         }
     }
