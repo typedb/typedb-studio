@@ -90,9 +90,10 @@ object TextEditor2 {
         )
         LazyColumn.Area(
             state = lazyColumnState,
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier.background(Theme.colors.background)
-                .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL)
+            alignment = Alignment.End,
+            modifier = Modifier.background(Theme.colors.background),
+            horizontalPadding = AREA_PADDING_HORIZONTAL,
+            verticalPadding = AREA_PADDING_VERTICAL,
         ) { item -> Text(text = item, style = font) }
     }
 
@@ -114,8 +115,9 @@ object TextEditor2 {
             .onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }) {
             LazyColumn.Area(
                 state = lazyColumnState,
-                modifier = Modifier.defaultMinSize(minWidth = minWidth)
-                    .padding(AREA_PADDING_HORIZONTAL, AREA_PADDING_VERTICAL),
+                modifier = Modifier.defaultMinSize(minWidth = minWidth),
+                horizontalPadding = AREA_PADDING_HORIZONTAL,
+                verticalPadding = AREA_PADDING_VERTICAL,
             ) { item ->
                 Text(
                     text = AnnotatedString(item),
