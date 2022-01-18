@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -109,6 +110,7 @@ object LazyColumn {
         alignment: Alignment.Horizontal = Alignment.Start,
         horizontalPadding: Dp = 0.dp,
         verticalPadding: Dp = 0.dp,
+        minWidth: Dp = 0.dp,
         itemFn: @Composable (item: T) -> Unit
     ) {
         val density = LocalDensity.current.density
@@ -116,7 +118,10 @@ object LazyColumn {
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
             .onSizeChanged { state.scroller.updateHeight(toDP(it.height, density)) }
             .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
-            Box(contentAlignment = contentAlignment, modifier = Modifier.padding(horizontalPadding, verticalPadding)) {
+            Box(
+                contentAlignment = contentAlignment,
+                modifier = Modifier.defaultMinSize(minWidth = minWidth).padding(horizontalPadding, verticalPadding)
+            ) {
                 (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEachIndexed { i, item ->
                     Box(Modifier.offset(y = state.scroller.itemHeight * i - state.scroller.firstVisibleOffset)) {
                         itemFn(state.items[item])

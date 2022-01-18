@@ -22,9 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -46,10 +44,13 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import kotlin.math.ceil
+import kotlin.math.log10
 
 object TextEditor2 {
 
     private const val LINE_HEIGHT = 1.5f
+    private val LINE_NUMBER_FONT_WIDTH = 12.dp // TODO: can we derive this dynamically at runtime?
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val AREA_PADDING_VERTICAL = 0.dp
 
@@ -84,6 +85,7 @@ object TextEditor2 {
     @Composable
     private fun LineNumbers(editorState: State) {
         val font = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
+        val minWidth = LINE_NUMBER_FONT_WIDTH * ceil(log10(editorState.lineCount.toDouble())).toInt()
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = (1..editorState.lineCount).map { it.toString() },
             scroller = editorState.scroller
@@ -94,6 +96,7 @@ object TextEditor2 {
             modifier = Modifier.background(Theme.colors.background),
             horizontalPadding = AREA_PADDING_HORIZONTAL,
             verticalPadding = AREA_PADDING_VERTICAL,
+            minWidth = minWidth,
         ) { item -> Text(text = item, style = font) }
     }
 
@@ -115,9 +118,10 @@ object TextEditor2 {
             .onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }) {
             LazyColumn.Area(
                 state = lazyColumnState,
-                modifier = Modifier.defaultMinSize(minWidth = minWidth),
+                modifier = Modifier,
                 horizontalPadding = AREA_PADDING_HORIZONTAL,
                 verticalPadding = AREA_PADDING_VERTICAL,
+                minWidth = minWidth,
             ) { item ->
                 Text(
                     text = AnnotatedString(item),
