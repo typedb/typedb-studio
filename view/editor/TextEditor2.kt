@@ -58,15 +58,19 @@ object TextEditor2 {
         val lineHeightDP = with(currentDensity) { fontDefault.fontSize.toDp() * LINE_HEIGHT }
         val lineHeightSP = with(currentDensity) { lineHeightDP.toSp() * currentDensity.density }
         val fontStyle = fontDefault.copy(lineHeight = lineHeightSP)
-        return State(file, fontStyle, lineHeightDP, currentDensity.density)
+        return State(file, fontStyle, currentDensity.density, lineHeightDP)
     }
 
-    class State internal constructor(val file: File, val font: TextStyle, val lineHeight: Dp, val density: Float) {
-        val content: MutableList<String> get() = file.content
-        var lineCount: Int by mutableStateOf(file.content.size)
-        val contentHeight: Dp by mutableStateOf(lineHeight * lineCount)
-        var contentAreaWidth: Dp by mutableStateOf(0.dp)
-        val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
+    internal data class Cursor(val row: Int, val col: Int)
+
+    internal data class Selection(val start: Cursor, val end: Cursor)
+
+    class State internal constructor(val file: File, val font: TextStyle, val density: Float, lineHeight: Dp) {
+        internal val content: MutableList<String> get() = file.content
+        internal var lineCount: Int by mutableStateOf(file.content.size)
+        internal var cursor: Cursor? by mutableStateOf(Cursor(0, 0))
+        internal var selection: Selection? by mutableStateOf(null)
+        internal val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -113,14 +117,15 @@ object TextEditor2 {
             scroller = editorState.scroller
         )
 
-        fun mayUpdateMinWidth(newWidth: Dp) {
+        fun mayUpdateMinWidth(newRawWidth: Int) {
+            val newWidth = toDP(newRawWidth, editorState.density)
             if (newWidth > minWidth) minWidth = newWidth
         }
 
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
-            .onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }) {
+            .onSizeChanged { mayUpdateMinWidth(it.width) }) {
             LazyColumn.Area(
                 state = lazyColumnState,
                 modifier = Modifier,
@@ -131,7 +136,7 @@ object TextEditor2 {
                 Text(
                     text = AnnotatedString(item),
                     style = editorState.font.copy(Theme.colors.onBackground),
-                    modifier = Modifier.onSizeChanged { mayUpdateMinWidth(toDP(it.width, editorState.density)) }
+                    modifier = Modifier.onSizeChanged { mayUpdateMinWidth(it.width) }
                 )
             }
         }
