@@ -23,7 +23,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -40,7 +39,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.project.File
@@ -100,7 +98,7 @@ object TextEditor2 {
 
     @Composable
     private fun TextArea(editorState: State) {
-        var minWidth by remember { mutableStateOf(4096.dp) }
+        var minWidth by remember { mutableStateOf(0.dp) }
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = editorState.content,
             scroller = editorState.scroller
