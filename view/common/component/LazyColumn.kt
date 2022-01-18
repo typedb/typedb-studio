@@ -62,14 +62,9 @@ object LazyColumn {
         @OptIn(ExperimentalComposeUiApi::class)
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
-
-            println("----------------------------")
-            println("raw delta: ${event.delta}")
             val delta = itemHeight * (event.delta as MouseScrollUnit.Line).value * -1
-            println("computed delta: ${delta}")
             val max = max(contentHeight - height, 0.dp)
             offset = (offset - delta).coerceIn(0.dp, max)
-            println("offset: $offset")
 
             updateView()
             return true
@@ -82,13 +77,9 @@ object LazyColumn {
 
         private fun updateView() {
             firstVisibleIndex = floor(offset.value / itemHeight.value).toInt()
-            println("firstVisibleIndex: $firstVisibleIndex")
             firstVisibleOffset = offset - itemHeight * firstVisibleIndex
-            println("firstVisibleOffset: $firstVisibleOffset")
             val visibleItems = floor((height.value + firstVisibleOffset.value) / itemHeight.value).toInt()
-            println("visibleItems: $visibleItems")
             lastVisibleIndex = min(firstVisibleIndex + visibleItems, itemCount - 1)
-            println("lastVisibleIndex: $lastVisibleIndex")
         }
     }
 
