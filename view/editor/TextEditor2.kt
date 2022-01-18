@@ -19,8 +19,6 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -28,7 +26,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.mouseClickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -40,9 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -54,11 +54,12 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.MouseEvent
+import kotlin.math.floor
 
 object TextEditor2 {
 
     private const val LINE_HEIGHT = 1.56f
-    private val LINE_GAP = 3.dp
+    private val LINE_GAP = 2.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
 
     @Composable
@@ -71,8 +72,8 @@ object TextEditor2 {
         return State(file, fontStyle, currentDensity.density, lineHeightDP)
     }
 
+    internal data class Coordinate(val x: Int, val y: Int)
     internal data class Cursor(val row: Int, val col: Int)
-
     internal data class Selection(val start: Cursor, val end: Cursor)
 
     class State internal constructor(
@@ -85,10 +86,25 @@ object TextEditor2 {
         internal var lineCount: Int by mutableStateOf(file.content.size)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
+        internal var textAreaCoord: Coordinate by mutableStateOf(Coordinate(0, 0))
         internal val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
 
         internal fun isCurrentLine(index: Int): Boolean {
-            return cursor.col == index
+            return cursor.row == index
+        }
+
+        internal fun updateTextAreaCoord(rawPosition: Offset) {
+            textAreaCoord = Coordinate(
+                toDP(rawPosition.x, density).value.toInt(),
+                toDP(rawPosition.y, density).value.toInt()
+            )
+        }
+
+        internal fun updateCursor(x: Int, y: Int) {
+            val relX = x - textAreaCoord.x
+            val relY = y - textAreaCoord.y + scroller.offset.value
+            val cursorRow = floor(relY / lineHeight.value).toInt()
+            cursor = Cursor(cursorRow, 0)
         }
     }
 
@@ -150,15 +166,8 @@ object TextEditor2 {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
-//            .onPointerEvent(PointerEventType.Press) {
-//                when (it.awtEvent.button) {
-//                    MouseEvent.BUTTON1 -> when (it.awtEvent.clickCount) {
-//                        1 -> onSingleLeftClick()
-//                        2 -> onDoubleLeftClick()
-//                    }
-//                    MouseEvent.BUTTON3 -> onRightClick()
-//                }
-//            }
+            .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow()) }
+            .onPointerEvent(PointerEventType.Press) { onPointerEvent(state, it.awtEvent) }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
             LazyColumn.Area(
                 state = lazyColumnState,
@@ -182,6 +191,16 @@ object TextEditor2 {
                 style = state.font,
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
             )
+        }
+    }
+
+    private fun onPointerEvent(state: State, event: MouseEvent) {
+        when (event.button) {
+            MouseEvent.BUTTON1 -> when (event.clickCount) {
+                1 -> state.updateCursor(event.x, event.y)
+                2 -> {}
+            }
+            MouseEvent.BUTTON3 -> {}
         }
     }
 }

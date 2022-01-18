@@ -51,8 +51,8 @@ import kotlin.math.floor
 object LazyColumn {
 
     class ScrollState internal constructor(val itemHeight: Dp, val itemCount: Int) {
+        var offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp = itemHeight * itemCount
-        private var offset: Dp by mutableStateOf(0.dp); private set
         internal var height: Dp by mutableStateOf(0.dp); private set
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
@@ -111,7 +111,8 @@ object LazyColumn {
             .onSizeChanged { state.scroller.updateHeight(toDP(it.height, density)) }
             .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
             (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEach { i ->
-                val offset = state.scroller.itemHeight * (i - state.scroller.firstVisibleIndex) - state.scroller.firstVisibleOffset
+                val indexInView = i - state.scroller.firstVisibleIndex
+                val offset = state.scroller.itemHeight * indexInView - state.scroller.firstVisibleOffset
                 Box(Modifier.offset(y = offset)) { itemFn(i, state.items[i]) }
             }
         }
