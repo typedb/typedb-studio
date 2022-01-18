@@ -19,6 +19,8 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -26,6 +28,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.mouseClickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -47,6 +53,7 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.awt.event.MouseEvent
 
 object TextEditor2 {
 
@@ -76,12 +83,12 @@ object TextEditor2 {
     ) {
         internal val content: MutableList<String> get() = file.content
         internal var lineCount: Int by mutableStateOf(file.content.size)
-        internal var cursor: Cursor? by mutableStateOf(Cursor(0, 0))
+        internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
         internal val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
 
         internal fun isCurrentLine(index: Int): Boolean {
-            return cursor != null && cursor!!.col == index
+            return cursor.col == index
         }
     }
 
@@ -126,6 +133,7 @@ object TextEditor2 {
         ) { Text(text = (index + 1).toString(), style = font) }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TextArea(state: State) {
         var minWidth by remember { mutableStateOf(0.dp) }
@@ -142,6 +150,15 @@ object TextEditor2 {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
+//            .onPointerEvent(PointerEventType.Press) {
+//                when (it.awtEvent.button) {
+//                    MouseEvent.BUTTON1 -> when (it.awtEvent.clickCount) {
+//                        1 -> onSingleLeftClick()
+//                        2 -> onDoubleLeftClick()
+//                    }
+//                    MouseEvent.BUTTON3 -> onRightClick()
+//                }
+//            }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
             LazyColumn.Area(
                 state = lazyColumnState,

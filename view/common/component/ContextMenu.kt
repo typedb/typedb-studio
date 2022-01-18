@@ -86,8 +86,8 @@ object ContextMenu {
                     when {
                         event.buttons.isPrimaryPressed -> {
                             when (event.awtEvent.clickCount) {
+                                1 -> onSinglePrimaryClick()
                                 2 -> onDoublePrimaryClick()
-                                else -> onSinglePrimaryClick()
                             }
                         }
                         event.buttons.isSecondaryPressed -> {
