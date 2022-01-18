@@ -44,13 +44,10 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import kotlin.math.ceil
-import kotlin.math.log10
 
 object TextEditor2 {
 
     private const val LINE_HEIGHT = 1.5f
-    private val LINE_NUMBER_FONT_WIDTH = 12.dp // TODO: can we derive this dynamically at runtime?
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val AREA_PADDING_VERTICAL = 0.dp
 
@@ -85,19 +82,27 @@ object TextEditor2 {
     @Composable
     private fun LineNumbers(editorState: State) {
         val font = editorState.font.copy(Theme.colors.onBackground.copy(0.5f))
-        val minWidth = LINE_NUMBER_FONT_WIDTH * ceil(log10(editorState.lineCount.toDouble())).toInt()
+        var minWidth by remember { mutableStateOf(0.dp) }
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = (1..editorState.lineCount).map { it.toString() },
             scroller = editorState.scroller
         )
-        LazyColumn.Area(
-            state = lazyColumnState,
-            alignment = Alignment.End,
-            modifier = Modifier.background(Theme.colors.background),
-            horizontalPadding = AREA_PADDING_HORIZONTAL,
-            verticalPadding = AREA_PADDING_VERTICAL,
-            minWidth = minWidth,
-        ) { item -> Text(text = item, style = font) }
+        Box {
+            Text( // We render the longest line number to find out the width
+                text = "${editorState.lineCount}", style = font,
+                onTextLayout = {
+                    minWidth = toDP(it.size.width, editorState.density) + 2.dp + AREA_PADDING_HORIZONTAL * 2
+                }
+            )
+            LazyColumn.Area(
+                state = lazyColumnState,
+                alignment = Alignment.End,
+                modifier = Modifier.background(Theme.colors.background),
+                horizontalPadding = AREA_PADDING_HORIZONTAL,
+                verticalPadding = AREA_PADDING_VERTICAL,
+                minWidth = minWidth,
+            ) { item -> Text(text = item, style = font) }
+        }
     }
 
     @Composable
