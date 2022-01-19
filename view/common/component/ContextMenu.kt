@@ -58,15 +58,20 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.View.Companion.CHILL_BRO
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.event.MouseEvent
+import mu.KotlinLogging
 
 object ContextMenu {
 
     private val ITEM_HEIGHT = 28.dp
     private val ITEM_WIDTH = 160.dp
     private val POPUP_SHADOW = 12.dp
+    private val LOGGER = KotlinLogging.logger {}
 
     data class Item(val label: String, val icon: Icon.Code? = null, val onClick: () -> Unit)
 
@@ -88,9 +93,10 @@ object ContextMenu {
                     when {
                         event.buttons.isPrimaryPressed -> {
                             when (event.awtEvent.clickCount) {
-                                1 -> onSinglePrimaryClick(event.awtEvent)
+                                0, 1 -> onSinglePrimaryClick(event.awtEvent)
                                 2 -> onDoublePrimaryClick(event.awtEvent)
                                 3 -> onTriplePrimaryClick(event.awtEvent)
+                                10 -> com.vaticle.typedb.studio.state.State.notification.userWarning(LOGGER, CHILL_BRO)
                             }
                         }
                         event.buttons.isSecondaryPressed -> {

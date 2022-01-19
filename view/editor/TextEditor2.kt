@@ -182,10 +182,7 @@ object TextEditor2 {
             .pointerInput(Unit) { onPointerInput(state, contextMenuState) }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
             ContextMenu.Popup(contextMenuState) { contextMenuFn(state) }
-            LazyColumn.Area(
-                state = lazyColumnState,
-                modifier = Modifier,
-            ) { index, text ->
+            LazyColumn.Area(state = lazyColumnState) { index, text ->
                 TextLine(state, index, text, font, fontWidth, minWidth, density) { mayUpdateMinWidth(it) }
             }
         }
