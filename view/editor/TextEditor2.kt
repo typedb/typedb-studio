@@ -40,8 +40,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -60,6 +63,7 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -76,17 +80,32 @@ object TextEditor2 {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 2.dp
 
-    @Composable
-    fun createState(file: File): State {
-        val font = Theme.typography.code1
-        val currentDensity = LocalDensity.current
-        val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        return State(file, font, lineHeight)
+    internal data class Coordinate(val x: Int, val y: Int)
+
+    internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
+        override fun compareTo(other: Cursor): Int {
+            return when (this.row) {
+                other.row -> this.col.compareTo(other.col)
+                else -> this.row.compareTo(other.row)
+            }
+        }
+
+        override fun toString(): String {
+            return "Cursor (row: $row, col: $col)"
+        }
     }
 
-    internal data class Coordinate(val x: Int, val y: Int)
-    internal data class Cursor(val row: Int, val col: Int)
-    internal data class Selection(val start: Cursor, val end: Cursor)
+    internal class Selection(val start: Cursor, endInit: Cursor) {
+        var end: Cursor by mutableStateOf(endInit)
+        val min: Cursor get() = if (start < end) start else end
+        val max: Cursor get() = if (end > start) end else start
+
+        override fun toString(): String {
+            val startStatus = if (start == min) "min" else "max"
+            val endStatus = if (end == max) "max" else "min"
+            return "Selection {start: $start [$startStatus], end: $end[$endStatus]}"
+        }
+    }
 
     class State internal constructor(
         internal val file: File, internal val fontBase: TextStyle, internal val lineHeight: Dp
@@ -96,8 +115,18 @@ object TextEditor2 {
         internal var lineCount: Int by mutableStateOf(file.content.size)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
+        private var isSelecting: Boolean by mutableStateOf(false)
         internal var textAreaCoord: Coordinate by mutableStateOf(Coordinate(0, 0))
         internal val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
+
+        private fun createCursor(x: Int, y: Int, density: Float): Cursor {
+            val relX = x - textAreaCoord.x
+            val relY = y - textAreaCoord.y + scroller.offset.value
+            val row = min(floor(relY / lineHeight.value).toInt(), lineCount - 1)
+            val offsetInLine = Offset(relX.toFloat() * density, (relY - (row * lineHeight.value)) * density)
+            val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
+            return Cursor(row, col)
+        }
 
         internal fun updateTextAreaCoord(rawPosition: Offset, density: Float) {
             textAreaCoord = Coordinate(
@@ -107,13 +136,45 @@ object TextEditor2 {
         }
 
         internal fun updateCursor(x: Int, y: Int, density: Float) {
-            val relX = x - textAreaCoord.x
-            val relY = y - textAreaCoord.y + scroller.offset.value
-            val row = min(floor(relY / lineHeight.value).toInt(), lineCount - 1)
-            val offsetInLine = Offset(relX.toFloat() * density, (relY - (row * lineHeight.value)) * density)
-            val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
-            cursor = Cursor(row, col)
+            cursor = createCursor(x, y, density)
+            selection = null
         }
+
+        internal fun updateCursorIfOutOfSelection(x: Int, y: Int, density: Float) {
+            val newCursor = createCursor(x, y, density)
+            if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
+                cursor = newCursor
+                selection = null
+            }
+        }
+
+        internal fun startSelection() {
+            isSelecting = true
+        }
+
+        internal fun endSelection() {
+            isSelecting = false
+        }
+
+        internal fun mayUpdateSelection(x: Int, y: Int, density: Float) {
+            if (isSelecting) {
+                val newCursor = createCursor(x, y, density)
+                if (selection == null) {
+                    selection = Selection(cursor, newCursor)
+                } else {
+                    selection!!.end = newCursor
+                    cursor = newCursor
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun createState(file: File): State {
+        val font = Theme.typography.code1
+        val currentDensity = LocalDensity.current
+        val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
+        return State(file, font, lineHeight)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -179,6 +240,9 @@ object TextEditor2 {
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
             .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow(), density) }
+            .onPointerEvent(PointerEventType.Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
+            .onPointerEvent(PointerEventType.Move) { state.mayUpdateSelection(it.awtEvent.x, it.awtEvent.y, density) }
+            .onPointerEvent(PointerEventType.Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
             .pointerInput(Unit) { onPointerInput(state, contextMenuState) }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
             ContextMenu.Popup(contextMenuState) { contextMenuFn(state) }
@@ -194,7 +258,11 @@ object TextEditor2 {
         font: TextStyle, fontWidth: Dp, minWidth: Dp, density: Float,
         onSizeChanged: (Int) -> Unit
     ) {
-        val bgColor = if (state.cursor.row == index) Theme.colors.primary else Theme.colors.background2
+        val bgColor = when {
+            state.cursor.row == index && state.selection == null -> Theme.colors.primary
+            else -> Theme.colors.background2
+        }
+
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
@@ -207,29 +275,52 @@ object TextEditor2 {
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
                 onTextLayout = { state.textLayouts[index] = it }
             )
+            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
+                SelectionHighlighter(state, index, density)
+            }
             if (state.cursor.row == index && state.textLayouts[index] != null) {
-                Cursor(state, text, font, fontWidth, density)
+                CursorIndicator(state, text, font, fontWidth, density)
             }
         }
     }
 
     @Composable
-    private fun Cursor(state: State, text: String, font: TextStyle, fontWidth: Dp, density: Float) {
-        val pos = toDP(state.textLayouts[state.cursor.row]!!.getCursorRect(state.cursor.col).left, density)
+    private fun SelectionHighlighter(state: State, index: Int, density: Float) {
+        assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
+        val start = when {
+            state.selection!!.min.row < index -> 0
+            else -> state.selection!!.min.col // state.selection!!.min.row == index
+        }
+        val end = when {
+            state.selection!!.max.row > index -> state.content[index].length
+            else -> state.selection!!.max.col
+        }
+        val startPos = toDP(state.textLayouts[index]!!.getCursorRect(start).left, density)
+        var endPos = toDP(state.textLayouts[index]!!.getCursorRect(end).right, density)
+        if (state.selection!!.max.row > index) endPos += DEFAULT_FONT_WIDTH
+        val width = endPos - startPos
+
+        val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
+        Box(Modifier.offset(x = startPos).width(width).height(state.lineHeight).background(color))
+    }
+
+    @Composable
+    private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp, density: Float) {
+        val offsetX = toDP(state.textLayouts[state.cursor.row]!!.getCursorRect(state.cursor.col).left, density)
         val width = when {
             state.cursor.col >= text.length -> fontWidth
             else -> toDP(state.textLayouts[state.cursor.row]!!.getBoundingBox(state.cursor.col).width, density)
         }
-        BlinkingCursor(state, text.getOrNull(state.cursor.col)?.toString() ?: "", pos, width, font)
+        BlinkingCursorIndicator(state, text.getOrNull(state.cursor.col)?.toString() ?: "", offsetX, width, font)
     }
 
     @OptIn(ExperimentalTime::class)
     @Composable
-    private fun BlinkingCursor(state: State, char: String, pos: Dp, width: Dp, font: TextStyle) {
+    private fun BlinkingCursorIndicator(state: State, char: String, offsetX: Dp, width: Dp, font: TextStyle) {
         var visible by remember { mutableStateOf(true) }
         if (visible) {
             Box(
-                modifier = Modifier.offset(x = pos, y = CURSOR_LINE_PADDING)
+                modifier = Modifier.offset(x = offsetX, y = CURSOR_LINE_PADDING)
                     .width(width).height(state.lineHeight - CURSOR_LINE_PADDING * 2)
                     .background(Theme.colors.secondary)
             ) { Text(char, Modifier.offset(y = -CURSOR_LINE_PADDING), style = font.copy(Theme.colors.background2)) }
@@ -249,7 +340,7 @@ object TextEditor2 {
             onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density) },
             onDoublePrimaryClick = { }, // TODO
             onTriplePrimaryClick = { }, // TODO
-            onSecondaryClick = { state.updateCursor(it.x, it.y, density) }
+            onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y, density) }
         )
     }
 

@@ -46,7 +46,7 @@ import kotlin.math.roundToInt
 object Theme {
 
     private const val ROUNDED_CORNER_RADIUS = 4f
-    private const val SELECTION_ALPHA = 0.4f
+    const val SELECTION_ALPHA = 0.3f
     private const val INDICATION_PRESSED_ALPHA = 0.25f
     const val INDICATION_HOVER_ALPHA = 0.1f
     val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
