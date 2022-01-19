@@ -299,8 +299,9 @@ object TextEditor2 {
             state.selection!!.max.row > index -> state.content[index].length
             else -> state.selection!!.max.col
         }
-        val startPos = toDP(state.textLayouts[index]!!.getCursorRect(start).left, density)
+        var startPos = toDP(state.textLayouts[index]!!.getCursorRect(start).left, density)
         var endPos = toDP(state.textLayouts[index]!!.getCursorRect(end).right, density)
+        if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
         if (state.selection!!.max.row > index) endPos += DEFAULT_FONT_WIDTH
         val width = endPos - startPos
 
