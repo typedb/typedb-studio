@@ -156,7 +156,7 @@ object TextEditor2 {
             isSelecting = false
         }
 
-        internal fun mayUpdateSelection(x: Int, y: Int, density: Float) {
+        internal fun updateSelection(x: Int, y: Int, density: Float) {
             if (isSelecting) {
                 val newCursor = createCursor(x, y, density)
                 if (selection == null) {
@@ -210,7 +210,9 @@ object TextEditor2 {
 
     @Composable
     private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp) {
-        val bgColor = if (state.cursor.row == index) Theme.colors.primary else Theme.colors.background
+        val isCursor = state.cursor.row == index
+        val isSelected = state.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
+        val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background
         Box(
             contentAlignment = Alignment.TopEnd,
             modifier = Modifier.background(bgColor)
@@ -241,7 +243,7 @@ object TextEditor2 {
             .horizontalScroll(rememberScrollState())
             .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow(), density) }
             .onPointerEvent(PointerEventType.Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
-            .onPointerEvent(PointerEventType.Move) { state.mayUpdateSelection(it.awtEvent.x, it.awtEvent.y, density) }
+            .onPointerEvent(PointerEventType.Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
             .onPointerEvent(PointerEventType.Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
             .pointerInput(Unit) { onPointerInput(state, contextMenuState) }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
