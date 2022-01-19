@@ -18,6 +18,8 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.page.Editable
@@ -27,7 +29,7 @@ import kotlin.io.path.extension
 
 class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent), Editable {
 
-    var content: MutableList<String> = mutableListOf()
+    val content: SnapshotStateList<String> = mutableStateListOf()
     val extension: String = this.path.extension
     val isTypeQL: Boolean = Property.File.TYPEQL.extensions.contains(extension)
 
@@ -40,7 +42,7 @@ class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent)
     }
 
     override fun load() {
-        content = Files.readAllLines(path)
+        content.addAll(Files.readAllLines(path))
     }
 
     fun save() {

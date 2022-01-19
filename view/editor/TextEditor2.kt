@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -55,6 +57,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.MouseEvent
 import kotlin.math.floor
+import kotlin.math.min
 
 object TextEditor2 {
 
@@ -82,7 +85,8 @@ object TextEditor2 {
         internal val density: Float,
         internal val lineHeight: Dp
     ) {
-        internal val content: MutableList<String> get() = file.content
+        internal val content: SnapshotStateList<String> get() = file.content
+        internal val textLayouts: MutableList<TextLayoutResult?> = MutableList(file.content.size) { null }
         internal var lineCount: Int by mutableStateOf(file.content.size)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
@@ -95,16 +99,18 @@ object TextEditor2 {
 
         internal fun updateTextAreaCoord(rawPosition: Offset) {
             textAreaCoord = Coordinate(
-                toDP(rawPosition.x, density).value.toInt(),
-                toDP(rawPosition.y, density).value.toInt()
+                x = toDP(rawPosition.x, density).value.toInt() + AREA_PADDING_HORIZONTAL.value.toInt(),
+                y = toDP(rawPosition.y, density).value.toInt()
             )
         }
 
         internal fun updateCursor(x: Int, y: Int) {
             val relX = x - textAreaCoord.x
             val relY = y - textAreaCoord.y + scroller.offset.value
-            val cursorRow = floor(relY / lineHeight.value).toInt()
-            cursor = Cursor(cursorRow, 0)
+            val row = min(floor(relY / lineHeight.value).toInt(), lineCount - 1)
+            val offsetInLine = Offset(relX.toFloat() * density, (relY - (row * lineHeight.value)) * density)
+            val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
+            cursor = Cursor(row, col)
         }
     }
 
@@ -190,6 +196,7 @@ object TextEditor2 {
                 text = AnnotatedString(text),
                 style = state.font,
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
+                onTextLayout = { state.textLayouts[index] = it }
             )
         }
     }
