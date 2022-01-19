@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +63,9 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.min
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.delay
 
 object TextEditor2 {
 
@@ -69,6 +73,7 @@ object TextEditor2 {
     private val LINE_GAP = 2.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
+    private val CURSOR_LINE_PADDING = 2.dp
 
     @Composable
     fun createState(file: File): State {
@@ -216,14 +221,24 @@ object TextEditor2 {
         BlinkingCursor(state, text.getOrNull(state.cursor.col)?.toString() ?: "", pos, width, font)
     }
 
+    @OptIn(ExperimentalTime::class)
     @Composable
     private fun BlinkingCursor(state: State, char: String, pos: Dp, width: Dp, font: TextStyle) {
-        val linePadding = 2.dp
-        Box(
-            modifier = Modifier.offset(x = pos, y = linePadding)
-                .width(width).height(state.lineHeight - linePadding * 2)
-                .background(Theme.colors.secondary)
-        ) { Text(char, Modifier.offset(y = -linePadding), style = font.copy(color = Theme.colors.background2)) }
+        var visible by remember { mutableStateOf(true) }
+        if (visible) {
+            Box(
+                modifier = Modifier.offset(x = pos, y = CURSOR_LINE_PADDING)
+                    .width(width).height(state.lineHeight - CURSOR_LINE_PADDING * 2)
+                    .background(Theme.colors.secondary)
+            ) { Text(char, Modifier.offset(y = -CURSOR_LINE_PADDING), style = font.copy(Theme.colors.background2)) }
+        }
+        LaunchedEffect(state.cursor) {
+            visible = true
+            while (true) {
+                delay(Duration.Companion.milliseconds(500))
+                visible = !visible
+            }
+        }
     }
 
     private fun onPointerEvent(state: State, event: MouseEvent, density: Float) {
