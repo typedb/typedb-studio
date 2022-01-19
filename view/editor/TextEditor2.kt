@@ -272,14 +272,14 @@ object TextEditor2 {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
+            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
+                SelectionHighlighter(state, index, density)
+            }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
                 onTextLayout = { state.textLayouts[index] = it }
             )
-            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                SelectionHighlighter(state, index, density)
-            }
             if (state.cursor.row == index && state.textLayouts[index] != null) {
                 CursorIndicator(state, text, font, fontWidth, density)
             }
