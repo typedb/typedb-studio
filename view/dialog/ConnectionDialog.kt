@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB_CLUSTER
@@ -81,12 +81,12 @@ object ConnectionDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> State.connection.tryConnectToTypeDB(address)
+                TYPEDB -> GlobalState.connection.tryConnectToTypeDB(address)
                 TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> State.connection.tryConnectToTypeDBCluster(
+                    caCertificate.isBlank() -> GlobalState.connection.tryConnectToTypeDBCluster(
                         address, username, password, tlsEnabled
                     )
-                    else -> State.connection.tryConnectToTypeDBCluster(
+                    else -> GlobalState.connection.tryConnectToTypeDBCluster(
                         address, username, password, caCertificate
                     )
                 }
@@ -98,7 +98,7 @@ object ConnectionDialog {
     fun Layout() {
         Dialog(
             title = Label.CONNECT_TO_TYPEDB,
-            onCloseRequest = { State.connection.showDialog = false },
+            onCloseRequest = { GlobalState.connection.showDialog = false },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -117,7 +117,7 @@ object ConnectionDialog {
                 Row(verticalAlignment = Alignment.Bottom) {
                     ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
-                    when (State.connection.status) {
+                    when (GlobalState.connection.status) {
                         DISCONNECTED -> DisconnectedFormButtons()
                         CONNECTED -> ConnectedFormButtons()
                         CONNECTING -> ConnectingFormButtons()
@@ -134,7 +134,7 @@ object ConnectionDialog {
                 values = Property.Server.values().toList(),
                 selected = ConnectionFormState.server,
                 onSelection = { ConnectionFormState.server = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -148,7 +148,7 @@ object ConnectionDialog {
                 value = ConnectionFormState.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { ConnectionFormState.address = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -162,7 +162,7 @@ object ConnectionDialog {
                 value = ConnectionFormState.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { ConnectionFormState.username = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -176,7 +176,7 @@ object ConnectionDialog {
                 value = ConnectionFormState.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { ConnectionFormState.password = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -189,7 +189,7 @@ object ConnectionDialog {
             Checkbox(
                 value = ConnectionFormState.tlsEnabled,
                 onChange = { ConnectionFormState.tlsEnabled = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
             )
         }
     }
@@ -202,7 +202,7 @@ object ConnectionDialog {
                 value = ConnectionFormState.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { ConnectionFormState.caCertificate = it },
-                enabled = State.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected(),
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -210,9 +210,9 @@ object ConnectionDialog {
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText = "${Label.STATUS}: ${State.connection.status.name.lowercase()}"
+        val statusText = "${Label.STATUS}: ${GlobalState.connection.status.name.lowercase()}"
         Text(
-            value = statusText, color = when (State.connection.status) {
+            value = statusText, color = when (GlobalState.connection.status) {
                 DISCONNECTED -> Theme.colors.error2
                 CONNECTING -> Theme.colors.quaternary2
                 CONNECTED -> Theme.colors.secondary
@@ -223,7 +223,7 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { State.connection.showDialog = false })
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.showDialog = false })
         ComponentSpacer()
         TextButton(
             text = Label.CONNECT,
@@ -236,17 +236,17 @@ object ConnectionDialog {
     private fun ConnectedFormButtons() {
         TextButton(
             text = Label.DISCONNECT,
-            onClick = { State.connection.disconnect() },
+            onClick = { GlobalState.connection.disconnect() },
             textColor = Theme.colors.error2
         )
         ComponentSpacer()
-        TextButton(text = Label.CLOSE, onClick = { State.connection.showDialog = false })
+        TextButton(text = Label.CLOSE, onClick = { GlobalState.connection.showDialog = false })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { State.connection.disconnect() })
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.disconnect() })
         ComponentSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }

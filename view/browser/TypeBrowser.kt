@@ -27,7 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
@@ -40,14 +40,16 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
-    override val isActive: Boolean get() = State.connection.hasDatabase()
+    override val isActive: Boolean get() = GlobalState.connection.hasDatabase()
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
     override fun NavigatorLayout() {
         val selectDBDialogState = SelectDatabaseDialog.rememberState()
-        if (!State.connection.isConnected()) ConnectToServerHelper()
-        else if (!State.connection.hasDatabase() || selectDBDialogState.showDialog) SelectDBHelper(selectDBDialogState)
+        if (!GlobalState.connection.isConnected()) ConnectToServerHelper()
+        else if (!GlobalState.connection.hasDatabase() || selectDBDialogState.showDialog) SelectDBHelper(
+            selectDBDialogState
+        )
         else {
 
         }
@@ -61,7 +63,7 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
         ) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                onClick = { State.connection.showDialog = true },
+                onClick = { GlobalState.connection.showDialog = true },
                 leadingIcon = Icon.Code.DATABASE
             )
         }

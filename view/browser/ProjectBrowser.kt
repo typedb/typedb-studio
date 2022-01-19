@@ -28,7 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
@@ -52,7 +52,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
 
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
-    override val isActive: Boolean get() = State.project.current != null
+    override val isActive: Boolean get() = GlobalState.project.current != null
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
@@ -60,12 +60,12 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
         if (!isActive) OpenProjectHelper()
         else {
             val state = rememberNavigatorState(
-                container = State.project.current!!,
+                container = GlobalState.project.current!!,
                 title = Label.PROJECT_BROWSER,
                 initExpandDepth = 1,
                 liveUpdate = true
             ) { projectItemOpen(it) }
-            State.project.onChange = { state.replaceContainer(it) }
+            GlobalState.project.onChange = { state.replaceContainer(it) }
             buttons = state.buttons
             Navigator.Layout(navState = state, iconArgs = { projectItemIcon(it) }) { contextMenuItems(it) }
         }
@@ -79,7 +79,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                onClick = { State.project.showDialog = true },
+                onClick = { GlobalState.project.showDialog = true },
                 leadingIcon = Icon.Code.FOLDER_OPEN
             )
         }
@@ -88,7 +88,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
         when (itemState.item) {
             is Directory -> itemState.asExpandable().toggle()
-            is File -> State.page.open(itemState.item.asFile())
+            is File -> GlobalState.page.open(itemState.item.asFile())
         }
     }
 
@@ -129,7 +129,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     @OptIn(ExperimentalFoundationApi::class)
     private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
         return listOf(
-            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { State.page.open(itemState.item.asFile()) },
+            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { GlobalState.page.open(itemState.item.asFile()) },
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
         )
     }

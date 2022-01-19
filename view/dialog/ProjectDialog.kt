@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
@@ -54,7 +54,7 @@ object ProjectDialog {
 
     class ProjectFormState : Form.State {
 
-        var directory: String? by mutableStateOf(State.project.current?.directory?.absolutePath?.toString())
+        var directory: String? by mutableStateOf(GlobalState.project.current?.directory?.absolutePath?.toString())
 
         override fun isValid(): Boolean {
             return !directory.isNullOrBlank()
@@ -66,7 +66,7 @@ object ProjectDialog {
 
         override fun trySubmit() {
             assert(!directory.isNullOrBlank())
-            State.project.tryOpenDirectory(directory!!)
+            GlobalState.project.tryOpenDirectory(directory!!)
         }
     }
 
@@ -75,7 +75,7 @@ object ProjectDialog {
         val formState = remember { ProjectFormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
-            onCloseRequest = { State.project.showDialog = false },
+            onCloseRequest = { GlobalState.project.showDialog = false },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -126,7 +126,7 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun OpenProjectButtons(formState: ProjectFormState) {
-        TextButton(text = Label.CANCEL, onClick = { State.project.showDialog = false })
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.project.showDialog = false })
         ComponentSpacer()
         TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }

@@ -37,7 +37,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.view.browser.BrowserArea
@@ -60,7 +60,7 @@ object Studio {
     private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
     private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
     private val mainWindowTitle: String
-        get() = "${Label.TYPEDB_STUDIO}${State.project.current?.let { " — ${it.directory.name}" } ?: ""}"
+        get() = "${Label.TYPEDB_STUDIO}${GlobalState.project.current?.let { " — ${it.directory.name}" } ?: ""}"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -126,8 +126,8 @@ object Studio {
                 StatusBar.Layout()
             }
             NotificationArea.Layout()
-            if (State.connection.showDialog) ConnectionDialog.Layout()
-            if (State.project.showDialog) ProjectDialog.Layout()
+            if (GlobalState.connection.showDialog) ConnectionDialog.Layout()
+            if (GlobalState.project.showDialog) ProjectDialog.Layout()
         }
     }
 

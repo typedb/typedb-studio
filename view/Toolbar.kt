@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.State
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
@@ -54,7 +54,7 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { State.project.toggleDialog() })
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.toggleDialog() })
             ToolbarSpace()
             ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
             ToolbarSpace()
@@ -81,11 +81,12 @@ object Toolbar {
 
     @Composable
     private fun ConnectionButton() {
-        when (State.connection.status) {
+        when (GlobalState.connection.status) {
             DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
             CONNECTING -> ConnectionButton(Label.CONNECTING)
             CONNECTED -> ConnectionButton(
-                (State.connection.current!!.username?.let { "$it@" } ?: "") + State.connection.current!!.address
+                (GlobalState.connection.current!!.username?.let { "$it@" }
+                    ?: "") + GlobalState.connection.current!!.address
             )
         }
     }
@@ -95,7 +96,7 @@ object Toolbar {
         TextButton(
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
-            onClick = { State.connection.showDialog = true },
+            onClick = { GlobalState.connection.showDialog = true },
             trailingIcon = Icon.Code.DATABASE,
         )
     }

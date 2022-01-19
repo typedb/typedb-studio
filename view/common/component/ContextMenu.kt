@@ -35,7 +35,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -58,8 +57,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
-import com.vaticle.typedb.studio.state.State
-import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.CHILL_BRO
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -96,7 +94,7 @@ object ContextMenu {
                                 0, 1 -> onSinglePrimaryClick(event.awtEvent)
                                 2 -> onDoublePrimaryClick(event.awtEvent)
                                 3 -> onTriplePrimaryClick(event.awtEvent)
-                                10 -> com.vaticle.typedb.studio.state.State.notification.userWarning(LOGGER, CHILL_BRO)
+                                10 -> GlobalState.notification.userWarning(LOGGER, CHILL_BRO)
                             }
                         }
                         event.buttons.isSecondaryPressed -> {
