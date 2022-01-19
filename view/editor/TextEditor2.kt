@@ -159,11 +159,13 @@ object TextEditor2 {
         internal fun updateSelection(x: Int, y: Int, density: Float) {
             if (isSelecting) {
                 val newCursor = createCursor(x, y, density)
-                if (selection == null) {
-                    selection = Selection(cursor, newCursor)
-                } else {
-                    selection!!.end = newCursor
-                    cursor = newCursor
+                if (newCursor != cursor) {
+                    if (selection == null) {
+                        selection = Selection(cursor, newCursor)
+                    } else {
+                        selection!!.end = newCursor
+                        cursor = newCursor
+                    }
                 }
             }
         }
