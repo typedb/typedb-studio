@@ -63,6 +63,7 @@ object Icon {
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
         LINK_SIMPLE(0xe1cdu),
+        PASTE(0xf0eau),
         PEN(0xf304u),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         RECTANGLE_CODE(0Xe322U),

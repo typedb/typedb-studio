@@ -40,10 +40,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInWindow
@@ -54,11 +53,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.ContextMenu
+import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import java.awt.event.MouseEvent
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -124,13 +125,14 @@ object TextEditor2 {
         val textFont = state.fontBase.copy(color = fontColor, lineHeight = fontHeight)
         val lineNumberFont = state.fontBase.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
+        val contextMenuState = remember { ContextMenu.State() }
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Row(modifier = modifier) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
                 Separator.Vertical()
-                TextArea(state, textFont, fontWidth, density)
+                TextArea(state, contextMenuState, textFont, fontWidth, density)
             }
         }
     }
@@ -159,7 +161,9 @@ object TextEditor2 {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, density: Float) {
+    private fun TextArea(
+        state: State, contextMenuState: ContextMenu.State, font: TextStyle, fontWidth: Dp, density: Float
+    ) {
         var minWidth by remember { mutableStateOf(0.dp) }
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = state.content,
@@ -175,8 +179,9 @@ object TextEditor2 {
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
             .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow(), density) }
-            .onPointerEvent(PointerEventType.Press) { onPointerEvent(state, it.awtEvent, density) }
+            .pointerInput(Unit) { onPointerInput(state, contextMenuState) }
             .onSizeChanged { mayUpdateMinWidth(it.width) }) {
+            ContextMenu.Popup(contextMenuState) { contextMenuFn(state) }
             LazyColumn.Area(
                 state = lazyColumnState,
                 modifier = Modifier,
@@ -241,13 +246,19 @@ object TextEditor2 {
         }
     }
 
-    private fun onPointerEvent(state: State, event: MouseEvent, density: Float) {
-        when (event.button) {
-            MouseEvent.BUTTON1 -> when (event.clickCount) {
-                1 -> state.updateCursor(event.x, event.y, density)
-                2 -> {}
-            }
-            MouseEvent.BUTTON3 -> {}
-        }
+    private suspend fun PointerInputScope.onPointerInput(state: State, contextMenuState: ContextMenu.State) {
+        contextMenuState.onPointerInput(
+            pointerInputScope = this,
+            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density) },
+            onDoublePrimaryClick = { }, // TODO
+            onTriplePrimaryClick = { }, // TODO
+            onSecondaryClick = { state.updateCursor(it.x, it.y, density) }
+        )
+    }
+
+    private fun contextMenuFn(state: State): List<ContextMenu.Item> { // TODO
+        return listOf(
+            ContextMenu.Item(Label.PASTE, Icon.Code.PASTE) {}
+        )
     }
 }

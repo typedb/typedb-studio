@@ -60,6 +60,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import java.awt.event.MouseEvent
 
 object ContextMenu {
 
@@ -69,15 +70,16 @@ object ContextMenu {
 
     data class Item(val label: String, val icon: Icon.Code? = null, val onClick: () -> Unit)
 
-    class State internal constructor() {
+    class State {
 
         internal var isOpen by mutableStateOf(false)
 
         suspend fun onPointerInput(
             pointerInputScope: PointerInputScope,
-            onSinglePrimaryClick: () -> Unit,
-            onDoublePrimaryClick: () -> Unit,
-            onSecondaryClick: () -> Unit
+            onSinglePrimaryClick: (MouseEvent) -> Unit = {},
+            onDoublePrimaryClick: (MouseEvent) -> Unit = {},
+            onTriplePrimaryClick: (MouseEvent) -> Unit = {},
+            onSecondaryClick: (MouseEvent) -> Unit = {}
         ) {
             pointerInputScope.forEachGesture {
                 awaitPointerEventScope {
@@ -86,12 +88,13 @@ object ContextMenu {
                     when {
                         event.buttons.isPrimaryPressed -> {
                             when (event.awtEvent.clickCount) {
-                                1 -> onSinglePrimaryClick()
-                                2 -> onDoublePrimaryClick()
+                                1 -> onSinglePrimaryClick(event.awtEvent)
+                                2 -> onDoublePrimaryClick(event.awtEvent)
+                                3 -> onTriplePrimaryClick(event.awtEvent)
                             }
                         }
                         event.buttons.isSecondaryPressed -> {
-                            onSecondaryClick()
+                            onSecondaryClick(event.awtEvent)
                             isOpen = true
                         }
                     }
@@ -116,11 +119,6 @@ object ContextMenu {
                 else -> false
             }
         }
-    }
-
-    @Composable
-    fun rememberState(): State {
-        return remember { State() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

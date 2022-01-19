@@ -367,11 +367,11 @@ object Navigator {
         contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
     ) {
         val density = LocalDensity.current.density
-        val ctmState = ContextMenu.rememberState()
+        val contextMenuState = remember { ContextMenu.State() }
         val lazyListState = rememberLazyListState()
         navState.viewState = lazyListState
         Box(modifier = Modifier.fillMaxSize().onSizeChanged { navState.mayIncreaseMinWidth(toDP(it.width, density)) }) {
-            ContextMenu.Popup(ctmState) { contextMenuFn(navState.selected!!) }
+            ContextMenu.Popup(contextMenuState) { contextMenuFn(navState.selected!!) }
             LazyColumn(
                 state = lazyListState, modifier = Modifier.widthIn(min = navState.minWidth)
                     .horizontalScroll(state = rememberScrollState())
@@ -379,7 +379,7 @@ object Navigator {
             ) {
                 navState.entries.forEach {
                     item {
-                        ItemLayout(navState, ctmState, it, it.depth, iconArgs) {
+                        ItemLayout(navState, contextMenuState, it, it.depth, iconArgs) {
                             navState.mayIncreaseMinWidth(toDP(it, density))
                         }
                     }
@@ -408,7 +408,7 @@ object Navigator {
                 .focusRequester(item.focusReq!!).focusable()
                 .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(contextMenuState, navState, item.focusReq!!, item) }
+                .pointerInput(item) { onPointerInput(navState, contextMenuState, item.focusReq!!, item) }
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
@@ -449,7 +449,7 @@ object Navigator {
     }
 
     private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
-        contextMenuState: ContextMenu.State, navigatorState: NavigatorState<T>,
+        navigatorState: NavigatorState<T>, contextMenuState: ContextMenu.State,
         focusReq: FocusRequester, item: ItemState<T>
     ) {
         contextMenuState.onPointerInput(
