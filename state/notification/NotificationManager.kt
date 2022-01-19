@@ -57,7 +57,11 @@ class NotificationManager {
     }
 
     private fun userNotification(logger: KLogger, type: Notification.Type, code: String, message: String) {
-        logger.error { message }
+        when (type) {
+            INFO -> logger.info { message }
+            WARNING -> logger.warn { message }
+            ERROR -> logger.error { message }
+        }
         queue += Notification(type, code, message)
     }
 
@@ -65,8 +69,14 @@ class NotificationManager {
         logger: KLogger, cause: Throwable, type: Notification.Type,
         code: String, message: String
     ) {
-        logger.error { message }
-        logger.error { cause }
+        when (type) {
+            INFO -> logger.info { message }
+            WARNING -> logger.warn { message }
+            ERROR -> {
+                logger.error { message }
+                logger.error { cause }
+            }
+        }
         queue += Notification(type, code, message)
     }
 
