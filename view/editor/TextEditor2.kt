@@ -81,7 +81,11 @@ object TextEditor2 {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 2.dp
 
-    internal data class Coordinate(val x: Int, val y: Int)
+    internal data class Coordinate(val x: Int, val y: Int) {
+        override fun toString(): String {
+            return "Coordinate (x: $x, y: $y)"
+        }
+    }
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
         override fun compareTo(other: Cursor): Int {
@@ -115,8 +119,10 @@ object TextEditor2 {
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
             addAll(List(file.content.size) { null })
         }
+        internal val contextMenu = ContextMenu.State()
+        internal val scroller = LazyColumn.createScrollState(lineHeight, file.content.size)
         internal var lineCount: Int by mutableStateOf(file.content.size)
-        internal val scroller = LazyColumn.createScrollState(lineHeight, lineCount)
+        internal var width by mutableStateOf(0.dp)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
         private var isSelecting: Boolean by mutableStateOf(false)
@@ -136,6 +142,11 @@ object TextEditor2 {
                 x = toDP(rawPosition.x, density).value.toInt() + AREA_PADDING_HORIZONTAL.value.toInt(),
                 y = toDP(rawPosition.y, density).value.toInt()
             )
+        }
+
+        internal fun increaseWidth(newRawWidth: Int, density: Float) {
+            val newWidth = toDP(newRawWidth, density)
+            if (newWidth > width) width = newWidth
         }
 
         internal fun updateCursor(x: Int, y: Int, density: Float) {
@@ -191,14 +202,13 @@ object TextEditor2 {
         val textFont = state.fontBase.copy(color = fontColor, lineHeight = fontHeight)
         val lineNumberFont = state.fontBase.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
-        val contextMenuState = remember { ContextMenu.State() }
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Row(modifier = modifier) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
                 Separator.Vertical()
-                TextArea(state, contextMenuState, textFont, fontWidth)
+                TextArea(state, textFont, fontWidth)
             }
         }
     }
@@ -229,18 +239,12 @@ object TextEditor2 {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(state: State, contextMenuState: ContextMenu.State, font: TextStyle, fontWidth: Dp) {
+    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
         val density = LocalDensity.current.density
-        var minWidth by remember { mutableStateOf(0.dp) }
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = state.content,
             scroller = state.scroller
         )
-
-        fun mayUpdateMinWidth(newRawWidth: Int) {
-            val newWidth = toDP(newRawWidth, density)
-            if (newWidth > minWidth) minWidth = newWidth
-        }
 
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
@@ -249,21 +253,16 @@ object TextEditor2 {
             .onPointerEvent(PointerEventType.Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
             .onPointerEvent(PointerEventType.Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
             .onPointerEvent(PointerEventType.Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
-            .pointerInput(Unit) { onPointerInput(state, contextMenuState) }
-            .onSizeChanged { mayUpdateMinWidth(it.width) }) {
-            ContextMenu.Popup(contextMenuState) { contextMenuFn(state) }
-            LazyColumn.Area(state = lazyColumnState) { index, text ->
-                TextLine(state, index, text, font, fontWidth, minWidth) { mayUpdateMinWidth(it) }
-            }
+            .pointerInput(state) { onPointerInput(state) }
+            .onSizeChanged { state.increaseWidth(it.width, density) }) {
+            ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
+            LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
         }
     }
 
     @Composable
-    private fun TextLine(
-        state: State, index: Int, text: String,
-        font: TextStyle, fontWidth: Dp, minWidth: Dp,
-        onSizeChanged: (Int) -> Unit
-    ) {
+    private fun TextLine(state: State, index: Int, text: String, font: TextStyle, fontWidth: Dp) {
+        val density = LocalDensity.current.density
         val bgColor = when {
             state.cursor.row == index && state.selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
@@ -272,7 +271,7 @@ object TextEditor2 {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = minWidth)
+                .defaultMinSize(minWidth = state.width)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
@@ -281,7 +280,7 @@ object TextEditor2 {
             }
             Text(
                 text = AnnotatedString(text), style = font,
-                modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
+                modifier = Modifier.onSizeChanged { state.increaseWidth(it.width, density) },
                 onTextLayout = { state.textLayouts[index] = it }
             )
             if (state.cursor.row == index && state.textLayouts[index] != null) {
@@ -343,8 +342,8 @@ object TextEditor2 {
         }
     }
 
-    private suspend fun PointerInputScope.onPointerInput(state: State, contextMenuState: ContextMenu.State) {
-        contextMenuState.onPointerInput(
+    private suspend fun PointerInputScope.onPointerInput(state: State) {
+        state.contextMenu.onPointerInput(
             pointerInputScope = this,
             onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density) },
             onDoublePrimaryClick = { }, // TODO
