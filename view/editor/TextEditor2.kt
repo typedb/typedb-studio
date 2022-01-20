@@ -279,7 +279,7 @@ object TextEditor2 {
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
-                onTextLayout = { state.textLayouts[index] = it; println("update text layout for index: $index") }
+                onTextLayout = { state.textLayouts[index] = it }
             )
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
                 SelectionHighlighter(state, index, text.length)
@@ -292,7 +292,6 @@ object TextEditor2 {
 
     @Composable
     private fun SelectionHighlighter(state: State, index: Int, length: Int) {
-        println("recompose SeelctionHighlighter for ${state.selection}")
         val density = LocalDensity.current.density
         assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
         val start = when {
