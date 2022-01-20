@@ -20,6 +20,8 @@ package com.vaticle.typedb.studio.state.page
 
 interface Editable {
 
-    fun load()
+    fun open()
+
+    fun close()
 
 }

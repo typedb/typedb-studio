@@ -41,8 +41,13 @@ class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent)
         return this
     }
 
-    override fun load() {
+    override fun open() {
+        content.clear()
         content.addAll(Files.readAllLines(path))
+    }
+
+    override fun close() {
+        content.clear()
     }
 
     fun save() {

@@ -36,7 +36,7 @@ class PageManager(val notification: NotificationManager) {
 
     fun open(page: Editable) {
         if (page !in openedPages) {
-            page.load()
+            page.open()
             openedPages.add(page)
         }
         selectedPage = page
@@ -45,6 +45,7 @@ class PageManager(val notification: NotificationManager) {
     fun close(page: Editable) {
         val newPageIndex = max(openedPages.indexOf(page) - 1, 0)
         openedPages.remove(page)
+        page.close()
         selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
 }
