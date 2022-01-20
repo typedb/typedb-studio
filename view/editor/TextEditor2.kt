@@ -276,14 +276,14 @@ object TextEditor2 {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
+            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
+                SelectionHighlighter(state, index, text.length)
+            }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { onSizeChanged(it.width) },
                 onTextLayout = { state.textLayouts[index] = it }
             )
-            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                SelectionHighlighter(state, index, text.length)
-            }
             if (state.cursor.row == index && state.textLayouts[index] != null) {
                 CursorIndicator(state, text, font, fontWidth)
             }
@@ -302,8 +302,8 @@ object TextEditor2 {
             state.selection!!.max.row > index -> state.content[index].length
             else -> state.selection!!.max.col
         }
-        var startPos = toDP(state.textLayouts[index]!!.getCursorRect(start).left, density)
-        var endPos = toDP(state.textLayouts[index]!!.getCursorRect(end).right, density)
+        var startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, density) } ?: 0.dp
+        var endPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(end).right, density) } ?: 0.dp
         if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
         if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
@@ -315,10 +315,11 @@ object TextEditor2 {
     private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
         var visible by remember { mutableStateOf(true) }
         val density = LocalDensity.current.density
-        val offsetX = toDP(state.textLayouts[state.cursor.row]!!.getCursorRect(state.cursor.col).left, density)
+        val textLayout = state.textLayouts[state.cursor.row]
+        val offsetX = textLayout?.let { toDP(it.getCursorRect(state.cursor.col).left, density) } ?: 0.dp
         val width = when {
             state.cursor.col >= text.length -> fontWidth
-            else -> toDP(state.textLayouts[state.cursor.row]!!.getBoundingBox(state.cursor.col).width, density)
+            else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, density) } ?: fontWidth
         }
         if (visible) {
             Box(
