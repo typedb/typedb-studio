@@ -187,11 +187,21 @@ object Navigator {
                 entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.reloadEntries() }
             }
 
-            internal fun checkForUpdate() {
-                if (!isExpanded) return
+            internal fun checkForUpdate(recomputeNavigator: Boolean): Boolean {
+                var hasUpdate = false
+                if (!isExpanded) return hasUpdate
                 item.asExpandable().reloadEntries()
-                if (item.asExpandable().entries.toSet() != entries.map { it.item }.toSet()) reloadEntries()
-                entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.checkForUpdate() }
+                if (item.asExpandable().entries.toSet() != entries.map { it.item }.toSet()) {
+                    reloadEntries()
+                    hasUpdate = true
+                }
+                entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach {
+                    val childHasUpdate = it.checkForUpdate(false)
+                    if (childHasUpdate) hasUpdate = true
+                }
+
+                if (hasUpdate && recomputeNavigator) navState.recomputeList()
+                return hasUpdate
             }
 
             internal open fun itemStateOf(item: T): ItemState<T> {
@@ -255,7 +265,7 @@ object Navigator {
                 try {
                     do {
                         delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
-                        root.checkForUpdate()
+                        root.checkForUpdate(true)
                     } while (root == container)
                 } catch (e: CancellationException) {
                 } catch (e: java.lang.Exception) {
