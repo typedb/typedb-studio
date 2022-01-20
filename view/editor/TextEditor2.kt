@@ -196,6 +196,7 @@ object TextEditor2 {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier) {
+        if (state.content.isEmpty()) return
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground

@@ -44,6 +44,7 @@ class File(path: Path, parent: Directory) : ProjectItem(Type.FILE, path, parent)
     override fun open() {
         content.clear()
         content.addAll(Files.readAllLines(path))
+        if (content.isEmpty()) content.add("")
     }
 
     override fun close() {
