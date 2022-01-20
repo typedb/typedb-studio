@@ -275,7 +275,7 @@ object TextEditor2 {
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                SelectionHighlighter(state, index, density)
+                SelectionHighlighter(state, index, text.length, density)
             }
             Text(
                 text = AnnotatedString(text), style = font,
@@ -289,7 +289,7 @@ object TextEditor2 {
     }
 
     @Composable
-    private fun SelectionHighlighter(state: State, index: Int, density: Float) {
+    private fun SelectionHighlighter(state: State, index: Int, length: Int, density: Float) {
         assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
         val start = when {
             state.selection!!.min.row < index -> 0
@@ -302,11 +302,9 @@ object TextEditor2 {
         var startPos = toDP(state.textLayouts[index]!!.getCursorRect(start).left, density)
         var endPos = toDP(state.textLayouts[index]!!.getCursorRect(end).right, density)
         if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
-        if (state.selection!!.max.row > index) endPos += DEFAULT_FONT_WIDTH
-        val width = endPos - startPos
-
+        if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
-        Box(Modifier.offset(x = startPos).width(width).height(state.lineHeight).background(color))
+        Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
     }
 
     @Composable
