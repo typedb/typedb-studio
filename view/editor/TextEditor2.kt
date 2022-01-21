@@ -43,7 +43,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
@@ -172,7 +174,11 @@ object TextEditor2 {
 
         internal fun updateSelection(x: Int, y: Int, density: Float) {
             if (isSelecting) {
-                val newCursor = createCursor(x, y, density)
+                val y2 = when {
+                    x < textAreaCoord.x - AREA_PADDING_HORIZONTAL.value -> y + lineHeight.value.toInt()
+                    else -> y
+                }
+                val newCursor = createCursor(x, y2, density)
                 if (newCursor != cursor) {
                     if (selection == null) {
                         selection = Selection(cursor, newCursor)
@@ -206,7 +212,12 @@ object TextEditor2 {
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier) {
+            Row(modifier = modifier
+                .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
+                .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
+                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
+                .pointerInput(state) { onPointerInput(state) }
+            ) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
                 Separator.Vertical()
                 TextArea(state, textFont, fontWidth)
@@ -251,10 +262,6 @@ object TextEditor2 {
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
             .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow(), density) }
-            .onPointerEvent(PointerEventType.Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
-            .onPointerEvent(PointerEventType.Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
-            .onPointerEvent(PointerEventType.Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
-            .pointerInput(state) { onPointerInput(state) }
             .onSizeChanged { state.increaseWidth(it.width, density) }) {
             ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
             LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
