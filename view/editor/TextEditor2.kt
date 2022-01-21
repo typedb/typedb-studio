@@ -71,7 +71,6 @@ import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
-import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
@@ -196,7 +195,7 @@ object TextEditor2 {
 
         private fun mayScrollTo(x: Int, y: Int) {
             if (x < textAreaRect.left) coroutineScope.launch {
-                verScroller.scrollTo(max(verScroller.value + x - textAreaRect.left.toInt(), 0))
+                verScroller.scrollTo(verScroller.value + x - textAreaRect.left.toInt().coerceAtLeast(0))
             } else if (x > textAreaRect.right) coroutineScope.launch {
                 verScroller.scrollTo(verScroller.value + x - textAreaRect.right.toInt())
             }
