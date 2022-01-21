@@ -35,6 +35,7 @@ import androidx.compose.ui.input.mouse.mouseScrollFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -58,12 +59,16 @@ object LazyColumn {
         internal var firstVisibleIndex: Int by mutableStateOf(0)
         internal var lastVisibleIndex: Int by mutableStateOf(0)
 
+        fun updateOffset(delta: Dp) {
+            offset = (offset + delta).coerceIn(0.dp, max(contentHeight - height, 0.dp))
+            updateView()
+        }
+
         @OptIn(ExperimentalComposeUiApi::class)
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
             val delta = itemHeight * (event.delta as MouseScrollUnit.Line).value * -1
-            val max = max(contentHeight - height, 0.dp)
-            offset = (offset - delta).coerceIn(0.dp, max)
+            offset = (offset - delta).coerceIn(0.dp, max(contentHeight - height, 0.dp))
 
             updateView()
             return true
