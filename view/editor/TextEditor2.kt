@@ -43,15 +43,16 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -82,12 +83,6 @@ object TextEditor2 {
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 2.dp
-
-    internal data class Coordinate(val x: Int, val y: Int) {
-        override fun toString(): String {
-            return "Coordinate (x: $x, y: $y)"
-        }
-    }
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
         override fun compareTo(other: Cursor): Int {
@@ -128,21 +123,23 @@ object TextEditor2 {
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
         private var isSelecting: Boolean by mutableStateOf(false)
-        private var textAreaCoord: Coordinate by mutableStateOf(Coordinate(0, 0))
+        private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
 
         private fun createCursor(x: Int, y: Int, density: Float): Cursor {
-            val relX = x - textAreaCoord.x
-            val relY = y - textAreaCoord.y + scroller.offset.value
+            val relX = x - textAreaRect.left
+            val relY = y - textAreaRect.top + scroller.offset.value
             val row = min(floor(relY / lineHeight.value).toInt(), lineCount - 1)
             val offsetInLine = Offset(relX.toFloat() * density, (relY - (row * lineHeight.value)) * density)
             val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
             return Cursor(row, col)
         }
 
-        internal fun updateTextAreaCoord(rawPosition: Offset, density: Float) {
-            textAreaCoord = Coordinate(
-                x = toDP(rawPosition.x, density).value.toInt() + AREA_PADDING_HORIZONTAL.value.toInt(),
-                y = toDP(rawPosition.y, density).value.toInt()
+        internal fun updateTextAreaCoord(rawPosition: Rect, density: Float) {
+            textAreaRect = Rect(
+                left = toDP(rawPosition.left, density).value + AREA_PADDING_HORIZONTAL.value,
+                top = toDP(rawPosition.top, density).value,
+                right = toDP(rawPosition.right, density).value - AREA_PADDING_HORIZONTAL.value,
+                bottom = toDP(rawPosition.bottom, density).value
             )
         }
 
@@ -175,7 +172,7 @@ object TextEditor2 {
         internal fun updateSelection(x: Int, y: Int, density: Float) {
             if (isSelecting) {
                 val y2 = when {
-                    x < textAreaCoord.x - AREA_PADDING_HORIZONTAL.value -> y + lineHeight.value.toInt()
+                    x < textAreaRect.left - AREA_PADDING_HORIZONTAL.value -> y + lineHeight.value.toInt()
                     else -> y
                 }
                 val newCursor = createCursor(x, y2, density)
@@ -261,7 +258,7 @@ object TextEditor2 {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(rememberScrollState())
-            .onGloballyPositioned { state.updateTextAreaCoord(it.positionInWindow(), density) }
+            .onGloballyPositioned { state.updateTextAreaCoord(it.boundsInWindow(), density) }
             .onSizeChanged { state.increaseWidth(it.width, density) }) {
             ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
             LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
