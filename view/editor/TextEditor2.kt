@@ -121,8 +121,8 @@ object TextEditor2 {
             addAll(List(file.content.size) { null })
         }
         internal val contextMenu = ContextMenu.State()
-        internal val horScroller = LazyColumn.createScrollState(lineHeight, file.content.size)
-        internal var verScroller = ScrollState(0)
+        internal val verScroller = LazyColumn.createScrollState(lineHeight, file.content.size)
+        internal var horScroller = ScrollState(0)
         internal var lineCount: Int by mutableStateOf(file.content.size)
         internal var width by mutableStateOf(0.dp)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
@@ -131,8 +131,8 @@ object TextEditor2 {
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
 
         private fun createCursor(x: Int, y: Int, density: Float): Cursor {
-            val relX = x - textAreaRect.left + toDP(verScroller.value, density).value
-            val relY = y - textAreaRect.top + horScroller.offset.value
+            val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
+            val relY = y - textAreaRect.top + verScroller.offset.value
             val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
             val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
             val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
@@ -177,7 +177,7 @@ object TextEditor2 {
         internal fun updateSelection(x: Int, y: Int, density: Float) {
             if (isSelecting) {
                 var newCursor = createCursor(x, y, density)
-                val border = textAreaRect.left - toDP(verScroller.value, density).value - AREA_PADDING_HORIZONTAL.value
+                val border = textAreaRect.left - toDP(horScroller.value, density).value - AREA_PADDING_HORIZONTAL.value
                 if (x < border && selection != null && newCursor >= selection!!.start) {
                     newCursor = createCursor(x, y + lineHeight.value.toInt(), density)
                 }
@@ -188,19 +188,19 @@ object TextEditor2 {
                         selection!!.end = newCursor
                         cursor = newCursor
                     }
-                    mayScrollTo(x, y)
                 }
+                mayScrollTo(x, y)
             }
         }
 
         private fun mayScrollTo(x: Int, y: Int) {
             if (x < textAreaRect.left) coroutineScope.launch {
-                verScroller.scrollTo(verScroller.value + x - textAreaRect.left.toInt().coerceAtLeast(0))
+                horScroller.scrollTo(horScroller.value + x - textAreaRect.left.toInt())
             } else if (x > textAreaRect.right) coroutineScope.launch {
-                verScroller.scrollTo(verScroller.value + x - textAreaRect.right.toInt())
+                horScroller.scrollTo(horScroller.value + x - textAreaRect.right.toInt())
             }
-            if (y < textAreaRect.top) horScroller.updateOffset((y - textAreaRect.top.toInt()).dp - lineHeight)
-            else if (y > textAreaRect.bottom) horScroller.updateOffset((y - textAreaRect.bottom.toInt()).dp + lineHeight)
+            if (y < textAreaRect.top) verScroller.updateOffset((y - textAreaRect.top.toInt()).dp)
+            else if (y > textAreaRect.bottom) verScroller.updateOffset((y - textAreaRect.bottom.toInt()).dp)
         }
     }
 
@@ -243,7 +243,7 @@ object TextEditor2 {
         val minWidth = fontWidth * ceil(log10(state.lineCount.toDouble())).toInt() + AREA_PADDING_HORIZONTAL * 2 + 2.dp
         val lazyColumnState: LazyColumn.State<Int> = LazyColumn.createState(
             items = (0 until state.lineCount).map { it },
-            scroller = state.horScroller
+            scroller = state.verScroller
         )
         LazyColumn.Area(state = lazyColumnState) { index, _ -> LineNumber(state, index, font, minWidth) }
     }
@@ -268,12 +268,12 @@ object TextEditor2 {
         val density = LocalDensity.current.density
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = state.content,
-            scroller = state.horScroller
+            scroller = state.verScroller
         )
 
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
-            .horizontalScroll(state.verScroller)
+            .horizontalScroll(state.horScroller)
             .onGloballyPositioned { state.updateTextAreaCoord(it.boundsInWindow(), density) }
             .onSizeChanged { state.increaseWidth(it.width, density) }) {
             ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
