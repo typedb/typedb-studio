@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.isTypedEvent
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,8 +44,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
@@ -67,6 +75,8 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MAPPING
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -110,6 +120,28 @@ object TextEditor2 {
         }
     }
 
+    internal sealed interface Operation {
+
+        data class Insertion(val cursor: Cursor, val texts: List<String>) : Operation {
+            fun invert(): Deletion {
+                assert(texts.isNotEmpty())
+                val endRow = cursor.row + texts.size - 1
+                val endCol = when {
+                    texts.size > 1 -> texts[texts.size - 1].length
+                    else -> cursor.col + texts[0].length
+                }
+                return Deletion(Selection(cursor, Cursor(endRow, endCol)))
+            }
+        }
+
+        data class Deletion(val selection: Selection) : Operation {
+            fun invert(deletedText: List<String>): Insertion {
+                assert(deletedText.isNotEmpty())
+                return Insertion(selection.min, deletedText)
+            }
+        }
+    }
+
     class State internal constructor(
         internal val file: File,
         internal val fontBase: TextStyle,
@@ -127,8 +159,10 @@ object TextEditor2 {
         internal var width by mutableStateOf(0.dp)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
-        private var isSelecting: Boolean by mutableStateOf(false)
+        internal var isSelecting: Boolean by mutableStateOf(false)
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
+        private var undoStack: ArrayDeque<Operation> = ArrayDeque()
+        private var redoStack: ArrayDeque<Operation> = ArrayDeque()
 
         private fun createCursor(x: Int, y: Int, density: Float): Cursor {
             val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
@@ -153,9 +187,16 @@ object TextEditor2 {
             if (newWidth > width) width = newWidth
         }
 
-        internal fun updateCursor(x: Int, y: Int, density: Float) {
-            cursor = createCursor(x, y, density)
-            selection = null
+        internal fun updateCursor(x: Int, y: Int, density: Float, isSelecting: Boolean) {
+            updateCursor(createCursor(x, y, density), isSelecting)
+        }
+
+        private fun updateCursor(newCursor: Cursor, isSelecting: Boolean) {
+            if (isSelecting) {
+                if (selection == null) selection = Selection(cursor, newCursor)
+                else selection!!.end = newCursor
+            } else selection = null
+            cursor = newCursor
         }
 
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int, density: Float) {
@@ -164,14 +205,6 @@ object TextEditor2 {
                 cursor = newCursor
                 selection = null
             }
-        }
-
-        internal fun startSelection() {
-            isSelecting = true
-        }
-
-        internal fun endSelection() {
-            isSelecting = false
         }
 
         internal fun updateSelection(x: Int, y: Int, density: Float) {
@@ -186,8 +219,8 @@ object TextEditor2 {
                         selection = Selection(cursor, newCursor)
                     } else {
                         selection!!.end = newCursor
-                        cursor = newCursor
                     }
+                    cursor = newCursor
                 }
                 mayScrollTo(x, y)
             }
@@ -201,6 +234,176 @@ object TextEditor2 {
             }
             if (y < textAreaRect.top) verScroller.updateOffset((y - textAreaRect.top.toInt()).dp)
             else if (y > textAreaRect.bottom) verScroller.updateOffset((y - textAreaRect.bottom.toInt()).dp)
+        }
+
+        internal fun processKeyEvent(event: KeyEvent): Boolean {
+            return if (event.isTypedEvent) {
+                insertText(event.awtEvent.keyChar.toString())
+                true
+            } else if (event.type != KeyEventType.KeyDown) false
+            else CURRENT_KEY_MAPPING.map(event)?.let { processCommand(it); true } ?: false
+        }
+
+        private fun processCommand(command: Command) {
+            when (command) {
+                Command.MOVE_CURSOR_LEFT_CHAR -> moveCursorPrevByChar() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_CHAR -> moveCursorNextByChar() // because we only display left to right
+                Command.MOVE_CURSOR_LEFT_WORD -> moveCursorPrevByWord() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_WORD -> moveCursorNexBytWord() // because we only display left to right
+                Command.MOVE_CURSOR_PREV_PARAGRAPH -> moveCursorPrevByParagraph()
+                Command.MOVE_CURSOR_NEXT_PARAGRAPH -> moveCursorNextByParagraph()
+                Command.MOVE_CURSOR_LEFT_LINE -> moveCursorToStartOfLine() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_LINE -> moveCursorToEndOfLine() // because we only display left to right
+                Command.MOVE_CURSOR_START_LINE -> moveCursorToStartOfLine()
+                Command.MOVE_CURSOR_END_LINE -> moveCursorToEndOfLine()
+                Command.MOVE_CURSOR_UP_LINE -> moveCursorUpByLine()
+                Command.MOVE_CURSOR_DOWN_LINE -> moveCursorDownByLine()
+                Command.MOVE_CURSOR_UP_PAGE -> moveCursorUpByPage()
+                Command.MOVE_CURSOR_DOWN_PAGE -> moveCursorDownByPage()
+                Command.MOVE_CURSOR_HOME -> moveCursorToHome()
+                Command.MOVE_CURSOR_END -> moveCursorToEnd()
+                Command.SELECT_LEFT_CHAR -> moveCursorPrevByChar(true) // because we only display left to right
+                Command.SELECT_RIGHT_CHAR -> moveCursorNextByChar(true) // because we only display left to right
+                Command.SELECT_LEFT_WORD -> moveCursorPrevByWord(true) // because we only display left to right
+                Command.SELECT_RIGHT_WORD -> moveCursorNexBytWord(true) // because we only display left to right
+                Command.SELECT_PREV_PARAGRAPH -> moveCursorPrevByParagraph(true)
+                Command.SELECT_NEXT_PARAGRAPH -> moveCursorNextByParagraph(true)
+                Command.SELECT_LEFT_LINE -> moveCursorToStartOfLine(true) // because we only display left to right
+                Command.SELECT_RIGHT_LINE -> moveCursorToEndOfLine(true) // because we only display left to right
+                Command.SELECT_START_LINE -> moveCursorToStartOfLine(true)
+                Command.SELECT_END_LINE -> moveCursorToEndOfLine(true)
+                Command.SELECT_UP_LINE -> moveCursorUpByLine(true)
+                Command.SELECT_DOWN_LINE -> moveCursorDownByLine(true)
+                Command.SELECT_UP_PAGE -> moveCursorUpByPage(true)
+                Command.SELECT_DOWN_PAGE -> moveCursorDownByPage(true)
+                Command.SELECT_HOME -> moveCursorToHome(true)
+                Command.SELECT_END -> moveCursorToEnd(true)
+                Command.SELECT_ALL -> selectAll()
+                Command.SELECT_NONE -> selectNone()
+                Command.DELETE_PREV_CHAR -> deleteSelectionOr { moveCursorPrevByChar(true); deleteSelection() }
+                Command.DELETE_NEXT_CHAR -> deleteSelectionOr { moveCursorNextByChar(true); deleteSelection() }
+                Command.DELETE_PREV_WORD -> deleteSelectionOr { moveCursorPrevByWord(true); deleteSelection() }
+                Command.DELETE_NEXT_WORD -> deleteSelectionOr { moveCursorNexBytWord(true); deleteSelection() }
+                Command.DELETE_START_LINE -> deleteSelectionOr { moveCursorToStartOfLine(true); deleteSelection() }
+                Command.DELETE_END_LINE -> deleteSelectionOr { moveCursorToEndOfLine(true); deleteSelection() }
+                Command.INSERT_NEW_LINE -> insertNewLine()
+                Command.INSERT_TAB -> insertTab()
+                Command.COPY -> copy()
+                Command.PASTE -> paste()
+                Command.CUT -> cut()
+                Command.UNDO -> undo()
+                Command.REDO -> redo()
+                Command.CHARACTER_PALETTE -> {
+                    // TODO: https://github.com/JetBrains/compose-jb/issues/1754
+                    // androidx.compose.foundation.text.showCharacterPalette()
+                }
+            }
+        }
+
+        private fun moveCursorPrevByChar(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorNextByChar(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorNexBytWord(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorNextByParagraph(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorToStartOfLine(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorToEndOfLine(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorUpByLine(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorDownByLine(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorUpByPage(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorDownByPage(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorToHome(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun moveCursorToEnd(isSelecting: Boolean = false) {
+            // TODO
+        }
+
+        private fun selectAll() {
+            cursor = Cursor(content.size - 1, content.last().length)
+            selection = Selection(Cursor(0, 0), cursor)
+        }
+
+        private fun selectNone() {
+            selection = null
+        }
+
+        private fun deleteSelectionOr(elseFn: () -> Unit) {
+            if (selection != null) deleteSelection()
+            else elseFn()
+        }
+
+        private fun deleteSelection() {
+            // TODO
+        }
+
+        private fun insertText(string: String) {
+            // TODO
+        }
+
+        private fun insertNewLine() {
+            // TODO
+        }
+
+        private fun insertTab() {
+            // TODO
+        }
+
+        private fun copy() {
+            // TODO
+        }
+
+        private fun paste() {
+            // TODO
+        }
+
+        private fun cut() {
+            // TODO
+        }
+
+        private fun undo() {
+            // TODO
+        }
+
+        private fun redo() {
+            // TODO
         }
     }
 
@@ -222,13 +425,15 @@ object TextEditor2 {
         val textFont = state.fontBase.copy(color = fontColor, lineHeight = fontHeight)
         val lineNumberFont = state.fontBase.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
+        val focusReq = FocusRequester()
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier
-                .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.startSelection() }
+            Row(modifier = modifier.focusable().focusRequester(focusReq)
+                .onKeyEvent { state.processKeyEvent(it) }
+                .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.isSelecting = true }
                 .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
-                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.endSelection() }
+                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
@@ -236,6 +441,8 @@ object TextEditor2 {
                 TextArea(state, textFont, fontWidth)
             }
         }
+
+        LaunchedEffect(state) { focusReq.requestFocus() }
     }
 
     @Composable
@@ -366,7 +573,7 @@ object TextEditor2 {
     private suspend fun PointerInputScope.onPointerInput(state: State) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density) },
+            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density, it.isShiftDown) },
             onDoublePrimaryClick = { }, // TODO
             onTriplePrimaryClick = { }, // TODO
             onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y, density) }
