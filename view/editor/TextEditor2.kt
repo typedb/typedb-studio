@@ -199,6 +199,7 @@ object TextEditor2 {
                 else selection!!.end = newCursor
             } else selection = null
             cursor = newCursor
+            mayScrollToCursor()
         }
 
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
@@ -224,14 +225,25 @@ object TextEditor2 {
             }
         }
 
-        private fun mayScrollToCoordinate(x: Int, y: Int) {
-            if (x < textAreaRect.left) coroutineScope.launch {
-                horScroller.scrollTo(horScroller.value + x - textAreaRect.left.toInt())
-            } else if (x > textAreaRect.right) coroutineScope.launch {
-                horScroller.scrollTo(horScroller.value + x - textAreaRect.right.toInt())
+        private fun mayScrollToCursor() {
+            val cursorRect = textLayouts[cursor.row]?.let { it.getCursorRect(cursor.col) } ?: Rect(0f, 0f, 0f, 0f)
+            val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
+            val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
+            mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
+        }
+
+        private fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
+            val left = textAreaRect.left.toInt() + padding
+            val right = textAreaRect.right.toInt() - padding
+            val top = textAreaRect.top.toInt() + padding
+            val bottom = textAreaRect.bottom.toInt() - padding
+            if (x < left) coroutineScope.launch {
+                horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
+            } else if (x > right) coroutineScope.launch {
+                horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
-            if (y < textAreaRect.top) verScroller.updateOffset((y - textAreaRect.top.toInt()).dp)
-            else if (y > textAreaRect.bottom) verScroller.updateOffset((y - textAreaRect.bottom.toInt()).dp)
+            if (y < top) verScroller.updateOffset((y - top).dp)
+            else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
         }
 
         internal fun processKeyEvent(event: KeyEvent): Boolean {
