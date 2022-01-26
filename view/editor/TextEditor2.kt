@@ -431,11 +431,11 @@ object TextEditor2 {
         }
 
         private fun moveCursorToHome(isSelecting: Boolean = false) {
-            // TODO
+            updateCursor(Cursor(0, 0), isSelecting)
         }
 
         private fun moveCursorToEnd(isSelecting: Boolean = false) {
-            // TODO
+            updateCursor(Cursor(content.size - 1, content.last().length), isSelecting)
         }
 
         private fun selectAll() {
