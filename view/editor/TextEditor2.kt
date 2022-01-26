@@ -357,7 +357,7 @@ object TextEditor2 {
         }
 
         private fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
-            if (col < 0) return 0
+            if (col < 0 || content[cursor.row].isEmpty()) return 0
             val newCol = textLayout.getWordBoundary(withinText(col)).start
             return if (newCol < col) newCol
             else getPrevWordOffset(textLayout, col - 1)
@@ -371,7 +371,7 @@ object TextEditor2 {
         }
 
         private fun withinText(col: Int): Int {
-            return col.coerceIn(0, content[cursor.row].length - 1)
+            return col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
         }
 
         private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
