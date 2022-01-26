@@ -311,29 +311,35 @@ object TextEditor2 {
         }
 
         private fun moveCursorPrevByChar(isSelecting: Boolean = false) {
-            var newRow = cursor.row
-            var newCol = cursor.col - 1
-            if (newCol < 0) {
-                newRow -= 1
-                if (newRow < 0) {
-                    newRow = 0
-                    newCol = 0
-                } else newCol = content[newRow].length
+            if (!isSelecting && selection != null) updateCursor(selection!!.min, false)
+            else {
+                var newRow = cursor.row
+                var newCol = cursor.col - 1
+                if (newCol < 0) {
+                    newRow -= 1
+                    if (newRow < 0) {
+                        newRow = 0
+                        newCol = 0
+                    } else newCol = content[newRow].length
+                }
+                updateCursor(Cursor(newRow, newCol), isSelecting)
             }
-            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorNextByChar(isSelecting: Boolean = false) {
-            var newRow = cursor.row
-            var newCol = cursor.col + 1
-            if (newCol > content[newRow].length) {
-                newRow += 1
-                if (newRow >= content.size) {
-                    newRow = content.size - 1
-                    newCol = content[newRow].length
-                } else newCol = 0
+            if (!isSelecting && selection != null) updateCursor(selection!!.max, false)
+            else {
+                var newRow = cursor.row
+                var newCol = cursor.col + 1
+                if (newCol > content[newRow].length) {
+                    newRow += 1
+                    if (newRow >= content.size) {
+                        newRow = content.size - 1
+                        newCol = content[newRow].length
+                    } else newCol = 0
+                }
+                updateCursor(Cursor(newRow, newCol), isSelecting)
             }
-            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
