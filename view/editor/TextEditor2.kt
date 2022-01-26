@@ -375,11 +375,17 @@ object TextEditor2 {
         }
 
         private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
-            // TODO
+            if (cursor.col > 0) moveCursorToStartOfLine(isSelecting) // because we don't wrap text
+            else updateCursor(Cursor((cursor.row - 1).coerceAtLeast(0), cursor.col), isSelecting)
         }
 
         private fun moveCursorNextByParagraph(isSelecting: Boolean = false) {
-            // TODO
+            if (cursor.col < content[cursor.row].length) moveCursorToEndOfLine(isSelecting) // because we don't wrap text
+            else {
+                val newRow = (cursor.row + 1).coerceAtMost(content.size - 1)
+                val newCol = cursor.col.coerceAtMost(content[newRow].length)
+                updateCursor(Cursor(newRow, newCol), isSelecting)
+            }
         }
 
         private fun moveCursorToStartOfLine(isSelecting: Boolean = false) {
