@@ -297,11 +297,29 @@ object TextEditor2 {
         }
 
         private fun moveCursorPrevByChar(isSelecting: Boolean = false) {
-            // TODO
+            var newRow = cursor.row
+            var newCol = cursor.col - 1
+            if (newCol < 0) {
+                newRow -= 1
+                if (newRow < 0) {
+                    newRow = 0
+                    newCol = 0
+                } else newCol = content[newRow].length
+            }
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorNextByChar(isSelecting: Boolean = false) {
-            // TODO
+            var newRow = cursor.row
+            var newCol = cursor.col + 1
+            if (newCol > content[newRow].length) {
+                newRow += 1
+                if (newRow >= content.size) {
+                    newRow = content.size - 1
+                    newCol = content[newRow].length
+                } else newCol = 0
+            }
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
@@ -321,19 +339,31 @@ object TextEditor2 {
         }
 
         private fun moveCursorToStartOfLine(isSelecting: Boolean = false) {
-            // TODO
+            updateCursor(Cursor(cursor.row, 0), isSelecting)
         }
 
         private fun moveCursorToEndOfLine(isSelecting: Boolean = false) {
-            // TODO
+            updateCursor(Cursor(cursor.row, content[cursor.row].length), isSelecting)
         }
 
         private fun moveCursorUpByLine(isSelecting: Boolean = false) {
-            // TODO
+            var newRow = cursor.row - 1
+            var newCol = cursor.col
+            if (newRow < 0) {
+                newRow = 0
+                newCol = 0
+            } else newCol = newCol.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorDownByLine(isSelecting: Boolean = false) {
-            // TODO
+            var newRow = cursor.row + 1
+            var newCol = cursor.col
+            if (newRow >= content.size) {
+                newRow = content.size - 1
+                newCol = content[newRow].length
+            } else newCol = newCol.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorUpByPage(isSelecting: Boolean = false) {
