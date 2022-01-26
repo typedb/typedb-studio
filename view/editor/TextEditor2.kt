@@ -343,11 +343,35 @@ object TextEditor2 {
         }
 
         private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
-            // TODO
+            val newCursor: Cursor = textLayouts[cursor.row]?.let {
+                Cursor(cursor.row, getPrevWordOffset(it, cursor.col))
+            } ?: Cursor(0, 0)
+            updateCursor(newCursor, isSelecting)
         }
 
         private fun moveCursorNexBytWord(isSelecting: Boolean = false) {
-            // TODO
+            val newCursor: Cursor = textLayouts[cursor.row]?.let {
+                Cursor(cursor.row, getNextWordOffset(it, cursor.col))
+            } ?: Cursor(0, 0)
+            updateCursor(newCursor, isSelecting)
+        }
+
+        private fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
+            if (col < 0) return 0
+            val newCol = textLayout.getWordBoundary(withinText(col)).start
+            return if (newCol < col) newCol
+            else getPrevWordOffset(textLayout, col - 1)
+        }
+
+        private fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
+            if (col >= content[cursor.row].length) return content[cursor.row].length
+            val newCol = textLayout.getWordBoundary(withinText(col)).end
+            return if (newCol > col) newCol
+            else getNextWordOffset(textLayout, col + 1)
+        }
+
+        private fun withinText(col: Int): Int {
+            return col.coerceIn(0, content[cursor.row].length - 1)
         }
 
         private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
