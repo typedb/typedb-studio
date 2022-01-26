@@ -190,16 +190,16 @@ object TextEditor2 {
         }
 
         internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
-            updateCursor(createCursor(x, y), isSelecting)
+            updateCursor(createCursor(x, y), isSelecting, false)
         }
 
-        private fun updateCursor(newCursor: Cursor, isSelecting: Boolean) {
+        private fun updateCursor(newCursor: Cursor, isSelecting: Boolean, mayScroll: Boolean = true) {
             if (isSelecting) {
                 if (selection == null) selection = Selection(cursor, newCursor)
                 else selection!!.end = newCursor
             } else selection = null
             cursor = newCursor
-            mayScrollToCursor()
+            if (mayScroll) mayScrollToCursor()
         }
 
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
