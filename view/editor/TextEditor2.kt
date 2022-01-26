@@ -61,6 +61,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -146,6 +148,7 @@ object TextEditor2 {
         internal val file: File,
         internal val fontBase: TextStyle,
         internal val lineHeight: Dp,
+        private val clipboard: ClipboardManager,
         private val coroutineScope: CoroutineScope,
         initDensity: Float,
     ) {
@@ -469,7 +472,17 @@ object TextEditor2 {
         }
 
         private fun copy() {
-            // TODO
+            if (selection == null) return
+            val builder = StringBuilder()
+            for (i in selection!!.min.row..selection!!.max.row) {
+                val line = content[i]
+                if (i == selection!!.min.row) {
+                    if (selection!!.max.row > selection!!.min.row) builder.append(line.substring(selection!!.min.col))
+                    else builder.append(line.substring(selection!!.min.col, selection!!.max.col))
+                } else if (i == selection!!.max.row) builder.append("\n").append(line.substring(0, selection!!.max.col))
+                else builder.append("\n").append(line)
+            }
+            clipboard.setText(AnnotatedString(builder.toString()))
         }
 
         private fun paste() {
@@ -477,7 +490,9 @@ object TextEditor2 {
         }
 
         private fun cut() {
-            // TODO
+            if (selection == null) return
+            copy()
+            deleteSelection()
         }
 
         private fun undo() {
@@ -494,7 +509,7 @@ object TextEditor2 {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        return State(file, font, lineHeight, coroutineScope, currentDensity.density)
+        return State(file, font, lineHeight, LocalClipboardManager.current, coroutineScope, currentDensity.density)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
