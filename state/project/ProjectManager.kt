@@ -57,7 +57,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         else if (!path.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, newDir)
         else if (!path.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
         else {
-            current = Project(path)
+            current = Project(path, notificationMgr)
             showDialog = false
         }
     }

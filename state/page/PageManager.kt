@@ -24,11 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.lang.Integer.max
+import mu.KotlinLogging
 
 class PageManager(val notification: NotificationManager) {
 
     val openedPages: MutableList<Editable> = mutableStateListOf()
     var selectedPage: Editable? by mutableStateOf(null)
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     fun isSelected(page: Editable): Boolean {
         return selectedPage == page
@@ -36,8 +41,8 @@ class PageManager(val notification: NotificationManager) {
 
     fun open(page: Editable) {
         if (page !in openedPages) {
-            page.open()
-            openedPages.add(page)
+            if (page.tryOpen()) openedPages.add(page)
+            else return
         }
         selectedPage = page
     }

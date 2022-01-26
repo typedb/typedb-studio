@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.page
 
 interface Editable {
 
-    fun open()
+    fun tryOpen(): Boolean
 
     fun close()
 

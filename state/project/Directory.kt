@@ -20,12 +20,13 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 
-class Directory internal constructor(path: Path, parent: Directory?) :
-    Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent) {
+class Directory internal constructor(path: Path, parent: Directory?, notificationMgr: NotificationManager) :
+    Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, notificationMgr) {
 
     override var entries: List<ProjectItem> = emptyList()
 
@@ -48,6 +49,6 @@ class Directory internal constructor(path: Path, parent: Directory?) :
     }
 
     private fun projectItemOf(it: Path): ProjectItem {
-        return if (it.isDirectory()) Directory(it, this) else File(it, this)
+        return if (it.isDirectory()) Directory(it, this, notificationMgr) else File(it, this, notificationMgr)
     }
 }

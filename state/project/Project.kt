@@ -19,11 +19,13 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 
-class Project internal constructor(val path: Path) : Navigable.Container<ProjectItem> {
+class Project internal constructor(val path: Path, val notificationMgr: NotificationManager) :
+    Navigable.Container<ProjectItem> {
 
-    val directory: Directory = Directory(path, null)
+    val directory: Directory = Directory(path, null, notificationMgr)
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
     override val parent: Navigable.ExpandableItem<ProjectItem>? = null

@@ -19,12 +19,18 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(val type: Type, val path: Path, final override val parent: Directory?) :
+sealed class ProjectItem(
+    val type: Type,
+    val path: Path,
+    final override val parent: Directory?,
+    val notificationMgr: NotificationManager
+) :
     Navigable.Item<ProjectItem> {
 
     enum class Type(val index: Int) {
