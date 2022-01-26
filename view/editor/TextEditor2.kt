@@ -417,11 +417,17 @@ object TextEditor2 {
         }
 
         private fun moveCursorUpByPage(isSelecting: Boolean = false) {
-            // TODO
+            val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
+            val newRow = (cursor.row - fullyVisibleLines).coerceAtLeast(0)
+            val newCol = cursor.col.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorDownByPage(isSelecting: Boolean = false) {
-            // TODO
+            val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
+            val newRow = (cursor.row + fullyVisibleLines).coerceAtMost(content.size - 1)
+            val newCol = cursor.col.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol), isSelecting)
         }
 
         private fun moveCursorToHome(isSelecting: Boolean = false) {
