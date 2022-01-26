@@ -146,7 +146,8 @@ object TextEditor2 {
         internal val file: File,
         internal val fontBase: TextStyle,
         internal val lineHeight: Dp,
-        private val coroutineScope: CoroutineScope
+        private val coroutineScope: CoroutineScope,
+        initDensity: Float,
     ) {
         internal val content: SnapshotStateList<String> get() = file.content
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
@@ -160,11 +161,12 @@ object TextEditor2 {
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
         internal var isSelecting: Boolean by mutableStateOf(false)
+        internal var density: Float by mutableStateOf(initDensity)
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
         private var undoStack: ArrayDeque<Operation> = ArrayDeque()
         private var redoStack: ArrayDeque<Operation> = ArrayDeque()
 
-        private fun createCursor(x: Int, y: Int, density: Float): Cursor {
+        private fun createCursor(x: Int, y: Int): Cursor {
             val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
             val relY = y - textAreaRect.top + verScroller.offset.value
             val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
@@ -173,7 +175,7 @@ object TextEditor2 {
             return Cursor(row, col)
         }
 
-        internal fun updateTextAreaCoord(rawPosition: Rect, density: Float) {
+        internal fun updateTextAreaCoord(rawPosition: Rect) {
             textAreaRect = Rect(
                 left = toDP(rawPosition.left, density).value + AREA_PADDING_HORIZONTAL.value,
                 top = toDP(rawPosition.top, density).value,
@@ -182,13 +184,13 @@ object TextEditor2 {
             )
         }
 
-        internal fun increaseWidth(newRawWidth: Int, density: Float) {
+        internal fun increaseWidth(newRawWidth: Int) {
             val newWidth = toDP(newRawWidth, density)
             if (newWidth > width) width = newWidth
         }
 
-        internal fun updateCursor(x: Int, y: Int, density: Float, isSelecting: Boolean) {
-            updateCursor(createCursor(x, y, density), isSelecting)
+        internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
+            updateCursor(createCursor(x, y), isSelecting)
         }
 
         private fun updateCursor(newCursor: Cursor, isSelecting: Boolean) {
@@ -199,30 +201,30 @@ object TextEditor2 {
             cursor = newCursor
         }
 
-        internal fun updateCursorIfOutOfSelection(x: Int, y: Int, density: Float) {
-            val newCursor = createCursor(x, y, density)
+        internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
+            val newCursor = createCursor(x, y)
             if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
                 updateCursor(newCursor, false)
             }
         }
 
-        internal fun updateSelection(x: Int, y: Int, density: Float) {
+        internal fun updateSelection(x: Int, y: Int) {
             if (isSelecting) {
-                var newCursor = createCursor(x, y, density)
+                var newCursor = createCursor(x, y)
                 val border = textAreaRect.left - toDP(horScroller.value, density).value - AREA_PADDING_HORIZONTAL.value
                 if (x < border && selection != null && newCursor >= selection!!.start) {
-                    newCursor = createCursor(x, y + lineHeight.value.toInt(), density)
+                    newCursor = createCursor(x, y + lineHeight.value.toInt())
                 }
                 if (newCursor != cursor) {
                     if (selection == null) selection = Selection(cursor, newCursor)
                     else selection!!.end = newCursor
                     cursor = newCursor
                 }
-                mayScrollTo(x, y)
+                mayScrollToCoordinate(x, y)
             }
         }
 
-        private fun mayScrollTo(x: Int, y: Int) {
+        private fun mayScrollToCoordinate(x: Int, y: Int) {
             if (x < textAreaRect.left) coroutineScope.launch {
                 horScroller.scrollTo(horScroller.value + x - textAreaRect.left.toInt())
             } else if (x > textAreaRect.right) coroutineScope.launch {
@@ -438,7 +440,7 @@ object TextEditor2 {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        return State(file, font, lineHeight, coroutineScope)
+        return State(file, font, lineHeight, coroutineScope, currentDensity.density)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -456,9 +458,10 @@ object TextEditor2 {
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Row(modifier = modifier.focusRequester(focusReq).focusable()
+                .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
                 .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.isSelecting = true }
-                .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
+                .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y) }
                 .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
@@ -498,7 +501,6 @@ object TextEditor2 {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
-        val density = LocalDensity.current.density
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(
             items = state.content,
             scroller = state.verScroller
@@ -507,8 +509,8 @@ object TextEditor2 {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(state.horScroller)
-            .onGloballyPositioned { state.updateTextAreaCoord(it.boundsInWindow(), density) }
-            .onSizeChanged { state.increaseWidth(it.width, density) }) {
+            .onGloballyPositioned { state.updateTextAreaCoord(it.boundsInWindow()) }
+            .onSizeChanged { state.increaseWidth(it.width) }) {
             ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
             LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
         }
@@ -516,7 +518,6 @@ object TextEditor2 {
 
     @Composable
     private fun TextLine(state: State, index: Int, text: String, font: TextStyle, fontWidth: Dp) {
-        val density = LocalDensity.current.density
         val bgColor = when {
             state.cursor.row == index && state.selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
@@ -534,7 +535,7 @@ object TextEditor2 {
             }
             Text(
                 text = AnnotatedString(text), style = font,
-                modifier = Modifier.onSizeChanged { state.increaseWidth(it.width, density) },
+                modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
                 onTextLayout = { state.textLayouts[index] = it }
             )
             if (state.cursor.row == index && state.textLayouts[index] != null) {
@@ -545,7 +546,6 @@ object TextEditor2 {
 
     @Composable
     private fun SelectionHighlighter(state: State, index: Int, length: Int) {
-        val density = LocalDensity.current.density
         assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
         val start = when {
             state.selection!!.min.row < index -> 0
@@ -555,8 +555,8 @@ object TextEditor2 {
             state.selection!!.max.row > index -> state.content[index].length
             else -> state.selection!!.max.col
         }
-        var startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, density) } ?: 0.dp
-        var endPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(end).right, density) } ?: 0.dp
+        var startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, state.density) } ?: 0.dp
+        var endPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(end).right, state.density) } ?: 0.dp
         if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
         if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
@@ -567,12 +567,11 @@ object TextEditor2 {
     @Composable
     private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
         var visible by remember { mutableStateOf(true) }
-        val density = LocalDensity.current.density
         val textLayout = state.textLayouts[state.cursor.row]
-        val offsetX = textLayout?.let { toDP(it.getCursorRect(state.cursor.col).left, density) } ?: 0.dp
+        val offsetX = textLayout?.let { toDP(it.getCursorRect(state.cursor.col).left, state.density) } ?: 0.dp
         val width = when {
             state.cursor.col >= text.length -> fontWidth
-            else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, density) } ?: fontWidth
+            else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
         }
         if (visible) {
             Box(
@@ -599,10 +598,10 @@ object TextEditor2 {
     private suspend fun PointerInputScope.onPointerInput(state: State) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, density, it.isShiftDown) },
+            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, it.isShiftDown) },
             onDoublePrimaryClick = { }, // TODO
             onTriplePrimaryClick = { }, // TODO
-            onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y, density) }
+            onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }
 
