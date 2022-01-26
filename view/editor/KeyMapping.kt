@@ -97,7 +97,7 @@ internal interface KeyMapping {
         UNDO(true),
         REDO(true),
 
-        CHARACTER_PALETTE(true)
+        CHARACTER_PALETTE(false)
     }
 
     private enum class OS {

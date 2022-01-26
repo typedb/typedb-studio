@@ -202,8 +202,7 @@ object TextEditor2 {
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int, density: Float) {
             val newCursor = createCursor(x, y, density)
             if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
-                cursor = newCursor
-                selection = null
+                updateCursor(newCursor, false)
             }
         }
 
@@ -215,11 +214,8 @@ object TextEditor2 {
                     newCursor = createCursor(x, y + lineHeight.value.toInt(), density)
                 }
                 if (newCursor != cursor) {
-                    if (selection == null) {
-                        selection = Selection(cursor, newCursor)
-                    } else {
-                        selection!!.end = newCursor
-                    }
+                    if (selection == null) selection = Selection(cursor, newCursor)
+                    else selection!!.end = newCursor
                     cursor = newCursor
                 }
                 mayScrollTo(x, y)
@@ -429,7 +425,7 @@ object TextEditor2 {
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier.focusable().focusRequester(focusReq)
+            Row(modifier = modifier.focusRequester(focusReq).focusable()
                 .onKeyEvent { state.processKeyEvent(it) }
                 .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.isSelecting = true }
                 .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y, density) }
