@@ -591,7 +591,10 @@ object TextEditor2 {
                 val prefix = content[start.row].substring(0, start.col)
                 val suffix = content[end.row].substring(end.col)
                 content[start.row] = prefix + suffix
-                if (end.row > start.row) content.removeRange(start.row + 1, end.row + 1)
+                if (end.row > start.row) {
+                    content.removeRange(start.row + 1, end.row + 1)
+                    textLayouts.removeRange(start.row + 1, end.row + 1)
+                }
                 cursor = deletion.selection().min
                 selection = null
             }
@@ -605,7 +608,10 @@ object TextEditor2 {
                 texts[texts.size - 1] = texts[texts.size - 1] + suffix
 
                 content[cursor.row] = texts[0]
-                if (texts.size > 1) content.addAll(cursor.row + 1, texts.subList(1, texts.size))
+                if (texts.size > 1) {
+                    content.addAll(cursor.row + 1, texts.subList(1, texts.size))
+                    textLayouts.addAll(cursor.row + 1, List(texts.size - 1) { null })
+                }
                 this.cursor = insertion.selection().max
             }
 
