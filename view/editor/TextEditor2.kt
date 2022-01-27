@@ -206,6 +206,8 @@ object TextEditor2 {
         internal var selection: Selection? by mutableStateOf(null)
         internal var isSelecting: Boolean by mutableStateOf(false)
         internal var density: Float by mutableStateOf(initDensity)
+        internal var stateVersion by mutableStateOf(0L)
+        internal var viewVersion by mutableStateOf(0L)
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
         private var undoStack: ArrayDeque<Change> = ArrayDeque()
         private var redoStack: ArrayDeque<Change> = ArrayDeque()
@@ -607,6 +609,7 @@ object TextEditor2 {
                 }
             }
 
+            stateVersion++
             verScroller.itemCount = content.size
 
             when (type) {
@@ -716,17 +719,17 @@ object TextEditor2 {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
-            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                SelectionHighlighter(state, index, text.length)
-            }
+            val textIsRendered = state.viewVersion == state.stateVersion
+            val isInSelection =
+                state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index
+
+            if (textIsRendered && isInSelection) SelectionHighlighter(state, index, text.length)
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
-                onTextLayout = { state.textLayouts[index] = it }
+                onTextLayout = { state.textLayouts[index] = it; state.viewVersion = state.stateVersion }
             )
-            if (state.cursor.row == index && state.textLayouts[index] != null) {
-                CursorIndicator(state, text, font, fontWidth)
-            }
+            if (textIsRendered && state.cursor.row == index) CursorIndicator(state, text, font, fontWidth)
         }
     }
 
