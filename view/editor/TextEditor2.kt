@@ -93,7 +93,7 @@ object TextEditor2 {
 
     private const val TAB_SIZE = 4
     private const val LINE_HEIGHT = 1.56f
-    private val LINE_GAP = 2.dp
+    private val LINE_GAP = 1.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 2.dp
@@ -483,13 +483,14 @@ object TextEditor2 {
 
         private fun copy() {
             if (selection == null) return
+            val start = selection!!.min
+            val end = selection!!.max
             val builder = StringBuilder()
-            for (i in selection!!.min.row..selection!!.max.row) {
+            for (i in start.row..end.row) {
                 val line = content[i]
-                if (i == selection!!.min.row) {
-                    if (selection!!.max.row > selection!!.min.row) builder.append(line.substring(selection!!.min.col))
-                    else builder.append(line.substring(selection!!.min.col, selection!!.max.col))
-                } else if (i == selection!!.max.row) builder.append("\n").append(line.substring(0, selection!!.max.col))
+                if (i == start.row && end.row > start.row) builder.append(line.substring(start.col))
+                else if (i == start.row) builder.append(line.substring(start.col, end.col))
+                else if (i == end.row) builder.append("\n").append(line.substring(0, end.col))
                 else builder.append("\n").append(line)
             }
             clipboard.setText(AnnotatedString(builder.toString()))
