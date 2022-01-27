@@ -497,7 +497,8 @@ object TextEditor2 {
         }
 
         private fun paste() {
-            // TODO
+            if (selection != null) deleteSelection()
+            clipboard.getText()?.let { insertText(it.text) }
         }
 
         private fun cut() {
