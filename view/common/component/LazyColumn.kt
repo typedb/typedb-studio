@@ -51,7 +51,7 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: Int) {
+    class ScrollState internal constructor(val itemHeight: Dp, var itemCount: Int) {
         var offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp = itemHeight * itemCount
         internal var height: Dp by mutableStateOf(0.dp); private set

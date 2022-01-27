@@ -79,6 +79,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Command
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MAPPING
+import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.NATIVE
+import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.REDO
+import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.UNDO
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -92,6 +95,7 @@ import kotlinx.coroutines.launch
 object TextEditor2 {
 
     private const val TAB_SIZE = 4
+    private const val UNDO_LIMIT = 1_000
     private const val LINE_HEIGHT = 1.56f
     private val LINE_GAP = 1.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
@@ -123,24 +127,60 @@ object TextEditor2 {
         }
     }
 
-    internal sealed interface Operation {
+    internal data class Change(val operations: List<Operation>) {
 
-        data class Insertion(val cursor: Cursor, val texts: List<String>) : Operation {
-            fun invert(): Deletion {
-                assert(texts.isNotEmpty())
-                val endRow = cursor.row + texts.size - 1
-                val endCol = when {
-                    texts.size > 1 -> texts[texts.size - 1].length
-                    else -> cursor.col + texts[0].length
-                }
-                return Deletion(Selection(cursor, Cursor(endRow, endCol)))
+        constructor(vararg operations: Operation) : this(operations.asList())
+
+        enum class Type { NATIVE, UNDO, REDO }
+
+        companion object {
+            fun merge(changes: List<Change>): Change {
+                return Change(changes.flatMap { it.operations }.toList())
             }
         }
 
-        data class Deletion(val selection: Selection) : Operation {
-            fun invert(deletedText: List<String>): Insertion {
-                assert(deletedText.isNotEmpty())
-                return Insertion(selection.min, deletedText)
+        fun invert(): Change {
+            return Change(operations.reversed().map { it.invert() })
+        }
+    }
+
+    internal sealed class Operation(val cursor: Cursor, val text: String, private var selection: Selection? = null) {
+
+        abstract fun invert(): Operation
+
+        init {
+            assert(selection == null || selection == selection(false))
+        }
+
+        fun selection(): Selection {
+            return selection(true)
+        }
+
+        private fun selection(cache: Boolean): Selection {
+            selection?.let { return it }
+            assert(text.isNotEmpty())
+            val texts = text.split("\n")
+            val endRow = cursor.row + texts.size - 1
+            val endCol = when {
+                texts.size > 1 -> texts[texts.size - 1].length
+                else -> cursor.col + texts[0].length
+            }
+            val newSelection = Selection(cursor, Cursor(endRow, endCol))
+            if (cache) selection = newSelection
+            return newSelection
+        }
+
+        class Insertion(cursor: Cursor, text: String) : Operation(cursor, text) {
+            override fun invert(): Deletion {
+                return Deletion(cursor, text)
+            }
+        }
+
+        // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
+        class Deletion(cursor: Cursor, text: String, selection: Selection? = null) :
+            Operation(cursor, text, selection) {
+            override fun invert(): Insertion {
+                return Insertion(cursor, text)
             }
         }
     }
@@ -167,8 +207,8 @@ object TextEditor2 {
         internal var isSelecting: Boolean by mutableStateOf(false)
         internal var density: Float by mutableStateOf(initDensity)
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
-        private var undoStack: ArrayDeque<Operation> = ArrayDeque()
-        private var redoStack: ArrayDeque<Operation> = ArrayDeque()
+        private var undoStack: ArrayDeque<Change> = ArrayDeque()
+        private var redoStack: ArrayDeque<Change> = ArrayDeque()
 
         private fun createCursor(x: Int, y: Int): Cursor {
             val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
@@ -230,7 +270,7 @@ object TextEditor2 {
         }
 
         private fun mayScrollToCursor() {
-            val cursorRect = textLayouts[cursor.row]?.let { it.getCursorRect(cursor.col) } ?: Rect(0f, 0f, 0f, 0f)
+            val cursorRect = textLayouts[cursor.row]?.getCursorRect(cursor.col) ?: Rect(0f, 0f, 0f, 0f)
             val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
             val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
             mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
@@ -451,17 +491,29 @@ object TextEditor2 {
             selection = null
         }
 
+        private fun deletionOperation(): Operation.Deletion {
+            return Operation.Deletion(selection!!.min, selectedText(), selection)
+        }
+
         private fun deleteSelectionOr(elseFn: () -> Unit) {
             if (selection != null) deleteSelection()
             else elseFn()
         }
 
         private fun deleteSelection() {
-            // TODO
+            if (selection == null) return
+            apply(Change(deletionOperation()))
+        }
+
+        private fun insertOperation(string: String): Operation.Insertion {
+            return Operation.Insertion(selection?.min ?: cursor, string)
         }
 
         private fun insertText(string: String) {
-            // TODO
+            val operations = mutableListOf<Operation>()
+            if (selection != null) operations.add(deletionOperation())
+            operations.add(insertOperation(string))
+            apply(Change(operations))
         }
 
         private fun insertNewLine() {
@@ -473,16 +525,34 @@ object TextEditor2 {
                     break
                 }
             }
-            indent = floor(indent.toDouble() / TAB_SIZE).toInt() + TAB_SIZE
+            indent = floor(indent.toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(indent))
         }
 
         private fun insertTab() {
-            insertText((TAB_SIZE - content[cursor.row].length % TAB_SIZE).toString())
+            if (selection == null) insertText(" ".repeat(TAB_SIZE - content[cursor.row].length % TAB_SIZE))
+            else {
+                // TODO
+            }
         }
 
         private fun copy() {
             if (selection == null) return
+            clipboard.setText(AnnotatedString(selectedText()))
+        }
+
+        private fun paste() {
+            clipboard.getText()?.let { insertText(it.text) }
+        }
+
+        private fun cut() {
+            if (selection == null) return
+            copy()
+            deleteSelection()
+        }
+
+        private fun selectedText(): String {
+            if (selection == null) return ""
             val start = selection!!.min
             val end = selection!!.max
             val builder = StringBuilder()
@@ -493,26 +563,61 @@ object TextEditor2 {
                 else if (i == end.row) builder.append("\n").append(line.substring(0, end.col))
                 else builder.append("\n").append(line)
             }
-            clipboard.setText(AnnotatedString(builder.toString()))
-        }
-
-        private fun paste() {
-            if (selection != null) deleteSelection()
-            clipboard.getText()?.let { insertText(it.text) }
-        }
-
-        private fun cut() {
-            if (selection == null) return
-            copy()
-            deleteSelection()
+            return builder.toString()
         }
 
         private fun undo() {
-            // TODO
+            if (undoStack.isNotEmpty()) apply(undoStack.removeLast(), UNDO)
         }
 
         private fun redo() {
-            // TODO
+            if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), REDO)
+        }
+
+        private fun apply(change: Change, type: Change.Type = NATIVE) {
+
+            fun applyDeletion(deletion: Operation.Deletion) {
+                val start = deletion.selection().min
+                val end = deletion.selection().max
+                val prefix = content[start.row].substring(0, start.col)
+                val suffix = content[end.row].substring(end.col)
+                content[start.row] = prefix + suffix
+                if (end.row > start.row) content.removeRange(start.row + 1, end.row + 1)
+                cursor = deletion.selection().min
+                selection = null
+            }
+
+            fun applyInsertion(insertion: Operation.Insertion) {
+                val cursor = insertion.cursor
+                val prefix = content[cursor.row].substring(0, cursor.col)
+                val suffix = content[cursor.row].substring(cursor.col)
+                val texts = insertion.text.split("\n").toMutableList()
+                texts[0] = prefix + texts[0]
+                texts[texts.size - 1] = texts[texts.size - 1] + suffix
+
+                content[cursor.row] = texts[0]
+                if (texts.size > 1) content.addAll(cursor.row + 1, texts.subList(1, texts.size))
+                this.cursor = insertion.selection().max
+            }
+
+            change.operations.forEach {
+                when (it) {
+                    is Operation.Deletion -> applyDeletion(it)
+                    is Operation.Insertion -> applyInsertion(it)
+                }
+            }
+
+            verScroller.itemCount = content.size
+
+            when (type) {
+                NATIVE -> {
+                    redoStack.clear()
+                    undoStack.addLast(change.invert())
+                    while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
+                }
+                UNDO -> redoStack.addLast(change.invert())
+                REDO -> undoStack.addLast(change.invert())
+            }
         }
     }
 
