@@ -194,13 +194,13 @@ object TextEditor2 {
         initDensity: Float,
     ) {
         internal val content: SnapshotStateList<String> get() = file.content
+        internal val lineCount: Int get() = file.content.size
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
             addAll(List(file.content.size) { null })
         }
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight, file.content.size)
         internal var horScroller = ScrollState(0)
-        internal var lineCount: Int by mutableStateOf(file.content.size)
         internal var width by mutableStateOf(0.dp)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
