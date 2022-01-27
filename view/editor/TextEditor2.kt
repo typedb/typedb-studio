@@ -596,7 +596,6 @@ object TextEditor2 {
                     textLayouts.removeRange(start.row + 1, end.row + 1)
                 }
                 updateCursor(deletion.selection().min, false)
-                selection = null
             }
 
             fun applyInsertion(insertion: Operation.Insertion) {
