@@ -115,9 +115,6 @@ object LazyColumn {
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
             .onSizeChanged { state.scroller.updateHeight(toDP(it.height, density)) }
             .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
-            println("---")
-            println("first line: ${state.items[0]}")
-            println("state.items.size: ${state.items.size}")
             if (state.items.isNotEmpty()) {
                 (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEach { i ->
                     val indexInView = i - state.scroller.firstVisibleIndex

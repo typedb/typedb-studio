@@ -82,6 +82,7 @@ import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MA
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.NATIVE
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.REDO
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.UNDO
+import java.awt.event.MouseEvent
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -644,14 +645,26 @@ object TextEditor2 {
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
         val focusReq = FocusRequester()
 
+        fun onPress(event: MouseEvent) {
+            focusReq.requestFocus(); if (event.button == BUTTON1) state.isSelecting = true
+        }
+
+        fun onMove(event: MouseEvent) {
+            state.updateSelection(event.x, event.y)
+        }
+
+        fun onRelease(event: MouseEvent) {
+            if (event.button == BUTTON1) state.isSelecting = false
+        }
+
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Row(modifier = modifier.focusRequester(focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
-                .onPointerEvent(Press) { if (it.awtEvent.button == BUTTON1) state.isSelecting = true }
-                .onPointerEvent(Move) { state.updateSelection(it.awtEvent.x, it.awtEvent.y) }
-                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
+                .onPointerEvent(Press) { onPress(it.awtEvent) }
+                .onPointerEvent(Move) { onMove(it.awtEvent) }
+                .onPointerEvent(Release) { onRelease(it.awtEvent) }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
