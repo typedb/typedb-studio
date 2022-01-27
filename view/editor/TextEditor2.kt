@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.key.KeyEvent
@@ -75,6 +76,7 @@ import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Command
@@ -93,15 +95,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalTime::class)
 object TextEditor2 {
 
     private const val TAB_SIZE = 4
     private const val UNDO_LIMIT = 1_000
     private const val LINE_HEIGHT = 1.56f
-    private val LINE_GAP = 1.dp
+    private const val DISABLED_CURSOR_OPACITY = 0.6f
+    private val LINE_GAP = 2.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
-    private val CURSOR_LINE_PADDING = 2.dp
+    private val CURSOR_LINE_PADDING = 0.dp
+    private val BLINKING_FREQUENCY = Duration.milliseconds(500)
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
         override fun compareTo(other: Cursor): Int {
@@ -202,6 +207,7 @@ object TextEditor2 {
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight, file.content.size)
         internal var horScroller = ScrollState(0)
+        internal var isFocused by mutableStateOf(true)
         internal var width by mutableStateOf(0.dp)
         internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
         internal var selection: Selection? by mutableStateOf(null)
@@ -646,7 +652,8 @@ object TextEditor2 {
         val focusReq = FocusRequester()
 
         fun onPress(event: MouseEvent) {
-            focusReq.requestFocus(); if (event.button == BUTTON1) state.isSelecting = true
+            focusReq.requestFocus()
+            if (event.button == BUTTON1) state.isSelecting = true
         }
 
         fun onMove(event: MouseEvent) {
@@ -659,7 +666,8 @@ object TextEditor2 {
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier.focusRequester(focusReq).focusable()
+            Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused }
+                .focusRequester(focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
                 .onPointerEvent(Press) { onPress(it.awtEvent) }
@@ -775,11 +783,11 @@ object TextEditor2 {
             state.cursor.col >= text.length -> fontWidth
             else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
         }
-        if (visible) {
+        if (visible || !state.isFocused) {
             Box(
                 modifier = Modifier.offset(x = offsetX, y = CURSOR_LINE_PADDING)
                     .width(width).height(state.lineHeight - CURSOR_LINE_PADDING * 2)
-                    .background(Theme.colors.secondary)
+                    .background(fadeable(Theme.colors.secondary, !state.isFocused, DISABLED_CURSOR_OPACITY))
             ) {
                 Text(
                     text.getOrNull(state.cursor.col)?.toString() ?: "",
@@ -788,10 +796,10 @@ object TextEditor2 {
                 )
             }
         }
-        LaunchedEffect(state.cursor) {
+        if (state.isFocused) LaunchedEffect(state.cursor) {
             visible = true
             while (true) {
-                delay(Duration.milliseconds(500))
+                delay(BLINKING_FREQUENCY)
                 visible = !visible
             }
         }
