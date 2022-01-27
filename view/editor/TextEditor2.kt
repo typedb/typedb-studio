@@ -595,7 +595,7 @@ object TextEditor2 {
                     content.removeRange(start.row + 1, end.row + 1)
                     textLayouts.removeRange(start.row + 1, end.row + 1)
                 }
-                cursor = deletion.selection().min
+                updateCursor(deletion.selection().min, false)
                 selection = null
             }
 
@@ -612,7 +612,7 @@ object TextEditor2 {
                     content.addAll(cursor.row + 1, texts.subList(1, texts.size))
                     textLayouts.addAll(cursor.row + 1, List(texts.size - 1) { null })
                 }
-                this.cursor = insertion.selection().max
+                updateCursor(insertion.selection().max, false)
             }
 
             change.operations.forEach {
@@ -625,7 +625,7 @@ object TextEditor2 {
             stateVersion++
             verScroller.itemCount = content.size
 
-            when (type) {
+            when (type) { // TODO: make this async and batch the changes
                 NATIVE -> {
                     redoStack.clear()
                     undoStack.addLast(change.invert())
