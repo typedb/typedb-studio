@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 
 object TextEditor2 {
 
+    private const val TAB_SIZE = 4
     private const val LINE_HEIGHT = 1.56f
     private val LINE_GAP = 2.dp
     private val AREA_PADDING_HORIZONTAL = 6.dp
@@ -464,11 +465,20 @@ object TextEditor2 {
         }
 
         private fun insertNewLine() {
-            // TODO
+            val line = content[cursor.row]
+            var indent = 0
+            for (it in line.indices) {
+                if (line[it] != ' ') {
+                    indent = it
+                    break
+                }
+            }
+            indent = floor(indent.toDouble() / TAB_SIZE).toInt() + TAB_SIZE
+            insertText("\n" + " ".repeat(indent))
         }
 
         private fun insertTab() {
-            // TODO
+            insertText((TAB_SIZE - content[cursor.row].length % TAB_SIZE).toString())
         }
 
         private fun copy() {
