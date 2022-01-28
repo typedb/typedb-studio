@@ -70,6 +70,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -519,21 +520,26 @@ object TextEditor2 {
         }
 
         private fun deleteTab() {
-            // TODO
+            val oldSelection = selection
+            selection = selection?.let { expandSelection(it) } ?: expandSelection(Selection(cursor, cursor))
+            val oldText = selectedText()
+            val newText = indent(oldText, -TAB_SIZE)
+            val oldTextLines = oldText.split("\n")
+            val newTextLines = newText.split("\n")
+            val firstLineShift = newTextLines.first().length - oldTextLines.first().length
+            val lastLineShift = newTextLines.last().length - oldTextLines.last().length
+            val newPosition: Either<Cursor, Selection> = oldSelection?.let {
+                Either.second(shiftSelection(it, firstLineShift, lastLineShift))
+            } ?: Either.first(Cursor(cursor.row, (cursor.col + firstLineShift).coerceAtLeast(0)))
+            insertText(newText, newPosition)
         }
 
         private fun insertTab() {
-            if (selection == null) insertText(" ".repeat(TAB_SIZE - content[cursor.row].length % TAB_SIZE))
+            if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
-                val newSelection = Selection(
-                    Cursor(selection!!.start.row, selection!!.start.col + TAB_SIZE),
-                    Cursor(selection!!.end.row, selection!!.end.col + TAB_SIZE)
-                )
-                selection = Selection(
-                    Cursor(selection!!.min.row, 0),
-                    Cursor(selection!!.max.row, content[selection!!.max.row].length)
-                )
-                insertText(indent(selectedText(), TAB_SIZE), newSelection)
+                val newSelection = shiftSelection(selection!!, TAB_SIZE, TAB_SIZE)
+                selection = expandSelection(selection!!)
+                insertText(indent(selectedText(), TAB_SIZE), Either.second(newSelection))
             }
         }
 
@@ -541,6 +547,18 @@ object TextEditor2 {
             val line = content[cursor.row]
             val tabs = floor(prefixSpaces(line).toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
+        }
+
+        private fun shiftSelection(selection: Selection, firstLine: Int, secondLine: Int) = Selection(
+            Cursor(selection.start.row, (selection.start.col + firstLine).coerceAtLeast(0)),
+            Cursor(selection.end.row, (selection.end.col + secondLine).coerceAtLeast(0))
+        )
+
+        private fun expandSelection(selection: Selection): Selection {
+            return Selection(
+                Cursor(selection.min.row, 0),
+                Cursor(selection.max.row, content[selection.max.row].length)
+            )
         }
 
         private fun indent(string: String, spaces: Int): String {
@@ -562,11 +580,11 @@ object TextEditor2 {
             return spaces
         }
 
-        private fun insertText(string: String, newSelection: Selection? = null) {
+        private fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null) {
             val operations = mutableListOf<Operation>()
             if (selection != null) operations.add(deletionOperation())
             operations.add(Operation.Insertion(selection?.min ?: cursor, string))
-            apply(Change(operations), NATIVE, newSelection)
+            apply(Change(operations), NATIVE, newPosition)
         }
 
         private fun copy() {
@@ -607,7 +625,7 @@ object TextEditor2 {
             if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), REDO)
         }
 
-        private fun apply(change: Change, type: Change.Type, newSelection: Selection? = null) {
+        private fun apply(change: Change, type: Change.Type, newPosition: Either<Cursor, Selection>? = null) {
 
             fun applyDeletion(deletion: Operation.Deletion) {
                 val start = deletion.selection().min
@@ -644,7 +662,13 @@ object TextEditor2 {
                     is Operation.Insertion -> applyInsertion(it)
                 }
             }
-            newSelection?.let { selection = it; cursor = it.end }
+            if (newPosition != null) when {
+                newPosition.isFirst -> updateCursor(newPosition.first(), false)
+                newPosition.isSecond -> {
+                    selection = newPosition.second()
+                    updateCursor(newPosition.second().end, true)
+                }
+            }
             stateVersion++
 
             when (type) { // TODO: make this async and batch the changes
@@ -788,7 +812,7 @@ object TextEditor2 {
         assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
         val start = when {
             state.selection!!.min.row < index -> 0
-            else -> state.selection!!.min.col // state.selection!!.min.row == index
+            else -> state.selection!!.min.col
         }
         val end = when {
             state.selection!!.max.row > index -> state.content[index].length
@@ -810,7 +834,7 @@ object TextEditor2 {
     @Composable
     private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
         var visible by remember { mutableStateOf(true) }
-        var offsetX by remember { mutableStateOf(0.dp) }
+        var offsetX by remember { mutableStateOf(fontWidth * text.length) }
         val textLayout = state.textLayouts[state.cursor.row]
         offsetX = textLayout?.let {
             toDP(it.getCursorRect(state.cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
