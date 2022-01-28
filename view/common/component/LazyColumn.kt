@@ -54,10 +54,10 @@ object LazyColumn {
     class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) {
         var offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp get() = itemHeight * itemCount()
-        private var viewHeight: Dp by mutableStateOf(0.dp);
+        private var viewHeight: Dp by mutableStateOf(0.dp)
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
-        internal var lastVisibleIndex: Int by mutableStateOf(0)
+        internal var lastVisibleIndexPossible: Int by mutableStateOf(0)
 
         fun updateOffset(delta: Dp) {
             offset = (offset + delta).coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
@@ -83,7 +83,7 @@ object LazyColumn {
             firstVisibleIndex = floor(offset.value / itemHeight.value).toInt()
             firstVisibleOffset = offset - itemHeight * firstVisibleIndex
             val visibleItems = floor((viewHeight.value + firstVisibleOffset.value) / itemHeight.value).toInt()
-            lastVisibleIndex = min(firstVisibleIndex + visibleItems, itemCount() - 1)
+            lastVisibleIndexPossible = firstVisibleIndex + visibleItems
         }
     }
 
@@ -113,10 +113,11 @@ object LazyColumn {
     ) {
         val density = LocalDensity.current.density
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
-            .onSizeChanged { state.scroller.updateViewHeight(toDP(it.height, density)) }
-            .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
+            .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }
+            .onSizeChanged { state.scroller.updateViewHeight(toDP(it.height, density)) }) {
             if (state.items.isNotEmpty()) {
-                (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEach { i ->
+                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.itemCount() - 1)
+                (state.scroller.firstVisibleIndex..lastVisibleIndex).forEach { i ->
                     val indexInView = i - state.scroller.firstVisibleIndex
                     val offset = state.scroller.itemHeight * indexInView - state.scroller.firstVisibleOffset
                     Box(Modifier.offset(y = offset)) { itemFn(i, state.items[i]) }

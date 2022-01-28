@@ -200,7 +200,7 @@ object TextEditor2 {
         initDensity: Float,
     ) {
         internal val content: SnapshotStateList<String> get() = file.content
-        internal val lineCount: Int get() = file.content.size
+        internal val lineCount: Int get() = content.size
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
             addAll(List(file.content.size) { null })
         }
