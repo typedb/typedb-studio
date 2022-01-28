@@ -529,15 +529,15 @@ object TextEditor2 {
 
         private fun insertNewLine() {
             val line = content[cursor.row]
-            var indent = 0
+            var spaces = 0
             for (it in line.indices) {
                 if (line[it] != ' ') {
-                    indent = it
+                    spaces = it
                     break
                 }
             }
-            indent = floor(indent.toDouble() / TAB_SIZE).toInt()
-            insertText("\n" + " ".repeat(indent))
+            val tabs = floor(spaces.toDouble() / TAB_SIZE).toInt()
+            insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 
         private fun insertTab() {
