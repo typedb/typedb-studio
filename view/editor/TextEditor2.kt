@@ -351,8 +351,9 @@ object TextEditor2 {
                 Command.DELETE_NEXT_WORD -> deleteSelectionOr { moveCursorNexBytWord(true); deleteSelection() }
                 Command.DELETE_START_LINE -> deleteSelectionOr { moveCursorToStartOfLine(true); deleteSelection() }
                 Command.DELETE_END_LINE -> deleteSelectionOr { moveCursorToEndOfLine(true); deleteSelection() }
-                Command.INSERT_NEW_LINE -> insertNewLine()
+                Command.DELETE_TAB -> deleteTab()
                 Command.INSERT_TAB -> insertTab()
+                Command.INSERT_NEW_LINE -> insertNewLine()
                 Command.COPY -> copy()
                 Command.PASTE -> paste()
                 Command.CUT -> cut()
@@ -514,6 +515,10 @@ object TextEditor2 {
         private fun deleteSelection() {
             if (selection == null) return
             apply(Change(deletionOperation()))
+        }
+
+        private fun deleteTab() {
+            // TODO
         }
 
         private fun insertOperation(string: String): Operation.Insertion {

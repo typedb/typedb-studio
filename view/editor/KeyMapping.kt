@@ -89,6 +89,7 @@ internal interface KeyMapping {
         DELETE_NEXT_WORD(true),
         DELETE_START_LINE(true),
         DELETE_END_LINE(true),
+        DELETE_TAB(true),
 
         COPY(false),
         PASTE(true),
@@ -97,7 +98,7 @@ internal interface KeyMapping {
         UNDO(true),
         REDO(true),
 
-        CHARACTER_PALETTE(false)
+        CHARACTER_PALETTE(false),
     }
 
     private enum class OS {
@@ -184,6 +185,7 @@ internal interface KeyMapping {
                         Keys.MoveHome -> Command.SELECT_START_LINE
                         Keys.MoveEnd -> Command.SELECT_END_LINE
                         Keys.Insert -> Command.PASTE
+                        Keys.Tab -> Command.DELETE_TAB
                         else -> null
                     }
                 else ->
