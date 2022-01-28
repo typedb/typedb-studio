@@ -51,16 +51,16 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, var itemCount: Int) {
+    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) {
         var offset: Dp by mutableStateOf(0.dp); private set
-        private val contentHeight: Dp = itemHeight * itemCount
-        internal var height: Dp by mutableStateOf(0.dp); private set
+        private val contentHeight: Dp get() = itemHeight * itemCount()
+        private var viewHeight: Dp by mutableStateOf(0.dp);
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
         internal var lastVisibleIndex: Int by mutableStateOf(0)
 
         fun updateOffset(delta: Dp) {
-            offset = (offset + delta).coerceIn(0.dp, max(contentHeight - height, 0.dp))
+            offset = (offset + delta).coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
             updateView()
         }
 
@@ -68,22 +68,22 @@ object LazyColumn {
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
             val delta = itemHeight * (event.delta as MouseScrollUnit.Line).value * -1
-            offset = (offset - delta).coerceIn(0.dp, max(contentHeight - height, 0.dp))
+            offset = (offset - delta).coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
 
             updateView()
             return true
         }
 
-        internal fun updateHeight(newHeight: Dp) {
-            height = newHeight
+        internal fun updateViewHeight(newHeight: Dp) {
+            viewHeight = newHeight
             updateView()
         }
 
         private fun updateView() {
             firstVisibleIndex = floor(offset.value / itemHeight.value).toInt()
             firstVisibleOffset = offset - itemHeight * firstVisibleIndex
-            val visibleItems = floor((height.value + firstVisibleOffset.value) / itemHeight.value).toInt()
-            lastVisibleIndex = min(firstVisibleIndex + visibleItems, itemCount - 1)
+            val visibleItems = floor((viewHeight.value + firstVisibleOffset.value) / itemHeight.value).toInt()
+            lastVisibleIndex = min(firstVisibleIndex + visibleItems, itemCount() - 1)
         }
     }
 
@@ -92,12 +92,12 @@ object LazyColumn {
         internal val scroller: ScrollState
     )
 
-    fun createScrollState(itemHeight: Dp, itemCount: Int): ScrollState {
+    fun createScrollState(itemHeight: Dp, itemCount: () -> Int): ScrollState {
         return ScrollState(itemHeight, itemCount)
     }
 
     fun <T : Any> createState(items: List<T>, itemHeight: Dp): State<T> {
-        return State(items, createScrollState(itemHeight, items.size))
+        return State(items, createScrollState(itemHeight) { items.size })
     }
 
     fun <T : Any> createState(items: List<T>, scroller: ScrollState): State<T> {
@@ -113,7 +113,7 @@ object LazyColumn {
     ) {
         val density = LocalDensity.current.density
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
-            .onSizeChanged { state.scroller.updateHeight(toDP(it.height, density)) }
+            .onSizeChanged { state.scroller.updateViewHeight(toDP(it.height, density)) }
             .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }) {
             if (state.items.isNotEmpty()) {
                 (state.scroller.firstVisibleIndex..state.scroller.lastVisibleIndex).forEach { i ->

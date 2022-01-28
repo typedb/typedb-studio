@@ -205,7 +205,7 @@ object TextEditor2 {
             addAll(List(file.content.size) { null })
         }
         internal val contextMenu = ContextMenu.State()
-        internal val verScroller = LazyColumn.createScrollState(lineHeight, file.content.size)
+        internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
         internal var horScroller = ScrollState(0)
         internal var isFocused by mutableStateOf(true)
         internal var width by mutableStateOf(0.dp)
@@ -616,15 +616,13 @@ object TextEditor2 {
                 updateCursor(insertion.selection().max, false)
             }
 
+            stateVersion++
             change.operations.forEach {
                 when (it) {
                     is Operation.Deletion -> applyDeletion(it)
                     is Operation.Insertion -> applyInsertion(it)
                 }
             }
-
-            stateVersion++
-            verScroller.itemCount = content.size
 
             when (type) { // TODO: make this async and batch the changes
                 NATIVE -> {
