@@ -36,10 +36,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -203,6 +205,7 @@ object TextEditor2 {
     ) {
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
+        private val textLayoutBin: SnapshotStateMap<Int, TextLayoutResult?> = mutableStateMapOf()
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
             addAll(MutableList(file.content.size) { null })
         }
@@ -629,6 +632,7 @@ object TextEditor2 {
                 content[start.row] = prefix + suffix
                 if (end.row > start.row) {
                     content.removeRange(start.row + 1, end.row + 1)
+                    for (i in start.row + 1..end.row) textLayoutBin[i] = textLayouts[i]
                     textLayouts.removeRange(start.row + 1, end.row + 1)
                 }
                 updateCursor(deletion.selection().min, false)
@@ -645,7 +649,9 @@ object TextEditor2 {
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
                     content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                    textLayouts.addAll(cursor.row + 1, MutableList(texts.size - 1) { null })
+                    textLayouts.addAll(cursor.row + 1, MutableList(texts.size - 1) {
+                        textLayoutBin.remove(cursor.row + 1 + it)
+                    })
                 }
                 updateCursor(insertion.selection().max, false)
             }
