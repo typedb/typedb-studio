@@ -686,7 +686,10 @@ object TextEditor2 {
             }
         }
 
-        LaunchedEffect(state) { focusReq.requestFocus() }
+        LaunchedEffect(state) {
+            focusReq.requestFocus()
+            state.isFocused = true
+        }
     }
 
     @Composable
