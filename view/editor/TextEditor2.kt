@@ -529,7 +529,7 @@ object TextEditor2 {
 
         private fun insertNewLine() {
             val line = content[cursor.row]
-            var spaces = 0
+            var spaces = line.length
             for (it in line.indices) {
                 if (line[it] != ' ') {
                     spaces = it
