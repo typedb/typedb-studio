@@ -204,7 +204,7 @@ object TextEditor2 {
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
-            addAll(List(file.content.size) { null })
+            addAll(MutableList(file.content.size) { null })
         }
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
@@ -570,14 +570,8 @@ object TextEditor2 {
         }
 
         private fun prefixSpaces(line: String): Int {
-            var spaces = line.length
-            for (it in line.indices) {
-                if (line[it] != ' ') {
-                    spaces = it
-                    break
-                }
-            }
-            return spaces
+            for (it in line.indices) if (line[it] != ' ') return it
+            return line.length
         }
 
         private fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null) {
@@ -651,7 +645,7 @@ object TextEditor2 {
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
                     content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                    textLayouts.addAll(cursor.row + 1, List(texts.size - 1) { null })
+                    textLayouts.addAll(cursor.row + 1, MutableList(texts.size - 1) { null })
                 }
                 updateCursor(insertion.selection().max, false)
             }
@@ -795,20 +789,27 @@ object TextEditor2 {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
+            val isRendered = state.viewVersion == state.stateVersion
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                SelectionHighlighter(state, index, text.length)
+                if (isRendered) SelectionHighlighter(state, index, state.textLayouts[index], text.length, fontWidth)
+                else SelectionHighlighter(state, index, null, text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
                 onTextLayout = { state.textLayouts[index] = it; state.viewVersion = state.stateVersion }
             )
-            if (state.cursor.row == index) CursorIndicator(state, text, font, fontWidth)
+            if (state.cursor.row == index) {
+                if (isRendered) CursorIndicator(state, text, state.textLayouts[index], font, fontWidth)
+                else CursorIndicator(state, text, null, font, fontWidth)
+            }
         }
     }
 
     @Composable
-    private fun SelectionHighlighter(state: State, index: Int, length: Int) {
+    private fun SelectionHighlighter(
+        state: State, index: Int, textLayout: TextLayoutResult?, length: Int, fontWidth: Dp
+    ) {
         assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
         val start = when {
             state.selection!!.min.row < index -> 0
@@ -818,12 +819,10 @@ object TextEditor2 {
             state.selection!!.max.row > index -> state.content[index].length
             else -> state.selection!!.max.col
         }
-        var startPos by remember { mutableStateOf(0.dp) }
-        var endPos by remember { mutableStateOf(0.dp) }
-        startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, state.density) } ?: startPos
-        endPos = state.textLayouts[index]?.let {
+        var startPos = textLayout?.let { toDP(it.getCursorRect(start).left, state.density) } ?: (fontWidth * start)
+        var endPos = textLayout?.let {
             toDP(it.getCursorRect(end.coerceAtMost(it.getLineEnd(0))).right, state.density)
-        } ?: endPos
+        } ?: (fontWidth * end)
         if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
         if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
@@ -832,13 +831,13 @@ object TextEditor2 {
 
     @OptIn(ExperimentalTime::class)
     @Composable
-    private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
+    private fun CursorIndicator(
+        state: State, text: String, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp
+    ) {
         var visible by remember { mutableStateOf(true) }
-        var offsetX by remember { mutableStateOf(fontWidth * text.length) }
-        val textLayout = state.textLayouts[state.cursor.row]
-        offsetX = textLayout?.let {
+        val offsetX = textLayout?.let {
             toDP(it.getCursorRect(state.cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
-        } ?: offsetX
+        } ?: (fontWidth * state.cursor.col)
         val width = when {
             state.cursor.col >= text.length -> fontWidth
             else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
