@@ -399,6 +399,13 @@ object TextEditor2 {
         }
 
         private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
+            fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
+                if (col < 0 || content[cursor.row].isEmpty()) return 0
+                val newCol = textLayout.getWordBoundary(withinText(col)).start
+                return if (newCol < col) newCol
+                else getPrevWordOffset(textLayout, col - 1)
+            }
+
             val newCursor: Cursor = textLayouts[cursor.row]?.let {
                 Cursor(cursor.row, getPrevWordOffset(it, cursor.col))
             } ?: Cursor(0, 0)
@@ -406,24 +413,17 @@ object TextEditor2 {
         }
 
         private fun moveCursorNexBytWord(isSelecting: Boolean = false) {
+            fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
+                if (col >= content[cursor.row].length) return content[cursor.row].length
+                val newCol = textLayout.getWordBoundary(withinText(col)).end
+                return if (newCol > col) newCol
+                else getNextWordOffset(textLayout, col + 1)
+            }
+
             val newCursor: Cursor = textLayouts[cursor.row]?.let {
                 Cursor(cursor.row, getNextWordOffset(it, cursor.col))
             } ?: Cursor(0, 0)
             updateCursor(newCursor, isSelecting)
-        }
-
-        private fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
-            if (col < 0 || content[cursor.row].isEmpty()) return 0
-            val newCol = textLayout.getWordBoundary(withinText(col)).start
-            return if (newCol < col) newCol
-            else getPrevWordOffset(textLayout, col - 1)
-        }
-
-        private fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
-            if (col >= content[cursor.row].length) return content[cursor.row].length
-            val newCol = textLayout.getWordBoundary(withinText(col)).end
-            return if (newCol > col) newCol
-            else getNextWordOffset(textLayout, col + 1)
         }
 
         private fun withinText(col: Int): Int {
@@ -521,15 +521,11 @@ object TextEditor2 {
             // TODO
         }
 
-        private fun insertOperation(string: String): Operation.Insertion {
-            return Operation.Insertion(selection?.min ?: cursor, string)
-        }
-
-        private fun insertText(string: String) {
-            val operations = mutableListOf<Operation>()
-            if (selection != null) operations.add(deletionOperation())
-            operations.add(insertOperation(string))
-            apply(Change(operations))
+        private fun insertTab() {
+            if (selection == null) insertText(" ".repeat(TAB_SIZE - content[cursor.row].length % TAB_SIZE))
+            else {
+                // TODO
+            }
         }
 
         private fun insertNewLine() {
@@ -545,11 +541,11 @@ object TextEditor2 {
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 
-        private fun insertTab() {
-            if (selection == null) insertText(" ".repeat(TAB_SIZE - content[cursor.row].length % TAB_SIZE))
-            else {
-                // TODO
-            }
+        private fun insertText(string: String) {
+            val operations = mutableListOf<Operation>()
+            if (selection != null) operations.add(deletionOperation())
+            operations.add(Operation.Insertion(selection?.min ?: cursor, string))
+            apply(Change(operations))
         }
 
         private fun copy() {
