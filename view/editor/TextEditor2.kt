@@ -86,6 +86,7 @@ import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.REDO
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.UNDO
 import java.awt.event.MouseEvent
 import java.awt.event.MouseEvent.BUTTON1
+import java.util.stream.Collectors
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -514,7 +515,7 @@ object TextEditor2 {
 
         private fun deleteSelection() {
             if (selection == null) return
-            apply(Change(deletionOperation()))
+            apply(Change(deletionOperation()), NATIVE)
         }
 
         private fun deleteTab() {
@@ -524,12 +525,33 @@ object TextEditor2 {
         private fun insertTab() {
             if (selection == null) insertText(" ".repeat(TAB_SIZE - content[cursor.row].length % TAB_SIZE))
             else {
-                // TODO
+                val newSelection = Selection(
+                    Cursor(selection!!.start.row, selection!!.start.col + TAB_SIZE),
+                    Cursor(selection!!.end.row, selection!!.end.col + TAB_SIZE)
+                )
+                selection = Selection(
+                    Cursor(selection!!.min.row, 0),
+                    Cursor(selection!!.max.row, content[selection!!.max.row].length)
+                )
+                insertText(indent(selectedText(), TAB_SIZE), newSelection)
             }
         }
 
         private fun insertNewLine() {
             val line = content[cursor.row]
+            val tabs = floor(prefixSpaces(line).toDouble() / TAB_SIZE).toInt()
+            insertText("\n" + " ".repeat(TAB_SIZE * tabs))
+        }
+
+        private fun indent(string: String, spaces: Int): String {
+            return string.split("\n").stream().map {
+                if (spaces > 0) " ".repeat(spaces) + it
+                else if (spaces < 0) it.removePrefix(" ".repeat((-spaces).coerceAtMost(prefixSpaces(it))))
+                else it
+            }.collect(Collectors.joining("\n"))
+        }
+
+        private fun prefixSpaces(line: String): Int {
             var spaces = line.length
             for (it in line.indices) {
                 if (line[it] != ' ') {
@@ -537,15 +559,14 @@ object TextEditor2 {
                     break
                 }
             }
-            val tabs = floor(spaces.toDouble() / TAB_SIZE).toInt()
-            insertText("\n" + " ".repeat(TAB_SIZE * tabs))
+            return spaces
         }
 
-        private fun insertText(string: String) {
+        private fun insertText(string: String, newSelection: Selection? = null) {
             val operations = mutableListOf<Operation>()
             if (selection != null) operations.add(deletionOperation())
             operations.add(Operation.Insertion(selection?.min ?: cursor, string))
-            apply(Change(operations))
+            apply(Change(operations), NATIVE, newSelection)
         }
 
         private fun copy() {
@@ -586,7 +607,7 @@ object TextEditor2 {
             if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), REDO)
         }
 
-        private fun apply(change: Change, type: Change.Type = NATIVE) {
+        private fun apply(change: Change, type: Change.Type, newSelection: Selection? = null) {
 
             fun applyDeletion(deletion: Operation.Deletion) {
                 val start = deletion.selection().min
@@ -617,13 +638,14 @@ object TextEditor2 {
                 updateCursor(insertion.selection().max, false)
             }
 
-            stateVersion++
             change.operations.forEach {
                 when (it) {
                     is Operation.Deletion -> applyDeletion(it)
                     is Operation.Insertion -> applyInsertion(it)
                 }
             }
+            newSelection?.let { selection = it; cursor = it.end }
+            stateVersion++
 
             when (type) { // TODO: make this async and batch the changes
                 NATIVE -> {
@@ -772,8 +794,12 @@ object TextEditor2 {
             state.selection!!.max.row > index -> state.content[index].length
             else -> state.selection!!.max.col
         }
-        var startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, state.density) } ?: 0.dp
-        var endPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(end).right, state.density) } ?: 0.dp
+        var startPos by remember { mutableStateOf(0.dp) }
+        var endPos by remember { mutableStateOf(0.dp) }
+        startPos = state.textLayouts[index]?.let { toDP(it.getCursorRect(start).left, state.density) } ?: startPos
+        endPos = state.textLayouts[index]?.let {
+            toDP(it.getCursorRect(end.coerceAtMost(it.getLineEnd(0))).right, state.density)
+        } ?: endPos
         if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
         if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
@@ -784,10 +810,11 @@ object TextEditor2 {
     @Composable
     private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
         var visible by remember { mutableStateOf(true) }
+        var offsetX by remember { mutableStateOf(0.dp) }
         val textLayout = state.textLayouts[state.cursor.row]
-        val offsetX = textLayout?.let {
+        offsetX = textLayout?.let {
             toDP(it.getCursorRect(state.cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
-        } ?: 0.dp
+        } ?: offsetX
         val width = when {
             state.cursor.col >= text.length -> fontWidth
             else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
