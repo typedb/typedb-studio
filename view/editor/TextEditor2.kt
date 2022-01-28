@@ -694,7 +694,8 @@ object TextEditor2 {
 
     @Composable
     private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp) {
-        val minWidth = fontWidth * ceil(log10(state.lineCount.toDouble())).toInt() + AREA_PADDING_HORIZONTAL * 2 + 2.dp
+        val maxDigits = ceil(log10(state.lineCount + 1.0)).toInt()
+        val minWidth = fontWidth * maxDigits + AREA_PADDING_HORIZONTAL * 2 + 2.dp
         val lazyColumnState: LazyColumn.State<Int> = LazyColumn.createState(
             items = (0 until state.lineCount).map { it },
             scroller = state.verScroller
