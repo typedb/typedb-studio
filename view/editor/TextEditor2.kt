@@ -279,7 +279,9 @@ object TextEditor2 {
         }
 
         private fun mayScrollToCursor() {
-            val cursorRect = textLayouts[cursor.row]?.getCursorRect(cursor.col) ?: Rect(0f, 0f, 0f, 0f)
+            val cursorRect = textLayouts[cursor.row]?.let {
+                it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
+            } ?: Rect(0f, 0f, 0f, 0f)
             val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
             val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
             mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
@@ -740,7 +742,6 @@ object TextEditor2 {
             state.cursor.row == index && state.selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
         }
-
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
@@ -748,17 +749,15 @@ object TextEditor2 {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
-            val textIsRendered = state.viewVersion == state.stateVersion
-            val isInSelection =
-                state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index
-
-            if (textIsRendered && isInSelection) SelectionHighlighter(state, index, text.length)
+            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
+                SelectionHighlighter(state, index, text.length)
+            }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
                 onTextLayout = { state.textLayouts[index] = it; state.viewVersion = state.stateVersion }
             )
-            if (textIsRendered && state.cursor.row == index) CursorIndicator(state, text, font, fontWidth)
+            if (state.cursor.row == index) CursorIndicator(state, text, font, fontWidth)
         }
     }
 
@@ -786,7 +785,9 @@ object TextEditor2 {
     private fun CursorIndicator(state: State, text: String, font: TextStyle, fontWidth: Dp) {
         var visible by remember { mutableStateOf(true) }
         val textLayout = state.textLayouts[state.cursor.row]
-        val offsetX = textLayout?.let { toDP(it.getCursorRect(state.cursor.col).left, state.density) } ?: 0.dp
+        val offsetX = textLayout?.let {
+            toDP(it.getCursorRect(state.cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
+        } ?: 0.dp
         val width = when {
             state.cursor.col >= text.length -> fontWidth
             else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
