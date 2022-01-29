@@ -631,10 +631,12 @@ object TextEditor2 {
                 val suffix = content[end.row].substring(end.col)
                 content[start.row] = prefix + suffix
                 if (end.row > start.row) {
-                    content.removeRange(start.row + 1, end.row + 1)
+                    val removalStartInc = start.row + 1
+                    val removalEndExc = end.row + 1
                     for (i in start.row + 1..end.row) textLayoutBin[i] = textLayouts[i]
-                    textLayouts.removeRange(start.row + 1, end.row + 1)
-                    textLayoutVersions.removeRange(start.row + 1, end.row + 1)
+                    textLayouts.removeRange(removalStartInc, removalEndExc)
+                    textLayoutVersions.removeRange(removalStartInc, removalEndExc)
+                    content.removeRange(removalStartInc, removalEndExc)
                 }
                 updateCursor(deletion.selection().min, false)
             }
@@ -649,11 +651,11 @@ object TextEditor2 {
 
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
-                    content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                    textLayouts.addAll(cursor.row + 1, MutableList(texts.size - 1) {
-                        textLayoutBin.remove(cursor.row + 1 + it)
-                    })
-                    textLayoutVersions.addAll(cursor.row + 1, MutableList(texts.size - 1) { 0 })
+                    val addAtIndex = cursor.row + 1
+                    val addSize = texts.size - 1
+                    content.addAll(addAtIndex, texts.subList(1, texts.size))
+                    textLayoutVersions.addAll(addAtIndex, MutableList(addSize) { 0 })
+                    textLayouts.addAll(addAtIndex, MutableList(addSize) { textLayoutBin.remove(addAtIndex + it) })
                 }
                 updateCursor(insertion.selection().max, false)
             }
