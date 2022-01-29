@@ -205,10 +205,11 @@ object TextEditor2 {
     ) {
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
+        internal val textLayouts: SnapshotStateList<TextLayoutResult?> =
+            mutableStateListOf<TextLayoutResult?>().apply { addAll(List(file.content.size) { null }) }
+        internal val textLayoutVersions: SnapshotStateList<Int> =
+            mutableStateListOf<Int>().apply { addAll(List(file.content.size) { 0 }) }
         private val textLayoutBin: SnapshotStateMap<Int, TextLayoutResult?> = mutableStateMapOf()
-        internal val textLayouts: SnapshotStateList<TextLayoutResult?> = mutableStateListOf<TextLayoutResult?>().apply {
-            addAll(MutableList(file.content.size) { null })
-        }
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
         internal var horScroller = ScrollState(0)
@@ -218,8 +219,7 @@ object TextEditor2 {
         internal var selection: Selection? by mutableStateOf(null)
         internal var isSelecting: Boolean by mutableStateOf(false)
         internal var density: Float by mutableStateOf(initDensity)
-        internal var stateVersion by mutableStateOf(0L)
-        internal var viewVersion by mutableStateOf(0L)
+        internal var stateVersion by mutableStateOf(0)
         private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
         private var undoStack: ArrayDeque<Change> = ArrayDeque()
         private var redoStack: ArrayDeque<Change> = ArrayDeque()
@@ -794,8 +794,9 @@ object TextEditor2 {
                 .defaultMinSize(minWidth = state.width)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
+                .onSizeChanged { state.textLayoutVersions[index] = state.stateVersion }
         ) {
-            val isRendered = state.viewVersion == state.stateVersion
+            val isRendered = state.textLayoutVersions[index] == state.stateVersion
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
                 if (isRendered) SelectionHighlighter(state, index, state.textLayouts[index], text.length, fontWidth)
                 else SelectionHighlighter(state, index, null, text.length, fontWidth)
@@ -803,7 +804,7 @@ object TextEditor2 {
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
-                onTextLayout = { state.textLayouts[index] = it; state.viewVersion = state.stateVersion }
+                onTextLayout = { state.textLayouts[index] = it }
             )
             if (state.cursor.row == index) {
                 if (isRendered) CursorIndicator(state, text, state.textLayouts[index], font, fontWidth)
@@ -846,7 +847,9 @@ object TextEditor2 {
         } ?: (fontWidth * state.cursor.col)
         val width = when {
             state.cursor.col >= text.length -> fontWidth
-            else -> textLayout?.let { toDP(it.getBoundingBox(state.cursor.col).width, state.density) } ?: fontWidth
+            else -> textLayout?.let {
+                toDP(it.getBoundingBox(state.cursor.col).width, state.density)
+            } ?: fontWidth
         }
         if (visible || !state.isFocused) {
             Box(
