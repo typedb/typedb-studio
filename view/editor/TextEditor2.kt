@@ -654,11 +654,13 @@ object TextEditor2 {
 
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
-                    val addAtIndex = cursor.row + 1
-                    val addSize = texts.size - 1
-                    content.addAll(addAtIndex, texts.subList(1, texts.size))
-                    textLayoutVersions.addAll(addAtIndex, List(addSize) { 0 })
-                    textLayouts.addAll(addAtIndex, List(addSize) { textLayoutBin.remove(addAtIndex + it) })
+                    val additionIndex = cursor.row + 1
+                    val additionSize = texts.size - 1
+                    content.addAll(additionIndex, texts.subList(1, texts.size))
+                    textLayoutVersions.addAll(additionIndex, List(additionSize) { 0 })
+                    textLayouts.addAll(additionIndex, List(additionSize) {
+                        textLayoutBin.remove(additionIndex + it) ?: textLayouts.getOrNull(additionIndex + it)
+                    })
                 }
                 updateCursor(insertion.selection().max, false)
             }
