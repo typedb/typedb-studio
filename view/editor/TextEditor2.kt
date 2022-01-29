@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -111,6 +112,7 @@ object TextEditor2 {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
+    private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}') // TODO: is this complete?
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
         override fun compareTo(other: Cursor): Int {
@@ -404,10 +406,24 @@ object TextEditor2 {
             }
         }
 
+        private fun wordBoundary(textLayout: TextLayoutResult, col: Int): TextRange {
+            // TODO: https://github.com/JetBrains/compose-jb/issues/1762
+            //       We can remove this function once the above issue is resolved
+            val colSafe = col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
+            val boundary = textLayout.getWordBoundary(colSafe)
+            val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
+            val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
+            val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
+            return TextRange(
+                if (newStart < 0) boundary.start else newStart + boundary.start + 1,
+                if (newEnd < 0) boundary.end else newEnd + boundary.start
+            )
+        }
+
         private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
             fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
                 if (col < 0 || content[cursor.row].isEmpty()) return 0
-                val newCol = textLayout.getWordBoundary(withinText(col)).start
+                val newCol = wordBoundary(textLayout, col).start
                 return if (newCol < col) newCol
                 else getPrevWordOffset(textLayout, col - 1)
             }
@@ -421,7 +437,7 @@ object TextEditor2 {
         private fun moveCursorNexBytWord(isSelecting: Boolean = false) {
             fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
                 if (col >= content[cursor.row].length) return content[cursor.row].length
-                val newCol = textLayout.getWordBoundary(withinText(col)).end
+                val newCol = wordBoundary(textLayout, col).end
                 return if (newCol > col) newCol
                 else getNextWordOffset(textLayout, col + 1)
             }
@@ -430,10 +446,6 @@ object TextEditor2 {
                 Cursor(cursor.row, getNextWordOffset(it, cursor.col))
             } ?: Cursor(0, 0)
             updateCursor(newCursor, isSelecting)
-        }
-
-        private fun withinText(col: Int): Int {
-            return col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
         }
 
         private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
@@ -503,6 +515,14 @@ object TextEditor2 {
         private fun selectAll() {
             cursor = Cursor(content.size - 1, content.last().length)
             selection = Selection(Cursor(0, 0), cursor)
+        }
+
+        internal fun selectWord() {
+            // TODO
+        }
+
+        internal fun selectLine() {
+            // TODO
         }
 
         private fun selectNone() {
@@ -885,8 +905,8 @@ object TextEditor2 {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
             onSinglePrimaryClick = { state.updateCursor(it.x, it.y, it.isShiftDown) },
-            onDoublePrimaryClick = { }, // TODO
-            onTriplePrimaryClick = { }, // TODO
+            onDoublePrimaryClick = { state.selectWord() },
+            onTriplePrimaryClick = { state.selectLine() },
             onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }
