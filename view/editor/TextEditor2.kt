@@ -262,6 +262,11 @@ object TextEditor2 {
             }
         }
 
+        private fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
+            selection = newSelection
+            selection?.let { updateCursor(it.end, true, mayScroll) }
+        }
+
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
             val newCursor = createCursor(x, y)
             if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
@@ -509,21 +514,20 @@ object TextEditor2 {
         }
 
         private fun selectAll() {
-            cursor = Cursor(content.size - 1, content.last().length)
-            selection = Selection(Cursor(0, 0), cursor)
+            updateSelection(Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false)
         }
 
         internal fun selectWord() {
             val boundary = wordBoundary(textLayouts[cursor.row]!!, cursor.col)
-            selection = Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
+            updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
         }
 
         internal fun selectLine() {
-            selection = Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length))
+            updateSelection(Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length)))
         }
 
         private fun selectNone() {
-            selection = null
+            updateSelection(null)
         }
 
         private fun deletionOperation(): Operation.Deletion {
@@ -542,7 +546,7 @@ object TextEditor2 {
 
         private fun deleteTab() {
             val oldSelection = selection
-            selection = selection?.let { expandSelection(it) } ?: expandSelection(Selection(cursor, cursor))
+            updateSelection(selection?.let { expandSelection(it) } ?: expandSelection(Selection(cursor, cursor)))
             val oldText = selectedText()
             val newText = indent(oldText, -TAB_SIZE)
             val oldTextLines = oldText.split("\n")
@@ -561,7 +565,7 @@ object TextEditor2 {
             if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
                 val newSelection = shiftSelection(selection!!, TAB_SIZE, TAB_SIZE)
-                selection = expandSelection(selection!!)
+                updateSelection(expandSelection(selection!!))
                 insertText(indent(selectedText(), TAB_SIZE), Either.second(newSelection))
             }
         }
@@ -690,10 +694,7 @@ object TextEditor2 {
             }
             if (newPosition != null) when {
                 newPosition.isFirst -> updateCursor(newPosition.first(), false)
-                newPosition.isSecond -> {
-                    selection = newPosition.second()
-                    updateCursor(newPosition.second().end, true)
-                }
+                newPosition.isSecond -> updateSelection(newPosition.second())
             }
             stateVersion++
 
