@@ -518,11 +518,12 @@ object TextEditor2 {
         }
 
         internal fun selectWord() {
-            // TODO
+            val boundary = wordBoundary(textLayouts[cursor.row]!!, cursor.col)
+            selection = Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
         }
 
         internal fun selectLine() {
-            // TODO
+            selection = Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length))
         }
 
         private fun selectNone() {
