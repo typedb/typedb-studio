@@ -654,8 +654,8 @@ object TextEditor2 {
                     val addAtIndex = cursor.row + 1
                     val addSize = texts.size - 1
                     content.addAll(addAtIndex, texts.subList(1, texts.size))
-                    textLayoutVersions.addAll(addAtIndex, MutableList(addSize) { 0 })
-                    textLayouts.addAll(addAtIndex, MutableList(addSize) { textLayoutBin.remove(addAtIndex + it) })
+                    textLayoutVersions.addAll(addAtIndex, List(addSize) { 0 })
+                    textLayouts.addAll(addAtIndex, List(addSize) { textLayoutBin.remove(addAtIndex + it) })
                 }
                 updateCursor(insertion.selection().max, false)
             }
