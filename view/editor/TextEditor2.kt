@@ -250,6 +250,25 @@ object TextEditor2 {
             if (newWidth > width) width = newWidth
         }
 
+        internal fun updateSelection(x: Int, y: Int) {
+            if (isSelecting) {
+                var newCursor = createCursor(x, y)
+                val horScrollOffset = toDP(horScroller.value, density).value
+                val lineNumberBorder = textAreaRect.left - horScrollOffset - AREA_PADDING_HORIZONTAL.value
+                if (x < lineNumberBorder && selection != null && newCursor >= selection!!.start) {
+                    newCursor = createCursor(x, y + lineHeight.value.toInt())
+                }
+                if (newCursor != cursor) updateCursor(newCursor, true)
+            }
+        }
+
+        internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
+            val newCursor = createCursor(x, y)
+            if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
+                updateCursor(newCursor, false)
+            }
+        }
+
         internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
             updateCursor(createCursor(x, y), isSelecting, false)
         }
@@ -263,50 +282,27 @@ object TextEditor2 {
             if (mayScroll) mayScrollToCursor()
         }
 
-        internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
-            val newCursor = createCursor(x, y)
-            if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
-                updateCursor(newCursor, false)
-            }
-        }
-
-        internal fun updateSelection(x: Int, y: Int) {
-            if (isSelecting) {
-                var newCursor = createCursor(x, y)
-                val border = textAreaRect.left - toDP(horScroller.value, density).value - AREA_PADDING_HORIZONTAL.value
-                if (x < border && selection != null && newCursor >= selection!!.start) {
-                    newCursor = createCursor(x, y + lineHeight.value.toInt())
-                }
-                if (newCursor != cursor) {
-                    if (selection == null) selection = Selection(cursor, newCursor)
-                    else selection!!.end = newCursor
-                    cursor = newCursor
-                }
-                mayScrollToCoordinate(x, y)
-            }
-        }
-
         private fun mayScrollToCursor() {
+            fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
+                val left = textAreaRect.left.toInt() + padding
+                val right = textAreaRect.right.toInt() - padding
+                val top = textAreaRect.top.toInt() + padding
+                val bottom = textAreaRect.bottom.toInt() - padding
+                if (x < left) coroutineScope.launch {
+                    horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
+                } else if (x > right) coroutineScope.launch {
+                    horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
+                }
+                if (y < top) verScroller.updateOffset((y - top).dp)
+                else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
+            }
+
             val cursorRect = textLayouts[cursor.row]?.let {
                 it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
             } ?: Rect(0f, 0f, 0f, 0f)
             val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
             val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
-            mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
-        }
-
-        private fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
-            val left = textAreaRect.left.toInt() + padding
-            val right = textAreaRect.right.toInt() - padding
-            val top = textAreaRect.top.toInt() + padding
-            val bottom = textAreaRect.bottom.toInt() - padding
-            if (x < left) coroutineScope.launch {
-                horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
-            } else if (x > right) coroutineScope.launch {
-                horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
-            }
-            if (y < top) verScroller.updateOffset((y - top).dp)
-            else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
+            mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt())
         }
 
         internal fun processKeyEvent(event: KeyEvent): Boolean {
