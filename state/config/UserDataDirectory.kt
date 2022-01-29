@@ -45,7 +45,7 @@ object UserDataDirectory {
     private const val MAC_DIR_APP_SUPPORT = "Application Support"
     private const val APP_DIR_TYPEDB_STUDIO = "TypeDB Studio"
     private const val APP_LOG = "typedb-studio.log"
-    private val LOG = KotlinLogging.logger {}
+    private val LOGGER = KotlinLogging.logger {}
 
     private val path: Path = when (currentOS()) {
         // Source: https://stackoverflow.com/a/16660314/2902555
@@ -74,7 +74,7 @@ object UserDataDirectory {
         } catch (e: Exception) {
             isWritable = false;
         }
-        if (!isWritable) LOG.error { "Unable to access app data. User preferences and history will be unavailable." }
+        if (!isWritable) LOGGER.error { "Unable to access app data. User preferences and history will be unavailable." }
     }
 
     private fun initLogFileOutput() {

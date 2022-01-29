@@ -52,8 +52,7 @@ import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
 import javax.swing.UIManager
 import kotlin.system.exitProcess
-import mu.KLogger
-import mu.KotlinLogging.logger
+import mu.KotlinLogging
 
 object Studio {
 
@@ -62,19 +61,19 @@ object Studio {
     private val mainWindowTitle: String
         get() = "${Label.TYPEDB_STUDIO}${GlobalState.project.current?.let { " — ${it.directory.name}" } ?: ""}"
 
+    private val LOGGER = KotlinLogging.logger {}
+
     @JvmStatic
     fun main(args: Array<String>) {
-        var logger: KLogger? = null
         try {
             setConfigurations()
             Message.loadClasses()
             UserDataDirectory.initialise()
-            logger = logger {}
             application { MainWindow(it) }
         } catch (exception: Exception) {
             application { ErrorWindow(exception, it) }
         } finally {
-            logger?.debug { Label.CLOSING_TYPEDB_STUDIO }
+            LOGGER.debug { Label.CLOSING_TYPEDB_STUDIO }
             exitProcess(0)
         }
     }
