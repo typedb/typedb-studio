@@ -127,8 +127,9 @@ object TextEditor2 {
 
     internal class Selection(val start: Cursor, endInit: Cursor) {
         var end: Cursor by mutableStateOf(endInit)
-        val min: Cursor get() = if (start < end) start else end
-        val max: Cursor get() = if (end > start) end else start
+        val min: Cursor get() = if (start <= end) start else end
+        val max: Cursor get() = if (end >= start) end else start
+        val isForward: Boolean get() = start <= end
 
         override fun toString(): String {
             val startStatus = if (start == min) "min" else "max"
@@ -532,7 +533,9 @@ object TextEditor2 {
             val firstLineShift = newTextLines.first().length - oldTextLines.first().length
             val lastLineShift = newTextLines.last().length - oldTextLines.last().length
             val newPosition: Either<Cursor, Selection> = oldSelection?.let {
-                Either.second(shiftSelection(it, firstLineShift, lastLineShift))
+                val startCursorShift = if (it.isForward) firstLineShift else lastLineShift
+                val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
+                Either.second(shiftSelection(it, startCursorShift, endCursorShift))
             } ?: Either.first(Cursor(cursor.row, (cursor.col + firstLineShift).coerceAtLeast(0)))
             insertText(newText, newPosition)
         }
