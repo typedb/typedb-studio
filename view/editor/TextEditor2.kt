@@ -56,7 +56,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
-import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -88,7 +87,6 @@ import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MA
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.NATIVE
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.REDO
 import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.UNDO
-import java.awt.event.MouseEvent
 import java.awt.event.MouseEvent.BUTTON1
 import java.util.stream.Collectors
 import kotlin.math.ceil
@@ -206,6 +204,7 @@ object TextEditor2 {
         private val coroutineScope: CoroutineScope,
         initDensity: Float,
     ) {
+        internal val focusReq: FocusRequester = FocusRequester()
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
         internal val textLayouts: SnapshotStateList<TextLayoutResult?> =
@@ -251,15 +250,13 @@ object TextEditor2 {
         }
 
         internal fun updateSelection(x: Int, y: Int) {
-            if (isSelecting) {
-                var newCursor = createCursor(x, y)
-                val horScrollOffset = toDP(horScroller.value, density).value
-                val lineNumberBorder = textAreaRect.left - horScrollOffset - AREA_PADDING_HORIZONTAL.value
-                if (x < lineNumberBorder && selection != null && newCursor >= selection!!.start) {
-                    newCursor = createCursor(x, y + lineHeight.value.toInt())
-                }
-                if (newCursor != cursor) updateCursor(newCursor, true)
+            var newCursor = createCursor(x, y)
+            val horScrollOffset = toDP(horScroller.value, density).value
+            val lineNumberBorder = textAreaRect.left - horScrollOffset - AREA_PADDING_HORIZONTAL.value
+            if (x < lineNumberBorder && selection != null && newCursor >= selection!!.start) {
+                newCursor = createCursor(x, y + lineHeight.value.toInt())
             }
+            if (newCursor != cursor) updateCursor(newCursor, true)
         }
 
         private fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
@@ -728,30 +725,15 @@ object TextEditor2 {
         val textFont = state.fontBase.copy(color = fontColor, lineHeight = fontHeight)
         val lineNumberFont = state.fontBase.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
-        val focusReq = FocusRequester()
-
-        fun onPress(event: MouseEvent) {
-            focusReq.requestFocus()
-            if (event.button == BUTTON1) state.isSelecting = true
-        }
-
-        fun onMove(event: MouseEvent) {
-            state.updateSelection(event.x, event.y)
-        }
-
-        fun onRelease(event: MouseEvent) {
-            if (event.button == BUTTON1) state.isSelecting = false
-        }
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused }
-                .focusRequester(focusReq).focusable()
+                .focusRequester(state.focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
-                .onPointerEvent(Press) { onPress(it.awtEvent) }
-                .onPointerEvent(Move) { onMove(it.awtEvent) }
-                .onPointerEvent(Release) { onRelease(it.awtEvent) }
+                .onPointerEvent(Move) { if (state.isSelecting) state.updateSelection(it.awtEvent.x, it.awtEvent.y) }
+                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
@@ -761,7 +743,7 @@ object TextEditor2 {
         }
 
         LaunchedEffect(state) {
-            focusReq.requestFocus()
+            state.focusReq.requestFocus()
             state.isFocused = true
         }
     }
@@ -902,7 +884,11 @@ object TextEditor2 {
     private suspend fun PointerInputScope.onPointerInput(state: State) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryClick = { state.updateCursor(it.x, it.y, it.isShiftDown) },
+            onSinglePrimaryClick = {
+                state.focusReq.requestFocus()
+                state.isSelecting = true
+                state.updateCursor(it.x, it.y, it.isShiftDown)
+            },
             onDoublePrimaryClick = { state.selectWord() },
             onTriplePrimaryClick = { state.selectLine() },
             onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y) }
