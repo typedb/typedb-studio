@@ -634,6 +634,7 @@ object TextEditor2 {
                     content.removeRange(start.row + 1, end.row + 1)
                     for (i in start.row + 1..end.row) textLayoutBin[i] = textLayouts[i]
                     textLayouts.removeRange(start.row + 1, end.row + 1)
+                    textLayoutVersions.removeRange(start.row + 1, end.row + 1)
                 }
                 updateCursor(deletion.selection().min, false)
             }
@@ -652,6 +653,7 @@ object TextEditor2 {
                     textLayouts.addAll(cursor.row + 1, MutableList(texts.size - 1) {
                         textLayoutBin.remove(cursor.row + 1 + it)
                     })
+                    textLayoutVersions.addAll(cursor.row + 1, MutableList(texts.size - 1) { 0 })
                 }
                 updateCursor(insertion.selection().max, false)
             }
@@ -794,7 +796,6 @@ object TextEditor2 {
                 .defaultMinSize(minWidth = state.width)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
-                .onSizeChanged { state.textLayoutVersions[index] = state.stateVersion }
         ) {
             val isRendered = state.textLayoutVersions[index] == state.stateVersion
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
@@ -804,7 +805,7 @@ object TextEditor2 {
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
-                onTextLayout = { state.textLayouts[index] = it }
+                onTextLayout = { state.textLayouts[index] = it; state.textLayoutVersions[index] = state.stateVersion }
             )
             if (state.cursor.row == index) {
                 if (isRendered) CursorIndicator(state, text, state.textLayouts[index], font, fontWidth)
