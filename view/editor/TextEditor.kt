@@ -35,13 +35,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -158,14 +155,10 @@ object TextEditor {
         internal val onClose: () -> Unit,
         initDensity: Float,
     ) {
-        internal val focusReq: FocusRequester = FocusRequester()
+        internal val focusReq = FocusRequester()
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
-        internal val textLayouts: SnapshotStateList<TextLayoutResult?> =
-            mutableStateListOf<TextLayoutResult?>().apply { addAll(List(file.content.size) { null }) }
-        internal val textLayoutVersions: SnapshotStateList<Int> =
-            mutableStateListOf<Int>().apply { addAll(List(file.content.size) { 0 }) }
-        private val textLayoutBin: SnapshotStateMap<Int, TextLayoutResult?> = mutableStateMapOf()
+        internal val textLayout = TextLayout(file.content.size)
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
         internal var horScroller = ScrollState(0)
@@ -185,7 +178,7 @@ object TextEditor {
             val relY = y - textAreaRect.top + verScroller.offset.value
             val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
             val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-            val col = textLayouts[row]?.getOffsetForPosition(offsetInLine) ?: 0
+            val col = textLayout.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
             return Cursor(row, col)
         }
 
@@ -259,7 +252,7 @@ object TextEditor {
                 else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
             }
 
-            val cursorRect = textLayouts[cursor.row]?.let {
+            val cursorRect = textLayout.get(cursor.row)?.let {
                 it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
             } ?: Rect(0f, 0f, 0f, 0f)
             val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
@@ -387,7 +380,7 @@ object TextEditor {
                 else getPrevWordOffset(textLayout, col - 1)
             }
 
-            val newCursor: Cursor = textLayouts[cursor.row]?.let {
+            val newCursor: Cursor = textLayout.get(cursor.row)?.let {
                 Cursor(cursor.row, getPrevWordOffset(it, cursor.col))
             } ?: Cursor(0, 0)
             updateCursor(newCursor, isSelecting)
@@ -401,7 +394,7 @@ object TextEditor {
                 else getNextWordOffset(textLayout, col + 1)
             }
 
-            val newCursor: Cursor = textLayouts[cursor.row]?.let {
+            val newCursor: Cursor = textLayout.get(cursor.row)?.let {
                 Cursor(cursor.row, getNextWordOffset(it, cursor.col))
             } ?: Cursor(0, 0)
             updateCursor(newCursor, isSelecting)
@@ -476,7 +469,7 @@ object TextEditor {
         }
 
         internal fun selectWord() {
-            val boundary = wordBoundary(textLayouts[cursor.row]!!, cursor.col)
+            val boundary = wordBoundary(textLayout.get(cursor.row)!!, cursor.col)
             updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
         }
 
@@ -614,12 +607,8 @@ object TextEditor {
                 val suffix = content[end.row].substring(end.col)
                 content[start.row] = prefix + suffix
                 if (end.row > start.row) {
-                    val removalStartInc = start.row + 1
-                    val removalEndExc = end.row + 1
-                    for (i in start.row + 1..end.row) textLayoutBin[i] = textLayouts[i]
-                    textLayouts.removeRange(removalStartInc, removalEndExc)
-                    textLayoutVersions.removeRange(removalStartInc, removalEndExc)
-                    content.removeRange(removalStartInc, removalEndExc)
+                    textLayout.removeRange(start.row + 1, end.row + 1)
+                    content.removeRange(start.row + 1, end.row + 1)
                 }
                 updateCursor(deletion.selection().min, false)
             }
@@ -634,13 +623,8 @@ object TextEditor {
 
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
-                    val additionIndex = cursor.row + 1
-                    val additionSize = texts.size - 1
-                    content.addAll(additionIndex, texts.subList(1, texts.size))
-                    textLayoutVersions.addAll(additionIndex, List(additionSize) { 0 })
-                    textLayouts.addAll(additionIndex, List(additionSize) {
-                        textLayoutBin.remove(additionIndex + it) ?: textLayouts.getOrNull(additionIndex + it)
-                    })
+                    content.addAll(cursor.row + 1, texts.subList(1, texts.size))
+                    textLayout.addNew(cursor.row + 1, texts.size - 1)
                 }
                 updateCursor(insertion.selection().max, false)
             }
@@ -764,19 +748,19 @@ object TextEditor {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
-            val isRendered = state.textLayoutVersions[index] == state.stateVersion
+            val isRendered = state.textLayout.isRendered(index, state.stateVersion)
             if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
-                if (isRendered) SelectionHighlighter(state, index, state.textLayouts[index], text.length, fontWidth)
-                else SelectionHighlighter(state, index, null, text.length, fontWidth)
+                if (!isRendered) SelectionHighlighter(state, index, null, text.length, fontWidth)
+                else SelectionHighlighter(state, index, state.textLayout.get(index), text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
-                onTextLayout = { state.textLayouts[index] = it; state.textLayoutVersions[index] = state.stateVersion }
+                onTextLayout = { state.textLayout.set(index, it, state.stateVersion) }
             )
             if (state.cursor.row == index) {
-                if (isRendered) CursorIndicator(state, text, state.textLayouts[index], font, fontWidth)
-                else CursorIndicator(state, text, null, font, fontWidth)
+                if (!isRendered) CursorIndicator(state, text, null, font, fontWidth)
+                else CursorIndicator(state, text, state.textLayout.get(index), font, fontWidth)
             }
         }
     }
