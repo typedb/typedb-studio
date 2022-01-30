@@ -93,6 +93,7 @@ internal class InputTarget(
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
     internal var selection: Selection? by mutableStateOf(null)
     internal var density: Float by mutableStateOf(initDensity)
+    private var mayDragSelect: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size
 
@@ -114,7 +115,16 @@ internal class InputTarget(
         return Cursor(row, col)
     }
 
-    internal fun updateSelection(x: Int, y: Int) {
+    internal fun startDragSelection() {
+        mayDragSelect = true
+    }
+
+    internal fun stopDragSelection() {
+        mayDragSelect = false
+    }
+
+    internal fun mayUpdateDragSelection(x: Int, y: Int) {
+        if (!mayDragSelect) return
         var newCursor = createCursor(x, y)
         val horScrollOffset = Theme.toDP(horScroller.value, density).value
         val lineNumberBorder = textAreaRect.left - horScrollOffset - horPadding.value

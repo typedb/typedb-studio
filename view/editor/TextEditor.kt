@@ -128,7 +128,6 @@ object TextEditor {
         )
         internal var isFocused by mutableStateOf(true)
         internal var width by mutableStateOf(0.dp)
-        internal var isSelecting: Boolean by mutableStateOf(false)
         internal var stateVersion by mutableStateOf(0)
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
@@ -390,10 +389,8 @@ object TextEditor {
                 .focusRequester(state.focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
-                .onPointerEvent(Move) {
-                    if (state.isSelecting) state.target.updateSelection(it.awtEvent.x, it.awtEvent.y)
-                }
-                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
+                .onPointerEvent(Move) { state.target.mayUpdateDragSelection(it.awtEvent.x, it.awtEvent.y) }
+                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
                 LineNumberArea(state, lineNumberFont, fontWidth)
@@ -547,7 +544,7 @@ object TextEditor {
             pointerInputScope = this,
             onSinglePrimaryClick = {
                 state.focusReq.requestFocus()
-                state.isSelecting = true
+                state.target.startDragSelection()
                 state.target.updateCursor(it.x, it.y, it.isShiftDown)
             },
             onDoublePrimaryClick = { state.target.selectWord() },
