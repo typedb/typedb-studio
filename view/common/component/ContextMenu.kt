@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -67,13 +68,15 @@ import mu.KotlinLogging
 object ContextMenu {
 
     private val ITEM_HEIGHT = 28.dp
-    private val ITEM_WIDTH = 160.dp
+    private val ITEM_WIDTH = 180.dp
+    private val ITEM_PADDING = 6.dp
     private val POPUP_SHADOW = 12.dp
     private val LOGGER = KotlinLogging.logger {}
 
     data class Item(
         val label: String,
         val icon: Icon.Code? = null,
+        val info: String? = null,
         val enabled: Boolean = true,
         val onClick: () -> Unit
     )
@@ -158,8 +161,7 @@ object ContextMenu {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Item(item: Item, state: State) {
-        var modifier = Modifier
-            .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
+        var modifier = Modifier.sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT) // TODO: dynamically compute max minWidth
         if (item.enabled) modifier = modifier
             .pointerHoverIcon(PointerIconDefaults.Hand)
             .clickable { state.isOpen = false; item.onClick() }
@@ -168,6 +170,11 @@ object ContextMenu {
                 item.icon?.let { Icon.Render(icon = it, enabled = item.enabled) }
             }
             Text(value = item.label, enabled = item.enabled)
+            item.info?.let {
+                Spacer(Modifier.weight(1f))
+                Text(value = it, enabled = false)
+                Spacer(Modifier.width(ITEM_PADDING))
+            }
         }
     }
 }

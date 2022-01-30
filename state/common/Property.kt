@@ -24,11 +24,22 @@ object Property {
 
     enum class OS(val displayName: String) {
         WINDOWS("Windows"),
-        MAC("MacOS"),
+        MACOS("MacOS"),
         LINUX("Linux");
 
         override fun toString(): String {
             return displayName
+        }
+
+        companion object {
+            val Current: OS by lazy {
+                val name = System.getProperty("os.name")
+                when {
+                    name.startsWith("Mac") -> MACOS
+                    name.startsWith("Win") -> WINDOWS
+                    else -> LINUX
+                }
+            }
         }
     }
 

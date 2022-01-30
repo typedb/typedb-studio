@@ -25,6 +25,7 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
+import com.vaticle.typedb.studio.state.common.Property.OS
 
 internal interface KeyMapping {
 
@@ -100,25 +101,6 @@ internal interface KeyMapping {
 
         CLOSE(false),
         CHARACTER_PALETTE(false),
-    }
-
-    private enum class OS {
-        LINUX,
-        WINDOWS,
-        MACOS,
-        UNKNOWN;
-
-        companion object {
-            val Current: OS by lazy {
-                val name = System.getProperty("os.name")
-                when {
-                    name?.startsWith("Linux") == true -> LINUX
-                    name?.startsWith("Win") == true -> WINDOWS
-                    name == "Mac OS X" -> MACOS
-                    else -> UNKNOWN
-                }
-            }
-        }
     }
 
     private object Keys {

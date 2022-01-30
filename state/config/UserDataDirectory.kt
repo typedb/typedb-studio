@@ -27,7 +27,7 @@ import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.OS.LINUX
-import com.vaticle.typedb.studio.state.common.Property.OS.MAC
+import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
 import com.vaticle.typedb.studio.state.common.Property.OS.WINDOWS
 import java.lang.System.getProperty
 import java.lang.System.getenv
@@ -47,24 +47,15 @@ object UserDataDirectory {
     private const val APP_LOG = "typedb-studio.log"
     private val LOGGER = KotlinLogging.logger {}
 
-    private val path: Path = when (currentOS()) {
+    private val path: Path = when (Property.OS.Current) {
         // Source: https://stackoverflow.com/a/16660314/2902555
         WINDOWS -> Path.of(getenv(WIN_ENV_APP_DATA), APP_DIR_TYPEDB_STUDIO)
-        MAC -> Path.of(getProperty(UNIX_PROP_USER_HOME), MAC_DIR_LIBRARY, MAC_DIR_APP_SUPPORT, APP_DIR_TYPEDB_STUDIO)
+        MACOS -> Path.of(getProperty(UNIX_PROP_USER_HOME), MAC_DIR_LIBRARY, MAC_DIR_APP_SUPPORT, APP_DIR_TYPEDB_STUDIO)
         LINUX -> Path.of(getProperty(UNIX_PROP_USER_HOME), APP_DIR_TYPEDB_STUDIO)
     }
 
     private var logFile = path.resolve(APP_LOG).toFile()
     private var isWritable = false
-
-    private fun currentOS(): Property.OS {
-        val osName = getProperty("os.name").lowercase()
-        return when {
-            "mac" in osName || "darwin" in osName -> MAC
-            "win" in osName -> WINDOWS
-            else -> LINUX
-        }
-    }
 
     fun initialise() {
         try {

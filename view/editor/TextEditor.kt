@@ -73,10 +73,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Icon.Code
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
@@ -842,15 +843,17 @@ object TextEditor {
     }
 
     private fun contextMenuFn(state: State): List<List<ContextMenu.Item>> { // TODO
+        val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
+        val hasClipboard = !state.clipboard.getText().isNullOrBlank()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.CUT, Icon.Code.CUT, state.selection != null) { state.cut() },
-                ContextMenu.Item(Label.COPY, Icon.Code.COPY, state.selection != null) { state.copy() },
-                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, !state.clipboard.getText().isNullOrBlank()) { state.paste() }
+                ContextMenu.Item(Label.CUT, Code.CUT, "$modKey + X", state.selection != null) { state.cut() },
+                ContextMenu.Item(Label.COPY, Code.COPY, "$modKey + C", state.selection != null) { state.copy() },
+                ContextMenu.Item(Label.PASTE, Code.PASTE, "$modKey + V", hasClipboard) { state.paste() }
             ),
             listOf(
-                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK) { state.onClose() },
+                ContextMenu.Item(Label.SAVE, Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
+                ContextMenu.Item(Label.CLOSE, Code.XMARK, "$modKey + W") { state.onClose() },
             )
         )
     }
