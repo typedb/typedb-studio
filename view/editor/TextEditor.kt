@@ -57,7 +57,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -94,19 +93,32 @@ object TextEditor {
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
 
+    @Composable
+    fun createState(file: File, coroutineScope: CoroutineScope, onClose: () -> Unit): State {
+        val font = Theme.typography.code1
+        val currentDensity = LocalDensity.current
+        val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
+        val clipboard = LocalClipboardManager.current
+        val rendering = TextRendering(file.content.size)
+        val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, coroutineScope, currentDensity.density)
+        val processor = TextProcessor(file, rendering, target, clipboard, onClose)
+        return State(file, font, rendering, target, processor)
+    }
+
     class State internal constructor(
-        internal val file: File, internal val fontBase: TextStyle, internal val lineHeight: Dp,
-        clipboard: ClipboardManager, coroutineScope: CoroutineScope, initDensity: Float, onClose: () -> Unit,
+        internal val file: File,
+        internal val fontBase: TextStyle,
+        internal val rendering: TextRendering,
+        internal val target: InputTarget,
+        internal val processor: TextProcessor,
     ) {
-        internal val rendering = TextRendering(file.content.size)
-        internal val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, coroutineScope, initDensity)
-        internal val processor = TextProcessor(file, rendering, target, clipboard, onClose)
         internal val contextMenu = ContextMenu.State()
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
         internal var isFocused by mutableStateOf(true)
         internal val focusReq = FocusRequester()
         internal var width by mutableStateOf(0.dp)
+        internal val lineHeight get() = target.lineHeight
         internal var density: Float
             get() = target.density
             set(value) {
@@ -129,15 +141,6 @@ object TextEditor {
             } else if (event.type != KeyEventType.KeyDown) false
             else KeyMapping.CURRENT.map(event)?.let { processor.process(it); true } ?: false
         }
-    }
-
-    @Composable
-    fun createState(file: File, coroutineScope: CoroutineScope, onClose: () -> Unit): State {
-        val font = Theme.typography.code1
-        val currentDensity = LocalDensity.current
-        val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        val clipboard = LocalClipboardManager.current
-        return State(file, font, lineHeight, clipboard, coroutineScope, currentDensity.density, onClose)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

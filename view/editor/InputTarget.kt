@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 
 internal class InputTarget(
     private val file: File,
-    private val lineHeight: Dp,
+    internal val lineHeight: Dp,
     private val horPadding: Dp,
     private val rendering: TextRendering,
     private val coroutineScope: CoroutineScope,
