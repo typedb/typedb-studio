@@ -46,8 +46,6 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -65,15 +63,12 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.status.StatusManager.Key.TEXT_POSITION
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon.Code
@@ -82,6 +77,8 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Command
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MAPPING
 import com.vaticle.typedb.studio.view.editor.TextChange.Type.NATIVE
@@ -96,7 +93,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
 object TextEditor {
@@ -110,49 +106,14 @@ object TextEditor {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
-    private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}') // TODO: is this complete?
-
-    internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
-        override fun compareTo(other: Cursor): Int {
-            return when (this.row) {
-                other.row -> this.col.compareTo(other.col)
-                else -> this.row.compareTo(other.row)
-            }
-        }
-
-        fun label(): String {
-            return "$row:$col"
-        }
-
-        override fun toString(): String {
-            return "Cursor (row: $row, col: $col)"
-        }
-    }
-
-    internal class Selection(val start: Cursor, endInit: Cursor) {
-        var end: Cursor by mutableStateOf(endInit)
-        val min: Cursor get() = if (start <= end) start else end
-        val max: Cursor get() = if (end >= start) end else start
-        val isForward: Boolean get() = start <= end
-
-        fun label(): String {
-            return "${start.label()} -- ${end.label()}"
-        }
-
-        override fun toString(): String {
-            val startStatus = if (start == min) "min" else "max"
-            val endStatus = if (end == max) "max" else "min"
-            return "Selection {start: $start [$startStatus], end: $end[$endStatus]}"
-        }
-    }
 
     class State internal constructor(
         internal val file: File,
         internal val fontBase: TextStyle,
         internal val lineHeight: Dp,
         internal val clipboard: ClipboardManager,
-        private val coroutineScope: CoroutineScope,
         internal val onClose: () -> Unit,
+        coroutineScope: CoroutineScope,
         initDensity: Float,
     ) {
         internal val focusReq = FocusRequester()
@@ -162,102 +123,28 @@ object TextEditor {
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
         internal var horScroller = ScrollState(0)
+        internal val target = InputTarget(
+            file, lineHeight, verScroller, horScroller, AREA_PADDING_HORIZONTAL, textLayout, coroutineScope, initDensity
+        )
         internal var isFocused by mutableStateOf(true)
         internal var width by mutableStateOf(0.dp)
-        internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
-        internal var selection: Selection? by mutableStateOf(null)
         internal var isSelecting: Boolean by mutableStateOf(false)
-        internal var density: Float by mutableStateOf(initDensity)
         internal var stateVersion by mutableStateOf(0)
-        private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
+        internal var density: Float
+            get() = target.density
+            set(value) {
+                target.density = value
+            }
 
-        private fun createCursor(x: Int, y: Int): Cursor {
-            val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
-            val relY = y - textAreaRect.top + verScroller.offset.value
-            val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
-            val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-            val col = textLayout.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
-            return Cursor(row, col)
-        }
-
-        internal fun updateTextAreaCoord(rawPosition: Rect) {
-            textAreaRect = Rect(
-                left = toDP(rawPosition.left, density).value + AREA_PADDING_HORIZONTAL.value,
-                top = toDP(rawPosition.top, density).value,
-                right = toDP(rawPosition.right, density).value - AREA_PADDING_HORIZONTAL.value,
-                bottom = toDP(rawPosition.bottom, density).value
-            )
+        internal fun updateStatus() {
+            target.updateStatus()
         }
 
         internal fun increaseWidth(newRawWidth: Int) {
             val newWidth = toDP(newRawWidth, density)
             if (newWidth > width) width = newWidth
-        }
-
-        internal fun updateSelection(x: Int, y: Int) {
-            var newCursor = createCursor(x, y)
-            val horScrollOffset = toDP(horScroller.value, density).value
-            val lineNumberBorder = textAreaRect.left - horScrollOffset - AREA_PADDING_HORIZONTAL.value
-            if (x < lineNumberBorder && selection != null && newCursor >= selection!!.start) {
-                newCursor = createCursor(x, y + lineHeight.value.toInt())
-            }
-            if (newCursor != cursor) updateCursor(newCursor, true)
-        }
-
-        private fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
-            selection = newSelection
-            if (selection != null) updateCursor(selection!!.end, true, mayScroll)
-            else updateStatus()
-        }
-
-        internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
-            val newCursor = createCursor(x, y)
-            if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
-                updateCursor(newCursor, false)
-            }
-        }
-
-        internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
-            updateCursor(createCursor(x, y), isSelecting, false)
-        }
-
-        private fun updateCursor(newCursor: Cursor, isSelecting: Boolean, mayScroll: Boolean = true) {
-            if (isSelecting) {
-                if (selection == null) selection = Selection(cursor, newCursor)
-                else selection!!.end = newCursor
-            } else selection = null
-            cursor = newCursor
-            if (mayScroll) mayScrollToCursor()
-            updateStatus()
-        }
-
-        internal fun updateStatus() {
-            GlobalState.status.publish(TEXT_POSITION, selection?.label() ?: cursor.label())
-        }
-
-        private fun mayScrollToCursor() {
-            fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
-                val left = textAreaRect.left.toInt() + padding
-                val right = textAreaRect.right.toInt() - padding
-                val top = textAreaRect.top.toInt() + padding
-                val bottom = textAreaRect.bottom.toInt() - padding
-                if (x < left) coroutineScope.launch {
-                    horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
-                } else if (x > right) coroutineScope.launch {
-                    horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
-                }
-                if (y < top) verScroller.updateOffset((y - top).dp)
-                else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
-            }
-
-            val cursorRect = textLayout.get(cursor.row)?.let {
-                it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
-            } ?: Rect(0f, 0f, 0f, 0f)
-            val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
-            val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
-            mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt())
         }
 
         internal fun processKeyEvent(event: KeyEvent): Boolean {
@@ -270,46 +157,46 @@ object TextEditor {
 
         private fun processCommand(command: Command) {
             when (command) {
-                Command.MOVE_CURSOR_LEFT_CHAR -> moveCursorPrevByChar() // because we only display left to right
-                Command.MOVE_CURSOR_RIGHT_CHAR -> moveCursorNextByChar() // because we only display left to right
-                Command.MOVE_CURSOR_LEFT_WORD -> moveCursorPrevByWord() // because we only display left to right
-                Command.MOVE_CURSOR_RIGHT_WORD -> moveCursorNexBytWord() // because we only display left to right
-                Command.MOVE_CURSOR_PREV_PARAGRAPH -> moveCursorPrevByParagraph()
-                Command.MOVE_CURSOR_NEXT_PARAGRAPH -> moveCursorNextByParagraph()
-                Command.MOVE_CURSOR_LEFT_LINE -> moveCursorToStartOfLine() // because we only display left to right
-                Command.MOVE_CURSOR_RIGHT_LINE -> moveCursorToEndOfLine() // because we only display left to right
-                Command.MOVE_CURSOR_START_LINE -> moveCursorToStartOfLine()
-                Command.MOVE_CURSOR_END_LINE -> moveCursorToEndOfLine()
-                Command.MOVE_CURSOR_UP_LINE -> moveCursorUpByLine()
-                Command.MOVE_CURSOR_DOWN_LINE -> moveCursorDownByLine()
-                Command.MOVE_CURSOR_UP_PAGE -> moveCursorUpByPage()
-                Command.MOVE_CURSOR_DOWN_PAGE -> moveCursorDownByPage()
-                Command.MOVE_CURSOR_HOME -> moveCursorToHome()
-                Command.MOVE_CURSOR_END -> moveCursorToEnd()
-                Command.SELECT_LEFT_CHAR -> moveCursorPrevByChar(true) // because we only display left to right
-                Command.SELECT_RIGHT_CHAR -> moveCursorNextByChar(true) // because we only display left to right
-                Command.SELECT_LEFT_WORD -> moveCursorPrevByWord(true) // because we only display left to right
-                Command.SELECT_RIGHT_WORD -> moveCursorNexBytWord(true) // because we only display left to right
-                Command.SELECT_PREV_PARAGRAPH -> moveCursorPrevByParagraph(true)
-                Command.SELECT_NEXT_PARAGRAPH -> moveCursorNextByParagraph(true)
-                Command.SELECT_LEFT_LINE -> moveCursorToStartOfLine(true) // because we only display left to right
-                Command.SELECT_RIGHT_LINE -> moveCursorToEndOfLine(true) // because we only display left to right
-                Command.SELECT_START_LINE -> moveCursorToStartOfLine(true)
-                Command.SELECT_END_LINE -> moveCursorToEndOfLine(true)
-                Command.SELECT_UP_LINE -> moveCursorUpByLine(true)
-                Command.SELECT_DOWN_LINE -> moveCursorDownByLine(true)
-                Command.SELECT_UP_PAGE -> moveCursorUpByPage(true)
-                Command.SELECT_DOWN_PAGE -> moveCursorDownByPage(true)
-                Command.SELECT_HOME -> moveCursorToHome(true)
-                Command.SELECT_END -> moveCursorToEnd(true)
-                Command.SELECT_ALL -> selectAll()
-                Command.SELECT_NONE -> selectNone()
-                Command.DELETE_PREV_CHAR -> deleteSelectionOr { moveCursorPrevByChar(true); deleteSelection() }
-                Command.DELETE_NEXT_CHAR -> deleteSelectionOr { moveCursorNextByChar(true); deleteSelection() }
-                Command.DELETE_PREV_WORD -> deleteSelectionOr { moveCursorPrevByWord(true); deleteSelection() }
-                Command.DELETE_NEXT_WORD -> deleteSelectionOr { moveCursorNexBytWord(true); deleteSelection() }
-                Command.DELETE_START_LINE -> deleteSelectionOr { moveCursorToStartOfLine(true); deleteSelection() }
-                Command.DELETE_END_LINE -> deleteSelectionOr { moveCursorToEndOfLine(true); deleteSelection() }
+                Command.MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
+                Command.MOVE_CURSOR_LEFT_WORD -> target.moveCursorPrevByWord() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_WORD -> target.moveCursorNexBytWord() // because we only display left to right
+                Command.MOVE_CURSOR_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph()
+                Command.MOVE_CURSOR_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph()
+                Command.MOVE_CURSOR_LEFT_LINE -> target.moveCursorToStartOfLine() // because we only display left to right
+                Command.MOVE_CURSOR_RIGHT_LINE -> target.moveCursorToEndOfLine() // because we only display left to right
+                Command.MOVE_CURSOR_START_LINE -> target.moveCursorToStartOfLine()
+                Command.MOVE_CURSOR_END_LINE -> target.moveCursorToEndOfLine()
+                Command.MOVE_CURSOR_UP_LINE -> target.moveCursorUpByLine()
+                Command.MOVE_CURSOR_DOWN_LINE -> target.moveCursorDownByLine()
+                Command.MOVE_CURSOR_UP_PAGE -> target.moveCursorUpByPage()
+                Command.MOVE_CURSOR_DOWN_PAGE -> target.moveCursorDownByPage()
+                Command.MOVE_CURSOR_HOME -> target.moveCursorToHome()
+                Command.MOVE_CURSOR_END -> target.moveCursorToEnd()
+                Command.SELECT_LEFT_CHAR -> target.moveCursorPrevByChar(true) // because we only display left to right
+                Command.SELECT_RIGHT_CHAR -> target.moveCursorNextByChar(true) // because we only display left to right
+                Command.SELECT_LEFT_WORD -> target.moveCursorPrevByWord(true) // because we only display left to right
+                Command.SELECT_RIGHT_WORD -> target.moveCursorNexBytWord(true) // because we only display left to right
+                Command.SELECT_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph(true)
+                Command.SELECT_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph(true)
+                Command.SELECT_LEFT_LINE -> target.moveCursorToStartOfLine(true) // because we only display left to right
+                Command.SELECT_RIGHT_LINE -> target.moveCursorToEndOfLine(true) // because we only display left to right
+                Command.SELECT_START_LINE -> target.moveCursorToStartOfLine(true)
+                Command.SELECT_END_LINE -> target.moveCursorToEndOfLine(true)
+                Command.SELECT_UP_LINE -> target.moveCursorUpByLine(true)
+                Command.SELECT_DOWN_LINE -> target.moveCursorDownByLine(true)
+                Command.SELECT_UP_PAGE -> target.moveCursorUpByPage(true)
+                Command.SELECT_DOWN_PAGE -> target.moveCursorDownByPage(true)
+                Command.SELECT_HOME -> target.moveCursorToHome(true)
+                Command.SELECT_END -> target.moveCursorToEnd(true)
+                Command.SELECT_ALL -> target.selectAll()
+                Command.SELECT_NONE -> target.selectNone()
+                Command.DELETE_PREV_CHAR -> deleteSelectionOr { target.moveCursorPrevByChar(true); deleteSelection() }
+                Command.DELETE_NEXT_CHAR -> deleteSelectionOr { target.moveCursorNextByChar(true); deleteSelection() }
+                Command.DELETE_PREV_WORD -> deleteSelectionOr { target.moveCursorPrevByWord(true); deleteSelection() }
+                Command.DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
+                Command.DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
+                Command.DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
                 Command.DELETE_TAB -> deleteTab()
                 Command.INSERT_TAB -> insertTab()
                 Command.INSERT_NEW_LINE -> insertNewLine()
@@ -326,179 +213,27 @@ object TextEditor {
             }
         }
 
-        private fun moveCursorPrevByChar(isSelecting: Boolean = false) {
-            if (!isSelecting && selection != null) updateCursor(selection!!.min, false)
-            else {
-                var newRow = cursor.row
-                var newCol = cursor.col - 1
-                if (newCol < 0) {
-                    newRow -= 1
-                    if (newRow < 0) {
-                        newRow = 0
-                        newCol = 0
-                    } else newCol = content[newRow].length
-                }
-                updateCursor(Cursor(newRow, newCol), isSelecting)
-            }
-        }
-
-        private fun moveCursorNextByChar(isSelecting: Boolean = false) {
-            if (!isSelecting && selection != null) updateCursor(selection!!.max, false)
-            else {
-                var newRow = cursor.row
-                var newCol = cursor.col + 1
-                if (newCol > content[newRow].length) {
-                    newRow += 1
-                    if (newRow >= content.size) {
-                        newRow = content.size - 1
-                        newCol = content[newRow].length
-                    } else newCol = 0
-                }
-                updateCursor(Cursor(newRow, newCol), isSelecting)
-            }
-        }
-
-        private fun wordBoundary(textLayout: TextLayoutResult, col: Int): TextRange {
-            // TODO: https://github.com/JetBrains/compose-jb/issues/1762
-            //       We can remove this function once the above issue is resolved
-            val colSafe = col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
-            val boundary = textLayout.getWordBoundary(colSafe)
-            val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
-            val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
-            val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
-            return TextRange(
-                if (newStart < 0) boundary.start else newStart + boundary.start + 1,
-                if (newEnd < 0) boundary.end else newEnd + boundary.start
-            )
-        }
-
-        private fun moveCursorPrevByWord(isSelecting: Boolean = false) {
-            fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
-                if (col < 0 || content[cursor.row].isEmpty()) return 0
-                val newCol = wordBoundary(textLayout, col).start
-                return if (newCol < col) newCol
-                else getPrevWordOffset(textLayout, col - 1)
-            }
-
-            val newCursor: Cursor = textLayout.get(cursor.row)?.let {
-                Cursor(cursor.row, getPrevWordOffset(it, cursor.col))
-            } ?: Cursor(0, 0)
-            updateCursor(newCursor, isSelecting)
-        }
-
-        private fun moveCursorNexBytWord(isSelecting: Boolean = false) {
-            fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
-                if (col >= content[cursor.row].length) return content[cursor.row].length
-                val newCol = wordBoundary(textLayout, col).end
-                return if (newCol > col) newCol
-                else getNextWordOffset(textLayout, col + 1)
-            }
-
-            val newCursor: Cursor = textLayout.get(cursor.row)?.let {
-                Cursor(cursor.row, getNextWordOffset(it, cursor.col))
-            } ?: Cursor(0, 0)
-            updateCursor(newCursor, isSelecting)
-        }
-
-        private fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
-            if (cursor.col > 0) moveCursorToStartOfLine(isSelecting) // because we don't wrap text
-            else updateCursor(Cursor((cursor.row - 1).coerceAtLeast(0), cursor.col), isSelecting)
-        }
-
-        private fun moveCursorNextByParagraph(isSelecting: Boolean = false) {
-            if (cursor.col < content[cursor.row].length) moveCursorToEndOfLine(isSelecting) // because we don't wrap text
-            else {
-                val newRow = (cursor.row + 1).coerceAtMost(content.size - 1)
-                val newCol = cursor.col.coerceAtMost(content[newRow].length)
-                updateCursor(Cursor(newRow, newCol), isSelecting)
-            }
-        }
-
-        private fun moveCursorToStartOfLine(isSelecting: Boolean = false) {
-            updateCursor(Cursor(cursor.row, 0), isSelecting)
-        }
-
-        private fun moveCursorToEndOfLine(isSelecting: Boolean = false) {
-            updateCursor(Cursor(cursor.row, content[cursor.row].length), isSelecting)
-        }
-
-        private fun moveCursorUpByLine(isSelecting: Boolean = false) {
-            var newRow = cursor.row - 1
-            var newCol = cursor.col
-            if (newRow < 0) {
-                newRow = 0
-                newCol = 0
-            } else newCol = newCol.coerceAtMost(content[newRow].length)
-            updateCursor(Cursor(newRow, newCol), isSelecting)
-        }
-
-        private fun moveCursorDownByLine(isSelecting: Boolean = false) {
-            var newRow = cursor.row + 1
-            var newCol = cursor.col
-            if (newRow >= content.size) {
-                newRow = content.size - 1
-                newCol = content[newRow].length
-            } else newCol = newCol.coerceAtMost(content[newRow].length)
-            updateCursor(Cursor(newRow, newCol), isSelecting)
-        }
-
-        private fun moveCursorUpByPage(isSelecting: Boolean = false) {
-            val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
-            val newRow = (cursor.row - fullyVisibleLines).coerceAtLeast(0)
-            val newCol = cursor.col.coerceAtMost(content[newRow].length)
-            updateCursor(Cursor(newRow, newCol), isSelecting)
-        }
-
-        private fun moveCursorDownByPage(isSelecting: Boolean = false) {
-            val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
-            val newRow = (cursor.row + fullyVisibleLines).coerceAtMost(content.size - 1)
-            val newCol = cursor.col.coerceAtMost(content[newRow].length)
-            updateCursor(Cursor(newRow, newCol), isSelecting)
-        }
-
-        private fun moveCursorToHome(isSelecting: Boolean = false) {
-            updateCursor(Cursor(0, 0), isSelecting)
-        }
-
-        private fun moveCursorToEnd(isSelecting: Boolean = false) {
-            updateCursor(Cursor(content.size - 1, content.last().length), isSelecting)
-        }
-
-        private fun selectAll() {
-            updateSelection(Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false)
-        }
-
-        internal fun selectWord() {
-            val boundary = wordBoundary(textLayout.get(cursor.row)!!, cursor.col)
-            updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
-        }
-
-        internal fun selectLine() {
-            updateSelection(Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length)))
-        }
-
-        private fun selectNone() {
-            updateSelection(null)
-        }
-
         private fun deletionOperation(): TextChange.Deletion {
-            return TextChange.Deletion(selection!!.min, selectedText(), selection)
+            return TextChange.Deletion(target.selection!!.min, target.selectedText(), target.selection)
         }
 
         private fun deleteSelectionOr(elseFn: () -> Unit) {
-            if (selection != null) deleteSelection()
+            if (target.selection != null) deleteSelection()
             else elseFn()
         }
 
         private fun deleteSelection() {
-            if (selection == null) return
+            if (target.selection == null) return
             apply(TextChange(deletionOperation()), NATIVE)
         }
 
         private fun deleteTab() {
-            val oldSelection = selection
-            updateSelection(selection?.let { expandSelection(it) } ?: expandSelection(Selection(cursor, cursor)))
-            val oldText = selectedText()
+            val oldSelection = target.selection
+            val oldCursor = target.cursor
+            val newSelection = oldSelection?.let { target.expandSelection(it) }
+                ?: target.expandSelection(oldCursor.toSelection())
+            target.updateSelection(newSelection)
+            val oldText = target.selectedText()
             val newText = indent(oldText, -TAB_SIZE)
             val oldTextLines = oldText.split("\n")
             val newTextLines = newText.split("\n")
@@ -507,37 +242,28 @@ object TextEditor {
             val newPosition: Either<Cursor, Selection> = oldSelection?.let {
                 val startCursorShift = if (it.isForward) firstLineShift else lastLineShift
                 val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
-                Either.second(shiftSelection(it, startCursorShift, endCursorShift))
-            } ?: Either.first(Cursor(cursor.row, (cursor.col + firstLineShift).coerceAtLeast(0)))
+                Either.second(target.shiftSelection(it, startCursorShift, endCursorShift))
+            } ?: Either.first(Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
             insertText(newText, newPosition)
         }
 
         private fun insertTab() {
+            val selection = target.selection
+            val cursor = target.cursor
             if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
-                val newSelection = shiftSelection(selection!!, TAB_SIZE, TAB_SIZE)
-                updateSelection(expandSelection(selection!!))
-                insertText(indent(selectedText(), TAB_SIZE), Either.second(newSelection))
+                val newSelection = target.shiftSelection(selection, TAB_SIZE, TAB_SIZE)
+                target.updateSelection(target.expandSelection(selection))
+                insertText(indent(target.selectedText(), TAB_SIZE), Either.second(newSelection))
             }
         }
 
         private fun insertNewLine() {
-            val line = content[cursor.row]
+            val line = content[target.cursor.row]
             val tabs = floor(prefixSpaces(line).toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 
-        private fun shiftSelection(selection: Selection, firstLine: Int, secondLine: Int) = Selection(
-            Cursor(selection.start.row, (selection.start.col + firstLine).coerceAtLeast(0)),
-            Cursor(selection.end.row, (selection.end.col + secondLine).coerceAtLeast(0))
-        )
-
-        private fun expandSelection(selection: Selection): Selection {
-            return Selection(
-                Cursor(selection.min.row, 0),
-                Cursor(selection.max.row, content[selection.max.row].length)
-            )
-        }
 
         private fun indent(string: String, spaces: Int): String {
             return string.split("\n").stream().map {
@@ -555,14 +281,14 @@ object TextEditor {
         private fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null) {
             assert(string.isNotEmpty())
             val operations = mutableListOf<TextChange.Operation>()
-            if (selection != null) operations.add(deletionOperation())
-            operations.add(TextChange.Insertion(selection?.min ?: cursor, string))
+            if (target.selection != null) operations.add(deletionOperation())
+            operations.add(TextChange.Insertion(target.selection?.min ?: target.cursor, string))
             apply(TextChange(operations), NATIVE, newPosition)
         }
 
         internal fun copy() {
-            if (selection == null) return
-            clipboard.setText(AnnotatedString(selectedText()))
+            if (target.selection == null) return
+            clipboard.setText(AnnotatedString(target.selectedText()))
         }
 
         internal fun paste() {
@@ -570,24 +296,9 @@ object TextEditor {
         }
 
         internal fun cut() {
-            if (selection == null) return
+            if (target.selection == null) return
             copy()
             deleteSelection()
-        }
-
-        private fun selectedText(): String {
-            if (selection == null) return ""
-            val start = selection!!.min
-            val end = selection!!.max
-            val builder = StringBuilder()
-            for (i in start.row..end.row) {
-                val line = content[i]
-                if (i == start.row && end.row > start.row) builder.append(line.substring(start.col))
-                else if (i == start.row) builder.append(line.substring(start.col, end.col))
-                else if (i == end.row) builder.append("\n").append(line.substring(0, end.col))
-                else builder.append("\n").append(line)
-            }
-            return builder.toString()
         }
 
         private fun undo() {
@@ -610,7 +321,7 @@ object TextEditor {
                     textLayout.removeRange(start.row + 1, end.row + 1)
                     content.removeRange(start.row + 1, end.row + 1)
                 }
-                updateCursor(deletion.selection().min, false)
+                target.updateCursor(deletion.selection().min, false)
             }
 
             fun applyInsertion(insertion: TextChange.Insertion) {
@@ -626,7 +337,7 @@ object TextEditor {
                     content.addAll(cursor.row + 1, texts.subList(1, texts.size))
                     textLayout.addNew(cursor.row + 1, texts.size - 1)
                 }
-                updateCursor(insertion.selection().max, false)
+                target.updateCursor(insertion.selection().max, false)
             }
 
             change.operations.forEach {
@@ -636,8 +347,8 @@ object TextEditor {
                 }
             }
             if (newPosition != null) when {
-                newPosition.isFirst -> updateCursor(newPosition.first(), false)
-                newPosition.isSecond -> updateSelection(newPosition.second())
+                newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
+                newPosition.isSecond -> target.updateSelection(newPosition.second())
             }
             stateVersion++
 
@@ -659,7 +370,7 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        return State(file, font, lineHeight, clipboard, coroutineScope, onClose, currentDensity.density)
+        return State(file, font, lineHeight, clipboard, onClose, coroutineScope, currentDensity.density)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -679,7 +390,9 @@ object TextEditor {
                 .focusRequester(state.focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
-                .onPointerEvent(Move) { if (state.isSelecting) state.updateSelection(it.awtEvent.x, it.awtEvent.y) }
+                .onPointerEvent(Move) {
+                    if (state.isSelecting) state.target.updateSelection(it.awtEvent.x, it.awtEvent.y)
+                }
                 .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.isSelecting = false }
                 .pointerInput(state) { onPointerInput(state) }
             ) {
@@ -705,8 +418,8 @@ object TextEditor {
 
     @Composable
     private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp) {
-        val isCursor = state.cursor.row == index
-        val isSelected = state.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
+        val isCursor = state.target.cursor.row == index
+        val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
         val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background
         Box(
             contentAlignment = Alignment.TopEnd,
@@ -728,7 +441,7 @@ object TextEditor {
         Box(modifier = Modifier.fillMaxSize()
             .background(Theme.colors.background2)
             .horizontalScroll(state.horScroller)
-            .onGloballyPositioned { state.updateTextAreaCoord(it.boundsInWindow()) }
+            .onGloballyPositioned { state.target.updateTextArea(it.boundsInWindow()) }
             .onSizeChanged { state.increaseWidth(it.width) }) {
             ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
             LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
@@ -737,8 +450,10 @@ object TextEditor {
 
     @Composable
     private fun TextLine(state: State, index: Int, text: String, font: TextStyle, fontWidth: Dp) {
+        val cursor = state.target.cursor
+        val selection = state.target.selection
         val bgColor = when {
-            state.cursor.row == index && state.selection == null -> Theme.colors.primary
+            cursor.row == index && selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
         }
         Box(
@@ -749,7 +464,7 @@ object TextEditor {
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
             val isRendered = state.textLayout.isRendered(index, state.stateVersion)
-            if (state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index) {
+            if (selection != null && selection.min.row <= index && selection.max.row >= index) {
                 if (!isRendered) SelectionHighlighter(state, index, null, text.length, fontWidth)
                 else SelectionHighlighter(state, index, state.textLayout.get(index), text.length, fontWidth)
             }
@@ -758,7 +473,7 @@ object TextEditor {
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
                 onTextLayout = { state.textLayout.set(index, it, state.stateVersion) }
             )
-            if (state.cursor.row == index) {
+            if (cursor.row == index) {
                 if (!isRendered) CursorIndicator(state, text, null, font, fontWidth)
                 else CursorIndicator(state, text, state.textLayout.get(index), font, fontWidth)
             }
@@ -769,21 +484,22 @@ object TextEditor {
     private fun SelectionHighlighter(
         state: State, index: Int, textLayout: TextLayoutResult?, length: Int, fontWidth: Dp
     ) {
-        assert(state.selection != null && state.selection!!.min.row <= index && state.selection!!.max.row >= index)
+        val selection = state.target.selection
+        assert(selection != null && selection.min.row <= index && selection.max.row >= index)
         val start = when {
-            state.selection!!.min.row < index -> 0
-            else -> state.selection!!.min.col
+            selection!!.min.row < index -> 0
+            else -> selection.min.col
         }
         val end = when {
-            state.selection!!.max.row > index -> state.content[index].length
-            else -> state.selection!!.max.col
+            selection.max.row > index -> state.content[index].length
+            else -> selection.max.col
         }
         var startPos = textLayout?.let { toDP(it.getCursorRect(start).left, state.density) } ?: (fontWidth * start)
         var endPos = textLayout?.let {
             toDP(it.getCursorRect(end.coerceAtMost(it.getLineEnd(0))).right, state.density)
         } ?: (fontWidth * end)
-        if (state.selection!!.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
-        if (state.selection!!.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
+        if (selection.min.row < index) startPos -= AREA_PADDING_HORIZONTAL
+        if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HORIZONTAL
         val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
     }
@@ -793,14 +509,15 @@ object TextEditor {
     private fun CursorIndicator(
         state: State, text: String, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp
     ) {
+        val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
         val offsetX = textLayout?.let {
-            toDP(it.getCursorRect(state.cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
-        } ?: (fontWidth * state.cursor.col)
+            toDP(it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
+        } ?: (fontWidth * cursor.col)
         val width = when {
-            state.cursor.col >= text.length -> fontWidth
+            cursor.col >= text.length -> fontWidth
             else -> textLayout?.let {
-                toDP(it.getBoundingBox(state.cursor.col).width, state.density)
+                toDP(it.getBoundingBox(cursor.col).width, state.density)
             } ?: fontWidth
         }
         if (visible || !state.isFocused) {
@@ -810,13 +527,13 @@ object TextEditor {
                     .background(fadeable(Theme.colors.secondary, !state.isFocused, DISABLED_CURSOR_OPACITY))
             ) {
                 Text(
-                    text.getOrNull(state.cursor.col)?.toString() ?: "",
+                    text.getOrNull(cursor.col)?.toString() ?: "",
                     Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font.copy(Theme.colors.background2)
                 )
             }
         }
-        if (state.isFocused) LaunchedEffect(state.cursor) {
+        if (state.isFocused) LaunchedEffect(cursor) {
             visible = true
             while (true) {
                 delay(BLINKING_FREQUENCY)
@@ -831,21 +548,22 @@ object TextEditor {
             onSinglePrimaryClick = {
                 state.focusReq.requestFocus()
                 state.isSelecting = true
-                state.updateCursor(it.x, it.y, it.isShiftDown)
+                state.target.updateCursor(it.x, it.y, it.isShiftDown)
             },
-            onDoublePrimaryClick = { state.selectWord() },
-            onTriplePrimaryClick = { state.selectLine() },
-            onSecondaryClick = { state.updateCursorIfOutOfSelection(it.x, it.y) }
+            onDoublePrimaryClick = { state.target.selectWord() },
+            onTriplePrimaryClick = { state.target.selectLine() },
+            onSecondaryClick = { state.target.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }
 
     private fun contextMenuFn(state: State): List<List<ContextMenu.Item>> { // TODO
+        val selection = state.target.selection
         val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
         val hasClipboard = !state.clipboard.getText().isNullOrBlank()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.CUT, Code.CUT, "$modKey + X", state.selection != null) { state.cut() },
-                ContextMenu.Item(Label.COPY, Code.COPY, "$modKey + C", state.selection != null) { state.copy() },
+                ContextMenu.Item(Label.CUT, Code.CUT, "$modKey + X", selection != null) { state.cut() },
+                ContextMenu.Item(Label.COPY, Code.COPY, "$modKey + C", selection != null) { state.copy() },
                 ContextMenu.Item(Label.PASTE, Code.PASTE, "$modKey + V", hasClipboard) { state.paste() }
             ),
             listOf(

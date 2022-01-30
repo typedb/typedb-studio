@@ -35,7 +35,7 @@ internal data class TextChange(val operations: List<Operation>) {
     }
 
     sealed class Operation(
-        val cursor: TextEditor.Cursor, val text: String, private var selection: TextEditor.Selection? = null
+        val cursor: InputTarget.Cursor, val text: String, private var selection: InputTarget.Selection? = null
     ) {
 
         init {
@@ -44,11 +44,11 @@ internal data class TextChange(val operations: List<Operation>) {
 
         abstract fun invert(): Operation
 
-        fun selection(): TextEditor.Selection {
+        fun selection(): InputTarget.Selection {
             return selection(true)
         }
 
-        private fun selection(cache: Boolean): TextEditor.Selection {
+        private fun selection(cache: Boolean): InputTarget.Selection {
             selection?.let { return it }
             assert(text.isNotEmpty())
             val texts = text.split("\n")
@@ -57,21 +57,21 @@ internal data class TextChange(val operations: List<Operation>) {
                 texts.size > 1 -> texts[texts.size - 1].length
                 else -> cursor.col + texts[0].length
             }
-            val newSelection = TextEditor.Selection(cursor, TextEditor.Cursor(endRow, endCol))
+            val newSelection = InputTarget.Selection(cursor, InputTarget.Cursor(endRow, endCol))
             if (cache) selection = newSelection
             return newSelection
         }
 
     }
 
-    class Insertion(cursor: TextEditor.Cursor, text: String) : Operation(cursor, text) {
+    class Insertion(cursor: InputTarget.Cursor, text: String) : Operation(cursor, text) {
         override fun invert(): Deletion {
             return Deletion(cursor, text)
         }
     }
 
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
-    class Deletion(cursor: TextEditor.Cursor, text: String, selection: TextEditor.Selection? = null) :
+    class Deletion(cursor: InputTarget.Cursor, text: String, selection: InputTarget.Selection? = null) :
         Operation(cursor, text, selection) {
         override fun invert(): Insertion {
             return Insertion(cursor, text)
