@@ -84,9 +84,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Command
 import com.vaticle.typedb.studio.view.editor.KeyMapping.Companion.CURRENT_KEY_MAPPING
-import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.NATIVE
-import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.REDO
-import com.vaticle.typedb.studio.view.editor.TextEditor2.Change.Type.UNDO
+import com.vaticle.typedb.studio.view.editor.TextEditor.Change.Type.NATIVE
+import com.vaticle.typedb.studio.view.editor.TextEditor.Change.Type.REDO
+import com.vaticle.typedb.studio.view.editor.TextEditor.Change.Type.UNDO
 import java.awt.event.MouseEvent.BUTTON1
 import java.util.stream.Collectors
 import kotlin.math.ceil
@@ -99,7 +99,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
-object TextEditor2 {
+object TextEditor {
 
     private const val TAB_SIZE = 4
     private const val UNDO_LIMIT = 1_000
