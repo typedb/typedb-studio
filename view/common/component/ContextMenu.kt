@@ -132,7 +132,7 @@ object ContextMenu {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Popup(state: State, itemsFn: () -> List<Item>) {
+    fun Popup(state: State, itemListsFn: () -> List<List<Item>>) {
         if (state.isOpen) {
             Popup(
                 focusable = true,
@@ -146,21 +146,28 @@ object ContextMenu {
                         .border(Form.BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
-                    itemsFn().forEach { item ->
-                        var modifier = Modifier
-                            .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
-                        if (item.enabled) modifier = modifier
-                            .pointerHoverIcon(PointerIconDefaults.Hand)
-                            .clickable { state.isOpen = false; item.onClick() }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
-                            Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
-                                item.icon?.let { Icon.Render(icon = it, enabled = item.enabled) }
-                            }
-                            Text(value = item.label, enabled = item.enabled)
-                        }
+                    itemListsFn().forEach { list ->
+                        list.forEach { item -> Item(item, state) }
+                        Separator.Horizontal()
                     }
                 }
             }
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun Item(item: Item, state: State) {
+        var modifier = Modifier
+            .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
+        if (item.enabled) modifier = modifier
+            .pointerHoverIcon(PointerIconDefaults.Hand)
+            .clickable { state.isOpen = false; item.onClick() }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+            Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
+                item.icon?.let { Icon.Render(icon = it, enabled = item.enabled) }
+            }
+            Text(value = item.label, enabled = item.enabled)
         }
     }
 }

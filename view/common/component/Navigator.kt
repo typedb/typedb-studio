@@ -374,7 +374,7 @@ object Navigator {
     fun <T : Navigable.Item<T>> Layout(
         navState: NavigatorState<T>,
         iconArgs: (ItemState<T>) -> IconArgs,
-        contextMenuFn: (ItemState<T>) -> List<ContextMenu.Item>
+        contextMenuFn: (ItemState<T>) -> List<List<ContextMenu.Item>>
     ) {
         val density = LocalDensity.current.density
         val contextMenuState = remember { ContextMenu.State() }

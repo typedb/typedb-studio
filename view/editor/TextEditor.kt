@@ -144,7 +144,7 @@ object TextEditor {
         internal val lineHeight: Dp,
         internal val clipboard: ClipboardManager,
         private val coroutineScope: CoroutineScope,
-        private val onClose: () -> Unit,
+        internal val onClose: () -> Unit,
         initDensity: Float,
     ) {
         internal val focusReq: FocusRequester = FocusRequester()
@@ -550,7 +550,7 @@ object TextEditor {
             apply(TextChange(operations), NATIVE, newPosition)
         }
 
-        private fun copy() {
+        internal fun copy() {
             if (selection == null) return
             clipboard.setText(AnnotatedString(selectedText()))
         }
@@ -559,7 +559,7 @@ object TextEditor {
             clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
         }
 
-        private fun cut() {
+        internal fun cut() {
             if (selection == null) return
             copy()
             deleteSelection()
@@ -841,9 +841,17 @@ object TextEditor {
         )
     }
 
-    private fun contextMenuFn(state: State): List<ContextMenu.Item> { // TODO
+    private fun contextMenuFn(state: State): List<List<ContextMenu.Item>> { // TODO
         return listOf(
-            ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, !state.clipboard.getText().isNullOrBlank()) { state.paste() }
+            listOf(
+                ContextMenu.Item(Label.CUT, Icon.Code.CUT, state.selection != null) { state.cut() },
+                ContextMenu.Item(Label.COPY, Icon.Code.COPY, state.selection != null) { state.copy() },
+                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, !state.clipboard.getText().isNullOrBlank()) { state.paste() }
+            ),
+            listOf(
+                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, false) { }, // TODO
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK) { state.onClose() },
+            )
         )
     }
 }

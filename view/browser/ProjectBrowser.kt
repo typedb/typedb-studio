@@ -109,7 +109,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
         return when (itemState.item) {
             is Directory -> directoryContextMenuItems(itemState)
             is File -> fileContextMenuItems(itemState)
@@ -117,20 +117,20 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
-        return listOf(
+    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+        return listOf(listOf(
             ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
             ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
             ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
-        )
+        ))
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<ContextMenu.Item> {
-        return listOf(
+    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+        return listOf(listOf(
             ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { GlobalState.page.open(itemState.item.asFile()) },
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
-        )
+        ))
     }
 }

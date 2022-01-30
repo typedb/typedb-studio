@@ -53,6 +53,8 @@ object Icon {
         CHEVRON_RIGHT(0xf054u),
         CHEVRONS_DOWN(0xf322u),
         CHEVRONS_UP(0xf325u),
+        COPY(0xf0c5u),
+        CUT(0xf0c4u),
         DATABASE(0xf1c0u),
         DELETE_RIGHT(0xe154u),
         DIAGRAM_PROJECT(0xf542u),
