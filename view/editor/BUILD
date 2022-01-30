@@ -25,10 +25,12 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//view/common:common",
         "//state/common:common",
         "//state/page:page",
         "//state/project:project",
+        "//state/status:status",
+        "//state:state",
+        "//view/common:common",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

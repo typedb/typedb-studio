@@ -24,30 +24,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.status.StatusManager
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object StatusBar {
 
-    private val HEIGHT = 20.dp
+    private val HEIGHT = 22.dp
     private val PADDING = 6.dp
 
     @Composable
     fun Layout() {
         val statusMgr = GlobalState.status
-        Row(Modifier.fillMaxWidth().height(HEIGHT)) {
-            if (statusMgr.loadingStatus.isNotEmpty()) Form.Text(value = statusMgr.loadingStatus)
+        val fontStyle = Theme.typography.body2
+        Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
+            if (statusMgr.loadingStatus.isNotEmpty()) Form.Text(value = statusMgr.loadingStatus, style = fontStyle)
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.width(PADDING))
-            statusMgr.prioritisedKeys.reversed().forEach {
-                val status = statusMgr.statuses[it.key]
+            StatusManager.Key.values().reversed().forEach {
+                val status = statusMgr.statuses[it]
                 if (!status.isNullOrEmpty()) {
                     Separator.Vertical()
                     Spacer(Modifier.width(PADDING))
-                    Form.Text(value = status)
+                    Form.Text(value = status, style = fontStyle)
                     Spacer(Modifier.width(PADDING))
                 }
             }

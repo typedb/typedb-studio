@@ -73,8 +73,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.status.StatusManager.Key.TEXT_POSITION
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon.Code
@@ -121,6 +123,10 @@ object TextEditor {
             }
         }
 
+        fun label(): String {
+            return "$row:$col"
+        }
+
         override fun toString(): String {
             return "Cursor (row: $row, col: $col)"
         }
@@ -131,6 +137,10 @@ object TextEditor {
         val min: Cursor get() = if (start <= end) start else end
         val max: Cursor get() = if (end >= start) end else start
         val isForward: Boolean get() = start <= end
+
+        fun label(): String {
+            return "${start.label()} to ${end.label()}"
+        }
 
         override fun toString(): String {
             val startStatus = if (start == min) "min" else "max"
@@ -205,7 +215,8 @@ object TextEditor {
 
         private fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
             selection = newSelection
-            selection?.let { updateCursor(it.end, true, mayScroll) }
+            if (selection != null) updateCursor(selection!!.end, true, mayScroll)
+            else updateStatus()
         }
 
         internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
@@ -226,6 +237,11 @@ object TextEditor {
             } else selection = null
             cursor = newCursor
             if (mayScroll) mayScrollToCursor()
+            updateStatus()
+        }
+
+        private fun updateStatus() {
+            GlobalState.status.publish(TEXT_POSITION, selection?.label() ?: cursor.label())
         }
 
         private fun mayScrollToCursor() {

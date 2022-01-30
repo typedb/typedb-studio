@@ -26,33 +26,24 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 
 class StatusManager {
 
-    data class PrioritisedKey(val key: String, val priority: Int) : Comparable<PrioritisedKey> {
-        override fun compareTo(other: PrioritisedKey): Int {
-            return this.priority.compareTo(other.priority)
-        }
+    /**
+     * The order of keys defined in this enum determine the order in which they
+     * get displayed on the status bar.
+     */
+    enum class Key {
+        TEXT_POSITION,
+        QUERY_RESPONSE_TIME,
     }
 
-    var prioritisedKeys: List<PrioritisedKey> by mutableStateOf(listOf())
-    val statuses: SnapshotStateMap<String, String> = mutableStateMapOf()
+    val statuses: SnapshotStateMap<Key, String> = mutableStateMapOf()
     var loadingStatus: String by mutableStateOf("")
 
-    fun register(key: String, priority: Int) {
-        deregister(key)
-        val newKeys = prioritisedKeys + PrioritisedKey(key, priority)
-        prioritisedKeys = newKeys.sortedBy { it.priority }
-    }
 
-    fun deregister(key: String) {
-        statuses.remove(key)
-        prioritisedKeys = prioritisedKeys.filter { it.key != key }
-    }
-
-    fun publish(key: String, status: String) {
-        assert(prioritisedKeys.any { it.key == key })
+    fun publish(key: Key, status: String) {
         statuses[key] = status
     }
 
-    fun clear(key: String) {
+    fun clear(key: Key) {
         statuses.remove(key)
     }
 
