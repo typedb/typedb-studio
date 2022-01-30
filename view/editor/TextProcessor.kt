@@ -81,8 +81,17 @@ import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.UNDO
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.Type
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 internal class TextProcessor(
     private val file: File,
@@ -92,15 +101,20 @@ internal class TextProcessor(
     internal val onClose: () -> Unit
 ) {
 
+    @OptIn(ExperimentalTime::class)
     companion object {
         private const val TAB_SIZE = 4
         private const val UNDO_LIMIT = 1_000
+        private val CHANGE_BATCH_DELAY = Duration.milliseconds(500)
     }
 
     internal val content: SnapshotStateList<String> get() = file.content
     internal var version by mutableStateOf(0)
     private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
     private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
+    private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
+    private var changeCount: AtomicInteger = AtomicInteger(0)
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     internal fun process(command: KeyMapping.Command) {
         when (command) {
@@ -200,7 +214,7 @@ internal class TextProcessor(
 
     private fun deleteSelection() {
         if (target.selection == null) return
-        apply(TextChange(deletionOperation()), Type.NATIVE)
+        apply(TextChange(deletionOperation()), Type.ORIGINAL)
     }
 
     private fun deleteTab() {
@@ -245,10 +259,11 @@ internal class TextProcessor(
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
         operations.add(Insertion(target.selection?.min ?: target.cursor, string))
-        apply(TextChange(operations), Type.NATIVE, newPosition)
+        apply(TextChange(operations), Type.ORIGINAL, newPosition)
     }
 
     private fun undo() {
+        drainAndBatchOriginalChanges()
         if (undoStack.isNotEmpty()) apply(undoStack.removeLast(), Type.UNDO)
     }
 
@@ -304,14 +319,32 @@ internal class TextProcessor(
     }
 
     private fun recordChange(change: TextChange, type: Type) {
-        when (type) { // TODO: make this async and batch the changes
-            Type.NATIVE -> {
-                redoStack.clear()
-                undoStack.addLast(change.invert())
-                while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
-            }
+        when (type) {
+            Type.ORIGINAL -> queueOriginalChange(change)
             Type.UNDO -> redoStack.addLast(change.invert())
             Type.REDO -> undoStack.addLast(change.invert())
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun queueOriginalChange(change: TextChange) {
+        redoStack.clear()
+        changeQueue.put(change)
+        changeCount.incrementAndGet()
+        coroutineScope.launch {
+            delay(CHANGE_BATCH_DELAY)
+            if (changeCount.decrementAndGet() <= 0) drainAndBatchOriginalChanges()
+            if (changeCount.get() < 0) changeCount.set(0)
+        }
+    }
+
+    @Synchronized
+    private fun drainAndBatchOriginalChanges() {
+        if (changeQueue.isNotEmpty()) {
+            val changes = mutableListOf<TextChange>()
+            changeQueue.drainTo(changes)
+            undoStack.addLast(TextChange.merge(changes).invert())
+            while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
         }
     }
 }

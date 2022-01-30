@@ -94,13 +94,13 @@ object TextEditor {
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
 
     @Composable
-    fun createState(file: File, coroutineScope: CoroutineScope, onClose: () -> Unit): State {
+    fun createState(file: File, onClose: () -> Unit): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
         val rendering = TextRendering(file.content.size)
-        val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, coroutineScope, currentDensity.density)
+        val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor(file, rendering, target, clipboard, onClose)
         return State(file, font, rendering, target, processor)
     }

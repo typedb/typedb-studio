@@ -18,11 +18,13 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import java.util.stream.Collectors
+
 internal data class TextChange(val operations: List<Operation>) {
 
     constructor(vararg operations: Operation) : this(operations.asList())
 
-    enum class Type { NATIVE, UNDO, REDO }
+    enum class Type { ORIGINAL, UNDO, REDO }
 
     companion object {
         fun merge(changes: List<TextChange>): TextChange {
@@ -32,6 +34,10 @@ internal data class TextChange(val operations: List<Operation>) {
 
     fun invert(): TextChange {
         return TextChange(operations.reversed().map { it.invert() })
+    }
+
+    override fun toString(): String {
+        return "TextChange {\n" + operations.stream().map { it.toString() }.collect(Collectors.joining(",\n")) + "\n}"
     }
 
     sealed class Operation(
@@ -68,6 +74,10 @@ internal data class TextChange(val operations: List<Operation>) {
         override fun invert(): Deletion {
             return Deletion(cursor, text)
         }
+
+        override fun toString(): String {
+            return "Insertion { cursor: ${cursor.label()}, text: $text }"
+        }
     }
 
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
@@ -75,6 +85,10 @@ internal data class TextChange(val operations: List<Operation>) {
         Operation(cursor, text, selection) {
         override fun invert(): Insertion {
             return Insertion(cursor, text)
+        }
+
+        override fun toString(): String {
+            return "Deletion { selection: ${selection().label()} }"
         }
     }
 }

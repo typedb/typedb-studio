@@ -34,6 +34,7 @@ import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.status.StatusManager
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -43,7 +44,6 @@ internal class InputTarget(
     internal val lineHeight: Dp,
     private val horPadding: Dp,
     private val rendering: TextRendering,
-    private val coroutineScope: CoroutineScope,
     initDensity: Float
 ) {
 
@@ -96,6 +96,7 @@ internal class InputTarget(
     private var mayDragSelect: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun updateTextArea(rawRectangle: Rect) {
         textAreaRect = Rect(
