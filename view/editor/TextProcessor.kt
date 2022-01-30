@@ -26,6 +26,61 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.CHARACTER_PALETTE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.CLOSE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.COPY
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.CUT
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_END_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_NEXT_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_NEXT_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_PREV_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_PREV_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_START_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.DELETE_TAB
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.INSERT_NEW_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.INSERT_TAB
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_DOWN_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_DOWN_PAGE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_END
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_END_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_HOME
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_LEFT_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_LEFT_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_LEFT_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_NEXT_PARAGRAPH
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_PREV_PARAGRAPH
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_RIGHT_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_RIGHT_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_RIGHT_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_START_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_UP_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.MOVE_CURSOR_UP_PAGE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.PASTE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.REDO
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_ALL
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_DOWN_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_DOWN_PAGE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_END
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_END_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_HOME
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_LEFT_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_LEFT_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_LEFT_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_NEXT_PARAGRAPH
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_NONE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_PREV_PARAGRAPH
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_RIGHT_CHAR
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_RIGHT_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_RIGHT_WORD
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_START_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_UP_LINE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.SELECT_UP_PAGE
+import com.vaticle.typedb.studio.view.editor.KeyMapping.Command.UNDO
+import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
+import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
+import com.vaticle.typedb.studio.view.editor.TextChange.Type
 import java.util.stream.Collectors
 import kotlin.math.floor
 
@@ -49,64 +104,93 @@ internal class TextProcessor(
 
     internal fun process(command: KeyMapping.Command) {
         when (command) {
-            KeyMapping.Command.MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_LEFT_WORD -> target.moveCursorPrevByWord() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_RIGHT_WORD -> target.moveCursorNexBytWord() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph()
-            KeyMapping.Command.MOVE_CURSOR_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph()
-            KeyMapping.Command.MOVE_CURSOR_LEFT_LINE -> target.moveCursorToStartOfLine() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_RIGHT_LINE -> target.moveCursorToEndOfLine() // because we only display left to right
-            KeyMapping.Command.MOVE_CURSOR_START_LINE -> target.moveCursorToStartOfLine()
-            KeyMapping.Command.MOVE_CURSOR_END_LINE -> target.moveCursorToEndOfLine()
-            KeyMapping.Command.MOVE_CURSOR_UP_LINE -> target.moveCursorUpByLine()
-            KeyMapping.Command.MOVE_CURSOR_DOWN_LINE -> target.moveCursorDownByLine()
-            KeyMapping.Command.MOVE_CURSOR_UP_PAGE -> target.moveCursorUpByPage()
-            KeyMapping.Command.MOVE_CURSOR_DOWN_PAGE -> target.moveCursorDownByPage()
-            KeyMapping.Command.MOVE_CURSOR_HOME -> target.moveCursorToHome()
-            KeyMapping.Command.MOVE_CURSOR_END -> target.moveCursorToEnd()
-            KeyMapping.Command.SELECT_LEFT_CHAR -> target.moveCursorPrevByChar(true) // because we only display left to right
-            KeyMapping.Command.SELECT_RIGHT_CHAR -> target.moveCursorNextByChar(true) // because we only display left to right
-            KeyMapping.Command.SELECT_LEFT_WORD -> target.moveCursorPrevByWord(true) // because we only display left to right
-            KeyMapping.Command.SELECT_RIGHT_WORD -> target.moveCursorNexBytWord(true) // because we only display left to right
-            KeyMapping.Command.SELECT_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph(true)
-            KeyMapping.Command.SELECT_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph(true)
-            KeyMapping.Command.SELECT_LEFT_LINE -> target.moveCursorToStartOfLine(true) // because we only display left to right
-            KeyMapping.Command.SELECT_RIGHT_LINE -> target.moveCursorToEndOfLine(true) // because we only display left to right
-            KeyMapping.Command.SELECT_START_LINE -> target.moveCursorToStartOfLine(true)
-            KeyMapping.Command.SELECT_END_LINE -> target.moveCursorToEndOfLine(true)
-            KeyMapping.Command.SELECT_UP_LINE -> target.moveCursorUpByLine(true)
-            KeyMapping.Command.SELECT_DOWN_LINE -> target.moveCursorDownByLine(true)
-            KeyMapping.Command.SELECT_UP_PAGE -> target.moveCursorUpByPage(true)
-            KeyMapping.Command.SELECT_DOWN_PAGE -> target.moveCursorDownByPage(true)
-            KeyMapping.Command.SELECT_HOME -> target.moveCursorToHome(true)
-            KeyMapping.Command.SELECT_END -> target.moveCursorToEnd(true)
-            KeyMapping.Command.SELECT_ALL -> target.selectAll()
-            KeyMapping.Command.SELECT_NONE -> target.selectNone()
-            KeyMapping.Command.DELETE_PREV_CHAR -> deleteSelectionOr { target.moveCursorPrevByChar(true); deleteSelection() }
-            KeyMapping.Command.DELETE_NEXT_CHAR -> deleteSelectionOr { target.moveCursorNextByChar(true); deleteSelection() }
-            KeyMapping.Command.DELETE_PREV_WORD -> deleteSelectionOr { target.moveCursorPrevByWord(true); deleteSelection() }
-            KeyMapping.Command.DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
-            KeyMapping.Command.DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
-            KeyMapping.Command.DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
-            KeyMapping.Command.DELETE_TAB -> deleteTab()
-            KeyMapping.Command.INSERT_TAB -> insertTab()
-            KeyMapping.Command.INSERT_NEW_LINE -> insertNewLine()
-            KeyMapping.Command.COPY -> copy()
-            KeyMapping.Command.PASTE -> paste()
-            KeyMapping.Command.CUT -> cut()
-            KeyMapping.Command.UNDO -> undo()
-            KeyMapping.Command.REDO -> redo()
-            KeyMapping.Command.CLOSE -> onClose()
-            KeyMapping.Command.CHARACTER_PALETTE -> {
+            MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
+            MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
+            MOVE_CURSOR_LEFT_WORD -> target.moveCursorPrevByWord() // because we only display left to right
+            MOVE_CURSOR_RIGHT_WORD -> target.moveCursorNexBytWord() // because we only display left to right
+            MOVE_CURSOR_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph()
+            MOVE_CURSOR_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph()
+            MOVE_CURSOR_LEFT_LINE -> target.moveCursorToStartOfLine() // because we only display left to right
+            MOVE_CURSOR_RIGHT_LINE -> target.moveCursorToEndOfLine() // because we only display left to right
+            MOVE_CURSOR_START_LINE -> target.moveCursorToStartOfLine()
+            MOVE_CURSOR_END_LINE -> target.moveCursorToEndOfLine()
+            MOVE_CURSOR_UP_LINE -> target.moveCursorUpByLine()
+            MOVE_CURSOR_DOWN_LINE -> target.moveCursorDownByLine()
+            MOVE_CURSOR_UP_PAGE -> target.moveCursorUpByPage()
+            MOVE_CURSOR_DOWN_PAGE -> target.moveCursorDownByPage()
+            MOVE_CURSOR_HOME -> target.moveCursorToHome()
+            MOVE_CURSOR_END -> target.moveCursorToEnd()
+            SELECT_LEFT_CHAR -> target.moveCursorPrevByChar(true) // because we only display left to right
+            SELECT_RIGHT_CHAR -> target.moveCursorNextByChar(true) // because we only display left to right
+            SELECT_LEFT_WORD -> target.moveCursorPrevByWord(true) // because we only display left to right
+            SELECT_RIGHT_WORD -> target.moveCursorNexBytWord(true) // because we only display left to right
+            SELECT_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph(true)
+            SELECT_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph(true)
+            SELECT_LEFT_LINE -> target.moveCursorToStartOfLine(true) // because we only display left to right
+            SELECT_RIGHT_LINE -> target.moveCursorToEndOfLine(true) // because we only display left to right
+            SELECT_START_LINE -> target.moveCursorToStartOfLine(true)
+            SELECT_END_LINE -> target.moveCursorToEndOfLine(true)
+            SELECT_UP_LINE -> target.moveCursorUpByLine(true)
+            SELECT_DOWN_LINE -> target.moveCursorDownByLine(true)
+            SELECT_UP_PAGE -> target.moveCursorUpByPage(true)
+            SELECT_DOWN_PAGE -> target.moveCursorDownByPage(true)
+            SELECT_HOME -> target.moveCursorToHome(true)
+            SELECT_END -> target.moveCursorToEnd(true)
+            SELECT_ALL -> target.selectAll()
+            SELECT_NONE -> target.selectNone()
+            DELETE_PREV_CHAR -> deleteSelectionOr { target.moveCursorPrevByChar(true); deleteSelection() }
+            DELETE_NEXT_CHAR -> deleteSelectionOr { target.moveCursorNextByChar(true); deleteSelection() }
+            DELETE_PREV_WORD -> deleteSelectionOr { target.moveCursorPrevByWord(true); deleteSelection() }
+            DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
+            DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
+            DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
+            DELETE_TAB -> deleteTab()
+            INSERT_TAB -> insertTab()
+            INSERT_NEW_LINE -> insertNewLine()
+            CUT -> cut()
+            COPY -> copy()
+            PASTE -> paste()
+            UNDO -> undo()
+            REDO -> redo()
+            CLOSE -> onClose()
+            CHARACTER_PALETTE -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
             }
         }
     }
 
-    private fun deletionOperation(): TextChange.Deletion {
-        return TextChange.Deletion(target.selection!!.min, target.selectedText(), target.selection)
+    internal fun cut() {
+        if (target.selection == null) return
+        copy()
+        deleteSelection()
+    }
+
+    internal fun copy() {
+        if (target.selection == null) return
+        clipboard.setText(AnnotatedString(target.selectedText()))
+    }
+
+    internal fun paste() {
+        clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
+    }
+
+    private fun indent(string: String, spaces: Int): String {
+        return string.split("\n").stream().map {
+            if (spaces > 0) " ".repeat(spaces) + it
+            else if (spaces < 0) it.removePrefix(" ".repeat((-spaces).coerceAtMost(prefixSpaces(it))))
+            else it
+        }.collect(Collectors.joining("\n"))
+    }
+
+    private fun prefixSpaces(line: String): Int {
+        for (it in line.indices) if (line[it] != ' ') return it
+        return line.length
+    }
+
+    private fun deletionOperation(): Deletion {
+        assert(target.selection != null)
+        return Deletion(target.selection!!.min, target.selectedText(), target.selection)
     }
 
     private fun deleteSelectionOr(elseFn: () -> Unit) {
@@ -116,7 +200,7 @@ internal class TextProcessor(
 
     private fun deleteSelection() {
         if (target.selection == null) return
-        apply(TextChange(deletionOperation()), TextChange.Type.NATIVE)
+        apply(TextChange(deletionOperation()), Type.NATIVE)
     }
 
     private fun deleteTab() {
@@ -131,11 +215,11 @@ internal class TextProcessor(
         val newTextLines = newText.split("\n")
         val firstLineShift = newTextLines.first().length - oldTextLines.first().length
         val lastLineShift = newTextLines.last().length - oldTextLines.last().length
-        val newPosition: Either<InputTarget.Cursor, InputTarget.Selection> = oldSelection?.let {
+        val newPosition: Either<Cursor, Selection> = oldSelection?.let {
             val startCursorShift = if (it.isForward) firstLineShift else lastLineShift
             val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
             Either.second(target.shiftSelection(it, startCursorShift, endCursorShift))
-        } ?: Either.first(InputTarget.Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
+        } ?: Either.first(Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
         insertText(newText, newPosition)
     }
 
@@ -156,90 +240,27 @@ internal class TextProcessor(
         insertText("\n" + " ".repeat(TAB_SIZE * tabs))
     }
 
-
-    private fun indent(string: String, spaces: Int): String {
-        return string.split("\n").stream().map {
-            if (spaces > 0) " ".repeat(spaces) + it
-            else if (spaces < 0) it.removePrefix(" ".repeat((-spaces).coerceAtMost(prefixSpaces(it))))
-            else it
-        }.collect(Collectors.joining("\n"))
-    }
-
-    private fun prefixSpaces(line: String): Int {
-        for (it in line.indices) if (line[it] != ' ') return it
-        return line.length
-    }
-
-    internal fun insertText(string: String, newPosition: Either<InputTarget.Cursor, InputTarget.Selection>? = null) {
+    internal fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null) {
         assert(string.isNotEmpty())
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
-        operations.add(TextChange.Insertion(target.selection?.min ?: target.cursor, string))
-        apply(TextChange(operations), TextChange.Type.NATIVE, newPosition)
-    }
-
-    internal fun copy() {
-        if (target.selection == null) return
-        clipboard.setText(AnnotatedString(target.selectedText()))
-    }
-
-    internal fun paste() {
-        clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
-    }
-
-    internal fun cut() {
-        if (target.selection == null) return
-        copy()
-        deleteSelection()
+        operations.add(Insertion(target.selection?.min ?: target.cursor, string))
+        apply(TextChange(operations), Type.NATIVE, newPosition)
     }
 
     private fun undo() {
-        if (undoStack.isNotEmpty()) apply(undoStack.removeLast(), TextChange.Type.UNDO)
+        if (undoStack.isNotEmpty()) apply(undoStack.removeLast(), Type.UNDO)
     }
 
     private fun redo() {
-        if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), TextChange.Type.REDO)
+        if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), Type.REDO)
     }
 
-    private fun apply(
-        change: TextChange,
-        type: TextChange.Type,
-        newPosition: Either<InputTarget.Cursor, InputTarget.Selection>? = null
-    ) {
-
-        fun applyDeletion(deletion: TextChange.Deletion) {
-            val start = deletion.selection().min
-            val end = deletion.selection().max
-            val prefix = content[start.row].substring(0, start.col)
-            val suffix = content[end.row].substring(end.col)
-            content[start.row] = prefix + suffix
-            if (end.row > start.row) {
-                rendering.removeRange(start.row + 1, end.row + 1)
-                content.removeRange(start.row + 1, end.row + 1)
-            }
-            target.updateCursor(deletion.selection().min, false)
-        }
-
-        fun applyInsertion(insertion: TextChange.Insertion) {
-            val cursor = insertion.cursor
-            val prefix = content[cursor.row].substring(0, cursor.col)
-            val suffix = content[cursor.row].substring(cursor.col)
-            val texts = insertion.text.split("\n").toMutableList()
-            texts[0] = prefix + texts[0]
-            texts[texts.size - 1] = texts[texts.size - 1] + suffix
-
-            content[cursor.row] = texts[0]
-            if (texts.size > 1) {
-                content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                rendering.addNew(cursor.row + 1, texts.size - 1)
-            }
-            target.updateCursor(insertion.selection().max, false)
-        }
-
+    private fun apply(change: TextChange, type: Type, newPosition: Either<Cursor, Selection>? = null) {
         change.operations.forEach {
             when (it) {
-                is TextChange.Deletion -> applyDeletion(it)
-                is TextChange.Insertion -> applyInsertion(it)
+                is Deletion -> applyDeletion(it)
+                is Insertion -> applyInsertion(it, type)
             }
         }
         if (newPosition != null) when {
@@ -247,15 +268,50 @@ internal class TextProcessor(
             newPosition.isSecond -> target.updateSelection(newPosition.second())
         }
         version++
+        recordChange(change, type)
+    }
 
+    private fun applyDeletion(deletion: Deletion) {
+        val start = deletion.selection().min
+        val end = deletion.selection().max
+        val prefix = content[start.row].substring(0, start.col)
+        val suffix = content[end.row].substring(end.col)
+        content[start.row] = prefix + suffix
+        if (end.row > start.row) {
+            rendering.removeRange(start.row + 1, end.row + 1)
+            content.removeRange(start.row + 1, end.row + 1)
+        }
+        target.updateCursor(deletion.selection().min, false)
+    }
+
+    private fun applyInsertion(insertion: Insertion, type: Type) {
+        val cursor = insertion.cursor
+        val prefix = content[cursor.row].substring(0, cursor.col)
+        val suffix = content[cursor.row].substring(cursor.col)
+        val texts = insertion.text.split("\n").toMutableList()
+        texts[0] = prefix + texts[0]
+        texts[texts.size - 1] = texts[texts.size - 1] + suffix
+
+        content[cursor.row] = texts[0]
+        if (texts.size > 1) {
+            content.addAll(cursor.row + 1, texts.subList(1, texts.size))
+            rendering.addNew(cursor.row + 1, texts.size - 1)
+        }
+        when (type) {
+            Type.UNDO, Type.REDO -> target.updateSelection(insertion.selection())
+            else -> target.updateCursor(insertion.selection().max, false)
+        }
+    }
+
+    private fun recordChange(change: TextChange, type: Type) {
         when (type) { // TODO: make this async and batch the changes
-            TextChange.Type.NATIVE -> {
+            Type.NATIVE -> {
                 redoStack.clear()
                 undoStack.addLast(change.invert())
                 while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
             }
-            TextChange.Type.UNDO -> redoStack.addLast(change.invert())
-            TextChange.Type.REDO -> undoStack.addLast(change.invert())
+            Type.UNDO -> redoStack.addLast(change.invert())
+            Type.REDO -> undoStack.addLast(change.invert())
         }
     }
 }

@@ -107,7 +107,7 @@ object TextEditor {
 
     class State internal constructor(
         internal val file: File,
-        internal val fontBase: TextStyle,
+        internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
@@ -150,8 +150,8 @@ object TextEditor {
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
-        val textFont = state.fontBase.copy(color = fontColor, lineHeight = fontHeight)
-        val lineNumberFont = state.fontBase.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
+        val textFont = state.font.copy(color = fontColor, lineHeight = fontHeight)
+        val lineNumberFont = state.font.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
 
         Box { // We render a number to find out the default width of a digit for the given font
