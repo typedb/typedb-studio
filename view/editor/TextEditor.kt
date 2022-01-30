@@ -462,8 +462,8 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.stateVersion)
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                if (!isRendered) SelectionHighlighter(state, index, null, text.length, fontWidth)
-                else SelectionHighlighter(state, index, state.rendering.get(index), text.length, fontWidth)
+                if (!isRendered) Selection(state, index, null, text.length, fontWidth)
+                else Selection(state, index, state.rendering.get(index), text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
@@ -471,16 +471,14 @@ object TextEditor {
                 onTextLayout = { state.rendering.set(index, it, state.stateVersion) }
             )
             if (cursor.row == index) {
-                if (!isRendered) CursorIndicator(state, text, null, font, fontWidth)
-                else CursorIndicator(state, text, state.rendering.get(index), font, fontWidth)
+                if (!isRendered) Cursor(state, text, null, font, fontWidth)
+                else Cursor(state, text, state.rendering.get(index), font, fontWidth)
             }
         }
     }
 
     @Composable
-    private fun SelectionHighlighter(
-        state: State, index: Int, textLayout: TextLayoutResult?, length: Int, fontWidth: Dp
-    ) {
+    private fun Selection(state: State, index: Int, textLayout: TextLayoutResult?, length: Int, fontWidth: Dp) {
         val selection = state.target.selection
         assert(selection != null && selection.min.row <= index && selection.max.row >= index)
         val start = when {
@@ -503,9 +501,7 @@ object TextEditor {
 
     @OptIn(ExperimentalTime::class)
     @Composable
-    private fun CursorIndicator(
-        state: State, text: String, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp
-    ) {
+    private fun Cursor(state: State, text: String, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
         val offsetX = textLayout?.let {
