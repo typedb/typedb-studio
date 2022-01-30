@@ -139,7 +139,7 @@ object TextEditor {
         val isForward: Boolean get() = start <= end
 
         fun label(): String {
-            return "${start.label()} to ${end.label()}"
+            return "${start.label()} -- ${end.label()}"
         }
 
         override fun toString(): String {
@@ -240,7 +240,7 @@ object TextEditor {
             updateStatus()
         }
 
-        private fun updateStatus() {
+        internal fun updateStatus() {
             GlobalState.status.publish(TEXT_POSITION, selection?.label() ?: cursor.label())
         }
 
@@ -691,7 +691,7 @@ object TextEditor {
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused }
+            Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
                 .focusRequester(state.focusReq).focusable()
                 .onGloballyPositioned { state.density = density }
                 .onKeyEvent { state.processKeyEvent(it) }
@@ -705,10 +705,7 @@ object TextEditor {
             }
         }
 
-        LaunchedEffect(state) {
-            state.focusReq.requestFocus()
-            state.isFocused = true
-        }
+        LaunchedEffect(state) { state.focusReq.requestFocus() }
     }
 
     @Composable
