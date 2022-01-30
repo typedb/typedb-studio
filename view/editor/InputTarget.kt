@@ -41,8 +41,6 @@ import kotlinx.coroutines.launch
 internal class InputTarget(
     private val file: File,
     private val lineHeight: Dp,
-    private val verScroller: LazyColumn.ScrollState,
-    private val horScroller: ScrollState,
     private val horPadding: Dp,
     private val rendering: TextRendering,
     private val coroutineScope: CoroutineScope,
@@ -93,6 +91,8 @@ internal class InputTarget(
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
     internal var selection: Selection? by mutableStateOf(null)
     internal var density: Float by mutableStateOf(initDensity)
+    internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
+    internal var horScroller = ScrollState(0)
     private var mayDragSelect: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size

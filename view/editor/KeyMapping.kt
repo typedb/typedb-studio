@@ -33,7 +33,7 @@ internal interface KeyMapping {
 
     companion object {
 
-        internal val CURRENT_KEY_MAPPING: KeyMapping = when (OS.Current) {
+        internal val CURRENT: KeyMapping = when (OS.Current) {
             OS.MACOS -> MacOSKeyMapping
             else -> DefaultKeyMapping
         }
