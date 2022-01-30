@@ -71,7 +71,12 @@ object ContextMenu {
     private val POPUP_SHADOW = 12.dp
     private val LOGGER = KotlinLogging.logger {}
 
-    data class Item(val label: String, val icon: Icon.Code? = null, val onClick: () -> Unit)
+    data class Item(
+        val label: String,
+        val icon: Icon.Code? = null,
+        val enabled: Boolean = true,
+        val onClick: () -> Unit
+    )
 
     class State {
 
@@ -141,18 +146,17 @@ object ContextMenu {
                         .border(Form.BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
-                    itemsFn().forEach {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .pointerHoverIcon(PointerIconDefaults.Hand)
-                                .clickable { state.isOpen = false; it.onClick() }
-                                .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
-                        ) {
+                    itemsFn().forEach { item ->
+                        var modifier = Modifier
+                            .sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT)
+                        if (item.enabled) modifier = modifier
+                            .pointerHoverIcon(PointerIconDefaults.Hand)
+                            .clickable { state.isOpen = false; item.onClick() }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
                             Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
-                                it.icon?.let { Icon.Render(icon = it) }
+                                item.icon?.let { Icon.Render(icon = it, enabled = item.enabled) }
                             }
-                            Text(value = it.label)
+                            Text(value = item.label, enabled = item.enabled)
                         }
                     }
                 }

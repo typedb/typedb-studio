@@ -143,12 +143,13 @@ object Form {
         color: Color = Theme.colors.onPrimary,
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        enabled: Boolean = true,
     ) {
         androidx.compose.material.Text(
             text = value,
             style = style,
-            color = alpha?.let { color.copy(alpha = alpha) } ?: color,
+            color = fadeable(alpha?.let { color.copy(alpha = alpha) } ?: color, !enabled),
             modifier = modifier,
             textAlign = align,
         )

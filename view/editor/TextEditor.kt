@@ -142,7 +142,7 @@ object TextEditor {
         internal val file: File,
         internal val fontBase: TextStyle,
         internal val lineHeight: Dp,
-        private val clipboard: ClipboardManager,
+        internal val clipboard: ClipboardManager,
         private val coroutineScope: CoroutineScope,
         private val onClose: () -> Unit,
         initDensity: Float,
@@ -543,6 +543,7 @@ object TextEditor {
         }
 
         private fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null) {
+            assert(string.isNotEmpty())
             val operations = mutableListOf<TextChange.Operation>()
             if (selection != null) operations.add(deletionOperation())
             operations.add(TextChange.Insertion(selection?.min ?: cursor, string))
@@ -554,8 +555,8 @@ object TextEditor {
             clipboard.setText(AnnotatedString(selectedText()))
         }
 
-        private fun paste() {
-            clipboard.getText()?.let { insertText(it.text) }
+        internal fun paste() {
+            clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
         }
 
         private fun cut() {
@@ -842,7 +843,7 @@ object TextEditor {
 
     private fun contextMenuFn(state: State): List<ContextMenu.Item> { // TODO
         return listOf(
-            ContextMenu.Item(Label.PASTE, Icon.Code.PASTE) {}
+            ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, !state.clipboard.getText().isNullOrBlank()) { state.paste() }
         )
     }
 }
