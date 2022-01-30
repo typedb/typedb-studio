@@ -69,7 +69,7 @@ object PageArea {
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
-                GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() }
+                GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout { closePage(state, it) } }
             }
         }
     }
@@ -96,7 +96,7 @@ object PageArea {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
-                    onClick = { GlobalState.page.close(page.data); areaState.cachedPages.remove(page.data) },
+                    onClick = { closePage(areaState, page.data) },
                     modifier = Modifier.size(TAB_HEIGHT),
                     bgColor = Color.Transparent,
                     rounded = false,
@@ -105,5 +105,10 @@ object PageArea {
             if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary)
         }
         Separator.Vertical()
+    }
+
+    private fun closePage(areaState: AreaState, editable: Editable) {
+        areaState.cachedPages.remove(editable)
+        GlobalState.page.close(editable)
     }
 }

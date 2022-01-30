@@ -39,9 +39,8 @@ class FilePage(val file: File) : Page(file) {
     private var editorState: TextEditor.State? = null
 
     @Composable
-    override fun Layout() {
-        val coroutineScope = rememberCoroutineScope()
-        if (editorState == null) editorState = TextEditor.createState(file, coroutineScope)
+    override fun Layout(onClose: () -> Unit) {
+        if (editorState == null) editorState = TextEditor.createState(file, rememberCoroutineScope(), onClose)
         TextEditor.Area(state = editorState!!, modifier = Modifier.fillMaxSize())
     }
 }

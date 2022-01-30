@@ -98,6 +98,7 @@ internal interface KeyMapping {
         UNDO(true),
         REDO(true),
 
+        CLOSE(false),
         CHARACTER_PALETTE(false),
     }
 
@@ -133,6 +134,7 @@ internal interface KeyMapping {
         val O: Key = Key(java.awt.event.KeyEvent.VK_O)
         val P: Key = Key(java.awt.event.KeyEvent.VK_P)
         val V: Key = Key(java.awt.event.KeyEvent.VK_V)
+        val W: Key = Key(java.awt.event.KeyEvent.VK_W)
         val X: Key = Key(java.awt.event.KeyEvent.VK_X)
         val Z: Key = Key(java.awt.event.KeyEvent.VK_Z)
         val Backslash: Key = Key(java.awt.event.KeyEvent.VK_BACK_SLASH)
@@ -171,6 +173,7 @@ internal interface KeyMapping {
                         Keys.X -> Command.CUT
                         Keys.A -> Command.SELECT_ALL
                         Keys.Z -> Command.UNDO
+                        Keys.W -> Command.CLOSE
                         else -> null
                     }
                 event.isCtrlPressed -> null

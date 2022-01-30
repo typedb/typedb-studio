@@ -38,5 +38,5 @@ abstract class Page(val data: Editable) {
     }
 
     @Composable
-    abstract fun Layout()
+    abstract fun Layout(onClose: () -> Unit)
 }

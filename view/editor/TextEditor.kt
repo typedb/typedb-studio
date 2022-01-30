@@ -139,8 +139,13 @@ object TextEditor {
     }
 
     class State internal constructor(
-        internal val file: File, internal val fontBase: TextStyle, internal val lineHeight: Dp,
-        private val clipboard: ClipboardManager, private val coroutineScope: CoroutineScope, initDensity: Float,
+        internal val file: File,
+        internal val fontBase: TextStyle,
+        internal val lineHeight: Dp,
+        private val clipboard: ClipboardManager,
+        private val coroutineScope: CoroutineScope,
+        private val onClose: () -> Unit,
+        initDensity: Float,
     ) {
         internal val focusReq: FocusRequester = FocusRequester()
         internal val content: SnapshotStateList<String> get() = file.content
@@ -303,6 +308,7 @@ object TextEditor {
                 Command.CUT -> cut()
                 Command.UNDO -> undo()
                 Command.REDO -> redo()
+                Command.CLOSE -> onClose()
                 Command.CHARACTER_PALETTE -> {
                     // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                     // androidx.compose.foundation.text.showCharacterPalette()
@@ -646,11 +652,12 @@ object TextEditor {
     }
 
     @Composable
-    fun createState(file: File, coroutineScope: CoroutineScope): State {
+    fun createState(file: File, coroutineScope: CoroutineScope, onClose: () -> Unit): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
-        return State(file, font, lineHeight, LocalClipboardManager.current, coroutineScope, currentDensity.density)
+        val clipboard = LocalClipboardManager.current
+        return State(file, font, lineHeight, clipboard, coroutineScope, onClose, currentDensity.density)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

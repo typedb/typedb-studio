@@ -38,11 +38,11 @@ internal data class TextChange(val operations: List<Operation>) {
         val cursor: TextEditor.Cursor, val text: String, private var selection: TextEditor.Selection? = null
     ) {
 
-        abstract fun invert(): Operation
-
         init {
             assert(selection == null || selection == selection(false))
         }
+
+        abstract fun invert(): Operation
 
         fun selection(): TextEditor.Selection {
             return selection(true)
