@@ -22,16 +22,26 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.text.TextLayoutResult
 
-internal class TextLayout(initSize: Int) {
+/**
+ * This class is a wrapper over [TextLayoutResult] which is produced after
+ * [androidx.compose.material.Text] completes "rendering" and is saved when the
+ * onTextLayout() callback function called. This class allows us to recycle
+ * [TextLayoutResult] after they get deleted, or initialise a text line with a
+ * subsequent line's [TextLayoutResult] in case they are identical. We initialise
+ * a line with a subsequent line's [TextLayoutResult] as it is possible that they
+ * are identical and Compose may not recompose that Text and simply reuse the
+ * previously identical text line on that same position.
+ */
+internal class TextRendering(initSize: Int) {
 
-    private val layouts = mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
+    private val results = mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
     private val versions = mutableStateListOf<Int>().apply { addAll(List(initSize) { 0 }) }
     private val deleted = mutableStateMapOf<Int, TextLayoutResult?>()
 
-    fun get(int: Int): TextLayoutResult? = layouts[int]
+    fun get(int: Int): TextLayoutResult? = results[int]
 
     fun set(int: Int, layout: TextLayoutResult, version: Int) {
-        layouts[int] = layout
+        results[int] = layout
         versions[int] = version
     }
 
@@ -40,13 +50,13 @@ internal class TextLayout(initSize: Int) {
     }
 
     fun removeRange(startInc: Int, endExc: Int) {
-        for (i in startInc until endExc) deleted[i] = layouts[i]
-        layouts.removeRange(startInc, endExc)
+        for (i in startInc until endExc) deleted[i] = results[i]
+        results.removeRange(startInc, endExc)
         versions.removeRange(startInc, endExc)
     }
 
     fun addNew(index: Int, size: Int) {
         versions.addAll(index, List(size) { 0 })
-        layouts.addAll(index, List(size) { deleted.remove(index + it) ?: layouts.getOrNull(index + it) })
+        results.addAll(index, List(size) { deleted.remove(index + it) ?: results.getOrNull(index + it) })
     }
 }

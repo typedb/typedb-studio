@@ -44,7 +44,7 @@ internal class InputTarget(
     private val verScroller: LazyColumn.ScrollState,
     private val horScroller: ScrollState,
     private val horPadding: Dp,
-    private val textLayout: TextLayout,
+    private val rendering: TextRendering,
     private val coroutineScope: CoroutineScope,
     initDensity: Float
 ) {
@@ -110,7 +110,7 @@ internal class InputTarget(
         val relY = y - textAreaRect.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-        val col = textLayout.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
+        val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
         return Cursor(row, col)
     }
 
@@ -170,7 +170,7 @@ internal class InputTarget(
             else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
         }
 
-        val cursorRect = textLayout.get(cursor.row)?.let {
+        val cursorRect = rendering.get(cursor.row)?.let {
             it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
         } ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaRect.left + Theme.toDP(cursorRect.left - horScroller.value, density).value
@@ -225,7 +225,7 @@ internal class InputTarget(
     }
 
     internal fun moveCursorPrevByWord(isSelecting: Boolean = false) {
-        val newCursor: Cursor = textLayout.get(cursor.row)?.let {
+        val newCursor: Cursor = rendering.get(cursor.row)?.let {
             Cursor(cursor.row, getPrevWordOffset(it, cursor.col))
         } ?: Cursor(0, 0)
         updateCursor(newCursor, isSelecting)
@@ -239,7 +239,7 @@ internal class InputTarget(
     }
 
     internal fun moveCursorNexBytWord(isSelecting: Boolean = false) {
-        val newCursor: Cursor = textLayout.get(cursor.row)?.let {
+        val newCursor: Cursor = rendering.get(cursor.row)?.let {
             Cursor(cursor.row, getNextWordOffset(it, cursor.col))
         } ?: Cursor(0, 0)
         updateCursor(newCursor, isSelecting)
@@ -321,7 +321,7 @@ internal class InputTarget(
     }
 
     internal fun selectWord() {
-        val boundary = wordBoundary(textLayout.get(cursor.row)!!, cursor.col)
+        val boundary = wordBoundary(rendering.get(cursor.row)!!, cursor.col)
         updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
     }
 

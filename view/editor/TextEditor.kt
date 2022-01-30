@@ -119,12 +119,12 @@ object TextEditor {
         internal val focusReq = FocusRequester()
         internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
-        internal val textLayout = TextLayout(file.content.size)
+        internal val rendering = TextRendering(file.content.size)
         internal val contextMenu = ContextMenu.State()
         internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
         internal var horScroller = ScrollState(0)
         internal val target = InputTarget(
-            file, lineHeight, verScroller, horScroller, AREA_PADDING_HORIZONTAL, textLayout, coroutineScope, initDensity
+            file, lineHeight, verScroller, horScroller, AREA_PADDING_HORIZONTAL, rendering, coroutineScope, initDensity
         )
         internal var isFocused by mutableStateOf(true)
         internal var width by mutableStateOf(0.dp)
@@ -318,7 +318,7 @@ object TextEditor {
                 val suffix = content[end.row].substring(end.col)
                 content[start.row] = prefix + suffix
                 if (end.row > start.row) {
-                    textLayout.removeRange(start.row + 1, end.row + 1)
+                    rendering.removeRange(start.row + 1, end.row + 1)
                     content.removeRange(start.row + 1, end.row + 1)
                 }
                 target.updateCursor(deletion.selection().min, false)
@@ -335,7 +335,7 @@ object TextEditor {
                 content[cursor.row] = texts[0]
                 if (texts.size > 1) {
                     content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                    textLayout.addNew(cursor.row + 1, texts.size - 1)
+                    rendering.addNew(cursor.row + 1, texts.size - 1)
                 }
                 target.updateCursor(insertion.selection().max, false)
             }
@@ -463,19 +463,19 @@ object TextEditor {
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HORIZONTAL)
         ) {
-            val isRendered = state.textLayout.isRendered(index, state.stateVersion)
+            val isRendered = state.rendering.isRendered(index, state.stateVersion)
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
                 if (!isRendered) SelectionHighlighter(state, index, null, text.length, fontWidth)
-                else SelectionHighlighter(state, index, state.textLayout.get(index), text.length, fontWidth)
+                else SelectionHighlighter(state, index, state.rendering.get(index), text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
                 modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
-                onTextLayout = { state.textLayout.set(index, it, state.stateVersion) }
+                onTextLayout = { state.rendering.set(index, it, state.stateVersion) }
             )
             if (cursor.row == index) {
                 if (!isRendered) CursorIndicator(state, text, null, font, fontWidth)
-                else CursorIndicator(state, text, state.textLayout.get(index), font, fontWidth)
+                else CursorIndicator(state, text, state.rendering.get(index), font, fontWidth)
             }
         }
     }
