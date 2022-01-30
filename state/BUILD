@@ -29,6 +29,7 @@ kt_jvm_library(
         "//state/notification:notification",
         "//state/page:page",
         "//state/project:project",
+        "//state/status:status",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

@@ -24,20 +24,15 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "notification",
+    name = "status",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/common:common",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
-
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-notification:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-status:{pom_version}"],
 )
 
 checkstyle_test(

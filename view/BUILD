@@ -30,6 +30,7 @@ kt_jvm_library(
         "//state/connection:connection",
         "//state/notification:notification",
         "//state/project:project",
+        "//state/status:status",
         "//state:state",
         "//view/browser:browser",
         "//view/common:common",

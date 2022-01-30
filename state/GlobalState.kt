@@ -22,10 +22,12 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager
+import com.vaticle.typedb.studio.state.status.StatusManager
 
 object GlobalState {
 
     val notification = NotificationManager()
+    val status = StatusManager()
     val connection = ConnectionManager(notification)
     val page = PageManager(notification)
     val project = ProjectManager(notification)
