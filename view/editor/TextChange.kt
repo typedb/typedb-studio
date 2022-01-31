@@ -18,13 +18,17 @@
 
 package com.vaticle.typedb.studio.view.editor
 
-import java.util.stream.Collectors
+import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor.Companion.min
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
+import kotlin.streams.toList
 
 internal data class TextChange(val operations: List<Operation>) {
 
     constructor(vararg operations: Operation) : this(operations.asList())
 
-    enum class Type { ORIGINAL, UNDO, REDO }
+    enum class ReplayType { UNDO, REDO }
 
     companion object {
         fun merge(changes: List<TextChange>): TextChange {
@@ -37,11 +41,37 @@ internal data class TextChange(val operations: List<Operation>) {
     }
 
     override fun toString(): String {
-        return "TextChange {\n" + operations.stream().map { it.toString() }.collect(Collectors.joining(",\n")) + "\n}"
+        val operations = operations.stream().map { it.toString() }.toList().toMutableList()
+        operations.add(0, "TextChange {")
+        operations.add("}")
+
+        return when {
+            operations.size > 3 -> operations.joinToString(separator = "\n")
+            else -> operations.joinToString(separator = " ")
+        }
+    }
+
+    fun summaryTarget(): Either<Cursor, Selection> {
+        assert(operations.isNotEmpty())
+        var summary = when (val first = operations.first()) {
+            is Deletion -> Selection(first.selection().min, first.selection().min)
+            is Insertion -> first.selection()
+        }
+        operations.stream().skip(1).forEach { operation ->
+            val selection = operation.selection()
+            summary = when (operation) {
+                is Deletion -> Selection(min(summary.start, selection.min), selection.min)
+                is Insertion -> Selection(summary.start, selection.end)
+            }
+        }
+        return when (summary.start) {
+            summary.end -> Either.first(summary.start)
+            else -> Either.second(summary)
+        }
     }
 
     sealed class Operation(
-        val cursor: InputTarget.Cursor, val text: String, private var selection: InputTarget.Selection? = null
+        val cursor: Cursor, val text: String, private var selection: Selection? = null
     ) {
 
         init {
@@ -50,11 +80,11 @@ internal data class TextChange(val operations: List<Operation>) {
 
         abstract fun invert(): Operation
 
-        fun selection(): InputTarget.Selection {
+        fun selection(): Selection {
             return selection(true)
         }
 
-        private fun selection(cache: Boolean): InputTarget.Selection {
+        private fun selection(cache: Boolean): Selection {
             selection?.let { return it }
             assert(text.isNotEmpty())
             val texts = text.split("\n")
@@ -63,14 +93,14 @@ internal data class TextChange(val operations: List<Operation>) {
                 texts.size > 1 -> texts[texts.size - 1].length
                 else -> cursor.col + texts[0].length
             }
-            val newSelection = InputTarget.Selection(cursor, InputTarget.Cursor(endRow, endCol))
+            val newSelection = Selection(cursor, Cursor(endRow, endCol))
             if (cache) selection = newSelection
             return newSelection
         }
 
     }
 
-    class Insertion(cursor: InputTarget.Cursor, text: String) : Operation(cursor, text) {
+    class Insertion(cursor: Cursor, text: String) : Operation(cursor, text) {
         override fun invert(): Deletion {
             return Deletion(cursor, text)
         }
@@ -81,7 +111,7 @@ internal data class TextChange(val operations: List<Operation>) {
     }
 
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
-    class Deletion(cursor: InputTarget.Cursor, text: String, selection: InputTarget.Selection? = null) :
+    class Deletion(cursor: Cursor, text: String, selection: Selection? = null) :
         Operation(cursor, text, selection) {
         override fun invert(): Insertion {
             return Insertion(cursor, text)

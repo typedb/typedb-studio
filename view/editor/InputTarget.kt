@@ -50,6 +50,13 @@ internal class InputTarget(
     private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}') // TODO: is this complete?
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
+
+        companion object {
+            fun min(first: Cursor, second: Cursor): Cursor {
+                return if (first < second) first else second
+            }
+        }
+
         override fun compareTo(other: Cursor): Int {
             return when (this.row) {
                 other.row -> this.col.compareTo(other.col)

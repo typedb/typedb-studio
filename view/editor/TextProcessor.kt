@@ -80,7 +80,7 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.Command.SELECT_UP_PAGE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
-import com.vaticle.typedb.studio.view.editor.TextChange.Type
+import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -214,7 +214,7 @@ internal class TextProcessor(
 
     private fun deleteSelection() {
         if (target.selection == null) return
-        apply(TextChange(deletionOperation()), Type.ORIGINAL)
+        applyOriginal(TextChange(deletionOperation()))
     }
 
     private fun deleteTab() {
@@ -259,31 +259,48 @@ internal class TextProcessor(
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
         operations.add(Insertion(target.selection?.min ?: target.cursor, string))
-        apply(TextChange(operations), Type.ORIGINAL, newPosition)
+        applyOriginal(TextChange(operations), newPosition)
     }
 
     private fun undo() {
         drainAndBatchOriginalChanges()
-        if (undoStack.isNotEmpty()) apply(undoStack.removeLast(), Type.UNDO)
+        if (undoStack.isNotEmpty()) applyReplay(undoStack.removeLast(), ReplayType.UNDO)
     }
 
     private fun redo() {
-        if (redoStack.isNotEmpty()) apply(redoStack.removeLast(), Type.REDO)
+        if (redoStack.isNotEmpty()) applyReplay(redoStack.removeLast(), ReplayType.REDO)
     }
 
-    private fun apply(change: TextChange, type: Type, newPosition: Either<Cursor, Selection>? = null) {
-        change.operations.forEach {
-            when (it) {
-                is Deletion -> applyDeletion(it)
-                is Insertion -> applyInsertion(it, type)
-            }
-        }
+    private fun applyOriginal(change: TextChange, newPosition: Either<Cursor, Selection>? = null) {
+        applyChange(change)
         if (newPosition != null) when {
             newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
             newPosition.isSecond -> target.updateSelection(newPosition.second())
         }
+        queueOriginalChange(change)
+    }
+
+    private fun applyReplay(change: TextChange, replayType: ReplayType) {
+        applyChange(change)
+        val newTarget = change.summaryTarget()
+        when {
+            newTarget.isFirst -> target.updateCursor(newTarget.first(), false)
+            newTarget.isSecond -> target.updateSelection(newTarget.second())
+        }
+        when (replayType) {
+            ReplayType.UNDO -> redoStack.addLast(change.invert())
+            ReplayType.REDO -> undoStack.addLast(change.invert())
+        }
+    }
+
+    private fun applyChange(change: TextChange) {
+        change.operations.forEach {
+            when (it) {
+                is Deletion -> applyDeletion(it)
+                is Insertion -> applyInsertion(it)
+            }
+        }
         version++
-        recordChange(change, type)
     }
 
     private fun applyDeletion(deletion: Deletion) {
@@ -299,7 +316,7 @@ internal class TextProcessor(
         target.updateCursor(deletion.selection().min, false)
     }
 
-    private fun applyInsertion(insertion: Insertion, type: Type) {
+    private fun applyInsertion(insertion: Insertion) {
         val cursor = insertion.cursor
         val prefix = content[cursor.row].substring(0, cursor.col)
         val suffix = content[cursor.row].substring(cursor.col)
@@ -312,18 +329,7 @@ internal class TextProcessor(
             content.addAll(cursor.row + 1, texts.subList(1, texts.size))
             rendering.addNew(cursor.row + 1, texts.size - 1)
         }
-        when (type) {
-            Type.UNDO, Type.REDO -> target.updateSelection(insertion.selection())
-            else -> target.updateCursor(insertion.selection().max, false)
-        }
-    }
-
-    private fun recordChange(change: TextChange, type: Type) {
-        when (type) {
-            Type.ORIGINAL -> queueOriginalChange(change)
-            Type.UNDO -> redoStack.addLast(change.invert())
-            Type.REDO -> undoStack.addLast(change.invert())
-        }
+        target.updateCursor(insertion.selection().max, false)
     }
 
     @OptIn(ExperimentalTime::class)
