@@ -22,11 +22,14 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.IndicationInstance
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.ExperimentalMaterialApi
@@ -59,6 +62,7 @@ object Theme {
         @ReadOnlyComposable
         get() = listOf(
             LocalMinimumTouchTargetEnforcement provides false,
+            LocalScrollbarStyle provides scrollbarStyle(color = colors.scrollbar),
             LocalIndication provides rectangleIndication(color = colors.indicationBase),
             LocalTextSelectionColors provides TextSelectionColors(
                 backgroundColor = colors.tertiary.copy(alpha = SELECTION_ALPHA),
@@ -90,7 +94,22 @@ object Theme {
         return (pixel.toDouble() / density).roundToInt().dp
     }
 
-    fun roundedCornerRadius(density: Float): CornerRadius {
+    fun scrollbarStyle(
+        color: androidx.compose.ui.graphics.Color,
+        thickness: Dp = 8.dp,
+        unhoverAlpha: Float = 0.3f,
+        hoverAlpha: Float = 0.6f
+    ) =
+        ScrollbarStyle(
+            minimalHeight = 16.dp,
+            thickness = thickness,
+            shape = RoundedCornerShape(4.dp),
+            hoverDurationMillis = 300,
+            unhoverColor = color.copy(alpha = unhoverAlpha),
+            hoverColor = color.copy(alpha = hoverAlpha)
+        )
+
+    private fun roundedCornerRadius(density: Float): CornerRadius {
         return CornerRadius(x = ROUNDED_CORNER_RADIUS * density, y = ROUNDED_CORNER_RADIUS * density)
     }
 

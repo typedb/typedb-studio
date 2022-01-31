@@ -18,13 +18,17 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -202,13 +206,25 @@ object TextEditor {
     private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(state.content, state.target.verScroller)
 
-        Box(modifier = Modifier.fillMaxSize()
-            .background(Theme.colors.background2)
-            .horizontalScroll(state.target.horScroller)
-            .onGloballyPositioned { state.target.updateTextArea(it.boundsInWindow()) }
-            .onSizeChanged { state.increaseWidth(it.width) }) {
-            ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
-            LazyColumn.Area(state = lazyColumnState) { index, text -> TextLine(state, index, text, font, fontWidth) }
+        Box {
+            Box(modifier = Modifier.fillMaxSize()
+                .background(Theme.colors.background2)
+                .horizontalScroll(state.target.horScroller)
+                .onGloballyPositioned { state.target.updateTextArea(it.boundsInWindow()) }
+                .onSizeChanged { state.increaseWidth(it.width) }) {
+                ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
+                LazyColumn.Area(state = lazyColumnState) { index, text ->
+                    TextLine(state, index, text, font, fontWidth)
+                }
+            }
+            VerticalScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(4.dp),
+                adapter = state.target.verScroller
+            )
+            HorizontalScrollbar(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(4.dp),
+                adapter = state.target.horScrollerAdapter
+            )
         }
     }
 

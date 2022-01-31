@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
+import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
@@ -51,7 +52,7 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) {
+    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int): ScrollbarAdapter {
         var offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp get() = itemHeight * itemCount()
         private var viewHeight: Dp by mutableStateOf(0.dp)
@@ -59,19 +60,30 @@ object LazyColumn {
         internal var firstVisibleIndex: Int by mutableStateOf(0)
         internal var lastVisibleIndexPossible: Int by mutableStateOf(0)
 
-        fun updateOffset(delta: Dp) {
-            offset = (offset + delta).coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
-            updateView()
+        override val scrollOffset: Float get() = offset.value
+
+        override fun maxScrollOffset(containerSize: Int): Float {
+            return contentHeight.value - viewHeight.value
+        }
+
+        override suspend fun scrollTo(containerSize: Int, scrollOffset: Float) {
+            updateOffset(scrollOffset.dp)
+        }
+
+        fun updateOffsetBy(delta: Dp) {
+            updateOffset(offset + delta)
         }
 
         @OptIn(ExperimentalComposeUiApi::class)
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
-            val delta = itemHeight * (event.delta as MouseScrollUnit.Line).value * -1
-            offset = (offset - delta).coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
-
-            updateView()
+            updateOffsetBy(itemHeight * (event.delta as MouseScrollUnit.Line).value)
             return true
+        }
+
+        private fun updateOffset(newOffset: Dp) {
+            offset = newOffset.coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
+            updateView()
         }
 
         internal fun updateViewHeight(newHeight: Dp) {

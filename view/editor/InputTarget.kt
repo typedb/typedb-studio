@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -47,7 +48,10 @@ internal class InputTarget(
     initDensity: Float
 ) {
 
-    private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}') // TODO: is this complete?
+    companion object {
+        // TODO: is this complete?
+        private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
+    }
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
 
@@ -100,6 +104,7 @@ internal class InputTarget(
     internal var density: Float by mutableStateOf(initDensity)
     internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
     internal var horScroller = ScrollState(0)
+    internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     private var mayDragSelect: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size
@@ -184,8 +189,8 @@ internal class InputTarget(
             } else if (x > right) coroutineScope.launch {
                 horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
-            if (y < top) verScroller.updateOffset((y - top).dp)
-            else if (y > bottom) verScroller.updateOffset((y - bottom).dp)
+            if (y < top) verScroller.updateOffsetBy((y - top).dp)
+            else if (y > bottom) verScroller.updateOffsetBy((y - bottom).dp)
         }
 
         val cursorRect = rendering.get(cursor.row)?.let {
