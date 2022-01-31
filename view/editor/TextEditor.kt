@@ -120,21 +120,14 @@ object TextEditor {
         internal val lineCount: Int get() = content.size
         internal var isFocused by mutableStateOf(true)
         internal val focusReq = FocusRequester()
-        internal var width by mutableStateOf(0.dp)
         internal val lineHeight get() = target.lineHeight
         internal var density: Float
             get() = target.density
             set(value) {
                 target.density = value
             }
-
         internal fun updateStatus() {
             target.updateStatus()
-        }
-
-        internal fun increaseWidth(newRawWidth: Int) {
-            val newWidth = toDP(newRawWidth, density)
-            if (newWidth > width) width = newWidth
         }
 
         internal fun processKeyEvent(event: KeyEvent): Boolean {
@@ -211,7 +204,7 @@ object TextEditor {
                 .background(Theme.colors.background2)
                 .horizontalScroll(state.target.horScroller)
                 .onGloballyPositioned { state.target.updateTextArea(it.boundsInWindow()) }
-                .onSizeChanged { state.increaseWidth(it.width) }) {
+                .onSizeChanged { state.target.mayIncreaseWidth(it.width) }) {
                 ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
                 LazyColumn.Area(state = lazyColumnState) { index, text ->
                     TextLine(state, index, text, font, fontWidth)
@@ -239,7 +232,7 @@ object TextEditor {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = state.width)
+                .defaultMinSize(minWidth = state.target.width)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
@@ -250,7 +243,7 @@ object TextEditor {
             }
             Text(
                 text = AnnotatedString(text), style = font,
-                modifier = Modifier.onSizeChanged { state.increaseWidth(it.width) },
+                modifier = Modifier.onSizeChanged { state.target.mayIncreaseWidth(it.width) },
                 onTextLayout = { state.rendering.set(index, it, state.processor.version) }
             )
             if (cursor.row == index) {

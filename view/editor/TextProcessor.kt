@@ -301,6 +301,7 @@ internal class TextProcessor(
             }
         }
         version++
+        target.resetWidth()
     }
 
     private fun applyDeletion(deletion: Deletion) {
