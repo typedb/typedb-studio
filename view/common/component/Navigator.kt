@@ -22,6 +22,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -64,10 +65,11 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
@@ -244,7 +246,10 @@ object Navigator {
     ) {
         private var container: Container<T> by mutableStateOf(Container(container, this)); private set
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
-        internal var minWidth by mutableStateOf(0.dp); private set
+        internal var density by mutableStateOf(0f)
+        private var itemWidth by mutableStateOf(0.dp); private set
+        private var areaWidth by mutableStateOf(0.dp); private set
+        internal val minWidth get() = max(itemWidth, areaWidth)
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
@@ -319,8 +324,13 @@ object Navigator {
             previous?.next = null
         }
 
-        internal fun mayIncreaseMinWidth(width: Dp) {
-            if (width > minWidth) minWidth = width
+        internal fun updateAreaWidth(newRawWidth: Int) {
+            areaWidth = toDP(newRawWidth, density)
+        }
+
+        internal fun mayIncreaseItemWidth(newRawWidth: Int) {
+            val newWidth = toDP(newRawWidth, density)
+            if (newWidth > itemWidth) itemWidth = newWidth
         }
 
         internal fun open(item: ItemState<T>) {
@@ -386,25 +396,20 @@ object Navigator {
         contextMenuFn: (ItemState<T>) -> List<List<ContextMenu.Item>>
     ) {
         val density = LocalDensity.current.density
-        val contextMenuState = remember { ContextMenu.State() }
+        val ctxMenuState = remember { ContextMenu.State() }
         val lazyListState = rememberLazyListState()
         val horScrollState = rememberScrollState()
         navState.viewState = lazyListState
-        Box(modifier = Modifier.fillMaxSize().onSizeChanged { navState.mayIncreaseMinWidth(toDP(it.width, density)) }) {
-            ContextMenu.Popup(contextMenuState) { contextMenuFn(navState.selected!!) }
+        Box(modifier = Modifier.fillMaxSize().onGloballyPositioned {
+            navState.density = density
+            navState.updateAreaWidth(it.size.width)
+        }) {
+            ContextMenu.Popup(ctxMenuState) { contextMenuFn(navState.selected!!) }
             LazyColumn(
                 state = lazyListState, modifier = Modifier.widthIn(min = navState.minWidth)
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { navState.hovered = null; false })
-            ) {
-                navState.entries.forEach {
-                    item {
-                        ItemLayout(navState, contextMenuState, it, it.depth, iconArgs) {
-                            navState.mayIncreaseMinWidth(toDP(it, density))
-                        }
-                    }
-                }
-            }
+            ) { navState.entries.forEach { item { ItemLayout(navState, ctxMenuState, it, it.depth, iconArgs) } } }
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(SCROLLBAR_PADDING),
                 adapter = rememberScrollbarAdapter(lazyListState)
@@ -420,7 +425,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
         navState: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
-        iconArgs: (ItemState<T>) -> IconArgs, onSizeChanged: (Int) -> Unit
+        iconArgs: (ItemState<T>) -> IconArgs
     ) {
         item.focusReq = remember { FocusRequester() }
         val bgColor = when {
@@ -429,10 +434,8 @@ object Navigator {
             else -> Color.Transparent
         }
         Row(
-            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(color = bgColor)
                 .widthIn(min = navState.minWidth).height(ITEM_HEIGHT)
-                .onSizeChanged { onSizeChanged(it.width) }
                 .focusRequester(item.focusReq!!).focusable()
                 .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
@@ -440,12 +443,17 @@ object Navigator {
                 .onPointerEvent(Release) { if (it.awtEvent.clickCount == 2) navState.open(item) }
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
-            if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-            ItemButton(item)
-            ItemIcon(item, iconArgs)
-            Spacer(Modifier.width(TEXT_SPACING))
-            ItemText(item)
-            Spacer(modifier = Modifier.width(AREA_PADDING))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.onGloballyPositioned { navState.mayIncreaseItemWidth(it.size.width) }
+            ) {
+                if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+                ItemButton(item)
+                ItemIcon(item, iconArgs)
+                Spacer(Modifier.width(TEXT_SPACING))
+                ItemText(item)
+                Spacer(modifier = Modifier.width(AREA_PADDING))
+            }
             Spacer(modifier = Modifier.weight(1f))
         }
     }
