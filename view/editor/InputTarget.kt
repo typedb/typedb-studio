@@ -69,7 +69,7 @@ internal class InputTarget(
         }
 
         fun label(): String {
-            return "$row:$col"
+            return "${row + 1}:${col + 1}"
         }
 
         override fun toString(): String {
