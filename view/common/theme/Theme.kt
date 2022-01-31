@@ -51,7 +51,8 @@ object Theme {
     const val ROUNDED_CORNER_RADIUS = 4f
     const val SELECTION_ALPHA = 0.35f
     const val INDICATION_HOVER_ALPHA = 0.1f
-    val SCROLLBAR_PADDING = 4.dp
+    val SCROLLBAR_LONG_PADDING = 4.dp
+    val SCROLLBAR_END_PADDING = 6.dp
     val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
     private const val INDICATION_PRESSED_ALPHA = 0.25f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }

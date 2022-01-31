@@ -78,6 +78,8 @@ import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
+import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
@@ -221,12 +223,14 @@ object TextEditor {
                 }
             }
             VerticalScrollbar(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(4.dp),
-                adapter = state.target.verScroller
+                adapter = state.target.verScroller,
+                modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
+                    .padding(SCROLLBAR_LONG_PADDING, SCROLLBAR_END_PADDING)
             )
             HorizontalScrollbar(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(4.dp),
-                adapter = state.target.horScrollerAdapter
+                adapter = state.target.horScrollerAdapter,
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                    .padding(SCROLLBAR_END_PADDING, SCROLLBAR_LONG_PADDING)
             )
         }
     }

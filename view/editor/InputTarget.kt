@@ -113,10 +113,7 @@ internal class InputTarget(
 
     internal fun mayIncreaseTextWidth(newRawWidth: Int) {
         val newWidth = Theme.toDP(newRawWidth, density)
-        if (newWidth > textWidth) {
-            textWidth = newWidth
-            println("textWidth: $textWidth")
-        }
+        if (newWidth > textWidth) textWidth = newWidth
     }
 
     internal fun resetTextWidth() {
