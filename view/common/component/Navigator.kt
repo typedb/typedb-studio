@@ -19,23 +19,27 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.mouseClickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +78,7 @@ import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expan
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Container
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
+import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -383,12 +388,13 @@ object Navigator {
         val density = LocalDensity.current.density
         val contextMenuState = remember { ContextMenu.State() }
         val lazyListState = rememberLazyListState()
+        val horScrollState = rememberScrollState()
         navState.viewState = lazyListState
         Box(modifier = Modifier.fillMaxSize().onSizeChanged { navState.mayIncreaseMinWidth(toDP(it.width, density)) }) {
             ContextMenu.Popup(contextMenuState) { contextMenuFn(navState.selected!!) }
             LazyColumn(
                 state = lazyListState, modifier = Modifier.widthIn(min = navState.minWidth)
-                    .horizontalScroll(state = rememberScrollState())
+                    .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { navState.hovered = null; false })
             ) {
                 navState.entries.forEach {
@@ -399,6 +405,14 @@ object Navigator {
                     }
                 }
             }
+            VerticalScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(SCROLLBAR_PADDING),
+                adapter = rememberScrollbarAdapter(lazyListState)
+            )
+            HorizontalScrollbar(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(SCROLLBAR_PADDING),
+                adapter = rememberScrollbarAdapter(horScrollState)
+            )
         }
     }
 

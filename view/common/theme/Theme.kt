@@ -48,11 +48,12 @@ import kotlin.math.roundToInt
 
 object Theme {
 
-    private const val ROUNDED_CORNER_RADIUS = 4f
+    const val ROUNDED_CORNER_RADIUS = 4f
     const val SELECTION_ALPHA = 0.35f
-    private const val INDICATION_PRESSED_ALPHA = 0.25f
     const val INDICATION_HOVER_ALPHA = 0.1f
+    val SCROLLBAR_PADDING = 4.dp
     val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
+    private const val INDICATION_PRESSED_ALPHA = 0.25f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
