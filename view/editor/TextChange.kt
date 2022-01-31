@@ -70,9 +70,7 @@ internal data class TextChange(val operations: List<Operation>) {
         }
     }
 
-    sealed class Operation(
-        val cursor: Cursor, val text: String, private var selection: Selection? = null
-    ) {
+    sealed class Operation(val cursor: Cursor, val text: String, private var selection: Selection? = null) {
 
         init {
             assert(selection == null || selection == selection(false))

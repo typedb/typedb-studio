@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.mouseClickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,8 +53,10 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
@@ -419,6 +423,7 @@ object Navigator {
                 .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(navState, contextMenuState, item.focusReq!!, item) }
+                .onPointerEvent(Release) { if (it.awtEvent.clickCount == 2) navState.open(item) }
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
@@ -459,14 +464,13 @@ object Navigator {
     }
 
     private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
-        navigatorState: NavigatorState<T>, contextMenuState: ContextMenu.State,
+        navState: NavigatorState<T>, contextMenuState: ContextMenu.State,
         focusReq: FocusRequester, item: ItemState<T>
     ) {
         contextMenuState.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryClick = { navigatorState.select(item); focusReq.requestFocus() },
-            onDoublePrimaryClick = { navigatorState.open(item) },
-            onSecondaryClick = { navigatorState.select(item) }
+            onSinglePrimaryPressed = { navState.select(item); focusReq.requestFocus() },
+            onSecondaryClick = { navState.select(item) }
         )
     }
 

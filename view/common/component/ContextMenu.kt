@@ -87,9 +87,9 @@ object ContextMenu {
 
         suspend fun onPointerInput(
             pointerInputScope: PointerInputScope,
-            onSinglePrimaryClick: (MouseEvent) -> Unit = {},
-            onDoublePrimaryClick: (MouseEvent) -> Unit = {},
-            onTriplePrimaryClick: (MouseEvent) -> Unit = {},
+            onSinglePrimaryPressed: (MouseEvent) -> Unit = {},
+            onDoublePrimaryPressed: (MouseEvent) -> Unit = {},
+            onTriplePrimaryPressed: (MouseEvent) -> Unit = {},
             onSecondaryClick: (MouseEvent) -> Unit = {}
         ) {
             pointerInputScope.forEachGesture {
@@ -99,9 +99,9 @@ object ContextMenu {
                     when {
                         event.buttons.isPrimaryPressed -> {
                             when (event.awtEvent.clickCount) {
-                                0, 1 -> onSinglePrimaryClick(event.awtEvent)
-                                2 -> onDoublePrimaryClick(event.awtEvent)
-                                3 -> onTriplePrimaryClick(event.awtEvent)
+                                0, 1 -> onSinglePrimaryPressed(event.awtEvent)
+                                2 -> onDoublePrimaryPressed(event.awtEvent)
+                                3 -> onTriplePrimaryPressed(event.awtEvent)
                                 10 -> GlobalState.notification.userWarning(LOGGER, CHILL_BRO)
                             }
                         }

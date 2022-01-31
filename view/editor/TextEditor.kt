@@ -305,13 +305,13 @@ object TextEditor {
     private suspend fun PointerInputScope.onPointerInput(state: State) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryClick = {
+            onSinglePrimaryPressed = {
                 state.focusReq.requestFocus()
                 state.target.startDragSelection()
                 state.target.updateCursor(it.x, it.y, it.isShiftDown)
             },
-            onDoublePrimaryClick = { state.target.selectWord() },
-            onTriplePrimaryClick = { state.target.selectLine() },
+            onDoublePrimaryPressed = { state.target.selectWord() },
+            onTriplePrimaryPressed = { state.target.selectLine() },
             onSecondaryClick = { state.target.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }
