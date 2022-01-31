@@ -105,19 +105,22 @@ internal class InputTarget(
     internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
-    internal var width by mutableStateOf(0.dp)
+    internal var textWidth by mutableStateOf(0.dp)
     private var mayDragSelect: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    internal fun mayIncreaseWidth(newRawWidth: Int) {
+    internal fun mayIncreaseTextWidth(newRawWidth: Int) {
         val newWidth = Theme.toDP(newRawWidth, density)
-        if (newWidth > width) width = newWidth
+        if (newWidth > textWidth) {
+            textWidth = newWidth
+            println("textWidth: $textWidth")
+        }
     }
 
-    internal fun resetWidth() {
-        width = 0.dp
+    internal fun resetTextWidth() {
+        textWidth = 0.dp
     }
 
     internal fun updateTextArea(rawRectangle: Rect) {

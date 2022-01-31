@@ -68,6 +68,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
@@ -121,11 +122,17 @@ object TextEditor {
         internal var isFocused by mutableStateOf(true)
         internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
+        internal var areaWidth by mutableStateOf(0.dp)
         internal var density: Float
             get() = target.density
             set(value) {
                 target.density = value
             }
+
+        internal fun updateAreaWidth(newWidth: Int) {
+            areaWidth = toDP(newWidth, density)
+        }
+
         internal fun updateStatus() {
             target.updateStatus()
         }
@@ -199,12 +206,15 @@ object TextEditor {
     private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
         val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(state.content, state.target.verScroller)
 
-        Box {
-            Box(modifier = Modifier.fillMaxSize()
-                .background(Theme.colors.background2)
-                .horizontalScroll(state.target.horScroller)
-                .onGloballyPositioned { state.target.updateTextArea(it.boundsInWindow()) }
-                .onSizeChanged { state.target.mayIncreaseWidth(it.width) }) {
+        Box(modifier = Modifier.onGloballyPositioned {
+            state.updateAreaWidth(it.size.width)
+            state.target.updateTextArea(it.boundsInWindow())
+        }) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .background(Theme.colors.background2)
+                    .horizontalScroll(state.target.horScroller)
+            ) {
                 ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
                 LazyColumn.Area(state = lazyColumnState) { index, text ->
                     TextLine(state, index, text, font, fontWidth)
@@ -232,7 +242,7 @@ object TextEditor {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = state.target.width)
+                .defaultMinSize(minWidth = max(state.target.textWidth, state.areaWidth))
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
@@ -243,7 +253,7 @@ object TextEditor {
             }
             Text(
                 text = AnnotatedString(text), style = font,
-                modifier = Modifier.onSizeChanged { state.target.mayIncreaseWidth(it.width) },
+                modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
                 onTextLayout = { state.rendering.set(index, it, state.processor.version) }
             )
             if (cursor.row == index) {
