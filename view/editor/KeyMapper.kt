@@ -27,15 +27,15 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import com.vaticle.typedb.studio.state.common.Property.OS
 
-internal interface KeyMapping {
+internal interface KeyMapper {
 
     fun map(event: KeyEvent): Command?
 
     companion object {
 
-        internal val CURRENT: KeyMapping = when (OS.Current) {
-            OS.MACOS -> MacOSKeyMapping
-            else -> DefaultKeyMapping
+        internal val CURRENT: KeyMapper = when (OS.Current) {
+            OS.MACOS -> MacOSKeyMapper
+            else -> DefaultKeyMapper
         }
     }
 
@@ -140,7 +140,7 @@ internal interface KeyMapping {
         val Escape: Key = Key(java.awt.event.KeyEvent.VK_ESCAPE)
     }
 
-    private object CommonKeyMapping {
+    private object CommonKeyMapper {
         fun map(event: KeyEvent, shortcutModifier: (KeyEvent) -> Boolean): Command? {
             return when {
                 shortcutModifier(event) && event.isShiftPressed ->
@@ -197,7 +197,7 @@ internal interface KeyMapping {
         }
     }
 
-    object DefaultKeyMapping : KeyMapping {
+    object DefaultKeyMapper : KeyMapper {
         override fun map(event: KeyEvent): Command? {
             return when {
                 event.isShiftPressed && event.isCtrlPressed ->
@@ -227,11 +227,11 @@ internal interface KeyMapping {
                         else -> null
                     }
                 else -> null
-            } ?: CommonKeyMapping.map(event, KeyEvent::isCtrlPressed)
+            } ?: CommonKeyMapper.map(event, KeyEvent::isCtrlPressed)
         }
     }
 
-    object MacOSKeyMapping : KeyMapping {
+    object MacOSKeyMapper : KeyMapper {
         override fun map(event: KeyEvent): Command? {
             return when {
                 event.isMetaPressed && event.isCtrlPressed ->
@@ -326,7 +326,7 @@ internal interface KeyMapping {
                         else -> null
                     }
                 else -> null
-            } ?: CommonKeyMapping.map(event, KeyEvent::isMetaPressed)
+            } ?: CommonKeyMapper.map(event, KeyEvent::isMetaPressed)
         }
     }
 }

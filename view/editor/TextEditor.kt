@@ -79,7 +79,6 @@ import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTime::class)
@@ -139,7 +138,7 @@ object TextEditor {
                 processor.insertText(event.awtEvent.keyChar.toString())
                 true
             } else if (event.type != KeyEventType.KeyDown) false
-            else KeyMapping.CURRENT.map(event)?.let { processor.process(it); true } ?: false
+            else KeyMapper.CURRENT.map(event)?.let { processor.process(it); true } ?: false
         }
     }
 
