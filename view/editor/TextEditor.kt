@@ -26,7 +26,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,7 +50,6 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -69,7 +67,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
@@ -77,10 +74,6 @@ import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconButton
-import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -106,12 +99,6 @@ object TextEditor {
     private const val DISABLED_CURSOR_OPACITY = 0.6f
     private val LINE_GAP = 2.dp
     private val AREA_PADDING_HOR = 6.dp
-    private val TOOLBAR_MAX_WIDTH = 500.dp
-    private val TOOLBAR_MIN_WIDTH = 260.dp
-    private val TOOLBAR_ROW_HEIGHT = 28.dp
-    private val TOOLBAR_BUTTON_AREA_WIDTH = 160.dp
-    private val TOOLBAR_BUTTON_HEIGHT = 24.dp
-    private val TOOLBAR_BUTTON_SPACING = 4.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
@@ -216,7 +203,7 @@ object TextEditor {
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Column {
-                if (state.showToolbar) Toolbar(state)
+                if (state.showToolbar) TextToolbar.Area(state.finder)
                 Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
@@ -233,92 +220,6 @@ object TextEditor {
         }
 
         LaunchedEffect(state) { state.focusReq.requestFocus() }
-    }
-
-    @Composable
-    private fun Toolbar(state: State) {
-        Column {
-            Finder(state)
-            if (state.finder.showReplacer) {
-                var inputTextWidth by remember { mutableStateOf(0.dp) }
-                ToolbarLineSeparator(inputTextWidth)
-                Replacer(state) { inputTextWidth = it }
-            }
-            Separator.Horizontal()
-        }
-    }
-
-    @Composable
-    private fun ToolbarLineSeparator(inputTextWidth: Dp) {
-        Spacer(Modifier.height(Separator.WEIGHT).width(inputTextWidth).background(Theme.colors.border))
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun Finder(state: State) {
-        Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
-            Box(Modifier.height(TOOLBAR_ROW_HEIGHT).weight(1f)) {
-                TextInput(
-                    value = state.finder.findText,
-                    placeholder = Label.FIND,
-                    onValueChange = { state.finder.findText = it },
-                    leadingIcon = Icon.Code.MAGNIFYING_GLASS,
-                    shape = null,
-                    border = null,
-                    // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
-                )
-                IconButton(
-                    Icon.Code.FONT_CASE,
-                    onClick = { state.finder.toggleCaseSensitive() },
-                    iconColor = if (state.finder.isCaseSensitive) Theme.colors.secondary else Theme.colors.icon,
-                    bgColor = Color.Transparent,
-                    rounded = false,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                )
-            }
-            Separator.Vertical()
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_BUTTON_AREA_WIDTH)
-            ) {
-                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
-                IconButton(Icon.Code.CHEVRON_DOWN, {}, bgColor = Color.Transparent, rounded = false)
-                IconButton(Icon.Code.CHEVRON_UP, {}, bgColor = Color.Transparent, rounded = false)
-                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
-                Text(
-                    value = state.finder.status,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun Replacer(state: State, onResizeInputText: (Dp) -> Unit) {
-        Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
-            TextInput(
-                value = state.finder.replaceText,
-                placeholder = Label.REPLACE,
-                onValueChange = { state.finder.replaceText = it },
-                leadingIcon = Icon.Code.RIGHT_LEFT,
-                shape = null,
-                border = null,
-                modifier = Modifier.weight(1f).onSizeChanged { onResizeInputText(toDP(it.width, state.density)) },
-                // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
-            )
-            Separator.Vertical()
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_BUTTON_AREA_WIDTH)
-            ) {
-                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
-                Form.TextButton(Label.REPLACE, {}, Modifier.height(TOOLBAR_BUTTON_HEIGHT))
-                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
-                Form.TextButton(Label.REPLACE_ALL, {}, Modifier.height(TOOLBAR_BUTTON_HEIGHT))
-            }
-        }
     }
 
     @Composable

@@ -32,6 +32,7 @@ internal class TextFinder(private val file: File, private val target: InputTarge
     internal var findText by mutableStateOf("")
     internal var replaceText by mutableStateOf("")
     internal var isCaseSensitive by mutableStateOf(false)
+    internal val density: Float get() = target.density
     internal val status: String get() = "11 / 23462" // TODO
 
     internal fun showFinder() {
