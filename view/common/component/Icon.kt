@@ -74,6 +74,7 @@ object Icon {
         PEN(0xf304u),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         RECTANGLE_CODE(0Xe322U),
+        RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
         TRASH_CAN(0xf2edu),

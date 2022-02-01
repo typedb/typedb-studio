@@ -195,12 +195,12 @@ object TextEditor {
             }
         }
 
-        private fun showFinder() {
+        internal fun showFinder() {
             showFinder = true
             showReplacer = false
         }
 
-        private fun showReplacer() {
+        internal fun showReplacer() {
             showReplacer = true
         }
 
@@ -303,7 +303,7 @@ object TextEditor {
                 value = "",
                 placeholder = Label.REPLACE,
                 onValueChange = {},
-                leadingIcon = Icon.Code.PEN,
+                leadingIcon = Icon.Code.RIGHT_LEFT,
                 shape = null,
                 border = null,
                 modifier = Modifier.weight(1f).onSizeChanged { onResizeInputText(toDP(it.width, state.density)) },
@@ -497,6 +497,14 @@ object TextEditor {
                 },
                 ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, "$modKey + V", hasClipboard) {
                     state.processor.paste()
+                }
+            ),
+            listOf(
+                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") {
+                    state.showFinder()
+                },
+                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") {
+                    state.showReplacer()
                 }
             ),
             listOf(
