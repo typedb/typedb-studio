@@ -23,6 +23,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
@@ -43,13 +44,16 @@ object Icon {
     enum class Code(
         hexcode: UShort,
         val defaultSize: TextUnit = ICON_DEFAULT_SIZE,
-        val offset: Offset = Offset(0.dp, 0.dp)
+        val offset: Offset = Offset(0.dp, 0.dp),
+        val rotate: Float = 0f,
     ) {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
+        BLOCK_QUOTE(0xe0b5u),
         CARET_DOWN(0xf0d7u),
         CARET_RIGHT(0xf0dau),
         CHEVRON_DOWN(0xf078u),
+        CHEVRON_UP(0xf077u),
         CHEVRON_RIGHT(0xf054u),
         CHEVRONS_DOWN(0xf322u),
         CHEVRONS_UP(0xf325u),
@@ -65,6 +69,7 @@ object Icon {
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
         LINK_SIMPLE(0xe1cdu),
+        MAGNIFYING_GLASS(0xf002u, rotate = 90f),
         PASTE(0xf0eau),
         PEN(0xf304u),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
@@ -93,7 +98,7 @@ object Icon {
             color = fadeable(color, !enabled),
             fontSize = size,
             fontFamily = FONT_AWESOME,
-            modifier = modifier.offset(icon.offset.x, icon.offset.y)
+            modifier = modifier.offset(icon.offset.x, icon.offset.y).rotate(icon.rotate)
         )
     }
 }

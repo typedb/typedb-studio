@@ -75,6 +75,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.Label
@@ -94,7 +95,7 @@ object Form {
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val CONTENT_PADDING = 8.dp
-    private val ICON_SPACING = 4.dp
+    private val ICON_SPACING = 6.dp
     internal val BORDER_WIDTH = 1.dp
     internal val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
     internal val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
@@ -145,6 +146,8 @@ object Form {
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = false,
         enabled: Boolean = true,
     ) {
         androidx.compose.material.Text(
@@ -152,6 +155,8 @@ object Form {
             style = style,
             color = fadeable(alpha?.let { color.copy(alpha = alpha) } ?: color, !enabled),
             modifier = modifier,
+            overflow = overflow,
+            softWrap = softWrap,
             textAlign = align,
         )
     }
@@ -294,8 +299,8 @@ object Form {
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         shape: Shape? = ROUNDED_RECTANGLE,
         border: Border? = DEFAULT_BORDER,
-        trailingIcon: (@Composable () -> Unit)? = null,
-        leadingIcon: (@Composable () -> Unit)? = null
+        trailingIcon: Icon.Code? = null,
+        leadingIcon: Icon.Code? = null
     ) {
         val mod = border?.let {
             modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
@@ -315,15 +320,18 @@ object Form {
             textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             decorationBox = { innerTextField ->
-                Row(modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
-                    leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
+                Row(Modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
+                    leadingIcon?.let {
+                        Icon.Render(icon = it)
+                        Spacer(Modifier.width(ICON_SPACING))
+                    }
                     Box(Modifier.height(FIELD_HEIGHT).weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
                     }
                     trailingIcon?.let {
                         Spacer(Modifier.width(ICON_SPACING))
-                        trailingIcon()
+                        Icon.Render(icon = it)
                     }
                 }
             },

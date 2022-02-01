@@ -21,12 +21,12 @@ package com.vaticle.typedb.studio.view.editor
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.isTypedEvent
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +52,7 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -69,6 +70,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
@@ -76,8 +78,11 @@ import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
+import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.IconButton
+import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
-import com.vaticle.typedb.studio.view.common.component.Icon.Code
+import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
@@ -102,6 +107,12 @@ object TextEditor {
     private const val DISABLED_CURSOR_OPACITY = 0.6f
     private val LINE_GAP = 2.dp
     private val AREA_PADDING_HOR = 6.dp
+    private val TOOLBAR_MAX_WIDTH = 500.dp
+    private val TOOLBAR_MIN_WIDTH = 260.dp
+    private val TOOLBAR_ROW_HEIGHT = 28.dp
+    private val TOOLBAR_BUTTON_AREA_WIDTH = 160.dp
+    private val TOOLBAR_BUTTON_HEIGHT = 24.dp
+    private val TOOLBAR_BUTTON_SPACING = 4.dp
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
@@ -171,8 +182,8 @@ object TextEditor {
 
         private fun process(command: WindowCommand): Boolean {
             when (command) {
-                WindowCommand.FIND -> showFinder = true
-                WindowCommand.REPLACE -> showReplacer = true
+                WindowCommand.FIND -> showFinder()
+                WindowCommand.REPLACE -> showReplacer()
                 WindowCommand.CLOSE -> onClose()
             }
             return true
@@ -182,6 +193,15 @@ object TextEditor {
             return when (command) {
                 GenericCommand.ESCAPE -> hideToolbar()
             }
+        }
+
+        private fun showFinder() {
+            showFinder = true
+            showReplacer = false
+        }
+
+        private fun showReplacer() {
+            showReplacer = true
         }
 
         private fun hideToolbar(): Boolean {
@@ -229,35 +249,76 @@ object TextEditor {
     private fun Toolbar(state: State) {
         Column {
             Finder(state)
-            if (state.showReplacer) Replacer(state)
+            if (state.showReplacer) {
+                var inputTextWidth by remember { mutableStateOf(0.dp) }
+                ToolbarLineSeparator(inputTextWidth)
+                Replacer(state) { inputTextWidth = it }
+            }
+            Separator.Horizontal()
         }
+    }
+
+    @Composable
+    private fun ToolbarLineSeparator(inputTextWidth: Dp) {
+        Spacer(Modifier.height(Separator.WEIGHT).width(inputTextWidth).background(Theme.colors.border))
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Finder(state: State) {
-        Row { // TODO
+        Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
             TextInput(
                 value = "",
                 placeholder = Label.FIND,
                 onValueChange = {},
+                leadingIcon = Icon.Code.MAGNIFYING_GLASS,
                 shape = null,
                 border = null,
+                modifier = Modifier.weight(1f),
+                // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
             )
+            Separator.Vertical()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_BUTTON_AREA_WIDTH)
+            ) {
+                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
+                IconButton(Icon.Code.CHEVRON_DOWN, {}, bgColor = Color.Transparent, rounded = false)
+                IconButton(Icon.Code.CHEVRON_UP, {}, bgColor = Color.Transparent, rounded = false)
+                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
+                Text(
+                    value = "11 / 23462",
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Replacer(state: State) {
-        Row { // TODO
+    private fun Replacer(state: State, onResizeInputText: (Dp) -> Unit) {
+        Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
             TextInput(
                 value = "",
                 placeholder = Label.REPLACE,
                 onValueChange = {},
+                leadingIcon = Icon.Code.PEN,
                 shape = null,
                 border = null,
+                modifier = Modifier.weight(1f).onSizeChanged { onResizeInputText(toDP(it.width, state.density)) },
+                // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
             )
+            Separator.Vertical()
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_BUTTON_AREA_WIDTH)
+            ) {
+                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
+                Form.TextButton(Label.REPLACE, {}, Modifier.height(TOOLBAR_BUTTON_HEIGHT))
+                Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
+                Form.TextButton(Label.REPLACE_ALL, {}, Modifier.height(TOOLBAR_BUTTON_HEIGHT))
+            }
         }
     }
 
@@ -428,13 +489,21 @@ object TextEditor {
         val hasClipboard = !state.processor.clipboard.getText().isNullOrBlank()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.CUT, Code.CUT, "$modKey + X", selection != null) { state.processor.cut() },
-                ContextMenu.Item(Label.COPY, Code.COPY, "$modKey + C", selection != null) { state.processor.copy() },
-                ContextMenu.Item(Label.PASTE, Code.PASTE, "$modKey + V", hasClipboard) { state.processor.paste() }
+                ContextMenu.Item(Label.CUT, Icon.Code.CUT, "$modKey + X", selection != null) {
+                    state.processor.cut()
+                },
+                ContextMenu.Item(Label.COPY, Icon.Code.COPY, "$modKey + C", selection != null) {
+                    state.processor.copy()
+                },
+                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, "$modKey + V", hasClipboard) {
+                    state.processor.paste()
+                }
             ),
             listOf(
-                ContextMenu.Item(Label.SAVE, Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Code.XMARK, "$modKey + W") { state.onClose() },
+                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") {
+                    state.onClose()
+                },
             )
         )
     }

@@ -129,7 +129,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     @OptIn(ExperimentalFoundationApi::class)
     private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
         return listOf(listOf(
-            ContextMenu.Item(Label.OPEN, Icon.Code.PEN) { GlobalState.page.open(itemState.item.asFile()) },
+            ContextMenu.Item(Label.OPEN, Icon.Code.BLOCK_QUOTE) { GlobalState.page.open(itemState.item.asFile()) },
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
         ))
     }

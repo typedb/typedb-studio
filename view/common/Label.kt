@@ -53,6 +53,7 @@ object Label {
     const val PROJECT = "Project"
     const val PROJECT_BROWSER = "Project Browser"
     const val REPLACE = "Replace"
+    const val REPLACE_ALL = "Replace All"
     const val ROLES = "Roles"
     const val RULES = "Rules"
     const val SAVE = "Save"
