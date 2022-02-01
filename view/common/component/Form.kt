@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -94,17 +95,18 @@ object Form {
     private val FIELD_HEIGHT = 28.dp
     private val CONTENT_PADDING = 8.dp
     private val ICON_SPACING = 4.dp
-    private val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
     internal val BORDER_WIDTH = 1.dp
+    internal val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
+    internal val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
     data class ButtonArgs(val icon: Icon.Code, val onClick: () -> Unit)
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
+    data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
 
     interface State {
-
         fun isValid(): Boolean
         fun trySubmit()
         fun trySubmitIfValid()
@@ -290,14 +292,17 @@ object Form {
         modifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+        shape: Shape? = ROUNDED_RECTANGLE,
+        border: Border? = DEFAULT_BORDER,
         trailingIcon: (@Composable () -> Unit)? = null,
         leadingIcon: (@Composable () -> Unit)? = null
     ) {
-        val borderBrush = SolidColor(fadeable(Theme.colors.border, !enabled))
+        val mod = border?.let {
+            modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
+        } ?: modifier
+
         BasicTextField(
-            modifier = modifier
-                .background(fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
-                .border(width = BORDER_WIDTH, brush = borderBrush, shape = ROUNDED_RECTANGLE)
+            modifier = mod.background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape)
                 .pointerHoverIcon(pointerHoverIcon)
                 .onPreviewKeyEvent { onKeyEvent(event = it, enabled = enabled) },
             value = value,

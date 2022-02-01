@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.editor
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,7 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -74,7 +76,7 @@ import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon.Code
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -235,7 +237,13 @@ object TextEditor {
     @Composable
     private fun Finder(state: State) {
         Row { // TODO
-            Form.TextInput(value = "", placeholder = Label.FIND, onValueChange = {})
+            TextInput(
+                value = "",
+                placeholder = Label.FIND,
+                onValueChange = {},
+                shape = null,
+                border = null,
+            )
         }
     }
 
@@ -243,7 +251,13 @@ object TextEditor {
     @Composable
     private fun Replacer(state: State) {
         Row { // TODO
-            Form.TextInput(value = "", placeholder = Label.REPLACE, onValueChange = {})
+            TextInput(
+                value = "",
+                placeholder = Label.REPLACE,
+                onValueChange = {},
+                shape = null,
+                border = null,
+            )
         }
     }
 
