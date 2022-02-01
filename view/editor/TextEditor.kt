@@ -125,7 +125,8 @@ object TextEditor {
         val rendering = TextRendering(file.content.size)
         val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor(file, rendering, target, clipboard)
-        return State(file, font, rendering, target, processor, onClose)
+        val finder = TextFinder(file, target)
+        return State(file, font, rendering, target, processor, finder, onClose)
     }
 
     class State internal constructor(
@@ -134,6 +135,7 @@ object TextEditor {
         internal val rendering: TextRendering,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
+        internal val finder: TextFinder,
         internal val onClose: () -> Unit,
     ) {
         internal val contextMenu = ContextMenu.State()
@@ -143,13 +145,11 @@ object TextEditor {
         internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
-        internal var showFinder by mutableStateOf(false)
-        internal var showReplacer by mutableStateOf(false)
         internal var showToolbar
-            get() = showFinder || showReplacer
+            get() = finder.showFinder || finder.showReplacer
             set(value) {
-                showFinder = value
-                showReplacer = value
+                finder.showFinder = value
+                finder.showReplacer = value
             }
         internal var density: Float
             get() = target.density
@@ -181,8 +181,8 @@ object TextEditor {
 
         private fun process(command: WindowCommand): Boolean {
             when (command) {
-                WindowCommand.FIND -> showFinder()
-                WindowCommand.REPLACE -> showReplacer()
+                WindowCommand.FIND -> finder.showFinder()
+                WindowCommand.REPLACE -> finder.showReplacer()
                 WindowCommand.CLOSE -> onClose()
             }
             return true
@@ -192,15 +192,6 @@ object TextEditor {
             return when (command) {
                 GenericCommand.ESCAPE -> hideToolbar()
             }
-        }
-
-        internal fun showFinder() {
-            showFinder = true
-            showReplacer = false
-        }
-
-        internal fun showReplacer() {
-            showReplacer = true
         }
 
         private fun hideToolbar(): Boolean {
@@ -248,7 +239,7 @@ object TextEditor {
     private fun Toolbar(state: State) {
         Column {
             Finder(state)
-            if (state.showReplacer) {
+            if (state.finder.showReplacer) {
                 var inputTextWidth by remember { mutableStateOf(0.dp) }
                 ToolbarLineSeparator(inputTextWidth)
                 Replacer(state) { inputTextWidth = it }
@@ -268,9 +259,9 @@ object TextEditor {
         Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
             Box(Modifier.height(TOOLBAR_ROW_HEIGHT).weight(1f)) {
                 TextInput(
-                    value = "",
+                    value = state.finder.findText,
                     placeholder = Label.FIND,
-                    onValueChange = {},
+                    onValueChange = { state.finder.findText = it },
                     leadingIcon = Icon.Code.MAGNIFYING_GLASS,
                     shape = null,
                     border = null,
@@ -278,8 +269,8 @@ object TextEditor {
                 )
                 IconButton(
                     Icon.Code.FONT_CASE,
-                    {},
-                    iconColor = fadeable(Theme.colors.icon, false),
+                    onClick = { state.finder.toggleCaseSensitive() },
+                    iconColor = if (state.finder.isCaseSensitive) Theme.colors.secondary else Theme.colors.icon,
                     bgColor = Color.Transparent,
                     rounded = false,
                     modifier = Modifier.align(Alignment.CenterEnd)
@@ -295,7 +286,7 @@ object TextEditor {
                 IconButton(Icon.Code.CHEVRON_UP, {}, bgColor = Color.Transparent, rounded = false)
                 Spacer(Modifier.width(TOOLBAR_BUTTON_SPACING))
                 Text(
-                    value = "11 / 23462",
+                    value = state.finder.status,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
@@ -308,9 +299,9 @@ object TextEditor {
     private fun Replacer(state: State, onResizeInputText: (Dp) -> Unit) {
         Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
             TextInput(
-                value = "",
+                value = state.finder.replaceText,
                 placeholder = Label.REPLACE,
-                onValueChange = {},
+                onValueChange = { state.finder.replaceText = it },
                 leadingIcon = Icon.Code.RIGHT_LEFT,
                 shape = null,
                 border = null,
@@ -508,8 +499,8 @@ object TextEditor {
                 }
             ),
             listOf(
-                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.showFinder() },
-                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.showReplacer() }
+                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.finder.showFinder() },
+                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.finder.showReplacer() }
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
