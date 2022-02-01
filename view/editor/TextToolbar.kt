@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -94,32 +95,37 @@ object TextToolbar {
                 rounded = false
             )
             Separator.Vertical()
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.height(ROW_HEIGHT).width(BUTTON_AREA_WIDTH)
-            ) {
-                Spacer(Modifier.width(BUTTON_SPACING))
-                Form.IconButton(
-                    Icon.Code.CHEVRON_DOWN,
-                    {},
-                    modifier = Modifier.size(ROW_HEIGHT),
-                    bgColor = Color.Transparent,
-                    rounded = false
-                )
-                Form.IconButton(
-                    Icon.Code.CHEVRON_UP,
-                    {},
-                    modifier = Modifier.size(ROW_HEIGHT),
-                    bgColor = Color.Transparent,
-                    rounded = false
-                )
-                Spacer(Modifier.width(BUTTON_SPACING))
-                Form.Text(
-                    value = state.status,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            FinderButtons(state)
+        }
+    }
+
+    @Composable
+    private fun FinderButtons(state: TextFinder) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(ROW_HEIGHT).width(BUTTON_AREA_WIDTH)
+        ) {
+            Spacer(Modifier.width(BUTTON_SPACING))
+            Form.IconButton(
+                icon = Icon.Code.CHEVRON_DOWN,
+                onClick = { state },
+                modifier = Modifier.size(ROW_HEIGHT),
+                bgColor = Color.Transparent,
+                rounded = false
+            )
+            Form.IconButton(
+                icon = Icon.Code.CHEVRON_UP,
+                onClick = { state },
+                modifier = Modifier.size(ROW_HEIGHT),
+                bgColor = Color.Transparent,
+                rounded = false
+            )
+            Spacer(Modifier.width(BUTTON_SPACING))
+            Form.Text(
+                value = state.status,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 
@@ -138,15 +144,20 @@ object TextToolbar {
                 // TODO: figure out how to set min width to MIN_WIDTH
             )
             Separator.Vertical()
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.height(ROW_HEIGHT).width(BUTTON_AREA_WIDTH)
-            ) {
-                Spacer(Modifier.width(BUTTON_SPACING))
-                Form.TextButton(Label.REPLACE, {}, Modifier.height(BUTTON_HEIGHT))
-                Spacer(Modifier.width(BUTTON_SPACING))
-                Form.TextButton(Label.REPLACE_ALL, {}, Modifier.height(BUTTON_HEIGHT))
-            }
+            ReplacerButton(state)
+        }
+    }
+
+    @Composable
+    private fun ReplacerButton(state: TextFinder) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.height(ROW_HEIGHT).width(BUTTON_AREA_WIDTH)
+        ) {
+            Spacer(Modifier.width(BUTTON_SPACING))
+            Form.TextButton(Label.REPLACE, { state }, Modifier.height(BUTTON_HEIGHT))
+            Spacer(Modifier.width(BUTTON_SPACING))
+            Form.TextButton(Label.REPLACE_ALL, { state }, Modifier.height(BUTTON_HEIGHT))
         }
     }
 }
