@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.isTypedEvent
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -267,16 +266,25 @@ object TextEditor {
     @Composable
     private fun Finder(state: State) {
         Row(Modifier.height(TOOLBAR_ROW_HEIGHT).width(TOOLBAR_MAX_WIDTH)) {
-            TextInput(
-                value = "",
-                placeholder = Label.FIND,
-                onValueChange = {},
-                leadingIcon = Icon.Code.MAGNIFYING_GLASS,
-                shape = null,
-                border = null,
-                modifier = Modifier.weight(1f),
-                // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
-            )
+            Box(Modifier.height(TOOLBAR_ROW_HEIGHT).weight(1f)) {
+                TextInput(
+                    value = "",
+                    placeholder = Label.FIND,
+                    onValueChange = {},
+                    leadingIcon = Icon.Code.MAGNIFYING_GLASS,
+                    shape = null,
+                    border = null,
+                    // TODO: figure out how to set min width to TOOLBAR_MIN_WIDTH
+                )
+                IconButton(
+                    Icon.Code.FONT_CASE,
+                    {},
+                    iconColor = fadeable(Theme.colors.icon, false),
+                    bgColor = Color.Transparent,
+                    rounded = false,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
+            }
             Separator.Vertical()
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -500,18 +508,12 @@ object TextEditor {
                 }
             ),
             listOf(
-                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") {
-                    state.showFinder()
-                },
-                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") {
-                    state.showReplacer()
-                }
+                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.showFinder() },
+                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.showReplacer() }
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") {
-                    state.onClose()
-                },
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.onClose() },
             )
         )
     }

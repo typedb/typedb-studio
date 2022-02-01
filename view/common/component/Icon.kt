@@ -68,6 +68,7 @@ object Icon {
         FOLDER_OPEN(0xf07cu),
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
+        FONT_CASE(0xf866u),
         LINK_SIMPLE(0xe1cdu),
         MAGNIFYING_GLASS(0xf002u, rotate = 90f),
         PASTE(0xf0eau),
