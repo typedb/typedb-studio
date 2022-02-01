@@ -24,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -73,6 +74,7 @@ import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
+import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon.Code
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -81,6 +83,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
+import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
+import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
@@ -107,8 +112,8 @@ object TextEditor {
         val clipboard = LocalClipboardManager.current
         val rendering = TextRendering(file.content.size)
         val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor(file, rendering, target, clipboard, onClose)
-        return State(file, font, rendering, target, processor)
+        val processor = TextProcessor(file, rendering, target, clipboard)
+        return State(file, font, rendering, target, processor, onClose)
     }
 
     class State internal constructor(
@@ -117,6 +122,7 @@ object TextEditor {
         internal val rendering: TextRendering,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
+        internal val onClose: () -> Unit,
     ) {
         internal val contextMenu = ContextMenu.State()
         internal val content: SnapshotStateList<String> get() = file.content
@@ -125,6 +131,14 @@ object TextEditor {
         internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
+        internal var showFinder by mutableStateOf(false)
+        internal var showReplacer by mutableStateOf(false)
+        internal var showToolbar
+            get() = showFinder || showReplacer
+            set(value) {
+                showFinder = value
+                showReplacer = value
+            }
         internal var density: Float
             get() = target.density
             set(value) {
@@ -139,12 +153,40 @@ object TextEditor {
             target.updateStatus()
         }
 
-        internal fun processKeyEvent(event: KeyEvent): Boolean {
-            return if (event.isTypedEvent) {
-                processor.insertText(event.awtEvent.keyChar.toString())
+        internal fun process(event: KeyEvent): Boolean {
+            return when {
+                event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
+                event.type != KeyEventType.KeyDown -> false
+                else -> KeyMapper.CURRENT.map(event)?.let {
+                    when (it) {
+                        is EditorCommand -> processor.process(it)
+                        is WindowCommand -> process(it)
+                        is GenericCommand -> processor.process(it) || process(it)
+                    }
+                } ?: false
+            }
+        }
+
+        private fun process(command: WindowCommand): Boolean {
+            when (command) {
+                WindowCommand.FIND -> showFinder = true
+                WindowCommand.REPLACE -> showReplacer = true
+                WindowCommand.CLOSE -> onClose()
+            }
+            return true
+        }
+
+        private fun process(command: GenericCommand): Boolean {
+            return when (command) {
+                GenericCommand.ESCAPE -> hideToolbar()
+            }
+        }
+
+        private fun hideToolbar(): Boolean {
+            return if (showToolbar) {
+                showToolbar = false
                 true
-            } else if (event.type != KeyEventType.KeyDown) false
-            else KeyMapper.CURRENT.map(event)?.let { processor.process(it); true } ?: false
+            } else false
         }
     }
 
@@ -161,21 +203,48 @@ object TextEditor {
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
-            Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
-                .focusRequester(state.focusReq).focusable()
-                .onGloballyPositioned { state.density = density }
-                .onKeyEvent { state.processKeyEvent(it) }
-                .onPointerEvent(Move) { state.target.mayUpdateDragSelection(it.awtEvent.x, it.awtEvent.y) }
-                .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
-                .pointerInput(state) { onPointerInput(state) }
-            ) {
-                LineNumberArea(state, lineNumberFont, fontWidth)
-                Separator.Vertical()
-                TextArea(state, textFont, fontWidth)
+            Column {
+                if (state.showToolbar) Toolbar(state)
+                Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
+                    .focusRequester(state.focusReq).focusable()
+                    .onGloballyPositioned { state.density = density }
+                    .onKeyEvent { state.process(it) }
+                    .onPointerEvent(Move) { state.target.mayUpdateDragSelection(it.awtEvent.x, it.awtEvent.y) }
+                    .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
+                    .pointerInput(state) { onPointerInput(state) }
+                ) {
+                    LineNumberArea(state, lineNumberFont, fontWidth)
+                    Separator.Vertical()
+                    TextArea(state, textFont, fontWidth)
+                }
             }
         }
 
         LaunchedEffect(state) { state.focusReq.requestFocus() }
+    }
+
+    @Composable
+    private fun Toolbar(state: State) {
+        Column {
+            Finder(state)
+            if (state.showReplacer) Replacer(state)
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun Finder(state: State) {
+        Row { // TODO
+            Form.TextInput(value = "", placeholder = Label.FIND, onValueChange = {})
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun Replacer(state: State) {
+        Row { // TODO
+            Form.TextInput(value = "", placeholder = Label.REPLACE, onValueChange = {})
+        }
     }
 
     @Composable
@@ -351,7 +420,7 @@ object TextEditor {
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Code.XMARK, "$modKey + W") { state.processor.onClose() },
+                ContextMenu.Item(Label.CLOSE, Code.XMARK, "$modKey + W") { state.onClose() },
             )
         )
     }

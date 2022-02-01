@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -313,7 +312,7 @@ object Form {
             decorationBox = { innerTextField ->
                 Row(modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let { leadingIcon(); Spacer(Modifier.width(ICON_SPACING)) }
-                    Box(Modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Box(Modifier.height(FIELD_HEIGHT).weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
                     }
