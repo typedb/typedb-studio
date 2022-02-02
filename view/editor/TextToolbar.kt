@@ -215,23 +215,38 @@ object TextToolbar {
     private fun FinderButtons(state: State) {
         Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
-                FinderButton(Icon.Code.CHEVRON_DOWN, { state.findNext() })
-                FinderButton(Icon.Code.CHEVRON_UP, { state.findPrevious() })
-            }
+            FinderNextPreviousButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
-            Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
-                FinderButton(Icon.Code.FONT_CASE, { state.toggleCaseSensitive() }, state.isCaseSensitive)
-                FinderButton(Icon.Code.LETTER_W, { state.toggleWord() }, state.isWord)
-                FinderButton(Icon.Code.ASTERISK, { state.toggleRegex() }, state.isRegex)
-            }
+            FinderParameterButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
-            Form.Text(
-                value = state.finder.status,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.height(BUTTON_HEIGHT).weight(1f)
-            )
+            FinderStatus(state, Modifier.height(BUTTON_HEIGHT).weight(1f))
         }
+    }
+
+    @Composable
+    private fun FinderNextPreviousButtons(state: State) {
+        Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+            FinderButton(Icon.Code.CHEVRON_DOWN, { state.findNext() })
+            FinderButton(Icon.Code.CHEVRON_UP, { state.findPrevious() })
+        }
+    }
+
+    @Composable
+    private fun FinderParameterButtons(state: State) {
+        Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+            FinderButton(Icon.Code.FONT_CASE, { state.toggleCaseSensitive() }, state.isCaseSensitive)
+            FinderButton(Icon.Code.LETTER_W, { state.toggleWord() }, state.isWord)
+            FinderButton(Icon.Code.ASTERISK, { state.toggleRegex() }, state.isRegex)
+        }
+    }
+
+    @Composable
+    private fun FinderStatus(state: State, modifier: Modifier) {
+        Form.Text(
+            value = state.finder.status,
+            overflow = TextOverflow.Ellipsis,
+            modifier = modifier
+        )
     }
 
     @Composable
@@ -248,26 +263,17 @@ object TextToolbar {
     private fun ReplacerButtons(state: State) {
         Row(verticalAlignment = Alignment.Top, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplaceNextButton(state)
+            ReplacerButton(Label.REPLACE) { state.replaceNext() }
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplaceAllButton(state)
+            ReplacerButton(Label.REPLACE_ALL) { state.replaceAll() }
         }
     }
 
     @Composable
-    private fun ReplaceNextButton(state: State) {
+    private fun ReplacerButton(text: String, onClick: () -> Unit) {
         Form.TextButton(
-            text = Label.REPLACE,
-            onClick = { state.replaceNext() },
-            modifier = Modifier.height(BUTTON_HEIGHT)
-        )
-    }
-
-    @Composable
-    private fun ReplaceAllButton(state: State) {
-        Form.TextButton(
-            text = Label.REPLACE_ALL,
-            onClick = { state.replaceAll() },
+            text = text,
+            onClick = onClick,
             modifier = Modifier.height(BUTTON_HEIGHT)
         )
     }
