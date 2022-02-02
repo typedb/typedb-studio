@@ -18,35 +18,33 @@
 
 package com.vaticle.typedb.studio.view.editor
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.project.File
 
-internal class TextFinder(private val file: File, private val target: InputTarget) {
+internal class TextFinder(val file: File) {
 
-    internal val content: SnapshotStateList<String> get() = file.content
-    internal var showFinder by mutableStateOf(false)
-    internal var showReplacer by mutableStateOf(false)
-    internal var findText by mutableStateOf("")
-    internal var replaceText by mutableStateOf("")
-    internal var isCaseSensitive by mutableStateOf(false)
-    internal val density: Float get() = target.density
     internal val status: String get() = "11 / 23462" // TODO
 
-    internal fun showFinder() {
-        showFinder = true
-        showReplacer = false
-        if (target.selection != null) findText = target.selectedText()
+    internal fun findText(text: String, isCaseSensitive: Boolean) {
+        // TODO
     }
 
-    internal fun showReplacer() {
-        showReplacer = true
-        if (target.selection != null) findText = target.selectedText()
+    internal fun findRegex(regex: Regex, isCaseSensitive: Boolean) {
+        // TODO
     }
 
-    fun toggleCaseSensitive() {
-        isCaseSensitive = !isCaseSensitive
+    internal fun findNext() {
+        // TODO
+    }
+
+    internal fun findPrevious() {
+        // TODO
+    }
+
+    internal fun replaceNext(text: String) {
+        // TODO
+    }
+
+    internal fun replaceAll(text: String) {
+        // TODO
     }
 }

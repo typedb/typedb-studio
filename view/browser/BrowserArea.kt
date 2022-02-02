@@ -52,7 +52,6 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object BrowserArea {
 
-    const val ID = "BROWSER_AREA"
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
     private val SIDE_TAB_WIDTH = 22.dp

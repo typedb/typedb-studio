@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,7 +102,7 @@ object ProjectDialog {
                     value = formState.directory ?: "",
                     placeholder = Label.PATH_TO_PROJECT,
                     onValueChange = { formState.directory = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxHeight().weight(1f),
                 )
                 ComponentSpacer()
                 IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState) })

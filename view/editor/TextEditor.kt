@@ -112,8 +112,9 @@ object TextEditor {
         val rendering = TextRendering(file.content.size)
         val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor(file, rendering, target, clipboard)
-        val finder = TextFinder(file, target)
-        return State(file, font, rendering, target, processor, finder, onClose)
+        val finder = TextFinder(file)
+        val toolbar = TextToolbar.State(target, finder)
+        return State(file, font, rendering, target, processor, toolbar, onClose)
     }
 
     class State internal constructor(
@@ -122,7 +123,7 @@ object TextEditor {
         internal val rendering: TextRendering,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
-        internal val finder: TextFinder,
+        internal val toolbar: TextToolbar.State,
         internal val onClose: () -> Unit,
     ) {
         internal val contextMenu = ContextMenu.State()
@@ -133,10 +134,10 @@ object TextEditor {
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal var showToolbar
-            get() = finder.showFinder || finder.showReplacer
+            get() = toolbar.showFinder || toolbar.showReplacer
             set(value) {
-                finder.showFinder = value
-                finder.showReplacer = value
+                toolbar.showFinder = value
+                toolbar.showReplacer = value
             }
         internal var density: Float
             get() = target.density
@@ -168,8 +169,8 @@ object TextEditor {
 
         private fun process(command: WindowCommand): Boolean {
             when (command) {
-                WindowCommand.FIND -> finder.showFinder()
-                WindowCommand.REPLACE -> finder.showReplacer()
+                WindowCommand.FIND -> toolbar.showFinder()
+                WindowCommand.REPLACE -> toolbar.showReplacer()
                 WindowCommand.CLOSE -> onClose()
             }
             return true
@@ -203,7 +204,7 @@ object TextEditor {
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Column {
-                if (state.showToolbar) TextToolbar.Area(state.finder)
+                if (state.showToolbar) TextToolbar.Area(state.toolbar)
                 Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
@@ -400,8 +401,8 @@ object TextEditor {
                 }
             ),
             listOf(
-                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.finder.showFinder() },
-                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.finder.showReplacer() }
+                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.toolbar.showFinder() },
+                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.toolbar.showReplacer() }
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO

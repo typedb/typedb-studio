@@ -71,6 +71,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -117,7 +118,7 @@ object Form {
     fun Field(label: String, fieldInput: @Composable () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(value = label, modifier = LABEL_MODIFIER)
-            Column(modifier = INPUT_MODIFIER) { fieldInput() }
+            Box(modifier = INPUT_MODIFIER) { fieldInput() }
         }
     }
 
@@ -289,7 +290,6 @@ object Form {
         value: String,
         placeholder: String,
         onValueChange: (String) -> Unit,
-        maxLines: Int = 1,
         singleLine: Boolean = true,
         readOnly: Boolean = false,
         enabled: Boolean = true,
@@ -297,6 +297,7 @@ object Form {
         modifier: Modifier = Modifier,
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_RECTANGLE,
         border: Border? = DEFAULT_BORDER,
         trailingIcon: Icon.Code? = null,
@@ -314,18 +315,18 @@ object Form {
             onValueChange = onValueChange,
             readOnly = readOnly,
             singleLine = singleLine,
-            maxLines = maxLines,
             enabled = enabled,
             cursorBrush = SolidColor(Theme.colors.secondary),
             textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            onTextLayout = onTextLayout,
             decorationBox = { innerTextField ->
                 Row(Modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let {
                         Icon.Render(icon = it)
                         Spacer(Modifier.width(ICON_SPACING))
                     }
-                    Box(Modifier.height(FIELD_HEIGHT).weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
                     }

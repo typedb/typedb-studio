@@ -111,12 +111,12 @@ object Studio {
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
                     Frame.Pane(
-                        id = BrowserArea.ID,
+                        id = BrowserArea.javaClass.name,
                         initSize = Either.first(BrowserArea.WIDTH),
                         minSize = BrowserArea.MIN_WIDTH
                     ) { BrowserArea.Layout(it) },
                     Frame.Pane(
-                        id = PageArea.ID,
+                        id = PageArea.javaClass.name,
                         initSize = Either.second(1f),
                         minSize = PageArea.MIN_WIDTH
                     ) { PageArea.Area() }
