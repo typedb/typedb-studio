@@ -49,6 +49,7 @@ object Icon {
     ) {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
+        ASTERISK(0x2au),
         BLOCK_QUOTE(0xe0b5u),
         CARET_DOWN(0xf0d7u),
         CARET_RIGHT(0xf0dau),
@@ -69,6 +70,7 @@ object Icon {
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
         FONT_CASE(0xf866u),
+        LETTER_W(0x57u),
         LINK_SIMPLE(0xe1cdu),
         MAGNIFYING_GLASS(0xf002u, rotate = 90f),
         PASTE(0xf0eau),

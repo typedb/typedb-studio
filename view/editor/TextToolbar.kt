@@ -18,12 +18,12 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -48,6 +48,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
 object TextToolbar {
@@ -56,8 +57,8 @@ object TextToolbar {
     private val INPUT_MIN_WIDTH = 300.dp
     private val INPUT_MIN_HEIGHT = 28.dp
     private val INPUT_MAX_HEIGHT = 120.dp
-    private val BUTTON_AREA_WIDTH = 160.dp
-    private val BUTTON_HEIGHT = 24.dp
+    private val BUTTON_AREA_WIDTH = 220.dp
+    private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
 
     internal class State(private val target: InputTarget, val finder: TextFinder) {
@@ -69,8 +70,8 @@ object TextToolbar {
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal var findTextInputWidth by mutableStateOf(0.dp)
         internal var replaceText by mutableStateOf("")
-        internal val isRegex by mutableStateOf(false)
-        internal val isWord by mutableStateOf(false)
+        internal var isRegex by mutableStateOf(false)
+        internal var isWord by mutableStateOf(false)
         internal var isCaseSensitive by mutableStateOf(false)
         internal val density: Float get() = target.density
 
@@ -106,6 +107,16 @@ object TextToolbar {
 
         internal fun toggleCaseSensitive() {
             isCaseSensitive = !isCaseSensitive
+        }
+
+        internal fun toggleWord() {
+            isWord = !isWord
+            if (isWord) isRegex = false
+        }
+
+        internal fun toggleRegex() {
+            isRegex = !isRegex
+            if (isRegex) isWord = false
         }
 
         internal fun findText(text: String) {
@@ -191,79 +202,51 @@ object TextToolbar {
 
     @Composable
     private fun Buttons(state: State) {
-        Row(modifier = Modifier.offset(x = -INPUT_MIN_HEIGHT - Separator.WEIGHT)) {
-            FinderToggles(state)
-            Separator.Vertical()
+        Row {
             Column(Modifier.width(BUTTON_AREA_WIDTH)) {
                 FinderButtons(state)
+                Separator.Horizontal(height = 3.dp, color = Color.Transparent)
                 ReplacerButtons(state)
             }
         }
     }
 
     @Composable
-    private fun FinderToggles(state: State) {
-        Form.IconButton(
-            Icon.Code.FONT_CASE,
-            onClick = { state.toggleCaseSensitive() },
-            modifier = Modifier.size(INPUT_MIN_HEIGHT),
-            iconColor = if (state.isCaseSensitive) Theme.colors.secondary else Theme.colors.icon,
-            bgColor = Theme.colors.surface,
-            rounded = false
-        )
-    }
-
-    @Composable
     private fun FinderButtons(state: State) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.height(INPUT_MIN_HEIGHT)
-        ) {
+        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            FindNextButton(state)
-            FindPreviousButton(state)
+            Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+                FinderButton(Icon.Code.CHEVRON_DOWN, { state.findNext() })
+                FinderButton(Icon.Code.CHEVRON_UP, { state.findPrevious() })
+            }
             Spacer(Modifier.width(BUTTON_SPACING))
-            FinderStatus(state, Modifier.weight(1f))
+            Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+                FinderButton(Icon.Code.FONT_CASE, { state.toggleCaseSensitive() }, state.isCaseSensitive)
+                FinderButton(Icon.Code.LETTER_W, { state.toggleWord() }, state.isWord)
+                FinderButton(Icon.Code.ASTERISK, { state.toggleRegex() }, state.isRegex)
+            }
+            Spacer(Modifier.width(BUTTON_SPACING))
+            Form.Text(
+                value = state.finder.status,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.height(BUTTON_HEIGHT).weight(1f)
+            )
         }
     }
 
     @Composable
-    private fun FinderStatus(state: State, modifier: Modifier) {
-        Form.Text(
-            value = state.finder.status,
-            overflow = TextOverflow.Ellipsis,
-            modifier = modifier
-        )
-    }
-
-    @Composable
-    private fun FindNextButton(state: State) {
+    private fun FinderButton(icon: Icon.Code, onClick: () -> Unit, isActive: Boolean = false) {
         Form.IconButton(
-            icon = Icon.Code.CHEVRON_DOWN,
-            onClick = { state.findNext() },
-            modifier = Modifier.size(INPUT_MIN_HEIGHT),
-            bgColor = Color.Transparent,
-            rounded = false
-        )
-    }
-
-    @Composable
-    private fun FindPreviousButton(state: State) {
-        Form.IconButton(
-            icon = Icon.Code.CHEVRON_UP,
-            onClick = { state.findPrevious() },
-            modifier = Modifier.size(INPUT_MIN_HEIGHT),
-            bgColor = Color.Transparent,
-            rounded = false
+            icon = icon,
+            onClick = onClick,
+            modifier = Modifier.size(BUTTON_HEIGHT),
+            iconColor = if (isActive) Theme.colors.secondary else Theme.colors.icon
         )
     }
 
     @Composable
     private fun ReplacerButtons(state: State) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = Modifier.height(INPUT_MIN_HEIGHT)
-        ) {
+        Row(verticalAlignment = Alignment.Top, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
             Spacer(Modifier.width(BUTTON_SPACING))
             ReplaceNextButton(state)
             Spacer(Modifier.width(BUTTON_SPACING))

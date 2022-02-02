@@ -83,6 +83,9 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
+import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_RADIUS
+import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
@@ -98,8 +101,7 @@ object Form {
     private val CONTENT_PADDING = 8.dp
     private val ICON_SPACING = 6.dp
     internal val BORDER_WIDTH = 1.dp
-    internal val ROUNDED_RECTANGLE = RoundedCornerShape(Theme.ROUNDED_CORNER_SIZE)
-    internal val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
+    private val DEFAULT_BORDER = Border(BORDER_WIDTH, RECTANGLE_ROUNDED_ALL)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
@@ -230,7 +232,7 @@ object Form {
     ) {
         val hoverIndication = when {
             rounded -> roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
-            else -> Theme.rectangleIndication(Theme.colors.indicationBase)
+            else -> rectangleIndication(Theme.colors.indicationBase)
         }
         CompositionLocalProvider(
             LocalIndication provides hoverIndication
@@ -239,7 +241,7 @@ object Form {
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .height(FIELD_HEIGHT)
-                    .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
+                    .background(fadeable(color, !enabled), if (rounded) RECTANGLE_ROUNDED_ALL else RectangleShape)
                     .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     .clickable(enabled = enabled) { onClick() }
                     .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
@@ -298,7 +300,7 @@ object Form {
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-        shape: Shape? = ROUNDED_RECTANGLE,
+        shape: Shape? = RECTANGLE_ROUNDED_ALL,
         border: Border? = DEFAULT_BORDER,
         trailingIcon: Icon.Code? = null,
         leadingIcon: Icon.Code? = null
@@ -351,7 +353,7 @@ object Form {
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
                 .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE)
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), RECTANGLE_ROUNDED_ALL)
                 .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
             enabled = enabled,
             colors = CheckboxDefaults.colors(

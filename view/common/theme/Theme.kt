@@ -28,7 +28,6 @@ import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -41,6 +40,8 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -48,12 +49,12 @@ import kotlin.math.roundToInt
 
 object Theme {
 
-    const val ROUNDED_CORNER_RADIUS = 4f
-    const val SELECTION_ALPHA = 0.35f
-    const val INDICATION_HOVER_ALPHA = 0.1f
     val SCROLLBAR_LONG_PADDING = 4.dp
     val SCROLLBAR_END_PADDING = 6.dp
-    val ROUNDED_CORNER_SIZE = CornerSize(ROUNDED_CORNER_RADIUS.dp)
+    val ROUNDED_CORNER_RADIUS = 4.dp
+    val RECTANGLE_ROUNDED_ALL = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+    const val SELECTION_ALPHA = 0.35f
+    const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.25f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
@@ -112,7 +113,24 @@ object Theme {
         )
 
     private fun roundedCornerRadius(density: Float): CornerRadius {
-        return CornerRadius(x = ROUNDED_CORNER_RADIUS * density, y = ROUNDED_CORNER_RADIUS * density)
+        return CornerRadius(x = ROUNDED_CORNER_RADIUS.value * density, y = ROUNDED_CORNER_RADIUS.value * density)
+    }
+
+    fun leftRoundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
+        return rawIndication { isPressed, isHovered, isFocused ->
+            if (isHovered.value || isFocused.value) {
+                drawRect(
+                    topLeft = Offset(size.width / 2, 0f),
+                    color = color.copy(INDICATION_HOVER_ALPHA),
+                    size = Size(size.width / 2, size.height)
+                )
+                drawRoundRect(
+                    color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
+                )
+            } else if (isPressed.value) drawRoundRect(
+                color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
+            )
+        }
     }
 
     fun roundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
@@ -127,8 +145,8 @@ object Theme {
 
     fun rectangleIndication(color: androidx.compose.ui.graphics.Color): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
-            if (isHovered.value || isFocused.value) drawRect(color = color.copy(0.1f), size = size)
-            else if (isPressed.value) drawRect(color = color.copy(0.25f), size = size)
+            if (isHovered.value || isFocused.value) drawRect(color = color.copy(INDICATION_HOVER_ALPHA), size = size)
+            else if (isPressed.value) drawRect(color = color.copy(INDICATION_PRESSED_ALPHA), size = size)
         }
     }
 

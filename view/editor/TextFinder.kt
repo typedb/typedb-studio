@@ -22,7 +22,7 @@ import com.vaticle.typedb.studio.state.project.File
 
 internal class TextFinder(val file: File) {
 
-    internal val status: String get() = "11 / 23462" // TODO
+    internal val status: String get() = "(11 / 23462)" // TODO
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
         // TODO
