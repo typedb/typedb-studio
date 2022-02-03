@@ -94,6 +94,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 object Form {
 
@@ -351,14 +354,51 @@ object Form {
         )
     }
 
-    class MultilineTextInputState() {
-        val horScroller: ScrollState = ScrollState(0)
+    @Composable
+    private fun rememberMultilineTextInputState(): MultilineTextInputState {
+        val density = LocalDensity.current.density
+        return remember { MultilineTextInputState(density) }
+    }
+
+    class MultilineTextInputState(initDensity: Float) {
+
+        internal var value by mutableStateOf(TextFieldValue(""))
+        internal var layout: TextLayoutResult? by mutableStateOf(null)
+        internal var density by mutableStateOf(initDensity)
+        internal var boxWidth by mutableStateOf(0.dp)
+        internal val horScroller: ScrollState = ScrollState(0)
+        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+        internal fun updateValue(newValue: TextFieldValue) {
+            val oldText = value.text
+            value = newValue
+            if (oldText == newValue.text) mayScrollHorizontally()
+            // else, text have changed and updateLayout() will be called
+        }
+
+        internal fun updateLayout(newLayout: TextLayoutResult) {
+            layout = newLayout
+            mayScrollHorizontally()
+        }
+
+        private fun mayScrollHorizontally() {
+            val cursorOffset = toDP(layout?.getCursorRect(value.selection.end)?.left ?: 0f, density)
+            val scrollOffset = toDP(horScroller.value, density)
+            val viewPadding = MULTILINE_INPUT_PADDING * 2
+            if (boxWidth + scrollOffset - viewPadding < cursorOffset) {
+                val scrollTo = (cursorOffset - boxWidth + viewPadding).value.toInt()
+                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+            } else if (scrollOffset + viewPadding > cursorOffset) {
+                val scrollTo = (cursorOffset - viewPadding).value.toInt()
+                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+            }
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun MultilineTextInput(
-        state: MultilineTextInputState = remember { MultilineTextInputState() },
+        state: MultilineTextInputState = rememberMultilineTextInputState(),
         text: String,
         modifier: Modifier,
         icon: Icon.Code? = null,
@@ -366,34 +406,35 @@ object Form {
         onValueChange: (String) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
     ) {
+        val density = LocalDensity.current.density
         Row(
             verticalAlignment = Alignment.Top,
             modifier = modifier.fillMaxWidth()
                 .background(Theme.colors.surface)
+                .onSizeChanged { state.density = density }
                 .onPointerEvent(PointerEventType.Press) { focusRequester.requestFocus() }
         ) {
-            var valueState by remember { mutableStateOf(TextFieldValue(text)) }
-            val value = valueState.copy(text)
-
             icon?.let {
                 Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
             } ?: Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
-            Box(
-                modifier = Modifier.fillMaxHeight().weight(1f)
-                    .padding(vertical = MULTILINE_INPUT_PADDING)
-                    .horizontalScroll(state.horScroller)
-            ) {
-                Row(Modifier.align(alignment = Alignment.CenterStart)) {
-                    BasicTextField(
-                        value = value,
-                        onValueChange = { valueState = it; onValueChange(it.text) },
-                        onTextLayout = onTextLayout,
-                        cursorBrush = SolidColor(Theme.colors.secondary),
-                        textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
-                        modifier = Modifier.focusRequester(focusRequester)
-                            .defaultMinSize(minWidth = MULTILINE_INPUT_MIN_WIDTH)
-                    )
-                    Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+            Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
+                Box(
+                    modifier = Modifier.fillMaxHeight()
+                        .padding(vertical = MULTILINE_INPUT_PADDING)
+                        .horizontalScroll(state.horScroller)
+                ) {
+                    Row(Modifier.align(alignment = Alignment.CenterStart)) {
+                        BasicTextField(
+                            value = state.value.copy(text),
+                            onValueChange = { state.updateValue(it); onValueChange(it.text) },
+                            onTextLayout = { state.updateLayout(it); onTextLayout(it) },
+                            cursorBrush = SolidColor(Theme.colors.secondary),
+                            textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
+                            modifier = Modifier.focusRequester(focusRequester)
+                                .defaultMinSize(minWidth = MULTILINE_INPUT_MIN_WIDTH)
+                        )
+                        Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+                    }
                 }
             }
         }

@@ -40,7 +40,7 @@ import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal class InputTarget(
+internal class InputTarget constructor(
     private val file: File,
     internal val lineHeight: Dp,
     private val horPadding: Dp,
