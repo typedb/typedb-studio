@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -93,8 +93,8 @@ object TextToolbar {
         }
 
         internal fun toolBarHeight(): Dp {
-            var height = Separator.WEIGHT + finderInputHeight()
-            if (showReplacer) height += replacerInputHeight()
+            var height = finderInputHeight()
+            if (showReplacer) height += replacerInputHeight() + Separator.WEIGHT
             return height
         }
 
@@ -178,9 +178,13 @@ object TextToolbar {
                 }
                 Separator.Vertical()
                 Column(Modifier.width(BUTTON_AREA_WIDTH)) {
+                    Spacer(Modifier.weight(1f))
                     FinderButtons(state)
-                    Separator.Horizontal(height = 3.dp, color = Color.Transparent)
-                    ReplacerButtons(state)
+                    Spacer(Modifier.weight(1f))
+                    if (state.showReplacer) {
+                        ReplacerButtons(state)
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -217,13 +221,13 @@ object TextToolbar {
 
     @Composable
     private fun FinderButtons(state: State) {
-        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
+        Row(Modifier.height(BUTTON_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(BUTTON_SPACING))
             FinderNextPreviousButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
             FinderParameterButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
-            FinderStatus(state, Modifier.height(BUTTON_HEIGHT).weight(1f))
+            FinderStatus(state, Modifier.weight(1f))
         }
     }
 
@@ -265,7 +269,7 @@ object TextToolbar {
 
     @Composable
     private fun ReplacerButtons(state: State) {
-        Row(verticalAlignment = Alignment.Top, modifier = Modifier.height(INPUT_MIN_HEIGHT - 1.dp)) {
+        Row(Modifier.height(BUTTON_HEIGHT)) {
             Spacer(Modifier.width(BUTTON_SPACING))
             ReplacerButton(Label.REPLACE) { state.replaceNext() }
             Spacer(Modifier.width(BUTTON_SPACING))
