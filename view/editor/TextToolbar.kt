@@ -158,7 +158,7 @@ object TextToolbar {
     }
 
     @Composable
-    internal fun Area(state: State) {
+    internal fun Area(state: State, modifier: Modifier = Modifier) {
         val findTextFocusReq = FocusRequester()
         Box {
             // We render a character to find out the default height of a line for the given font
@@ -168,7 +168,7 @@ object TextToolbar {
                 onTextLayout = { state.lineHeight = Theme.toDP(it.size.height, state.density) }
             )
             // TODO: figure out how to set min width to MIN_WIDTH
-            Row(modifier = Modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolBarHeight())) {
+            Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolBarHeight())) {
                 Column(Modifier.weight(1f)) {
                     FinderTextInput(state, findTextFocusReq)
                     if (state.showReplacer) {

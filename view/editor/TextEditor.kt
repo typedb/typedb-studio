@@ -53,6 +53,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
@@ -153,7 +154,7 @@ object TextEditor {
             target.updateStatus()
         }
 
-        internal fun process(event: KeyEvent): Boolean {
+        internal fun handleEditorEvent(event: KeyEvent): Boolean {
             return when {
                 event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
                 event.type != KeyEventType.KeyDown -> false
@@ -165,6 +166,16 @@ object TextEditor {
                     }
                 } ?: false
             }
+        }
+
+        internal fun handleToolbarEvent(event: KeyEvent): Boolean {
+            return KeyMapper.CURRENT.map(event)?.let {
+                when (it) {
+                    is WindowCommand -> process(it)
+                    is GenericCommand -> process(it)
+                    else -> false
+                }
+            } ?: false
         }
 
         private fun process(command: WindowCommand): Boolean {
@@ -204,11 +215,13 @@ object TextEditor {
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Column {
-                if (state.showToolbar) TextToolbar.Area(state.toolbar)
+                if (state.showToolbar) {
+                    TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handleToolbarEvent(it) })
+                }
                 Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
-                    .onKeyEvent { state.process(it) }
+                    .onKeyEvent { state.handleEditorEvent(it) }
                     .onPointerEvent(Move) { state.target.mayUpdateDragSelection(it.awtEvent.x, it.awtEvent.y) }
                     .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
@@ -220,7 +233,10 @@ object TextEditor {
             }
         }
 
-        LaunchedEffect(state) { state.focusReq.requestFocus() }
+        LaunchedEffect(state, state.showToolbar) {
+            if (!state.showToolbar) state.focusReq.requestFocus()
+            else state.isFocused = false
+        }
     }
 
     @Composable

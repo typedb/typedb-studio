@@ -412,6 +412,7 @@ object Form {
             modifier = modifier.fillMaxWidth()
                 .background(Theme.colors.surface)
                 .onSizeChanged { state.density = density }
+                .pointerHoverIcon(PointerIconDefaults.Text)
                 .onPointerEvent(PointerEventType.Press) { focusRequester.requestFocus() }
         ) {
             icon?.let {
