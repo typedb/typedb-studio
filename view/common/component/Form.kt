@@ -399,11 +399,11 @@ object Form {
     @Composable
     fun MultilineTextInput(
         state: MultilineTextInputState = rememberMultilineTextInputState(),
-        text: String,
+        value: TextFieldValue,
         modifier: Modifier,
         icon: Icon.Code? = null,
         focusRequester: FocusRequester = FocusRequester(),
-        onValueChange: (String) -> Unit,
+        onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
     ) {
         val density = LocalDensity.current.density
@@ -426,8 +426,8 @@ object Form {
                 ) {
                     Row(Modifier.align(alignment = Alignment.CenterStart)) {
                         BasicTextField(
-                            value = state.value.copy(text),
-                            onValueChange = { state.updateValue(it); onValueChange(it.text) },
+                            value = value,
+                            onValueChange = { state.updateValue(it); onValueChange(it) },
                             onTextLayout = { state.updateLayout(it); onTextLayout(it) },
                             cursorBrush = SolidColor(Theme.colors.secondary),
                             textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),

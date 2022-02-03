@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,6 +38,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
@@ -70,11 +70,11 @@ object TextToolbar {
         internal var lineHeight by mutableStateOf(0.dp)
         internal var showFinder by mutableStateOf(false)
         internal var showReplacer by mutableStateOf(false)
-        internal var findText by mutableStateOf("")
+        internal var findText by mutableStateOf(TextFieldValue(""))
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal val findTextHorScroller = Form.MultilineTextInputState(target.density)
         internal val replaceTextHorScroller = Form.MultilineTextInputState(target.density)
-        internal var replaceText by mutableStateOf("")
+        internal var replaceText by mutableStateOf(TextFieldValue(""))
         internal var replaceTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal var isRegex by mutableStateOf(false)
         internal var isWord by mutableStateOf(false)
@@ -84,12 +84,12 @@ object TextToolbar {
         internal fun showFinder() {
             showFinder = true
             showReplacer = false
-            if (target.selection != null) findText = target.selectedText()
+            if (target.selection != null) findText = TextFieldValue(target.selectedText())
         }
 
         internal fun showReplacer() {
             showReplacer = true
-            if (target.selection != null) findText = target.selectedText()
+            if (target.selection != null) findText = TextFieldValue(target.selectedText())
         }
 
         internal fun toolBarHeight(): Dp {
@@ -110,12 +110,12 @@ object TextToolbar {
         }
 
         internal fun finderInputHeight(): Dp {
-            val height = lineHeight * findText.split("\n").size + INPUT_VERTICAL_PADDING * 2
+            val height = lineHeight * findText.text.split("\n").size + INPUT_VERTICAL_PADDING * 2
             return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
         internal fun replacerInputHeight(): Dp {
-            val height = lineHeight * replaceText.split("\n").size + INPUT_VERTICAL_PADDING * 2
+            val height = lineHeight * replaceText.text.split("\n").size + INPUT_VERTICAL_PADDING * 2
             return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
@@ -133,11 +133,11 @@ object TextToolbar {
             if (isRegex) isWord = false
         }
 
-        internal fun findText(text: String) {
+        internal fun findText(text: TextFieldValue) {
             findText = text
-            if (isRegex) finder.findRegex(Regex(findText), isCaseSensitive)
+            if (isRegex) finder.findRegex(Regex(findText.text), isCaseSensitive)
             else if (isWord) finder.findRegex(Regex("\b$findText\b"), isCaseSensitive)
-            else finder.findText(text, isCaseSensitive)
+            else finder.findText(findText.text, isCaseSensitive)
         }
 
         internal fun findNext() {
@@ -149,11 +149,11 @@ object TextToolbar {
         }
 
         internal fun replaceNext() {
-            finder.replaceNext(findText)
+            finder.replaceNext(replaceText.text)
         }
 
         internal fun replaceAll() {
-            finder.replaceAll(replaceText)
+            finder.replaceAll(replaceText.text)
         }
     }
 
@@ -197,7 +197,7 @@ object TextToolbar {
     private fun FinderTextInput(state: State, focusReq: FocusRequester) {
         MultilineTextInput(
             state = state.findTextHorScroller,
-            text = state.findText,
+            value = state.findText,
             modifier = Modifier.height(state.finderInputHeight()),
             icon = Icon.Code.MAGNIFYING_GLASS,
             focusRequester = focusReq,
@@ -211,7 +211,7 @@ object TextToolbar {
     private fun ReplacerTextInput(state: State) {
         MultilineTextInput(
             state = state.replaceTextHorScroller,
-            text = state.replaceText,
+            value = state.replaceText,
             modifier = Modifier.height(state.replacerInputHeight()),
             icon = Icon.Code.RIGHT_LEFT,
             onValueChange = { state.replaceText = it },
