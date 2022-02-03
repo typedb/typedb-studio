@@ -42,8 +42,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -63,7 +67,7 @@ object TextToolbar {
     private val INPUT_MAX_WIDTH = 740.dp
     private val INPUT_MIN_WIDTH = 300.dp
     private val INPUT_VERTICAL_PADDING = 4.dp
-    private val INPUT_RIGHT_PADDING = 2.dp
+    private val INPUT_RIGHT_PADDING = 4.dp
     private val INPUT_MIN_HEIGHT = 28.dp
     private val INPUT_MAX_HEIGHT = 120.dp
     private val BUTTON_AREA_WIDTH = 220.dp
@@ -101,11 +105,15 @@ object TextToolbar {
             return height
         }
 
+        private fun textInputWidth(): Dp {
+            val findTextWidth = findTextLayout?.let { toDP(it.multiParagraph.width, density) } ?: 0.dp
+            val replaceTextWidth = replaceTextLayout?.let { toDP(it.multiParagraph.width, density) } ?: 0.dp
+            return max(max(findTextWidth, replaceTextWidth), INPUT_MIN_WIDTH)
+        }
+
         internal fun toolbarMaxWidth(): Dp {
-            val findTextWidth = findTextLayout?.let { toDP(it.size.width, this.density) } ?: 0.dp
-            val replaceTextWidth = replaceTextLayout?.let { toDP(it.size.width, this.density) } ?: 0.dp
             val otherWidth = INPUT_MIN_HEIGHT + INPUT_RIGHT_PADDING + BUTTON_AREA_WIDTH
-            return otherWidth + max(findTextWidth, replaceTextWidth).coerceIn(INPUT_MIN_WIDTH, INPUT_MAX_WIDTH)
+            return otherWidth + textInputWidth().coerceIn(INPUT_MIN_WIDTH, INPUT_MAX_WIDTH)
         }
 
         internal fun finderInputHeight(): Dp {
@@ -209,6 +217,7 @@ object TextToolbar {
         )
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TextInput(
         value: String,
@@ -217,19 +226,25 @@ object TextToolbar {
         onTextLayout: (TextLayoutResult) -> Unit,
         icon: Icon.Code
     ) {
-        Row(modifier = modifier.background(Theme.colors.surface).fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        val focusReq = FocusRequester()
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = modifier.fillMaxWidth()
+                .background(Theme.colors.surface)
+                .onPointerEvent(Press) { focusReq.requestFocus() }
+        ) {
             Box(Modifier.size(INPUT_MIN_HEIGHT)) { Icon.Render(icon, modifier = Modifier.align(Alignment.Center)) }
             Box(modifier = Modifier.fillMaxHeight().weight(1f)
                 .padding(vertical = INPUT_VERTICAL_PADDING)
                 .horizontalScroll(rememberScrollState())) {
-                Row(Modifier.align(alignment = Alignment.Center)) {
+                Row(Modifier.align(alignment = Alignment.CenterStart)) {
                     BasicTextField(
                         value = value,
                         onValueChange = onValueChange,
                         onTextLayout = onTextLayout,
                         cursorBrush = SolidColor(Theme.colors.secondary),
                         textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
-                        modifier = Modifier.defaultMinSize(minWidth = INPUT_MIN_WIDTH)
+                        modifier = Modifier.focusRequester(focusReq).defaultMinSize(minWidth = INPUT_MIN_WIDTH)
                     )
                     Spacer(Modifier.width(INPUT_RIGHT_PADDING))
                 }
