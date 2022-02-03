@@ -19,14 +19,21 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,15 +43,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -55,6 +62,8 @@ object TextToolbar {
 
     private val INPUT_MAX_WIDTH = 740.dp
     private val INPUT_MIN_WIDTH = 300.dp
+    private val INPUT_VERTICAL_PADDING = 4.dp
+    private val INPUT_RIGHT_PADDING = 2.dp
     private val INPUT_MIN_HEIGHT = 28.dp
     private val INPUT_MAX_HEIGHT = 120.dp
     private val BUTTON_AREA_WIDTH = 220.dp
@@ -68,8 +77,8 @@ object TextToolbar {
         internal var showReplacer by mutableStateOf(false)
         internal var findText by mutableStateOf("")
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
-        internal var findTextInputWidth by mutableStateOf(0.dp)
         internal var replaceText by mutableStateOf("")
+        internal var replaceTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal var isRegex by mutableStateOf(false)
         internal var isWord by mutableStateOf(false)
         internal var isCaseSensitive by mutableStateOf(false)
@@ -94,15 +103,19 @@ object TextToolbar {
 
         internal fun toolbarMaxWidth(): Dp {
             val findTextWidth = findTextLayout?.let { toDP(it.size.width, this.density) } ?: 0.dp
-            return BUTTON_AREA_WIDTH + findTextWidth.coerceIn(INPUT_MIN_WIDTH, INPUT_MAX_WIDTH)
+            val replaceTextWidth = replaceTextLayout?.let { toDP(it.size.width, this.density) } ?: 0.dp
+            val otherWidth = INPUT_MIN_HEIGHT + INPUT_RIGHT_PADDING + BUTTON_AREA_WIDTH
+            return otherWidth + max(findTextWidth, replaceTextWidth).coerceIn(INPUT_MIN_WIDTH, INPUT_MAX_WIDTH)
         }
 
         internal fun finderInputHeight(): Dp {
-            return (lineHeight * findText.split("\n").size).coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
+            val height = lineHeight * findText.split("\n").size + INPUT_VERTICAL_PADDING * 2
+            return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
         internal fun replacerInputHeight(): Dp {
-            return (lineHeight * replaceText.split("\n").size).coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
+            val height = lineHeight * replaceText.split("\n").size + INPUT_VERTICAL_PADDING * 2
+            return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
         internal fun toggleCaseSensitive() {
@@ -162,7 +175,11 @@ object TextToolbar {
                     }
                 }
                 Separator.Vertical()
-                Buttons(state)
+                Column(Modifier.width(BUTTON_AREA_WIDTH)) {
+                    FinderButtons(state)
+                    Separator.Horizontal(height = 3.dp, color = Color.Transparent)
+                    ReplacerButtons(state)
+                }
             }
         }
         Separator.Horizontal()
@@ -173,15 +190,10 @@ object TextToolbar {
     private fun FinderTextInput(state: State) {
         TextInput(
             value = state.findText,
-            placeholder = Label.FIND,
+            modifier = Modifier.height(state.finderInputHeight()),
             onValueChange = { state.findText(it) },
-            leadingIcon = Icon.Code.MAGNIFYING_GLASS,
             onTextLayout = { state.findTextLayout = it },
-            singleLine = false,
-            shape = null,
-            border = null,
-            modifier = Modifier.height(state.finderInputHeight())
-                .onSizeChanged { state.findTextInputWidth = toDP(it.width, state.density) },
+            icon = Icon.Code.MAGNIFYING_GLASS,
         )
     }
 
@@ -190,23 +202,37 @@ object TextToolbar {
     private fun ReplacerTextInput(state: State) {
         TextInput(
             value = state.replaceText,
-            placeholder = Label.REPLACE,
-            onValueChange = { state.replaceText = it },
-            leadingIcon = Icon.Code.RIGHT_LEFT,
-            singleLine = false,
-            shape = null,
-            border = null,
             modifier = Modifier.height(state.replacerInputHeight()),
+            onValueChange = { state.replaceText = it },
+            onTextLayout = { state.replaceTextLayout = it },
+            icon = Icon.Code.RIGHT_LEFT,
         )
     }
 
     @Composable
-    private fun Buttons(state: State) {
-        Row {
-            Column(Modifier.width(BUTTON_AREA_WIDTH)) {
-                FinderButtons(state)
-                Separator.Horizontal(height = 3.dp, color = Color.Transparent)
-                ReplacerButtons(state)
+    private fun TextInput(
+        value: String,
+        modifier: Modifier,
+        onValueChange: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit,
+        icon: Icon.Code
+    ) {
+        Row(modifier = modifier.background(Theme.colors.surface).fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Box(Modifier.size(INPUT_MIN_HEIGHT)) { Icon.Render(icon, modifier = Modifier.align(Alignment.Center)) }
+            Box(modifier = Modifier.fillMaxHeight().weight(1f)
+                .padding(vertical = INPUT_VERTICAL_PADDING)
+                .horizontalScroll(rememberScrollState())) {
+                Row(Modifier.align(alignment = Alignment.Center)) {
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        onTextLayout = onTextLayout,
+                        cursorBrush = SolidColor(Theme.colors.secondary),
+                        textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
+                        modifier = Modifier.defaultMinSize(minWidth = INPUT_MIN_WIDTH)
+                    )
+                    Spacer(Modifier.width(INPUT_RIGHT_PADDING))
+                }
             }
         }
     }
