@@ -19,23 +19,17 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,11 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -56,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.MultilineTextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -81,6 +72,8 @@ object TextToolbar {
         internal var showReplacer by mutableStateOf(false)
         internal var findText by mutableStateOf("")
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
+        internal val findTextHorScroller = Form.MultilineTextInputState()
+        internal val replaceTextHorScroller = Form.MultilineTextInputState()
         internal var replaceText by mutableStateOf("")
         internal var replaceTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal var isRegex by mutableStateOf(false)
@@ -166,6 +159,7 @@ object TextToolbar {
 
     @Composable
     internal fun Area(state: State) {
+        val findTextFocusReq = FocusRequester()
         Box {
             // We render a character to find out the default height of a line for the given font
             // TODO: use FinderTextInput TextLayoutResult after: https://github.com/JetBrains/compose-jb/issues/1781
@@ -176,7 +170,7 @@ object TextToolbar {
             // TODO: figure out how to set min width to MIN_WIDTH
             Row(modifier = Modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolBarHeight())) {
                 Column(Modifier.weight(1f)) {
-                    FinderTextInput(state)
+                    FinderTextInput(state, findTextFocusReq)
                     if (state.showReplacer) {
                         Separator.Horizontal()
                         ReplacerTextInput(state)
@@ -191,65 +185,34 @@ object TextToolbar {
             }
         }
         Separator.Horizontal()
+        LaunchedEffect(state, state.showReplacer) { findTextFocusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun FinderTextInput(state: State) {
-        TextInput(
-            value = state.findText,
+    private fun FinderTextInput(state: State, focusReq: FocusRequester) {
+        MultilineTextInput(
+            state = state.findTextHorScroller,
+            text = state.findText,
             modifier = Modifier.height(state.finderInputHeight()),
+            icon = Icon.Code.MAGNIFYING_GLASS,
+            focusRequester = focusReq,
             onValueChange = { state.findText(it) },
             onTextLayout = { state.findTextLayout = it },
-            icon = Icon.Code.MAGNIFYING_GLASS,
         )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ReplacerTextInput(state: State) {
-        TextInput(
-            value = state.replaceText,
+        MultilineTextInput(
+            state = state.replaceTextHorScroller,
+            text = state.replaceText,
             modifier = Modifier.height(state.replacerInputHeight()),
+            icon = Icon.Code.RIGHT_LEFT,
             onValueChange = { state.replaceText = it },
             onTextLayout = { state.replaceTextLayout = it },
-            icon = Icon.Code.RIGHT_LEFT,
         )
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun TextInput(
-        value: String,
-        modifier: Modifier,
-        onValueChange: (String) -> Unit,
-        onTextLayout: (TextLayoutResult) -> Unit,
-        icon: Icon.Code
-    ) {
-        val focusReq = FocusRequester()
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = modifier.fillMaxWidth()
-                .background(Theme.colors.surface)
-                .onPointerEvent(Press) { focusReq.requestFocus() }
-        ) {
-            Box(Modifier.size(INPUT_MIN_HEIGHT)) { Icon.Render(icon, modifier = Modifier.align(Alignment.Center)) }
-            Box(modifier = Modifier.fillMaxHeight().weight(1f)
-                .padding(vertical = INPUT_VERTICAL_PADDING)
-                .horizontalScroll(rememberScrollState())) {
-                Row(Modifier.align(alignment = Alignment.CenterStart)) {
-                    BasicTextField(
-                        value = value,
-                        onValueChange = onValueChange,
-                        onTextLayout = onTextLayout,
-                        cursorBrush = SolidColor(Theme.colors.secondary),
-                        textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
-                        modifier = Modifier.focusRequester(focusReq).defaultMinSize(minWidth = INPUT_MIN_WIDTH)
-                    )
-                    Spacer(Modifier.width(INPUT_RIGHT_PADDING))
-                }
-            }
-        }
     }
 
     @Composable

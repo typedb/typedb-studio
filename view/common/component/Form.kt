@@ -19,9 +19,11 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -32,12 +34,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
@@ -53,6 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -74,6 +79,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,7 +90,6 @@ import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
-import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_RADIUS
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -99,6 +104,8 @@ object Form {
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val CONTENT_PADDING = 8.dp
+    private val MULTILINE_INPUT_PADDING = 4.dp
+    private val MULTILINE_INPUT_MIN_WIDTH = 100.dp
     private val ICON_SPACING = 6.dp
     internal val BORDER_WIDTH = 1.dp
     private val DEFAULT_BORDER = Border(BORDER_WIDTH, RECTANGLE_ROUNDED_ALL)
@@ -181,11 +188,11 @@ object Form {
         BoxButton(onClick = onClick, color = bgColor, modifier = modifier, enabled = enabled) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = CONTENT_PADDING)
+                modifier = Modifier.padding(horizontal = MULTILINE_INPUT_PADDING)
             ) {
                 @Composable
                 fun iconSpacing() {
-                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(CONTENT_PADDING))
+                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
                 }
                 leadingIcon?.let {
                     Icon.Render(icon = it, color = iconColor)
@@ -323,7 +330,10 @@ object Form {
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             onTextLayout = onTextLayout,
             decorationBox = { innerTextField ->
-                Row(Modifier.padding(horizontal = CONTENT_PADDING), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.padding(horizontal = MULTILINE_INPUT_PADDING),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     leadingIcon?.let {
                         Icon.Render(icon = it)
                         Spacer(Modifier.width(ICON_SPACING))
@@ -339,6 +349,54 @@ object Form {
                 }
             },
         )
+    }
+
+    class MultilineTextInputState() {
+        val horScroller: ScrollState = ScrollState(0)
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun MultilineTextInput(
+        state: MultilineTextInputState = remember { MultilineTextInputState() },
+        text: String,
+        modifier: Modifier,
+        icon: Icon.Code? = null,
+        focusRequester: FocusRequester = FocusRequester(),
+        onValueChange: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = modifier.fillMaxWidth()
+                .background(Theme.colors.surface)
+                .onPointerEvent(PointerEventType.Press) { focusRequester.requestFocus() }
+        ) {
+            var valueState by remember { mutableStateOf(TextFieldValue(text)) }
+            val value = valueState.copy(text)
+
+            icon?.let {
+                Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
+            } ?: Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+            Box(
+                modifier = Modifier.fillMaxHeight().weight(1f)
+                    .padding(vertical = MULTILINE_INPUT_PADDING)
+                    .horizontalScroll(state.horScroller)
+            ) {
+                Row(Modifier.align(alignment = Alignment.CenterStart)) {
+                    BasicTextField(
+                        value = value,
+                        onValueChange = { valueState = it; onValueChange(it.text) },
+                        onTextLayout = onTextLayout,
+                        cursorBrush = SolidColor(Theme.colors.secondary),
+                        textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
+                        modifier = Modifier.focusRequester(focusRequester)
+                            .defaultMinSize(minWidth = MULTILINE_INPUT_MIN_WIDTH)
+                    )
+                    Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+                }
+            }
+        }
     }
 
     @Composable
@@ -418,7 +476,7 @@ object Form {
                 onDismissRequest = { state.expanded = false },
                 modifier = Modifier.background(Theme.colors.surface).defaultMinSize(minWidth = state.width)
             ) {
-                val padding = PaddingValues(horizontal = CONTENT_PADDING)
+                val padding = PaddingValues(horizontal = MULTILINE_INPUT_PADDING)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
                 if (values.isEmpty()) DropdownMenuItem(
                     onClick = {}, contentPadding = padding,
