@@ -244,42 +244,44 @@ object TextToolbar {
     @Composable
     internal fun Area(state: State, modifier: Modifier = Modifier) {
         val findTextFocusReq = FocusRequester()
-        val focusManager = LocalFocusManager.current
         Box {
-            // We render a character to find out the default height of a line for the given font
-            // TODO: use FinderTextInput TextLayoutResult after: https://github.com/JetBrains/compose-jb/issues/1781
-            Text(
-                text = "0", style = Theme.typography.body1,
-                onTextLayout = { state.lineHeight = Theme.toDP(it.size.height, state.density) }
-            )
+            ComputeFontHeight(state)
             // TODO: figure out how to set min width to MIN_WIDTH
             Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolbarHeight())) {
-                Column(Modifier.weight(1f)) {
-                    FinderTextInput(state, findTextFocusReq, focusManager)
-                    if (state.showReplacer) {
-                        Separator.Horizontal()
-                        ReplacerTextInput(state, focusManager)
-                    }
-                }
+                TextInputs(state, Modifier.weight(1f), findTextFocusReq)
                 Separator.Vertical()
-                Column(Modifier.width(BUTTON_AREA_WIDTH).height(state.toolbarButtonAreaHeight())) {
-                    Spacer(Modifier.weight(1f))
-                    FinderButtons(state)
-                    Spacer(Modifier.weight(1f))
-                    if (state.showReplacer) {
-                        ReplacerButtons(state)
-                        Spacer(Modifier.weight(1f))
-                    }
-                }
+                ToolbarButtons(state)
             }
         }
         Separator.Horizontal()
         LaunchedEffect(state, state.showReplacer) { findTextFocusReq.requestFocus() }
     }
 
+    @Composable
+    private fun ComputeFontHeight(state: State) {
+        // We render a character to find out the default height of a line for the given font
+        // TODO: use FinderTextInput TextLayoutResult after: https://github.com/JetBrains/compose-jb/issues/1781
+        Text(
+            text = "0", style = Theme.typography.body1,
+            onTextLayout = { state.lineHeight = toDP(it.size.height, state.density) }
+        )
+    }
+
+    @Composable
+    private fun TextInputs(state: State, modifier: Modifier, focusReq: FocusRequester) {
+        Column(modifier) {
+            FinderTextInput(state, focusReq)
+            if (state.showReplacer) {
+                Separator.Horizontal()
+                ReplacerTextInput(state)
+            }
+        }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun FinderTextInput(state: State, focusReq: FocusRequester, focusManager: FocusManager) {
+    private fun FinderTextInput(state: State, focusReq: FocusRequester) {
+        val focusManager = LocalFocusManager.current
         MultilineTextInput(
             state = state.findTextHorScroller,
             value = state.findText,
@@ -287,25 +289,37 @@ object TextToolbar {
             focusRequester = focusReq,
             onValueChange = { state.findText(it) },
             onTextLayout = { state.findTextLayout = it },
-            modifier = Modifier.height(state.finderInputHeight()).onPreviewKeyEvent { event ->
-                state.handle(event, focusManager, FINDER)
-            },
+            modifier = Modifier.height(state.finderInputHeight())
+                .onPreviewKeyEvent { state.handle(it, focusManager, FINDER) },
         )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ReplacerTextInput(state: State, focusManager: FocusManager) {
+    private fun ReplacerTextInput(state: State) {
+        val focusManager = LocalFocusManager.current
         MultilineTextInput(
             state = state.replaceTextHorScroller,
             value = state.replaceText,
             icon = Icon.Code.RIGHT_LEFT,
             onValueChange = { state.replaceText = it },
             onTextLayout = { state.replaceTextLayout = it },
-            modifier = Modifier.height(state.replacerInputHeight()).onPreviewKeyEvent { event ->
-                state.handle(event, focusManager, State.InputType.REPLACER)
-            },
+            modifier = Modifier.height(state.replacerInputHeight())
+                .onPreviewKeyEvent { state.handle(it, focusManager, REPLACER) },
         )
+    }
+
+    @Composable
+    private fun ToolbarButtons(state: State) {
+        Column(Modifier.width(BUTTON_AREA_WIDTH).height(state.toolbarButtonAreaHeight())) {
+            Spacer(Modifier.weight(1f))
+            FinderButtons(state)
+            Spacer(Modifier.weight(1f))
+            if (state.showReplacer) {
+                ReplacerButtons(state)
+                Spacer(Modifier.weight(1f))
+            }
+        }
     }
 
     @Composable
