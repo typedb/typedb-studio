@@ -248,7 +248,10 @@ object TextToolbar {
             val oldText = findText.text
             findText = textFieldValue
             if (findText.text.isNotEmpty() && findText.text != oldText) delayedFindText()
-            else if (findText.text.isEmpty()) finder.reset()
+            else if (findText.text.isEmpty()) {
+                target.clearSelection()
+                finder.reset()
+            }
         }
 
         @OptIn(ExperimentalTime::class)
@@ -270,15 +273,15 @@ object TextToolbar {
         }
 
         internal fun findNext() {
-            if (finder.hasMatches) target.updateSelection(finder.findNext())
+            selectCurrentOr { target.updateSelection(finder.findNext()) }
         }
 
         internal fun findPrevious() {
-            if (finder.hasMatches) target.updateSelection(finder.findPrevious())
+            selectCurrentOr { target.updateSelection(finder.findPrevious()) }
         }
 
         internal fun replaceCurrent() {
-            if (finder.hasMatches) {
+            selectCurrentOr {
                 val oldPosition = finder.position
                 processor.insertText(replaceText.text)
                 finder.updatePosition(oldPosition)
@@ -288,6 +291,13 @@ object TextToolbar {
 
         internal fun replaceAll() {
             while (finder.hasMatches) replaceCurrent()
+        }
+
+        private fun selectCurrentOr(function: () -> Unit) {
+            if (finder.hasMatches) {
+                if (finder.findCurrent() == target.selection) function()
+                else target.updateSelection(finder.findCurrent())
+            }
         }
     }
 
