@@ -66,6 +66,7 @@ internal class TextFinder(val file: File) {
         else Pattern.compile(string, Pattern.CASE_INSENSITIVE)
         matches = pattern.matcher(content).results().map { selection(it) }.toList()
         target = 0
+        println("findPattern() -> {\n$matches\n}")
     }
 
     private fun selection(match: MatchResult): Selection {

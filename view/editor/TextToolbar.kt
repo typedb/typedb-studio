@@ -61,8 +61,15 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.CHANGE_BATCH_DELAY
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 object TextToolbar {
 
@@ -94,6 +101,8 @@ object TextToolbar {
         internal var isCaseSensitive by mutableStateOf(false)
         internal val status: String get() = finder.status
         internal val density: Float get() = target.density
+        private var changeCount: AtomicInteger = AtomicInteger(0)
+        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
         internal fun showFinder() {
             showFinder = true
@@ -225,9 +234,20 @@ object TextToolbar {
 
         internal fun findText(text: TextFieldValue) {
             findText = text
-            if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
-            else if (isWord) finder.findWord(findText.text, isCaseSensitive)
-            else finder.findText(findText.text, isCaseSensitive)
+            delayedFindText()
+        }
+
+        @OptIn(ExperimentalTime::class)
+        private fun delayedFindText() {
+            changeCount.incrementAndGet()
+            coroutineScope.launch {
+                delay(CHANGE_BATCH_DELAY)
+                if (changeCount.decrementAndGet() == 0) {
+                    if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
+                    else if (isWord) finder.findWord(findText.text, isCaseSensitive)
+                    else finder.findText(findText.text, isCaseSensitive)
+                }
+            }
         }
 
         internal fun findNext() {

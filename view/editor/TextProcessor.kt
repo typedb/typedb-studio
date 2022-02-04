@@ -107,7 +107,7 @@ internal class TextProcessor(
     companion object {
         private const val TAB_SIZE = 4
         private const val UNDO_LIMIT = 1_000
-        private val CHANGE_BATCH_DELAY = Duration.milliseconds(500)
+        internal val CHANGE_BATCH_DELAY = Duration.milliseconds(500)
     }
 
     internal val content: SnapshotStateList<String> get() = file.content
@@ -349,8 +349,7 @@ internal class TextProcessor(
         changeCount.incrementAndGet()
         coroutineScope.launch {
             delay(CHANGE_BATCH_DELAY)
-            if (changeCount.decrementAndGet() <= 0) drainAndBatchOriginalChanges()
-            if (changeCount.get() < 0) changeCount.set(0)
+            if (changeCount.decrementAndGet() == 0) drainAndBatchOriginalChanges()
         }
     }
 
