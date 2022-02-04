@@ -29,11 +29,7 @@ import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
-internal class TextFinder(
-    private val file: File,
-    private val target: InputTarget,
-    private val processor: TextProcessor
-) {
+internal class TextFinder(private val file: File) {
 
     data class LineInfo(val start: Int, val length: Int)
 
@@ -41,7 +37,7 @@ internal class TextFinder(
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
     private var matches: List<Selection> by mutableStateOf(listOf())
     private var pattern: Pattern? by mutableStateOf(null)
-    private var position: Int by mutableStateOf(0)
+    internal var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
 
     internal fun status(): String {
@@ -55,9 +51,11 @@ internal class TextFinder(
         position = 0
     }
 
-    internal fun recompute() {
-        updateContent()
-        pattern?.let { computeMatches() }
+    internal fun mayRecompute() {
+        pattern?.let {
+            updateContent()
+            computeMatches()
+        }
     }
 
     internal fun updateContent() {
@@ -115,31 +113,24 @@ internal class TextFinder(
         return Cursor(row, col)
     }
 
-    private fun updatePosition(newPosition: Int) {
+    internal fun updatePosition(newPosition: Int): Int {
         position = newPosition.coerceIn(0, (matches.size - 1).coerceAtLeast(0))
-        if (hasMatches) target.updateSelection(matches[position])
-        else target.clearSelection()
+        return position
     }
 
-    internal fun findNext() {
-        if (!hasMatches) return
-        updatePosition((position + 1) % matches.size)
+    internal fun findCurrent(): Selection? {
+        return if (hasMatches) matches[position] else null
     }
 
-    internal fun findPrevious() {
-        if (!hasMatches) return
-        var newPos = position - 1
-        if (newPos < 0) newPos += matches.size
-        updatePosition(newPos)
+    internal fun findNext(): Selection? {
+        return if (hasMatches) matches[updatePosition((position + 1) % matches.size)] else null
     }
 
-    internal fun replaceCurrent(text: String) {
-        if (!hasMatches) return
-        processor.insertText(text) // processor will internally call recompute()
-        updatePosition(position)
-    }
-
-    internal fun replaceAll(text: String) {
-        while (hasMatches) replaceCurrent(text)
+    internal fun findPrevious(): Selection? {
+        return if (hasMatches) {
+            var newPos = position - 1
+            if (newPos < 0) newPos += matches.size
+            matches[updatePosition(newPos)]
+        } else null
     }
 }

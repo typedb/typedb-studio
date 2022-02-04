@@ -111,11 +111,10 @@ object TextEditor {
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
         val rendering = TextRendering(file.content.size)
+        val finder = TextFinder(file)
         val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor(file, rendering, target, clipboard)
-        val finder = TextFinder(file, target, processor)
-        val toolbar = TextToolbar.State(target, finder)
-        processor.onChange { finder.recompute() }
+        val processor = TextProcessor(file, rendering, finder, target, clipboard)
+        val toolbar = TextToolbar.State(finder, target, processor)
         return State(file, font, rendering, target, processor, toolbar, onClose)
     }
 
@@ -140,6 +139,7 @@ object TextEditor {
             set(value) {
                 toolbar.showFinder = value
                 toolbar.showReplacer = value
+                if (!value) toolbar.reset()
             }
         internal var density: Float
             get() = target.density

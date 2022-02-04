@@ -83,7 +83,11 @@ object TextToolbar {
     private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
 
-    internal class State(private val target: InputTarget, private val finder: TextFinder) {
+    internal class State(
+        private val finder: TextFinder,
+        private val target: InputTarget,
+        private val processor: TextProcessor
+    ) {
 
         enum class InputType { FINDER, REPLACER }
 
@@ -104,6 +108,10 @@ object TextToolbar {
         internal val density: Float get() = target.density
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+        internal fun reset() {
+            finder.reset()
+        }
 
         internal fun showFinder() {
             showFinder = true
@@ -256,22 +264,30 @@ object TextToolbar {
             if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
             else if (isWord) finder.findWord(findText.text, isCaseSensitive)
             else finder.findText(findText.text, isCaseSensitive)
+
+            if (finder.hasMatches) target.updateSelection(finder.findCurrent())
+            else target.clearSelection()
         }
 
         internal fun findNext() {
-            if (finder.hasMatches) finder.findNext()
+            if (finder.hasMatches) target.updateSelection(finder.findNext())
         }
 
         internal fun findPrevious() {
-            if (finder.hasMatches) finder.findPrevious()
+            if (finder.hasMatches) target.updateSelection(finder.findPrevious())
         }
 
         internal fun replaceCurrent() {
-            if (finder.hasMatches) finder.replaceCurrent(replaceText.text)
+            if (finder.hasMatches) {
+                val oldPosition = finder.position
+                processor.insertText(replaceText.text)
+                finder.updatePosition(oldPosition)
+                target.updateSelection(finder.findCurrent())
+            }
         }
 
         internal fun replaceAll() {
-            if (finder.hasMatches) finder.replaceAll(replaceText.text)
+            while (finder.hasMatches) replaceCurrent()
         }
     }
 
