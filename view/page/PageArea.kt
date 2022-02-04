@@ -49,7 +49,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object PageArea {
 
-    val MIN_WIDTH = 240.dp
+    val MIN_WIDTH = 300.dp
     private val TAB_SPACING = 8.dp
     private val TAB_HEIGHT = 28.dp
     private val TAB_UNDERLINE_HEIGHT = 2.dp

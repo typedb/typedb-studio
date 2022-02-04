@@ -107,7 +107,6 @@ object Form {
     private val FIELD_HEIGHT = 28.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
-    private val MULTILINE_INPUT_MIN_WIDTH = 100.dp
     private val ICON_SPACING = 6.dp
     internal val BORDER_WIDTH = 1.dp
     private val DEFAULT_BORDER = Border(BORDER_WIDTH, RECTANGLE_ROUNDED_ALL)
@@ -450,7 +449,7 @@ object Form {
                             cursorBrush = SolidColor(Theme.colors.secondary),
                             textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
                             modifier = Modifier.focusRequester(focusRequester)
-                                .defaultMinSize(minWidth = MULTILINE_INPUT_MIN_WIDTH)
+                                .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
                         )
                         Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
                     }
