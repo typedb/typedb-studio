@@ -128,10 +128,8 @@ object TextToolbar {
 
         private fun initialiseFinder(wasClosed: Boolean) {
             finder.updateContent()
-            if (target.selection != null && wasClosed) {
-                findText = TextFieldValue(target.selectedText())
-                findText()
-            }
+            if (target.selection != null && wasClosed) findText = TextFieldValue(target.selectedText())
+            if (findText.text.isNotEmpty()) findText()
         }
 
         internal fun toolbarHeight(): Dp {
@@ -254,10 +252,7 @@ object TextToolbar {
             val oldText = findText.text
             findText = textFieldValue
             if (findText.text.isNotEmpty() && findText.text != oldText) delayedFindText()
-            else if (findText.text.isEmpty()) {
-                target.clearSelection()
-                finder.reset()
-            }
+            else if (findText.text.isEmpty()) finder.reset()
         }
 
         @OptIn(ExperimentalTime::class)
@@ -273,9 +268,6 @@ object TextToolbar {
             if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
             else if (isWord) finder.findWord(findText.text, isCaseSensitive)
             else finder.findText(findText.text, isCaseSensitive)
-
-            if (finder.hasMatches) target.updateSelection(finder.findCurrent())
-            else target.clearSelection()
         }
 
         internal fun findNext() {

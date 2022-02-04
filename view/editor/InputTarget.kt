@@ -163,10 +163,6 @@ internal class InputTarget constructor(
         else updateStatus()
     }
 
-    internal fun clearSelection() {
-        selection = null
-    }
-
     internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
         val newCursor = createCursor(x, y)
         if (selection == null || newCursor < selection!!.min || newCursor > selection!!.max) {
