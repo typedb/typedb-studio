@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -117,19 +116,19 @@ object TextToolbar {
         }
 
         internal fun showFinder() {
-            val wasInitiallyClosed = !showToolbar
+            initialiseFinder(!showToolbar)
             showFinder = true
             showReplacer = false
-            if (target.selection != null && wasInitiallyClosed) {
-                findText = TextFieldValue(target.selectedText())
-                findText()
-            }
         }
 
         internal fun showReplacer() {
-            val wasInitiallyClosed = !showToolbar
+            initialiseFinder(!showToolbar)
             showReplacer = true
-            if (target.selection != null && wasInitiallyClosed) {
+        }
+
+        private fun initialiseFinder(wasClosed: Boolean) {
+            finder.updateContent()
+            if (target.selection != null && wasClosed) {
                 findText = TextFieldValue(target.selectedText())
                 findText()
             }
@@ -232,10 +231,6 @@ object TextToolbar {
         private fun deleteSelection(field: TextFieldValue): TextFieldValue {
             val text = field.text.removeRange(field.selection.min, field.selection.max)
             return TextFieldValue(text, TextRange(field.selection.min))
-        }
-
-        internal fun updateContent() {
-            finder.updateContent()
         }
 
         internal fun toggleCaseSensitive() {
@@ -361,7 +356,6 @@ object TextToolbar {
             onValueChange = { state.updateFindText(it) },
             onTextLayout = { state.findTextLayout = it },
             modifier = Modifier.height(state.finderInputHeight())
-                .onFocusEvent { state.updateContent() }
                 .onPreviewKeyEvent { state.handle(it, focusManager, FINDER) },
         )
     }
