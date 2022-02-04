@@ -29,7 +29,6 @@ import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.COPY
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.CUT
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_END_LINE
@@ -38,10 +37,9 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_NEXT
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_CHAR
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_WORD
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_START_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB_SHIFT
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_LINE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_PAGE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_END
@@ -78,6 +76,8 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_RIGH
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_START_LINE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_UP_LINE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_UP_PAGE
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB_SHIFT
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.UNDO
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand.ESCAPE

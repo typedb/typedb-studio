@@ -99,8 +99,8 @@ internal class InputTarget constructor(
     }
 
     internal val content: SnapshotStateList<String> get() = file.content
-    internal var cursor: Cursor by mutableStateOf(Cursor(0, 0))
-    internal var selection: Selection? by mutableStateOf(null)
+    internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
+    internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
     internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
     internal var horScroller = ScrollState(0)

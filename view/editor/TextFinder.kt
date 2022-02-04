@@ -22,30 +22,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
-internal class TextFinder(val file: File) {
+internal class TextFinder(
+    private val file: File,
+    private val target: InputTarget,
+    private val processor: TextProcessor
+) {
 
     data class LineInfo(val start: Int, val length: Int)
+    data class FindArgs(val pattern: String, val isCaseSensitive: Boolean)
 
     private var content: String by mutableStateOf("")
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
-    private var matches: List<Selection> by mutableStateOf(listOf())
-    private var target: Int by mutableStateOf(0)
+    private var matches: MutableList<Selection> by mutableStateOf(mutableListOf())
+    private var findArgs: FindArgs? by mutableStateOf(null)
+    private var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
 
     internal fun status(): String {
-        val count = if (matches.isNotEmpty()) "${target + 1} / ${matches.size}" else matches.size.toString()
-        return "$count found"
+        val count = if (matches.isNotEmpty()) "${position + 1} / ${matches.size}" else matches.size.toString()
+        return "$count ${Label.FOUND.lowercase()}"
     }
 
     internal fun reset() {
-        matches = listOf()
-        target = 0
+        findArgs = null
+        matches = mutableListOf()
+        position = 0
     }
 
     internal fun updateContent() {
@@ -71,12 +79,14 @@ internal class TextFinder(val file: File) {
         findPattern(regex, isCaseSensitive)
     }
 
-    private fun findPattern(string: String, isCaseSensitive: Boolean) {
-        assert(string.isNotEmpty())
-        val pattern = if (isCaseSensitive) Pattern.compile(string)
-        else Pattern.compile(string, Pattern.CASE_INSENSITIVE)
-        matches = pattern.matcher(content).results().map { selection(it) }.toList()
-        target = 0
+    private fun findPattern(patternStr: String, isCaseSensitive: Boolean, lastPosition: Int = 0) {
+        assert(patternStr.isNotEmpty())
+        findArgs = FindArgs(patternStr, isCaseSensitive)
+        matches = when {
+            isCaseSensitive -> Pattern.compile(patternStr)
+            else -> Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE)
+        }.matcher(content).results().map { selection(it) }.toList().toMutableList()
+        if (hasMatches) updatePosition(lastPosition) else position = 0
     }
 
     private fun selection(match: MatchResult): Selection {
@@ -94,23 +104,30 @@ internal class TextFinder(val file: File) {
         return Cursor(row, col)
     }
 
+    private fun updatePosition(newPosition: Int) {
+        position = newPosition.coerceIn(0, (matches.size - 1).coerceAtLeast(0))
+        target.updateSelection(matches[position])
+    }
+
     internal fun findNext() {
-        target = (target + 1) % matches.size
-        println("findNext() -> ${matches[target].label()}") // TODO: remove
+        if (!hasMatches) return
+        updatePosition((position + 1) % matches.size)
     }
 
     internal fun findPrevious() {
-        target = (target - 1) % matches.size
-        println("findPrevious() -> ${matches[target].label()}") // TODO: remove
+        if (!hasMatches) return
+        updatePosition((position - 1) % matches.size)
     }
 
-    internal fun replaceNext(text: String) {
-        println("replaceNext() -> text: $text")
-        // TODO
+    internal fun replaceCurrent(replaceText: String) {
+        if (!hasMatches) return
+        val findArgs = this.findArgs!!
+        processor.insertText(replaceText)
+        updateContent()
+        findPattern(findArgs.pattern, findArgs.isCaseSensitive, position)
     }
 
     internal fun replaceAll(text: String) {
-        println("replaceAll() -> text: $text")
-        // TODO
+        while (hasMatches) replaceCurrent(text)
     }
 }

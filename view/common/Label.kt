@@ -41,6 +41,7 @@ object Label {
     const val ENABLE_TLS = "Enable TLS"
     const val EXPAND_COLLAPSE = "Expand/Collapse"
     const val FIND = "Find"
+    const val FOUND = "Found"
     const val NONE = "None"
     const val OPEN = "Open"
     const val OPEN_PROJECT = "Open Project"

@@ -206,7 +206,7 @@ object TextToolbar {
         private fun onEnter(inputType: InputType) {
             when (inputType) {
                 FINDER -> findNext()
-                REPLACER -> replaceNext()
+                REPLACER -> replaceCurrent()
             }
         }
 
@@ -221,19 +221,22 @@ object TextToolbar {
 
         internal fun toggleCaseSensitive() {
             isCaseSensitive = !isCaseSensitive
+            if (findText.text.isNotEmpty()) findText()
         }
 
         internal fun toggleWord() {
             isWord = !isWord
             if (isWord) isRegex = false
+            if (findText.text.isNotEmpty()) findText()
         }
 
         internal fun toggleRegex() {
             isRegex = !isRegex
             if (isRegex) isWord = false
+            if (findText.text.isNotEmpty()) findText()
         }
 
-        internal fun findText(text: TextFieldValue) {
+        internal fun updateFindText(text: TextFieldValue) {
             findText = text
             if (findText.text.isNotEmpty()) delayedFindText()
             else finder.reset()
@@ -245,27 +248,31 @@ object TextToolbar {
             coroutineScope.launch {
                 delay(CHANGE_BATCH_DELAY)
                 if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) {
-                    if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
-                    else if (isWord) finder.findWord(findText.text, isCaseSensitive)
-                    else finder.findText(findText.text, isCaseSensitive)
+                    findText()
                 }
             }
         }
 
+        private fun findText() {
+            if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
+            else if (isWord) finder.findWord(findText.text, isCaseSensitive)
+            else finder.findText(findText.text, isCaseSensitive)
+        }
+
         internal fun findNext() {
-            finder.findNext()
+            if (finder.hasMatches) finder.findNext()
         }
 
         internal fun findPrevious() {
-            finder.findPrevious()
+            if (finder.hasMatches) finder.findPrevious()
         }
 
-        internal fun replaceNext() {
-            finder.replaceNext(replaceText.text)
+        internal fun replaceCurrent() {
+            if (finder.hasMatches) finder.replaceCurrent(replaceText.text)
         }
 
         internal fun replaceAll() {
-            finder.replaceAll(replaceText.text)
+            if (finder.hasMatches) finder.replaceAll(replaceText.text)
         }
     }
 
@@ -315,7 +322,7 @@ object TextToolbar {
             value = state.findText,
             icon = Icon.Code.MAGNIFYING_GLASS,
             focusRequester = focusReq,
-            onValueChange = { state.findText(it) },
+            onValueChange = { state.updateFindText(it) },
             onTextLayout = { state.findTextLayout = it },
             modifier = Modifier.height(state.finderInputHeight())
                 .onFocusEvent { state.updateContent() }
@@ -404,7 +411,7 @@ object TextToolbar {
     private fun ReplacerButtons(state: State) {
         Row(Modifier.height(BUTTON_HEIGHT)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplacerButton(Label.REPLACE) { state.replaceNext() }
+            ReplacerButton(Label.REPLACE) { state.replaceCurrent() }
             Spacer(Modifier.width(BUTTON_SPACING))
             ReplacerButton(Label.REPLACE_ALL) { state.replaceAll() }
         }
