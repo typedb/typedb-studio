@@ -36,12 +36,11 @@ internal class TextFinder(
 ) {
 
     data class LineInfo(val start: Int, val length: Int)
-    data class FindArgs(val pattern: String, val isCaseSensitive: Boolean)
 
     private var content: String by mutableStateOf("")
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
     private var matches: MutableList<Selection> by mutableStateOf(mutableListOf())
-    private var findArgs: FindArgs? by mutableStateOf(null)
+    private var pattern: Pattern? by mutableStateOf(null)
     private var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
 
@@ -51,14 +50,14 @@ internal class TextFinder(
     }
 
     internal fun reset() {
-        findArgs = null
+        pattern = null
         matches = mutableListOf()
         position = 0
     }
 
     internal fun recompute() {
         updateContent()
-        findArgs?.let { findPattern(it.pattern, it.isCaseSensitive, position) }
+        pattern?.let { findPattern(it, position) }
     }
 
     internal fun updateContent() {
@@ -73,25 +72,36 @@ internal class TextFinder(
     }
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
-        findPattern(text, isCaseSensitive)
+        findPattern(text, isCaseSensitive, false)
     }
 
     internal fun findWord(word: String, isCaseSensitive: Boolean) {
-        findPattern("\b$word\b", isCaseSensitive)
+        findPattern("\\b$word\\b", isCaseSensitive, true)
     }
 
     internal fun findRegex(regex: String, isCaseSensitive: Boolean) {
-        findPattern(regex, isCaseSensitive)
+        findPattern(regex, isCaseSensitive, true)
     }
 
-    private fun findPattern(patternStr: String, isCaseSensitive: Boolean, lastPosition: Int = 0) {
+    private fun findPattern(patternStr: String, isCaseSensitive: Boolean, isRegex: Boolean, lastPosition: Int = 0) {
         assert(patternStr.isNotEmpty())
-        findArgs = FindArgs(patternStr, isCaseSensitive)
-        matches = when {
-            isCaseSensitive -> Pattern.compile(patternStr)
-            else -> Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE)
-        }.matcher(content).results().map { selection(it) }.toList().toMutableList()
-        updatePosition(lastPosition)
+        val caseFlag = if (isCaseSensitive) 0 else Pattern.CASE_INSENSITIVE
+        val literalFlag = if (isRegex) 0 else Pattern.LITERAL
+        try {
+            pattern = Pattern.compile(patternStr, caseFlag or literalFlag)
+            findPattern(pattern!!, lastPosition)
+        } catch (e: Exception) {
+            reset()
+        }
+    }
+
+    private fun findPattern(pattern: Pattern, lastPosition: Int) {
+        try {
+            matches = pattern.matcher(content).results().map { selection(it) }.toList().toMutableList()
+            updatePosition(lastPosition)
+        } catch (e: Exception) {
+            reset()
+        }
     }
 
     private fun selection(match: MatchResult): Selection {

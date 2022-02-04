@@ -236,9 +236,10 @@ object TextToolbar {
             if (findText.text.isNotEmpty()) findText()
         }
 
-        internal fun updateFindText(text: TextFieldValue) {
-            findText = text
-            if (findText.text.isNotEmpty()) delayedFindText()
+        internal fun updateFindText(textFieldValue: TextFieldValue) {
+            val oldText = findText.text
+            findText = textFieldValue
+            if (findText.text.isNotEmpty() && findText.text != oldText) delayedFindText()
             else finder.reset()
         }
 
