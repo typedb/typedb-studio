@@ -93,8 +93,10 @@ internal interface KeyMapper {
         SELECT_HOME(false),
         SELECT_END(false),
 
-        INSERT_NEW_LINE(true),
-        INSERT_TAB(true),
+        ENTER(true),
+        ENTER_SHIFT(true),
+        TAB(true),
+        TAB_SHIFT(true),
 
         DELETE_PREV_CHAR(true),
         DELETE_NEXT_CHAR(true),
@@ -102,7 +104,6 @@ internal interface KeyMapper {
         DELETE_NEXT_WORD(true),
         DELETE_START_LINE(true),
         DELETE_END_LINE(true),
-        DELETE_TAB(true),
 
         COPY(false),
         PASTE(true),
@@ -184,7 +185,8 @@ internal interface KeyMapper {
                         Keys.MoveHome -> EditorCommand.SELECT_START_LINE
                         Keys.MoveEnd -> EditorCommand.SELECT_END_LINE
                         Keys.Insert -> EditorCommand.PASTE
-                        Keys.Tab -> EditorCommand.DELETE_TAB
+                        Keys.Tab -> EditorCommand.TAB_SHIFT
+                        Keys.Enter -> EditorCommand.ENTER_SHIFT
                         else -> null
                     }
                 else ->
@@ -197,12 +199,12 @@ internal interface KeyMapper {
                         Keys.PageDown -> EditorCommand.MOVE_CURSOR_DOWN_PAGE
                         Keys.MoveHome -> EditorCommand.MOVE_CURSOR_START_LINE
                         Keys.MoveEnd -> EditorCommand.MOVE_CURSOR_END_LINE
-                        Keys.Enter -> EditorCommand.INSERT_NEW_LINE
+                        Keys.Enter -> EditorCommand.ENTER
                         Keys.Backspace -> EditorCommand.DELETE_PREV_CHAR
                         Keys.Delete -> EditorCommand.DELETE_NEXT_CHAR
                         Keys.Paste -> EditorCommand.PASTE
                         Keys.Cut -> EditorCommand.CUT
-                        Keys.Tab -> EditorCommand.INSERT_TAB
+                        Keys.Tab -> EditorCommand.TAB
                         Keys.Copy -> EditorCommand.COPY
                         Keys.Escape -> GenericCommand.ESCAPE
                         else -> null
@@ -317,7 +319,7 @@ internal interface KeyMapper {
                         Keys.H -> EditorCommand.DELETE_PREV_CHAR
                         Keys.D -> EditorCommand.DELETE_NEXT_CHAR
                         Keys.K -> EditorCommand.DELETE_END_LINE
-                        Keys.O -> EditorCommand.INSERT_NEW_LINE
+                        Keys.O -> EditorCommand.ENTER
                         else -> null
                     }
                 }

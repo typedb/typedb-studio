@@ -36,8 +36,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -52,6 +60,8 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
+import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
 
 object TextToolbar {
 
@@ -66,6 +76,8 @@ object TextToolbar {
     private val BUTTON_SPACING = 4.dp
 
     internal class State(private val target: InputTarget, val finder: TextFinder) {
+
+        enum class InputType { FINDER, REPLACER }
 
         internal var lineHeight by mutableStateOf(0.dp)
         internal var showFinder by mutableStateOf(false)
@@ -125,6 +137,72 @@ object TextToolbar {
             return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
+        internal fun handle(event: KeyEvent, focusManager: FocusManager, inputType: InputType): Boolean {
+            return if (event.type == KeyEventType.KeyUp) false
+            else KeyMapper.CURRENT.map(event)?.let {
+                when (it) {
+                    is KeyMapper.EditorCommand -> execute(it, focusManager, inputType)
+                    else -> false
+                }
+            } ?: false
+        }
+
+        private fun execute(
+            command: KeyMapper.EditorCommand,
+            focusManager: FocusManager,
+            inputType: InputType
+        ): Boolean {
+            return when (command) {
+                KeyMapper.EditorCommand.TAB -> {
+                    moveFocusNext(focusManager)
+                    true
+                }
+                KeyMapper.EditorCommand.ENTER_SHIFT -> {
+                    insertNewLine(inputType)
+                    true
+                }
+                KeyMapper.EditorCommand.ENTER -> {
+                    onEnter(inputType)
+                    true
+                }
+                else -> false
+            }
+        }
+
+        private fun moveFocusNext(focusManager: FocusManager) {
+            focusManager.moveFocus(FocusDirection.Next)
+        }
+
+        private fun insertNewLine(inputType: InputType) {
+            val field = when (inputType) {
+                FINDER -> findText
+                REPLACER -> replaceText
+            }
+            val noSelectionField = when {
+                field.selection.collapsed -> field
+                else -> deleteSelection(field)
+            }
+            val cursor = noSelectionField.selection.end
+            val newText = noSelectionField.text.substring(0, cursor) + "\n" + noSelectionField.text.substring(cursor)
+            val newField = TextFieldValue(newText, TextRange(cursor + 1))
+            when (inputType) {
+                FINDER -> findText = newField
+                REPLACER -> replaceText = newField
+            }
+        }
+
+        private fun onEnter(inputType: InputType) {
+            when (inputType) {
+                FINDER -> findNext()
+                REPLACER -> replaceNext()
+            }
+        }
+
+        private fun deleteSelection(field: TextFieldValue): TextFieldValue {
+            val text = field.text.removeRange(field.selection.min, field.selection.max)
+            return TextFieldValue(text, TextRange(field.selection.min))
+        }
+
         internal fun toggleCaseSensitive() {
             isCaseSensitive = !isCaseSensitive
         }
@@ -166,6 +244,7 @@ object TextToolbar {
     @Composable
     internal fun Area(state: State, modifier: Modifier = Modifier) {
         val findTextFocusReq = FocusRequester()
+        val focusManager = LocalFocusManager.current
         Box {
             // We render a character to find out the default height of a line for the given font
             // TODO: use FinderTextInput TextLayoutResult after: https://github.com/JetBrains/compose-jb/issues/1781
@@ -176,10 +255,10 @@ object TextToolbar {
             // TODO: figure out how to set min width to MIN_WIDTH
             Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolbarHeight())) {
                 Column(Modifier.weight(1f)) {
-                    FinderTextInput(state, findTextFocusReq)
+                    FinderTextInput(state, findTextFocusReq, focusManager)
                     if (state.showReplacer) {
                         Separator.Horizontal()
-                        ReplacerTextInput(state)
+                        ReplacerTextInput(state, focusManager)
                     }
                 }
                 Separator.Vertical()
@@ -200,28 +279,32 @@ object TextToolbar {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun FinderTextInput(state: State, focusReq: FocusRequester) {
+    private fun FinderTextInput(state: State, focusReq: FocusRequester, focusManager: FocusManager) {
         MultilineTextInput(
             state = state.findTextHorScroller,
             value = state.findText,
-            modifier = Modifier.height(state.finderInputHeight()),
             icon = Icon.Code.MAGNIFYING_GLASS,
             focusRequester = focusReq,
             onValueChange = { state.findText(it) },
             onTextLayout = { state.findTextLayout = it },
+            modifier = Modifier.height(state.finderInputHeight()).onPreviewKeyEvent { event ->
+                state.handle(event, focusManager, FINDER)
+            },
         )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ReplacerTextInput(state: State) {
+    private fun ReplacerTextInput(state: State, focusManager: FocusManager) {
         MultilineTextInput(
             state = state.replaceTextHorScroller,
             value = state.replaceText,
-            modifier = Modifier.height(state.replacerInputHeight()),
             icon = Icon.Code.RIGHT_LEFT,
             onValueChange = { state.replaceText = it },
             onTextLayout = { state.replaceTextLayout = it },
+            modifier = Modifier.height(state.replacerInputHeight()).onPreviewKeyEvent { event ->
+                state.handle(event, focusManager, State.InputType.REPLACER)
+            },
         )
     }
 

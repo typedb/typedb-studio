@@ -38,9 +38,10 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_NEXT
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_CHAR
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_WORD
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_START_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_TAB
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.INSERT_NEW_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.INSERT_TAB
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB_SHIFT
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_LINE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_PAGE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_END
@@ -117,13 +118,13 @@ internal class TextProcessor(
     private var changeCount: AtomicInteger = AtomicInteger(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    internal fun process(command: GenericCommand): Boolean {
+    internal fun execute(command: GenericCommand): Boolean {
         return when (command) {
             ESCAPE -> target.selection?.let { target.selectNone(); true } ?: false
         }
     }
 
-    internal fun process(command: EditorCommand): Boolean {
+    internal fun execute(command: EditorCommand): Boolean {
         when (command) {
             MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
             MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
@@ -165,9 +166,9 @@ internal class TextProcessor(
             DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
             DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
             DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
-            DELETE_TAB -> deleteTab()
-            INSERT_TAB -> insertTab()
-            INSERT_NEW_LINE -> insertNewLine()
+            TAB_SHIFT -> deleteTab()
+            TAB -> insertTab()
+            ENTER, ENTER_SHIFT -> insertNewLine()
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()

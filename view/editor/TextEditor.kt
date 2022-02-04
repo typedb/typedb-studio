@@ -155,30 +155,31 @@ object TextEditor {
         }
 
         internal fun handleEditorEvent(event: KeyEvent): Boolean {
-            return when {
+            return if (event.type == KeyEventType.KeyUp) false
+            else when {
                 event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
-                event.type != KeyEventType.KeyDown -> false
                 else -> KeyMapper.CURRENT.map(event)?.let {
                     when (it) {
-                        is EditorCommand -> processor.process(it)
-                        is WindowCommand -> process(it)
-                        is GenericCommand -> processor.process(it) || process(it)
+                        is EditorCommand -> processor.execute(it)
+                        is WindowCommand -> execute(it)
+                        is GenericCommand -> processor.execute(it) || execute(it)
                     }
                 } ?: false
             }
         }
 
         internal fun handleToolbarEvent(event: KeyEvent): Boolean {
-            return KeyMapper.CURRENT.map(event)?.let {
+            return if (event.type == KeyEventType.KeyUp) false
+            else KeyMapper.CURRENT.map(event)?.let {
                 when (it) {
-                    is WindowCommand -> process(it)
-                    is GenericCommand -> process(it)
+                    is WindowCommand -> execute(it)
+                    is GenericCommand -> execute(it)
                     else -> false
                 }
             } ?: false
         }
 
-        private fun process(command: WindowCommand): Boolean {
+        private fun execute(command: WindowCommand): Boolean {
             when (command) {
                 WindowCommand.FIND -> toolbar.showFinder()
                 WindowCommand.REPLACE -> toolbar.showReplacer()
@@ -187,7 +188,7 @@ object TextEditor {
             return true
         }
 
-        private fun process(command: GenericCommand): Boolean {
+        private fun execute(command: GenericCommand): Boolean {
             return when (command) {
                 GenericCommand.ESCAPE -> hideToolbar()
             }
