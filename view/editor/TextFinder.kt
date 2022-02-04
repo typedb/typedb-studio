@@ -86,7 +86,7 @@ internal class TextFinder(
             isCaseSensitive -> Pattern.compile(patternStr)
             else -> Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE)
         }.matcher(content).results().map { selection(it) }.toList().toMutableList()
-        if (hasMatches) updatePosition(lastPosition) else position = 0
+        updatePosition(lastPosition)
     }
 
     private fun selection(match: MatchResult): Selection {
@@ -106,7 +106,8 @@ internal class TextFinder(
 
     private fun updatePosition(newPosition: Int) {
         position = newPosition.coerceIn(0, (matches.size - 1).coerceAtLeast(0))
-        target.updateSelection(matches[position])
+        if (hasMatches) target.updateSelection(matches[position])
+        else target.clearSelection()
     }
 
     internal fun findNext() {

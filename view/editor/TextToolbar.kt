@@ -186,20 +186,20 @@ object TextToolbar {
         }
 
         private fun insertNewLine(inputType: InputType) {
-            val field = when (inputType) {
+            val textFieldValue = when (inputType) {
                 FINDER -> findText
                 REPLACER -> replaceText
             }
             val noSelectionField = when {
-                field.selection.collapsed -> field
-                else -> deleteSelection(field)
+                textFieldValue.selection.collapsed -> textFieldValue
+                else -> deleteSelection(textFieldValue)
             }
             val cursor = noSelectionField.selection.end
             val newText = noSelectionField.text.substring(0, cursor) + "\n" + noSelectionField.text.substring(cursor)
-            val newField = TextFieldValue(newText, TextRange(cursor + 1))
+            val newTextFieldValue = TextFieldValue(newText, TextRange(cursor + 1))
             when (inputType) {
-                FINDER -> findText = newField
-                REPLACER -> replaceText = newField
+                FINDER -> updateFindText(newTextFieldValue)
+                REPLACER -> replaceText = newTextFieldValue
             }
         }
 
@@ -366,7 +366,10 @@ object TextToolbar {
             Spacer(Modifier.width(BUTTON_SPACING))
             FinderParameterButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
-            if (state.findText.text.isNotEmpty()) FinderStatus(state, Modifier.weight(1f))
+            if (state.findText.text.isNotEmpty()) {
+                Spacer(Modifier.width(BUTTON_SPACING))
+                FinderStatus(state, Modifier.weight(1f))
+            }
         }
     }
 
