@@ -115,6 +115,7 @@ object TextEditor {
         val processor = TextProcessor(file, rendering, target, clipboard)
         val finder = TextFinder(file, target, processor)
         val toolbar = TextToolbar.State(target, finder)
+        processor.onChange { finder.recompute() }
         return State(file, font, rendering, target, processor, toolbar, onClose)
     }
 

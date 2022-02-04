@@ -56,6 +56,11 @@ internal class TextFinder(
         position = 0
     }
 
+    internal fun recompute() {
+        updateContent()
+        findArgs?.let { findPattern(it.pattern, it.isCaseSensitive, position) }
+    }
+
     internal fun updateContent() {
         val newLineInfo = mutableListOf<LineInfo>()
         file.content.forEachIndexed { i, line ->
@@ -122,10 +127,8 @@ internal class TextFinder(
 
     internal fun replaceCurrent(replaceText: String) {
         if (!hasMatches) return
-        val findArgs = this.findArgs!!
         processor.insertText(replaceText)
-        updateContent()
-        findPattern(findArgs.pattern, findArgs.isCaseSensitive, position)
+        recompute()
     }
 
     internal fun replaceAll(text: String) {

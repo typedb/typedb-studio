@@ -114,9 +114,14 @@ internal class TextProcessor(
     internal var version by mutableStateOf(0)
     private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
     private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
+    private var onChange: (() -> Unit)? = null
     private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
     private var changeCount: AtomicInteger = AtomicInteger(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+    internal fun onChange(onChange: () -> Unit) {
+        this.onChange = onChange
+    }
 
     internal fun execute(command: GenericCommand): Boolean {
         return when (command) {
@@ -311,6 +316,7 @@ internal class TextProcessor(
         }
         version++
         target.resetTextWidth()
+        onChange?.let { it() }
     }
 
     private fun applyDeletion(deletion: Deletion) {
