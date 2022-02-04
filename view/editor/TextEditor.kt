@@ -117,13 +117,14 @@ object TextEditor {
         val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor(file, rendering, finder, target, clipboard)
         val toolbar = TextToolbar.State(finder, target, processor)
-        return State(file, font, rendering, target, processor, toolbar, onClose)
+        return State(file, font, rendering, finder, target, processor, toolbar, onClose)
     }
 
     class State internal constructor(
         internal val file: File,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
+        internal val finder: TextFinder,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
         internal val toolbar: TextToolbar.State,
@@ -317,6 +318,9 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
             val textLayout = if (isRendered) state.rendering.get(index) else null
+            state.finder.matches(index).forEach {
+                Selection(state, it, index, textLayout, Theme.colors.quaternary, text.length, fontWidth)
+            }
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
                 Selection(state, selection, index, textLayout, Theme.colors.tertiary, text.length, fontWidth)
             }

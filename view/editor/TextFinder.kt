@@ -36,6 +36,7 @@ internal class TextFinder(private val file: File) {
     private var content: String by mutableStateOf("")
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
     private var matches: List<Selection> by mutableStateOf(listOf())
+    private var matchesByLine: Map<Int, List<Selection>> by mutableStateOf(mapOf())
     private var pattern: Pattern? by mutableStateOf(null)
     internal var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
@@ -95,7 +96,12 @@ internal class TextFinder(private val file: File) {
     }
 
     private fun computeMatches() {
+        val byLine = mutableMapOf<Int, MutableList<Selection>>()
         matches = pattern!!.matcher(content).results().map { selection(it) }.toList()
+        matches.forEach {
+            (it.min.row..it.end.row).forEach { i -> byLine.computeIfAbsent(i) { mutableListOf() }.add(it) }
+        }
+        matchesByLine = byLine
     }
 
     private fun selection(match: MatchResult): Selection {
@@ -132,5 +138,9 @@ internal class TextFinder(private val file: File) {
             if (newPos < 0) newPos += matches.size
             matches[updatePosition(newPos)]
         } else null
+    }
+
+    internal fun matches(line: Int): List<Selection> {
+        return matchesByLine[line] ?: listOf()
     }
 }
