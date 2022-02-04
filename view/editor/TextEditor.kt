@@ -50,6 +50,7 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -83,6 +84,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
@@ -315,8 +317,8 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                if (!isRendered) Selection(state, index, null, text.length, fontWidth)
-                else Selection(state, index, state.rendering.get(index), text.length, fontWidth)
+                val textLayout = if (isRendered) state.rendering.get(index) else null
+                Selection(state, selection, index, textLayout, Theme.colors.tertiary, text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
@@ -331,25 +333,22 @@ object TextEditor {
     }
 
     @Composable
-    private fun Selection(state: State, index: Int, textLayout: TextLayoutResult?, length: Int, fontWidth: Dp) {
-        val selection = state.target.selection
-        assert(selection != null && selection.min.row <= index && selection.max.row >= index)
-        val start = when {
-            selection!!.min.row < index -> 0
-            else -> selection.min.col
-        }
-        val end = when {
-            selection.max.row > index -> state.content[index].length
-            else -> selection.max.col
-        }
+    private fun Selection(
+        state: State, selection: Selection, index: Int,
+        textLayout: TextLayoutResult?, color: Color,
+        length: Int, fontWidth: Dp
+    ) {
+        assert(selection.min.row <= index && selection.max.row >= index)
+        val start = if (selection.min.row < index) 0 else selection.min.col
+        val end = if (selection.max.row > index) state.content[index].length else selection.max.col
         var startPos = textLayout?.let { toDP(it.getCursorRect(start).left, state.density) } ?: (fontWidth * start)
         var endPos = textLayout?.let {
             toDP(it.getCursorRect(end.coerceAtMost(it.getLineEnd(0))).right, state.density)
         } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
-        val color = Theme.colors.tertiary.copy(Theme.SELECTION_ALPHA)
-        Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
+        val faded = color.copy(Theme.SELECTION_ALPHA)
+        Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(faded))
     }
 
     @OptIn(ExperimentalTime::class)
