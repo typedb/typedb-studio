@@ -240,7 +240,7 @@ object TextToolbar {
             val oldText = findText.text
             findText = textFieldValue
             if (findText.text.isNotEmpty() && findText.text != oldText) delayedFindText()
-            else finder.reset()
+            else if (findText.text.isEmpty()) finder.reset()
         }
 
         @OptIn(ExperimentalTime::class)
@@ -248,9 +248,7 @@ object TextToolbar {
             changeCount.incrementAndGet()
             coroutineScope.launch {
                 delay(CHANGE_BATCH_DELAY)
-                if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) {
-                    findText()
-                }
+                if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) findText()
             }
         }
 
