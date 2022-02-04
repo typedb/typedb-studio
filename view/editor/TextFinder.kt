@@ -25,26 +25,32 @@ internal class TextFinder(val file: File) {
     internal val status: String get() = "11 / 23462" // TODO
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
+        println("findText() -> isCaseSensitive: $isCaseSensitive, text: $text")
         // TODO
     }
 
     internal fun findRegex(regex: Regex, isCaseSensitive: Boolean) {
+        println("findRegex() -> isCaseSensitive: $isCaseSensitive, regex: $regex")
         // TODO
     }
 
     internal fun findNext() {
+        println("findNext()")
         // TODO
     }
 
     internal fun findPrevious() {
+        println("findPrevious()")
         // TODO
     }
 
     internal fun replaceNext(text: String) {
+        println("replaceNext() -> text: $text")
         // TODO
     }
 
     internal fun replaceAll(text: String) {
+        println("replaceAll() -> text: $text")
         // TODO
     }
 }

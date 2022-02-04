@@ -66,7 +66,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
@@ -254,10 +253,7 @@ object Form {
                     .background(fadeable(color, !enabled), if (rounded) RECTANGLE_ROUNDED_ALL else RectangleShape)
                     .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     .clickable(enabled = enabled) { onClick() }
-                    .onKeyEvent { onKeyEvent(event = it, enabled = enabled, onEnter = onClick) }
-            ) {
-                content()
-            }
+            ) { content() }
         }
     }
 
@@ -320,9 +316,8 @@ object Form {
         } ?: modifier
 
         BasicTextField(
-            modifier = mod.background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape)
-                .pointerHoverIcon(pointerHoverIcon)
-                .onPreviewKeyEvent { onKeyEvent(event = it, enabled = enabled) },
+            modifier = mod.pointerHoverIcon(pointerHoverIcon)
+                .background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape),
             value = value,
             onValueChange = onValueChange,
             readOnly = readOnly,
