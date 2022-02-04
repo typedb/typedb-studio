@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -75,7 +76,7 @@ object TextToolbar {
     private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
 
-    internal class State(private val target: InputTarget, val finder: TextFinder) {
+    internal class State(private val target: InputTarget, private val finder: TextFinder) {
 
         enum class InputType { FINDER, REPLACER }
 
@@ -91,6 +92,7 @@ object TextToolbar {
         internal var isRegex by mutableStateOf(false)
         internal var isWord by mutableStateOf(false)
         internal var isCaseSensitive by mutableStateOf(false)
+        internal val status: String get() = finder.status
         internal val density: Float get() = target.density
 
         internal fun showFinder() {
@@ -203,6 +205,10 @@ object TextToolbar {
             return TextFieldValue(text, TextRange(field.selection.min))
         }
 
+        internal fun updateContent() {
+            finder.updateContent()
+        }
+
         internal fun toggleCaseSensitive() {
             isCaseSensitive = !isCaseSensitive
         }
@@ -219,8 +225,8 @@ object TextToolbar {
 
         internal fun findText(text: TextFieldValue) {
             findText = text
-            if (isRegex) finder.findRegex(Regex(findText.text), isCaseSensitive)
-            else if (isWord) finder.findRegex(Regex("\b$findText\b"), isCaseSensitive)
+            if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
+            else if (isWord) finder.findWord(findText.text, isCaseSensitive)
             else finder.findText(findText.text, isCaseSensitive)
         }
 
@@ -290,6 +296,7 @@ object TextToolbar {
             onValueChange = { state.findText(it) },
             onTextLayout = { state.findTextLayout = it },
             modifier = Modifier.height(state.finderInputHeight())
+                .onFocusEvent { state.updateContent() }
                 .onPreviewKeyEvent { state.handle(it, focusManager, FINDER) },
         )
     }
@@ -354,7 +361,7 @@ object TextToolbar {
     @Composable
     private fun FinderStatus(state: State, modifier: Modifier) {
         Form.Text(
-            value = state.finder.status,
+            value = state.status,
             overflow = TextOverflow.Ellipsis,
             modifier = modifier
         )

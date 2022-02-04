@@ -18,30 +18,79 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
+import java.util.regex.MatchResult
+import java.util.regex.Pattern
+import kotlin.streams.toList
 
 internal class TextFinder(val file: File) {
 
-    internal val status: String get() = "11 / 23462" // TODO
+    data class LineInfo(val start: Int, val length: Int)
 
-    internal fun findText(text: String, isCaseSensitive: Boolean) {
-        println("findText() -> isCaseSensitive: $isCaseSensitive, text: $text")
-        // TODO
+    private var content: String by mutableStateOf("")
+    private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
+    private var matches: List<Selection> by mutableStateOf(listOf())
+    private var target: Int by mutableStateOf(0)
+    internal val status: String get() = "$target / ${matches.size}"
+
+    internal fun updateContent() {
+        val newLineInfo = mutableListOf<LineInfo>()
+        file.content.forEachIndexed { i, line ->
+            val length = if (i < file.content.size - 1) line.length + 1 else line.length
+            if (i == 0) newLineInfo.add(LineInfo(0, length))
+            else newLineInfo.add(LineInfo(newLineInfo[i - 1].start + newLineInfo[i - 1].length, length))
+        }
+        lineInfo = newLineInfo
+        content = file.content.joinToString(separator = "\n")
     }
 
-    internal fun findRegex(regex: Regex, isCaseSensitive: Boolean) {
-        println("findRegex() -> isCaseSensitive: $isCaseSensitive, regex: $regex")
-        // TODO
+    internal fun findText(text: String, isCaseSensitive: Boolean) {
+        findPattern(text, isCaseSensitive)
+    }
+
+    internal fun findWord(word: String, isCaseSensitive: Boolean) {
+        findPattern("\b$word\b", isCaseSensitive)
+    }
+
+    internal fun findRegex(regex: String, isCaseSensitive: Boolean) {
+        findPattern(regex, isCaseSensitive)
+    }
+
+    private fun findPattern(string: String, isCaseSensitive: Boolean) {
+        val pattern = if (isCaseSensitive) Pattern.compile(string)
+        else Pattern.compile(string, Pattern.CASE_INSENSITIVE)
+        matches = pattern.matcher(content).results().map { selection(it) }.toList()
+        target = 0
+    }
+
+    private fun selection(match: MatchResult): Selection {
+        return Selection(cursor(match.start()), cursor(match.end()))
+    }
+
+    private fun cursor(index: Int): Cursor {
+        var row = 0
+        var col = index
+
+        while (col >= lineInfo[row].length) {
+            col -= lineInfo[row].length
+            row++
+        }
+        return Cursor(row, col)
     }
 
     internal fun findNext() {
-        println("findNext()")
-        // TODO
+        target = (target + 1) % matches.size
+        println("findNext() -> ${matches[target].label()}") // TODO: remove
     }
 
     internal fun findPrevious() {
-        println("findPrevious()")
-        // TODO
+        target = (target - 1) % matches.size
+        println("findPrevious() -> ${matches[target].label()}") // TODO: remove
     }
 
     internal fun replaceNext(text: String) {
