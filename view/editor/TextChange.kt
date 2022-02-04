@@ -59,7 +59,11 @@ internal data class TextChange(val operations: List<Operation>) {
         }
         operations.stream().skip(1).forEach { operation ->
             val selection = operation.selection()
-            summary = when (operation) {
+            if (selection.start != summary.end && selection.end != summary.start) {
+                val cursor = operations.last().selection().end
+                summary = Selection(cursor, cursor)
+                return@forEach
+            } else summary = when (operation) {
                 is Deletion -> Selection(min(summary.start, selection.min), selection.min)
                 is Insertion -> Selection(summary.start, selection.end)
             }
