@@ -105,7 +105,7 @@ object Form {
     private val INNER_SPACING = 10.dp
     private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
-    private val CONTENT_PADDING = 8.dp
+    private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
     private val MULTILINE_INPUT_MIN_WIDTH = 100.dp
     private val ICON_SPACING = 6.dp
@@ -190,11 +190,11 @@ object Form {
         BoxButton(onClick = onClick, color = bgColor, modifier = modifier, enabled = enabled) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = MULTILINE_INPUT_PADDING)
+                modifier = Modifier.padding(horizontal = TEXT_BUTTON_PADDING)
             ) {
                 @Composable
                 fun iconSpacing() {
-                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(TEXT_BUTTON_PADDING))
                 }
                 leadingIcon?.let {
                     Icon.Render(icon = it, color = iconColor)
