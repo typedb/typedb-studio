@@ -211,6 +211,23 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
+    fun RawClickableIcon(
+        icon: Icon.Code,
+        onClick: () -> Unit,
+        modifier: Modifier,
+        iconColor: Color = Theme.colors.icon,
+        enabled: Boolean = true
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier.height(FIELD_HEIGHT)
+                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .onPointerEvent(PointerEventType.Press) { if (it.buttons.isPrimaryPressed) onClick() }
+        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
     fun IconButton(
         icon: Icon.Code,
         onClick: () -> Unit,
@@ -257,21 +274,27 @@ object Form {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun RawClickableIcon(
-        icon: Icon.Code,
-        onClick: () -> Unit,
-        modifier: Modifier,
-        iconColor: Color = Theme.colors.icon,
+    fun Checkbox(
+        value: Boolean,
+        onChange: (Boolean) -> Unit,
+        modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = modifier.height(FIELD_HEIGHT)
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                .onPointerEvent(PointerEventType.Press) { if (it.buttons.isPrimaryPressed) onClick() }
-        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
+        Checkbox(
+            checked = value,
+            onCheckedChange = onChange,
+            modifier = modifier.size(FIELD_HEIGHT)
+                .background(color = fadeable(Theme.colors.surface, !enabled))
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), RECTANGLE_ROUNDED_ALL)
+                .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
+            enabled = enabled,
+            colors = CheckboxDefaults.colors(
+                checkedColor = fadeable(Theme.colors.icon, !enabled),
+                uncheckedColor = fadeable(Theme.colors.surface, !enabled),
+                disabledColor = fadeable(Theme.colors.surface, !enabled)
+            )
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -434,29 +457,6 @@ object Form {
                 }
             }
         }
-    }
-
-    @Composable
-    fun Checkbox(
-        value: Boolean,
-        onChange: (Boolean) -> Unit,
-        modifier: Modifier = Modifier,
-        enabled: Boolean = true
-    ) {
-        Checkbox(
-            checked = value,
-            onCheckedChange = onChange,
-            modifier = modifier.size(FIELD_HEIGHT)
-                .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), RECTANGLE_ROUNDED_ALL)
-                .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
-            enabled = enabled,
-            colors = CheckboxDefaults.colors(
-                checkedColor = fadeable(Theme.colors.icon, !enabled),
-                uncheckedColor = fadeable(Theme.colors.surface, !enabled),
-                disabledColor = fadeable(Theme.colors.surface, !enabled)
-            )
-        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
