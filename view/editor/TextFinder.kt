@@ -128,12 +128,14 @@ internal class TextFinder(
 
     internal fun findPrevious() {
         if (!hasMatches) return
-        updatePosition((position - 1) % matches.size)
+        var newPos = position - 1
+        if (newPos < 0) newPos += matches.size
+        updatePosition(newPos)
     }
 
-    internal fun replaceCurrent(replaceText: String) {
+    internal fun replaceCurrent(text: String) {
         if (!hasMatches) return
-        processor.insertText(replaceText)
+        processor.insertText(text) // processor will internally call recompute()
         updatePosition(position)
     }
 
