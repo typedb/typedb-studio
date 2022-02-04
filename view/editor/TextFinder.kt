@@ -36,7 +36,17 @@ internal class TextFinder(val file: File) {
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
     private var matches: List<Selection> by mutableStateOf(listOf())
     private var target: Int by mutableStateOf(0)
-    internal val status: String get() = "$target / ${matches.size}"
+    internal val hasMatches: Boolean get() = matches.isNotEmpty()
+
+    internal fun status(): String {
+        val count = if (matches.isNotEmpty()) "${target + 1} / ${matches.size}" else matches.size.toString()
+        return "$count found"
+    }
+
+    internal fun reset() {
+        matches = listOf()
+        target = 0
+    }
 
     internal fun updateContent() {
         val newLineInfo = mutableListOf<LineInfo>()
@@ -62,11 +72,11 @@ internal class TextFinder(val file: File) {
     }
 
     private fun findPattern(string: String, isCaseSensitive: Boolean) {
+        assert(string.isNotEmpty())
         val pattern = if (isCaseSensitive) Pattern.compile(string)
         else Pattern.compile(string, Pattern.CASE_INSENSITIVE)
         matches = pattern.matcher(content).results().map { selection(it) }.toList()
         target = 0
-        println("findPattern() -> {\n$matches\n}")
     }
 
     private fun selection(match: MatchResult): Selection {

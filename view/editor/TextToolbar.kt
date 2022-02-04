@@ -99,7 +99,8 @@ object TextToolbar {
         internal var isRegex by mutableStateOf(false)
         internal var isWord by mutableStateOf(false)
         internal var isCaseSensitive by mutableStateOf(false)
-        internal val status: String get() = finder.status
+        internal val hasFindMatches: Boolean get() = finder.hasMatches
+        internal val status: String get() = finder.status()
         internal val density: Float get() = target.density
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -234,7 +235,8 @@ object TextToolbar {
 
         internal fun findText(text: TextFieldValue) {
             findText = text
-            delayedFindText()
+            if (findText.text.isNotEmpty()) delayedFindText()
+            else finder.reset()
         }
 
         @OptIn(ExperimentalTime::class)
@@ -242,7 +244,7 @@ object TextToolbar {
             changeCount.incrementAndGet()
             coroutineScope.launch {
                 delay(CHANGE_BATCH_DELAY)
-                if (changeCount.decrementAndGet() == 0) {
+                if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) {
                     if (isRegex) finder.findRegex(findText.text, isCaseSensitive)
                     else if (isWord) finder.findWord(findText.text, isCaseSensitive)
                     else finder.findText(findText.text, isCaseSensitive)
@@ -357,7 +359,7 @@ object TextToolbar {
             Spacer(Modifier.width(BUTTON_SPACING))
             FinderParameterButtons(state)
             Spacer(Modifier.width(BUTTON_SPACING))
-            FinderStatus(state, Modifier.weight(1f))
+            if (state.findText.text.isNotEmpty()) FinderStatus(state, Modifier.weight(1f))
         }
     }
 
@@ -383,7 +385,8 @@ object TextToolbar {
         Form.Text(
             value = state.status,
             overflow = TextOverflow.Ellipsis,
-            modifier = modifier
+            modifier = modifier,
+            color = if (state.hasFindMatches) Theme.colors.secondary else Theme.colors.error
         )
     }
 
