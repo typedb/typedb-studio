@@ -137,13 +137,8 @@ object TextEditor {
         internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
-        internal var showToolbar
-            get() = toolbar.showFinder || toolbar.showReplacer
-            set(value) {
-                toolbar.showFinder = value
-                toolbar.showReplacer = value
-                if (!value) toolbar.reset()
-            }
+        internal val showToolbar get() = toolbar.showToolbar
+
         internal var density: Float
             get() = target.density
             set(value) {
@@ -199,8 +194,8 @@ object TextEditor {
         }
 
         private fun hideToolbar(): Boolean {
-            return if (showToolbar) {
-                showToolbar = false
+            return if (toolbar.showToolbar) {
+                toolbar.hide()
                 true
             } else false
         }
@@ -318,7 +313,7 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
             val textLayout = if (isRendered) state.rendering.get(index) else null
-            state.finder.matches(index).forEach {
+            state.finder.matches(index).forEach { // TODO: choose a better color
                 Selection(state, it, index, textLayout, Theme.colors.quaternary, text.length, fontWidth)
             }
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {

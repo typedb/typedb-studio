@@ -393,7 +393,8 @@ object Form {
             // else, text have changed and updateLayout() will be called
         }
 
-        internal fun updateLayout(newLayout: TextLayoutResult) {
+        internal fun updateLayout(newLayout: TextLayoutResult, value: TextFieldValue) {
+            if (this.value != value) this.value = value
             layout = newLayout
             mayScrollHorizontally()
         }
@@ -419,7 +420,7 @@ object Form {
         value: TextFieldValue,
         modifier: Modifier,
         icon: Icon.Code? = null,
-        focusRequester: FocusRequester = FocusRequester(),
+        focusReq: FocusRequester = FocusRequester(),
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
     ) {
@@ -430,7 +431,6 @@ object Form {
                 .background(Theme.colors.surface)
                 .onSizeChanged { state.density = density }
                 .pointerHoverIcon(PointerIconDefaults.Text)
-                .onPointerEvent(PointerEventType.Press) { focusRequester.requestFocus() }
         ) {
             icon?.let {
                 Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
@@ -445,10 +445,10 @@ object Form {
                         BasicTextField(
                             value = value,
                             onValueChange = { state.updateValue(it); onValueChange(it) },
-                            onTextLayout = { state.updateLayout(it); onTextLayout(it) },
+                            onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
                             cursorBrush = SolidColor(Theme.colors.secondary),
                             textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
-                            modifier = Modifier.focusRequester(focusRequester)
+                            modifier = Modifier.focusRequester(focusReq)
                                 .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
                         )
                         Spacer(Modifier.width(MULTILINE_INPUT_PADDING))

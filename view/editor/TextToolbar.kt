@@ -91,9 +91,10 @@ object TextToolbar {
 
         enum class InputType { FINDER, REPLACER }
 
-        internal var lineHeight by mutableStateOf(0.dp)
         internal var showFinder by mutableStateOf(false)
         internal var showReplacer by mutableStateOf(false)
+        internal val showToolbar get() = showFinder || showReplacer
+        internal var lineHeight by mutableStateOf(0.dp)
         internal var findText by mutableStateOf(TextFieldValue(""))
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal val findTextHorScroller = Form.MultilineTextInputState(target.density)
@@ -109,19 +110,23 @@ object TextToolbar {
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-        internal fun reset() {
+        internal fun hide() {
+            showFinder = false
+            showReplacer = false
             finder.reset()
         }
 
         internal fun showFinder() {
+            val wasInitiallyClosed = !showToolbar
             showFinder = true
             showReplacer = false
-            if (target.selection != null) findText = TextFieldValue(target.selectedText())
+            if (target.selection != null && wasInitiallyClosed) findText = TextFieldValue(target.selectedText())
         }
 
         internal fun showReplacer() {
+            val wasInitiallyClosed = !showToolbar
             showReplacer = true
-            if (target.selection != null) findText = TextFieldValue(target.selectedText())
+            if (target.selection != null && wasInitiallyClosed) findText = TextFieldValue(target.selectedText())
         }
 
         internal fun toolbarHeight(): Dp {
@@ -314,7 +319,10 @@ object TextToolbar {
             }
         }
         Separator.Horizontal()
-        LaunchedEffect(state, state.showReplacer) { findTextFocusReq.requestFocus() }
+        LaunchedEffect(state, state.showReplacer) {
+            println("requesting focus...")
+            findTextFocusReq.requestFocus()
+        }
     }
 
     @Composable
@@ -346,7 +354,7 @@ object TextToolbar {
             state = state.findTextHorScroller,
             value = state.findText,
             icon = Icon.Code.MAGNIFYING_GLASS,
-            focusRequester = focusReq,
+            focusReq = focusReq,
             onValueChange = { state.updateFindText(it) },
             onTextLayout = { state.findTextLayout = it },
             modifier = Modifier.height(state.finderInputHeight())
