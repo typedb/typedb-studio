@@ -316,8 +316,8 @@ object TextEditor {
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
+            val textLayout = if (isRendered) state.rendering.get(index) else null
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                val textLayout = if (isRendered) state.rendering.get(index) else null
                 Selection(state, selection, index, textLayout, Theme.colors.tertiary, text.length, fontWidth)
             }
             Text(
@@ -325,10 +325,7 @@ object TextEditor {
                 modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
                 onTextLayout = { state.rendering.set(index, it, state.processor.version) }
             )
-            if (cursor.row == index) {
-                if (!isRendered) Cursor(state, text, null, font, fontWidth)
-                else Cursor(state, text, state.rendering.get(index), font, fontWidth)
-            }
+            if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth)
         }
     }
 
