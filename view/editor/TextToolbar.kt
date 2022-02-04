@@ -120,13 +120,19 @@ object TextToolbar {
             val wasInitiallyClosed = !showToolbar
             showFinder = true
             showReplacer = false
-            if (target.selection != null && wasInitiallyClosed) findText = TextFieldValue(target.selectedText())
+            if (target.selection != null && wasInitiallyClosed) {
+                findText = TextFieldValue(target.selectedText())
+                findText()
+            }
         }
 
         internal fun showReplacer() {
             val wasInitiallyClosed = !showToolbar
             showReplacer = true
-            if (target.selection != null && wasInitiallyClosed) findText = TextFieldValue(target.selectedText())
+            if (target.selection != null && wasInitiallyClosed) {
+                findText = TextFieldValue(target.selectedText())
+                findText()
+            }
         }
 
         internal fun toolbarHeight(): Dp {
@@ -319,10 +325,7 @@ object TextToolbar {
             }
         }
         Separator.Horizontal()
-        LaunchedEffect(state, state.showReplacer) {
-            println("requesting focus...")
-            findTextFocusReq.requestFocus()
-        }
+        LaunchedEffect(state, state.showReplacer) { findTextFocusReq.requestFocus() }
     }
 
     @Composable

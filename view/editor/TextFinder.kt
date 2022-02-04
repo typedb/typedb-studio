@@ -48,8 +48,9 @@ internal class TextFinder(private val file: File) {
 
     internal fun reset() {
         pattern = null
-        matches = mutableListOf()
         position = 0
+        matches = listOf()
+        matchesByLine = mapOf()
     }
 
     internal fun mayRecompute() {
