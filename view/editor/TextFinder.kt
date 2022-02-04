@@ -39,7 +39,7 @@ internal class TextFinder(
 
     private var content: String by mutableStateOf("")
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
-    private var matches: MutableList<Selection> by mutableStateOf(mutableListOf())
+    private var matches: List<Selection> by mutableStateOf(listOf())
     private var pattern: Pattern? by mutableStateOf(null)
     private var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
@@ -57,7 +57,7 @@ internal class TextFinder(
 
     internal fun recompute() {
         updateContent()
-        pattern?.let { findPattern(it, position) }
+        pattern?.let { computeMatches() }
     }
 
     internal fun updateContent() {
@@ -83,25 +83,21 @@ internal class TextFinder(
         findPattern(regex, isCaseSensitive, true)
     }
 
-    private fun findPattern(patternStr: String, isCaseSensitive: Boolean, isRegex: Boolean, lastPosition: Int = 0) {
+    private fun findPattern(patternStr: String, isCaseSensitive: Boolean, isRegex: Boolean) {
         assert(patternStr.isNotEmpty())
         val caseFlag = if (isCaseSensitive) 0 else Pattern.CASE_INSENSITIVE
         val literalFlag = if (isRegex) 0 else Pattern.LITERAL
         try {
             pattern = Pattern.compile(patternStr, caseFlag or literalFlag)
-            findPattern(pattern!!, lastPosition)
+            computeMatches()
+            updatePosition(0)
         } catch (e: Exception) {
             reset()
         }
     }
 
-    private fun findPattern(pattern: Pattern, lastPosition: Int) {
-        try {
-            matches = pattern.matcher(content).results().map { selection(it) }.toList().toMutableList()
-            updatePosition(lastPosition)
-        } catch (e: Exception) {
-            reset()
-        }
+    private fun computeMatches() {
+        matches = pattern!!.matcher(content).results().map { selection(it) }.toList()
     }
 
     private fun selection(match: MatchResult): Selection {
@@ -138,7 +134,7 @@ internal class TextFinder(
     internal fun replaceCurrent(replaceText: String) {
         if (!hasMatches) return
         processor.insertText(replaceText)
-        recompute()
+        updatePosition(position)
     }
 
     internal fun replaceAll(text: String) {
