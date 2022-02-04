@@ -92,9 +92,15 @@ object TextToolbar {
             if (target.selection != null) findText = TextFieldValue(target.selectedText())
         }
 
-        internal fun toolBarHeight(): Dp {
+        internal fun toolbarHeight(): Dp {
             var height = finderInputHeight()
             if (showReplacer) height += replacerInputHeight() + Separator.WEIGHT
+            return height
+        }
+
+        internal fun toolbarButtonAreaHeight(): Dp {
+            var height = INPUT_MIN_HEIGHT
+            if (showReplacer) height += INPUT_MIN_HEIGHT + Separator.WEIGHT
             return height
         }
 
@@ -168,7 +174,7 @@ object TextToolbar {
                 onTextLayout = { state.lineHeight = Theme.toDP(it.size.height, state.density) }
             )
             // TODO: figure out how to set min width to MIN_WIDTH
-            Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolBarHeight())) {
+            Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolbarHeight())) {
                 Column(Modifier.weight(1f)) {
                     FinderTextInput(state, findTextFocusReq)
                     if (state.showReplacer) {
@@ -177,7 +183,7 @@ object TextToolbar {
                     }
                 }
                 Separator.Vertical()
-                Column(Modifier.width(BUTTON_AREA_WIDTH)) {
+                Column(Modifier.width(BUTTON_AREA_WIDTH).height(state.toolbarButtonAreaHeight())) {
                     Spacer(Modifier.weight(1f))
                     FinderButtons(state)
                     Spacer(Modifier.weight(1f))
