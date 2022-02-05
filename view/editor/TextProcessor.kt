@@ -108,7 +108,7 @@ internal class TextProcessor(
     companion object {
         private const val TAB_SIZE = 4
         private const val UNDO_LIMIT = 1_000
-        internal val CHANGE_BATCH_DELAY = Duration.milliseconds(500)
+        internal val CHANGE_BATCH_DELAY = Duration.milliseconds(400)
     }
 
     internal val content: SnapshotStateList<String> get() = file.content
