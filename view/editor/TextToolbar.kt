@@ -116,19 +116,19 @@ object TextToolbar {
         }
 
         internal fun showFinder() {
-            initialiseFinder(!showToolbar)
+            initialiseFinder()
             showFinder = true
             showReplacer = false
         }
 
         internal fun showReplacer() {
-            initialiseFinder(!showToolbar)
+            initialiseFinder()
             showReplacer = true
         }
 
-        private fun initialiseFinder(wasClosed: Boolean) {
+        private fun initialiseFinder() {
             finder.updateContent()
-            if (target.selection != null && wasClosed) findText = TextFieldValue(target.selectedText())
+            if (target.selection != null && !showToolbar) findText = TextFieldValue(target.selectedText())
             if (findText.text.isNotEmpty()) findText()
         }
 
