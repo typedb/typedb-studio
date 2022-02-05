@@ -383,8 +383,12 @@ object Form {
         internal var layout: TextLayoutResult? by mutableStateOf(null)
         internal var density by mutableStateOf(initDensity)
         internal var boxWidth by mutableStateOf(0.dp)
-        internal val horScroller: ScrollState = ScrollState(0)
+        internal var horScroller: ScrollState = ScrollState(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+        fun reset() {
+            boxWidth = 0.dp
+        }
 
         internal fun updateValue(newValue: TextFieldValue) {
             val oldText = value.text

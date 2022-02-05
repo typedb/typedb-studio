@@ -99,8 +99,8 @@ object TextToolbar {
         internal var findText by mutableStateOf(TextFieldValue(""))
         internal val findTextFocus = FocusRequester()
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
-        internal val findTextHorScroller = Form.MultilineTextInputState(target.density)
-        internal val replaceTextHorScroller = Form.MultilineTextInputState(target.density)
+        internal val findTextInput = Form.MultilineTextInputState(target.density)
+        internal val replaceTextInput = Form.MultilineTextInputState(target.density)
         internal var replaceText by mutableStateOf(TextFieldValue(""))
         internal var replaceTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal var isRegex by mutableStateOf(false)
@@ -116,6 +116,10 @@ object TextToolbar {
             showFinder = false
             showReplacer = false
             finder.reset()
+            findTextInput.reset()
+            replaceTextInput.reset()
+            findTextLayout = null
+            replaceTextLayout = null
         }
 
         internal fun showFinder() {
@@ -352,7 +356,7 @@ object TextToolbar {
     private fun FinderTextInput(state: State) {
         val focusManager = LocalFocusManager.current
         MultilineTextInput(
-            state = state.findTextHorScroller,
+            state = state.findTextInput,
             value = state.findText,
             icon = Icon.Code.MAGNIFYING_GLASS,
             focusReq = state.findTextFocus,
@@ -368,7 +372,7 @@ object TextToolbar {
     private fun ReplacerTextInput(state: State) {
         val focusManager = LocalFocusManager.current
         MultilineTextInput(
-            state = state.replaceTextHorScroller,
+            state = state.replaceTextInput,
             value = state.replaceText,
             icon = Icon.Code.RIGHT_LEFT,
             onValueChange = { state.replaceText = it },
