@@ -54,7 +54,7 @@ class PageManager(val notification: NotificationManager) {
         val newPageIndex = when {
             selectedPageIndex > closingPageIndex -> selectedPageIndex - 1
             else -> closingPageIndex
-        }.coerceIn(0, openedPages.size - 1)
+        }.coerceIn(0, (openedPages.size - 1).coerceAtLeast(0))
         selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
 }
