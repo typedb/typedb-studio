@@ -304,7 +304,7 @@ object TextToolbar {
         internal fun replaceCurrent() {
             selectCurrentOr {
                 val oldPosition = finder.position
-                processor.insertText(replaceText.text)
+                processor.insertText(replaceText.text, recomputeFinder = true)
                 finder.trySetPosition(oldPosition)
                 target.updateSelection(finder.findCurrent())
             }
