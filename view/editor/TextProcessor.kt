@@ -322,7 +322,7 @@ internal class TextProcessor(
         }
         version++
         target.resetTextWidth()
-        if (recomputeFinder) finder.mayRecompute()
+        if (recomputeFinder) finder.mayRecomputeAllMatches()
     }
 
     private fun applyDeletion(deletion: Deletion) {

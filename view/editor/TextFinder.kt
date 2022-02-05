@@ -60,10 +60,17 @@ internal class TextFinder(private val file: File) {
         matchesByLine = mapOf()
     }
 
-    internal fun mayRecompute(fromIndex: Int = 0) {
+    internal fun mayRecomputeAllMatches() {
         pattern?.let {
             updateContent()
-            computeMatches(fromIndex)
+            computeAllMatches()
+        }
+    }
+
+    internal fun recomputeNextMatch(from: Cursor): Selection? {
+        return pattern?.let {
+            updateContent()
+            computeNextMatch(index(from))
         }
     }
 
@@ -98,27 +105,26 @@ internal class TextFinder(private val file: File) {
         val literalFlag = if (isRegex) 0 else Pattern.LITERAL
         try {
             pattern = Pattern.compile(patternStr, caseFlag or literalFlag)
-            computeMatches(0)
+            computeAllMatches()
             trySetPosition(0)
         } catch (e: Exception) {
             reset()
         }
     }
 
-    internal fun replaceAll(text: String) {
-        if (!hasMatches) return
-        content = pattern!!.matcher(content).replaceAll(text)
-        file.content.clear()
-        file.content.addAll(content.split("\n"))
-    }
-
-    private fun computeMatches(fromIndex: Int) {
+    private fun computeAllMatches() {
         val byLine = mutableMapOf<Int, MutableList<Selection>>()
         matches = pattern!!.matcher(content).results().map { selection(it) }.toList()
         matches.forEach {
             (it.min.row..it.end.row).forEach { i -> byLine.computeIfAbsent(i) { mutableListOf() }.add(it) }
         }
         matchesByLine = byLine
+    }
+
+    private fun computeNextMatch(index: Int): Selection? {
+        if (index < 0 || index > content.length) return null
+        val matcher = pattern!!.matcher(content)
+        return if (matcher.find(index)) selection(matcher.toMatchResult()) else null
     }
 
     private fun selection(match: MatchResult): Selection {
@@ -134,6 +140,17 @@ internal class TextFinder(private val file: File) {
             row++
         }
         return Cursor(row, col)
+    }
+
+    private fun index(cursor: Cursor): Int {
+        var index = 0
+        (0..cursor.row).forEach { i ->
+            index += when {
+                i < cursor.row -> lineInfo[i].length
+                else -> cursor.col
+            }
+        }
+        return index
     }
 
     internal fun trySetPosition(newPosition: Int): Int {

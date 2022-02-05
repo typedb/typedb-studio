@@ -60,6 +60,8 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
+import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
 import java.util.concurrent.atomic.AtomicInteger
@@ -311,10 +313,15 @@ object TextToolbar {
         }
 
         internal fun replaceAll() {
-            if (finder.hasMatches) {
-                finder.replaceAll(replaceText.text)
-                finder.reset()
+            var next: Selection?
+            target.updateCursor(Cursor(0, 0), isSelecting = false, mayScroll = false)
+            var deleted = 0
+            while (finder.recomputeNextMatch(target.cursor).let { next = it; next != null }) {
+                deleted += 1
+                target.updateSelection(next)
+                processor.insertText(replaceText.text, recomputeFinder = false)
             }
+            finder.mayRecomputeAllMatches()
         }
     }
 
