@@ -188,27 +188,38 @@ object TextToolbar {
             inputType: InputType
         ): Boolean {
             return when (command) {
-                KeyMapper.EditorCommand.TAB -> {
-                    moveFocusNext(focusManager)
-                    true
-                }
-                KeyMapper.EditorCommand.ENTER_SHIFT -> {
-                    insertNewLine(inputType)
-                    true
-                }
-                KeyMapper.EditorCommand.ENTER -> {
-                    onEnter(inputType)
+                KeyMapper.EditorCommand.TAB -> moveFocusNext(focusManager)
+                KeyMapper.EditorCommand.ENTER -> onEnter(inputType)
+                KeyMapper.EditorCommand.ENTER_SHIFT -> onEnterShift(inputType)
+                KeyMapper.EditorCommand.ENTER_SHIFT_MOD -> insertNewLine(inputType)
+                else -> false
+            }
+        }
+
+        private fun moveFocusNext(focusManager: FocusManager): Boolean {
+            focusManager.moveFocus(FocusDirection.Next)
+            return true
+        }
+
+        private fun onEnter(inputType: InputType): Boolean {
+            when (inputType) {
+                FINDER -> findNext()
+                REPLACER -> replaceCurrent()
+            }
+            return true
+        }
+
+        private fun onEnterShift(inputType: InputType): Boolean {
+            return when (inputType) {
+                FINDER -> {
+                    findPrevious()
                     true
                 }
                 else -> false
             }
         }
 
-        private fun moveFocusNext(focusManager: FocusManager) {
-            focusManager.moveFocus(FocusDirection.Next)
-        }
-
-        private fun insertNewLine(inputType: InputType) {
+        private fun insertNewLine(inputType: InputType): Boolean {
             val textFieldValue = when (inputType) {
                 FINDER -> findText
                 REPLACER -> replaceText
@@ -224,13 +235,7 @@ object TextToolbar {
                 FINDER -> updateFindText(newTextFieldValue)
                 REPLACER -> replaceText = newTextFieldValue
             }
-        }
-
-        private fun onEnter(inputType: InputType) {
-            when (inputType) {
-                FINDER -> findNext()
-                REPLACER -> replaceCurrent()
-            }
+            return true
         }
 
         private fun deleteSelection(field: TextFieldValue): TextFieldValue {

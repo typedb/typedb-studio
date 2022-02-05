@@ -95,6 +95,7 @@ internal interface KeyMapper {
 
         ENTER(true),
         ENTER_SHIFT(true),
+        ENTER_SHIFT_MOD(false),
         TAB(true),
         TAB_SHIFT(true),
 
@@ -159,6 +160,7 @@ internal interface KeyMapper {
                 shortcutModifier(event) && event.isShiftPressed ->
                     when (event.key) {
                         Keys.Z -> EditorCommand.REDO
+                        Keys.Enter -> EditorCommand.ENTER_SHIFT_MOD
                         else -> null
                     }
                 shortcutModifier(event) ->
