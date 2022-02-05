@@ -96,6 +96,13 @@ internal class TextFinder(private val file: File) {
         }
     }
 
+    internal fun replaceAll(text: String) {
+        if (!hasMatches) return
+        content = pattern!!.matcher(content).replaceAll(text)
+        file.content.clear()
+        file.content.addAll(content.split("\n"))
+    }
+
     private fun computeMatches() {
         val byLine = mutableMapOf<Int, MutableList<Selection>>()
         matches = pattern!!.matcher(content).results().map { selection(it) }.toList()

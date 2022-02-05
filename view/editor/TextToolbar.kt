@@ -311,7 +311,7 @@ object TextToolbar {
         }
 
         internal fun replaceAll() {
-            while (finder.hasMatches) replaceCurrent()
+            if (finder.hasMatches) finder.replaceAll(replaceText.text)
         }
     }
 
