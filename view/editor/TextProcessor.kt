@@ -264,10 +264,9 @@ internal class TextProcessor(
     }
 
     internal fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null): Boolean {
-        assert(string.isNotEmpty())
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
-        operations.add(Insertion(target.selection?.min ?: target.cursor, string))
+        if (string.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, string))
         applyOriginal(TextChange(operations), newPosition)
         return true
     }
