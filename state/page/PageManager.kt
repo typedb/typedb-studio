@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import java.lang.Integer.max
 import mu.KotlinLogging
 
 class PageManager(val notification: NotificationManager) {
@@ -48,9 +47,14 @@ class PageManager(val notification: NotificationManager) {
     }
 
     fun close(page: Editable) {
-        val newPageIndex = max(openedPages.indexOf(page) - 1, 0)
+        val selectedPageIndex = openedPages.indexOf(selectedPage)
+        val closingPageIndex = openedPages.indexOf(page)
         openedPages.remove(page)
         page.close()
+        val newPageIndex = when {
+            selectedPageIndex > closingPageIndex -> selectedPageIndex - 1
+            else -> closingPageIndex
+        }.coerceIn(0, openedPages.size - 1)
         selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
 }
