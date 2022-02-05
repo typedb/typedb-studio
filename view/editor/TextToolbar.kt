@@ -60,16 +60,17 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.CHANGE_BATCH_DELAY
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalTime::class)
 object TextToolbar {
 
     private val INPUT_MAX_WIDTH = 740.dp
@@ -81,6 +82,7 @@ object TextToolbar {
     private val BUTTON_AREA_WIDTH = 220.dp
     private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
+    private val FIND_TEXT_DELAY = Duration.milliseconds(200)
 
     internal class State(
         private val finder: TextFinder,
@@ -264,7 +266,7 @@ object TextToolbar {
         private fun delayedFindText() {
             changeCount.incrementAndGet()
             coroutineScope.launch {
-                delay(CHANGE_BATCH_DELAY)
+                delay(FIND_TEXT_DELAY)
                 if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) findText()
             }
         }
