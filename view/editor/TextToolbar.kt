@@ -79,7 +79,7 @@ object TextToolbar {
     private val INPUT_RIGHT_PADDING = 4.dp
     private val INPUT_MIN_HEIGHT = 28.dp
     private val INPUT_MAX_HEIGHT = 120.dp
-    private val BUTTON_AREA_WIDTH = 220.dp
+    private val BUTTON_AREA_WIDTH = 300.dp
     private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
     private val FIND_TEXT_DELAY = Duration.milliseconds(200)
