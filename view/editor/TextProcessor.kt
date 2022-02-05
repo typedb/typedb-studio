@@ -223,7 +223,7 @@ internal class TextProcessor(
 
     private fun deleteSelection() {
         if (target.selection == null) return
-        applyOriginal(TextChange(deletionOperation()), newPosition = null, recomputeFinder = true)
+        applyOriginal(TextChange(deletionOperation()))
     }
 
     private fun outdentTab() {
@@ -268,15 +268,11 @@ internal class TextProcessor(
         return true
     }
 
-    internal fun insertText(string: String, recomputeFinder: Boolean) {
-        insertText(string, newPosition = null, recomputeFinder)
-    }
-
-    private fun insertText(string: String, newPosition: Either<Cursor, Selection>?, recomputeFinder: Boolean = true) {
+    private fun insertText(string: String, newPosition: Either<Cursor, Selection>?) {
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
         if (string.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, string))
-        applyOriginal(TextChange(operations), newPosition, recomputeFinder)
+        applyOriginal(TextChange(operations), newPosition)
     }
 
     private fun undo() {
@@ -288,9 +284,8 @@ internal class TextProcessor(
         if (redoStack.isNotEmpty()) applyReplay(redoStack.removeLast(), ReplayType.REDO)
     }
 
-    private fun applyOriginal(change: TextChange, newPosition: Either<Cursor, Selection>?, recomputeFinder: Boolean) {
-        assert(newPosition == null || !recomputeFinder)
-        applyChange(change, recomputeFinder)
+    private fun applyOriginal(change: TextChange, newPosition: Either<Cursor, Selection>? = null) {
+        applyChange(change)
         if (newPosition != null) when {
             newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
             newPosition.isSecond -> target.updateSelection(newPosition.second())
@@ -311,7 +306,7 @@ internal class TextProcessor(
         }
     }
 
-    private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
+    private fun applyChange(change: TextChange) {
         change.operations.forEach {
             when (it) {
                 is Deletion -> applyDeletion(it)
@@ -320,7 +315,7 @@ internal class TextProcessor(
         }
         version++
         target.resetTextWidth()
-        if (recomputeFinder) finder.mayRecompute()
+        finder.mayRecompute()
     }
 
     private fun applyDeletion(deletion: Deletion) {
