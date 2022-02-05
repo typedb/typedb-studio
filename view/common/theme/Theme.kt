@@ -45,6 +45,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match
 import kotlin.math.roundToInt
 
 object Theme {
@@ -53,7 +54,8 @@ object Theme {
     val SCROLLBAR_END_PADDING = 6.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
     val RECTANGLE_ROUNDED_ALL = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
-    const val SELECTION_ALPHA = 0.35f
+    const val TARGET_SELECTION_ALPHA = 0.4f
+    const val FIND_SELECTION_ALPHA = 0.3f
     const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.25f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
@@ -68,7 +70,7 @@ object Theme {
             LocalScrollbarStyle provides scrollbarStyle(color = colors.scrollbar),
             LocalIndication provides rectangleIndication(color = colors.indicationBase),
             LocalTextSelectionColors provides TextSelectionColors(
-                backgroundColor = colors.tertiary.copy(alpha = SELECTION_ALPHA),
+                backgroundColor = colors.tertiary.copy(alpha = TARGET_SELECTION_ALPHA),
                 handleColor = colors.tertiary
             )
         )

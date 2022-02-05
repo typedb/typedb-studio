@@ -313,11 +313,13 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
             val textLayout = if (isRendered) state.rendering.get(index) else null
-            state.finder.matches(index).forEach { // TODO: choose a better color
-                Selection(state, it, index, textLayout, Theme.colors.quaternary, text.length, fontWidth)
+            val findColor = Theme.colors.quaternary.copy(Theme.FIND_SELECTION_ALPHA)
+            state.finder.matches(index).forEach {
+                Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
             }
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                Selection(state, selection, index, textLayout, Theme.colors.tertiary, text.length, fontWidth)
+                val color = Theme.colors.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
+                Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
             Text(
                 text = AnnotatedString(text), style = font,
@@ -343,8 +345,7 @@ object TextEditor {
         } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
-        val faded = color.copy(Theme.SELECTION_ALPHA)
-        Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(faded))
+        Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
     }
 
     @OptIn(ExperimentalTime::class)
