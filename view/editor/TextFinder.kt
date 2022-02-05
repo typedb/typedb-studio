@@ -41,6 +41,13 @@ internal class TextFinder(private val file: File) {
     internal var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
 
+    companion object {
+        private val STARTS_WITH_WORD_CHAR_PATTERN = Pattern.compile("\\w.*")
+        private val ENDS_WITH_WORD_CHAR_PATTERN = Pattern.compile(".*\\w")
+        private const val NON_WORD_CHAR_REGEX = "\\W"
+        private const val ANY_CHAR_REGEX = "(\\w|\\W)" // because "." does capture end of / new line
+    }
+
     internal fun status(): String {
         val count = if (matches.isNotEmpty()) "${position + 1} / ${matches.size}" else matches.size.toString()
         return "$count ${Label.FOUND.lowercase()}"
@@ -76,7 +83,9 @@ internal class TextFinder(private val file: File) {
     }
 
     internal fun findWord(word: String, isCaseSensitive: Boolean) {
-        findPattern("\\b$word\\b", isCaseSensitive, true)
+        val pre = if (STARTS_WITH_WORD_CHAR_PATTERN.matcher(word).matches()) NON_WORD_CHAR_REGEX else ANY_CHAR_REGEX
+        val post = if (ENDS_WITH_WORD_CHAR_PATTERN.matcher(word).matches()) NON_WORD_CHAR_REGEX else ANY_CHAR_REGEX
+        findPattern("(?<=$pre)\\Q$word\\E(?=$post)", isCaseSensitive, true)
     }
 
     internal fun findRegex(regex: String, isCaseSensitive: Boolean) {
@@ -134,10 +143,6 @@ internal class TextFinder(private val file: File) {
 
     internal fun findCurrent(): Selection? {
         return if (hasMatches) matches[position] else null
-    }
-
-    internal fun findFirst(): Selection? {
-        return if (hasMatches) matches[trySetPosition(0)] else null
     }
 
     internal fun findNext(): Selection? {
