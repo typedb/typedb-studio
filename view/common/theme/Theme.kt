@@ -45,7 +45,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match
 import kotlin.math.roundToInt
 
 object Theme {
