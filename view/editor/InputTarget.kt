@@ -246,6 +246,7 @@ internal class InputTarget constructor(
     private fun wordBoundary(textLayout: TextLayoutResult, col: Int): TextRange {
         // TODO: https://github.com/JetBrains/compose-jb/issues/1762
         //       We can remove this function once the above issue is resolved
+        if (content[cursor.row].isEmpty()) return TextRange(0, 0)
         val colSafe = col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
         val boundary = textLayout.getWordBoundary(colSafe)
         val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
