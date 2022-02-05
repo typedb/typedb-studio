@@ -286,6 +286,13 @@ object TextToolbar {
             else finder.findText(findText.text, isCaseSensitive)
         }
 
+        private fun selectCurrentOr(function: () -> Unit) {
+            if (finder.hasMatches) {
+                if (finder.findCurrent() == target.selection) function()
+                else target.updateSelection(finder.findCurrent())
+            }
+        }
+
         internal fun findNext() {
             selectCurrentOr { target.updateSelection(finder.findNext()) }
         }
@@ -297,7 +304,7 @@ object TextToolbar {
         internal fun replaceCurrent() {
             selectCurrentOr {
                 val oldPosition = finder.position
-                processor.insertText(replaceText.text)
+                processor.insertText(replaceText.text, true)
                 finder.updatePosition(oldPosition)
                 target.updateSelection(finder.findCurrent())
             }
@@ -305,13 +312,6 @@ object TextToolbar {
 
         internal fun replaceAll() {
             while (finder.hasMatches) replaceCurrent()
-        }
-
-        private fun selectCurrentOr(function: () -> Unit) {
-            if (finder.hasMatches) {
-                if (finder.findCurrent() == target.selection) function()
-                else target.updateSelection(finder.findCurrent())
-            }
         }
     }
 

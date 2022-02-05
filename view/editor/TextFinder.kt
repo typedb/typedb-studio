@@ -53,10 +53,10 @@ internal class TextFinder(private val file: File) {
         matchesByLine = mapOf()
     }
 
-    internal fun mayRecompute() {
+    internal fun mayRecompute(fromIndex: Int = 0) {
         pattern?.let {
             updateContent()
-            computeMatches()
+            computeMatches(fromIndex)
         }
     }
 
@@ -89,16 +89,17 @@ internal class TextFinder(private val file: File) {
         val literalFlag = if (isRegex) 0 else Pattern.LITERAL
         try {
             pattern = Pattern.compile(patternStr, caseFlag or literalFlag)
-            computeMatches()
+            computeMatches(0)
             updatePosition(0)
         } catch (e: Exception) {
             reset()
         }
     }
 
-    private fun computeMatches() {
+    private fun computeMatches(fromIndex: Int) {
         val byLine = mutableMapOf<Int, MutableList<Selection>>()
-        matches = pattern!!.matcher(content).results().map { selection(it) }.toList()
+        val matcher = pattern!!.matcher(content)
+        matches = if (matcher.find(fromIndex)) matcher.results().map { selection(it) }.toList() else listOf()
         matches.forEach {
             (it.min.row..it.end.row).forEach { i -> byLine.computeIfAbsent(i) { mutableListOf() }.add(it) }
         }

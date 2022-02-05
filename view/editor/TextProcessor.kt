@@ -167,8 +167,8 @@ internal class TextProcessor(
             DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
             DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
             DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
-            TAB_SHIFT -> deleteTab()
-            TAB -> insertTab()
+            TAB -> indentTab()
+            TAB_SHIFT -> outdentTab()
             ENTER, ENTER_SHIFT -> insertNewLine()
             CUT -> cut()
             COPY -> copy()
@@ -223,10 +223,10 @@ internal class TextProcessor(
 
     private fun deleteSelection() {
         if (target.selection == null) return
-        applyOriginal(TextChange(deletionOperation()))
+        applyOriginal(TextChange(deletionOperation()), newPosition = null, recomputeFinder = true)
     }
 
-    private fun deleteTab() {
+    private fun outdentTab() {
         val oldSelection = target.selection
         val oldCursor = target.cursor
         val newSelection = oldSelection?.let { target.expandSelection(it) }
@@ -246,7 +246,7 @@ internal class TextProcessor(
         insertText(newText, newPosition)
     }
 
-    private fun insertTab() {
+    private fun indentTab() {
         val selection = target.selection
         val cursor = target.cursor
         if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
@@ -263,12 +263,20 @@ internal class TextProcessor(
         insertText("\n" + " ".repeat(TAB_SIZE * tabs))
     }
 
-    internal fun insertText(string: String, newPosition: Either<Cursor, Selection>? = null): Boolean {
+    internal fun insertText(string: String): Boolean  {
+        insertText(string, newPosition = null)
+        return true
+    }
+
+    internal fun insertText(string: String, recomputeFinder: Boolean) {
+        insertText(string, newPosition = null, recomputeFinder)
+    }
+
+    private fun insertText(string: String, newPosition: Either<Cursor, Selection>?, recomputeFinder: Boolean = true) {
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
         if (string.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, string))
-        applyOriginal(TextChange(operations), newPosition)
-        return true
+        applyOriginal(TextChange(operations), newPosition, recomputeFinder)
     }
 
     private fun undo() {
@@ -280,8 +288,9 @@ internal class TextProcessor(
         if (redoStack.isNotEmpty()) applyReplay(redoStack.removeLast(), ReplayType.REDO)
     }
 
-    private fun applyOriginal(change: TextChange, newPosition: Either<Cursor, Selection>? = null) {
-        applyChange(change)
+    private fun applyOriginal(change: TextChange, newPosition: Either<Cursor, Selection>?, recomputeFinder: Boolean) {
+        assert(newPosition == null || !recomputeFinder)
+        applyChange(change, recomputeFinder)
         if (newPosition != null) when {
             newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
             newPosition.isSecond -> target.updateSelection(newPosition.second())
@@ -302,7 +311,7 @@ internal class TextProcessor(
         }
     }
 
-    private fun applyChange(change: TextChange) {
+    private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
         change.operations.forEach {
             when (it) {
                 is Deletion -> applyDeletion(it)
@@ -311,7 +320,7 @@ internal class TextProcessor(
         }
         version++
         target.resetTextWidth()
-        finder.mayRecompute()
+        if (recomputeFinder) finder.mayRecompute()
     }
 
     private fun applyDeletion(deletion: Deletion) {
