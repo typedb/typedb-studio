@@ -22,7 +22,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,13 +29,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
@@ -46,6 +50,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
 object PageArea {
 
@@ -61,10 +66,17 @@ object PageArea {
 
     @Composable
     fun Area() {
+        val density = LocalDensity.current.density
         val state = remember { AreaState() }
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
-                GlobalState.page.openedPages.forEach { Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }) }
+                GlobalState.page.openedPages.forEach {
+                    Tab(
+                        state,
+                        state.cachedPages.getOrPut(it) { Page.of(it) },
+                        density
+                    )
+                }
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
@@ -75,18 +87,20 @@ object PageArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(areaState: AreaState, page: Page) {
+    private fun Tab(areaState: AreaState, page: Page, density: Float) {
         val isSelected = GlobalState.page.isSelected(page.data)
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
-        val tabHeight = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
+        val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
+        var width by remember { mutableStateOf(200.dp) }
 
-        Column(modifier = Modifier.width(intrinsicSize = IntrinsicSize.Min)) {
+        Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.height(tabHeight)
+                modifier = Modifier.height(height)
                     .background(color = bgColor)
                     .pointerHoverIcon(PointerIconDefaults.Hand)
                     .clickable { GlobalState.page.selectedPage = page.data }
+                    .onSizeChanged { width = toDP(it.width, density) }
             ) {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
@@ -101,7 +115,7 @@ object PageArea {
                     rounded = false,
                 )
             }
-            if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary)
+            if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
         }
         Separator.Vertical()
     }
