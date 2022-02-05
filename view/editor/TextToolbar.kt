@@ -95,6 +95,7 @@ object TextToolbar {
         internal val showToolbar get() = showFinder || showReplacer
         internal var lineHeight by mutableStateOf(0.dp)
         internal var findText by mutableStateOf(TextFieldValue(""))
+        internal val findTextFocus = FocusRequester()
         internal var findTextLayout: TextLayoutResult? by mutableStateOf(null)
         internal val findTextHorScroller = Form.MultilineTextInputState(target.density)
         internal val replaceTextHorScroller = Form.MultilineTextInputState(target.density)
@@ -128,8 +129,12 @@ object TextToolbar {
 
         private fun initialiseFinder() {
             finder.updateContent()
-            if (target.selection != null && !showToolbar) findText = TextFieldValue(target.selectedText())
-            if (findText.text.isNotEmpty()) findText()
+            if (showToolbar) findTextFocus.requestFocus() // only call after FindTextInput() is rendered at least once
+            if (target.selection != null) findText = TextFieldValue(target.selectedText())
+            if (findText.text.isNotEmpty()) {
+                findText = TextFieldValue(findText.text, TextRange(0, findText.text.length))
+                findText()
+            }
         }
 
         internal fun toolbarHeight(): Dp {
@@ -301,18 +306,17 @@ object TextToolbar {
 
     @Composable
     internal fun Area(state: State, modifier: Modifier = Modifier) {
-        val findTextFocusReq = FocusRequester()
         Box {
             ComputeFontHeight(state)
             // TODO: figure out how to set min width to MIN_WIDTH
             Row(modifier = modifier.widthIn(max = state.toolbarMaxWidth()).height(state.toolbarHeight())) {
-                TextInputs(state, Modifier.weight(1f), findTextFocusReq)
+                TextInputs(state, Modifier.weight(1f))
                 Separator.Vertical()
                 ToolbarButtons(state)
             }
         }
         Separator.Horizontal()
-        LaunchedEffect(state, state.showReplacer) { findTextFocusReq.requestFocus() }
+        LaunchedEffect(state) { state.findTextFocus.requestFocus() }
     }
 
     @Composable
@@ -326,9 +330,9 @@ object TextToolbar {
     }
 
     @Composable
-    private fun TextInputs(state: State, modifier: Modifier, focusReq: FocusRequester) {
+    private fun TextInputs(state: State, modifier: Modifier) {
         Column(modifier) {
-            FinderTextInput(state, focusReq)
+            FinderTextInput(state)
             if (state.showReplacer) {
                 Separator.Horizontal()
                 ReplacerTextInput(state)
@@ -338,13 +342,13 @@ object TextToolbar {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun FinderTextInput(state: State, focusReq: FocusRequester) {
+    private fun FinderTextInput(state: State) {
         val focusManager = LocalFocusManager.current
         MultilineTextInput(
             state = state.findTextHorScroller,
             value = state.findText,
             icon = Icon.Code.MAGNIFYING_GLASS,
-            focusReq = focusReq,
+            focusReq = state.findTextFocus,
             onValueChange = { state.updateFindText(it) },
             onTextLayout = { state.findTextLayout = it },
             modifier = Modifier.height(state.finderInputHeight())
