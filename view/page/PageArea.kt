@@ -91,7 +91,7 @@ object PageArea {
         val isSelected = GlobalState.page.isSelected(page.data)
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
         val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
-        var width by remember { mutableStateOf(200.dp) }
+        var width by remember { mutableStateOf(0.dp) }
 
         Column {
             Row(
