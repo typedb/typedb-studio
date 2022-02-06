@@ -29,12 +29,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
@@ -44,8 +47,10 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
+import java.awt.FileDialog
 import java.io.File
 import javax.swing.JFileChooser
+import kotlin.io.path.Path
 
 
 object ProjectDialog {
@@ -83,7 +88,7 @@ object ProjectDialog {
             )
         ) {
             Submission(state = formState) {
-                SelectDirectoryField(formState)
+                SelectDirectoryField(formState, window)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -95,7 +100,7 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(formState: ProjectFormState) {
+    private fun SelectDirectoryField(formState: ProjectFormState, window: ComposeDialog) {
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
@@ -105,12 +110,30 @@ object ProjectDialog {
                     modifier = Modifier.fillMaxHeight().weight(1f),
                 )
                 ComponentSpacer()
-                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState) })
+                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState, window) })
             }
         }
     }
 
-    private fun launchFileDialog(formState: ProjectFormState) {
+    private fun launchFileDialog(formState: ProjectFormState, window: ComposeDialog) {
+        when (Property.OS.Current) {
+            MACOS -> macOSDialog(formState, window)
+            else -> windowsOrLinuxDialog(formState)
+        }
+    }
+
+    private fun macOSDialog(formState: ProjectFormState, window: ComposeDialog) {
+        val fileDialog = FileDialog(window, Label.OPEN_PROJECT_DIRECTORY, FileDialog.LOAD).apply {
+            file = formState.directory
+            isMultipleMode = false
+            isVisible = true
+        }
+        if (fileDialog.directory != null) {
+            formState.directory = Path(fileDialog.directory).resolve(fileDialog.file).toString()
+        }
+    }
+
+    private fun windowsOrLinuxDialog(formState: ProjectFormState) {
         val directoryChooser = JFileChooser().apply {
             formState.directory?.let { currentDirectory = File(it) }
             dialogTitle = Label.OPEN_PROJECT_DIRECTORY
