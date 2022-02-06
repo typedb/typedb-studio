@@ -118,7 +118,7 @@ object ProjectDialog {
     private fun launchFileDialog(formState: ProjectFormState, window: ComposeDialog) {
         when (Property.OS.Current) {
             MACOS -> macOSDialog(formState, window)
-            else -> windowsOrLinuxDialog(formState)
+            else -> otherOSDialog(formState)
         }
     }
 
@@ -133,7 +133,7 @@ object ProjectDialog {
         }
     }
 
-    private fun windowsOrLinuxDialog(formState: ProjectFormState) {
+    private fun otherOSDialog(formState: ProjectFormState) {
         val directoryChooser = JFileChooser().apply {
             formState.directory?.let { currentDirectory = File(it) }
             dialogTitle = Label.OPEN_PROJECT_DIRECTORY
