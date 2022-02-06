@@ -88,6 +88,7 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
+import com.vaticle.typedb.studio.view.typeql.TypeQLHighlighter
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
@@ -322,12 +323,16 @@ object TextEditor {
                 Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
             Text(
-                text = AnnotatedString(text), style = font,
+                text = mayHighlight(state, text), style = font,
                 modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
                 onTextLayout = { state.rendering.set(index, it, state.processor.version) }
             )
             if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth)
         }
+    }
+
+    private fun mayHighlight(state: State, text: String): AnnotatedString {
+        return if (state.file.isTypeQL) TypeQLHighlighter.annotate(text) else AnnotatedString(text)
     }
 
     @Composable
