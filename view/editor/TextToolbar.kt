@@ -304,24 +304,11 @@ object TextToolbar {
         }
 
         internal fun replaceCurrent() {
-            selectCurrentOr {
-                val oldPosition = finder.position
-                processor.insertText(replaceText.text, recomputeFinder = true)
-                finder.trySetPosition(oldPosition)
-                target.updateSelection(finder.findCurrent())
-            }
+            selectCurrentOr { processor.replaceCurrentFound(replaceText.text)}
         }
 
         internal fun replaceAll() {
-            var next: Selection?
-            target.updateCursor(Cursor(0, 0), isSelecting = false, mayScroll = false)
-            var deleted = 0
-            while (finder.recomputeNextMatch(target.cursor).let { next = it; next != null }) {
-                deleted += 1
-                target.updateSelection(next)
-                processor.insertText(replaceText.text, recomputeFinder = false)
-            }
-            finder.mayRecomputeAllMatches()
+            processor.replaceAllFound(replaceText.text)
         }
     }
 

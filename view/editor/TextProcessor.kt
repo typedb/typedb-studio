@@ -198,6 +198,26 @@ internal class TextProcessor(
         clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
     }
 
+    internal fun replaceCurrentFound(text: String) {
+        if (!finder.hasMatches) return
+        val oldPosition = finder.position
+        if (finder.findCurrent() != target.selection) target.updateSelection(finder.findCurrent(), mayScroll = false)
+        insertText(text, recomputeFinder = true)
+        finder.trySetPosition(oldPosition)
+        target.updateSelection(finder.findCurrent())
+    }
+
+    internal fun replaceAllFound(text: String) {
+        if (!finder.hasMatches) return
+        var next: Selection?
+        target.updateCursor(Cursor(0, 0), isSelecting = false, mayScroll = false)
+        while (finder.recomputeNextMatch(target.cursor).let { next = it; next != null }) {
+            target.updateSelection(next)
+            insertText(text, recomputeFinder = false)
+        }
+        finder.mayRecomputeAllMatches()
+    }
+
     private fun indent(string: String, spaces: Int): String {
         return string.split("\n").stream().map {
             if (spaces > 0) " ".repeat(spaces) + it
@@ -268,7 +288,7 @@ internal class TextProcessor(
         return true
     }
 
-    internal fun insertText(string: String, recomputeFinder: Boolean) {
+    private fun insertText(string: String, recomputeFinder: Boolean) {
         insertText(string, newPosition = null, recomputeFinder)
     }
 
