@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.page.Editable
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -61,7 +61,7 @@ object PageArea {
     private val ICON_SIZE = 10.sp
 
     internal class AreaState {
-        val cachedPages: MutableMap<Editable, Page> = mutableMapOf()
+        val cachedPages: MutableMap<Pageable, Page> = mutableMapOf()
     }
 
     @Composable
@@ -71,16 +71,14 @@ object PageArea {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 GlobalState.page.openedPages.forEach {
-                    Tab(
-                        state,
-                        state.cachedPages.getOrPut(it) { Page.of(it) },
-                        density
-                    )
+                    Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }, density)
                 }
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
-                GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout { closePage(state, it) } }
+                GlobalState.page.selectedPage?.let {
+                    state.cachedPages[it]?.Layout { closePage(state, it) }
+                }
             }
         }
     }
@@ -120,8 +118,8 @@ object PageArea {
         Separator.Vertical()
     }
 
-    private fun closePage(areaState: AreaState, editable: Editable) {
-        areaState.cachedPages.remove(editable)
-        GlobalState.page.close(editable)
+    private fun closePage(areaState: AreaState, pageable: Pageable) {
+        areaState.cachedPages.remove(pageable)
+        GlobalState.page.close(pageable)
     }
 }

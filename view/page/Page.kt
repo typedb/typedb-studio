@@ -19,19 +19,19 @@
 package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.runtime.Composable
-import com.vaticle.typedb.studio.state.page.Editable
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 
-abstract class Page(val data: Editable) {
+abstract class Page(val data: Pageable) {
 
     abstract val label: String
     abstract val icon: Form.IconArgs
 
     companion object {
-        fun of(editable: Editable): Page {
-            return when (editable) {
-                is File -> FilePage(editable)
+        fun of(pageable: Pageable): Page {
+            return when (pageable) {
+                is File -> FilePage(pageable)
                 else -> throw IllegalStateException("should never be reached")
             }
         }

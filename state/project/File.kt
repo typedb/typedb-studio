@@ -24,7 +24,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.Editable
+import com.vaticle.typedb.studio.state.page.Pageable
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -34,7 +34,7 @@ import kotlin.io.path.extension
 import mu.KotlinLogging
 
 class File internal constructor(path: Path, parent: Directory, notificationMgr: NotificationManager) :
-    ProjectItem(Type.FILE, path, parent, notificationMgr), Editable {
+    ProjectItem(Type.FILE, path, parent, notificationMgr), Pageable {
 
     val content: SnapshotStateList<String> = mutableStateListOf()
     val extension: String = this.path.extension

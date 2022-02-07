@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.page
 
-interface Editable {
+interface Pageable {
 
     fun tryOpen(): Boolean
 
