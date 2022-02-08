@@ -117,7 +117,7 @@ object TextEditor {
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor(content, rendering, finder, target, clipboard)
+        val processor = TextProcessor(content, file.fileType, rendering, finder, target, clipboard)
         val toolbar = TextToolbar.State(finder, target, processor)
         return State(content, font, rendering, finder, target, processor, toolbar)
     }

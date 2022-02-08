@@ -99,6 +99,7 @@ import kotlinx.coroutines.launch
 
 internal class TextProcessor(
     private val content: SnapshotStateList<AnnotatedString>,
+    private val fileType: Property.FileType,
     private val rendering: TextRendering,
     private val finder: TextFinder,
     private val target: InputTarget,
@@ -334,12 +335,12 @@ internal class TextProcessor(
             newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
             newPosition.isSecond -> target.updateSelection(newPosition.second())
         }
-        queueOriginalChange(change)
+        queueChangeAndReannotation(change)
     }
 
     private fun applyReplay(change: TextChange, replayType: ReplayType) {
         applyChange(change)
-        val newTarget = change.summaryTarget()
+        val newTarget = change.target()
         when {
             newTarget.isFirst -> target.updateCursor(newTarget.first(), false)
             newTarget.isSecond -> target.updateSelection(newTarget.second())
@@ -392,23 +393,33 @@ internal class TextProcessor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun queueOriginalChange(change: TextChange) {
+    private fun queueChangeAndReannotation(change: TextChange) {
         redoStack.clear()
         changeQueue.put(change)
         changeCount.incrementAndGet()
         coroutineScope.launch {
             delay(CHANGE_BATCH_DELAY)
-            if (changeCount.decrementAndGet() == 0) drainAndBatchOriginalChanges()
+            if (changeCount.decrementAndGet() == 0) {
+                val changes = drainAndBatchOriginalChanges()
+                changes?.let { reannotate(it.lines()) }
+            }
         }
     }
 
     @Synchronized
-    private fun drainAndBatchOriginalChanges() {
+    private fun drainAndBatchOriginalChanges(): TextChange? {
+        var batchedChanges: TextChange? = null
         if (changeQueue.isNotEmpty()) {
             val changes = mutableListOf<TextChange>()
             changeQueue.drainTo(changes)
-            undoStack.addLast(TextChange.merge(changes).invert())
+            batchedChanges = TextChange.merge(changes)
+            undoStack.addLast(batchedChanges.invert())
             while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
         }
+        return batchedChanges
+    }
+
+    private fun reannotate(lines: IntRange) {
+        lines.forEach { content[it] = annotate(content[it].text, fileType) }
     }
 }

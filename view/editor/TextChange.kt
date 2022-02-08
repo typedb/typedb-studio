@@ -25,11 +25,13 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor.Companion.min
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import kotlin.streams.toList
 
-internal data class TextChange(val operations: List<Operation>) {
+internal class TextChange(val operations: List<Operation>) {
 
     constructor(vararg operations: Operation) : this(operations.asList())
 
     enum class ReplayType { UNDO, REDO }
+
+    private var target: Either<Cursor, Selection>? = null
 
     companion object {
         fun merge(changes: List<TextChange>): TextChange {
@@ -52,8 +54,19 @@ internal data class TextChange(val operations: List<Operation>) {
         }
     }
 
-    fun summaryTarget(): Either<Cursor, Selection> {
+    fun lines(): IntRange {
+        return target().let {
+            when {
+                it.isFirst -> IntRange(start = it.first().row, endInclusive = it.first().row)
+                else -> IntRange(start = it.second().min.row, endInclusive = it.second().max.row)
+            }
+        }
+    }
+
+    fun target(): Either<Cursor, Selection> {
         assert(operations.isNotEmpty())
+        if (target != null) return target!!
+
         var summary = when (val first = operations.first()) {
             is Deletion -> Selection(first.selection().min, first.selection().min)
             is Insertion -> first.selection()
@@ -69,10 +82,11 @@ internal data class TextChange(val operations: List<Operation>) {
                 is Insertion -> Selection(summary.start, selection.end)
             }
         }
-        return when (summary.start) {
+        target = when (summary.start) {
             summary.end -> Either.first(summary.start)
             else -> Either.second(summary)
         }
+        return target!!
     }
 
     sealed class Operation(
