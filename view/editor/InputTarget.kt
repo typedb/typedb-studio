@@ -26,12 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.status.StatusManager
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -41,7 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class InputTarget constructor(
-    private val file: File,
+    private val content: SnapshotStateList<AnnotatedString>,
     internal val lineHeight: Dp,
     private val horPadding: Dp,
     private val rendering: TextRendering,
@@ -98,7 +98,6 @@ internal class InputTarget constructor(
         }
     }
 
-    internal val content: SnapshotStateList<String> get() = file.content
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
@@ -377,18 +376,28 @@ internal class InputTarget constructor(
         Cursor(selection.max.row, content[selection.max.row].length)
     )
 
-    internal fun selectedText(): String {
-        if (selection == null) return ""
+    internal fun selectedText(): AnnotatedString {
+        val builder = AnnotatedString.Builder()
+        val textList = selectedTextLines()
+        textList.forEach {
+            builder.append(it)
+            if (textList.size > 1) builder.append("\n")
+        }
+        return builder.toAnnotatedString()
+    }
+
+    internal fun selectedTextLines(): List<AnnotatedString> {
+        if (selection == null) return listOf(AnnotatedString(""))
         val start = selection!!.min
         val end = selection!!.max
-        val builder = StringBuilder()
+        val list = mutableListOf<AnnotatedString>()
         for (i in start.row..end.row) {
             val line = content[i]
-            if (i == start.row && end.row > start.row) builder.append(line.substring(start.col))
-            else if (i == start.row) builder.append(line.substring(start.col, end.col))
-            else if (i == end.row) builder.append("\n").append(line.substring(0, end.col))
-            else builder.append("\n").append(line)
+            if (i == start.row && end.row > start.row) list.add(line.subSequence(start.col, line.length))
+            else if (i == start.row) list.add(line.subSequence(start.col, end.col))
+            else if (i == end.row) list.add(line.subSequence(0, end.col))
+            else list.add(line)
         }
-        return builder.toString()
+        return list
     }
 }

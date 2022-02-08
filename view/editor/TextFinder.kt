@@ -21,7 +21,8 @@ package com.vaticle.typedb.studio.view.editor
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.project.File
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
@@ -29,11 +30,11 @@ import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
-internal class TextFinder(private val file: File) {
+internal class TextFinder(private val content: SnapshotStateList<AnnotatedString>) {
 
     data class LineInfo(val start: Int, val length: Int)
 
-    private var content: String by mutableStateOf("")
+    private var contentAsString: String by mutableStateOf("")
     private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
     private var matches: List<Selection> by mutableStateOf(listOf())
     private var matchesByLine: Map<Int, List<Selection>> by mutableStateOf(mapOf())
@@ -76,13 +77,13 @@ internal class TextFinder(private val file: File) {
 
     internal fun updateContent() {
         val newLineInfo = mutableListOf<LineInfo>()
-        file.content.forEachIndexed { i, line ->
-            val length = if (i < file.content.size - 1) line.length + 1 else line.length
+        content.forEachIndexed { i, line ->
+            val length = if (i < content.size - 1) line.length + 1 else line.length
             if (i == 0) newLineInfo.add(LineInfo(0, length))
             else newLineInfo.add(LineInfo(newLineInfo[i - 1].start + newLineInfo[i - 1].length, length))
         }
         lineInfo = newLineInfo
-        content = file.content.joinToString(separator = "\n")
+        contentAsString = content.joinToString(separator = "\n")
     }
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
@@ -114,7 +115,7 @@ internal class TextFinder(private val file: File) {
 
     private fun computeAllMatches() {
         val byLine = mutableMapOf<Int, MutableList<Selection>>()
-        matches = pattern!!.matcher(content).results().map { selection(it) }.toList()
+        matches = pattern!!.matcher(contentAsString).results().map { selection(it) }.toList()
         matches.forEach {
             (it.min.row..it.end.row).forEach { i -> byLine.computeIfAbsent(i) { mutableListOf() }.add(it) }
         }
@@ -122,8 +123,8 @@ internal class TextFinder(private val file: File) {
     }
 
     private fun computeNextMatch(index: Int): Selection? {
-        if (index < 0 || index > content.length) return null
-        val matcher = pattern!!.matcher(content)
+        if (index < 0 || index > contentAsString.length) return null
+        val matcher = pattern!!.matcher(contentAsString)
         return if (matcher.find(index)) selection(matcher.toMatchResult()) else null
     }
 

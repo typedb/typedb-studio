@@ -26,7 +26,7 @@ import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
 sealed class ProjectItem(
-    val type: Type,
+    val projectItemType: Type,
     val path: Path,
     final override val parent: Directory?,
     val notificationMgr: NotificationManager
@@ -44,8 +44,8 @@ sealed class ProjectItem(
 
     val absolutePath: Path = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-    val isDirectory: Boolean = type == Type.DIRECTORY
-    val isFile: Boolean = type == Type.FILE
+    val isDirectory: Boolean = projectItemType == Type.DIRECTORY
+    val isFile: Boolean = projectItemType == Type.FILE
 
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
@@ -60,8 +60,8 @@ sealed class ProjectItem(
 
     override fun compareTo(other: Navigable.Item<ProjectItem>): Int {
         other as ProjectItem
-        return if (this.type == other.type) this.path.compareTo(other.path)
-        else this.type.index.compareTo(other.type.index)
+        return if (this.projectItemType == other.projectItemType) this.path.compareTo(other.path)
+        else this.projectItemType.index.compareTo(other.projectItemType.index)
     }
 
     override fun equals(other: Any?): Boolean {

@@ -88,7 +88,7 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
-import com.vaticle.typedb.studio.view.typeql.TypeQLHighlighter
+import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.annotate
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
@@ -108,37 +108,37 @@ object TextEditor {
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
 
     @Composable
-    fun createState(file: File, onClose: () -> Unit): State {
+    fun createState(file: File): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val rendering = TextRendering(file.content.size)
-        val finder = TextFinder(file)
-        val target = InputTarget(file, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor(file, rendering, finder, target, clipboard)
+        val content = SnapshotStateList<AnnotatedString>().apply { addAll(annotate(file.readFile(), file.fileType)) }
+        val rendering = TextRendering(content.size)
+        val finder = TextFinder(content)
+        val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
+        val processor = TextProcessor(content, rendering, finder, target, clipboard)
         val toolbar = TextToolbar.State(finder, target, processor)
-        return State(file, font, rendering, finder, target, processor, toolbar, onClose)
+        return State(content, font, rendering, finder, target, processor, toolbar)
     }
 
     class State internal constructor(
-        internal val file: File,
+        internal val content: SnapshotStateList<AnnotatedString>,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
-        internal val toolbar: TextToolbar.State,
-        internal val onClose: () -> Unit,
+        internal val toolbar: TextToolbar.State
     ) {
         internal val contextMenu = ContextMenu.State()
-        internal val content: SnapshotStateList<String> get() = file.content
         internal val lineCount: Int get() = content.size
         internal var isFocused by mutableStateOf(true)
         internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal val showToolbar get() = toolbar.showToolbar
+        internal var onClose: (() -> Unit)? = null
 
         internal var density: Float
             get() = target.density
@@ -183,7 +183,7 @@ object TextEditor {
             when (command) {
                 WindowCommand.FIND -> toolbar.showFinder()
                 WindowCommand.REPLACE -> toolbar.showReplacer()
-                WindowCommand.CLOSE -> onClose()
+                WindowCommand.CLOSE -> onClose?.let { it() }
             }
             return true
         }
@@ -204,8 +204,9 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Area(state: State, modifier: Modifier = Modifier) {
+    fun Area(state: State, modifier: Modifier = Modifier, onClose: () -> Unit) {
         if (state.content.isEmpty()) return
+        state.onClose = onClose
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
@@ -268,7 +269,7 @@ object TextEditor {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
-        val lazyColumnState: LazyColumn.State<String> = LazyColumn.createState(state.content, state.target.verScroller)
+        val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
 
         Box(modifier = Modifier.onGloballyPositioned {
             state.updateAreaWidth(it.size.width)
@@ -298,7 +299,7 @@ object TextEditor {
     }
 
     @Composable
-    private fun TextLine(state: State, index: Int, text: String, font: TextStyle, fontWidth: Dp) {
+    private fun TextLine(state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp) {
         val cursor = state.target.cursor
         val selection = state.target.selection
         val bgColor = when {
@@ -323,16 +324,12 @@ object TextEditor {
                 Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
             Text(
-                text = mayHighlight(state, text), style = font,
+                text = text, style = font,
                 modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
                 onTextLayout = { state.rendering.set(index, it, state.processor.version) }
             )
             if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth)
         }
-    }
-
-    private fun mayHighlight(state: State, text: String): AnnotatedString {
-        return if (state.file.isTypeQL) TypeQLHighlighter.annotate(text) else AnnotatedString(text)
     }
 
     @Composable
@@ -355,7 +352,13 @@ object TextEditor {
 
     @OptIn(ExperimentalTime::class)
     @Composable
-    private fun Cursor(state: State, text: String, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp) {
+    private fun Cursor(
+        state: State,
+        text: AnnotatedString,
+        textLayout: TextLayoutResult?,
+        font: TextStyle,
+        fontWidth: Dp
+    ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
         val offsetX = textLayout?.let {
@@ -425,7 +428,7 @@ object TextEditor {
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.onClose() },
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.onClose?.let { it() } },
             )
         )
     }

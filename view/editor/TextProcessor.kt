@@ -25,7 +25,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
@@ -84,10 +85,10 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand.ESCAPE
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
+import com.vaticle.typedb.studio.view.typeql.TypeQLHighlighter
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.Collectors
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlin.time.Duration
@@ -97,7 +98,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class TextProcessor(
-    private val file: File,
+    private val content: SnapshotStateList<AnnotatedString>,
     private val rendering: TextRendering,
     private val finder: TextFinder,
     private val target: InputTarget,
@@ -109,9 +110,19 @@ internal class TextProcessor(
         private const val TAB_SIZE = 4
         private const val UNDO_LIMIT = 1_000
         internal val CHANGE_BATCH_DELAY = Duration.milliseconds(400)
+
+        fun annotate(strings: List<String>, fileType: Property.FileType): List<AnnotatedString> {
+            return strings.map { annotate(it, fileType) }
+        }
+
+        private fun annotate(string: String, fileType: Property.FileType): AnnotatedString {
+            return when (fileType) {
+                TYPEQL -> TypeQLHighlighter.annotate(string)
+                else -> AnnotatedString(string)
+            }
+        }
     }
 
-    internal val content: SnapshotStateList<String> get() = file.content
     internal var version by mutableStateOf(0)
     private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
     private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
@@ -191,7 +202,7 @@ internal class TextProcessor(
 
     internal fun copy() {
         if (target.selection == null) return
-        clipboard.setText(AnnotatedString(target.selectedText()))
+        clipboard.setText(target.selectedText())
     }
 
     internal fun paste() {
@@ -218,22 +229,22 @@ internal class TextProcessor(
         finder.mayRecomputeAllMatches()
     }
 
-    private fun indent(string: String, spaces: Int): String {
-        return string.split("\n").stream().map {
-            if (spaces > 0) " ".repeat(spaces) + it
-            else if (spaces < 0) it.removePrefix(" ".repeat((-spaces).coerceAtMost(prefixSpaces(it))))
+    private fun indent(strings: List<AnnotatedString>, spaces: Int): List<AnnotatedString> {
+        return strings.map {
+            if (spaces > 0) AnnotatedString(" ".repeat(spaces)) + it
+            else if (spaces < 0) it.subSequence(spaces.coerceAtMost(prefixSpaces(it)), it.length)
             else it
-        }.collect(Collectors.joining("\n"))
+        }
     }
 
-    private fun prefixSpaces(line: String): Int {
+    private fun prefixSpaces(line: AnnotatedString): Int {
         for (it in line.indices) if (line[it] != ' ') return it
         return line.length
     }
 
     private fun deletionOperation(): Deletion {
         assert(target.selection != null)
-        return Deletion(target.selection!!.min, target.selectedText(), target.selection)
+        return Deletion(target.selection!!.min, target.selectedTextLines(), target.selection)
     }
 
     private fun deleteSelectionOr(elseFn: () -> Unit) {
@@ -252,10 +263,8 @@ internal class TextProcessor(
         val newSelection = oldSelection?.let { target.expandSelection(it) }
             ?: target.expandSelection(oldCursor.toSelection())
         target.updateSelection(newSelection)
-        val oldText = target.selectedText()
-        val newText = indent(oldText, -TAB_SIZE)
-        val oldTextLines = oldText.split("\n")
-        val newTextLines = newText.split("\n")
+        val oldTextLines = target.selectedTextLines()
+        val newTextLines = indent(oldTextLines, -TAB_SIZE)
         val firstLineShift = newTextLines.first().length - oldTextLines.first().length
         val lastLineShift = newTextLines.last().length - oldTextLines.last().length
         val newPosition: Either<Cursor, Selection> = oldSelection?.let {
@@ -263,7 +272,7 @@ internal class TextProcessor(
             val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
             Either.second(target.shiftSelection(it, startCursorShift, endCursorShift))
         } ?: Either.first(Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
-        insertText(newText, newPosition)
+        insertText(newTextLines, newPosition)
     }
 
     private fun indentTab() {
@@ -273,7 +282,7 @@ internal class TextProcessor(
         else {
             val newSelection = target.shiftSelection(selection, TAB_SIZE, TAB_SIZE)
             target.updateSelection(target.expandSelection(selection))
-            insertText(indent(target.selectedText(), TAB_SIZE), Either.second(newSelection))
+            insertText(indent(target.selectedTextLines(), TAB_SIZE), Either.second(newSelection))
         }
     }
 
@@ -283,19 +292,27 @@ internal class TextProcessor(
         insertText("\n" + " ".repeat(TAB_SIZE * tabs))
     }
 
+    private fun asAnnotatedLines(string: String): List<AnnotatedString> {
+        return if (string.isEmpty()) listOf() else string.split("\n").map { AnnotatedString(it) }
+    }
+
     internal fun insertText(string: String): Boolean {
-        insertText(string, newPosition = null)
+        insertText(asAnnotatedLines(string), newPosition = null)
         return true
     }
 
     private fun insertText(string: String, recomputeFinder: Boolean) {
-        insertText(string, newPosition = null, recomputeFinder)
+        insertText(asAnnotatedLines(string), newPosition = null, recomputeFinder)
     }
 
-    private fun insertText(string: String, newPosition: Either<Cursor, Selection>?, recomputeFinder: Boolean = true) {
+    private fun insertText(
+        strings: List<AnnotatedString>,
+        newPosition: Either<Cursor, Selection>?,
+        recomputeFinder: Boolean = true
+    ) {
         val operations = mutableListOf<TextChange.Operation>()
         if (target.selection != null) operations.add(deletionOperation())
-        if (string.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, string))
+        if (strings.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, strings))
         applyOriginal(TextChange(operations), newPosition, recomputeFinder)
     }
 
@@ -348,8 +365,8 @@ internal class TextProcessor(
     private fun applyDeletion(deletion: Deletion) {
         val start = deletion.selection().min
         val end = deletion.selection().max
-        val prefix = content[start.row].substring(0, start.col)
-        val suffix = content[end.row].substring(end.col)
+        val prefix = content[start.row].subSequence(0, start.col)
+        val suffix = content[end.row].subSequence(end.col, content[end.row].length)
         content[start.row] = prefix + suffix
         if (end.row > start.row) {
             rendering.removeRange(start.row + 1, end.row + 1)
@@ -360,9 +377,9 @@ internal class TextProcessor(
 
     private fun applyInsertion(insertion: Insertion) {
         val cursor = insertion.cursor
-        val prefix = content[cursor.row].substring(0, cursor.col)
-        val suffix = content[cursor.row].substring(cursor.col)
-        val texts = insertion.text.split("\n").toMutableList()
+        val prefix = content[cursor.row].subSequence(0, cursor.col)
+        val suffix = content[cursor.row].subSequence(cursor.col, content[cursor.row].length)
+        val texts = insertion.text.toMutableList()
         texts[0] = prefix + texts[0]
         texts[texts.size - 1] = texts[texts.size - 1] + suffix
 

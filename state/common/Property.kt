@@ -52,10 +52,11 @@ object Property {
         }
     }
 
-    enum class File(vararg extensionStrs: String) {
-        TYPEQL("tql", "typeql");
+    enum class FileType(vararg extension: String) {
+        TYPEQL("tql", "typeql"),
+        UNKNOWN;
 
-        val extensions = extensionStrs.toSet()
+        val extensions = extension.toSet()
     }
 
 

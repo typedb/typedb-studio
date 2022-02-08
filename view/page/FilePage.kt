@@ -27,7 +27,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 
-class FilePage(val file: File) : Page(file) {
+class FilePage private constructor(val file: File, val editorState: TextEditor.State) : Page(file) {
 
     override val label: String = file.name
     override val icon: Form.IconArgs = when {
@@ -35,11 +35,15 @@ class FilePage(val file: File) : Page(file) {
         else -> Form.IconArgs(Icon.Code.FILE_LINES)
     }
 
-    private var editorState: TextEditor.State? = null
+    companion object {
+        @Composable
+        fun create(file: File): FilePage {
+            return FilePage(file, TextEditor.createState(file))
+        }
+    }
 
     @Composable
     override fun Layout(onClose: () -> Unit) {
-        if (editorState == null) editorState = TextEditor.createState(file, onClose)
-        TextEditor.Area(state = editorState!!, modifier = Modifier.fillMaxSize())
+        TextEditor.Area(state = editorState, modifier = Modifier.fillMaxSize(), onClose = onClose)
     }
 }

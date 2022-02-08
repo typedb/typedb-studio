@@ -60,8 +60,6 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
-import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
 import java.util.concurrent.atomic.AtomicInteger
@@ -304,7 +302,7 @@ object TextToolbar {
         }
 
         internal fun replaceCurrent() {
-            selectCurrentOr { processor.replaceCurrentFound(replaceText.text)}
+            selectCurrentOr { processor.replaceCurrentFound(replaceText.text) }
         }
 
         internal fun replaceAll() {

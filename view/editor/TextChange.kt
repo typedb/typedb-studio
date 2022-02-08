@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor.Companion.min
@@ -74,7 +75,11 @@ internal data class TextChange(val operations: List<Operation>) {
         }
     }
 
-    sealed class Operation(val cursor: Cursor, val text: String, private var selection: Selection? = null) {
+    sealed class Operation(
+        val cursor: Cursor,
+        val text: List<AnnotatedString>,
+        private var selection: Selection? = null
+    ) {
 
         init {
             assert(selection == null || selection == selection(false))
@@ -89,11 +94,10 @@ internal data class TextChange(val operations: List<Operation>) {
         private fun selection(cache: Boolean): Selection {
             selection?.let { return it }
             assert(text.isNotEmpty())
-            val texts = text.split("\n")
-            val endRow = cursor.row + texts.size - 1
+            val endRow = cursor.row + text.size - 1
             val endCol = when {
-                texts.size > 1 -> texts[texts.size - 1].length
-                else -> cursor.col + texts[0].length
+                text.size > 1 -> text[text.size - 1].length
+                else -> cursor.col + text[0].length
             }
             val newSelection = Selection(cursor, Cursor(endRow, endCol))
             if (cache) selection = newSelection
@@ -102,7 +106,7 @@ internal data class TextChange(val operations: List<Operation>) {
 
     }
 
-    class Insertion(cursor: Cursor, text: String) : Operation(cursor, text) {
+    class Insertion(cursor: Cursor, text: List<AnnotatedString>) : Operation(cursor, text) {
         override fun invert(): Deletion {
             return Deletion(cursor, text)
         }
@@ -113,7 +117,7 @@ internal data class TextChange(val operations: List<Operation>) {
     }
 
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
-    class Deletion(cursor: Cursor, text: String, selection: Selection? = null) :
+    class Deletion(cursor: Cursor, text: List<AnnotatedString>, selection: Selection? = null) :
         Operation(cursor, text, selection) {
         override fun invert(): Insertion {
             return Insertion(cursor, text)

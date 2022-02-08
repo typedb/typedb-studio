@@ -29,9 +29,10 @@ abstract class Page(val data: Pageable) {
     abstract val icon: Form.IconArgs
 
     companion object {
+        @Composable
         fun of(pageable: Pageable): Page {
             return when (pageable) {
-                is File -> FilePage(pageable)
+                is File -> FilePage.create(pageable)
                 else -> throw IllegalStateException("should never be reached")
             }
         }
