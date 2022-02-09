@@ -14,3 +14,80 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+colors:
+  white: "#e8e8ff"
+
+  green: "#02DAC9"        # variable
+  orange: "#FFA187"       # variable.language
+  pink: "#fc88ce"         # keyword.control
+  red: "#ff8080"          # keyword.operator
+  cyan: "#55EAE2"         # storage.type
+  blue: "#8aabff"         # storage.modifier, constant
+  yellow: "#FFE4A7"       # string
+  purple: "#b99cff"       # entity
+  purple_light: "#d0bdff" # entity
+  grey: "#7F83AF"         # comment
+
+global:
+  foreground: white
+rules:
+  storage:
+    foreground: cyan
+    rules:
+      type:
+        # thing, entity, attribute, relation, role, rule
+        foreground: cyan
+        styles: [ italic ]
+      modifier:
+        # long, double, string, boolean, datetime
+        foreground: purple
+        styles: [ italic ]
+  keyword:
+    foreground: pink
+    rules:
+      control:
+        # match, get, define, undefine, insert, delete, compute,
+        # type, abstract, sub, sub!, owns, is_key, regex, as, plays, relates, when, then,
+        # iid, isa, isa!, has, value, is, offset, limit, sort, order_, asc, desc,
+        foreground: pink
+      operator:
+        # or, not, =, !=, >, >=, <, <=, like, contains,
+        foreground: pink
+  support:
+    foreground: pink
+    rules:
+      function:
+        # group, count, max, min, mean, median, std, sum,
+        foreground: pink
+        styles: [ italic ]
+  string:
+    # "first name"
+    foreground: yellow
+  constant:
+    # 2022-02-09, 2022-02-09T18:00:00.00
+    foreground: blue
+    rules:
+      language:
+        # true, false,
+        foreground: orange
+      numeric:
+        # 723829, 2837.284,
+        foreground: blue
+  variable:
+    # $x, $y, $z
+    foreground: green
+    rules:
+      parameter:
+        # $_
+        foreground: green
+        styles: [ italic ]
+      language:
+        # 0x966e80018000000000000000
+        foreground: red
+  entity:
+    # my-entity, my-relation, my-attribute
+    foreground: white
+  comment:
+    # # This comment explains the code
+    foreground: grey
+    styles: [ italic ]

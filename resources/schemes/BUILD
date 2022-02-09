@@ -22,13 +22,12 @@ package(default_visibility = ["//view/highlighter:__subpackages__"])
 filegroup(
     name = "schemes",
     srcs = [
-        "dracula.yml",
+        "typeql_dark.yml",
     ]
 )
 
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
-    exclude = glob(["dracula.yml"]),
     license_type = "agpl",
 )

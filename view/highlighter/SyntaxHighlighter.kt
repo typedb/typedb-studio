@@ -40,7 +40,7 @@ object SyntaxHighlighter {
 
     fun highlight(text: String, fileType: Property.FileType): AnnotatedString {
         return when (fileType) {
-            Property.FileType.TYPEQL -> annotate(text, TypeQLLexer, Scheme.DRACULA)
+            Property.FileType.TYPEQL -> annotate(text, TypeQLLexer, Scheme.TYPEQL_DARK)
             else -> AnnotatedString(text)
         }
     }
@@ -49,13 +49,13 @@ object SyntaxHighlighter {
         if (text.isBlank()) return AnnotatedString("")
         val builder = Builder()
         val tokens = lexer.tokenize(text, scheme)
-        tokens.forEach { builder.appendToken(it) }
+        tokens.forEach { builder.appendToken(it, scheme.globalScope) }
         return builder.toAnnotatedString()
     }
 
-    private fun Builder.appendToken(token: Token) {
+    private fun Builder.appendToken(token: Token, globalScope: Scope) {
         val scope = token.scope
-        if (scope == null || !scope.hasScheme) this.append(token.text)
+        if (scope == null || !scope.hasScheme) this.appendText(token.text, globalScope)
         else this.appendText(token.text, scope)
     }
 

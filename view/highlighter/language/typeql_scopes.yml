@@ -93,7 +93,7 @@
 "TRUE"     : constant.language
 "FALSE"    : constant.language
 
-"STRING_"   : string.quoted
+"STRING_"   : string
 "LONG_"     : constant.numeric
 "DOUBLE_"   : constant.numeric
 "DATE_"     : constant
@@ -104,7 +104,7 @@
 "VAR_ANONYMOUS_" : variable.parameter
 "IID_"           : variable.language
 
-"LABEL_"        : entity.name.type
-"LABEL_SCOPED_" : entity.name.type
+"LABEL_"        : entity
+"LABEL_SCOPED_" : entity
 
 "COMMENT" : comment
