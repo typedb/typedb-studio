@@ -27,7 +27,7 @@ import com.vaticle.typeql.lang.TypeQL
 import java.nio.file.Path
 import org.antlr.v4.runtime.CommonTokenStream
 
-// TODO: we should reimplement this class using a JFlex lexer,
+// TODO: we should reimplement this using a JFlex lexer,
 //       instead of our native ANTLR lexer, to get more powerful
 //       tokenisation rules using regular expressions
 object TypeQLLexer : Lexer {

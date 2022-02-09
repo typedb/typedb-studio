@@ -15,6 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+# TODO: we should reimplement this using a JFlex lexer,
+#       instead of our native ANTLR lexer, to get more powerful
+#       tokenisation rules using regular expressions
+
 "THING"     : storage.type
 "ENTITY"    : storage.type
 "ATTRIBUTE" : storage.type
