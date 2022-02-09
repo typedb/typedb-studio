@@ -53,7 +53,7 @@ object Theme {
     val SCROLLBAR_END_PADDING = 6.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
     val RECTANGLE_ROUNDED_ALL = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
-    const val TARGET_SELECTION_ALPHA = 0.4f
+    const val TARGET_SELECTION_ALPHA = 0.35f
     const val FIND_SELECTION_ALPHA = 0.3f
     const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.25f

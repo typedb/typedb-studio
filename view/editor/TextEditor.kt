@@ -256,7 +256,7 @@ object TextEditor {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
         val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background
-        val fontAlpha = if (isCursor || isSelected) 0.8f else 0.5f
+        val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
         Box(
             contentAlignment = Alignment.TopEnd,
             modifier = Modifier.background(bgColor)
@@ -303,7 +303,7 @@ object TextEditor {
         val cursor = state.target.cursor
         val selection = state.target.selection
         val bgColor = when {
-            cursor.row == index && selection == null -> Theme.colors.surface
+            cursor.row == index && selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
         }
         Box(

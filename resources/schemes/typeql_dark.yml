@@ -21,6 +21,7 @@ colors:
   red: "#ff8080"
   pink: "#ff7abd"
   purple: "#b7a3ff"
+  purple_light: "#d1c4ff"
   blue: "#82b6ff"
   orange: "#FFA187"
   yellow: "#FFE4A7"
@@ -84,7 +85,7 @@ rules:
         foreground: red
   entity:
     # my-entity, my-relation, my-attribute
-    foreground: purple
+    foreground: purple_light
   comment:
     # # This comment explains the code
     foreground: grey
