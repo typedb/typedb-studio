@@ -14,7 +14,7 @@ author: Zeno Rocha
 uuid: 83091B89-765E-4F0D-9275-0EC6CB084126
 semanticClass: theme.dracula
 colorSpaceName: sRGB
-globals:
+global:
   background: '#282a36'
   caret: '#f8f8f0'
   blockCaret: '#999a9e'
@@ -34,152 +34,111 @@ globals:
 rules:
   comment:
     foreground: '#6272a4'
-  constant.character:
+  constant:
     foreground: '#bd93f9'
-  constant.character.escape:
-    foreground: '#ff79c6'
-  constant.language:
-    foreground: '#bd93f9'
-  constant.numeric:
-    foreground: '#bd93f9'
-  constant.other:
-    foreground: '#bd93f9'
-  entity.name.class:
-    foreground: '#8be9fd'
-    fontStyle: [underline]
-  entity.other.inherited-class:
-    foreground: '#8be9fd'
-    fontStyle: [italic, underline]
-  entity.name.function:
+    children:
+      character:
+        foreground: '#bd93f9'
+        escape:
+          foreground: '#ff79c6'
+      language:
+        foreground: '#bd93f9'
+      numeric:
+        foreground: '#bd93f9'
+  entity:
     foreground: '#50fa7b'
-  entity.name.tag:
-    foreground: '#ff79c6'
-  entity.other.attribute-name:
-    foreground: '#50fa7b'
-  entity.name.filename:
-    foreground: '#E6DB74'
-  entity.name.module.ruby:
-    foreground: '#8be9fd'
-  entity.name.constant.ruby:
-    foreground: '#bd93f9'
-  entity.name.namespace.cs:
-    foreground: '#8be9fd'
+    children:
+      name:
+        children:
+          class:
+            foreground: '#8be9fd'
+            fontStyle: [underline]
+          function:
+            foreground: '#50fa7b'
+          tag:
+            foreground: '#ff79c6'
+          stcruct:
+            foreground: '#E6DB74'
+          section:
+            foreground: '#8be9fd'
+          constant:
+            foreground: '#bd93f9'
+          namespace:
+            foreground: '#8be9fd'
   invalid:
     background: '#ff79c6'
     foreground: '#F8F8F0'
-  invalid.deprecated:
-    background: '#bd93f9'
-    foreground: '#F8F8F0'
+    children:
+      deprecated:
+        background: '#bd93f9'
+        foreground: '#F8F8F0'
   keyword:
     foreground: '#ff79c6'
-  markup.inserted:
-    foreground: '#50fa7b'
-  markup.changed:
-    foreground: '#E6DB74'
-  meta.path:
-    foreground: '#66d9ef'
-    fontStyle: [underline]
-  meta.diff:
-    foreground: '#6272a4'
-  meta.diff.header:
-    foreground: '#6272a4'
-  markup.deleted:
-    foreground: '#ff79c6'
-  message.error:
-    foreground: '#F83333'
-  markup.strike:
-    foreground: '#FFB86C'
-    fontStyle: [italic]
-  markup.bold:
-    foreground: '#FFB86C'
-    fontStyle: [bold]
-  markup.italic:
-    foreground: '#FFB86C'
-    fontStyle: [italic]
-  markup.heading:
-    foreground: '#8BE9FD'
-  markup.quote:
-    foreground: '#6272A4'
-    fontStyle: [italic]
-  meta.separator:
-    foreground: '#6272A4'
-  markup.raw.inline:
-    foreground: '#50FA7B'
-  markup.underline:
-    foreground: '#BD93F9'
-    fontStyle: [underline]
-  markup.raw.block:
-    foreground: '#CFCFC2'
-  markup.raw.block.fenced.markdown:
-    foreground: '#F8F8F2'
-  meta.function.return-type:
-    foreground: '#FF79C6'
-  punctuation.definition.fenced.markdown:
-    foreground: '#6272A4'
-    fontStyle: [italic]
-  punctuation.definition.list_item.markdown:
-    foreground: '#FF79C6'
-  punctuation.definition.blockquote.markdown:
-    foreground: '#6272A4'
-    background: '#6272A4'
-    fontStyle: [italic]
-  punctuation.accessor:
-    foreground: '#FF79C6'
-  punctuation.section.block.begin:
-    foreground: '#ffffff'
-  punctuation.section.block.end:
-    foreground: '#ffffff'
-  punctuation.section.embedded.begin:
-    foreground: '#ff79c6'
-  punctuation.section.embedded.end:
-    foreground: '#ff79c6'
-  punctuation.separator.namespace:
-    foreground: '#ff79c6'
-  support.function.builtin.ruby:
-    foreground: '#ffffff'
+  markup:
+    children:
+      inserted:
+        foreground: '#50fa7b'
+      deleted:
+        foreground: '#ff79c6'
+      bold:
+        foreground: '#FFB86C'
+        fontStyle: [bold]
+      italic:
+        foreground: '#FFB86C'
+        fontStyle: [italic]
+      heading:
+        foreground: '#8BE9FD'
+      quote:
+        foreground: '#6272A4'
+        fontStyle: [italic]
+      raw:
+        foreground: '#50FA7B'
+      underline:
+        foreground: '#BD93F9'
+        fontStyle: [underline]
+  punctuation:
+    children:
+      separator:
+        foreground: '#ff79c6'
+      accessor:
+        foreground: '#FF79C6'
   storage.type.namespace.cs:
     foreground: '#ff79c6'
   storage:
     foreground: '#ff79c6'
-  storage.type:
-    foreground: '#8be9fd'
-    fontStyle: [italic]
-  storage.type.namespace:
-    foreground: '#8be9fd'
-    fontStyle: [italic]
-  storage.type.class:
-    foreground: '#ff79c6'
-    fontStyle: [italic]
+    children:
+      type:
+        foreground: '#8be9fd'
+        fontStyle: [italic]
+        children:
+          class:
+            foreground: '#ff79c6'
+            fontStyle: [italic]
   string:
     foreground: '#f1fa8c'
-  support.function:
-    foreground: '#8be9fd'
-  support.constant:
-    foreground: '#6be5fd'
-  support.type:
+  support:
     foreground: '#66d9ef'
     fontStyle: [italic]
-  support.class:
-    foreground: '#66d9ef'
-    fontStyle: [italic]
-  support.other.variable: ''
-  support.other.namespace:
-    foreground: '#66d9ef'
-    fontStyle: [italic]
-  text.html.markdown:
+    children:
+      constant:
+        foreground: '#6be5fd'
+      function:
+        foreground: '#8be9fd'
+      type:
+        foreground: '#66d9ef'
+        fontStyle: [italic]
+      class:
+        foreground: '#66d9ef'
+        fontStyle: [italic]
+  text.html:
     foreground: '#50FA7B'
-  variable.language.fenced.markdown:
-    foreground: '#6272A4'
-    fontStyle: [italic]
-  variable.function:
-    foreground: '#50fa7b'
-  variable.other:
-    foreground: '#ffffff'
-  variable.language:
-    foreground: '#bd93f9'
-  variable: ''
-  variable.other.readwrite.instance:
+  variable:
     foreground: '#ffb86c'
-  variable.parameter:
-    foreground: '#ffb86c'
-    fontStyle: [italic]
+    children:
+      language:
+        foreground: '#bd93f9'
+      parameter:
+        foreground: '#ffb86c'
+        fontStyle: [italic]
+      function:
+        foreground: '#50fa7b'
