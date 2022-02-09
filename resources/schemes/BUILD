@@ -16,27 +16,14 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//view/editor:__pkg__"])
+package(default_visibility = ["//view/highlighter:__pkg__"])
 
-kt_jvm_library(
-    name = "typeql",
-    srcs = glob(["*.kt"]),
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    deps = [
-
-        # External Vaticle Dependencies
-        "@vaticle_typeql//grammar:java",
-        "@vaticle_typeql_lang_java//:typeql-lang",
-
-        # External Maven Dependencies
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
-        "@maven//:org_slf4j_slf4j_api",
-    ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-typeql:{pom_version}"],
+filegroup(
+    name = "schemes",
+    srcs = [
+        "dracula.yml",
+    ]
 )
 
 checkstyle_test(

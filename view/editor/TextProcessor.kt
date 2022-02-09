@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
@@ -41,6 +40,7 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_STAR
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT
+import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT_MOD
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_LINE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_PAGE
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_END
@@ -85,7 +85,7 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand.ESCAPE
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
-import com.vaticle.typedb.studio.view.typeql.TypeQLHighlighter
+import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -111,17 +111,6 @@ internal class TextProcessor(
         private const val TAB_SIZE = 4
         private const val UNDO_LIMIT = 1_000
         internal val CHANGE_BATCH_DELAY = Duration.milliseconds(400)
-
-        fun annotate(strings: List<String>, fileType: Property.FileType): List<AnnotatedString> {
-            return strings.map { annotate(it, fileType) }
-        }
-
-        private fun annotate(string: String, fileType: Property.FileType): AnnotatedString {
-            return when (fileType) {
-                TYPEQL -> TypeQLHighlighter.annotate(string)
-                else -> AnnotatedString(string)
-            }
-        }
     }
 
     internal var version by mutableStateOf(0)
@@ -181,7 +170,7 @@ internal class TextProcessor(
             DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
             TAB -> indentTab()
             TAB_SHIFT -> outdentTab()
-            ENTER, ENTER_SHIFT -> insertNewLine()
+            ENTER, ENTER_SHIFT, ENTER_SHIFT_MOD -> insertNewLine()
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()
@@ -293,17 +282,17 @@ internal class TextProcessor(
         insertText("\n" + " ".repeat(TAB_SIZE * tabs))
     }
 
-    private fun asAnnotatedLines(string: String): List<AnnotatedString> {
-        return if (string.isEmpty()) listOf() else string.split("\n").map { AnnotatedString(it) }
+    private fun asAnnotatedLines(text: String): List<AnnotatedString> {
+        return if (text.isEmpty()) listOf() else text.split("\n").map { AnnotatedString(it) }
     }
 
-    internal fun insertText(string: String): Boolean {
-        insertText(asAnnotatedLines(string), newPosition = null)
+    internal fun insertText(text: String): Boolean {
+        insertText(asAnnotatedLines(text), newPosition = null)
         return true
     }
 
-    private fun insertText(string: String, recomputeFinder: Boolean) {
-        insertText(asAnnotatedLines(string), newPosition = null, recomputeFinder)
+    private fun insertText(text: String, recomputeFinder: Boolean) {
+        insertText(asAnnotatedLines(text), newPosition = null, recomputeFinder)
     }
 
     private fun insertText(
@@ -420,6 +409,6 @@ internal class TextProcessor(
     }
 
     private fun reannotate(lines: IntRange) {
-        lines.forEach { content[it] = annotate(content[it].text, fileType) }
+        lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
     }
 }

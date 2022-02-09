@@ -16,14 +16,11 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.typeql
+package com.vaticle.typedb.studio.view.highlighter.common
 
-import androidx.compose.ui.text.AnnotatedString
+interface Lexer {
 
-object TypeQLHighlighter {
+    data class Token(val text: String, val scope: Scope?)
 
-    fun annotate(text: String): AnnotatedString {
-        // TODO
-        return AnnotatedString(text)
-    }
+    fun tokenize(text: String, scheme: Scheme): List<Token>
 }

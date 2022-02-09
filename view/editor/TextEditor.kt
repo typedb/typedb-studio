@@ -88,7 +88,7 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
-import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.annotate
+import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
@@ -113,7 +113,7 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>().apply { addAll(annotate(file.readFile(), file.fileType)) }
+        val content = SnapshotStateList<AnnotatedString>().apply { addAll(highlight(file.readFile(), file.fileType)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)

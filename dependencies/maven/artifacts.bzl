@@ -20,6 +20,7 @@ artifacts = [
     "ch.qos.logback:logback-core",
     "io.github.microutils:kotlin-logging-jvm",
     "junit:junit",
+    "org.antlr:antlr4-runtime",
     "org.jetbrains.compose.desktop:desktop-jvm",
     "org.jetbrains.compose.foundation:foundation-desktop",
     "org.jetbrains.compose.foundation:foundation-layout-desktop",

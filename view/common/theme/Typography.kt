@@ -27,12 +27,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import java.nio.file.Path
 
 object Typography {
 
-    private const val TITILLIUM_WEB_REGULAR = "fonts/titilliumweb/TitilliumWeb-Regular.ttf"
-    private const val TITILLIUM_WEB_SEMI_BOLD = "fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
-    private const val UBUNTU_MONO_REGULAR = "fonts/ubuntumono/UbuntuMono-Regular.ttf"
+    private val TITILLIUM_WEB_REGULAR = Path.of("resources/fonts/titilliumweb/TitilliumWeb-Regular.ttf").toFile()
+    private val TITILLIUM_WEB_SEMI_BOLD = Path.of("resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf").toFile()
+    private val UBUNTU_MONO_REGULAR = Path.of("resources/fonts/ubuntumono/UbuntuMono-Regular.ttf").toFile()
     private const val DEFAULT_BODY_FONT_SIZE_MEDIUM = 13
     private const val DEFAULT_BODY_FONT_SIZE_SMALL = 11
     private const val DEFAULT_CODE_FONT_SIZE_MEDIUM = 14

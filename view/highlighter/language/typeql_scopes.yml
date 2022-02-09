@@ -15,22 +15,20 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+# TODO
 
-package(default_visibility = ["//view/common:__pkg__"])
+LABEL_: entity.name.type
 
-filegroup(
-    name = "titillium-web",
-    srcs = [
-        "TitilliumWeb-Light.ttf",
-        "TitilliumWeb-Regular.ttf",
-        "TitilliumWeb-SemiBold.ttf",
-    ]
-)
+THING     : storage.type
+ENTITY    : storage.type
+ATTRIBUTE : storage.type
+RELATION  : storage.type
+ROLE      : storage.type
+RULE      : storage.type
 
-checkstyle_test(
-    name = "checkstyle",
-    include = glob(["*"]),
-    exclude = glob(["*.ttf"]),
-    license_type = "agpl",
-)
+
+LONG     : storage.modifier
+DOUBLE   : storage.modifier
+STRING   : storage.modifier
+BOOLEAN  : storage.modifier
+DATETIME : storage.modifier
