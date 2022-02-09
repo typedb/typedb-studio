@@ -20,21 +20,43 @@ package com.vaticle.typedb.studio.view.highlighter.common
 
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML
+import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.BOLD
+import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.ITALIC
+import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.UNDERLINE
 import java.nio.file.Path
 
 class Scope private constructor(val name: String, var parent: Scope?) {
 
-    enum class Style { ITALIC, UNDERLINE, BOLD }
+    enum class FontStyle {
+        ITALIC, UNDERLINE, BOLD;
+
+        companion object {
+            fun of(string: String): FontStyle? {
+                return when (string) {
+                    ITALIC.name.lowercase() -> ITALIC
+                    UNDERLINE.name.lowercase() -> UNDERLINE
+                    BOLD.name.lowercase() -> BOLD
+                    else -> null
+                }
+            }
+        }
+    }
 
     init {
         parent?.children?.add(this)
     }
 
     var foreground: Color? = null
+        get() = if (parent == null || field != null) field else parent!!.foreground
     var background: Color? = null
-    var style: List<Style> = listOf()
+        get() = if (parent == null || field != null) field else parent!!.background
+    var fontStyle: List<FontStyle> = listOf()
+        get() = if (parent == null || field.isNotEmpty()) field else parent!!.fontStyle
+    val isItalic: Boolean get() = fontStyle.contains(ITALIC)
+    val isBold: Boolean get() = fontStyle.contains(BOLD)
+    val isUnderline: Boolean get() = fontStyle.contains(UNDERLINE)
+    val hasScheme: Boolean get() = foreground != null || background != null || fontStyle.isNotEmpty()
     val children: MutableList<Scope> = mutableListOf()
-    val hasScheme: Boolean get() = foreground != null || background != null || style.isNotEmpty()
     val fullName: String
         get() {
             return (parent?.let { if (it.name != GLOBAL_NAME) it.fullName + "." else "" } ?: "") + name
@@ -42,7 +64,7 @@ class Scope private constructor(val name: String, var parent: Scope?) {
 
     companion object {
 
-        private const val GLOBAL_NAME = "global"
+        internal const val GLOBAL_NAME = "global"
         private val SCOPE_DEFINITION_FILE = Path.of("view/highlighter/common/scope_definitions.yml")
 
         fun instantiateNewScopes(): Map<String, Scope> {

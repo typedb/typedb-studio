@@ -25,6 +25,8 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
+        "//view/common:common",
+
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
 
@@ -34,7 +36,10 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    data = ["scope_definitions.yml"],
+    data = [
+        "scope_definitions.yml",
+        "//resources/schemes:schemes",
+    ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter-common:{pom_version}"],
 )
 

@@ -22,10 +22,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer.Token
 import com.vaticle.typedb.studio.view.highlighter.common.Scheme
+import com.vaticle.typedb.studio.view.highlighter.common.Scope
 import com.vaticle.typedb.studio.view.highlighter.language.TypeQLLexer
 
 object SyntaxHighlighter {
@@ -52,18 +56,20 @@ object SyntaxHighlighter {
     private fun Builder.appendToken(token: Token) {
         val scope = token.scope
         if (scope == null || !scope.hasScheme) this.append(token.text)
-        else this.appendText(token.text, Color.Green)
+        else this.appendText(token.text, scope)
     }
 
-
-    private fun Builder.appendText(text: String, color: Color): Builder {
-        this.pushStyle(SpanStyle(color = color))
+    private fun Builder.appendText(text: String, scope: Scope): Builder {
+        val style = SpanStyle(
+            color = scope.foreground ?: Color.Unspecified,
+            background = scope.background ?: Color.Unspecified,
+            fontStyle = if (scope.isItalic) FontStyle.Italic else null,
+            fontWeight = if (scope.isBold) FontWeight.SemiBold else null,
+            textDecoration = if (scope.isUnderline) TextDecoration.Underline else null
+        )
+        this.pushStyle(style)
         this.append(text)
         this.pop()
         return this
-    }
-
-    private fun replaceSpace(text: String): String {
-        return text.replace(" ", "_")
     }
 }

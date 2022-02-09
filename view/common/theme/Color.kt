@@ -103,6 +103,10 @@ object Color {
 
     private const val FADED_OPACITY = 0.4f
 
+    fun hexToColor(hexString: String): Color {
+        return Color(("ff" + hexString.removePrefix("#").lowercase()).toLong(16))
+    }
+
     fun fadeable(color: Color, faded: Boolean, opacity: Float = FADED_OPACITY): Color {
         return if (color == Color.Transparent) color
         else if (faded) color.copy(opacity)
