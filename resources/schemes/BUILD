@@ -29,5 +29,6 @@ filegroup(
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
+    exclude = glob(["dracula.yml"]),
     license_type = "agpl",
 )
