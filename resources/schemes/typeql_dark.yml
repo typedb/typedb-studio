@@ -17,31 +17,28 @@
 
 colors:
   white: "#e8e8ff"
-
-  green: "#02DAC9"        # variable
-  orange: "#FFA187"       # variable.language
-  pink: "#fc88ce"         # keyword.control
-  red: "#ff8080"          # keyword.operator
-  cyan: "#55EAE2"         # storage.type
-  blue: "#8aabff"         # storage.modifier, constant
-  yellow: "#FFE4A7"       # string
-  purple: "#b99cff"       # entity
-  purple_light: "#d0bdff" # entity
-  grey: "#7F83AF"         # comment
+  green: "#55EAE2"
+  red: "#ff8080"
+  pink: "#ff7abd"
+  purple: "#b7a3ff"
+  blue: "#82b6ff"
+  orange: "#FFA187"
+  yellow: "#FFE4A7"
+  grey: "#978aba"
 
 global:
-  foreground: white
+  foreground: pink
 rules:
   storage:
-    foreground: cyan
+    foreground: green
     rules:
       type:
         # thing, entity, attribute, relation, role, rule
-        foreground: cyan
+        foreground: green
         styles: [ italic ]
       modifier:
         # long, double, string, boolean, datetime
-        foreground: purple
+        foreground: blue
         styles: [ italic ]
   keyword:
     foreground: pink
@@ -87,7 +84,7 @@ rules:
         foreground: red
   entity:
     # my-entity, my-relation, my-attribute
-    foreground: white
+    foreground: purple
   comment:
     # # This comment explains the code
     foreground: grey

@@ -210,12 +210,11 @@ object TextEditor {
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
-        val textFont = state.font.copy(color = fontColor, lineHeight = fontHeight)
-        val lineNumberFont = state.font.copy(color = fontColor.copy(0.5f), lineHeight = fontHeight)
+        val fontStyle = state.font.copy(color = fontColor, lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
 
         Box { // We render a number to find out the default width of a digit for the given font
-            Text(text = "0", style = lineNumberFont, onTextLayout = { fontWidth = toDP(it.size.width, density) })
+            Text(text = "0", style = fontStyle, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Column {
                 if (state.showToolbar) {
                     TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handleToolbarEvent(it) })
@@ -228,9 +227,9 @@ object TextEditor {
                     .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
-                    LineNumberArea(state, lineNumberFont, fontWidth)
+                    LineNumberArea(state, fontStyle, fontWidth)
                     Separator.Vertical()
-                    TextArea(state, textFont, fontWidth)
+                    TextArea(state, fontStyle, fontWidth)
                 }
             }
         }
@@ -257,13 +256,14 @@ object TextEditor {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
         val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background
+        val fontAlpha = if (isCursor || isSelected) 0.8f else 0.5f
         Box(
             contentAlignment = Alignment.TopEnd,
             modifier = Modifier.background(bgColor)
                 .defaultMinSize(minWidth = minWidth)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
-        ) { Text(text = (index + 1).toString(), style = font) }
+        ) { Text(text = (index + 1).toString(), style = font.copy(Theme.colors.onBackground.copy(alpha = fontAlpha))) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -303,7 +303,7 @@ object TextEditor {
         val cursor = state.target.cursor
         val selection = state.target.selection
         val bgColor = when {
-            cursor.row == index && selection == null -> Theme.colors.primary
+            cursor.row == index && selection == null -> Theme.colors.surface
             else -> Theme.colors.background2
         }
         Box(

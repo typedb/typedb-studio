@@ -24,7 +24,6 @@
 "ATTRIBUTE" : storage.type
 "RELATION"  : storage.type
 "ROLE"      : storage.type
-"RULE"      : storage.type
 
 "LONG"     : storage.modifier
 "DOUBLE"   : storage.modifier
@@ -36,9 +35,9 @@
 "GET"      : keyword.control
 "DEFINE"   : keyword.control
 "UNDEFINE" : keyword.control
+"RULE"     : keyword.control
 "INSERT"   : keyword.control
 "DELETE"   : keyword.control
-"COMPUTE"  : keyword.control
 
 "TYPE"     : keyword.control
 "ABSTRACT" : keyword.control

@@ -48,6 +48,7 @@ kt_jvm_library(
         "@maven//:org_slf4j_slf4j_api",
     ],
     data = [
+        "//resources/fonts/monaco:monaco",
         "//resources/fonts/titilliumweb:titillium-web",
         "//resources/fonts/ubuntumono:ubuntu-mono",
         "//resources/icons/fontawesome:icons",

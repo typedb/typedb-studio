@@ -31,6 +31,7 @@ import java.nio.file.Path
 
 object Typography {
 
+    private val MONACO = Path.of("resources/fonts/monaco/Monaco.ttf").toFile()
     private val TITILLIUM_WEB_REGULAR = Path.of("resources/fonts/titilliumweb/TitilliumWeb-Regular.ttf").toFile()
     private val TITILLIUM_WEB_SEMI_BOLD = Path.of("resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf").toFile()
     private val UBUNTU_MONO_REGULAR = Path.of("resources/fonts/ubuntumono/UbuntuMono-Regular.ttf").toFile()
@@ -50,10 +51,8 @@ object Typography {
         val code2 = TextStyle(fontSize = codeSizeSmall.sp, fontFamily = fixedWidthFontFamily)
     }
 
-    private val UBUNTU_MONO_FAMILY = FontFamily(
-        Font(UBUNTU_MONO_REGULAR, FontWeight.Normal, FontStyle.Normal)
-    )
-
+    private val MONACO_FAMILY = FontFamily(Font(MONACO, FontWeight.Normal, FontStyle.Normal))
+    private val UBUNTU_MONO_FAMILY = FontFamily(Font(UBUNTU_MONO_REGULAR, FontWeight.Normal, FontStyle.Normal))
     private val TITILLIUM_WEB_FAMILY = FontFamily(
         Font(TITILLIUM_WEB_REGULAR, FontWeight.Normal, FontStyle.Normal),
         Font(TITILLIUM_WEB_SEMI_BOLD, FontWeight.SemiBold, FontStyle.Normal)
