@@ -29,7 +29,7 @@ kt_jvm_library(
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//grammar:java",
+        "@vaticle_typeql//grammar/java:typeql-grammar",
         "@vaticle_typeql_lang_java//:typeql-lang",
 
         # External Maven Dependencies

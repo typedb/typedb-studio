@@ -15,20 +15,92 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# TODO
+"THING"     : storage.type
+"ENTITY"    : storage.type
+"ATTRIBUTE" : storage.type
+"RELATION"  : storage.type
+"ROLE"      : storage.type
+"RULE"      : storage.type
 
-LABEL_: entity.name.type
+"LONG"     : storage.modifier
+"DOUBLE"   : storage.modifier
+"STRING"   : storage.modifier
+"BOOLEAN"  : storage.modifier
+"DATETIME" : storage.modifier
 
-THING     : storage.type
-ENTITY    : storage.type
-ATTRIBUTE : storage.type
-RELATION  : storage.type
-ROLE      : storage.type
-RULE      : storage.type
+"MATCH"    : keyword.control
+"GET"      : keyword.control
+"DEFINE"   : keyword.control
+"UNDEFINE" : keyword.control
+"INSERT"   : keyword.control
+"DELETE"   : keyword.control
+"COMPUTE"  : keyword.control
 
+"TYPE"     : keyword.control
+"ABSTRACT" : keyword.control
+"SUB_"     : keyword.control
+"SUB"      : keyword.control
+"SUBX"     : keyword.control
+"OWNS"     : keyword.control
+"IS_KEY"   : keyword.control
+"REGEX"    : keyword.control
+"AS"       : keyword.control
+"PLAYS"    : keyword.control
+"RELATES"  : keyword.control
+"WHEN"     : keyword.control
+"THEN"     : keyword.control
 
-LONG     : storage.modifier
-DOUBLE   : storage.modifier
-STRING   : storage.modifier
-BOOLEAN  : storage.modifier
-DATETIME : storage.modifier
+"IID"   : keyword.control
+"ISA_"  : keyword.control
+"ISA"   : keyword.control
+"ISAX"  : keyword.control
+"HAS"   : keyword.control
+"VALUE" : keyword.control
+"IS"    : keyword.control
+
+"OFFSET" : keyword.control
+"LIMIT"  : keyword.control
+"SORT"   : keyword.control
+"ORDER_" : keyword.control
+"ASC"    : keyword.control
+"DESC"   : keyword.control
+
+"OR"       : keyword.operator
+"NOT"      : keyword.operator
+"EQ"       : keyword.operator
+"NEQ"      : keyword.operator
+"GT"       : keyword.operator
+"GTE"      : keyword.operator
+"LT"       : keyword.operator
+"LTE"      : keyword.operator
+"LIKE"     : keyword.operator
+"CONTAINS" : keyword.operator
+
+"GROUP"  : support.function
+"COUNT"  : support.function
+"MAX"    : support.function
+"MIN"    : support.function
+"MEAN"   : support.function
+"MEDIAN" : support.function
+"STD"    : support.function
+"SUM"    : support.function
+
+"BOOLEAN_" : constant.language
+"TRUE"     : constant.language
+"FALSE"    : constant.language
+
+"STRING_"   : string.quoted
+"LONG_"     : constant.numeric
+"DOUBLE_"   : constant.numeric
+"DATE_"     : constant
+"DATETIME_" : constant
+
+"VAR_"           : variable
+"VAR_NAMED_"     : variable
+"VAR_ANONYMOUS_" : variable.parameter
+"IID_"           : variable.language
+
+"LABEL_"        : entity.name.type
+"LABEL_SCOPED_" : entity.name.type
+
+"COMMENT" : comment
