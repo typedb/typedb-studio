@@ -64,7 +64,9 @@ internal interface TextProcessor {
     fun redo()
 
     companion object {
+
         private val LOGGER = KotlinLogging.logger {}
+        internal val TYPING_WINDOW_MILLIS = 400
 
         internal fun create(
             file: File,
@@ -84,23 +86,26 @@ internal interface TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
+        private var lastTyped by mutableStateOf(System.currentTimeMillis())
 
-        override fun replaceCurrentFound(text: String) = throwErrorNotification()
-        override fun replaceAllFound(text: String) = throwErrorNotification()
-        override fun insertText(toString: String): Boolean = throwErrorNotificationAndReturnTrue()
-        override fun insertNewLine() = throwErrorNotification()
-        override fun deleteSelection() = throwErrorNotification()
-        override fun indentTab() = throwErrorNotification()
-        override fun outdentTab() = throwErrorNotification()
-        override fun undo() = throwErrorNotification()
-        override fun redo() = throwErrorNotification()
+        override fun replaceCurrentFound(text: String) = displayWarning()
+        override fun replaceAllFound(text: String) = displayWarning()
+        override fun insertText(toString: String): Boolean = displayWarningOnStartTyping()
+        override fun insertNewLine() = displayWarning()
+        override fun deleteSelection() = displayWarning()
+        override fun indentTab() = displayWarning()
+        override fun outdentTab() = displayWarning()
+        override fun undo() = displayWarning()
+        override fun redo() = displayWarning()
 
-        private fun throwErrorNotification() {
-            GlobalState.notification.userError(LOGGER, FILE_NOT_WRITABLE, path)
+        private fun displayWarning() {
+            GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, path)
         }
 
-        private fun throwErrorNotificationAndReturnTrue(): Boolean {
-            throwErrorNotification()
+        private fun displayWarningOnStartTyping(): Boolean {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastTyped > TYPING_WINDOW_MILLIS) displayWarning()
+            lastTyped = currentTime
             return true
         }
     }
@@ -113,11 +118,9 @@ internal interface TextProcessor {
         private val target: InputTarget,
     ) : TextProcessor {
 
-        @OptIn(ExperimentalTime::class)
         companion object {
             private const val TAB_SIZE = 4
             private const val UNDO_LIMIT = 1_000
-            internal val CHANGE_BATCH_DELAY = Duration.milliseconds(400)
         }
 
         override var version by mutableStateOf(0)
@@ -309,7 +312,7 @@ internal interface TextProcessor {
             changeQueue.put(change)
             changeCount.incrementAndGet()
             coroutineScope.launch {
-                delay(CHANGE_BATCH_DELAY)
+                delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
                 if (changeCount.decrementAndGet() == 0) {
                     val changes = drainAndBatchOriginalChanges()
                     changes?.let { reannotate(it.lines()) }
