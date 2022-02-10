@@ -68,11 +68,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
@@ -112,9 +109,9 @@ object TextEditor {
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor.Writable(content, file.fileType, rendering, finder, target, clipboard)
+        val processor = TextProcessor.Writable(content, file.fileType, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
-        val handler = EventHandler(target, processor, toolbar)
+        val handler = EventHandler(target, processor, toolbar, clipboard)
         val editor = State(content, font, rendering, finder, target, processor, toolbar, handler)
 
         file.onUpdate { f: File ->
@@ -237,7 +234,7 @@ object TextEditor {
                     .background(Theme.colors.background2)
                     .horizontalScroll(state.target.horScroller)
             ) {
-                ContextMenu.Popup(state.contextMenu) { contextMenuFn(state) }
+                ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
                 LazyColumn.Area(state = lazyColumnState) { index, text ->
                     TextLine(state, index, text, font, fontWidth)
                 }
@@ -360,33 +357,6 @@ object TextEditor {
             onDoublePrimaryPressed = { state.target.selectWord() },
             onTriplePrimaryPressed = { state.target.selectLine() },
             onSecondaryClick = { state.target.updateCursorIfOutOfSelection(it.x, it.y) }
-        )
-    }
-
-    private fun contextMenuFn(state: State): List<List<ContextMenu.Item>> { // TODO
-        val selection = state.target.selection
-        val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
-        val hasClipboard = !state.processor.clipboard.getText().isNullOrBlank()
-        return listOf(
-            listOf(
-                ContextMenu.Item(Label.CUT, Icon.Code.CUT, "$modKey + X", selection != null) {
-                    state.processor.cut()
-                },
-                ContextMenu.Item(Label.COPY, Icon.Code.COPY, "$modKey + C", selection != null) {
-                    state.processor.copy()
-                },
-                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, "$modKey + V", hasClipboard) {
-                    state.processor.paste()
-                }
-            ),
-            listOf(
-                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { state.toolbar.showFinder() },
-                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { state.toolbar.showReplacer() }
-            ),
-            listOf(
-                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.handler.onClose?.let { it() } },
-            )
         )
     }
 }

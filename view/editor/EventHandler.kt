@@ -23,6 +23,11 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.ClipboardManager
+import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.ContextMenu
+import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.COPY
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.CUT
@@ -80,7 +85,8 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
 internal class EventHandler(
     private val target: InputTarget,
     private val processor: TextProcessor,
-    private val toolbar: TextToolbar.State
+    private val toolbar: TextToolbar.State,
+    private val clipboard: ClipboardManager
 ) {
 
     internal var onClose: (() -> Unit)? = null
@@ -163,9 +169,9 @@ internal class EventHandler(
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT, ENTER_SHIFT_MOD -> processor.insertNewLine()
-            CUT -> processor.cut()
-            COPY -> processor.copy()
-            PASTE -> processor.paste()
+            CUT -> cut()
+            COPY -> copy()
+            PASTE -> paste()
             UNDO -> processor.undo()
             REDO -> processor.redo()
             EMOJI_WINDOW -> {
@@ -181,10 +187,46 @@ internal class EventHandler(
         else elseFn()
     }
 
+    private fun cut() {
+        if (target.selection == null) return
+        copy()
+        processor.deleteSelection()
+    }
+
+    private fun copy() {
+        if (target.selection == null) return
+        clipboard.setText(target.selectedText())
+    }
+
+    private fun paste() {
+        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(it.text) }
+    }
+
     private fun hideToolbar(): Boolean {
         return if (toolbar.showToolbar) {
             toolbar.hide()
             true
         } else false
+    }
+
+    internal fun contextMenuFn(): List<List<ContextMenu.Item>> {
+        val selection = target.selection
+        val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
+        val hasClipboard = !clipboard.getText().isNullOrBlank()
+        return listOf(
+            listOf(
+                ContextMenu.Item(Label.CUT, Icon.Code.CUT, "$modKey + X", selection != null) { cut() },
+                ContextMenu.Item(Label.COPY, Icon.Code.COPY, "$modKey + C", selection != null) { copy() },
+                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, "$modKey + V", hasClipboard) { paste() }
+            ),
+            listOf(
+                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { toolbar.showFinder() },
+                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { toolbar.showReplacer() }
+            ),
+            listOf(
+                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { onClose?.let { it() } },
+            )
+        )
     }
 }

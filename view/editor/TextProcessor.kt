@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.Property
@@ -47,7 +46,6 @@ import kotlinx.coroutines.launch
 internal interface TextProcessor {
 
     val version: Int
-    val clipboard: ClipboardManager
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
@@ -56,9 +54,6 @@ internal interface TextProcessor {
     fun deleteSelection()
     fun indentTab()
     fun outdentTab()
-    fun cut()
-    fun copy()
-    fun paste()
     fun undo()
     fun redo()
 
@@ -68,7 +63,6 @@ internal interface TextProcessor {
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
-        override val clipboard: ClipboardManager,
     ) : TextProcessor {
 
         @OptIn(ExperimentalTime::class)
@@ -84,21 +78,6 @@ internal interface TextProcessor {
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-        override fun cut() {
-            if (target.selection == null) return
-            copy()
-            deleteSelection()
-        }
-
-        override fun copy() {
-            if (target.selection == null) return
-            clipboard.setText(target.selectedText())
-        }
-
-        override fun paste() {
-            clipboard.getText()?.let { if (it.text.isNotEmpty()) insertText(it.text) }
-        }
 
         override fun replaceCurrentFound(text: String) {
             if (!finder.hasMatches) return
