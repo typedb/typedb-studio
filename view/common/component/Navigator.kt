@@ -95,7 +95,7 @@ import mu.KotlinLogging
 object Navigator {
 
     @OptIn(ExperimentalTime::class)
-    private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(3)
+    private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
     private val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
