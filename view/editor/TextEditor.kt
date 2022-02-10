@@ -109,7 +109,10 @@ object TextEditor {
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor.Writable(content, file.fileType, rendering, finder, target)
+        val processor = when {
+            !file.isWriteable -> TextProcessor.ReadOnly(file.path)
+            else -> TextProcessor.Writable(content, file.fileType, rendering, finder, target)
+        }
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, processor, toolbar, clipboard)
         val editor = State(content, font, rendering, finder, target, processor, toolbar, handler)

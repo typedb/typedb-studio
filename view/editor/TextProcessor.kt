@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
@@ -32,6 +34,7 @@ import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
+import java.nio.file.Path
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -42,6 +45,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 internal interface TextProcessor {
 
@@ -56,6 +60,34 @@ internal interface TextProcessor {
     fun outdentTab()
     fun undo()
     fun redo()
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
+
+    class ReadOnly(val path: Path) : TextProcessor {
+
+        override val version: Int = 0
+
+        override fun replaceCurrentFound(text: String) = throwErrorNotification()
+        override fun replaceAllFound(text: String) = throwErrorNotification()
+        override fun insertText(toString: String): Boolean = throwErrorNotificationAndReturnTrue()
+        override fun insertNewLine() = throwErrorNotification()
+        override fun deleteSelection() = throwErrorNotification()
+        override fun indentTab() = throwErrorNotification()
+        override fun outdentTab() = throwErrorNotification()
+        override fun undo() = throwErrorNotification()
+        override fun redo() = throwErrorNotification()
+
+        private fun throwErrorNotification() {
+            GlobalState.notification.userError(LOGGER, FILE_NOT_WRITABLE, path)
+        }
+
+        private fun throwErrorNotificationAndReturnTrue(): Boolean {
+            throwErrorNotification()
+            return true
+        }
+    }
 
     class Writable(
         private val content: SnapshotStateList<AnnotatedString>,

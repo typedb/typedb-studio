@@ -100,7 +100,9 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val PROJECT_CLOSED =
                 Project(5, "Project path '%s' has been closed.")
             val FILE_NOT_READABLE =
-                Project(6, "File '%s' is not readable by TypeDB Studio.")
+                Project(6, "File '%s' is not readable.")
+            val FILE_NOT_WRITABLE =
+                Project(7, "File %s is not writeable, and you are currently in READ-ONLY mode.")
         }
     }
 }
