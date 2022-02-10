@@ -262,7 +262,7 @@ object Navigator {
 
         private fun initialiseContainer() {
             container.expand(false, 1 + initExpandDepth)
-            if (liveUpdate) initWatcher(container)
+            if (liveUpdate) launchWatcher(container)
             recomputeList()
         }
 
@@ -272,7 +272,7 @@ object Navigator {
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun initWatcher(root: Container<T>) {
+        private fun launchWatcher(root: Container<T>) {
             coroutineScope.launch {
                 try {
                     do {

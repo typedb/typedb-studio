@@ -18,6 +18,10 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property.FileType
@@ -30,7 +34,14 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.extension
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class File internal constructor(path: Path, parent: Directory, notificationMgr: NotificationManager) :
@@ -43,8 +54,14 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
+    private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
+    private var lastModified by mutableStateOf(path.toFile().lastModified())
+    private var watchFileSystem by mutableStateOf(false)
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    @OptIn(ExperimentalTime::class)
     companion object {
+        private val LIVE_UPDATE_REFRESH_RATE: Duration = Duration.seconds(1)
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -92,11 +109,40 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         return content
     }
 
+    override fun mayLaunchWatcher() = launchWatcher()
+
+    override fun mayStopWatcher() {
+        watchFileSystem = false
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun launchWatcher() {
+        if (watchFileSystem) return else watchFileSystem = true
+        coroutineScope.launch {
+            try {
+                do {
+                    if (lastModified < path.toFile().lastModified()) {
+                        lastModified = path.toFile().lastModified()
+                        onUpdate?.let { it(this@File) }
+                    }
+                    delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
+                } while (watchFileSystem)
+            } catch (e: CancellationException) {
+            } catch (e: java.lang.Exception) {
+                notificationMgr.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
+            }
+        }
+    }
+
+    fun onUpdate(function: (File) -> Unit) {
+        onUpdate = function
+    }
+
     fun save() {
         // TODO: Files.write(path, content)
     }
 
     override fun close() {
-        // TODO
+        onUpdate = null
     }
 }

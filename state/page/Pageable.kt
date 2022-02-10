@@ -22,6 +22,10 @@ interface Pageable {
 
     fun tryOpen(): Boolean
 
+    fun mayLaunchWatcher()
+
+    fun mayStopWatcher()
+
     fun close()
 
 }

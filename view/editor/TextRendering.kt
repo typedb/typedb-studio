@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
 
 /**
@@ -34,9 +35,23 @@ import androidx.compose.ui.text.TextLayoutResult
  */
 internal class TextRendering(initSize: Int) {
 
-    private val results = mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
-    private val versions = mutableStateListOf<Int>().apply { addAll(List(initSize) { 0 }) }
-    private val deleted = mutableStateMapOf<Int, TextLayoutResult?>()
+    private var results = initResults(initSize)
+    private var versions = initVersions(initSize)
+    private var deleted = initDeleted()
+
+    private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
+        mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
+
+    private fun initVersions(initSize: Int): SnapshotStateList<Int> =
+        mutableStateListOf<Int>().apply { addAll(List(initSize) { 0 }) }
+
+    private fun initDeleted() = mutableStateMapOf<Int, TextLayoutResult?>()
+
+    fun reinitialize(initSize: Int) {
+        results = initResults(initSize)
+        versions = initVersions(initSize)
+        deleted = initDeleted()
+    }
 
     fun get(int: Int): TextLayoutResult? = results[int]
 

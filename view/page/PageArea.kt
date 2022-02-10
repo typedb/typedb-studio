@@ -86,7 +86,7 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(areaState: AreaState, page: Page, density: Float) {
-        val isSelected = GlobalState.page.isSelected(page.data)
+        val isSelected = GlobalState.page.isSelected(page.state)
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
         val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
@@ -97,7 +97,7 @@ object PageArea {
                 modifier = Modifier.height(height)
                     .background(color = bgColor)
                     .pointerHoverIcon(PointerIconDefaults.Hand)
-                    .clickable { GlobalState.page.selectedPage = page.data }
+                    .clickable { GlobalState.page.select(page.state) }
                     .onSizeChanged { width = toDP(it.width, density) }
             ) {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
@@ -107,7 +107,7 @@ object PageArea {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
-                    onClick = { closePage(areaState, page.data) },
+                    onClick = { closePage(areaState, page.state) },
                     modifier = Modifier.size(TAB_HEIGHT),
                     bgColor = Color.Transparent,
                     rounded = false,

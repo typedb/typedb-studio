@@ -28,7 +28,7 @@ import mu.KotlinLogging
 class PageManager(val notification: NotificationManager) {
 
     val openedPages: MutableList<Pageable> = mutableStateListOf()
-    var selectedPage: Pageable? by mutableStateOf(null)
+    var selectedPage: Pageable? by mutableStateOf(null); private set
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -38,12 +38,20 @@ class PageManager(val notification: NotificationManager) {
         return selectedPage == page
     }
 
+    fun select(page: Pageable) {
+        selectedPage?.mayStopWatcher()
+        selectedPage = page
+        selectedPage?.mayLaunchWatcher()
+    }
+
     fun open(page: Pageable) {
+        selectedPage?.mayStopWatcher()
         if (page !in openedPages) {
             if (page.tryOpen()) openedPages.add(page)
             else return
         }
         selectedPage = page
+        selectedPage?.mayLaunchWatcher()
     }
 
     fun close(page: Pageable) {

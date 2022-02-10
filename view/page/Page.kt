@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 
-abstract class Page(val data: Pageable) {
+abstract class Page(val state: Pageable) {
 
     abstract val label: String
     abstract val icon: Form.IconArgs
