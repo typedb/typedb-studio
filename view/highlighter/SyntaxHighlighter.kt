@@ -46,7 +46,7 @@ object SyntaxHighlighter {
     }
 
     private fun annotate(text: String, lexer: Lexer, scheme: Scheme): AnnotatedString {
-        if (text.isBlank()) return AnnotatedString("")
+        if (text.isBlank()) return AnnotatedString(text)
         val builder = Builder()
         val tokens = lexer.tokenize(text, scheme)
         tokens.forEach { builder.appendToken(it, scheme.globalScope) }
