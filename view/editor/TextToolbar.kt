@@ -87,7 +87,7 @@ object TextToolbar {
     internal class State(
         private val finder: TextFinder,
         private val target: InputTarget,
-        private val processor: TextProcessor
+        internal var processor: TextProcessor
     ) {
 
         enum class InputType { FINDER, REPLACER }

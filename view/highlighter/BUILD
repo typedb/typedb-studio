@@ -26,6 +26,8 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/common:common",
+        "//state/page:page",
+        "//state/project:project",
         "//view/highlighter/common:common",
         "//view/highlighter/language:typeql",
 

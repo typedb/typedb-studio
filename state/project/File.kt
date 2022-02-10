@@ -37,6 +37,7 @@ import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
+import kotlin.io.path.isWritable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
@@ -56,9 +57,12 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
     private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
+    private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
     private var lastModified by mutableStateOf(path.toFile().lastModified())
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+    override var isWritable: Boolean by mutableStateOf(path.isWritable())
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -130,6 +134,10 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
                         lastModified = path.toFile().lastModified()
                         onUpdate?.let { it(this@File) }
                     }
+                    if (isWritable != path.isWritable()) {
+                        isWritable = path.isWritable()
+                        onPermissionChange?.let { it(this@File) }
+                    }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
                 } while (watchFileSystem)
             } catch (e: CancellationException) {
@@ -141,6 +149,10 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
 
     fun onUpdate(function: (File) -> Unit) {
         onUpdate = function
+    }
+
+    fun onChangePermission(function: (File) -> Unit) {
+        onPermissionChange = function
     }
 
     fun save() {

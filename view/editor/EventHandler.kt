@@ -84,7 +84,7 @@ import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
 
 internal class EventHandler(
     private val target: InputTarget,
-    private val processor: TextProcessor,
+    internal var processor: TextProcessor,
     private val toolbar: TextToolbar.State,
     private val clipboard: ClipboardManager
 ) {

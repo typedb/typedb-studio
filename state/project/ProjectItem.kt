@@ -23,7 +23,6 @@ import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
-import kotlin.io.path.isWritable
 import kotlin.io.path.readSymbolicLink
 
 sealed class ProjectItem(
@@ -47,8 +46,8 @@ sealed class ProjectItem(
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
-    val isWriteable: Boolean get() = path.isWritable()
 
+    abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
 

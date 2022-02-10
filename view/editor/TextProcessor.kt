@@ -51,6 +51,7 @@ import mu.KotlinLogging
 internal interface TextProcessor {
 
     val version: Int
+    val isWritable: Boolean
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
@@ -73,7 +74,7 @@ internal interface TextProcessor {
             target: InputTarget
         ): TextProcessor {
             return when {
-                !file.isWriteable -> ReadOnly(file.path)
+                !file.isWritable -> ReadOnly(file.path)
                 else -> Writable(content, file.fileType, rendering, finder, target)
             }
         }
@@ -82,6 +83,7 @@ internal interface TextProcessor {
     class ReadOnly(val path: Path) : TextProcessor {
 
         override val version: Int = 0
+        override val isWritable: Boolean = false
 
         override fun replaceCurrentFound(text: String) = throwErrorNotification()
         override fun replaceAllFound(text: String) = throwErrorNotification()
@@ -119,6 +121,7 @@ internal interface TextProcessor {
         }
 
         override var version by mutableStateOf(0)
+        override val isWritable: Boolean = true
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()

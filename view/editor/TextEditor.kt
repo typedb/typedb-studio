@@ -119,6 +119,13 @@ object TextEditor {
             rendering.reinitialize(content.size)
         }
 
+        file.onChangePermission {
+            val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
+            toolbar.processor = newProcessor
+            handler.processor = newProcessor
+            editor.processor = newProcessor
+        }
+
         return editor
     }
 
@@ -128,7 +135,7 @@ object TextEditor {
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
         internal val target: InputTarget,
-        internal val processor: TextProcessor,
+        internal var processor: TextProcessor,
         internal val toolbar: TextToolbar.State,
         internal val handler: EventHandler,
     ) {
