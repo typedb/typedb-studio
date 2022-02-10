@@ -121,15 +121,11 @@ object TextEditor {
 
         file.onChangePermission { f ->
             if (f.isReadable) {
-                println("onChangePermission() -> isReadable: true")
                 val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
                 toolbar.processor = newProcessor
                 handler.processor = newProcessor
                 editor.processor = newProcessor
-            } else {
-                println("onChangePermission() -> isReadable: false")
-                handler.onClose?.let { it() }
-            }
+            } else handler.onClose?.let { it() }
         }
 
         return editor
