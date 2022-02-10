@@ -289,7 +289,7 @@ object TextEditor {
         ) {
             val isRendered = state.rendering.isRendered(index, state.processor.version)
             val textLayout = if (isRendered) state.rendering.get(index) else null
-            val findColor = Theme.colors.quaternary.copy(Theme.FIND_SELECTION_ALPHA)
+            val findColor = Theme.colors.quaternary2.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
                 Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
             }
