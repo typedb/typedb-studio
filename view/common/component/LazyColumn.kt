@@ -52,7 +52,7 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int): ScrollbarAdapter {
+    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) : ScrollbarAdapter {
         var offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp get() = itemHeight * itemCount()
         private var viewHeight: Dp by mutableStateOf(0.dp)

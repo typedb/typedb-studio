@@ -72,7 +72,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Label
@@ -265,7 +264,7 @@ object TextEditor {
                 .defaultMinSize(minWidth = minWidth)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
-        ) { Text(text = (index + 1).toString(), style = font.copy(Theme.colors.onBackground.copy(alpha = fontAlpha))) }
+        ) { Text(text = (index + 1).toString(), style = font.copy(font.color.copy(alpha = fontAlpha))) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

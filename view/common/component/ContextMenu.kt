@@ -161,7 +161,7 @@ object ContextMenu {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Item(item: Item, state: State) {
-        var modifier = Modifier.sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT) // TODO: dynamically compute max minWidth
+        var modifier = Modifier.sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT) // TODO: compute max minWidth
         if (item.enabled) modifier = modifier
             .pointerHoverIcon(PointerIconDefaults.Hand)
             .clickable { state.isOpen = false; item.onClick() }
