@@ -45,10 +45,10 @@ sealed class ProjectItem(
     val absolutePath: Path = path.toAbsolutePath()
 
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-    val isReadable: Boolean get() = path.isReadable()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
 
+    abstract val isReadable: Boolean
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File

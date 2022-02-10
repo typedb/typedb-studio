@@ -31,6 +31,7 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, notificationMgr) {
 
     override var entries: List<ProjectItem> = emptyList()
+    override val isReadable: Boolean get() = path.isReadable()
     override val isWritable: Boolean get() = path.isWritable()
 
     override fun asDirectory(): Directory {

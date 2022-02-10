@@ -62,6 +62,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    override var isReadable: Boolean by mutableStateOf(path.isReadable())
     override var isWritable: Boolean by mutableStateOf(path.isWritable())
 
     @OptIn(ExperimentalTime::class)
@@ -134,7 +135,8 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
                         lastModified = path.toFile().lastModified()
                         onUpdate?.let { it(this@File) }
                     }
-                    if (isWritable != path.isWritable()) {
+                    if (isReadable != path.isReadable() || isWritable != path.isWritable()) {
+                        isReadable = path.isReadable()
                         isWritable = path.isWritable()
                         onPermissionChange?.let { it(this@File) }
                     }
