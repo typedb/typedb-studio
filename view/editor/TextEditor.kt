@@ -207,8 +207,10 @@ object TextEditor {
         }
 
         LaunchedEffect(state, state.showToolbar) {
-            if (!state.showToolbar) state.focusReq.requestFocus()
-            else state.isFocused = false
+            if (!state.showToolbar) {
+                state.focusReq.requestFocus()
+                state.isFocused = true
+            } else state.isFocused = false
         }
     }
 
