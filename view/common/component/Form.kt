@@ -89,7 +89,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
+import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -110,7 +110,7 @@ object Form {
     private val MULTILINE_INPUT_PADDING = 4.dp
     private val ICON_SPACING = 6.dp
     internal val BORDER_WIDTH = 1.dp
-    private val DEFAULT_BORDER = Border(BORDER_WIDTH, RECTANGLE_ROUNDED_ALL)
+    private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
@@ -280,7 +280,7 @@ object Form {
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .height(FIELD_HEIGHT)
-                    .background(fadeable(color, !enabled), if (rounded) RECTANGLE_ROUNDED_ALL else RectangleShape)
+                    .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
                     .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     .clickable(enabled = enabled) { onClick() }
             ) { content() }
@@ -299,7 +299,7 @@ object Form {
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
                 .background(color = fadeable(Theme.colors.surface, !enabled))
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), RECTANGLE_ROUNDED_ALL)
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE)
                 .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
             enabled = enabled,
             colors = CheckboxDefaults.colors(
@@ -342,7 +342,7 @@ object Form {
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-        shape: Shape? = RECTANGLE_ROUNDED_ALL,
+        shape: Shape? = ROUNDED_RECTANGLE,
         border: Border? = DEFAULT_BORDER,
         trailingIcon: Icon.Code? = null,
         leadingIcon: Icon.Code? = null

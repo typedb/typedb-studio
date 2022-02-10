@@ -56,6 +56,10 @@ class NotificationManager {
         queue -= message
     }
 
+    fun dismissAll() {
+        queue.clear()
+    }
+
     private fun userNotification(logger: KLogger, type: Notification.Type, code: String, message: String) {
         when (type) {
             INFO -> logger.info { message }

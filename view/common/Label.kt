@@ -38,6 +38,7 @@ object Label {
     const val DELETE = "Delete"
     const val DIRECTORY = "Directory"
     const val DISCONNECT = "Disconnect"
+    const val DISMISS_ALL = "Dismiss All"
     const val ENABLE_TLS = "Enable TLS"
     const val EXPAND_COLLAPSE = "Expand/Collapse"
     const val FIND = "Find"

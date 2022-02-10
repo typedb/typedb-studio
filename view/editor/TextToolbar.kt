@@ -58,7 +58,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.MultilineTextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.RECTANGLE_ROUNDED_ALL
+import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
@@ -408,7 +408,7 @@ object TextToolbar {
 
     @Composable
     private fun FinderNextPreviousButtons(state: State) {
-        Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+        Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
             FinderButton(Icon.Code.CHEVRON_DOWN, { state.findNext() })
             FinderButton(Icon.Code.CHEVRON_UP, { state.findPrevious() })
         }
@@ -416,7 +416,7 @@ object TextToolbar {
 
     @Composable
     private fun FinderParameterButtons(state: State) {
-        Row(Modifier.background(Theme.colors.primary, RECTANGLE_ROUNDED_ALL)) {
+        Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
             FinderButton(Icon.Code.FONT_CASE, { state.toggleCaseSensitive() }, state.isCaseSensitive)
             FinderButton(Icon.Code.LETTER_W, { state.toggleWord() }, state.isWord)
             FinderButton(Icon.Code.ASTERISK, { state.toggleRegex() }, state.isRegex)

@@ -63,7 +63,7 @@ object Color {
         val Green = Color(0xFF02DAC9)
         val Red1 = Color(0xFFFA5765)
         val Red2 = Color(0xFFF66B65)
-        val Orange1 = Color(0xFFeda221)
+        val Orange1 = Color(0xFFd68e11)
         val Orange2 = Color(0xFFF6C94C)
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
