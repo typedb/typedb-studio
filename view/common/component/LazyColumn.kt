@@ -52,9 +52,11 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) : ScrollbarAdapter {
+    class ScrollState internal constructor(
+        val itemHeight: Dp, private val bottomSpace: Dp, val itemCount: () -> Int
+    ) : ScrollbarAdapter {
         var offset: Dp by mutableStateOf(0.dp); private set
-        private val contentHeight: Dp get() = itemHeight * itemCount()
+        private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
         private var viewHeight: Dp by mutableStateOf(0.dp)
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
@@ -104,12 +106,12 @@ object LazyColumn {
         internal val scroller: ScrollState
     )
 
-    fun createScrollState(itemHeight: Dp, itemCount: () -> Int): ScrollState {
-        return ScrollState(itemHeight, itemCount)
+    fun createScrollState(itemHeight: Dp, bottomSpace: Dp, itemCount: () -> Int): ScrollState {
+        return ScrollState(itemHeight, bottomSpace, itemCount)
     }
 
-    fun <T : Any> createState(items: List<T>, itemHeight: Dp): State<T> {
-        return State(items, createScrollState(itemHeight) { items.size })
+    fun <T : Any> createState(items: List<T>, itemHeight: Dp, bottomSpace: Dp): State<T> {
+        return State(items, createScrollState(itemHeight, bottomSpace) { items.size })
     }
 
     fun <T : Any> createState(items: List<T>, scroller: ScrollState): State<T> {

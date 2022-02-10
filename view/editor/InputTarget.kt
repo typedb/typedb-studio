@@ -51,6 +51,7 @@ internal class InputTarget constructor(
     companion object {
         // TODO: is this complete?
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
+        private val END_OF_FILE_SPACE = 100.dp
     }
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
@@ -101,7 +102,7 @@ internal class InputTarget constructor(
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
-    internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
+    internal val verScroller = LazyColumn.createScrollState(lineHeight, END_OF_FILE_SPACE) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
