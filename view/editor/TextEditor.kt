@@ -110,8 +110,8 @@ object TextEditor {
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor.create(file, content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
-        val handler = EventHandler(target, processor, toolbar, clipboard)
-        val editor = State(content, font, rendering, finder, target, processor, toolbar, handler)
+        val handler = EventHandler(target, toolbar, clipboard, processor)
+        val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
 
         file.onUpdate { f: File ->
             content.clear()
@@ -135,10 +135,12 @@ object TextEditor {
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
         internal val target: InputTarget,
-        internal var processor: TextProcessor,
         internal val toolbar: TextToolbar.State,
         internal val handler: EventHandler,
+        initProcessor: TextProcessor,
     ) {
+
+        internal var processor: TextProcessor by mutableStateOf(initProcessor)
         internal val contextMenu = ContextMenu.State()
         internal val lineCount: Int get() = content.size
         internal var isFocused by mutableStateOf(true)

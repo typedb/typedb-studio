@@ -87,11 +87,12 @@ object TextToolbar {
     internal class State(
         private val finder: TextFinder,
         private val target: InputTarget,
-        internal var processor: TextProcessor
+        initProcessor: TextProcessor
     ) {
 
         enum class InputType { FINDER, REPLACER }
 
+        internal var processor: TextProcessor by mutableStateOf(initProcessor)
         internal var showFinder by mutableStateOf(false)
         internal var showReplacer by mutableStateOf(false)
         internal val showToolbar get() = showFinder || showReplacer
