@@ -69,15 +69,12 @@ internal interface TextProcessor {
         internal val TYPING_WINDOW_MILLIS = 400
 
         internal fun create(
-            file: File,
-            content: SnapshotStateList<AnnotatedString>,
-            rendering: TextRendering,
-            finder: TextFinder,
-            target: InputTarget
+            file: File, content: SnapshotStateList<AnnotatedString>,
+            rendering: TextRendering, finder: TextFinder, target: InputTarget
         ): TextProcessor {
             return when {
-                !file.isWritable -> ReadOnly(file.path)
-                else -> Writable(content, file.fileType, rendering, finder, target)
+                file.isWritable -> Writable(content, file.fileType, rendering, finder, target)
+                else -> ReadOnly(file.path)
             }
         }
     }

@@ -75,6 +75,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -152,6 +153,19 @@ object Form {
     @Composable
     fun Text(
         value: String,
+        style: TextStyle = Theme.typography.body1,
+        color: Color = Theme.colors.onPrimary,
+        alpha: Float? = null,
+        align: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = false,
+        enabled: Boolean = true,
+    ) { Text(AnnotatedString(value), style, color, alpha, align, modifier, overflow, softWrap, enabled) }
+
+    @Composable
+    fun Text(
+        value: AnnotatedString,
         style: TextStyle = Theme.typography.body1,
         color: Color = Theme.colors.onPrimary,
         alpha: Float? = null,

@@ -41,10 +41,14 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -103,7 +107,7 @@ object PageArea {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
                 Spacer(modifier = Modifier.width(TAB_SPACING))
-                Text(value = page.label)
+                Text(value = tabTitle(page))
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
@@ -116,6 +120,20 @@ object PageArea {
             if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
         }
         Separator.Vertical()
+    }
+
+    @Composable
+    private fun tabTitle(page: Page): AnnotatedString {
+        return if (page.isWritable) AnnotatedString(page.label)
+        else {
+            val builder = AnnotatedString.Builder()
+            val style = SpanStyle(color = Theme.colors.onPrimary.copy(alpha = 0.6f))
+            builder.append(page.label)
+            builder.pushStyle(style)
+            builder.append(" -- (${Label.READ_ONLY.lowercase()})")
+            builder.pop()
+            builder.toAnnotatedString()
+        }
     }
 
     private fun closePage(areaState: AreaState, pageable: Pageable) {

@@ -53,6 +53,7 @@ object Label {
     const val PATH_TO_PROJECT = "/path/to/project"
     const val PROJECT = "Project"
     const val PROJECT_BROWSER = "Project Browser"
+    const val READ_ONLY = "Read Only"
     const val REPLACE = "Replace"
     const val REPLACE_ALL = "Replace All"
     const val ROLES = "Roles"
