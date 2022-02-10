@@ -29,60 +29,6 @@ import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.COPY
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.CUT
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_END_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_NEXT_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_NEXT_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_PREV_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.DELETE_START_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.EMOJI_WINDOW
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.ENTER_SHIFT_MOD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_PAGE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_END
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_END_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_HOME
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_NEXT_PARAGRAPH
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_START_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_UP_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.MOVE_CURSOR_UP_PAGE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.PASTE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.REDO
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_ALL
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_DOWN_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_DOWN_PAGE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_END
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_END_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_HOME
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_LEFT_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_LEFT_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_LEFT_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_NEXT_PARAGRAPH
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_NONE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_RIGHT_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_RIGHT_WORD
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_START_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_UP_LINE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.SELECT_UP_PAGE
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.TAB_SHIFT
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand.UNDO
-import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
-import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand.ESCAPE
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
@@ -120,70 +66,6 @@ internal class TextProcessor(
     private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
     private var changeCount: AtomicInteger = AtomicInteger(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-    internal fun execute(command: GenericCommand): Boolean {
-        return when (command) {
-            ESCAPE -> target.selection?.let { target.selectNone(); true } ?: false
-        }
-    }
-
-    internal fun execute(command: EditorCommand): Boolean {
-        when (command) {
-            MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
-            MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
-            MOVE_CURSOR_LEFT_WORD -> target.moveCursorPrevByWord() // because we only display left to right
-            MOVE_CURSOR_RIGHT_WORD -> target.moveCursorNexBytWord() // because we only display left to right
-            MOVE_CURSOR_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph()
-            MOVE_CURSOR_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph()
-            MOVE_CURSOR_LEFT_LINE -> target.moveCursorToStartOfLine() // because we only display left to right
-            MOVE_CURSOR_RIGHT_LINE -> target.moveCursorToEndOfLine() // because we only display left to right
-            MOVE_CURSOR_START_LINE -> target.moveCursorToStartOfLine()
-            MOVE_CURSOR_END_LINE -> target.moveCursorToEndOfLine()
-            MOVE_CURSOR_UP_LINE -> target.moveCursorUpByLine()
-            MOVE_CURSOR_DOWN_LINE -> target.moveCursorDownByLine()
-            MOVE_CURSOR_UP_PAGE -> target.moveCursorUpByPage()
-            MOVE_CURSOR_DOWN_PAGE -> target.moveCursorDownByPage()
-            MOVE_CURSOR_HOME -> target.moveCursorToHome()
-            MOVE_CURSOR_END -> target.moveCursorToEnd()
-            SELECT_LEFT_CHAR -> target.moveCursorPrevByChar(true) // because we only display left to right
-            SELECT_RIGHT_CHAR -> target.moveCursorNextByChar(true) // because we only display left to right
-            SELECT_LEFT_WORD -> target.moveCursorPrevByWord(true) // because we only display left to right
-            SELECT_RIGHT_WORD -> target.moveCursorNexBytWord(true) // because we only display left to right
-            SELECT_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph(true)
-            SELECT_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph(true)
-            SELECT_LEFT_LINE -> target.moveCursorToStartOfLine(true) // because we only display left to right
-            SELECT_RIGHT_LINE -> target.moveCursorToEndOfLine(true) // because we only display left to right
-            SELECT_START_LINE -> target.moveCursorToStartOfLine(true)
-            SELECT_END_LINE -> target.moveCursorToEndOfLine(true)
-            SELECT_UP_LINE -> target.moveCursorUpByLine(true)
-            SELECT_DOWN_LINE -> target.moveCursorDownByLine(true)
-            SELECT_UP_PAGE -> target.moveCursorUpByPage(true)
-            SELECT_DOWN_PAGE -> target.moveCursorDownByPage(true)
-            SELECT_HOME -> target.moveCursorToHome(true)
-            SELECT_END -> target.moveCursorToEnd(true)
-            SELECT_ALL -> target.selectAll()
-            SELECT_NONE -> target.selectNone()
-            DELETE_PREV_CHAR -> deleteSelectionOr { target.moveCursorPrevByChar(true); deleteSelection() }
-            DELETE_NEXT_CHAR -> deleteSelectionOr { target.moveCursorNextByChar(true); deleteSelection() }
-            DELETE_PREV_WORD -> deleteSelectionOr { target.moveCursorPrevByWord(true); deleteSelection() }
-            DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); deleteSelection() }
-            DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); deleteSelection() }
-            DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); deleteSelection() }
-            TAB -> indentTab()
-            TAB_SHIFT -> outdentTab()
-            ENTER, ENTER_SHIFT, ENTER_SHIFT_MOD -> insertNewLine()
-            CUT -> cut()
-            COPY -> copy()
-            PASTE -> paste()
-            UNDO -> undo()
-            REDO -> redo()
-            EMOJI_WINDOW -> {
-                // TODO: https://github.com/JetBrains/compose-jb/issues/1754
-                // androidx.compose.foundation.text.showCharacterPalette()
-            }
-        }
-        return true
-    }
 
     internal fun cut() {
         if (target.selection == null) return
@@ -233,17 +115,12 @@ internal class TextProcessor(
         return Deletion(target.selection!!.min, target.selectedTextLines(), target.selection)
     }
 
-    private fun deleteSelectionOr(elseFn: () -> Unit) {
-        if (target.selection != null) deleteSelection()
-        else elseFn()
-    }
-
-    private fun deleteSelection() {
+    internal fun deleteSelection() {
         if (target.selection == null) return
         applyOriginal(TextChange(deletionOperation()))
     }
 
-    private fun outdentTab() {
+    internal fun outdentTab() {
         val oldSelection = target.selection
         val oldCursor = target.cursor
         val newSelection = oldSelection?.let { target.expandSelection(it) }
@@ -261,7 +138,7 @@ internal class TextProcessor(
         insertText(newTextLines, newPosition)
     }
 
-    private fun indentTab() {
+    internal fun indentTab() {
         val selection = target.selection
         val cursor = target.cursor
         if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
@@ -272,7 +149,7 @@ internal class TextProcessor(
         }
     }
 
-    private fun insertNewLine() {
+    internal fun insertNewLine() {
         val line = content[target.cursor.row]
         val tabs = floor(prefixSpaces(line).toDouble() / TAB_SIZE).toInt()
         insertText("\n" + " ".repeat(TAB_SIZE * tabs))
@@ -302,12 +179,12 @@ internal class TextProcessor(
         applyOriginal(TextChange(operations), newPosition, recomputeFinder)
     }
 
-    private fun undo() {
+    internal fun undo() {
         drainAndBatchOriginalChanges()
         if (undoStack.isNotEmpty()) applyReplay(undoStack.removeLast(), ReplayType.UNDO)
     }
 
-    private fun redo() {
+    internal fun redo() {
         if (redoStack.isNotEmpty()) applyReplay(redoStack.removeLast(), ReplayType.REDO)
     }
 

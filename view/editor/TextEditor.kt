@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.isTypedEvent
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,11 +50,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -85,9 +81,6 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
-import com.vaticle.typedb.studio.view.editor.KeyMapper.GenericCommand
-import com.vaticle.typedb.studio.view.editor.KeyMapper.WindowCommand
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
@@ -121,6 +114,8 @@ object TextEditor {
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
         val processor = TextProcessor(content, file.fileType, rendering, finder, target, clipboard)
         val toolbar = TextToolbar.State(finder, target, processor)
+        val handler = EventHandler(target, processor, toolbar)
+        val editor = State(content, font, rendering, finder, target, processor, toolbar, handler)
 
         file.onUpdate { f: File ->
             content.clear()
@@ -128,7 +123,7 @@ object TextEditor {
             rendering.reinitialize(content.size)
         }
 
-        return State(content, font, rendering, finder, target, processor, toolbar)
+        return editor
     }
 
     class State internal constructor(
@@ -138,7 +133,8 @@ object TextEditor {
         internal val finder: TextFinder,
         internal val target: InputTarget,
         internal val processor: TextProcessor,
-        internal val toolbar: TextToolbar.State
+        internal val toolbar: TextToolbar.State,
+        internal val handler: EventHandler,
     ) {
         internal val contextMenu = ContextMenu.State()
         internal val lineCount: Int get() = content.size
@@ -147,7 +143,6 @@ object TextEditor {
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal val showToolbar get() = toolbar.showToolbar
-        internal var onClose: (() -> Unit)? = null
 
         internal var density: Float
             get() = target.density
@@ -162,60 +157,13 @@ object TextEditor {
         internal fun updateStatus() {
             target.updateStatus()
         }
-
-        internal fun handleEditorEvent(event: KeyEvent): Boolean {
-            return if (event.type == KeyEventType.KeyUp) false
-            else when {
-                event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
-                else -> KeyMapper.CURRENT.map(event)?.let {
-                    when (it) {
-                        is EditorCommand -> processor.execute(it)
-                        is WindowCommand -> execute(it)
-                        is GenericCommand -> processor.execute(it) || execute(it)
-                    }
-                } ?: false
-            }
-        }
-
-        internal fun handleToolbarEvent(event: KeyEvent): Boolean {
-            return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)?.let {
-                when (it) {
-                    is WindowCommand -> execute(it)
-                    is GenericCommand -> execute(it)
-                    else -> false
-                }
-            } ?: false
-        }
-
-        private fun execute(command: WindowCommand): Boolean {
-            when (command) {
-                WindowCommand.FIND -> toolbar.showFinder()
-                WindowCommand.REPLACE -> toolbar.showReplacer()
-                WindowCommand.CLOSE -> onClose?.let { it() }
-            }
-            return true
-        }
-
-        private fun execute(command: GenericCommand): Boolean {
-            return when (command) {
-                GenericCommand.ESCAPE -> hideToolbar()
-            }
-        }
-
-        private fun hideToolbar(): Boolean {
-            return if (toolbar.showToolbar) {
-                toolbar.hide()
-                true
-            } else false
-        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier, onClose: () -> Unit) {
         if (state.content.isEmpty()) return
-        state.onClose = onClose
+        state.handler.onClose = onClose
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
@@ -226,12 +174,12 @@ object TextEditor {
             Text(text = "0", style = fontStyle, onTextLayout = { fontWidth = toDP(it.size.width, density) })
             Column {
                 if (state.showToolbar) {
-                    TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handleToolbarEvent(it) })
+                    TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handler.handleToolbarEvent(it) })
                 }
                 Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
-                    .onKeyEvent { state.handleEditorEvent(it) }
+                    .onKeyEvent { state.handler.handleEditorEvent(it) }
                     .onPointerEvent(Move) { state.target.mayUpdateDragSelection(it.awtEvent.x, it.awtEvent.y) }
                     .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
@@ -437,7 +385,7 @@ object TextEditor {
             ),
             listOf(
                 ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
-                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.onClose?.let { it() } },
+                ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { state.handler.onClose?.let { it() } },
             )
         )
     }

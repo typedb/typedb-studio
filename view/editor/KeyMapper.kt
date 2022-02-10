@@ -41,14 +41,11 @@ internal interface KeyMapper {
 
     sealed interface Command
 
-    enum class GenericCommand : Command {
-        ESCAPE
-    }
-
     enum class WindowCommand : Command {
         FIND,
         REPLACE,
         CLOSE,
+        ESCAPE,
     }
 
     enum class EditorCommand(val editsText: Boolean) : Command { // TODO: do we need 'editsText' boolean?
@@ -208,7 +205,7 @@ internal interface KeyMapper {
                         Keys.Cut -> EditorCommand.CUT
                         Keys.Tab -> EditorCommand.TAB
                         Keys.Copy -> EditorCommand.COPY
-                        Keys.Escape -> GenericCommand.ESCAPE
+                        Keys.Escape -> WindowCommand.ESCAPE
                         else -> null
                     }
             }
