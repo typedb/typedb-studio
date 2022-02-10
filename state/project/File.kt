@@ -153,7 +153,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         onUpdate = function
     }
 
-    fun onChangePermission(function: (File) -> Unit) {
+    fun onPermissionChange(function: (File) -> Unit) {
         onPermissionChange = function
     }
 

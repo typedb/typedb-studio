@@ -112,14 +112,24 @@ object TextEditor {
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
         val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
+        registerOnUpdate(file, content, rendering)
+        registerOnPermissionChange(file, content, rendering, finder, target, toolbar, handler, editor)
+        return editor
+    }
 
+    private fun registerOnUpdate(file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering) {
         file.onUpdate { f: File ->
             content.clear()
             content.addAll(SyntaxHighlighter.readFile(f))
             rendering.reinitialize(content.size)
         }
+    }
 
-        file.onChangePermission { f ->
+    private fun registerOnPermissionChange(
+        file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
+        target: InputTarget, toolbar: TextToolbar.State, handler: EventHandler, editor: State
+    ) {
+        file.onPermissionChange { f ->
             if (f.isReadable) {
                 val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
                 toolbar.processor = newProcessor
@@ -127,8 +137,6 @@ object TextEditor {
                 editor.processor = newProcessor
             } else handler.onClose?.let { it() }
         }
-
-        return editor
     }
 
     class State internal constructor(
