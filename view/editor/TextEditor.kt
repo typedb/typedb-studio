@@ -78,7 +78,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
+import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
@@ -104,22 +104,18 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        fun readFile(file: File): List<AnnotatedString> = highlight(file.readFile(), file.fileType)
-        val content = SnapshotStateList<AnnotatedString>().apply { addAll(readFile(file)) }
+        val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readFile(file)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = when {
-            !file.isWriteable -> TextProcessor.ReadOnly(file.path)
-            else -> TextProcessor.Writable(content, file.fileType, rendering, finder, target)
-        }
+        val processor = TextProcessor.create(file, content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, processor, toolbar, clipboard)
         val editor = State(content, font, rendering, finder, target, processor, toolbar, handler)
 
         file.onUpdate { f: File ->
             content.clear()
-            content.addAll(readFile(f))
+            content.addAll(SyntaxHighlighter.readFile(f))
             rendering.reinitialize(content.size)
         }
 

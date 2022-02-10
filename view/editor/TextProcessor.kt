@@ -27,6 +27,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
@@ -63,6 +64,19 @@ internal interface TextProcessor {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+
+        internal fun create(
+            file: File,
+            content: SnapshotStateList<AnnotatedString>,
+            rendering: TextRendering,
+            finder: TextFinder,
+            target: InputTarget
+        ): TextProcessor {
+            return when {
+                !file.isWriteable -> ReadOnly(file.path)
+                else -> Writable(content, file.fileType, rendering, finder, target)
+            }
+        }
     }
 
     class ReadOnly(val path: Path) : TextProcessor {
