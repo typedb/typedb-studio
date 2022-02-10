@@ -52,6 +52,16 @@ internal class InputTarget constructor(
         // TODO: is this complete?
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
         private val END_OF_FILE_SPACE = 100.dp
+
+        fun prefixSpaces(line: AnnotatedString): Int {
+            for (it in line.indices) if (line[it] != ' ') return it
+            return line.length
+        }
+
+        fun suffixSpaces(line: AnnotatedString): Int {
+            for (it in line.indices.reversed()) if (line[it] != ' ') return line.length - 1 - it
+            return line.length
+        }
     }
 
     internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
@@ -301,11 +311,16 @@ internal class InputTarget constructor(
     }
 
     internal fun moveCursorToStartOfLine(isSelecting: Boolean = false) {
-        updateCursor(Cursor(cursor.row, 0), isSelecting)
+        val startOfText = prefixSpaces(content[cursor.row])
+        val newCol = if (cursor.col > startOfText) startOfText else 0
+        updateCursor(Cursor(cursor.row, newCol), isSelecting)
     }
 
     internal fun moveCursorToEndOfLine(isSelecting: Boolean = false) {
-        updateCursor(Cursor(cursor.row, content[cursor.row].length), isSelecting)
+        val length = content[cursor.row].length
+        val endOfText = length - suffixSpaces(content[cursor.row])
+        val newCol = if (cursor.col < endOfText) endOfText else length
+        updateCursor(Cursor(cursor.row, newCol), isSelecting)
     }
 
     internal fun moveCursorUpByLine(isSelecting: Boolean = false) {

@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.KeyMapper.EditorCommand
@@ -225,11 +226,6 @@ internal class TextProcessor(
             else if (spaces < 0) it.subSequence(spaces.coerceAtMost(prefixSpaces(it)), it.length)
             else it
         }
-    }
-
-    private fun prefixSpaces(line: AnnotatedString): Int {
-        for (it in line.indices) if (line[it] != ' ') return it
-        return line.length
     }
 
     private fun deletionOperation(): Deletion {
