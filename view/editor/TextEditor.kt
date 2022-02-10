@@ -70,6 +70,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.common.Property
@@ -106,6 +107,7 @@ object TextEditor {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
+    private val MAX_LINE_MIN_WIDTH: Dp = 100_000.dp // we need this cause Compose can't render components too large
 
     @Composable
     fun createState(file: File): State {
@@ -309,7 +311,7 @@ object TextEditor {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = max(state.target.textWidth, state.areaWidth))
+                .defaultMinSize(minWidth = state.target.textWidth.coerceIn(state.areaWidth, MAX_LINE_MIN_WIDTH))
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {

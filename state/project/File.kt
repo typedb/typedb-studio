@@ -20,7 +20,6 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.FileType
 import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
