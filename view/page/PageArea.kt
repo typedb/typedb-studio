@@ -77,6 +77,7 @@ object PageArea {
                 GlobalState.page.openedPages.forEach {
                     Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }, density)
                 }
+                NewTabButton()
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
@@ -85,6 +86,19 @@ object PageArea {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun NewTabButton() {
+        IconButton(
+            icon = Icon.Code.PLUS,
+            onClick = {},
+            modifier = Modifier.size(TAB_HEIGHT),
+            bgColor = Color.Transparent,
+            rounded = false,
+            enabled = GlobalState.project.current != null
+        )
+        Separator.Vertical()
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
