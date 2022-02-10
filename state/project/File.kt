@@ -36,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.extension
+import kotlin.io.path.isReadable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
@@ -79,6 +80,10 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
 
     override fun tryOpen(): Boolean {
+        if (!path.isReadable()) {
+            notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
+            return false
+        }
         return try {
             // TODO: find a more efficient way to verify access without having to load the entire file
             if (isTextFile) loadTextFile()

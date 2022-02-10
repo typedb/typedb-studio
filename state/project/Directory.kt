@@ -23,6 +23,7 @@ import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isReadable
 import kotlin.io.path.listDirectoryEntries
 
 class Directory internal constructor(path: Path, parent: Directory?, notificationMgr: NotificationManager) :
@@ -39,7 +40,7 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     }
 
     override fun reloadEntries() {
-        val new = path.listDirectoryEntries().toSet()
+        val new = path.listDirectoryEntries().filter { it.isReadable() }.toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) {
             val deleted = old - new
