@@ -57,6 +57,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -80,6 +81,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.LinkedList
@@ -450,6 +452,11 @@ object Navigator {
             state.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
             else -> Color.Transparent
         }
+
+        fun onDoublePrimaryReleased(event: MouseEvent) {
+            if (!state.isHoverButton && event.button == 1 && event.clickCount == 2) state.open(item)
+        }
+
         Row(
             modifier = Modifier.background(color = bgColor)
                 .widthIn(min = state.minWidth).height(ITEM_HEIGHT)
@@ -457,7 +464,7 @@ object Navigator {
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(state, contextMenuState, item.focusReq!!, item) }
-                .onPointerEvent(Release) { if (!state.isHoverButton && it.awtEvent.clickCount == 2) state.open(item) }
+                .onPointerEvent(Release) { onDoublePrimaryReleased(it.awtEvent) }
                 .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
             Row(
