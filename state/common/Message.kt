@@ -54,13 +54,11 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val CODE_PREFIX = "VIW"
             private const val MESSAGE_PREFIX = "TypeDB Studio View"
 
-            val CHILL_BRO =
-                View(1, "Chill, bro.")
             val UNEXPECTED_ERROR =
-                View(2, "Unexpected error occurred with TypeDB Studio view library.")
+                View(1, "Unexpected error occurred with TypeDB Studio view library.")
             val EXPAND_LIMIT_REACHED =
                 View(
-                    3, "%s navigator reached the recommended limit of expanded items (%s). " +
+                    2, "%s navigator reached the recommended limit of expanded items (%s). " +
                             "Automated expansion beyond the limit is disabled to improve performance."
                 )
         }

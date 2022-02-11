@@ -58,8 +58,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
-import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message.View.Companion.CHILL_BRO
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.event.MouseEvent
@@ -102,7 +100,6 @@ object ContextMenu {
                                 0, 1 -> onSinglePrimaryPressed(event.awtEvent)
                                 2 -> onDoublePrimaryPressed(event.awtEvent)
                                 3 -> onTriplePrimaryPressed(event.awtEvent)
-                                10 -> GlobalState.notification.userWarning(LOGGER, CHILL_BRO)
                             }
                         }
                         event.buttons.isSecondaryPressed -> {

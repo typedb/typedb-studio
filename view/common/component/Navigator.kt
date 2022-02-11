@@ -251,6 +251,7 @@ object Navigator {
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
+        internal var isHoverButton by mutableStateOf(false)
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
             Form.ButtonArgs(Icon.Code.CHEVRONS_UP) { collapse() }
@@ -440,7 +441,7 @@ object Navigator {
                 .onKeyEvent { onKeyEvent(it, navState, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(navState, contextMenuState, item.focusReq!!, item) }
-                .onPointerEvent(Release) { if (it.awtEvent.clickCount == 2) navState.open(item) }
+                .onPointerEvent(Release) { if (!navState.isHoverButton && it.awtEvent.clickCount == 2) navState.open(item) }
                 .pointerMoveFilter(onEnter = { navState.hovered = item; false })
         ) {
             Row(
@@ -448,7 +449,7 @@ object Navigator {
                 modifier = Modifier.onGloballyPositioned { navState.mayIncreaseItemWidth(it.size.width) }
             ) {
                 if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                ItemButton(item)
+                ItemButton(navState, item)
                 ItemIcon(item, iconArgs)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item)
@@ -458,12 +459,16 @@ object Navigator {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
+    private fun <T : Navigable.Item<T>> ItemButton(navState: NavigatorState<T>, item: ItemState<T>) {
         if (item.isExpandable) Form.RawClickableIcon(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
-            modifier = Modifier.size(ITEM_HEIGHT)
+            modifier = Modifier.size(ITEM_HEIGHT).pointerMoveFilter(
+                onEnter = { navState.isHoverButton = true; false },
+                onExit = { navState.isHoverButton = false; false }
+            ),
         ) else Spacer(Modifier.size(ITEM_HEIGHT))
     }
 
