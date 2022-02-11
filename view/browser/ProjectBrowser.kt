@@ -122,7 +122,9 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
             ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
             ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
             ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
-            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete() }
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
+                itemState.item.delete()
+            }
         ))
     }
 

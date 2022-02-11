@@ -22,7 +22,6 @@ import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.util.Objects
-import kotlin.io.path.isReadable
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
@@ -31,8 +30,7 @@ sealed class ProjectItem(
     val path: Path,
     final override val parent: Directory?,
     val notificationMgr: NotificationManager
-) :
-    Navigable.Item<ProjectItem> {
+) : Navigable.Item<ProjectItem> {
 
     enum class Type(val index: Int) {
         DIRECTORY(0),
@@ -42,8 +40,9 @@ sealed class ProjectItem(
     private val hash = Objects.hash(path, parent)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
-    val absolutePath: Path = path.toAbsolutePath()
 
+    val isRoot get() = parent == null
+    val absolutePath: Path = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
