@@ -52,9 +52,11 @@ class PageManager(val notification: NotificationManager) {
         }
         selectedPage = page
         selectedPage?.mayLaunchWatcher()
+        selectedPage?.let { it.onClose { close(it) } }
     }
 
     fun close(page: Pageable) {
+        if (!openedPages.contains(page)) return
         val selectedPageIndex = openedPages.indexOf(selectedPage)
         val closingPageIndex = openedPages.indexOf(page)
         openedPages.remove(page)

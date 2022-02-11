@@ -129,6 +129,10 @@ object Navigator {
             return listOf(this)
         }
 
+        override fun toString(): String {
+            return "Navigable Item: $name"
+        }
+
         open class Expandable<T : Navigable.Item<T>> internal constructor(
             expandable: Navigable.ExpandableItem<T>, parent: Expandable<T>?, private val navState: NavigatorState<T>
         ) : ItemState<T>(expandable as T, parent) {
@@ -182,7 +186,7 @@ object Navigator {
                 }
             }
 
-            private fun reloadEntries() {
+            internal fun reloadEntries() {
                 item.asExpandable().reloadEntries()
                 val new = item.asExpandable().entries.toSet()
                 val old = entries.map { it.item }.toSet()
@@ -205,8 +209,7 @@ object Navigator {
                     hasUpdate = true
                 }
                 entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach {
-                    val childHasUpdate = it.checkForUpdate(false)
-                    if (childHasUpdate) hasUpdate = true
+                    if (it.checkForUpdate(false)) hasUpdate = true
                 }
 
                 if (hasUpdate && recomputeNavigator) navState.recomputeList()
@@ -216,6 +219,10 @@ object Navigator {
             internal open fun itemStateOf(item: T): ItemState<T> {
                 return if (item.isExpandable) Expandable(item.asExpandable(), this, navState)
                 else ItemState(item, this)
+            }
+
+            override fun toString(): String {
+                return "Navigable Expandable: $name"
             }
 
             internal class Container<T : Navigable.Item<T>> internal constructor(
@@ -229,6 +236,10 @@ object Navigator {
                 override fun itemStateOf(item: T): ItemState<T> {
                     return if (item.isExpandable) Expandable(item.asExpandable(), null, navState)
                     else ItemState(item, this)
+                }
+
+                override fun toString(): String {
+                    return "Navigable Container: $name"
                 }
             }
         }
@@ -312,6 +323,11 @@ object Navigator {
             recomputeList()
         }
 
+        internal fun reloadEntries() {
+            container.reloadEntries()
+            recomputeList()
+        }
+
         internal fun recomputeList() {
             var previous: ItemState<T>? = null
             entries = container.navigables().onEachIndexed { i, item ->
@@ -392,7 +408,7 @@ object Navigator {
     fun <T : Navigable.Item<T>> Layout(
         state: NavigatorState<T>,
         iconArgs: (ItemState<T>) -> IconArgs,
-        contextMenuFn: (ItemState<T>) -> List<List<ContextMenu.Item>>
+        contextMenuFn: (item: ItemState<T>, onDelete: () -> Unit) -> List<List<ContextMenu.Item>>
     ) {
         val density = LocalDensity.current.density
         val ctxMenuState = remember { ContextMenu.State() }
@@ -403,7 +419,7 @@ object Navigator {
             state.density = density
             state.updateAreaWidth(it.size.width)
         }) {
-            ContextMenu.Popup(ctxMenuState) { contextMenuFn(state.selected!!) }
+            ContextMenu.Popup(ctxMenuState) { contextMenuFn(state.selected!!) { state.reloadEntries() } }
             LazyColumn(
                 state = lazyListState, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)

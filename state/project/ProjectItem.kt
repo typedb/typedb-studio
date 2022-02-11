@@ -25,7 +25,7 @@ import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.readSymbolicLink
 
-sealed class ProjectItem(
+sealed class ProjectItem constructor(
     val projectItemType: Type,
     val path: Path,
     final override val parent: Directory?,
@@ -51,10 +51,7 @@ sealed class ProjectItem(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
-
-    fun delete() {
-        // TODO
-    }
+    abstract fun delete()
 
     override fun toString(): String {
         return path.toString()

@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
@@ -54,5 +55,9 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
 
     private fun projectItemOf(it: Path): ProjectItem {
         return if (it.isDirectory()) Directory(it, this, notificationMgr) else File(it, this, notificationMgr)
+    }
+
+    override fun delete() {
+        Files.walk(path).sorted(Comparator.reverseOrder()).forEach { it.toFile().delete() }
     }
 }

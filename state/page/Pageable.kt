@@ -26,6 +26,8 @@ interface Pageable {
 
     fun mayStopWatcher()
 
+    fun onClose(function: () -> Unit)
+
     fun close()
 
 }

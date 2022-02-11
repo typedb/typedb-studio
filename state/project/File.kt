@@ -34,7 +34,9 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.io.path.deleteExisting
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
@@ -56,8 +58,10 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
+    private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
     private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
+    private var onClose: (() -> Unit)? by mutableStateOf(null)
     private var lastModified by mutableStateOf(path.toFile().lastModified())
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -93,6 +97,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
             // TODO: find a more efficient way to verify access without having to load the entire file
             if (isTextFile) loadTextFile()
             else loadBinaryFile()
+            isOpen.set(true)
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
@@ -117,6 +122,10 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         while (reader.readLine().let { line = it; line != null }) content.add(line!!)
         if (content.isEmpty()) content.add("")
         return content
+    }
+
+    fun save() {
+        // TODO: Files.write(path, content)
     }
 
     override fun mayLaunchWatcher() = launchWatcher()
@@ -157,11 +166,21 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         onPermissionChange = function
     }
 
-    fun save() {
-        // TODO: Files.write(path, content)
+    override fun onClose(function: () -> Unit) {
+        onClose = function
     }
 
     override fun close() {
-        onUpdate = null
+        if (isOpen.compareAndSet(true, false)) {
+            watchFileSystem = false
+            onUpdate = null
+            onPermissionChange = null
+            onClose?.let { it() }
+        }
+    }
+
+    override fun delete() {
+        close()
+        path.deleteExisting()
     }
 }
