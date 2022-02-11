@@ -26,6 +26,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
     companion object {
 
+        const val UNKNOWN: String = "Unknown"
+
         /**
          * This method ensures all nested classes are initialised eagerly in start of runtime,
          * by simply calling that nested class, as shown below. Please make sure to update this
@@ -101,6 +103,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(6, "File '%s' is not readable.")
             val FILE_NOT_WRITABLE =
                 Project(7, "File %s is not writable, and you are currently in READ-ONLY mode.")
+            val DIRECTORY_NOT_DELETABLE =
+                Project(8, "Directory %s is not deletable. Cause: %s")
+            val FILE_NOT_DELETABLE =
+                Project(9, "File %s is not deletable. Cause: %s")
         }
     }
 }

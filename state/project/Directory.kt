@@ -18,15 +18,19 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.deleteExisting
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import mu.KotlinLogging
 
 class Directory internal constructor(path: Path, parent: Directory?, notificationMgr: NotificationManager) :
     Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, notificationMgr) {
@@ -34,6 +38,10 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     override var entries: List<ProjectItem> = emptyList()
     override val isReadable: Boolean get() = path.isReadable()
     override val isWritable: Boolean get() = path.isWritable()
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     override fun asDirectory(): Directory {
         return this
@@ -58,6 +66,13 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     }
 
     override fun delete() {
-        Files.walk(path).sorted(Comparator.reverseOrder()).forEach { it.toFile().delete() }
+        try {
+            entries.filter { it.isDirectory }.forEach { it.delete() }
+            entries.filter { it.isFile }.forEach { it.delete() }
+            entries = emptyList()
+            path.deleteExisting()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name, e.message ?: Message.UNKNOWN)
+        }
     }
 }

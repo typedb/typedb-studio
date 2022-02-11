@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property.FileType
@@ -40,6 +41,7 @@ import kotlin.io.path.deleteExisting
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
+import kotlin.io.path.name
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
@@ -180,7 +182,11 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
 
     override fun delete() {
-        close()
-        path.deleteExisting()
+        try {
+            close()
+            path.deleteExisting()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name, e.message ?: Message.UNKNOWN)
+        }
     }
 }
