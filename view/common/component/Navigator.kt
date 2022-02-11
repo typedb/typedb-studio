@@ -390,7 +390,7 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Navigable.Item<T>> Layout(
-        navState: NavigatorState<T>,
+        state: NavigatorState<T>,
         iconArgs: (ItemState<T>) -> IconArgs,
         contextMenuFn: (ItemState<T>) -> List<List<ContextMenu.Item>>
     ) {
@@ -398,17 +398,17 @@ object Navigator {
         val ctxMenuState = remember { ContextMenu.State() }
         val lazyListState = rememberLazyListState()
         val horScrollState = rememberScrollState()
-        navState.viewState = lazyListState
+        state.viewState = lazyListState
         Box(modifier = Modifier.fillMaxSize().onGloballyPositioned {
-            navState.density = density
-            navState.updateAreaWidth(it.size.width)
+            state.density = density
+            state.updateAreaWidth(it.size.width)
         }) {
-            ContextMenu.Popup(ctxMenuState) { contextMenuFn(navState.selected!!) }
+            ContextMenu.Popup(ctxMenuState) { contextMenuFn(state.selected!!) }
             LazyColumn(
-                state = lazyListState, modifier = Modifier.widthIn(min = navState.minWidth)
+                state = lazyListState, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
-                    .pointerMoveFilter(onExit = { navState.hovered = null; false })
-            ) { navState.entries.forEach { item { ItemLayout(navState, ctxMenuState, it, it.depth, iconArgs) } } }
+                    .pointerMoveFilter(onExit = { state.hovered = null; false })
+            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArgs) } } }
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(lazyListState),
                 modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
@@ -425,31 +425,31 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        navState: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
+        state: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
         iconArgs: (ItemState<T>) -> IconArgs
     ) {
         item.focusReq = remember { FocusRequester() }
         val bgColor = when {
-            navState.selected == item -> Theme.colors.primary
-            navState.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
+            state.selected == item -> Theme.colors.primary
+            state.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
             else -> Color.Transparent
         }
         Row(
             modifier = Modifier.background(color = bgColor)
-                .widthIn(min = navState.minWidth).height(ITEM_HEIGHT)
+                .widthIn(min = state.minWidth).height(ITEM_HEIGHT)
                 .focusRequester(item.focusReq!!).focusable()
-                .onKeyEvent { onKeyEvent(it, navState, item) }
+                .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(navState, contextMenuState, item.focusReq!!, item) }
-                .onPointerEvent(Release) { if (!navState.isHoverButton && it.awtEvent.clickCount == 2) navState.open(item) }
-                .pointerMoveFilter(onEnter = { navState.hovered = item; false })
+                .pointerInput(item) { onPointerInput(state, contextMenuState, item.focusReq!!, item) }
+                .onPointerEvent(Release) { if (!state.isHoverButton && it.awtEvent.clickCount == 2) state.open(item) }
+                .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.onGloballyPositioned { navState.mayIncreaseItemWidth(it.size.width) }
+                modifier = Modifier.onGloballyPositioned { state.mayIncreaseItemWidth(it.size.width) }
             ) {
                 if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                ItemButton(navState, item)
+                ItemButton(state, item)
                 ItemIcon(item, iconArgs)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item)
@@ -461,13 +461,13 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemButton(navState: NavigatorState<T>, item: ItemState<T>) {
+    private fun <T : Navigable.Item<T>> ItemButton(state: NavigatorState<T>, item: ItemState<T>) {
         if (item.isExpandable) Form.RawClickableIcon(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
             modifier = Modifier.size(ITEM_HEIGHT).pointerMoveFilter(
-                onEnter = { navState.isHoverButton = true; false },
-                onExit = { navState.isHoverButton = false; false }
+                onEnter = { state.isHoverButton = true; false },
+                onExit = { state.isHoverButton = false; false }
             ),
         ) else Spacer(Modifier.size(ITEM_HEIGHT))
     }
@@ -491,13 +491,13 @@ object Navigator {
     }
 
     private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
-        navState: NavigatorState<T>, contextMenuState: ContextMenu.State,
+        state: NavigatorState<T>, contextMenuState: ContextMenu.State,
         focusReq: FocusRequester, item: ItemState<T>
     ) {
         contextMenuState.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryPressed = { navState.select(item); focusReq.requestFocus() },
-            onSecondaryClick = { navState.select(item) }
+            onSinglePrimaryPressed = { state.select(item); focusReq.requestFocus() },
+            onSecondaryClick = { state.select(item) }
         )
     }
 
