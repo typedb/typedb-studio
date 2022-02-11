@@ -67,6 +67,7 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
 
     override fun delete() {
         try {
+            reloadEntries()
             entries.filter { it.isDirectory }.forEach { it.delete() }
             entries.filter { it.isFile }.forEach { it.delete() }
             entries = emptyList()

@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
@@ -129,8 +130,11 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
             ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
             ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
-                itemState.item.delete()
-                onDelete()
+                GlobalState.confirmation.submit(
+                    title = Label.CONFIRM_DIRECTORY_DELETION,
+                    message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                    action = { itemState.item.delete(); onDelete() }
+                )
             }
         ))
     }
@@ -141,7 +145,13 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     ): List<List<ContextMenu.Item>> {
         return listOf(listOf(
             ContextMenu.Item(Label.OPEN, Icon.Code.BLOCK_QUOTE) { GlobalState.page.open(itemState.item.asFile()) },
-            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) { itemState.item.delete(); onDelete() }
+            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) {
+                GlobalState.confirmation.submit(
+                    title = Label.CONFIRM_FILE_DELETION,
+                    message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                    action = { itemState.item.delete(); onDelete() }
+                )
+            }
         ))
     }
 }

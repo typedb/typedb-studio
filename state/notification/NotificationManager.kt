@@ -28,7 +28,7 @@ import mu.KLogger
 
 class NotificationManager {
 
-    val queue: SnapshotStateList<Notification> = mutableStateListOf();
+    val queue: SnapshotStateList<Notification> = mutableStateListOf()
 
     fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }

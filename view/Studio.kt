@@ -47,6 +47,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.dialog.ConfirmationDialog
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
@@ -129,6 +130,7 @@ object Studio {
             NotificationArea.Layout()
             if (GlobalState.connection.showDialog) ConnectionDialog.Layout()
             if (GlobalState.project.showDialog) ProjectDialog.Layout()
+            if (GlobalState.confirmation.showDialog) ConfirmationDialog.Layout()
         }
     }
 

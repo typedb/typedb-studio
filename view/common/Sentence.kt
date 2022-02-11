@@ -16,20 +16,12 @@
  *
  */
 
-package com.vaticle.typedb.studio.state
+package com.vaticle.typedb.studio.view.common
 
-import com.vaticle.typedb.studio.state.connection.ConnectionManager
-import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.PageManager
-import com.vaticle.typedb.studio.state.project.ProjectManager
-import com.vaticle.typedb.studio.state.status.StatusManager
+object Sentence {
 
-object GlobalState {
+    const val CONFIRM_DIRECTORY_DELETION = "Are you sure you would like to delete this directory and all of its content?"
+    const val CONFIRM_FILE_DELETION = "Are you sure you would like to delete this?"
+    const val CANNOT_BE_UNDONE = "This action cannot be undone."
 
-    val confirmation = ConfirmationManager()
-    val notification = NotificationManager()
-    val status = StatusManager()
-    val connection = ConnectionManager(notification)
-    val page = PageManager(notification)
-    val project = ProjectManager(notification)
 }

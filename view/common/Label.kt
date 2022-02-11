@@ -20,13 +20,15 @@ package com.vaticle.typedb.studio.view.common
 
 object Label {
 
-    const val STATUS = "Status"
     const val ADDRESS = "Address"
     const val CA_CERTIFICATE = "CA Certificate"
     const val CANCEL = "Cancel"
     const val CLOSE = "Close"
     const val CLOSING_TYPEDB_STUDIO = "Closing TypeDB Studio"
     const val CMD = "cmd"
+    const val CONFIRM = "Confirm"
+    const val CONFIRM_DIRECTORY_DELETION = "Confirm Directory Deletion"
+    const val CONFIRM_FILE_DELETION = "Confirm File Deletion"
     const val CONNECT = "Connect"
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
@@ -61,6 +63,7 @@ object Label {
     const val RULES = "Rules"
     const val SAVE = "Save"
     const val SELECT_DATABASE = "Select Database"
+    const val STATUS = "Status"
     const val TITLE = "Title"
     const val TRACE = "Trace"
     const val TYPEDB_STUDIO = "TypeDB Studio"

@@ -102,9 +102,8 @@ object Form {
 
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
-    private val OUTER_SPACING = 16.dp
     private val INNER_SPACING = 10.dp
-    private val FIELD_SPACING = 12.dp
+    val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
@@ -137,10 +136,7 @@ object Form {
     fun Submission(state: State? = null, content: @Composable() (ColumnScope.() -> Unit)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Theme.colors.background)
-                .padding(OUTER_SPACING)
+            modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)
                 .onKeyEvent { onKeyEvent(event = it, onEnter = { state?.trySubmitIfValid() }) }
         ) { content() }
     }
