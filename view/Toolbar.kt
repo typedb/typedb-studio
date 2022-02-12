@@ -38,7 +38,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.SelectDatabaseDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.view.dialog.ConnectionDialog.DatabaseDropdown
 
 object Toolbar {
 

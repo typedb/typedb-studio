@@ -77,7 +77,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun Layout() {
+    fun OpenProject() {
         val formState = remember { ProjectFormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
