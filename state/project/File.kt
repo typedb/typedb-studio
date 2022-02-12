@@ -186,7 +186,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
             close()
             path.deleteExisting()
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name, e.message ?: Message.UNKNOWN)
+            notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
         }
     }
 }

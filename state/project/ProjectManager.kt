@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
@@ -73,6 +74,15 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         else {
             current = Project(path, notificationMgr)
             openProjectDialog.close()
+        }
+    }
+
+    fun tryCreateDirectory(parent: Directory, name: String) {
+        try {
+            parent.createDirectory(name)
+            createDirectoryDialog.close()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(name))
         }
     }
 }

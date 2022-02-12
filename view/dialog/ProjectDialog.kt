@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -38,6 +39,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ComponentSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Field
@@ -56,6 +58,8 @@ object ProjectDialog {
 
     private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
     private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
+    private val CREATE_DIRECTORY_WINDOW_WIDTH = 500.dp
+    private val CREATE_DIRECTORY_WINDOW_HEIGHT = 200.dp
 
     private object OpenProjectForm : Form.State {
 
@@ -149,9 +153,71 @@ object ProjectDialog {
         TextButton(text = Label.OPEN, enabled = OpenProjectForm.isValid(), onClick = { OpenProjectForm.trySubmit() })
     }
 
+    private class CreateDirectoryForm : Form.State {
+
+        val parent = GlobalState.project.createDirectoryDialog.parentDirectory!!
+        var newDirectoryName: String by mutableStateOf(nextDirName())
+
+        override fun isValid(): Boolean {
+            return newDirectoryName.isNotBlank()
+        }
+
+        override fun trySubmit() {
+            assert(newDirectoryName.isNotBlank())
+            GlobalState.project.tryCreateDirectory(parent, newDirectoryName)
+        }
+
+        private fun nextDirName(): String {
+            val name = Label.UNTITLED
+            var counter = 1
+            parent.reloadEntries()
+            while (parent.entries.filter { it.name == name + counter }.isNotEmpty()) counter++
+            return name + counter
+        }
+    }
+
     @Composable
     fun CreateDirectory() {
+        val form = remember { CreateDirectoryForm() }
+        Dialog(
+            title = Label.CREATE_DIRECTORY,
+            onCloseRequest = { GlobalState.project.createDirectoryDialog.close() },
+            state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(CREATE_DIRECTORY_WINDOW_WIDTH, CREATE_DIRECTORY_WINDOW_HEIGHT)
+            )
+        ) {
+            Submission(state = form) {
+                Form.Text(value = Sentence.CREATE_DIRECTORY.format(form.parent), softWrap = true)
+                CreateDirectoryField(form)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    CreateDirectoryButtons(form)
+                }
+            }
+        }
+    }
 
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun CreateDirectoryField(form: CreateDirectoryForm) {
+        Field(label = Label.DIRECTORY_NAME) {
+            TextInput(
+                value = form.newDirectoryName,
+                placeholder = "",
+                onValueChange = { form.newDirectoryName = it },
+                modifier = Modifier.fillMaxHeight(),
+            )
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun CreateDirectoryButtons(form: CreateDirectoryForm) {
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.project.createDirectoryDialog.close() })
+        ComponentSpacer()
+        TextButton(text = Label.CREATE, enabled = form.isValid(), onClick = { form.trySubmit() })
     }
 
     @Composable

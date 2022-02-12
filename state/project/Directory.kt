@@ -18,12 +18,12 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
+import kotlin.io.path.createDirectory
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
@@ -73,7 +73,12 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
             entries = emptyList()
             path.deleteExisting()
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name, e.message ?: Message.UNKNOWN)
+            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
         }
+    }
+
+    internal fun createDirectory(name: String) {
+        path.resolve(name).createDirectory()
+        reloadEntries()
     }
 }

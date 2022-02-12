@@ -104,9 +104,11 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FILE_NOT_WRITABLE =
                 Project(7, "File %s is not writable, and you are currently in READ-ONLY mode.")
             val DIRECTORY_NOT_DELETABLE =
-                Project(8, "Directory %s is not deletable. Cause: %s")
+                Project(8, "Directory %s is not deletable.")
             val FILE_NOT_DELETABLE =
-                Project(9, "File %s is not deletable. Cause: %s")
+                Project(9, "File %s is not deletable.")
+            val FAILED_TO_CREATE_DIRECTORY =
+                Project(10, "Failed to create directory %s.")
         }
     }
 }

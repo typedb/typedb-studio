@@ -56,7 +56,7 @@ object Property {
         TYPEQL("tql", "typeql"),
         UNKNOWN;
 
-        val extensions = extension.toSet()
+        val extensions = extension.toList()
     }
 
 

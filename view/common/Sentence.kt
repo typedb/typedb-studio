@@ -20,8 +20,13 @@ package com.vaticle.typedb.studio.view.common
 
 object Sentence {
 
-    const val CONFIRM_DIRECTORY_DELETION = "Are you sure you would like to delete this directory and all of its content?"
-    const val CONFIRM_FILE_DELETION = "Are you sure you would like to delete this file?"
-    const val CANNOT_BE_UNDONE = "This action cannot be undone."
+    const val CANNOT_BE_UNDONE =
+        "This action cannot be undone."
+    const val CREATE_DIRECTORY =
+        "Create a new directory under %s."
+    const val CONFIRM_DIRECTORY_DELETION =
+        "Are you sure you would like to delete this directory and all of its content?"
+    const val CONFIRM_FILE_DELETION =
+        "Are you sure you would like to delete this file?"
 
 }
