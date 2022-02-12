@@ -96,7 +96,7 @@ object Toolbar {
         TextButton(
             text = text,
             modifier = Modifier.height(COMPONENT_HEIGHT),
-            onClick = { GlobalState.connection.dialog.open() },
+            onClick = { GlobalState.connection.connectServerDialog.open() },
             trailingIcon = Icon.Code.DATABASE,
         )
     }

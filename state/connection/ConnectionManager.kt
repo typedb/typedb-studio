@@ -43,7 +43,8 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
-    val dialog = DialogManager.Base()
+    val connectServerDialog = DialogManager.Base()
+    val selectDatabaseDialog = DialogManager.Base()
     var current: Connection? by mutableStateOf(null)
     var status: Status by mutableStateOf(Status.DISCONNECTED)
 

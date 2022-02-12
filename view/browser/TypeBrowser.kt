@@ -45,11 +45,9 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
 
     @Composable
     override fun NavigatorLayout() {
-        val selectDBDialogState = SelectDatabaseDialog.rememberState()
-        if (!GlobalState.connection.isConnected()) ConnectToServerHelper()
-        else if (!GlobalState.connection.hasDatabase() || selectDBDialogState.showDialog) SelectDBHelper(
-            selectDBDialogState
-        )
+        val connectionMgr = GlobalState.connection
+        if (!connectionMgr.isConnected()) ConnectToServerHelper()
+        else if (!connectionMgr.hasDatabase() || connectionMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
         else {
 
         }
@@ -63,24 +61,25 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
         ) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                onClick = { GlobalState.connection.dialog.open() },
+                onClick = { GlobalState.connection.connectServerDialog.open() },
                 leadingIcon = Icon.Code.DATABASE
             )
         }
     }
 
     @Composable
-    private fun SelectDBHelper(selectDBDialogState: SelectDatabaseDialog.DialogState) {
+    private fun SelectDBHelper() {
+        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
         ) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                onClick = { selectDBDialogState.showDialog = true },
+                onClick = { selectDBDialog.open() },
                 leadingIcon = Icon.Code.DATABASE
             )
         }
-        if (selectDBDialogState.showDialog) SelectDatabaseDialog.Layout(selectDBDialogState)
+        if (selectDBDialog.isOpen) SelectDatabaseDialog.Layout()
     }
 }

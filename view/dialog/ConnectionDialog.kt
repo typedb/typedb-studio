@@ -95,10 +95,10 @@ object ConnectionDialog {
     }
 
     @Composable
-    fun Layout() {
+    fun ConnectServer() {
         Dialog(
             title = Label.CONNECT_TO_TYPEDB,
-            onCloseRequest = { GlobalState.connection.dialog.close() },
+            onCloseRequest = { GlobalState.connection.connectServerDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -223,7 +223,7 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.dialog.close() })
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.connectServerDialog.close() })
         ComponentSpacer()
         TextButton(
             text = Label.CONNECT,
@@ -240,7 +240,7 @@ object ConnectionDialog {
             textColor = Theme.colors.error2
         )
         ComponentSpacer()
-        TextButton(text = Label.CLOSE, onClick = { GlobalState.connection.dialog.close() })
+        TextButton(text = Label.CLOSE, onClick = { GlobalState.connection.connectServerDialog.close() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

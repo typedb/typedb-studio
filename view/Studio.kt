@@ -128,7 +128,7 @@ object Studio {
                 StatusBar.Layout()
             }
             NotificationArea.Layout()
-            if (GlobalState.connection.dialog.isOpen) ConnectionDialog.Layout()
+            if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
             if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.Layout()
             if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
         }

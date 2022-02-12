@@ -21,10 +21,6 @@ package com.vaticle.typedb.studio.view.dialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
@@ -41,20 +37,12 @@ object SelectDatabaseDialog {
     private val WINDOW_WIDTH = 400.dp
     private val WINDOW_HEIGHT = 200.dp
 
-    class DialogState {
-        var showDialog by mutableStateOf(false)
-    }
-
     @Composable
-    fun rememberState(): DialogState {
-        return remember { DialogState() }
-    }
-
-    @Composable
-    fun Layout(dialogState: DialogState) {
+    fun Layout() {
+        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
         Dialog(
             title = Label.SELECT_DATABASE,
-            onCloseRequest = { dialogState.showDialog = false },
+            onCloseRequest = { selectDBDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -65,7 +53,7 @@ object SelectDatabaseDialog {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CLOSE, onClick = { dialogState.showDialog = false })
+                    Form.TextButton(text = Label.CLOSE, onClick = { selectDBDialog.close() })
                 }
             }
         }
