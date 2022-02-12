@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.DialogManager
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
@@ -33,6 +34,21 @@ import mu.KotlinLogging
 
 class ProjectManager(private val notificationMgr: NotificationManager) {
 
+    class ProjectItemDialog : DialogManager() {
+
+        var parentDirectory: Directory? by mutableStateOf(null)
+
+        fun open(parent: Directory) {
+            isOpen = true
+            parentDirectory = parent
+        }
+
+        override fun close() {
+            isOpen = false
+            parentDirectory = null
+        }
+    }
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
@@ -42,14 +58,12 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         get() = _current
         set(value) {
             _current = value
-            onChange?.let { it(_current!!) }
+            onProjectChange?.let { it(_current!!) }
         }
-    var showDialog: Boolean by mutableStateOf(false)
-    var onChange: ((Project) -> Unit)? = null
-
-    fun toggleDialog() {
-        showDialog = !showDialog
-    }
+    var onProjectChange: ((Project) -> Unit)? = null
+    val openProjectDialog = DialogManager.Base()
+    val createDirectoryDialog = ProjectItemDialog()
+    val createFileDialog = ProjectItemDialog()
 
     fun tryOpenDirectory(newDir: String) {
         val path = Path.of(newDir)
@@ -58,7 +72,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         else if (!path.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
         else {
             current = Project(path, notificationMgr)
-            showDialog = false
+            openProjectDialog.close()
         }
     }
 }

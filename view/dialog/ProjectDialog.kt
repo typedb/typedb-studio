@@ -81,7 +81,7 @@ object ProjectDialog {
         val formState = remember { ProjectFormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
-            onCloseRequest = { GlobalState.project.showDialog = false },
+            onCloseRequest = { GlobalState.project.openProjectDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -150,7 +150,7 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun OpenProjectButtons(formState: ProjectFormState) {
-        TextButton(text = Label.CANCEL, onClick = { GlobalState.project.showDialog = false })
+        TextButton(text = Label.CANCEL, onClick = { GlobalState.project.openProjectDialog.close() })
         ComponentSpacer()
         TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
     }

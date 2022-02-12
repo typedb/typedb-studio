@@ -66,7 +66,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                 initExpandDepth = 1,
                 liveUpdate = true
             ) { projectItemOpen(it) }
-            GlobalState.project.onChange = { state.replaceContainer(it) }
+            GlobalState.project.onProjectChange = { state.replaceContainer(it) }
             buttons = state.buttons
             Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) }) { item, onDelete ->
                 contextMenuItems(item, onDelete)
@@ -82,7 +82,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                onClick = { GlobalState.project.showDialog = true },
+                onClick = { GlobalState.project.openProjectDialog.open() },
                 leadingIcon = Icon.Code.FOLDER_OPEN
             )
         }
@@ -127,8 +127,12 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     ): List<List<ContextMenu.Item>> {
         return listOf(listOf(
             ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
-            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) { }, // TODO
-            ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) { }, // TODO
+            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {
+                GlobalState.project.createDirectoryDialog.open(itemState.item.asDirectory())
+            },
+            ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) {
+                GlobalState.project.createFileDialog.open(itemState.item.asDirectory())
+            },
             ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
                 GlobalState.confirmation.submit(
                     title = Label.CONFIRM_DIRECTORY_DELETION,

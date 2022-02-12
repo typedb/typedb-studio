@@ -129,7 +129,7 @@ object Studio {
             }
             NotificationArea.Layout()
             if (GlobalState.connection.showDialog) ConnectionDialog.Layout()
-            if (GlobalState.project.showDialog) ProjectDialog.Layout()
+            if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.Layout()
             if (GlobalState.confirmation.showDialog) ConfirmationDialog.Layout()
         }
     }

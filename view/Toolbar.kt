@@ -54,7 +54,7 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.toggleDialog() })
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
             ToolbarSpace()
             ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
             ToolbarSpace()
