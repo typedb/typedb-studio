@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -55,19 +54,15 @@ import kotlin.io.path.Path
 
 object ProjectDialog {
 
-    private val WINDOW_WIDTH = 500.dp
-    private val WINDOW_HEIGHT = 140.dp
+    private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
+    private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
 
-    class ProjectFormState : Form.State {
+    private object OpenProjectForm : Form.State {
 
         var directory: String? by mutableStateOf(GlobalState.project.current?.directory?.absolutePath?.toString())
 
         override fun isValid(): Boolean {
             return !directory.isNullOrBlank()
-        }
-
-        override fun trySubmitIfValid() {
-            if (isValid()) trySubmit()
         }
 
         override fun trySubmit() {
@@ -78,21 +73,20 @@ object ProjectDialog {
 
     @Composable
     fun OpenProject() {
-        val formState = remember { ProjectFormState() }
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { GlobalState.project.openProjectDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+                size = DpSize(OPEN_PROJECT_WINDOW_WIDTH, OPEN_PROJECT_WINDOW_HEIGHT)
             )
         ) {
-            Submission(state = formState) {
-                SelectDirectoryField(formState, window)
+            Submission(state = OpenProjectForm) {
+                SelectDirectoryField(window)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    OpenProjectButtons(formState)
+                    OpenProjectButtons()
                 }
             }
         }
@@ -100,42 +94,42 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(formState: ProjectFormState, window: ComposeDialog) {
+    private fun SelectDirectoryField(window: ComposeDialog) {
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
-                    value = formState.directory ?: "",
+                    value = OpenProjectForm.directory ?: "",
                     placeholder = Label.PATH_TO_PROJECT,
-                    onValueChange = { formState.directory = it },
+                    onValueChange = { OpenProjectForm.directory = it },
                     modifier = Modifier.fillMaxHeight().weight(1f),
                 )
                 ComponentSpacer()
-                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(formState, window) })
+                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(window) })
             }
         }
     }
 
-    private fun launchFileDialog(formState: ProjectFormState, window: ComposeDialog) {
+    private fun launchFileDialog(window: ComposeDialog) {
         when (Property.OS.Current) {
-            MACOS -> macOSDialog(formState, window)
-            else -> otherOSDialog(formState)
+            MACOS -> macOSDialog(window)
+            else -> otherOSDialog()
         }
     }
 
-    private fun macOSDialog(formState: ProjectFormState, window: ComposeDialog) {
+    private fun macOSDialog(window: ComposeDialog) {
         val fileDialog = FileDialog(window, Label.OPEN_PROJECT_DIRECTORY, FileDialog.LOAD).apply {
-            file = formState.directory
+            file = OpenProjectForm.directory
             isMultipleMode = false
             isVisible = true
         }
         if (fileDialog.directory != null) {
-            formState.directory = Path(fileDialog.directory).resolve(fileDialog.file).toString()
+            OpenProjectForm.directory = Path(fileDialog.directory).resolve(fileDialog.file).toString()
         }
     }
 
-    private fun otherOSDialog(formState: ProjectFormState) {
+    private fun otherOSDialog() {
         val directoryChooser = JFileChooser().apply {
-            formState.directory?.let { currentDirectory = File(it) }
+            OpenProjectForm.directory?.let { currentDirectory = File(it) }
             dialogTitle = Label.OPEN_PROJECT_DIRECTORY
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         }
@@ -143,15 +137,25 @@ object ProjectDialog {
         if (option == JFileChooser.APPROVE_OPTION) {
             val directory = directoryChooser.selectedFile
             assert(directory.isDirectory)
-            formState.directory = directory.absolutePath
+            OpenProjectForm.directory = directory.absolutePath
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun OpenProjectButtons(formState: ProjectFormState) {
+    private fun OpenProjectButtons() {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.project.openProjectDialog.close() })
         ComponentSpacer()
-        TextButton(text = Label.OPEN, enabled = formState.isValid(), onClick = { formState.trySubmit() })
+        TextButton(text = Label.OPEN, enabled = OpenProjectForm.isValid(), onClick = { OpenProjectForm.trySubmit() })
+    }
+
+    @Composable
+    fun CreateDirectory() {
+
+    }
+
+    @Composable
+    fun CreateFile() {
+
     }
 }

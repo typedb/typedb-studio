@@ -128,9 +128,11 @@ object Studio {
                 StatusBar.Layout()
             }
             NotificationArea.Layout()
-            if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
-            if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
             if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
+            if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
+            if (GlobalState.project.createDirectoryDialog.isOpen) ProjectDialog.CreateDirectory()
+            if (GlobalState.project.createFileDialog.isOpen) ProjectDialog.CreateFile()
+            if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
         }
     }
 

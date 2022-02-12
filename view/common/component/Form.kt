@@ -121,7 +121,9 @@ object Form {
     interface State {
         fun isValid(): Boolean
         fun trySubmit()
-        fun trySubmitIfValid()
+        fun trySubmitIfValid() {
+            if (isValid()) trySubmit()
+        }
     }
 
     @Composable
@@ -157,7 +159,9 @@ object Form {
         overflow: TextOverflow = TextOverflow.Clip,
         softWrap: Boolean = false,
         enabled: Boolean = true,
-    ) { Text(AnnotatedString(value), style, color, alpha, align, modifier, overflow, softWrap, enabled) }
+    ) {
+        Text(AnnotatedString(value), style, color, alpha, align, modifier, overflow, softWrap, enabled)
+    }
 
     @Composable
     fun Text(
