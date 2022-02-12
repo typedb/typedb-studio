@@ -24,6 +24,8 @@ object Sentence {
         "This action cannot be undone."
     const val CREATE_DIRECTORY =
         "Create a new directory under %s."
+    const val CREATE_FILE =
+        "Create a new file under %s."
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content?"
     const val CONFIRM_FILE_DELETION =

@@ -45,6 +45,7 @@ object Label {
     const val DISMISS_ALL = "Dismiss All"
     const val ENABLE_TLS = "Enable TLS"
     const val EXPAND_COLLAPSE = "Expand/Collapse"
+    const val FILE_NAME = "File Name"
     const val FIND = "Find"
     const val FOUND = "Found"
     const val NONE = "None"

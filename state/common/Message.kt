@@ -108,7 +108,9 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FILE_NOT_DELETABLE =
                 Project(9, "File %s is not deletable.")
             val FAILED_TO_CREATE_DIRECTORY =
-                Project(10, "Failed to create directory %s.")
+                Project(10, "Failed to create new directory at %s.")
+            val FAILED_TO_CREATE_FILE =
+                Project(11, "Failed to create new file at %s")
         }
     }
 }

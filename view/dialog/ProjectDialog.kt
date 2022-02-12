@@ -58,8 +58,8 @@ object ProjectDialog {
 
     private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
     private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
-    private val CREATE_DIRECTORY_WINDOW_WIDTH = 500.dp
-    private val CREATE_DIRECTORY_WINDOW_HEIGHT = 200.dp
+    private val CREATE_ITEM_WINDOW_WIDTH = 500.dp
+    private val CREATE_ITEM_WINDOW_HEIGHT = 200.dp
 
     private object OpenProjectForm : Form.State {
 
@@ -184,7 +184,7 @@ object ProjectDialog {
             onCloseRequest = { GlobalState.project.createDirectoryDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(CREATE_DIRECTORY_WINDOW_WIDTH, CREATE_DIRECTORY_WINDOW_HEIGHT)
+                size = DpSize(CREATE_ITEM_WINDOW_WIDTH, CREATE_ITEM_WINDOW_HEIGHT)
             )
         ) {
             Submission(state = form) {
@@ -193,7 +193,7 @@ object ProjectDialog {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    CreateDirectoryButtons(form)
+                    CreateItemButtons(form) { GlobalState.project.createDirectoryDialog.close() }
                 }
             }
         }
@@ -212,16 +212,71 @@ object ProjectDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun CreateDirectoryButtons(form: CreateDirectoryForm) {
-        TextButton(text = Label.CANCEL, onClick = { GlobalState.project.createDirectoryDialog.close() })
-        ComponentSpacer()
-        TextButton(text = Label.CREATE, enabled = form.isValid(), onClick = { form.trySubmit() })
+    private class CreateFileForm : Form.State {
+
+        val parent = GlobalState.project.createFileDialog.parentDirectory!!
+        var newFileName: String by mutableStateOf(nextFileName())
+
+        override fun isValid(): Boolean {
+            return newFileName.isNotBlank()
+        }
+
+        override fun trySubmit() {
+            assert(newFileName.isNotBlank())
+            GlobalState.project.tryCreateFile(parent, newFileName)
+        }
+
+        private fun nextFileName(): String {
+            val name = Label.UNTITLED
+            val format = Property.FileType.TYPEQL.extensions[0]
+            var counter = 1
+            parent.reloadEntries()
+            while (parent.entries.filter { it.name == "$name$counter.$format" }.isNotEmpty()) counter++
+            return "$name$counter.$format"
+        }
     }
 
     @Composable
     fun CreateFile() {
+        val form = remember { CreateFileForm() }
+        Dialog(
+            title = Label.CREATE_FILE,
+            onCloseRequest = { GlobalState.project.createFileDialog.close() },
+            state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(CREATE_ITEM_WINDOW_WIDTH, CREATE_ITEM_WINDOW_HEIGHT)
+            )
+        ) {
+            Submission(state = form) {
+                Form.Text(value = Sentence.CREATE_FILE.format(form.parent), softWrap = true)
+                CreateFileField(form)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    CreateItemButtons(form) { GlobalState.project.createFileDialog.close() }
+                }
+            }
+        }
+    }
 
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun CreateFileField(form: CreateFileForm) {
+        Field(label = Label.FILE_NAME) {
+            TextInput(
+                value = form.newFileName,
+                placeholder = "",
+                onValueChange = { form.newFileName = it },
+                modifier = Modifier.fillMaxHeight(),
+            )
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun CreateItemButtons(form: Form.State, onCancel: () -> Unit) {
+        TextButton(text = Label.CANCEL, onClick = onCancel)
+        ComponentSpacer()
+        TextButton(text = Label.CREATE, enabled = form.isValid(), onClick = { form.trySubmit() })
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
@@ -77,12 +78,21 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         }
     }
 
-    fun tryCreateDirectory(parent: Directory, name: String) {
+    fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
         try {
-            parent.createDirectory(name)
+            parent.createDirectory(newDirectoryName)
             createDirectoryDialog.close()
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(name))
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
+        }
+    }
+
+    fun tryCreateFile(parent: Directory, newFileName: String) {
+        try {
+            parent.createFile(newFileName)
+            createFileDialog.close()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, parent.path.resolve(newFileName))
         }
     }
 }

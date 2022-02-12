@@ -24,6 +24,7 @@ import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
+import kotlin.io.path.createFile
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
@@ -79,6 +80,11 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
 
     internal fun createDirectory(name: String) {
         path.resolve(name).createDirectory()
+        reloadEntries()
+    }
+
+    fun createFile(name: String) {
+        path.resolve(name).createFile()
         reloadEntries()
     }
 }
