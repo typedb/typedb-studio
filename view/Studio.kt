@@ -130,7 +130,7 @@ object Studio {
             NotificationArea.Layout()
             if (GlobalState.connection.dialog.isOpen) ConnectionDialog.Layout()
             if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.Layout()
-            if (GlobalState.confirmation.showDialog) ConfirmationDialog.Layout()
+            if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
         }
     }
 

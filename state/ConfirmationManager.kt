@@ -21,10 +21,11 @@ package com.vaticle.typedb.studio.state
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.DialogManager
 
 class ConfirmationManager {
 
-    var showDialog by mutableStateOf(false); private set
+    val dialog = DialogManager.Base()
     var title: String? by mutableStateOf(null); private set
     var message: String? by mutableStateOf(null); private set
     private var action: (() -> Unit)? by mutableStateOf(null); private set
@@ -33,18 +34,18 @@ class ConfirmationManager {
         this.title = title
         this.message = message
         this.action = action
-        showDialog = true
+        dialog.open()
     }
 
     fun cancel() {
         title = null
         message = null
         action = null
-        showDialog = false
+        dialog.close()
     }
 
     fun confirm() {
-        showDialog = false
+        dialog.close()
         action?.let { it() }
     }
 }
