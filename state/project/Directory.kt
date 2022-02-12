@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
@@ -41,6 +42,7 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     override val isWritable: Boolean get() = path.isWritable()
 
     companion object {
+        private const val UNTITLED = "Untitled"
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -78,13 +80,30 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
         }
     }
 
-    internal fun createDirectory(name: String) {
-        path.resolve(name).createDirectory()
+    fun nexUntitledDirName(): String {
+        var counter = 1
         reloadEntries()
+        while (entries.filter { it.name == UNTITLED + counter }.isNotEmpty()) counter++
+        return UNTITLED + counter
     }
 
-    fun createFile(name: String) {
+    fun nextUntitledFileName(): String {
+        val format = Property.FileType.TYPEQL.extensions[0]
+        var counter = 1
+        reloadEntries()
+        while (entries.filter { it.name == "$UNTITLED$counter.$format" }.isNotEmpty()) counter++
+        return "$UNTITLED$counter.$format"
+    }
+
+    internal fun createDirectory(name: String): Directory {
+        path.resolve(name).createDirectory()
+        reloadEntries()
+        return entries.first { it.name == name }.asDirectory()
+    }
+
+    internal fun createFile(name: String): File {
         path.resolve(name).createFile()
         reloadEntries()
+        return entries.first { it.name == name }.asFile()
     }
 }

@@ -78,12 +78,14 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         }
     }
 
-    fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
-        try {
-            parent.createDirectory(newDirectoryName)
-            createDirectoryDialog.close()
+    fun tryCreateFile(): File? {
+        val root = current!!.directory
+        val newFileName = root.nextUntitledFileName()
+        return try {
+            root.createFile(newFileName)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, root.path.resolve(newFileName))
+            null
         }
     }
 
@@ -93,6 +95,15 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
             createFileDialog.close()
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, parent.path.resolve(newFileName))
+        }
+    }
+
+    fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
+        try {
+            parent.createDirectory(newDirectoryName)
+            createDirectoryDialog.close()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
         }
     }
 }

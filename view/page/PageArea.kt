@@ -43,7 +43,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
@@ -92,7 +91,7 @@ object PageArea {
     private fun NewTabButton() {
         IconButton(
             icon = Icon.Code.PLUS,
-            onClick = {},
+            onClick = { GlobalState.project.tryCreateFile()?.let { GlobalState.page.open(it) } },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,

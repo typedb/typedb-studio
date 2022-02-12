@@ -156,7 +156,7 @@ object ProjectDialog {
     private class CreateDirectoryForm : Form.State {
 
         val parent = GlobalState.project.createDirectoryDialog.parentDirectory!!
-        var newDirectoryName: String by mutableStateOf(nextDirName())
+        var newDirectoryName: String by mutableStateOf(parent.nexUntitledDirName())
 
         override fun isValid(): Boolean {
             return newDirectoryName.isNotBlank()
@@ -165,14 +165,6 @@ object ProjectDialog {
         override fun trySubmit() {
             assert(newDirectoryName.isNotBlank())
             GlobalState.project.tryCreateDirectory(parent, newDirectoryName)
-        }
-
-        private fun nextDirName(): String {
-            val name = Label.UNTITLED
-            var counter = 1
-            parent.reloadEntries()
-            while (parent.entries.filter { it.name == name + counter }.isNotEmpty()) counter++
-            return name + counter
         }
     }
 
@@ -215,7 +207,7 @@ object ProjectDialog {
     private class CreateFileForm : Form.State {
 
         val parent = GlobalState.project.createFileDialog.parentDirectory!!
-        var newFileName: String by mutableStateOf(nextFileName())
+        var newFileName: String by mutableStateOf(parent.nextUntitledFileName())
 
         override fun isValid(): Boolean {
             return newFileName.isNotBlank()
@@ -224,15 +216,6 @@ object ProjectDialog {
         override fun trySubmit() {
             assert(newFileName.isNotBlank())
             GlobalState.project.tryCreateFile(parent, newFileName)
-        }
-
-        private fun nextFileName(): String {
-            val name = Label.UNTITLED
-            val format = Property.FileType.TYPEQL.extensions[0]
-            var counter = 1
-            parent.reloadEntries()
-            while (parent.entries.filter { it.name == "$name$counter.$format" }.isNotEmpty()) counter++
-            return "$name$counter.$format"
         }
     }
 
