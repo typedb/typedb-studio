@@ -63,7 +63,7 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
         ) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                onClick = { GlobalState.connection.showDialog = true },
+                onClick = { GlobalState.connection.dialog.open() },
                 leadingIcon = Icon.Code.DATABASE
             )
         }

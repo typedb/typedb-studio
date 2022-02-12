@@ -25,6 +25,7 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.common.DialogManager
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -42,9 +43,9 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
+    val dialog = DialogManager.Base()
     var current: Connection? by mutableStateOf(null)
     var status: Status by mutableStateOf(Status.DISCONNECTED)
-    var showDialog: Boolean by mutableStateOf(false)
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
