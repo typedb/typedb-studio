@@ -33,7 +33,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.SelectDatabaseDialog
+import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 
 internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
     Browser(areaState, order, initOpen) {
@@ -80,6 +80,6 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
                 leadingIcon = Icon.Code.DATABASE
             )
         }
-        if (selectDBDialog.isOpen) SelectDatabaseDialog.Layout()
+        if (selectDBDialog.isOpen) ConnectionDialog.SelectDatabase()
     }
 }

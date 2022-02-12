@@ -54,8 +54,10 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ConnectionDialog {
 
-    private val WINDOW_WIDTH = 500.dp
-    private val WINDOW_HEIGHT = 340.dp
+    private val CONNECT_SERVER_WINDOW_WIDTH = 500.dp
+    private val CONNECT_SERVER_WINDOW_HEIGHT = 340.dp
+    private val SELECT_DB_WINDOW_WIDTH = 400.dp
+    private val SELECT_DB_WINDOW_HEIGHT = 200.dp
 
     private object ConnectionFormState : Form.State {
         // We keep this static to maintain the values through application lifetime,
@@ -101,7 +103,7 @@ object ConnectionDialog {
             onCloseRequest = { GlobalState.connection.connectServerDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+                size = DpSize(CONNECT_SERVER_WINDOW_WIDTH, CONNECT_SERVER_WINDOW_HEIGHT)
             )
         ) {
             Submission(state = ConnectionFormState) {
@@ -249,5 +251,40 @@ object ConnectionDialog {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.disconnect() })
         ComponentSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+    }
+
+    @Composable
+    fun SelectDatabase() {
+        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
+        Dialog(
+            title = Label.SELECT_DATABASE,
+            onCloseRequest = { selectDBDialog.close() },
+            state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(SELECT_DB_WINDOW_WIDTH, SELECT_DB_WINDOW_HEIGHT)
+            )
+        ) {
+            Submission {
+                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown() }
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(text = Label.CLOSE, onClick = { selectDBDialog.close() })
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun DatabaseDropdown(modifier: Modifier = Modifier) {
+        Dropdown(
+            values = GlobalState.connection.current?.databaseList ?: emptyList(),
+            selected = GlobalState.connection.current?.getDatabase() ?: "",
+            onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
+            onSelection = { GlobalState.connection.current?.setDatabase(it) },
+            placeholder = Label.SELECT_DATABASE,
+            enabled = GlobalState.connection.isConnected(),
+            modifier = modifier
+        )
     }
 }
