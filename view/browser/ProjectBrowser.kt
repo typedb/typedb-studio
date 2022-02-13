@@ -32,6 +32,8 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
+import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
+import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -126,37 +128,53 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun directoryContextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
     ): List<List<ContextMenu.Item>> {
-        return listOf(listOf(
-            ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
-            ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {
-                GlobalState.project.createDirectoryDialog.open(itemState.item.asDirectory())
-            },
-            ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) {
-                GlobalState.project.createFileDialog.open(itemState.item.asDirectory())
-            },
-            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
-                GlobalState.confirmation.submit(
-                    title = Label.CONFIRM_DIRECTORY_DELETION,
-                    message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                    action = { itemState.item.delete(); onDelete() }
-                )
-            }
-        ))
+        return listOf(
+            listOf(
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
+            ),
+            listOf(
+                ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {
+                    GlobalState.project.createItemDialog.open(itemState.item.asDirectory(), DIRECTORY)
+                },
+                ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) {
+                    GlobalState.project.createItemDialog.open(itemState.item.asDirectory(), FILE)
+                },
+            ),
+            listOf(
+                ContextMenu.Item(Label.RENAME, Icon.Code.PEN) {
+                    GlobalState.project.renameItemDialog.open(itemState.item)
+                },
+                ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
+                    GlobalState.confirmation.submit(
+                        title = Label.CONFIRM_DIRECTORY_DELETION,
+                        message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                        action = { itemState.item.delete(); onDelete() }
+                    )
+                }
+            )
+        )
     }
 
     @OptIn(ExperimentalFoundationApi::class)
     private fun fileContextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
     ): List<List<ContextMenu.Item>> {
-        return listOf(listOf(
-            ContextMenu.Item(Label.OPEN, Icon.Code.BLOCK_QUOTE) { GlobalState.page.open(itemState.item.asFile()) },
-            ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) {
-                GlobalState.confirmation.submit(
-                    title = Label.CONFIRM_FILE_DELETION,
-                    message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                    action = { itemState.item.delete(); onDelete() }
-                )
-            }
-        ))
+        return listOf(
+            listOf(
+                ContextMenu.Item(Label.OPEN, Icon.Code.BLOCK_QUOTE) { GlobalState.page.open(itemState.item.asFile()) },
+            ),
+            listOf(
+                ContextMenu.Item(Label.RENAME, Icon.Code.PEN) {
+                    GlobalState.project.renameItemDialog.open(itemState.item)
+                },
+                ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) {
+                    GlobalState.confirmation.submit(
+                        title = Label.CONFIRM_FILE_DELETION,
+                        message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                        action = { itemState.item.delete(); onDelete() }
+                    )
+                }
+            )
+        )
     }
 }

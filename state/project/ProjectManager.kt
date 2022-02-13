@@ -36,18 +36,36 @@ import mu.KotlinLogging
 
 class ProjectManager(private val notificationMgr: NotificationManager) {
 
-    class ProjectItemDialog : DialogManager() {
+    class CreateItemDialog : DialogManager() {
 
-        var parentDirectory: Directory? by mutableStateOf(null)
+        var parent: Directory? by mutableStateOf(null)
+        var type: ProjectItem.Type? by mutableStateOf(null)
 
-        fun open(parent: Directory) {
+        fun open(parent: Directory, type: ProjectItem.Type) {
             isOpen = true
-            parentDirectory = parent
+            this.parent = parent
+            this.type = type
         }
 
         override fun close() {
             isOpen = false
-            parentDirectory = null
+            parent = null
+            type = null
+        }
+    }
+
+    class RenameItemDialog : DialogManager() {
+
+        var item: ProjectItem? by mutableStateOf(null)
+
+        fun open(item: ProjectItem) {
+            isOpen = true
+            this.item = item
+        }
+
+        override fun close() {
+            isOpen = false
+            item = null
         }
     }
 
@@ -65,8 +83,8 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
-    val createDirectoryDialog = ProjectItemDialog()
-    val createFileDialog = ProjectItemDialog()
+    val createItemDialog = CreateItemDialog()
+    val renameItemDialog = RenameItemDialog()
 
     fun tryOpenDirectory(newDir: String) {
         val path = Path.of(newDir)
@@ -95,7 +113,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     fun tryCreateFile(parent: Directory, newFileName: String) {
         try {
             parent.createFile(newFileName)
-            createFileDialog.close()
+            createItemDialog.close()
             onContentChange?.let { it() }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, parent.path.resolve(newFileName))
@@ -105,7 +123,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
         try {
             parent.createDirectory(newDirectoryName)
-            createDirectoryDialog.close()
+            createItemDialog.close()
             onContentChange?.let { it() }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))

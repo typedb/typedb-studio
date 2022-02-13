@@ -130,8 +130,7 @@ object Studio {
             NotificationArea.Layout()
             if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
             if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
-            if (GlobalState.project.createDirectoryDialog.isOpen) ProjectDialog.CreateDirectory()
-            if (GlobalState.project.createFileDialog.isOpen) ProjectDialog.CreateFile()
+            if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
             if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
         }
     }

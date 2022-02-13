@@ -42,6 +42,8 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
 import com.vaticle.typedb.studio.state.project.Directory
+import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
+import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -157,57 +159,62 @@ object ProjectDialog {
         TextButton(text = Label.OPEN, enabled = OpenProjectForm.isValid(), onClick = { OpenProjectForm.trySubmit() })
     }
 
-    private abstract class CreateProjectItemForm(
-        val parent: Directory, initNewName: String, val onSubmit: (Directory, String) -> Unit
-    ) : Form.State {
+    private class CreateProjectItemForm(initName: String, val onSubmit: (Directory, String) -> Unit) : Form.State {
 
-        var newItemName: String by mutableStateOf(initNewName)
+        val parent: Directory = GlobalState.project.createItemDialog.parent!!
+        var itemName: String by mutableStateOf(initName)
 
         override fun isValid(): Boolean {
-            return newItemName.isNotBlank()
+            return itemName.isNotBlank()
         }
 
         override fun trySubmit() {
-            assert(newItemName.isNotBlank())
-            onSubmit(parent, newItemName)
+            assert(itemName.isNotBlank())
+            onSubmit(parent, itemName)
         }
     }
 
-    private class CreateDirectoryForm : CreateProjectItemForm(
-        GlobalState.project.createDirectoryDialog.parentDirectory!!,
-        GlobalState.project.createDirectoryDialog.parentDirectory!!.nexUntitledDirName(),
-        { parent, newItemName -> GlobalState.project.tryCreateDirectory(parent, newItemName) }
-    )
-
-    private class CreateFileForm : CreateProjectItemForm(
-        GlobalState.project.createFileDialog.parentDirectory!!,
-        GlobalState.project.createFileDialog.parentDirectory!!.nextUntitledFileName(),
-        { parent, newItemName -> GlobalState.project.tryCreateFile(parent, newItemName) }
-    )
+    @Composable
+    fun CreateProjectItem() {
+        when (GlobalState.project.createItemDialog.type!!) {
+            DIRECTORY -> CreateDirectory()
+            FILE -> CreateFile()
+        }
+    }
 
     @Composable
-    fun CreateDirectory() {
-        CreateProjecItem(
-            form = remember { CreateDirectoryForm() },
+    private fun CreateDirectory() {
+        val form = remember {
+            CreateProjectItemForm(GlobalState.project.createItemDialog.parent!!.nexUntitledDirName()) { p, n ->
+                GlobalState.project.tryCreateDirectory(p, n)
+            }
+        }
+        CreateProjectItem(
+            form = form,
             title = Label.CREATE_DIRECTORY,
-            message = Sentence.CREATE_DIRECTORY.format(remember { CreateDirectoryForm() }.parent)
-        ) { GlobalState.project.createDirectoryDialog.close() }
+            message = Sentence.CREATE_DIRECTORY.format(form.parent)
+        )
     }
 
     @Composable
-    fun CreateFile() {
-        CreateProjecItem(
-            form = remember { CreateFileForm() },
+    private fun CreateFile() {
+        val form = remember {
+            CreateProjectItemForm(GlobalState.project.createItemDialog.parent!!.nextUntitledFileName()) { p, n ->
+                GlobalState.project.tryCreateFile(p, n)
+            }
+        }
+        CreateProjectItem(
+            form = form,
             title = Label.CREATE_FILE,
-            message = Sentence.CREATE_FILE.format(remember { CreateFileForm() }.parent)
-        ) { GlobalState.project.createFileDialog.close() }
+            message = Sentence.CREATE_FILE.format(form.parent)
+        )
     }
 
     @Composable
-    private fun CreateProjecItem(form: CreateProjectItemForm, title: String, message: String, onClose: () -> Unit) {
+    private fun CreateProjectItem(form: CreateProjectItemForm, title: String, message: String) {
         Dialog(
             title = title,
-            onCloseRequest = onClose,
+            onCloseRequest = { GlobalState.project.createItemDialog.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(CREATE_PROJECT_ITEM_WINDOW_WIDTH, CREATE_PROJECT_ITEM_WINDOW_HEIGHT)
@@ -215,11 +222,11 @@ object ProjectDialog {
         ) {
             Submission(state = form) {
                 Form.Text(value = message, softWrap = true)
-                CreateProjectItemField(form.newItemName) { form.newItemName = it }
+                CreateProjectItemField(form.itemName) { form.itemName = it }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    CreateProjectItemButtons(form, onClose)
+                    CreateProjectItemButtons(form) { GlobalState.project.createItemDialog.close() }
                 }
             }
         }
