@@ -41,6 +41,7 @@ import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
+import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -61,8 +62,8 @@ object ProjectDialog {
 
     private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
     private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
-    private val CREATE_ITEM_WINDOW_WIDTH = 500.dp
-    private val CREATE_ITEM_WINDOW_HEIGHT = 200.dp
+    private val CREATE_PROJECT_ITEM_WINDOW_WIDTH = 500.dp
+    private val CREATE_PROJECT_ITEM_WINDOW_HEIGHT = 200.dp
 
     private object OpenProjectForm : Form.State {
 
@@ -156,92 +157,69 @@ object ProjectDialog {
         TextButton(text = Label.OPEN, enabled = OpenProjectForm.isValid(), onClick = { OpenProjectForm.trySubmit() })
     }
 
-    private class CreateDirectoryForm : Form.State {
+    private abstract class CreateProjectItemForm(
+        val parent: Directory, initNewName: String, val onSubmit: (Directory, String) -> Unit
+    ) : Form.State {
 
-        val parent = GlobalState.project.createDirectoryDialog.parentDirectory!!
-        var newDirectoryName: String by mutableStateOf(parent.nexUntitledDirName())
+        var newItemName: String by mutableStateOf(initNewName)
 
         override fun isValid(): Boolean {
-            return newDirectoryName.isNotBlank()
+            return newItemName.isNotBlank()
         }
 
         override fun trySubmit() {
-            assert(newDirectoryName.isNotBlank())
-            GlobalState.project.tryCreateDirectory(parent, newDirectoryName)
+            assert(newItemName.isNotBlank())
+            onSubmit(parent, newItemName)
         }
     }
+
+    private class CreateDirectoryForm : CreateProjectItemForm(
+        GlobalState.project.createDirectoryDialog.parentDirectory!!,
+        GlobalState.project.createDirectoryDialog.parentDirectory!!.nexUntitledDirName(),
+        { parent, newItemName -> GlobalState.project.tryCreateDirectory(parent, newItemName) }
+    )
+
+    private class CreateFileForm : CreateProjectItemForm(
+        GlobalState.project.createFileDialog.parentDirectory!!,
+        GlobalState.project.createFileDialog.parentDirectory!!.nextUntitledFileName(),
+        { parent, newItemName -> GlobalState.project.tryCreateFile(parent, newItemName) }
+    )
 
     @Composable
     fun CreateDirectory() {
-        val form = remember { CreateDirectoryForm() }
-        Dialog(
+        CreateProjecItem(
+            form = remember { CreateDirectoryForm() },
             title = Label.CREATE_DIRECTORY,
-            onCloseRequest = { GlobalState.project.createDirectoryDialog.close() },
-            state = rememberDialogState(
-                position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(CREATE_ITEM_WINDOW_WIDTH, CREATE_ITEM_WINDOW_HEIGHT)
-            )
-        ) {
-            Submission(state = form) {
-                Form.Text(value = Sentence.CREATE_DIRECTORY.format(form.parent), softWrap = true)
-                CreateDirectoryField(form)
-                Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    CreateItemButtons(form) { GlobalState.project.createDirectoryDialog.close() }
-                }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun CreateDirectoryField(form: CreateDirectoryForm) {
-        val focusReq = FocusRequester()
-        Field(label = Label.DIRECTORY_NAME) {
-            TextInput(
-                value = form.newDirectoryName,
-                placeholder = "",
-                onValueChange = { form.newDirectoryName = it },
-                modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
-            )
-        }
-        LaunchedEffect(form) { focusReq.requestFocus() }
-    }
-
-    private class CreateFileForm : Form.State {
-
-        val parent = GlobalState.project.createFileDialog.parentDirectory!!
-        var newFileName: String by mutableStateOf(parent.nextUntitledFileName())
-
-        override fun isValid(): Boolean {
-            return newFileName.isNotBlank()
-        }
-
-        override fun trySubmit() {
-            assert(newFileName.isNotBlank())
-            GlobalState.project.tryCreateFile(parent, newFileName)
-        }
+            message = Sentence.CREATE_DIRECTORY.format(remember { CreateDirectoryForm() }.parent)
+        ) { GlobalState.project.createDirectoryDialog.close() }
     }
 
     @Composable
     fun CreateFile() {
-        val form = remember { CreateFileForm() }
-        Dialog(
+        CreateProjecItem(
+            form = remember { CreateFileForm() },
             title = Label.CREATE_FILE,
-            onCloseRequest = { GlobalState.project.createFileDialog.close() },
+            message = Sentence.CREATE_FILE.format(remember { CreateFileForm() }.parent)
+        ) { GlobalState.project.createFileDialog.close() }
+    }
+
+    @Composable
+    private fun CreateProjecItem(form: CreateProjectItemForm, title: String, message: String, onClose: () -> Unit) {
+        Dialog(
+            title = title,
+            onCloseRequest = onClose,
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(CREATE_ITEM_WINDOW_WIDTH, CREATE_ITEM_WINDOW_HEIGHT)
+                size = DpSize(CREATE_PROJECT_ITEM_WINDOW_WIDTH, CREATE_PROJECT_ITEM_WINDOW_HEIGHT)
             )
         ) {
             Submission(state = form) {
-                Form.Text(value = Sentence.CREATE_FILE.format(form.parent), softWrap = true)
-                CreateFileField(form)
+                Form.Text(value = message, softWrap = true)
+                CreateProjectItemField(form.newItemName) { form.newItemName = it }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    CreateItemButtons(form) { GlobalState.project.createFileDialog.close() }
+                    CreateProjectItemButtons(form, onClose)
                 }
             }
         }
@@ -249,22 +227,22 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun CreateFileField(form: CreateFileForm) {
+    private fun CreateProjectItemField(text: String, onChange: (String) -> Unit) {
         val focusReq = FocusRequester()
         Field(label = Label.FILE_NAME) {
             TextInput(
-                value = form.newFileName,
+                value = text,
                 placeholder = "",
-                onValueChange = { form.newFileName = it },
+                onValueChange = onChange,
                 modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
             )
         }
-        LaunchedEffect(form) { focusReq.requestFocus() }
+        LaunchedEffect(Unit) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun CreateItemButtons(form: Form.State, onCancel: () -> Unit) {
+    private fun CreateProjectItemButtons(form: Form.State, onCancel: () -> Unit) {
         TextButton(text = Label.CANCEL, onClick = onCancel)
         ComponentSpacer()
         TextButton(text = Label.CREATE, enabled = form.isValid(), onClick = { form.trySubmit() })
