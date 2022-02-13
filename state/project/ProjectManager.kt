@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
@@ -111,22 +110,16 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     }
 
     fun tryCreateFile(parent: Directory, newFileName: String) {
-        try {
-            parent.createFile(newFileName)
+        parent.createFile(newFileName)?.let {
             createItemDialog.close()
             onContentChange?.let { it() }
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, parent.path.resolve(newFileName))
         }
     }
 
     fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
-        try {
-            parent.createDirectory(newDirectoryName)
+        parent.createDirectory(newDirectoryName)?.let {
             createItemDialog.close()
-            onContentChange?.let { it() }
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
+            onContentChange?.let { fn -> fn() }
         }
     }
 

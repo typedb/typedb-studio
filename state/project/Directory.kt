@@ -18,7 +18,11 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
@@ -27,6 +31,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
 import kotlin.io.path.deleteExisting
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
@@ -100,15 +105,33 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
         return entries.any { it.name == newName }
     }
 
-    internal fun createDirectory(name: String): Directory {
-        path.resolve(name).createDirectory()
-        reloadEntries()
-        return entries.first { it.name == name }.asDirectory()
+    internal fun createDirectory(name: String): Directory? {
+        return createItem(
+            newPath = path.resolve(name),
+            failureMessage = FAILED_TO_CREATE_DIRECTORY,
+            createFn = { it.createDirectory() }
+        )?.asDirectory()
     }
 
-    internal fun createFile(name: String): File {
-        path.resolve(name).createFile()
-        reloadEntries()
-        return entries.first { it.name == name }.asFile()
+    internal fun createFile(name: String): File? {
+        return createItem(
+            newPath = path.resolve(name),
+            failureMessage = FAILED_TO_CREATE_FILE,
+            createFn = { it.createFile() }
+        )?.asFile()
+    }
+
+    private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): ProjectItem? {
+        return if (newPath.exists()) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            createFn(newPath)
+            reloadEntries()
+            entries.first { it.name == newPath.name }
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, failureMessage, newPath)
+            null
+        }
     }
 }
