@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -194,14 +197,16 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun CreateDirectoryField(form: CreateDirectoryForm) {
+        val focusReq = FocusRequester()
         Field(label = Label.DIRECTORY_NAME) {
             TextInput(
                 value = form.newDirectoryName,
                 placeholder = "",
                 onValueChange = { form.newDirectoryName = it },
-                modifier = Modifier.fillMaxHeight(),
+                modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
             )
         }
+        LaunchedEffect(form) { focusReq.requestFocus() }
     }
 
     private class CreateFileForm : Form.State {
@@ -245,14 +250,16 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun CreateFileField(form: CreateFileForm) {
+        val focusReq = FocusRequester()
         Field(label = Label.FILE_NAME) {
             TextInput(
                 value = form.newFileName,
                 placeholder = "",
                 onValueChange = { form.newFileName = it },
-                modifier = Modifier.fillMaxHeight(),
+                modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
             )
         }
+        LaunchedEffect(form) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
