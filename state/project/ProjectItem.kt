@@ -18,12 +18,16 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.moveTo
 import kotlin.io.path.readSymbolicLink
+import mu.KotlinLogging
 
 sealed class ProjectItem constructor(
     val projectItemType: Type,
@@ -35,6 +39,10 @@ sealed class ProjectItem constructor(
     enum class Type(val index: Int) {
         DIRECTORY(0),
         FILE(1);
+    }
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     private val hash = Objects.hash(path, parent)
@@ -52,6 +60,20 @@ sealed class ProjectItem constructor(
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
     abstract fun delete()
+
+    internal fun tryRename(newName: String): Boolean {
+        val newPath = path.resolveSibling(newName)
+        return if (parent?.contains(newName) == true) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE, newPath)
+            false
+        } else try {
+            path.moveTo(newPath)
+            true
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            false
+        }
+    }
 
     override fun toString(): String {
         return path.toString()

@@ -95,6 +95,11 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
         return "$UNTITLED$counter.$format"
     }
 
+    internal fun contains(newName: String): Boolean {
+        reloadEntries()
+        return entries.any { it.name == newName }
+    }
+
     internal fun createDirectory(name: String): Directory {
         path.resolve(name).createDirectory()
         reloadEntries()

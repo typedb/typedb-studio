@@ -30,5 +30,9 @@ object Sentence {
         "Are you sure you would like to delete this directory and all of its content?"
     const val CONFIRM_FILE_DELETION =
         "Are you sure you would like to delete this file?"
+    const val RENAME_DIRECTORY =
+        "Rename the directory at %s."
+    const val RENAME_FILE =
+        "Rename the file at %s."
 
 }

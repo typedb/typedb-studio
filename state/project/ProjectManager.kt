@@ -129,4 +129,11 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
         }
     }
+
+    fun tryRename(item: ProjectItem, newName: String) {
+        if (item.tryRename(newName)) {
+            renameItemDialog.close()
+            onContentChange?.let { it() }
+        }
+    }
 }

@@ -107,10 +107,14 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(8, "Directory %s is not deletable.")
             val FILE_NOT_DELETABLE =
                 Project(9, "File %s is not deletable.")
+            val FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE =
+                Project(10, "Failed to create or rename file to %s, as it already exists.")
             val FAILED_TO_CREATE_DIRECTORY =
-                Project(10, "Failed to create new directory at %s.")
+                Project(11, "Failed to create new directory at %s.")
             val FAILED_TO_CREATE_FILE =
-                Project(11, "Failed to create new file at %s")
+                Project(12, "Failed to create new file at %s.")
+            val FAILED_TO_RENAME_FILE =
+                Project(13, "Failed to rename file to %s.")
         }
     }
 }
