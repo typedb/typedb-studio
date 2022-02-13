@@ -63,6 +63,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
             onProjectChange?.let { it(_current!!) }
         }
     var onProjectChange: ((Project) -> Unit)? = null
+    var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createDirectoryDialog = ProjectItemDialog()
     val createFileDialog = ProjectItemDialog()
@@ -82,7 +83,9 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         val root = current!!.directory
         val newFileName = root.nextUntitledFileName()
         return try {
-            root.createFile(newFileName)
+            val newFile = root.createFile(newFileName)
+            onContentChange?.let { it() }
+            newFile
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, root.path.resolve(newFileName))
             null
@@ -93,6 +96,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         try {
             parent.createFile(newFileName)
             createFileDialog.close()
+            onContentChange?.let { it() }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, parent.path.resolve(newFileName))
         }
@@ -102,6 +106,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
         try {
             parent.createDirectory(newDirectoryName)
             createDirectoryDialog.close()
+            onContentChange?.let { it() }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DIRECTORY, parent.path.resolve(newDirectoryName))
         }

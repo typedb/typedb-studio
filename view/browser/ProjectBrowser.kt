@@ -67,6 +67,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                 liveUpdate = true
             ) { projectItemOpen(it) }
             GlobalState.project.onProjectChange = { state.replaceContainer(it) }
+            GlobalState.project.onContentChange = { state.reloadEntries() }
             buttons = state.buttons
             Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) }) { item, onDelete ->
                 contextMenuItems(item, onDelete)

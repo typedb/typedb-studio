@@ -325,7 +325,7 @@ object Navigator {
             recomputeList()
         }
 
-        internal fun reloadEntries() {
+        fun reloadEntries() {
             container.reloadEntries()
             recomputeList()
         }
