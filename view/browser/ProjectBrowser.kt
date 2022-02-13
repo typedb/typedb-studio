@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Icon.Code.FOLDER_PLUS
 import com.vaticle.typedb.studio.view.common.component.Navigator
 import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -128,16 +129,19 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun directoryContextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
     ): List<List<ContextMenu.Item>> {
+        val createItemDialog = GlobalState.project.createItemDialog
+        val directory = itemState.item.asDirectory()
+        val state = itemState.asExpandable()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.asExpandable().toggle() },
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { state.toggle() },
             ),
             listOf(
-                ContextMenu.Item(Label.CREATE_DIRECTORY, Icon.Code.FOLDER_PLUS) {
-                    GlobalState.project.createItemDialog.open(itemState.item.asDirectory(), DIRECTORY)
+                ContextMenu.Item(Label.CREATE_DIRECTORY, FOLDER_PLUS) {
+                    createItemDialog.open(directory, DIRECTORY) { state.expand() }
                 },
                 ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) {
-                    GlobalState.project.createItemDialog.open(itemState.item.asDirectory(), FILE)
+                    createItemDialog.open(directory, FILE) { state.expand() }
                 },
             ),
             listOf(

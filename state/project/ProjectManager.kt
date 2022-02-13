@@ -39,17 +39,20 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
 
         var parent: Directory? by mutableStateOf(null)
         var type: ProjectItem.Type? by mutableStateOf(null)
+        var onSuccess: (() -> Unit)? by mutableStateOf(null)
 
-        fun open(parent: Directory, type: ProjectItem.Type) {
+        fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
             isOpen = true
             this.parent = parent
             this.type = type
+            this.onSuccess = onSuccess
         }
 
         override fun close() {
             isOpen = false
             parent = null
             type = null
+            onSuccess = null
         }
     }
 
@@ -110,14 +113,16 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     }
 
     fun tryCreateFile(parent: Directory, newFileName: String) {
-        parent.createFile(newFileName)?.let {
-            createItemDialog.close()
-            onContentChange?.let { it() }
-        }
+        tryCreateItem { parent.createFile(newFileName) }
     }
 
     fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
-        parent.createDirectory(newDirectoryName)?.let {
+        tryCreateItem { parent.createDirectory(newDirectoryName) }
+    }
+
+    private fun tryCreateItem(createFn: () -> ProjectItem?) {
+        createFn()?.let {
+            createItemDialog.onSuccess?.let { fn -> fn() }
             createItemDialog.close()
             onContentChange?.let { fn -> fn() }
         }
