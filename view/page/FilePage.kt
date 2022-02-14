@@ -44,7 +44,7 @@ class FilePage private constructor(val file: File, val editorState: TextEditor.S
     }
 
     @Composable
-    override fun Layout(onClose: () -> Unit) {
-        TextEditor.Area(state = editorState, modifier = Modifier.fillMaxSize(), onClose = onClose)
+    override fun Layout() {
+        TextEditor.Area(state = editorState, modifier = Modifier.fillMaxSize())
     }
 }

@@ -98,6 +98,7 @@ object PageArea {
     fun Area() {
         val density = LocalDensity.current.density
         val state = remember { AreaState() }
+        (state.cachedPages.keys - GlobalState.page.openedPages.toSet()).forEach { state.cachedPages.remove(it) }
         Column(modifier = Modifier.fillMaxWidth().onKeyEvent { state.handleKeyEvent(it) }) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 GlobalState.page.openedPages.forEach {
@@ -106,11 +107,7 @@ object PageArea {
                 NewTabButton()
             }
             Separator.Horizontal()
-            Row(Modifier.fillMaxWidth()) {
-                GlobalState.page.selectedPage?.let {
-                    state.cachedPages[it]?.Layout { state.closePage(it) }
-                }
-            }
+            Row(Modifier.fillMaxWidth()) { GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() } }
         }
     }
 

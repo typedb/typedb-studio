@@ -59,6 +59,7 @@ sealed class ProjectItem constructor(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
+    abstract fun close()
     abstract fun delete()
 
     internal fun tryRename(newName: String): Boolean {

@@ -38,6 +38,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.deleteExisting
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
@@ -151,6 +152,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
                         isWritable = path.isWritable()
                         onPermissionChange?.let { it(this@File) }
                     }
+                    if (!path.exists() || !path.isReadable()) onClose?.let { it() }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
                 } while (watchFileSystem)
             } catch (e: CancellationException) {
@@ -178,6 +180,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
             onUpdate = null
             onPermissionChange = null
             onClose?.let { it() }
+            onClose = null
         }
     }
 

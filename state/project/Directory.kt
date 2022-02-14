@@ -65,24 +65,13 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
         if (new != old) {
             val deleted = old - new
             val added = new - old
+            entries.filter { deleted.contains(it.path) }.forEach { it.close() }
             entries = (entries.filter { !deleted.contains(it.path) } + added.map { projectItemOf(it) }).sorted()
         }
     }
 
     private fun projectItemOf(it: Path): ProjectItem {
         return if (it.isDirectory()) Directory(it, this, notificationMgr) else File(it, this, notificationMgr)
-    }
-
-    override fun delete() {
-        try {
-            reloadEntries()
-            entries.filter { it.isDirectory }.forEach { it.delete() }
-            entries.filter { it.isFile }.forEach { it.delete() }
-            entries = emptyList()
-            path.deleteExisting()
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
-        }
     }
 
     fun nexUntitledDirName(): String {
@@ -132,6 +121,20 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, failureMessage, newPath)
             null
+        }
+    }
+
+    override fun close() {}
+
+    override fun delete() {
+        try {
+            reloadEntries()
+            entries.filter { it.isDirectory }.forEach { it.delete() }
+            entries.filter { it.isFile }.forEach { it.delete() }
+            entries = emptyList()
+            path.deleteExisting()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
         }
     }
 }

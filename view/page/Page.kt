@@ -40,5 +40,5 @@ abstract class Page(val state: Pageable) {
     }
 
     @Composable
-    abstract fun Layout(onClose: () -> Unit)
+    abstract fun Layout()
 }

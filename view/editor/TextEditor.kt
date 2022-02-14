@@ -133,13 +133,11 @@ object TextEditor {
         file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
         target: InputTarget, toolbar: TextToolbar.State, handler: EventHandler, editor: State
     ) {
-        file.onPermissionChange { f ->
-            if (f.isReadable) {
-                val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
-                toolbar.processor = newProcessor
-                handler.processor = newProcessor
-                editor.processor = newProcessor
-            } else editor.onClose?.let { it() }
+        file.onPermissionChange {
+            val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
+            toolbar.processor = newProcessor
+            handler.processor = newProcessor
+            editor.processor = newProcessor
         }
     }
 
@@ -162,7 +160,6 @@ object TextEditor {
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal val showToolbar get() = toolbar.showToolbar
-        internal var onClose: (() -> Unit)? = null
 
         internal var density: Float
             get() = target.density
@@ -181,9 +178,8 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Area(state: State, modifier: Modifier = Modifier, onClose: () -> Unit) {
+    fun Area(state: State, modifier: Modifier = Modifier) {
         if (state.content.isEmpty()) return
-        state.onClose = onClose
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
