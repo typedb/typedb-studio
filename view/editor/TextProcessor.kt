@@ -62,6 +62,7 @@ internal interface TextProcessor {
     fun outdentTab()
     fun undo()
     fun redo()
+    fun reset()
 
     companion object {
 
@@ -94,6 +95,7 @@ internal interface TextProcessor {
         override fun outdentTab() = displayWarning()
         override fun undo() = displayWarning()
         override fun redo() = displayWarning()
+        override fun reset() {}
 
         private fun displayWarning() {
             GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, path)
@@ -127,6 +129,14 @@ internal interface TextProcessor {
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+        override fun reset() {
+            version = 0
+            undoStack.clear()
+            redoStack.clear()
+            changeQueue.clear()
+            changeCount.set(0)
+        }
 
         override fun replaceCurrentFound(text: String) {
             if (!finder.hasMatches) return

@@ -112,16 +112,20 @@ object TextEditor {
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
         val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
-        registerOnUpdate(file, content, rendering)
+        registerOnUpdate(file, content, rendering, processor)
         registerOnPermissionChange(file, content, rendering, finder, target, toolbar, handler, editor)
         return editor
     }
 
-    private fun registerOnUpdate(file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering) {
+    private fun registerOnUpdate(
+        file: File, content: SnapshotStateList<AnnotatedString>,
+        rendering: TextRendering, processor: TextProcessor
+    ) {
         file.onUpdate { f: File ->
             content.clear()
             content.addAll(SyntaxHighlighter.readFile(f))
             rendering.reinitialize(content.size)
+            processor.reset()
         }
     }
 
