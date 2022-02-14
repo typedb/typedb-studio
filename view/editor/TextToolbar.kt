@@ -180,24 +180,19 @@ object TextToolbar {
 
         internal fun handle(event: KeyEvent, focusManager: FocusManager, inputType: InputType): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)?.let {
-                when (it) {
-                    is KeyMapper.EditorCommand -> execute(it, focusManager, inputType)
-                    else -> false
-                }
-            } ?: false
+            else KeyMapper.CURRENT.map(event)?.let { execute(it, focusManager, inputType) } ?: false
         }
 
         private fun execute(
-            command: KeyMapper.EditorCommand,
+            command: KeyMapper.Command,
             focusManager: FocusManager,
             inputType: InputType
         ): Boolean {
             return when (command) {
-                KeyMapper.EditorCommand.TAB -> moveFocusNext(focusManager)
-                KeyMapper.EditorCommand.ENTER -> onEnter(inputType)
-                KeyMapper.EditorCommand.ENTER_SHIFT -> onEnterShift(inputType)
-                KeyMapper.EditorCommand.ENTER_SHIFT_MOD -> insertNewLine(inputType)
+                KeyMapper.Command.TAB -> moveFocusNext(focusManager)
+                KeyMapper.Command.ENTER -> onEnter(inputType)
+                KeyMapper.Command.ENTER_SHIFT -> onEnterShift(inputType)
+                KeyMapper.Command.ENTER_SHIFT_MOD -> insertNewLine(inputType)
                 else -> false
             }
         }

@@ -29,59 +29,58 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.view.common.KeyMapper
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.COPY
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.CUT
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_END_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_NEXT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_NEXT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_PREV_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_PREV_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.DELETE_START_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.EMOJI_WINDOW
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.ENTER
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.ENTER_SHIFT
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.ENTER_SHIFT_MOD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_DOWN_PAGE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_END
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_END_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_HOME
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_LEFT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_NEXT_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_RIGHT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_START_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_UP_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.MOVE_CURSOR_UP_PAGE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.PASTE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.REDO
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_ALL
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_DOWN_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_DOWN_PAGE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_END
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_END_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_HOME
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_LEFT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_LEFT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_LEFT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_NEXT_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_NONE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_RIGHT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_RIGHT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_START_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_UP_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.SELECT_UP_PAGE
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.TAB
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.TAB_SHIFT
-import com.vaticle.typedb.studio.view.common.KeyMapper.EditorCommand.UNDO
-import com.vaticle.typedb.studio.view.common.KeyMapper.WindowCommand
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.COPY
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.CUT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_END_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_NEXT_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_NEXT_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_PREV_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_PREV_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_START_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT_MOD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_DOWN_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_DOWN_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_END_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_HOME
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_NEXT_PARAGRAPH
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_PREV_PARAGRAPH
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_START_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_UP_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_UP_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.PASTE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REDO
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_ALL
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_DOWN_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_DOWN_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_END_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_HOME
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_NEXT_PARAGRAPH
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_NONE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PREV_PARAGRAPH
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_CHAR
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_WORD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_START_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_UP_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_UP_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB_SHIFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -99,36 +98,16 @@ internal class EventHandler(
         return if (event.type == KeyEventType.KeyUp) false
         else when {
             event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
-            else -> KeyMapper.CURRENT.map(event)?.let {
-                when (it) {
-                    is WindowCommand -> execute(it)
-                    is EditorCommand -> execute(it)
-                }
-            } ?: false
+            else -> KeyMapper.CURRENT.map(event)?.let { executeEditorCommand(it) } ?: false
         }
     }
 
     internal fun handleToolbarEvent(event: KeyEvent): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
-        else KeyMapper.CURRENT.map(event)?.let {
-            when (it) {
-                is WindowCommand -> execute(it)
-                else -> false
-            }
-        } ?: false
+        else KeyMapper.CURRENT.map(event)?.let { executeWindowCommand(it) } ?: false
     }
 
-    private fun execute(command: WindowCommand): Boolean {
-        when (command) {
-            WindowCommand.FIND -> toolbar.showFinder()
-            WindowCommand.REPLACE -> toolbar.showReplacer()
-            WindowCommand.ESCAPE -> target.selection?.let { target.selectNone() } ?: hideToolbar()
-            else -> return false
-        }
-        return true
-    }
-
-    private fun execute(command: EditorCommand): Boolean {
+    private fun executeEditorCommand(command: Command): Boolean {
         when (command) {
             MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
             MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
@@ -182,6 +161,17 @@ internal class EventHandler(
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
             }
+            else -> return executeWindowCommand(command)
+        }
+        return true
+    }
+
+    private fun executeWindowCommand(command: Command): Boolean {
+        when (command) {
+            Command.FIND -> toolbar.showFinder()
+            Command.REPLACE -> toolbar.showReplacer()
+            Command.ESCAPE -> target.selection?.let { target.selectNone() } ?: hideToolbar()
+            else -> return false
         }
         return true
     }

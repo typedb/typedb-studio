@@ -39,16 +39,11 @@ interface KeyMapper {
         }
     }
 
-    sealed interface Command
-
-    enum class WindowCommand : Command {
-        FIND,
-        REPLACE,
-        CLOSE,
-        ESCAPE,
-    }
-
-    enum class EditorCommand(val editsText: Boolean) : Command { // TODO: do we need 'editsText' boolean?
+    enum class Command(val editsText: Boolean) { // TODO: do we need 'editsText' boolean?
+        FIND(false),
+        REPLACE(false),
+        CLOSE(false),
+        ESCAPE(false),
         MOVE_CURSOR_LEFT_CHAR(false),
         MOVE_CURSOR_RIGHT_CHAR(false),
         MOVE_CURSOR_RIGHT_WORD(false),
@@ -156,56 +151,56 @@ interface KeyMapper {
             return when {
                 shortcutModifier(event) && event.isShiftPressed ->
                     when (event.key) {
-                        Keys.Z -> EditorCommand.REDO
-                        Keys.Enter -> EditorCommand.ENTER_SHIFT_MOD
+                        Keys.Z -> Command.REDO
+                        Keys.Enter -> Command.ENTER_SHIFT_MOD
                         else -> null
                     }
                 shortcutModifier(event) ->
                     when (event.key) {
-                        Keys.C, Keys.Insert -> EditorCommand.COPY
-                        Keys.V -> EditorCommand.PASTE
-                        Keys.X -> EditorCommand.CUT
-                        Keys.A -> EditorCommand.SELECT_ALL
-                        Keys.Z -> EditorCommand.UNDO
-                        Keys.F -> WindowCommand.FIND
-                        Keys.R -> WindowCommand.REPLACE
-                        Keys.W -> WindowCommand.CLOSE
+                        Keys.C, Keys.Insert -> Command.COPY
+                        Keys.V -> Command.PASTE
+                        Keys.X -> Command.CUT
+                        Keys.A -> Command.SELECT_ALL
+                        Keys.Z -> Command.UNDO
+                        Keys.F -> Command.FIND
+                        Keys.R -> Command.REPLACE
+                        Keys.W -> Command.CLOSE
                         else -> null
                     }
                 event.isCtrlPressed -> null
                 event.isShiftPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.SELECT_LEFT_CHAR
-                        Keys.DirectionRight -> EditorCommand.SELECT_RIGHT_CHAR
-                        Keys.DirectionUp -> EditorCommand.SELECT_UP_LINE
-                        Keys.DirectionDown -> EditorCommand.SELECT_DOWN_LINE
-                        Keys.PageUp -> EditorCommand.SELECT_UP_PAGE
-                        Keys.PageDown -> EditorCommand.SELECT_DOWN_PAGE
-                        Keys.MoveHome -> EditorCommand.SELECT_START_LINE
-                        Keys.MoveEnd -> EditorCommand.SELECT_END_LINE
-                        Keys.Insert -> EditorCommand.PASTE
-                        Keys.Tab -> EditorCommand.TAB_SHIFT
-                        Keys.Enter -> EditorCommand.ENTER_SHIFT
+                        Keys.DirectionLeft -> Command.SELECT_LEFT_CHAR
+                        Keys.DirectionRight -> Command.SELECT_RIGHT_CHAR
+                        Keys.DirectionUp -> Command.SELECT_UP_LINE
+                        Keys.DirectionDown -> Command.SELECT_DOWN_LINE
+                        Keys.PageUp -> Command.SELECT_UP_PAGE
+                        Keys.PageDown -> Command.SELECT_DOWN_PAGE
+                        Keys.MoveHome -> Command.SELECT_START_LINE
+                        Keys.MoveEnd -> Command.SELECT_END_LINE
+                        Keys.Insert -> Command.PASTE
+                        Keys.Tab -> Command.TAB_SHIFT
+                        Keys.Enter -> Command.ENTER_SHIFT
                         else -> null
                     }
                 else ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.MOVE_CURSOR_LEFT_CHAR
-                        Keys.DirectionRight -> EditorCommand.MOVE_CURSOR_RIGHT_CHAR
-                        Keys.DirectionUp -> EditorCommand.MOVE_CURSOR_UP_LINE
-                        Keys.DirectionDown -> EditorCommand.MOVE_CURSOR_DOWN_LINE
-                        Keys.PageUp -> EditorCommand.MOVE_CURSOR_UP_PAGE
-                        Keys.PageDown -> EditorCommand.MOVE_CURSOR_DOWN_PAGE
-                        Keys.MoveHome -> EditorCommand.MOVE_CURSOR_START_LINE
-                        Keys.MoveEnd -> EditorCommand.MOVE_CURSOR_END_LINE
-                        Keys.Enter -> EditorCommand.ENTER
-                        Keys.Backspace -> EditorCommand.DELETE_PREV_CHAR
-                        Keys.Delete -> EditorCommand.DELETE_NEXT_CHAR
-                        Keys.Paste -> EditorCommand.PASTE
-                        Keys.Cut -> EditorCommand.CUT
-                        Keys.Tab -> EditorCommand.TAB
-                        Keys.Copy -> EditorCommand.COPY
-                        Keys.Escape -> WindowCommand.ESCAPE
+                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_CHAR
+                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_CHAR
+                        Keys.DirectionUp -> Command.MOVE_CURSOR_UP_LINE
+                        Keys.DirectionDown -> Command.MOVE_CURSOR_DOWN_LINE
+                        Keys.PageUp -> Command.MOVE_CURSOR_UP_PAGE
+                        Keys.PageDown -> Command.MOVE_CURSOR_DOWN_PAGE
+                        Keys.MoveHome -> Command.MOVE_CURSOR_START_LINE
+                        Keys.MoveEnd -> Command.MOVE_CURSOR_END_LINE
+                        Keys.Enter -> Command.ENTER
+                        Keys.Backspace -> Command.DELETE_PREV_CHAR
+                        Keys.Delete -> Command.DELETE_NEXT_CHAR
+                        Keys.Paste -> Command.PASTE
+                        Keys.Cut -> Command.CUT
+                        Keys.Tab -> Command.TAB
+                        Keys.Copy -> Command.COPY
+                        Keys.Escape -> Command.ESCAPE
                         else -> null
                     }
             }
@@ -217,28 +212,28 @@ interface KeyMapper {
             return when {
                 event.isShiftPressed && event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.SELECT_LEFT_WORD
-                        Keys.DirectionRight -> EditorCommand.SELECT_RIGHT_WORD
-                        Keys.DirectionUp -> EditorCommand.SELECT_PREV_PARAGRAPH
-                        Keys.DirectionDown -> EditorCommand.SELECT_NEXT_PARAGRAPH
+                        Keys.DirectionLeft -> Command.SELECT_LEFT_WORD
+                        Keys.DirectionRight -> Command.SELECT_RIGHT_WORD
+                        Keys.DirectionUp -> Command.SELECT_PREV_PARAGRAPH
+                        Keys.DirectionDown -> Command.SELECT_NEXT_PARAGRAPH
                         else -> null
                     }
                 event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.MOVE_CURSOR_LEFT_WORD
-                        Keys.DirectionRight -> EditorCommand.MOVE_CURSOR_RIGHT_WORD
-                        Keys.DirectionUp -> EditorCommand.MOVE_CURSOR_PREV_PARAGRAPH
-                        Keys.DirectionDown -> EditorCommand.MOVE_CURSOR_NEXT_PARAGRAPH
-                        Keys.H -> EditorCommand.DELETE_PREV_CHAR
-                        Keys.Delete -> EditorCommand.DELETE_NEXT_WORD
-                        Keys.Backspace -> EditorCommand.DELETE_PREV_WORD
-                        Keys.Backslash -> EditorCommand.SELECT_NONE
+                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_WORD
+                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_WORD
+                        Keys.DirectionUp -> Command.MOVE_CURSOR_PREV_PARAGRAPH
+                        Keys.DirectionDown -> Command.MOVE_CURSOR_NEXT_PARAGRAPH
+                        Keys.H -> Command.DELETE_PREV_CHAR
+                        Keys.Delete -> Command.DELETE_NEXT_WORD
+                        Keys.Backspace -> Command.DELETE_PREV_WORD
+                        Keys.Backslash -> Command.SELECT_NONE
                         else -> null
                     }
                 event.isShiftPressed ->
                     when (event.key) {
-                        Keys.MoveHome -> EditorCommand.SELECT_HOME
-                        Keys.MoveEnd -> EditorCommand.SELECT_END
+                        Keys.MoveHome -> Command.SELECT_HOME
+                        Keys.MoveEnd -> Command.SELECT_END
                         else -> null
                     }
                 else -> null
@@ -251,74 +246,74 @@ interface KeyMapper {
             return when {
                 event.isMetaPressed && event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.Space -> EditorCommand.EMOJI_WINDOW
+                        Keys.Space -> Command.EMOJI_WINDOW
                         else -> null
                     }
                 event.isShiftPressed && event.isAltPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.SELECT_LEFT_WORD
-                        Keys.DirectionRight -> EditorCommand.SELECT_RIGHT_WORD
-                        Keys.DirectionUp -> EditorCommand.SELECT_PREV_PARAGRAPH
-                        Keys.DirectionDown -> EditorCommand.SELECT_NEXT_PARAGRAPH
+                        Keys.DirectionLeft -> Command.SELECT_LEFT_WORD
+                        Keys.DirectionRight -> Command.SELECT_RIGHT_WORD
+                        Keys.DirectionUp -> Command.SELECT_PREV_PARAGRAPH
+                        Keys.DirectionDown -> Command.SELECT_NEXT_PARAGRAPH
                         else -> null
                     }
                 event.isShiftPressed && event.isMetaPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.SELECT_LEFT_LINE
-                        Keys.DirectionRight -> EditorCommand.SELECT_RIGHT_LINE
-                        Keys.DirectionUp -> EditorCommand.SELECT_HOME
-                        Keys.DirectionDown -> EditorCommand.SELECT_END
+                        Keys.DirectionLeft -> Command.SELECT_LEFT_LINE
+                        Keys.DirectionRight -> Command.SELECT_RIGHT_LINE
+                        Keys.DirectionUp -> Command.SELECT_HOME
+                        Keys.DirectionDown -> Command.SELECT_END
                         else -> null
                     }
 
                 event.isMetaPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.MOVE_CURSOR_LEFT_LINE
-                        Keys.DirectionRight -> EditorCommand.MOVE_CURSOR_RIGHT_LINE
-                        Keys.DirectionUp -> EditorCommand.MOVE_CURSOR_HOME
-                        Keys.DirectionDown -> EditorCommand.MOVE_CURSOR_END
-                        Keys.Backspace -> EditorCommand.DELETE_START_LINE
+                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_LINE
+                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_LINE
+                        Keys.DirectionUp -> Command.MOVE_CURSOR_HOME
+                        Keys.DirectionDown -> Command.MOVE_CURSOR_END
+                        Keys.Backspace -> Command.DELETE_START_LINE
                         else -> null
                     }
 
                 // Emacs-like shortcuts
                 event.isCtrlPressed && event.isShiftPressed && event.isAltPressed -> {
                     when (event.key) {
-                        Keys.F -> EditorCommand.SELECT_RIGHT_WORD
-                        Keys.B -> EditorCommand.SELECT_LEFT_WORD
+                        Keys.F -> Command.SELECT_RIGHT_WORD
+                        Keys.B -> Command.SELECT_LEFT_WORD
                         else -> null
                     }
                 }
                 event.isCtrlPressed && event.isAltPressed -> {
                     when (event.key) {
-                        Keys.F -> EditorCommand.MOVE_CURSOR_RIGHT_WORD
-                        Keys.B -> EditorCommand.MOVE_CURSOR_LEFT_WORD
+                        Keys.F -> Command.MOVE_CURSOR_RIGHT_WORD
+                        Keys.B -> Command.MOVE_CURSOR_LEFT_WORD
                         else -> null
                     }
                 }
                 event.isCtrlPressed && event.isShiftPressed -> {
                     when (event.key) {
-                        Keys.F -> EditorCommand.SELECT_RIGHT_CHAR
-                        Keys.B -> EditorCommand.SELECT_LEFT_CHAR
-                        Keys.P -> EditorCommand.SELECT_UP_LINE
-                        Keys.N -> EditorCommand.SELECT_DOWN_LINE
-                        Keys.A -> EditorCommand.SELECT_START_LINE
-                        Keys.E -> EditorCommand.SELECT_END_LINE
+                        Keys.F -> Command.SELECT_RIGHT_CHAR
+                        Keys.B -> Command.SELECT_LEFT_CHAR
+                        Keys.P -> Command.SELECT_UP_LINE
+                        Keys.N -> Command.SELECT_DOWN_LINE
+                        Keys.A -> Command.SELECT_START_LINE
+                        Keys.E -> Command.SELECT_END_LINE
                         else -> null
                     }
                 }
                 event.isCtrlPressed -> {
                     when (event.key) {
-                        Keys.F -> EditorCommand.MOVE_CURSOR_LEFT_CHAR
-                        Keys.B -> EditorCommand.MOVE_CURSOR_RIGHT_CHAR
-                        Keys.P -> EditorCommand.MOVE_CURSOR_UP_LINE
-                        Keys.N -> EditorCommand.MOVE_CURSOR_DOWN_LINE
-                        Keys.A -> EditorCommand.MOVE_CURSOR_START_LINE
-                        Keys.E -> EditorCommand.MOVE_CURSOR_END_LINE
-                        Keys.H -> EditorCommand.DELETE_PREV_CHAR
-                        Keys.D -> EditorCommand.DELETE_NEXT_CHAR
-                        Keys.K -> EditorCommand.DELETE_END_LINE
-                        Keys.O -> EditorCommand.ENTER
+                        Keys.F -> Command.MOVE_CURSOR_LEFT_CHAR
+                        Keys.B -> Command.MOVE_CURSOR_RIGHT_CHAR
+                        Keys.P -> Command.MOVE_CURSOR_UP_LINE
+                        Keys.N -> Command.MOVE_CURSOR_DOWN_LINE
+                        Keys.A -> Command.MOVE_CURSOR_START_LINE
+                        Keys.E -> Command.MOVE_CURSOR_END_LINE
+                        Keys.H -> Command.DELETE_PREV_CHAR
+                        Keys.D -> Command.DELETE_NEXT_CHAR
+                        Keys.K -> Command.DELETE_END_LINE
+                        Keys.O -> Command.ENTER
                         else -> null
                     }
                 }
@@ -326,18 +321,18 @@ interface KeyMapper {
 
                 event.isShiftPressed ->
                     when (event.key) {
-                        Keys.MoveHome -> EditorCommand.SELECT_HOME
-                        Keys.MoveEnd -> EditorCommand.SELECT_END
+                        Keys.MoveHome -> Command.SELECT_HOME
+                        Keys.MoveEnd -> Command.SELECT_END
                         else -> null
                     }
                 event.isAltPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> EditorCommand.MOVE_CURSOR_LEFT_WORD
-                        Keys.DirectionRight -> EditorCommand.MOVE_CURSOR_RIGHT_WORD
-                        Keys.DirectionUp -> EditorCommand.MOVE_CURSOR_PREV_PARAGRAPH
-                        Keys.DirectionDown -> EditorCommand.MOVE_CURSOR_NEXT_PARAGRAPH
-                        Keys.Delete -> EditorCommand.DELETE_NEXT_WORD
-                        Keys.Backspace -> EditorCommand.DELETE_PREV_WORD
+                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_WORD
+                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_WORD
+                        Keys.DirectionUp -> Command.MOVE_CURSOR_PREV_PARAGRAPH
+                        Keys.DirectionDown -> Command.MOVE_CURSOR_NEXT_PARAGRAPH
+                        Keys.Delete -> Command.DELETE_NEXT_WORD
+                        Keys.Backspace -> Command.DELETE_PREV_WORD
                         else -> null
                     }
                 else -> null

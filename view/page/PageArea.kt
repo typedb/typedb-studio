@@ -78,7 +78,7 @@ object PageArea {
 
         private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
-                KeyMapper.WindowCommand.CLOSE -> closeSelectedPage()
+                KeyMapper.Command.CLOSE -> closeSelectedPage()
                 else -> false
             }
         }
