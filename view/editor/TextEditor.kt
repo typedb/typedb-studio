@@ -139,7 +139,7 @@ object TextEditor {
                 toolbar.processor = newProcessor
                 handler.processor = newProcessor
                 editor.processor = newProcessor
-            } else handler.onClose?.let { it() }
+            } else editor.onClose?.let { it() }
         }
     }
 
@@ -162,6 +162,7 @@ object TextEditor {
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal val showToolbar get() = toolbar.showToolbar
+        internal var onClose: (() -> Unit)? = null
 
         internal var density: Float
             get() = target.density
@@ -182,7 +183,7 @@ object TextEditor {
     @Composable
     fun Area(state: State, modifier: Modifier = Modifier, onClose: () -> Unit) {
         if (state.content.isEmpty()) return
-        state.handler.onClose = onClose
+        state.onClose = onClose
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground

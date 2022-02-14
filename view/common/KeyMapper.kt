@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.editor
+package com.vaticle.typedb.studio.view.common
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -27,13 +27,13 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import com.vaticle.typedb.studio.state.common.Property.OS
 
-internal interface KeyMapper {
+interface KeyMapper {
 
     fun map(event: KeyEvent): Command?
 
     companion object {
 
-        internal val CURRENT: KeyMapper = when (OS.Current) {
+        val CURRENT: KeyMapper = when (OS.Current) {
             OS.MACOS -> MacOSKeyMapper
             else -> DefaultKeyMapper
         }

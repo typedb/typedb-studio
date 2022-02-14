@@ -37,6 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -47,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
@@ -65,13 +70,35 @@ object PageArea {
 
     internal class AreaState {
         val cachedPages: MutableMap<Pageable, Page> = mutableMapOf()
+
+        fun handleKeyEvent(event: KeyEvent): Boolean {
+            return if (event.type == KeyEventType.KeyUp) false
+            else KeyMapper.CURRENT.map(event)?.let { execute(it) } ?: false
+        }
+
+        private fun execute(command: KeyMapper.Command): Boolean {
+            return when (command) {
+                KeyMapper.WindowCommand.CLOSE -> closeSelectedPage()
+                else -> false
+            }
+        }
+
+        private fun closeSelectedPage(): Boolean {
+            return GlobalState.page.selectedPage?.let { closePage(it) } ?: false
+        }
+
+        internal fun closePage(pageable: Pageable): Boolean {
+            cachedPages.remove(pageable)
+            GlobalState.page.close(pageable)
+            return true
+        }
     }
 
     @Composable
     fun Area() {
         val density = LocalDensity.current.density
         val state = remember { AreaState() }
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().onKeyEvent { state.handleKeyEvent(it) }) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
                 GlobalState.page.openedPages.forEach {
                     Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }, density)
@@ -81,7 +108,7 @@ object PageArea {
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) {
                 GlobalState.page.selectedPage?.let {
-                    state.cachedPages[it]?.Layout { closePage(state, it) }
+                    state.cachedPages[it]?.Layout { state.closePage(it) }
                 }
             }
         }
@@ -124,7 +151,7 @@ object PageArea {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
-                    onClick = { closePage(areaState, page.state) },
+                    onClick = { areaState.closePage(page.state) },
                     modifier = Modifier.size(TAB_HEIGHT),
                     bgColor = Color.Transparent,
                     rounded = false,
@@ -147,10 +174,5 @@ object PageArea {
             builder.pop()
             builder.toAnnotatedString()
         }
-    }
-
-    private fun closePage(areaState: AreaState, pageable: Pageable) {
-        areaState.cachedPages.remove(pageable)
-        GlobalState.page.close(pageable)
     }
 }
