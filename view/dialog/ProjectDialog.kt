@@ -77,7 +77,7 @@ object ProjectDialog {
 
         override fun trySubmit() {
             assert(!directory.isNullOrBlank())
-            GlobalState.project.tryOpenDirectory(directory!!)
+            GlobalState.project.tryOpenProject(directory!!)
         }
     }
 

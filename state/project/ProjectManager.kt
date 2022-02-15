@@ -26,11 +26,17 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_WRITABLE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
+import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isWritable
+import kotlin.io.path.notExists
 import mu.KotlinLogging
 
 class ProjectManager(private val notificationMgr: NotificationManager) {
@@ -73,6 +79,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+        const val DATA_DIR_NAME = ".tdbs"
     }
 
     var _current: Project? by mutableStateOf(null)
@@ -88,14 +95,19 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     val createItemDialog = CreateItemDialog()
     val renameItemDialog = RenameItemDialog()
 
-    fun tryOpenDirectory(newDir: String) {
-        val path = Path.of(newDir)
-        if (!path.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, newDir)
-        else if (!path.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, newDir)
-        else if (!path.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
-        else {
-            current = Project(path, notificationMgr)
+    fun tryOpenProject(newDir: String) {
+        val dir = Path.of(newDir)
+        val dataDir = dir.resolve(DATA_DIR_NAME)
+        if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, newDir)
+        else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, newDir)
+        else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, newDir)
+        else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
+        else if (dataDir.exists() && dataDir.isRegularFile()) {
+            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDir)
+        } else {
+            current = Project(dir, notificationMgr)
             openProjectDialog.close()
+            if (dataDir.notExists()) dataDir.createDirectory()
         }
     }
 
