@@ -40,48 +40,39 @@ interface KeyMapper {
     }
 
     enum class Command(val editsText: Boolean) { // TODO: do we need 'editsText' boolean?
-        FIND(false),
-        REPLACE(false),
-        CLOSE(false),
-        ESCAPE(false),
-        MOVE_CURSOR_LEFT_CHAR(false),
-        MOVE_CURSOR_RIGHT_CHAR(false),
-        MOVE_CURSOR_RIGHT_WORD(false),
-        MOVE_CURSOR_LEFT_WORD(false),
-        MOVE_CURSOR_PREV_PARAGRAPH(false),
-        MOVE_CURSOR_NEXT_PARAGRAPH(false),
-
-        MOVE_CURSOR_LEFT_LINE(false),
-        MOVE_CURSOR_RIGHT_LINE(false),
-        MOVE_CURSOR_START_LINE(false),
-        MOVE_CURSOR_END_LINE(false),
-
-        MOVE_CURSOR_UP_LINE(false),
-        MOVE_CURSOR_DOWN_LINE(false),
-        MOVE_CURSOR_UP_PAGE(false),
-        MOVE_CURSOR_DOWN_PAGE(false),
-        MOVE_CURSOR_HOME(false),
-        MOVE_CURSOR_END(false),
+        MOVE_CHAR_LEFT(false),
+        MOVE_CHAR_RIGHT(false),
+        MOVE_WORD_RIGHT(false),
+        MOVE_WORD_LEFT(false),
+        MOVE_PARAGRAPH_PREV(false),
+        MOVE_PARAGRAPH_NEXT(false),
+        MOVE_LINE_LEFT(false),
+        MOVE_LINE_RIGHT(false),
+        MOVE_LINE_START(false),
+        MOVE_LINE_END(false),
+        MOVE_LINE_UP(false),
+        MOVE_LINE_DOWN(false),
+        MOVE_PAGE_UP(false),
+        MOVE_PAGE_DOWN(false),
+        MOVE_HOME(false),
+        MOVE_END(false),
 
         SELECT_NONE(false),
         SELECT_ALL(false),
-
-        SELECT_LEFT_CHAR(false),
-        SELECT_RIGHT_CHAR(false),
-        SELECT_LEFT_WORD(false),
-        SELECT_RIGHT_WORD(false),
-        SELECT_NEXT_PARAGRAPH(false),
-        SELECT_PREV_PARAGRAPH(false),
-
-        SELECT_LEFT_LINE(false),
-        SELECT_RIGHT_LINE(false),
-        SELECT_START_LINE(false),
-        SELECT_END_LINE(false),
-
-        SELECT_UP_LINE(false),
-        SELECT_DOWN_LINE(false),
-        SELECT_UP_PAGE(false),
-        SELECT_DOWN_PAGE(false),
+        SELECT_CHAR_LEFT(false),
+        SELECT_CHAR_RIGHT(false),
+        SELECT_WORD_LEFT(false),
+        SELECT_WORD_RIGHT(false),
+        SELECT_PARAGRAPH_NEXT(false),
+        SELECT_PARAGRAPH_PREV(false),
+        SELECT_LINE_LEFT(false),
+        SELECT_LINE_RIGHT(false),
+        SELECT_LINE_START(false),
+        SELECT_LINE_END(false),
+        SELECT_LINE_UP(false),
+        SELECT_LINE_DOWN(false),
+        SELECT_PAGE_UP(false),
+        SELECT_PAGE_DOWN(false),
         SELECT_HOME(false),
         SELECT_END(false),
 
@@ -91,12 +82,12 @@ interface KeyMapper {
         TAB(true),
         TAB_SHIFT(true),
 
-        DELETE_PREV_CHAR(true),
-        DELETE_NEXT_CHAR(true),
-        DELETE_PREV_WORD(true),
-        DELETE_NEXT_WORD(true),
-        DELETE_START_LINE(true),
-        DELETE_END_LINE(true),
+        DELETE_CHAR_PREV(true),
+        DELETE_CHAR_NEXT(true),
+        DELETE_WORD_PREV(true),
+        DELETE_WORD_NEXT(true),
+        DELETE_LINE_START(true),
+        DELETE_LINE_END(true),
 
         COPY(false),
         PASTE(true),
@@ -104,6 +95,11 @@ interface KeyMapper {
 
         UNDO(true),
         REDO(true),
+
+        FIND(false),
+        REPLACE(false),
+        ESCAPE(false),
+        CLOSE(false),
 
         EMOJI_WINDOW(false),
     }
@@ -170,14 +166,14 @@ interface KeyMapper {
                 event.isCtrlPressed -> null
                 event.isShiftPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.SELECT_LEFT_CHAR
-                        Keys.DirectionRight -> Command.SELECT_RIGHT_CHAR
-                        Keys.DirectionUp -> Command.SELECT_UP_LINE
-                        Keys.DirectionDown -> Command.SELECT_DOWN_LINE
-                        Keys.PageUp -> Command.SELECT_UP_PAGE
-                        Keys.PageDown -> Command.SELECT_DOWN_PAGE
-                        Keys.MoveHome -> Command.SELECT_START_LINE
-                        Keys.MoveEnd -> Command.SELECT_END_LINE
+                        Keys.DirectionLeft -> Command.SELECT_CHAR_LEFT
+                        Keys.DirectionRight -> Command.SELECT_CHAR_RIGHT
+                        Keys.DirectionUp -> Command.SELECT_LINE_UP
+                        Keys.DirectionDown -> Command.SELECT_LINE_DOWN
+                        Keys.PageUp -> Command.SELECT_PAGE_UP
+                        Keys.PageDown -> Command.SELECT_PAGE_DOWN
+                        Keys.MoveHome -> Command.SELECT_LINE_START
+                        Keys.MoveEnd -> Command.SELECT_LINE_END
                         Keys.Insert -> Command.PASTE
                         Keys.Tab -> Command.TAB_SHIFT
                         Keys.Enter -> Command.ENTER_SHIFT
@@ -185,17 +181,17 @@ interface KeyMapper {
                     }
                 else ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_CHAR
-                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_CHAR
-                        Keys.DirectionUp -> Command.MOVE_CURSOR_UP_LINE
-                        Keys.DirectionDown -> Command.MOVE_CURSOR_DOWN_LINE
-                        Keys.PageUp -> Command.MOVE_CURSOR_UP_PAGE
-                        Keys.PageDown -> Command.MOVE_CURSOR_DOWN_PAGE
-                        Keys.MoveHome -> Command.MOVE_CURSOR_START_LINE
-                        Keys.MoveEnd -> Command.MOVE_CURSOR_END_LINE
+                        Keys.DirectionLeft -> Command.MOVE_CHAR_LEFT
+                        Keys.DirectionRight -> Command.MOVE_CHAR_RIGHT
+                        Keys.DirectionUp -> Command.MOVE_LINE_UP
+                        Keys.DirectionDown -> Command.MOVE_LINE_DOWN
+                        Keys.PageUp -> Command.MOVE_PAGE_UP
+                        Keys.PageDown -> Command.MOVE_PAGE_DOWN
+                        Keys.MoveHome -> Command.MOVE_LINE_START
+                        Keys.MoveEnd -> Command.MOVE_LINE_END
                         Keys.Enter -> Command.ENTER
-                        Keys.Backspace -> Command.DELETE_PREV_CHAR
-                        Keys.Delete -> Command.DELETE_NEXT_CHAR
+                        Keys.Backspace -> Command.DELETE_CHAR_PREV
+                        Keys.Delete -> Command.DELETE_CHAR_NEXT
                         Keys.Paste -> Command.PASTE
                         Keys.Cut -> Command.CUT
                         Keys.Tab -> Command.TAB
@@ -212,21 +208,21 @@ interface KeyMapper {
             return when {
                 event.isShiftPressed && event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.SELECT_LEFT_WORD
-                        Keys.DirectionRight -> Command.SELECT_RIGHT_WORD
-                        Keys.DirectionUp -> Command.SELECT_PREV_PARAGRAPH
-                        Keys.DirectionDown -> Command.SELECT_NEXT_PARAGRAPH
+                        Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
+                        Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
+                        Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
+                        Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
                         else -> null
                     }
                 event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_WORD
-                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_WORD
-                        Keys.DirectionUp -> Command.MOVE_CURSOR_PREV_PARAGRAPH
-                        Keys.DirectionDown -> Command.MOVE_CURSOR_NEXT_PARAGRAPH
-                        Keys.H -> Command.DELETE_PREV_CHAR
-                        Keys.Delete -> Command.DELETE_NEXT_WORD
-                        Keys.Backspace -> Command.DELETE_PREV_WORD
+                        Keys.DirectionLeft -> Command.MOVE_WORD_LEFT
+                        Keys.DirectionRight -> Command.MOVE_WORD_RIGHT
+                        Keys.DirectionUp -> Command.MOVE_PARAGRAPH_PREV
+                        Keys.DirectionDown -> Command.MOVE_PARAGRAPH_NEXT
+                        Keys.H -> Command.DELETE_CHAR_PREV
+                        Keys.Delete -> Command.DELETE_WORD_NEXT
+                        Keys.Backspace -> Command.DELETE_WORD_PREV
                         Keys.Backslash -> Command.SELECT_NONE
                         else -> null
                     }
@@ -251,16 +247,16 @@ interface KeyMapper {
                     }
                 event.isShiftPressed && event.isAltPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.SELECT_LEFT_WORD
-                        Keys.DirectionRight -> Command.SELECT_RIGHT_WORD
-                        Keys.DirectionUp -> Command.SELECT_PREV_PARAGRAPH
-                        Keys.DirectionDown -> Command.SELECT_NEXT_PARAGRAPH
+                        Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
+                        Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
+                        Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
+                        Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
                         else -> null
                     }
                 event.isShiftPressed && event.isMetaPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.SELECT_LEFT_LINE
-                        Keys.DirectionRight -> Command.SELECT_RIGHT_LINE
+                        Keys.DirectionLeft -> Command.SELECT_LINE_LEFT
+                        Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
                         Keys.DirectionUp -> Command.SELECT_HOME
                         Keys.DirectionDown -> Command.SELECT_END
                         else -> null
@@ -268,51 +264,51 @@ interface KeyMapper {
 
                 event.isMetaPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_LINE
-                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_LINE
-                        Keys.DirectionUp -> Command.MOVE_CURSOR_HOME
-                        Keys.DirectionDown -> Command.MOVE_CURSOR_END
-                        Keys.Backspace -> Command.DELETE_START_LINE
+                        Keys.DirectionLeft -> Command.MOVE_LINE_LEFT
+                        Keys.DirectionRight -> Command.MOVE_LINE_RIGHT
+                        Keys.DirectionUp -> Command.MOVE_HOME
+                        Keys.DirectionDown -> Command.MOVE_END
+                        Keys.Backspace -> Command.DELETE_LINE_START
                         else -> null
                     }
 
                 // Emacs-like shortcuts
                 event.isCtrlPressed && event.isShiftPressed && event.isAltPressed -> {
                     when (event.key) {
-                        Keys.F -> Command.SELECT_RIGHT_WORD
-                        Keys.B -> Command.SELECT_LEFT_WORD
+                        Keys.F -> Command.SELECT_WORD_RIGHT
+                        Keys.B -> Command.SELECT_WORD_LEFT
                         else -> null
                     }
                 }
                 event.isCtrlPressed && event.isAltPressed -> {
                     when (event.key) {
-                        Keys.F -> Command.MOVE_CURSOR_RIGHT_WORD
-                        Keys.B -> Command.MOVE_CURSOR_LEFT_WORD
+                        Keys.F -> Command.MOVE_WORD_RIGHT
+                        Keys.B -> Command.MOVE_WORD_LEFT
                         else -> null
                     }
                 }
                 event.isCtrlPressed && event.isShiftPressed -> {
                     when (event.key) {
-                        Keys.F -> Command.SELECT_RIGHT_CHAR
-                        Keys.B -> Command.SELECT_LEFT_CHAR
-                        Keys.P -> Command.SELECT_UP_LINE
-                        Keys.N -> Command.SELECT_DOWN_LINE
-                        Keys.A -> Command.SELECT_START_LINE
-                        Keys.E -> Command.SELECT_END_LINE
+                        Keys.F -> Command.SELECT_CHAR_RIGHT
+                        Keys.B -> Command.SELECT_CHAR_LEFT
+                        Keys.P -> Command.SELECT_LINE_UP
+                        Keys.N -> Command.SELECT_LINE_DOWN
+                        Keys.A -> Command.SELECT_LINE_START
+                        Keys.E -> Command.SELECT_LINE_END
                         else -> null
                     }
                 }
                 event.isCtrlPressed -> {
                     when (event.key) {
-                        Keys.F -> Command.MOVE_CURSOR_LEFT_CHAR
-                        Keys.B -> Command.MOVE_CURSOR_RIGHT_CHAR
-                        Keys.P -> Command.MOVE_CURSOR_UP_LINE
-                        Keys.N -> Command.MOVE_CURSOR_DOWN_LINE
-                        Keys.A -> Command.MOVE_CURSOR_START_LINE
-                        Keys.E -> Command.MOVE_CURSOR_END_LINE
-                        Keys.H -> Command.DELETE_PREV_CHAR
-                        Keys.D -> Command.DELETE_NEXT_CHAR
-                        Keys.K -> Command.DELETE_END_LINE
+                        Keys.F -> Command.MOVE_CHAR_LEFT
+                        Keys.B -> Command.MOVE_CHAR_RIGHT
+                        Keys.P -> Command.MOVE_LINE_UP
+                        Keys.N -> Command.MOVE_LINE_DOWN
+                        Keys.A -> Command.MOVE_LINE_START
+                        Keys.E -> Command.MOVE_LINE_END
+                        Keys.H -> Command.DELETE_CHAR_PREV
+                        Keys.D -> Command.DELETE_CHAR_NEXT
+                        Keys.K -> Command.DELETE_LINE_END
                         Keys.O -> Command.ENTER
                         else -> null
                     }
@@ -327,12 +323,12 @@ interface KeyMapper {
                     }
                 event.isAltPressed ->
                     when (event.key) {
-                        Keys.DirectionLeft -> Command.MOVE_CURSOR_LEFT_WORD
-                        Keys.DirectionRight -> Command.MOVE_CURSOR_RIGHT_WORD
-                        Keys.DirectionUp -> Command.MOVE_CURSOR_PREV_PARAGRAPH
-                        Keys.DirectionDown -> Command.MOVE_CURSOR_NEXT_PARAGRAPH
-                        Keys.Delete -> Command.DELETE_NEXT_WORD
-                        Keys.Backspace -> Command.DELETE_PREV_WORD
+                        Keys.DirectionLeft -> Command.MOVE_WORD_LEFT
+                        Keys.DirectionRight -> Command.MOVE_WORD_RIGHT
+                        Keys.DirectionUp -> Command.MOVE_PARAGRAPH_PREV
+                        Keys.DirectionDown -> Command.MOVE_PARAGRAPH_NEXT
+                        Keys.Delete -> Command.DELETE_WORD_NEXT
+                        Keys.Backspace -> Command.DELETE_WORD_PREV
                         else -> null
                     }
                 else -> null

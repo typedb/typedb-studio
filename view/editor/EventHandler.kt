@@ -32,52 +32,52 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.COPY
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.CUT
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_END_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_NEXT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_NEXT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_PREV_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_PREV_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_START_LINE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_CHAR_NEXT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_CHAR_PREV
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_LINE_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_LINE_START
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_NEXT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_PREV
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT_MOD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_DOWN_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_DOWN_PAGE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_END
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_END_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_HOME
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_LEFT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_NEXT_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_RIGHT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_START_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_UP_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CURSOR_UP_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_HOME
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_DOWN
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_RIGHT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_START
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_LINE_UP
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_PAGE_DOWN
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_PAGE_UP
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_PARAGRAPH_NEXT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_PARAGRAPH_PREV
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.PASTE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REDO
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_ALL
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_DOWN_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_DOWN_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_END
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_END_LINE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_HOME
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LEFT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_NEXT_PARAGRAPH
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_DOWN
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_END
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_RIGHT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_START
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_LINE_UP
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_NONE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PREV_PARAGRAPH
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_CHAR
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_RIGHT_WORD
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_START_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_UP_LINE
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_UP_PAGE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PAGE_DOWN
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PAGE_UP
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PARAGRAPH_NEXT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_PARAGRAPH_PREV
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_WORD_LEFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_WORD_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
@@ -109,46 +109,46 @@ internal class EventHandler(
 
     private fun executeEditorCommand(command: Command): Boolean {
         when (command) {
-            MOVE_CURSOR_LEFT_CHAR -> target.moveCursorPrevByChar() // because we only display left to right
-            MOVE_CURSOR_RIGHT_CHAR -> target.moveCursorNextByChar() // because we only display left to right
-            MOVE_CURSOR_LEFT_WORD -> target.moveCursorPrevByWord() // because we only display left to right
-            MOVE_CURSOR_RIGHT_WORD -> target.moveCursorNexBytWord() // because we only display left to right
-            MOVE_CURSOR_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph()
-            MOVE_CURSOR_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph()
-            MOVE_CURSOR_LEFT_LINE -> target.moveCursorToStartOfLine() // because we only display left to right
-            MOVE_CURSOR_RIGHT_LINE -> target.moveCursorToEndOfLine() // because we only display left to right
-            MOVE_CURSOR_START_LINE -> target.moveCursorToStartOfLine()
-            MOVE_CURSOR_END_LINE -> target.moveCursorToEndOfLine()
-            MOVE_CURSOR_UP_LINE -> target.moveCursorUpByLine()
-            MOVE_CURSOR_DOWN_LINE -> target.moveCursorDownByLine()
-            MOVE_CURSOR_UP_PAGE -> target.moveCursorUpByPage()
-            MOVE_CURSOR_DOWN_PAGE -> target.moveCursorDownByPage()
-            MOVE_CURSOR_HOME -> target.moveCursorToHome()
-            MOVE_CURSOR_END -> target.moveCursorToEnd()
-            SELECT_LEFT_CHAR -> target.moveCursorPrevByChar(true) // because we only display left to right
-            SELECT_RIGHT_CHAR -> target.moveCursorNextByChar(true) // because we only display left to right
-            SELECT_LEFT_WORD -> target.moveCursorPrevByWord(true) // because we only display left to right
-            SELECT_RIGHT_WORD -> target.moveCursorNexBytWord(true) // because we only display left to right
-            SELECT_PREV_PARAGRAPH -> target.moveCursorPrevByParagraph(true)
-            SELECT_NEXT_PARAGRAPH -> target.moveCursorNextByParagraph(true)
-            SELECT_LEFT_LINE -> target.moveCursorToStartOfLine(true) // because we only display left to right
-            SELECT_RIGHT_LINE -> target.moveCursorToEndOfLine(true) // because we only display left to right
-            SELECT_START_LINE -> target.moveCursorToStartOfLine(true)
-            SELECT_END_LINE -> target.moveCursorToEndOfLine(true)
-            SELECT_UP_LINE -> target.moveCursorUpByLine(true)
-            SELECT_DOWN_LINE -> target.moveCursorDownByLine(true)
-            SELECT_UP_PAGE -> target.moveCursorUpByPage(true)
-            SELECT_DOWN_PAGE -> target.moveCursorDownByPage(true)
+            MOVE_CHAR_LEFT -> target.moveCursorPrevByChar() // because we only display left to right
+            MOVE_CHAR_RIGHT -> target.moveCursorNextByChar() // because we only display left to right
+            MOVE_WORD_LEFT -> target.moveCursorPrevByWord() // because we only display left to right
+            MOVE_WORD_RIGHT -> target.moveCursorNexBytWord() // because we only display left to right
+            MOVE_PARAGRAPH_PREV -> target.moveCursorPrevByParagraph()
+            MOVE_PARAGRAPH_NEXT -> target.moveCursorNextByParagraph()
+            MOVE_LINE_LEFT -> target.moveCursorToStartOfLine() // because we only display left to right
+            MOVE_LINE_RIGHT -> target.moveCursorToEndOfLine() // because we only display left to right
+            MOVE_LINE_START -> target.moveCursorToStartOfLine()
+            MOVE_LINE_END -> target.moveCursorToEndOfLine()
+            MOVE_LINE_UP -> target.moveCursorUpByLine()
+            MOVE_LINE_DOWN -> target.moveCursorDownByLine()
+            MOVE_PAGE_UP -> target.moveCursorUpByPage()
+            MOVE_PAGE_DOWN -> target.moveCursorDownByPage()
+            MOVE_HOME -> target.moveCursorToHome()
+            MOVE_END -> target.moveCursorToEnd()
+            SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
+            SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
+            SELECT_WORD_LEFT -> target.moveCursorPrevByWord(true) // because we only display left to right
+            SELECT_WORD_RIGHT -> target.moveCursorNexBytWord(true) // because we only display left to right
+            SELECT_PARAGRAPH_PREV -> target.moveCursorPrevByParagraph(true)
+            SELECT_PARAGRAPH_NEXT -> target.moveCursorNextByParagraph(true)
+            SELECT_LINE_LEFT -> target.moveCursorToStartOfLine(true) // because we only display left to right
+            SELECT_LINE_RIGHT -> target.moveCursorToEndOfLine(true) // because we only display left to right
+            SELECT_LINE_START -> target.moveCursorToStartOfLine(true)
+            SELECT_LINE_END -> target.moveCursorToEndOfLine(true)
+            SELECT_LINE_UP -> target.moveCursorUpByLine(true)
+            SELECT_LINE_DOWN -> target.moveCursorDownByLine(true)
+            SELECT_PAGE_UP -> target.moveCursorUpByPage(true)
+            SELECT_PAGE_DOWN -> target.moveCursorDownByPage(true)
             SELECT_HOME -> target.moveCursorToHome(true)
             SELECT_END -> target.moveCursorToEnd(true)
             SELECT_ALL -> target.selectAll()
             SELECT_NONE -> target.selectNone()
-            DELETE_PREV_CHAR -> deleteSelectionOr { target.moveCursorPrevByChar(true); processor.deleteSelection() }
-            DELETE_NEXT_CHAR -> deleteSelectionOr { target.moveCursorNextByChar(true); processor.deleteSelection() }
-            DELETE_PREV_WORD -> deleteSelectionOr { target.moveCursorPrevByWord(true); processor.deleteSelection() }
-            DELETE_NEXT_WORD -> deleteSelectionOr { target.moveCursorNexBytWord(true); processor.deleteSelection() }
-            DELETE_START_LINE -> deleteSelectionOr { target.moveCursorToStartOfLine(true); processor.deleteSelection() }
-            DELETE_END_LINE -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
+            DELETE_CHAR_PREV -> deleteSelectionOr { target.moveCursorPrevByChar(true); processor.deleteSelection() }
+            DELETE_CHAR_NEXT -> deleteSelectionOr { target.moveCursorNextByChar(true); processor.deleteSelection() }
+            DELETE_WORD_PREV -> deleteSelectionOr { target.moveCursorPrevByWord(true); processor.deleteSelection() }
+            DELETE_WORD_NEXT -> deleteSelectionOr { target.moveCursorNexBytWord(true); processor.deleteSelection() }
+            DELETE_LINE_START -> deleteSelectionOr { target.moveCursorToStartOfLine(true); processor.deleteSelection() }
+            DELETE_LINE_END -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT, ENTER_SHIFT_MOD -> processor.insertNewLine()
