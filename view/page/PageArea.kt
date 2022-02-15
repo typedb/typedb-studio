@@ -78,9 +78,15 @@ object PageArea {
 
         private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
+                KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
                 KeyMapper.Command.CLOSE -> closeSelectedPage()
                 else -> false
             }
+        }
+
+        internal fun createAndOpenNewFile(): Boolean {
+            GlobalState.project.tryCreateFile()?.let { GlobalState.page.open(it) }
+            return true
         }
 
         private fun closeSelectedPage(): Boolean {
@@ -104,7 +110,7 @@ object PageArea {
                 GlobalState.page.openedPages.forEach {
                     Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }, density)
                 }
-                NewTabButton()
+                NewPageButton(state)
             }
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) { GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() } }
@@ -112,10 +118,10 @@ object PageArea {
     }
 
     @Composable
-    private fun NewTabButton() {
+    private fun NewPageButton(state: AreaState) {
         IconButton(
             icon = Icon.Code.PLUS,
-            onClick = { GlobalState.project.tryCreateFile()?.let { GlobalState.page.open(it) } },
+            onClick = { state.createAndOpenNewFile() },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,

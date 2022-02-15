@@ -98,6 +98,7 @@ interface KeyMapper {
 
         FIND,
         REPLACE,
+        NEW_PAGE,
         ESCAPE,
         CLOSE,
 
@@ -117,6 +118,7 @@ interface KeyMapper {
         val O: Key = Key(java.awt.event.KeyEvent.VK_O)
         val P: Key = Key(java.awt.event.KeyEvent.VK_P)
         val R: Key = Key(java.awt.event.KeyEvent.VK_R)
+        val T: Key = Key(java.awt.event.KeyEvent.VK_T)
         val V: Key = Key(java.awt.event.KeyEvent.VK_V)
         val W: Key = Key(java.awt.event.KeyEvent.VK_W)
         val X: Key = Key(java.awt.event.KeyEvent.VK_X)
@@ -160,6 +162,7 @@ interface KeyMapper {
                         Keys.Z -> Command.UNDO
                         Keys.F -> Command.FIND
                         Keys.R -> Command.REPLACE
+                        Keys.T -> Command.NEW_PAGE
                         Keys.W -> Command.CLOSE
                         else -> null
                     }
