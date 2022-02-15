@@ -154,11 +154,11 @@ object Studio {
                 val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
                 val contentColor = Theme.colors.error2
                 Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Text(value = "${Label.TITLE}:", modifier = labelModifier, style = labelStyle)
+                    Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
                     exception.message?.let { TextSelectable(value = it, color = contentColor) }
                 }
                 Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Text(value = "${Label.TRACE}:", modifier = labelModifier, style = labelStyle)
+                    Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
                     TextSelectable(value = exception.stackTraceToString(), color = contentColor)
                 }
             }

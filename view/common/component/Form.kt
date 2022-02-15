@@ -78,10 +78,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -151,7 +154,10 @@ object Form {
     @Composable
     fun Text(
         value: String,
-        style: TextStyle = Theme.typography.body1,
+        textStyle: TextStyle = Theme.typography.body1,
+        fontStyle: FontStyle? = null,
+        fontWeight: FontWeight? = null,
+        textDecoration: TextDecoration? = null,
         color: Color = Theme.colors.onPrimary,
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
@@ -160,13 +166,19 @@ object Form {
         softWrap: Boolean = false,
         enabled: Boolean = true,
     ) {
-        Text(AnnotatedString(value), style, color, alpha, align, modifier, overflow, softWrap, enabled)
+        Text(
+            AnnotatedString(value), textStyle, fontStyle, fontWeight, textDecoration,
+            color, alpha, align, modifier, overflow, softWrap, enabled
+        )
     }
 
     @Composable
     fun Text(
         value: AnnotatedString,
-        style: TextStyle = Theme.typography.body1,
+        textStyle: TextStyle = Theme.typography.body1,
+        fontStyle: FontStyle? = null,
+        fontWeight: FontWeight? = null,
+        textDecoration: TextDecoration? = null,
         color: Color = Theme.colors.onPrimary,
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
@@ -177,7 +189,10 @@ object Form {
     ) {
         androidx.compose.material.Text(
             text = value,
-            style = style,
+            style = textStyle,
+            fontStyle = fontStyle,
+            fontWeight = fontWeight,
+            textDecoration = textDecoration,
             color = fadeable(alpha?.let { color.copy(alpha = alpha) } ?: color, !enabled),
             modifier = modifier,
             overflow = overflow,
@@ -213,7 +228,7 @@ object Form {
                     Icon.Render(icon = it, color = iconColor)
                     iconSpacing()
                 }
-                Text(text, style = Theme.typography.body1, color = fadeable(textColor, !enabled))
+                Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
                 trailingIcon?.let {
                     iconSpacing()
                     Icon.Render(icon = it, color = iconColor)

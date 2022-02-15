@@ -46,7 +46,7 @@ object StatusBar {
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             if (statusMgr.loadingStatus.isNotEmpty()) {
                 Spacer(Modifier.width(PADDING))
-                Form.Text(value = statusMgr.loadingStatus, style = fontStyle)
+                Form.Text(value = statusMgr.loadingStatus, textStyle = fontStyle)
             }
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.width(PADDING))
@@ -57,7 +57,7 @@ object StatusBar {
                     Column {
                         Row {
                             Spacer(Modifier.width(PADDING))
-                            Form.Text(value = status, style = fontStyle)
+                            Form.Text(value = status, textStyle = fontStyle)
                             Spacer(Modifier.width(PADDING))
                         }
                         Spacer(Modifier.height(2.dp))

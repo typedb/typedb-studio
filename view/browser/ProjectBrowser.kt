@@ -45,6 +45,9 @@ import com.vaticle.typedb.studio.view.common.component.Icon.Code.FOLDER_PLUS
 import com.vaticle.typedb.studio.view.common.component.Navigator
 import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Typography
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
 import mu.KotlinLogging
 
 internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
@@ -72,9 +75,12 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
             GlobalState.project.onProjectChange = { state.replaceContainer(it) }
             GlobalState.project.onContentChange = { state.reloadEntries() }
             buttons = state.buttons
-            Navigator.Layout(state = state, iconArgs = { projectItemIcon(it) }) { item, onDelete ->
-                contextMenuItems(item, onDelete)
-            }
+            Navigator.Layout(
+                state = state,
+                iconArgs = { projectItemIcon(it) },
+                styleArgs = { projectItemStyles(it) },
+                contextMenuFn = { item, onDelete -> contextMenuItems(item, onDelete) }
+            )
         }
     }
 
@@ -115,6 +121,10 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
         }
     }
 
+    private fun projectItemStyles(itemState: Navigator.ItemState<ProjectItem>): List<Typography.Style> {
+        return if (itemState.item.isProjectData) listOf(ITALIC, FADED) else listOf()
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     private fun contextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
@@ -137,18 +147,28 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                 ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { state.toggle() },
             ),
             listOf(
-                ContextMenu.Item(Label.CREATE_DIRECTORY, FOLDER_PLUS) {
-                    createItemDialog.open(directory, DIRECTORY) { state.expand() }
-                },
-                ContextMenu.Item(Label.CREATE_FILE, Icon.Code.FILE_PLUS) {
-                    createItemDialog.open(directory, FILE) { state.expand() }
-                },
+                ContextMenu.Item(
+                    label = Label.CREATE_DIRECTORY,
+                    icon = FOLDER_PLUS,
+                    enabled = !directory.isProjectData,
+                ) { createItemDialog.open(directory, DIRECTORY) { state.expand() } },
+                ContextMenu.Item(
+                    label = Label.CREATE_FILE,
+                    icon = Icon.Code.FILE_PLUS,
+                    enabled = !directory.isProjectData,
+                ) { createItemDialog.open(directory, FILE) { state.expand() } },
             ),
             listOf(
-                ContextMenu.Item(Label.RENAME, Icon.Code.PEN) {
-                    GlobalState.project.renameItemDialog.open(itemState.item)
-                },
-                ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN, enabled = !itemState.item.isRoot) {
+                ContextMenu.Item(
+                    label = Label.RENAME,
+                    icon = Icon.Code.PEN,
+                    enabled = !directory.isProjectData,
+                ) { GlobalState.project.renameItemDialog.open(itemState.item) },
+                ContextMenu.Item(
+                    label = Label.DELETE,
+                    icon = Icon.Code.TRASH_CAN,
+                    enabled = !itemState.item.isRoot && !directory.isProjectData,
+                ) {
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_DIRECTORY_DELETION,
                         message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
@@ -163,19 +183,29 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun fileContextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
     ): List<List<ContextMenu.Item>> {
+        val file = itemState.item
         return listOf(
             listOf(
-                ContextMenu.Item(Label.OPEN, Icon.Code.BLOCK_QUOTE) { GlobalState.page.open(itemState.item.asFile()) },
+                ContextMenu.Item(
+                    label = Label.OPEN,
+                    icon = Icon.Code.BLOCK_QUOTE
+                ) { GlobalState.page.open(file.asFile()) },
             ),
             listOf(
-                ContextMenu.Item(Label.RENAME, Icon.Code.PEN) {
-                    GlobalState.project.renameItemDialog.open(itemState.item)
-                },
-                ContextMenu.Item(Label.DELETE, Icon.Code.TRASH_CAN) {
+                ContextMenu.Item(
+                    label = Label.RENAME,
+                    icon = Icon.Code.PEN,
+                    enabled = !file.isProjectData,
+                ) { GlobalState.project.renameItemDialog.open(file) },
+                ContextMenu.Item(
+                    label = Label.DELETE,
+                    icon = Icon.Code.TRASH_CAN,
+                    enabled = !file.isProjectData,
+                ) {
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_FILE_DELETION,
                         message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                        action = { itemState.item.delete(); onDelete() }
+                        action = { file.delete(); onDelete() }
                     )
                 }
             )

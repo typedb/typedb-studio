@@ -32,7 +32,7 @@ import java.nio.file.Path
 object Typography {
 
     enum class Style {
-        ITALIC, UNDERLINE, BOLD;
+        ITALIC, UNDERLINE, BOLD, FADED;
 
         companion object {
             fun of(string: String): Style? {
@@ -40,6 +40,7 @@ object Typography {
                     ITALIC.name.lowercase() -> ITALIC
                     UNDERLINE.name.lowercase() -> UNDERLINE
                     BOLD.name.lowercase() -> BOLD
+                    FADED.name.lowercase() -> FADED
                     else -> null
                 }
             }

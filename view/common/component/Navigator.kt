@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -66,6 +67,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
@@ -76,10 +80,15 @@ import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Container
+import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.common.theme.Typography
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.UNDERLINE
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -409,7 +418,8 @@ object Navigator {
     fun <T : Navigable.Item<T>> Layout(
         state: NavigatorState<T>,
         iconArgs: (ItemState<T>) -> IconArgs,
-        contextMenuFn: (item: ItemState<T>, onDelete: () -> Unit) -> List<List<ContextMenu.Item>>
+        styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
+        contextMenuFn: ((item: ItemState<T>, onDelete: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
         val density = LocalDensity.current.density
         val ctxMenuState = remember { ContextMenu.State() }
@@ -420,12 +430,12 @@ object Navigator {
             state.density = density
             state.updateAreaWidth(it.size.width)
         }) {
-            ContextMenu.Popup(ctxMenuState) { contextMenuFn(state.selected!!) { state.reloadEntries() } }
+            contextMenuFn?.let { ContextMenu.Popup(ctxMenuState) { it(state.selected!!) { state.reloadEntries() } } }
             LazyColumn(
                 state = lazyListState, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
-            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArgs) } } }
+            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArgs, styleArgs) } } }
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(lazyListState),
                 modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
@@ -443,9 +453,10 @@ object Navigator {
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
         state: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
-        iconArgs: (ItemState<T>) -> IconArgs
+        iconArgs: (ItemState<T>) -> IconArgs, styleArgs: ((ItemState<T>) -> List<Typography.Style>)
     ) {
         item.focusReq = remember { FocusRequester() }
+        val styles = styleArgs(item)
         val bgColor = when {
             state.selected == item -> Theme.colors.primary
             state.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
@@ -458,6 +469,7 @@ object Navigator {
 
         Row(
             modifier = Modifier.background(color = bgColor)
+                .alpha(if (styles.contains(Typography.Style.FADED)) FADED_OPACITY else 1f)
                 .widthIn(min = state.minWidth).height(ITEM_HEIGHT)
                 .focusRequester(item.focusReq!!).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
@@ -474,7 +486,7 @@ object Navigator {
                 ItemButton(state, item)
                 ItemIcon(item, iconArgs)
                 Spacer(Modifier.width(TEXT_SPACING))
-                ItemText(item)
+                ItemText(item, styles)
                 Spacer(modifier = Modifier.width(AREA_PADDING))
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -502,9 +514,14 @@ object Navigator {
     }
 
     @Composable
-    private fun <T : Navigable.Item<T>> ItemText(item: ItemState<T>) {
+    private fun <T : Navigable.Item<T>> ItemText(item: ItemState<T>, styleArgs: List<Typography.Style>) {
         Row(modifier = Modifier.height(ICON_WIDTH)) {
-            Form.Text(value = item.name)
+            Form.Text(
+                value = item.name,
+                fontStyle = if (styleArgs.contains(ITALIC)) FontStyle.Italic else null,
+                fontWeight = if (styleArgs.contains(BOLD)) FontWeight.SemiBold else null,
+                textDecoration = if (styleArgs.contains(UNDERLINE)) TextDecoration.Underline else null
+            )
             item.info?.let {
                 Spacer(Modifier.width(TEXT_SPACING))
                 Form.Text(value = "( $it )", alpha = 0.4f)
