@@ -94,9 +94,7 @@ sealed class ProjectItem(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as ProjectItem
-        if (path != other.path) return false
-        if (parent != other.parent) return false
-        return true
+        return path == other.path && parent == other.parent
     }
 
     override fun hashCode(): Int {

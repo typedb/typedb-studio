@@ -77,8 +77,12 @@ object ProjectDialog {
 
         override fun trySubmit() {
             assert(!directory.isNullOrBlank())
+            val previous = GlobalState.project.current
             if (GlobalState.project.tryOpenProject(directory!!)) {
-                GlobalState.project.unsavedFiles().forEach { GlobalState.page.open(it) }
+                if (previous != GlobalState.project.current) {
+                    GlobalState.page.closeAll()
+                    GlobalState.project.unsavedFiles().forEach { GlobalState.page.open(it) }
+                }
             }
         }
     }

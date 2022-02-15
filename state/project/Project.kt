@@ -44,4 +44,15 @@ class Project internal constructor(val path: Path, val settings: Settings, val n
     override fun toString(): String {
         return name
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as Project
+        return directory == other.directory
+    }
+
+    override fun hashCode(): Int {
+        return directory.hashCode()
+    }
 }

@@ -67,4 +67,9 @@ class PageManager(val notification: NotificationManager) {
         }.coerceIn(0, (openedPages.size - 1).coerceAtLeast(0))
         selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
+
+    fun closeAll() {
+        openedPages.toList().forEach { it.close() }
+        selectedPage = null
+    }
 }
