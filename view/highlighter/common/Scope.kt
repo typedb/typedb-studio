@@ -20,27 +20,13 @@ package com.vaticle.typedb.studio.view.highlighter.common
 
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML
-import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.BOLD
-import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.ITALIC
-import com.vaticle.typedb.studio.view.highlighter.common.Scope.FontStyle.UNDERLINE
+import com.vaticle.typedb.studio.view.common.theme.Typography
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
+import com.vaticle.typedb.studio.view.common.theme.Typography.Style.UNDERLINE
 import java.nio.file.Path
 
 class Scope private constructor(val name: String, var parent: Scope?) {
-
-    enum class FontStyle {
-        ITALIC, UNDERLINE, BOLD;
-
-        companion object {
-            fun of(string: String): FontStyle? {
-                return when (string) {
-                    ITALIC.name.lowercase() -> ITALIC
-                    UNDERLINE.name.lowercase() -> UNDERLINE
-                    BOLD.name.lowercase() -> BOLD
-                    else -> null
-                }
-            }
-        }
-    }
 
     init {
         parent?.children?.add(this)
@@ -50,12 +36,12 @@ class Scope private constructor(val name: String, var parent: Scope?) {
         get() = if (parent == null || field != null) field else parent!!.foreground
     var background: Color? = null
         get() = if (parent == null || field != null) field else parent!!.background
-    var fontStyle: List<FontStyle> = listOf()
-        get() = if (parent == null || field.isNotEmpty()) field else parent!!.fontStyle
-    val isItalic: Boolean get() = fontStyle.contains(ITALIC)
-    val isBold: Boolean get() = fontStyle.contains(BOLD)
-    val isUnderline: Boolean get() = fontStyle.contains(UNDERLINE)
-    val hasScheme: Boolean get() = foreground != null || background != null || fontStyle.isNotEmpty()
+    var style: List<Typography.Style> = listOf()
+        get() = if (parent == null || field.isNotEmpty()) field else parent!!.style
+    val isItalic: Boolean get() = style.contains(ITALIC)
+    val isBold: Boolean get() = style.contains(BOLD)
+    val isUnderline: Boolean get() = style.contains(UNDERLINE)
+    val hasScheme: Boolean get() = foreground != null || background != null || style.isNotEmpty()
     val children: MutableList<Scope> = mutableListOf()
     val fullName: String
         get() {

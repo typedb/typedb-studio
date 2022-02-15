@@ -31,6 +31,21 @@ import java.nio.file.Path
 
 object Typography {
 
+    enum class Style {
+        ITALIC, UNDERLINE, BOLD;
+
+        companion object {
+            fun of(string: String): Style? {
+                return when (string) {
+                    ITALIC.name.lowercase() -> ITALIC
+                    UNDERLINE.name.lowercase() -> UNDERLINE
+                    BOLD.name.lowercase() -> BOLD
+                    else -> null
+                }
+            }
+        }
+    }
+
     private val MONACO = Path.of("resources/fonts/monaco/Monaco.ttf").toFile()
     private val TITILLIUM_WEB_REGULAR = Path.of("resources/fonts/titilliumweb/TitilliumWeb-Regular.ttf").toFile()
     private val TITILLIUM_WEB_SEMI_BOLD = Path.of("resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf").toFile()

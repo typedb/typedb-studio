@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.highlighter.common
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.studio.view.common.theme.Color.hexToColor
+import com.vaticle.typedb.studio.view.common.theme.Typography
 import java.nio.file.Path
 
 class Scheme(val scopes: Map<String, Scope>) {
@@ -69,7 +70,7 @@ class Scheme(val scopes: Map<String, Scope>) {
                 val scheme = yaml.asMap().content()
                 scheme[FOREGROUND]?.let { scopes[fullName]!!.foreground = color(colors, it.asString().value()) }
                 scheme[BACKGROUND]?.let { scopes[fullName]!!.background = color(colors, it.asString().value()) }
-                scheme[STYLES]?.let { scopes[fullName]!!.fontStyle = listOfStyles(it.asList().content()) }
+                scheme[STYLES]?.let { scopes[fullName]!!.style = listOfStyles(it.asList().content()) }
                 scheme[RULES]?.let { populateRules(scopes, colors, it.asMap().content(), fullName) }
             }
         }
@@ -78,8 +79,8 @@ class Scheme(val scopes: Map<String, Scope>) {
             return if (value.startsWith("#")) hexToColor(value) else colors[value]!!
         }
 
-        private fun listOfStyles(content: List<YAML>): List<Scope.FontStyle> {
-            return content.map { Scope.FontStyle.of(it.asString().value())!! }
+        private fun listOfStyles(content: List<YAML>): List<Typography.Style> {
+            return content.map { Typography.Style.of(it.asString().value())!! }
         }
     }
 }
