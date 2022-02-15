@@ -114,10 +114,13 @@ object PageArea {
         val density = LocalDensity.current.density
         val state = remember { AreaState() }
         val focusReq = FocusRequester()
+        fun mayRequestFocus() {
+            if (GlobalState.page.openedPages.isEmpty()) focusReq.requestFocus()
+        }
         (state.cachedPages.keys - GlobalState.page.openedPages.toSet()).forEach { state.cachedPages.remove(it) }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
-                .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) focusReq.requestFocus() }
+                .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
                 .onKeyEvent { state.handleKeyEvent(it) }
         ) {
             Row(Modifier.fillMaxWidth().height(TAB_HEIGHT), horizontalArrangement = Arrangement.Start) {
@@ -129,7 +132,7 @@ object PageArea {
             Separator.Horizontal()
             Row(Modifier.fillMaxWidth()) { GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() } }
         }
-        LaunchedEffect(focusReq) { if (GlobalState.page.openedPages.isEmpty()) focusReq.requestFocus() }
+        LaunchedEffect(focusReq) { mayRequestFocus() }
     }
 
     @Composable
