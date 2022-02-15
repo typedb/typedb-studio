@@ -68,6 +68,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
@@ -85,6 +88,7 @@ import kotlin.math.log10
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.delay
+import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
 object TextEditor {
@@ -97,6 +101,7 @@ object TextEditor {
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
     private val MAX_LINE_MIN_WIDTH: Dp = 100_000.dp // we need this cause Compose can't render components too large
+    private val LOGGER = KotlinLogging.logger {}
 
     @Composable
     fun createState(file: File): State {
@@ -125,12 +130,14 @@ object TextEditor {
             content.addAll(SyntaxHighlighter.readLines(f))
             rendering.reinitialize(content.size)
             processor.reset()
+            GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, file.path)
         }
         file.onChangePermissionFromDisk {
             val newProcessor = TextProcessor.create(file, content, rendering, finder, target) { file.writeLines(it) }
             toolbar.processor = newProcessor
             handler.processor = newProcessor
             editor.processor = newProcessor
+            GlobalState.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, file.path)
         }
     }
 
