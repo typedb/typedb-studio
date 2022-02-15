@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.page
 
 interface Pageable {
 
-    val hasChanges: Boolean
+    val isUnsaved: Boolean
 
     fun tryOpen(): Boolean
 
@@ -32,7 +32,7 @@ interface Pageable {
 
     fun onClose(function: () -> Unit)
 
-    fun save()
+    fun saveFile()
 
     fun close()
 

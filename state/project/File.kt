@@ -54,11 +54,11 @@ import mu.KotlinLogging
 
 class File internal constructor(
     path: Path,
-    parent: Directory,
+    override val parent: Directory,
     settings: Settings,
+    projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) :
-    ProjectItem(Type.FILE, path, parent, settings, notificationMgr), Pageable {
+) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Pageable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -73,8 +73,9 @@ class File internal constructor(
     }
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
-    private var content: List<String> by mutableStateOf(listOf())
+    val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
 
+    private var content: List<String> by mutableStateOf(listOf())
     private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
     private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
@@ -83,10 +84,11 @@ class File internal constructor(
     private var lastModified by mutableStateOf(path.toFile().lastModified())
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private var hasChanges by mutableStateOf(false); private set
 
-    override var hasChanges by mutableStateOf(false); private set
     override var isReadable: Boolean by mutableStateOf(path.isReadable())
     override var isWritable: Boolean by mutableStateOf(path.isWritable())
+    override val isUnsaved: Boolean get() = hasChanges || isUnsavedFile
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
@@ -118,7 +120,7 @@ class File internal constructor(
         }
     }
 
-    fun hasChanged() {
+    fun isChanged() {
         hasChanges = true
     }
 
@@ -144,7 +146,7 @@ class File internal constructor(
 
     fun writeLines(lines: List<String>) {
         content = lines
-        if (settings.autosave) save()
+        if (settings.autosave) saveContent()
     }
 
     override fun mayLaunchWatcher() = launchWatcher()
@@ -159,16 +161,18 @@ class File internal constructor(
         coroutineScope.launch {
             try {
                 do {
-                    if (lastModified < path.toFile().lastModified()) {
-                        lastModified = path.toFile().lastModified()
-                        onUpdate?.let { it(this@File) }
-                    }
-                    if (isReadable != path.isReadable() || isWritable != path.isWritable()) {
-                        isReadable = path.isReadable()
-                        isWritable = path.isWritable()
-                        onPermissionChange?.let { it(this@File) }
-                    }
                     if (!path.exists() || !path.isReadable()) onClose?.let { it() }
+                    else {
+                        if (isReadable != path.isReadable() || isWritable != path.isWritable()) {
+                            isReadable = path.isReadable()
+                            isWritable = path.isWritable()
+                            onPermissionChange?.let { it(this@File) }
+                        }
+                        if (lastModified < path.toFile().lastModified()) {
+                            lastModified = path.toFile().lastModified()
+                            onUpdate?.let { it(this@File) }
+                        }
+                    }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
                 } while (watchFileSystem)
             } catch (e: CancellationException) {
@@ -194,7 +198,12 @@ class File internal constructor(
         onClose = function
     }
 
-    override fun save() {
+    override fun saveFile() {
+        saveContent()
+        if (isUnsavedFile) projectMgr.saveFileDialog.open(this)
+    }
+
+    fun saveContent() {
         onSave?.let { it() }
         Files.write(path, content)
         lastModified = System.currentTimeMillis()

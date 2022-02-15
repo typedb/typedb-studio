@@ -187,7 +187,7 @@ object PageArea {
         return if (page.isWritable) {
             val changeIndicator = " *"
             AnnotatedString(page.label) + when {
-                page.state.hasChanges -> AnnotatedString(changeIndicator)
+                page.state.isUnsaved -> AnnotatedString(changeIndicator)
                 else -> AnnotatedString(changeIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {

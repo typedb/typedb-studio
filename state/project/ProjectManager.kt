@@ -63,11 +63,11 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    class RenameItemDialog : DialogManager() {
+    class ProjectItemDialog<T: ProjectItem> : DialogManager() {
 
-        var item: ProjectItem? by mutableStateOf(null)
+        var item: T? by mutableStateOf(null)
 
-        fun open(item: ProjectItem) {
+        fun open(item: T) {
             isOpen = true
             this.item = item
         }
@@ -97,7 +97,8 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createItemDialog = CreateItemDialog()
-    val renameItemDialog = RenameItemDialog()
+    val renameItemDialog = ProjectItemDialog<ProjectItem>()
+    val saveFileDialog = ProjectItemDialog<File>()
 
     fun tryOpenProject(newDir: String): Boolean {
         val dir = Path.of(newDir)
@@ -120,7 +121,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, settings, notificationMgr)
+        current = Project(dir, settings, this, notificationMgr)
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()
@@ -165,6 +166,13 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     fun tryRename(item: ProjectItem, newName: String) {
         if (item.tryRename(newName)) {
             renameItemDialog.close()
+            onContentChange?.let { it() }
+        }
+    }
+
+    fun trySaveTo(item: ProjectItem, newPath: Path, overwrite: Boolean) {
+        if (item.trySaveTo(newPath, overwrite)) {
+            saveFileDialog.close()
             onContentChange?.let { it() }
         }
     }

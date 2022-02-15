@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_SAVE_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -34,8 +35,9 @@ import mu.KotlinLogging
 sealed class ProjectItem(
     val projectItemType: Type,
     val path: Path,
-    final override val parent: Directory?,
+    override val parent: Directory?,
     val settings: Settings,
+    val projectMgr: ProjectManager,
     val notificationMgr: NotificationManager
 ) : Navigable.Item<ProjectItem> {
 
@@ -48,7 +50,7 @@ sealed class ProjectItem(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    private val hash = Objects.hash(path, parent)
+    private val hash = Objects.hash(path)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
     val isRoot get() = parent == null
@@ -80,6 +82,17 @@ sealed class ProjectItem(
         }
     }
 
+    fun trySaveTo(newPath: Path, overwrite: Boolean): Boolean {
+        return try {
+            close()
+            path.moveTo(newPath, overwrite)
+            true
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            false
+        }
+    }
+
     override fun toString(): String {
         return path.toString()
     }
@@ -94,7 +107,7 @@ sealed class ProjectItem(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as ProjectItem
-        return path == other.path && parent == other.parent
+        return path == other.path
     }
 
     override fun hashCode(): Int {

@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.DpSize
@@ -138,9 +139,7 @@ object ProjectDialog {
             isMultipleMode = false
             isVisible = true
         }
-        if (fileDialog.directory != null) {
-            OpenProjectForm.directory = Path(fileDialog.directory).resolve(fileDialog.file).toString()
-        }
+        fileDialog.directory?.let { OpenProjectForm.directory = Path(it).resolve(fileDialog.file).toString() }
     }
 
     private fun otherOSDialog() {
@@ -308,5 +307,19 @@ object ProjectDialog {
         TextButton(text = Label.CANCEL, onClick = onCancel)
         ComponentSpacer()
         TextButton(text = submitLabel, enabled = form.isValid(), onClick = { form.trySubmit() })
+    }
+
+    @Composable
+    fun SaveFile(window: ComposeWindow) {
+        val projectFile = GlobalState.project.saveFileDialog.item!!
+        val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
+            directory = GlobalState.project.current?.path.toString()
+            file = projectFile.name
+            isMultipleMode = false
+            isVisible = true
+        }
+        fileDialog.directory?.let {
+            GlobalState.project.trySaveTo(projectFile, Path(it).resolve(fileDialog.file), true)
+        } ?: GlobalState.project.saveFileDialog.close()
     }
 }

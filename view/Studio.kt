@@ -133,6 +133,7 @@ object Studio {
             if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
             if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
             if (GlobalState.project.renameItemDialog.isOpen) ProjectDialog.RenameProjectItem()
+            if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
         }
     }
 

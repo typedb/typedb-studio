@@ -68,6 +68,7 @@ object Label {
     const val ROLES = "Roles"
     const val RULES = "Rules"
     const val SAVE = "Save"
+    const val SAVE_FILE = "Save File"
     const val SELECT_DATABASE = "Select Database"
     const val SERVER = "Server"
     const val STATUS = "Status"
