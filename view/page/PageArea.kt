@@ -93,7 +93,7 @@ object PageArea {
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateFile()?.let { GlobalState.page.open(it) }
+            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.page.open(it) }
             return true
         }
 

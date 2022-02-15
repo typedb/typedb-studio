@@ -80,6 +80,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     companion object {
         private val LOGGER = KotlinLogging.logger {}
         const val DATA_DIR_NAME = ".tdbs"
+        const val UNSAVED_DATA_DIR_NAME = ".unsaved"
     }
 
     var _current: Project? by mutableStateOf(null)
@@ -89,6 +90,8 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
             _current = value
             onProjectChange?.let { it(_current!!) }
         }
+    var dataDir: Directory? by mutableStateOf(null)
+    var unsavedFilesDir: Directory? by mutableStateOf(null)
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
@@ -97,29 +100,40 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
 
     fun tryOpenProject(newDir: String) {
         val dir = Path.of(newDir)
-        val dataDir = dir.resolve(DATA_DIR_NAME)
+        val dataDirPath = dir.resolve(DATA_DIR_NAME)
+        val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
         if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, newDir)
         else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, newDir)
         else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, newDir)
         else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
-        else if (dataDir.exists() && dataDir.isRegularFile()) {
-            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDir)
+        else if (dataDirPath.exists() && dataDirPath.isRegularFile()) {
+            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
+        } else if (unsavedFilesDirPath.exists() && unsavedFilesDirPath.isRegularFile()) {
+            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
         } else {
-            current = Project(dir, notificationMgr)
+            initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
             openProjectDialog.close()
-            if (dataDir.notExists()) dataDir.createDirectory()
         }
     }
 
-    fun tryCreateFile(): File? {
-        val root = current!!.directory
-        val newFileName = root.nextUntitledFileName()
+    private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
+        current = Project(dir, notificationMgr)
+        if (dataDirPath.notExists()) dataDirPath.createDirectory()
+        if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
+        current!!.directory.reloadEntries()
+        dataDir = current!!.directory.entries.first { it.name == DATA_DIR_NAME }.asDirectory()
+        dataDir!!.reloadEntries()
+        unsavedFilesDir = dataDir!!.entries.first { it.name == UNSAVED_DATA_DIR_NAME }.asDirectory()
+    }
+
+    fun tryCreateUntitledFile(): File? {
+        val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
-            val newFile = root.createFile(newFileName)
+            val newFile = unsavedFilesDir!!.createFile(newFileName)
             onContentChange?.let { it() }
             newFile
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, root.path.resolve(newFileName))
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
         }
     }
