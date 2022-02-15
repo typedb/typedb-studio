@@ -54,13 +54,13 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
+            OpenProjectButton()
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.FLOPPY_DISK, onClick = {})
+            SaveButton()
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+            PlayButton()
             ToolbarSpace()
-            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+            StopButton()
             Spacer(Modifier.weight(1f))
             DatabaseDropdown(Modifier.height(COMPONENT_HEIGHT).width(DATABASE_DROPDOWN_WIDTH))
             ToolbarSpace()
@@ -75,8 +75,40 @@ object Toolbar {
     }
 
     @Composable
-    private fun ToolbarButton(icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon) {
-        IconButton(icon = icon, onClick = onClick, modifier = Modifier.size(COMPONENT_HEIGHT), iconColor = color)
+    private fun OpenProjectButton() {
+        ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
+    }
+
+    @Composable
+    private fun SaveButton() {
+        ToolbarButton(
+            icon = Icon.Code.FLOPPY_DISK,
+            onClick = { GlobalState.page.selectedPage?.save() },
+            enabled = GlobalState.page.selectedPage?.hasChanges == true
+        )
+    }
+
+    @Composable
+    private fun StopButton() {
+        ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+    }
+
+    @Composable
+    private fun PlayButton() {
+        ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+    }
+
+    @Composable
+    private fun ToolbarButton(
+        icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon, enabled: Boolean = true
+    ) {
+        IconButton(
+            icon = icon,
+            onClick = onClick,
+            modifier = Modifier.size(COMPONENT_HEIGHT),
+            iconColor = color,
+            enabled = enabled
+        )
     }
 
     @Composable

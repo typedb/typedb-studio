@@ -118,6 +118,7 @@ object TextEditor {
         val handler = EventHandler(target, toolbar, clipboard, processor)
         val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
         onChangeFromDisk(file, content, rendering, finder, target, processor, toolbar, handler, editor)
+        file.onSave { processor.drainChanges() }
         return editor
     }
 

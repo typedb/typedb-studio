@@ -274,13 +274,13 @@ object ConnectionDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier) {
         Dropdown(
+            modifier = modifier,
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
             selected = GlobalState.connection.current?.getDatabase() ?: "",
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
             onSelection = { GlobalState.connection.current?.setDatabase(it) },
             placeholder = Label.SELECT_DATABASE,
-            enabled = GlobalState.connection.isConnected(),
-            modifier = modifier
+            enabled = GlobalState.connection.isConnected()
         )
     }
 }

@@ -62,6 +62,7 @@ internal interface TextProcessor {
     fun outdentTab()
     fun undo()
     fun redo()
+    fun drainChanges()
     fun save()
     fun reset()
 
@@ -105,6 +106,7 @@ internal interface TextProcessor {
         override fun outdentTab() = displayWarning()
         override fun undo() = displayWarning()
         override fun redo() = displayWarning()
+        override fun drainChanges() {}
         override fun save() {}
         override fun reset() {}
 
@@ -253,7 +255,7 @@ internal interface TextProcessor {
         }
 
         override fun undo() {
-            drainChanges(callOnChange = false)
+            drainAndBatchChanges(callOnChange = false)
             if (undoStack.isNotEmpty()) applyReplay(undoStack.removeLast(), ReplayType.UNDO)
         }
 
@@ -337,14 +339,14 @@ internal interface TextProcessor {
             coroutineScope.launch {
                 delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
                 if (changeCount.decrementAndGet() == 0) {
-                    val changes = drainChanges()
+                    val changes = drainAndBatchChanges()
                     changes?.let { highlight(it.lines()) }
                 }
             }
         }
 
         @Synchronized
-        private fun drainChanges(callOnChange: Boolean = true): TextChange? {
+        private fun drainAndBatchChanges(callOnChange: Boolean = true): TextChange? {
             var batchedChanges: TextChange? = null
             if (changeQueue.isNotEmpty()) {
                 val changes = mutableListOf<TextChange>()
@@ -363,6 +365,10 @@ internal interface TextProcessor {
 
         private fun callOnChange() {
             onChange(content.map { it.text })
+        }
+
+        override fun drainChanges() {
+            drainAndBatchChanges(callOnChange = true)
         }
 
         override fun save() {

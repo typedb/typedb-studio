@@ -29,6 +29,7 @@ kt_jvm_library(
         "//state/config:config",
         "//state/connection:connection",
         "//state/notification:notification",
+        "//state/page:page",
         "//state/project:project",
         "//state/status:status",
         "//state:state",

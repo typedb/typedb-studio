@@ -79,6 +79,7 @@ class File internal constructor(
     private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
     private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
     private var onClose: (() -> Unit)? by mutableStateOf(null)
+    private var onSave: (() -> Unit)? by mutableStateOf(null)
     private var lastModified by mutableStateOf(path.toFile().lastModified())
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -146,12 +147,6 @@ class File internal constructor(
         if (settings.autosave) save()
     }
 
-    fun save() {
-        Files.write(path, content)
-        lastModified = System.currentTimeMillis()
-        hasChanges = false
-    }
-
     override fun mayLaunchWatcher() = launchWatcher()
 
     override fun mayStopWatcher() {
@@ -165,7 +160,6 @@ class File internal constructor(
             try {
                 do {
                     if (lastModified < path.toFile().lastModified()) {
-                        println("launchWatcher calling onUpdate ...")
                         lastModified = path.toFile().lastModified()
                         onUpdate?.let { it(this@File) }
                     }
@@ -192,8 +186,19 @@ class File internal constructor(
         onPermissionChange = function
     }
 
+    override fun onSave(function: () -> Unit) {
+        onSave = function
+    }
+
     override fun onClose(function: () -> Unit) {
         onClose = function
+    }
+
+    override fun save() {
+        onSave?.let { it() }
+        Files.write(path, content)
+        lastModified = System.currentTimeMillis()
+        hasChanges = false
     }
 
     override fun close() {
