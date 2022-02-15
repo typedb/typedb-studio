@@ -35,8 +35,8 @@ import com.vaticle.typedb.studio.view.highlighter.language.TypeQLLexer
 
 object SyntaxHighlighter {
 
-    fun readFile(file: File): List<AnnotatedString> {
-        return highlight(file.readFile(), file.fileType)
+    fun readLines(file: File): List<AnnotatedString> {
+        return highlight(file.readLines(), file.fileType)
     }
 
     fun highlight(texts: List<String>, fileType: Property.FileType): List<AnnotatedString> {

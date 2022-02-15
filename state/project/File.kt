@@ -98,8 +98,8 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         }
         return try {
             // TODO: find a more efficient way to verify access without having to load the entire file
-            if (isTextFile) loadTextFile()
-            else loadBinaryFile()
+            if (isTextFile) loadTextFileLines()
+            else loadBinaryFileLines()
             isOpen.set(true)
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
@@ -108,17 +108,17 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         }
     }
 
-    fun readFile(): List<String> {
-        return if (isTextFile) loadTextFile() else loadBinaryFile()
+    fun readLines(): List<String> {
+        return if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
     }
 
-    private fun loadTextFile(): List<String> {
+    private fun loadTextFileLines(): List<String> {
         val content = Files.readAllLines(path)
         if (content.isEmpty()) content.add("")
         return content
     }
 
-    private fun loadBinaryFile(): List<String> {
+    private fun loadBinaryFileLines(): List<String> {
         val reader = BufferedReader(InputStreamReader(FileInputStream(path.toFile())))
         val content = mutableListOf<String>()
         var line: String?
@@ -127,8 +127,9 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         return content
     }
 
-    fun save() {
-        // TODO: Files.write(path, content)
+    fun writeLines(lines: List<String>) {
+        Files.write(path, lines)
+        lastModified = System.currentTimeMillis()
     }
 
     override fun mayLaunchWatcher() = launchWatcher()
@@ -144,6 +145,7 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
             try {
                 do {
                     if (lastModified < path.toFile().lastModified()) {
+                        println("launchWatcher calling onUpdate ...")
                         lastModified = path.toFile().lastModified()
                         onUpdate?.let { it(this@File) }
                     }
@@ -162,11 +164,11 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         }
     }
 
-    fun onUpdate(function: (File) -> Unit) {
+    fun onChangeContentFromDisk(function: (File) -> Unit) {
         onUpdate = function
     }
 
-    fun onPermissionChange(function: (File) -> Unit) {
+    fun onChangePermissionFromDisk(function: (File) -> Unit) {
         onPermissionChange = function
     }
 

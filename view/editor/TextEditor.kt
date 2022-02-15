@@ -104,37 +104,30 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readFile(file)) }
+        val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readLines(file)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor.create(file, content, rendering, finder, target)
+        val processor = TextProcessor.create(file, content, rendering, finder, target) { file.writeLines(it) }
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
         val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
-        registerOnUpdate(file, content, rendering, processor)
-        registerOnPermissionChange(file, content, rendering, finder, target, toolbar, handler, editor)
+        onChangeFromDisk(file, content, rendering, finder, target, processor, toolbar, handler, editor)
         return editor
     }
 
-    private fun registerOnUpdate(
-        file: File, content: SnapshotStateList<AnnotatedString>,
-        rendering: TextRendering, processor: TextProcessor
+    private fun onChangeFromDisk(
+        file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
+        target: InputTarget, processor: TextProcessor, toolbar: TextToolbar.State, handler: EventHandler, editor: State
     ) {
-        file.onUpdate { f: File ->
+        file.onChangeContentFromDisk { f: File ->
             content.clear()
-            content.addAll(SyntaxHighlighter.readFile(f))
+            content.addAll(SyntaxHighlighter.readLines(f))
             rendering.reinitialize(content.size)
             processor.reset()
         }
-    }
-
-    private fun registerOnPermissionChange(
-        file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
-        target: InputTarget, toolbar: TextToolbar.State, handler: EventHandler, editor: State
-    ) {
-        file.onPermissionChange {
-            val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
+        file.onChangePermissionFromDisk {
+            val newProcessor = TextProcessor.create(file, content, rendering, finder, target) { file.writeLines(it) }
             toolbar.processor = newProcessor
             handler.processor = newProcessor
             editor.processor = newProcessor

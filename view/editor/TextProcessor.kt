@@ -71,10 +71,10 @@ internal interface TextProcessor {
 
         internal fun create(
             file: File, content: SnapshotStateList<AnnotatedString>,
-            rendering: TextRendering, finder: TextFinder, target: InputTarget
+            rendering: TextRendering, finder: TextFinder, target: InputTarget, onChange: (List<String>) -> Unit
         ): TextProcessor {
             return when {
-                file.isWritable -> Writable(content, file.fileType, rendering, finder, target)
+                file.isWritable -> Writable(content, file.fileType, rendering, finder, target, onChange)
                 else -> ReadOnly(file.path)
             }
         }
@@ -115,6 +115,7 @@ internal interface TextProcessor {
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
+        private val onChange: (List<String>) -> Unit,
     ) : TextProcessor {
 
         companion object {
@@ -270,6 +271,7 @@ internal interface TextProcessor {
                 ReplayType.UNDO -> redoStack.addLast(change.invert())
                 ReplayType.REDO -> undoStack.addLast(change.invert())
             }
+            onChange(content.map { it.text })
         }
 
         private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
@@ -322,7 +324,8 @@ internal interface TextProcessor {
                 delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
                 if (changeCount.decrementAndGet() == 0) {
                     val changes = drainAndBatchOriginalChanges()
-                    changes?.let { reannotate(it.lines()) }
+                    onChange(content.map { it.text })
+                    changes?.let { highlight(it.lines()) }
                 }
             }
         }
@@ -340,7 +343,7 @@ internal interface TextProcessor {
             return batchedChanges
         }
 
-        private fun reannotate(lines: IntRange) {
+        private fun highlight(lines: IntRange) {
             lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
         }
     }
