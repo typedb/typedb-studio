@@ -169,7 +169,6 @@ object PageArea {
                 Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 Text(value = tabTitle(page))
-                Spacer(modifier = Modifier.width(TAB_SPACING))
                 IconButton(
                     icon = Icon.Code.XMARK,
                     onClick = { areaState.closePage(page.state) },
@@ -185,8 +184,13 @@ object PageArea {
 
     @Composable
     private fun tabTitle(page: Page): AnnotatedString {
-        return if (page.isWritable) AnnotatedString(page.label)
-        else {
+        return if (page.isWritable) {
+            val changeIndicator = " *"
+            AnnotatedString(page.label) + when {
+                page.state.hasChanges -> AnnotatedString(changeIndicator)
+                else -> AnnotatedString(changeIndicator, SpanStyle(color = Color.Transparent))
+            }
+        } else {
             val builder = AnnotatedString.Builder()
             val style = SpanStyle(color = Theme.colors.onPrimary.copy(alpha = 0.6f))
             builder.append(page.label)

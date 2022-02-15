@@ -26,6 +26,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
@@ -39,8 +40,10 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import mu.KotlinLogging
 
-class Directory internal constructor(path: Path, parent: Directory?, notificationMgr: NotificationManager) :
-    Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, notificationMgr) {
+class Directory internal constructor(
+    path: Path, parent: Directory?, settings: Settings, notificationMgr: NotificationManager
+) :
+    Navigable.ExpandableItem<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, settings, notificationMgr) {
 
     override var entries: List<ProjectItem> = emptyList()
     override val isReadable: Boolean get() = path.isReadable()
@@ -71,7 +74,8 @@ class Directory internal constructor(path: Path, parent: Directory?, notificatio
     }
 
     private fun projectItemOf(it: Path): ProjectItem {
-        return if (it.isDirectory()) Directory(it, this, notificationMgr) else File(it, this, notificationMgr)
+        return if (it.isDirectory()) Directory(it, this, settings, notificationMgr)
+        else File(it, this, settings, notificationMgr)
     }
 
     fun nexUntitledDirName(): String {

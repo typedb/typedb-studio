@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_C
 import com.vaticle.typedb.studio.state.common.Property.FileType
 import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
+import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.page.Pageable
 import java.io.BufferedReader
@@ -51,8 +52,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class File internal constructor(path: Path, parent: Directory, notificationMgr: NotificationManager) :
-    ProjectItem(Type.FILE, path, parent, notificationMgr), Pageable {
+class File internal constructor(
+    path: Path,
+    parent: Directory,
+    settings: Settings,
+    notificationMgr: NotificationManager
+) :
+    ProjectItem(Type.FILE, path, parent, settings, notificationMgr), Pageable {
+
+    @OptIn(ExperimentalTime::class)
+    companion object {
+        private val LIVE_UPDATE_REFRESH_RATE: Duration = Duration.seconds(1)
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     val extension: String = this.path.extension
     val fileType: FileType = when {
@@ -61,6 +73,8 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
+    private var content: List<String> by mutableStateOf(listOf())
+
     private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
     private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
@@ -69,14 +83,9 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     private var watchFileSystem by mutableStateOf(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    override var hasChanges by mutableStateOf(false); private set
     override var isReadable: Boolean by mutableStateOf(path.isReadable())
     override var isWritable: Boolean by mutableStateOf(path.isWritable())
-
-    @OptIn(ExperimentalTime::class)
-    companion object {
-        private val LIVE_UPDATE_REFRESH_RATE: Duration = Duration.seconds(1)
-        private val LOGGER = KotlinLogging.logger {}
-    }
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
@@ -108,8 +117,13 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
         }
     }
 
+    fun hasChanged() {
+        hasChanges = true
+    }
+
     fun readLines(): List<String> {
-        return if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
+        content = if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
+        return content
     }
 
     private fun loadTextFileLines(): List<String> {
@@ -128,8 +142,14 @@ class File internal constructor(path: Path, parent: Directory, notificationMgr: 
     }
 
     fun writeLines(lines: List<String>) {
-        Files.write(path, lines)
+        content = lines
+        if (settings.autosave) save()
+    }
+
+    fun save() {
+        Files.write(path, content)
         lastModified = System.currentTimeMillis()
+        hasChanges = false
     }
 
     override fun mayLaunchWatcher() = launchWatcher()

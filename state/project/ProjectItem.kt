@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import java.util.Objects
@@ -29,10 +30,11 @@ import kotlin.io.path.moveTo
 import kotlin.io.path.readSymbolicLink
 import mu.KotlinLogging
 
-sealed class ProjectItem constructor(
+sealed class ProjectItem(
     val projectItemType: Type,
     val path: Path,
     final override val parent: Directory?,
+    val settings: Settings,
     val notificationMgr: NotificationManager
 ) : Navigable.Item<ProjectItem> {
 

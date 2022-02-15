@@ -113,7 +113,7 @@ object TextEditor {
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
-        val processor = TextProcessor.create(file, content, rendering, finder, target) { file.writeLines(it) }
+        val processor = TextProcessor.create(file, content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
         val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
@@ -125,15 +125,21 @@ object TextEditor {
         file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
         target: InputTarget, processor: TextProcessor, toolbar: TextToolbar.State, handler: EventHandler, editor: State
     ) {
-        file.onChangeContentFromDisk { f: File ->
+        fun reinitialiseContent(file: File) {
             content.clear()
-            content.addAll(SyntaxHighlighter.readLines(f))
+            content.addAll(SyntaxHighlighter.readLines(file))
             rendering.reinitialize(content.size)
+        }
+
+        file.onChangeContentFromDisk {
+            reinitialiseContent(it)
             processor.reset()
             GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, file.path)
         }
+
         file.onChangePermissionFromDisk {
-            val newProcessor = TextProcessor.create(file, content, rendering, finder, target) { file.writeLines(it) }
+            reinitialiseContent(it)
+            val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
             toolbar.processor = newProcessor
             handler.processor = newProcessor
             editor.processor = newProcessor

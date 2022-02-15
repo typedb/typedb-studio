@@ -62,6 +62,7 @@ internal interface TextProcessor {
     fun outdentTab()
     fun undo()
     fun redo()
+    fun save()
     fun reset()
 
     companion object {
@@ -71,11 +72,20 @@ internal interface TextProcessor {
 
         internal fun create(
             file: File, content: SnapshotStateList<AnnotatedString>,
-            rendering: TextRendering, finder: TextFinder, target: InputTarget, onChange: (List<String>) -> Unit
+            rendering: TextRendering, finder: TextFinder, target: InputTarget
         ): TextProcessor {
             return when {
-                file.isWritable -> Writable(content, file.fileType, rendering, finder, target, onChange)
-                else -> ReadOnly(file.path)
+                !file.isWritable -> ReadOnly(file.path)
+                else -> Writable(
+                    content = content,
+                    fileType = file.fileType,
+                    rendering = rendering,
+                    finder = finder,
+                    target = target,
+                    onChangeInitiated = { file.hasChanged() },
+                    onChange = { file.writeLines(it) },
+                    onSave = { file.save() }
+                )
             }
         }
     }
@@ -95,6 +105,7 @@ internal interface TextProcessor {
         override fun outdentTab() = displayWarning()
         override fun undo() = displayWarning()
         override fun redo() = displayWarning()
+        override fun save() {}
         override fun reset() {}
 
         private fun displayWarning() {
@@ -115,7 +126,9 @@ internal interface TextProcessor {
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
+        private val onChangeInitiated: () -> Unit,
         private val onChange: (List<String>) -> Unit,
+        private val onSave: () -> Unit,
     ) : TextProcessor {
 
         companion object {
@@ -240,7 +253,7 @@ internal interface TextProcessor {
         }
 
         override fun undo() {
-            drainAndBatchOriginalChanges()
+            drainChanges(callOnChange = false)
             if (undoStack.isNotEmpty()) applyReplay(undoStack.removeLast(), ReplayType.UNDO)
         }
 
@@ -257,7 +270,7 @@ internal interface TextProcessor {
                 newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
                 newPosition.isSecond -> target.updateSelection(newPosition.second())
             }
-            queueChangeAndReannotation(change)
+            queueChangeAndHighlighting(change)
         }
 
         private fun applyReplay(change: TextChange, replayType: ReplayType) {
@@ -271,10 +284,11 @@ internal interface TextProcessor {
                 ReplayType.UNDO -> redoStack.addLast(change.invert())
                 ReplayType.REDO -> undoStack.addLast(change.invert())
             }
-            onChange(content.map { it.text })
+            callOnChange()
         }
 
         private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
+            onChangeInitiated()
             change.operations.forEach {
                 when (it) {
                     is Deletion -> applyDeletion(it)
@@ -316,22 +330,21 @@ internal interface TextProcessor {
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun queueChangeAndReannotation(change: TextChange) {
+        private fun queueChangeAndHighlighting(change: TextChange) {
             redoStack.clear()
             changeQueue.put(change)
             changeCount.incrementAndGet()
             coroutineScope.launch {
                 delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
                 if (changeCount.decrementAndGet() == 0) {
-                    val changes = drainAndBatchOriginalChanges()
-                    onChange(content.map { it.text })
+                    val changes = drainChanges()
                     changes?.let { highlight(it.lines()) }
                 }
             }
         }
 
         @Synchronized
-        private fun drainAndBatchOriginalChanges(): TextChange? {
+        private fun drainChanges(callOnChange: Boolean = true): TextChange? {
             var batchedChanges: TextChange? = null
             if (changeQueue.isNotEmpty()) {
                 val changes = mutableListOf<TextChange>()
@@ -339,12 +352,22 @@ internal interface TextProcessor {
                 batchedChanges = TextChange.merge(changes)
                 undoStack.addLast(batchedChanges.invert())
                 while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
+                if (callOnChange) callOnChange()
             }
             return batchedChanges
         }
 
         private fun highlight(lines: IntRange) {
             lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
+        }
+
+        private fun callOnChange() {
+            onChange(content.map { it.text })
+        }
+
+        override fun save() {
+            drainChanges()
+            onSave()
         }
     }
 }

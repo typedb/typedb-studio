@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
+import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
@@ -39,7 +40,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager(private val notificationMgr: NotificationManager) {
+class ProjectManager(private val settings: Settings, private val notificationMgr: NotificationManager) {
 
     class CreateItemDialog : DialogManager() {
 
@@ -117,7 +118,7 @@ class ProjectManager(private val notificationMgr: NotificationManager) {
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, notificationMgr)
+        current = Project(dir, settings, notificationMgr)
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()

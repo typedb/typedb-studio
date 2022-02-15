@@ -20,6 +20,8 @@ package com.vaticle.typedb.studio.state.page
 
 interface Pageable {
 
+    val hasChanges: Boolean
+
     fun tryOpen(): Boolean
 
     fun mayLaunchWatcher()
