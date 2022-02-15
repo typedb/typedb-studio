@@ -99,7 +99,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     val createItemDialog = CreateItemDialog()
     val renameItemDialog = RenameItemDialog()
 
-    fun tryOpenProject(newDir: String) {
+    fun tryOpenProject(newDir: String): Boolean {
         val dir = Path.of(newDir)
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
         val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
@@ -114,7 +114,9 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         } else {
             initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
             openProjectDialog.close()
+            return true
         }
+        return false
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
@@ -125,6 +127,11 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         dataDir = current!!.directory.entries.first { it.name == DATA_DIR_NAME }.asDirectory()
         dataDir!!.reloadEntries()
         unsavedFilesDir = dataDir!!.entries.first { it.name == UNSAVED_DATA_DIR_NAME }.asDirectory()
+    }
+
+    fun unsavedFiles(): List<File> {
+        unsavedFilesDir?.reloadEntries()
+        return unsavedFilesDir?.entries?.filter { it.isFile }?.map { it.asFile() } ?: listOf()
     }
 
     fun tryCreateUntitledFile(): File? {
