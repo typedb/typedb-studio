@@ -32,6 +32,6 @@ object GlobalState {
     val notification = NotificationManager()
     val status = StatusManager()
     val connection = ConnectionManager(notification)
-    val page = PageManager(notification)
     val project = ProjectManager(settings, notification)
+    val page = PageManager(notification)
 }

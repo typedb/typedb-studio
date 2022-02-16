@@ -32,7 +32,7 @@ interface Pageable {
 
     fun onClose(function: () -> Unit)
 
-    fun saveFile()
+    fun saveFile(onSuccess: ((Pageable) -> Unit)? = null)
 
     fun close()
 

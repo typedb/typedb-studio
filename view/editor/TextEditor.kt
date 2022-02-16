@@ -132,13 +132,13 @@ object TextEditor {
             rendering.reinitialize(content.size)
         }
 
-        file.onChangeContentFromDisk {
+        file.onDiskChangeContent {
             reinitialiseContent(it)
             processor.reset()
             GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, file.path)
         }
 
-        file.onChangePermissionFromDisk {
+        file.onDiskChangePermission {
             reinitialiseContent(it)
             val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
             toolbar.processor = newProcessor

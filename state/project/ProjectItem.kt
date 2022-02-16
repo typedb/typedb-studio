@@ -24,7 +24,6 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.project.ProjectManager.Companion.DATA_DIR_NAME
 import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
@@ -59,7 +58,7 @@ sealed class ProjectItem(
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
-    val isProjectData: Boolean get() = if (name == DATA_DIR_NAME) true else parent?.isProjectData ?: false
+    val isProjectData: Boolean get() = if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false
 
     abstract val isReadable: Boolean
     abstract val isWritable: Boolean

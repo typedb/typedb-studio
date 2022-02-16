@@ -59,14 +59,10 @@ import java.awt.FileDialog
 import java.io.File
 import javax.swing.JFileChooser
 import kotlin.io.path.Path
+import mu.KotlinLogging
 
 
 object ProjectDialog {
-
-    private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
-    private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
-    private val PROJECT_ITEM_NAMING_WINDOW_WIDTH = 500.dp
-    private val PROJECT_ITEM_NAMING_WINDOW_HEIGHT = 200.dp
 
     private object OpenProjectForm : Form.State {
 
@@ -87,6 +83,12 @@ object ProjectDialog {
             }
         }
     }
+
+    private val OPEN_PROJECT_WINDOW_WIDTH = 500.dp
+    private val OPEN_PROJECT_WINDOW_HEIGHT = 140.dp
+    private val PROJECT_ITEM_NAMING_WINDOW_WIDTH = 500.dp
+    private val PROJECT_ITEM_NAMING_WINDOW_HEIGHT = 200.dp
+    private val LOGGER = KotlinLogging.logger {}
 
     @Composable
     fun OpenProject() {
@@ -311,7 +313,7 @@ object ProjectDialog {
 
     @Composable
     fun SaveFile(window: ComposeWindow) {
-        val projectFile = GlobalState.project.saveFileDialog.item!!
+        val projectFile = GlobalState.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
             directory = GlobalState.project.current?.path.toString()
             file = projectFile.name
@@ -319,7 +321,8 @@ object ProjectDialog {
             isVisible = true
         }
         fileDialog.directory?.let {
-            GlobalState.project.trySaveTo(projectFile, Path(it).resolve(fileDialog.file), true)
+            val newPath = Path(it).resolve(fileDialog.file)
+            GlobalState.project.trySaveFileTo(projectFile, newPath, true)
         } ?: GlobalState.project.saveFileDialog.close()
     }
 }

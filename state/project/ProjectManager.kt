@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_READABLE
@@ -30,6 +31,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import com.vaticle.typedb.studio.state.page.Pageable
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
@@ -37,7 +39,9 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isWritable
+import kotlin.io.path.name
 import kotlin.io.path.notExists
+import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
 class ProjectManager(private val settings: Settings, private val notificationMgr: NotificationManager) {
@@ -63,11 +67,11 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    class ProjectItemDialog<T: ProjectItem> : DialogManager() {
+    class RenameProjectItemDialog : DialogManager() {
 
-        var item: T? by mutableStateOf(null)
+        var item: ProjectItem? by mutableStateOf(null)
 
-        fun open(item: T) {
+        fun open(item: ProjectItem) {
             isOpen = true
             this.item = item
         }
@@ -75,6 +79,24 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         override fun close() {
             isOpen = false
             item = null
+        }
+    }
+
+    class SaveFileDialog : DialogManager() {
+
+        var file: File? by mutableStateOf(null)
+        var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
+
+        fun open(file: File, onSuccess: ((Pageable) -> Unit)?) {
+            isOpen = true
+            this.file = file
+            this.onSuccess = onSuccess
+        }
+
+        override fun close() {
+            isOpen = false
+            file = null
+            onSuccess = null
         }
     }
 
@@ -97,8 +119,8 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createItemDialog = CreateItemDialog()
-    val renameItemDialog = ProjectItemDialog<ProjectItem>()
-    val saveFileDialog = ProjectItemDialog<File>()
+    val renameItemDialog = RenameProjectItemDialog()
+    val saveFileDialog = SaveFileDialog()
 
     fun tryOpenProject(newDir: String): Boolean {
         val dir = Path.of(newDir)
@@ -147,6 +169,19 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
+    private fun toFile(newPath: Path): File {
+        assert(newPath.startsWith(current!!.path))
+        var relPath = newPath.relativeTo(current!!.path)
+        var dir: Directory = current!!.directory
+        while (relPath.nameCount > 1) {
+            dir.reloadEntries()
+            dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
+            relPath = relPath.relativeTo(relPath.first())
+        }
+        dir.reloadEntries()
+        return dir.entries.first { it.name == relPath.first().name }.asFile()
+    }
+
     fun tryCreateFile(parent: Directory, newFileName: String) {
         tryCreateItem { parent.createFile(newFileName) }
     }
@@ -170,8 +205,10 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    fun trySaveTo(item: ProjectItem, newPath: Path, overwrite: Boolean) {
-        if (item.trySaveTo(newPath, overwrite)) {
+    fun trySaveFileTo(file: File, newPath: Path, overwrite: Boolean) {
+        if (file.trySaveTo(newPath, overwrite)) {
+            if (newPath.startsWith(current!!.path)) saveFileDialog.onSuccess?.let { it(toFile(newPath)) }
+            else notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
             saveFileDialog.close()
             onContentChange?.let { it() }
         }

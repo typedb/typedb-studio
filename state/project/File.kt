@@ -37,6 +37,7 @@ import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
@@ -76,19 +77,21 @@ class File internal constructor(
     val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
 
     private var content: List<String> by mutableStateOf(listOf())
-    private var isOpen: AtomicBoolean = AtomicBoolean(false)
-    private var onUpdate: ((File) -> Unit)? by mutableStateOf(null)
-    private var onPermissionChange: ((File) -> Unit)? by mutableStateOf(null)
+    private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
+    private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
     private var onClose: (() -> Unit)? by mutableStateOf(null)
     private var onSave: (() -> Unit)? by mutableStateOf(null)
-    private var lastModified by mutableStateOf(path.toFile().lastModified())
     private var watchFileSystem by mutableStateOf(false)
+    private var hasChanges by mutableStateOf(false)
+    private var lastModified = AtomicLong(path.toFile().lastModified())
+    private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    private var hasChanges by mutableStateOf(false); private set
 
-    override var isReadable: Boolean by mutableStateOf(path.isReadable())
-    override var isWritable: Boolean by mutableStateOf(path.isWritable())
     override val isUnsaved: Boolean get() = hasChanges || isUnsavedFile
+    override val isReadable: Boolean get() = isReadableAtomic.get()
+    override val isWritable: Boolean get() = isWritableAtomic.get()
+    private var isReadableAtomic = AtomicBoolean(path.isReadable())
+    private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
@@ -163,14 +166,17 @@ class File internal constructor(
                 do {
                     if (!path.exists() || !path.isReadable()) onClose?.let { it() }
                     else {
-                        if (isReadable != path.isReadable() || isWritable != path.isWritable()) {
-                            isReadable = path.isReadable()
-                            isWritable = path.isWritable()
-                            onPermissionChange?.let { it(this@File) }
+                        var permissionChanged = false
+                        if (isReadableAtomic.compareAndSet(!path.isReadable(), path.isReadable())) {
+                            permissionChanged = true
                         }
-                        if (lastModified < path.toFile().lastModified()) {
-                            lastModified = path.toFile().lastModified()
-                            onUpdate?.let { it(this@File) }
+                        if (isWritableAtomic.compareAndSet(!path.isWritable(), path.isWritable())) {
+                            permissionChanged = true
+                        }
+                        if (permissionChanged) onDiskChangePermission?.let { it(this@File) }
+                        if (lastModified.get() < path.toFile().lastModified()) {
+                            lastModified.set(path.toFile().lastModified())
+                            onDiskChangeContent?.let { it(this@File) }
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -182,12 +188,12 @@ class File internal constructor(
         }
     }
 
-    fun onChangeContentFromDisk(function: (File) -> Unit) {
-        onUpdate = function
+    fun onDiskChangeContent(function: (File) -> Unit) {
+        onDiskChangeContent = function
     }
 
-    fun onChangePermissionFromDisk(function: (File) -> Unit) {
-        onPermissionChange = function
+    fun onDiskChangePermission(function: (File) -> Unit) {
+        onDiskChangePermission = function
     }
 
     override fun onSave(function: () -> Unit) {
@@ -198,23 +204,23 @@ class File internal constructor(
         onClose = function
     }
 
-    override fun saveFile() {
+    override fun saveFile(onSuccess: ((Pageable) -> Unit)?) {
         saveContent()
-        if (isUnsavedFile) projectMgr.saveFileDialog.open(this)
+        if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
     fun saveContent() {
         onSave?.let { it() }
         Files.write(path, content)
-        lastModified = System.currentTimeMillis()
+        lastModified.set(System.currentTimeMillis())
         hasChanges = false
     }
 
     override fun close() {
         if (isOpen.compareAndSet(true, false)) {
             watchFileSystem = false
-            onUpdate = null
-            onPermissionChange = null
+            onDiskChangeContent = null
+            onDiskChangePermission = null
             onClose?.let { it() }
             onClose = null
         }

@@ -44,10 +44,19 @@ class PageManager(val notification: NotificationManager) {
         selectedPage?.mayLaunchWatcher()
     }
 
+    fun saveSelectedPageAndReopen() {
+        val index = openedPages.indexOf(selectedPage)
+        selectedPage?.saveFile { open(it, index) }
+    }
+
     fun open(page: Pageable) {
+        open(page, openedPages.size)
+    }
+
+    fun open(page: Pageable, index: Int) {
         selectedPage?.mayStopWatcher()
         if (page !in openedPages) {
-            if (page.tryOpen()) openedPages.add(page)
+            if (page.tryOpen()) openedPages.add(index, page)
             else return
         }
         selectedPage = page
