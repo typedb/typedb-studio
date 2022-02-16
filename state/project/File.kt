@@ -87,7 +87,7 @@ class File internal constructor(
     private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    override val isUnsaved: Boolean get() = hasChanges || isUnsavedFile
+    override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
@@ -96,6 +96,10 @@ class File internal constructor(
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
         return type != null && type.startsWith("text")
+    }
+
+    private fun isContentEmpty(): Boolean {
+        return content.size == 1 && content[0].isBlank()
     }
 
     override fun asDirectory(): Directory {
@@ -127,8 +131,9 @@ class File internal constructor(
         hasChanges = true
     }
 
-    fun readLines(): List<String> {
-        content = if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
+    fun reloadFromDisk(): List<String> {
+        val loadedContent = if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
+        content = loadedContent.ifEmpty { listOf("") }
         return content
     }
 

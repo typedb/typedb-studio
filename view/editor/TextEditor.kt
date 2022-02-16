@@ -109,7 +109,7 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readLines(file)) }
+        val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readFile(file)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
@@ -128,7 +128,7 @@ object TextEditor {
     ) {
         fun reinitialiseContent(file: File) {
             content.clear()
-            content.addAll(SyntaxHighlighter.readLines(file))
+            content.addAll(SyntaxHighlighter.readFile(file))
             rendering.reinitialize(content.size)
         }
 
