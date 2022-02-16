@@ -35,6 +35,7 @@ class Project internal constructor(
     override val info: String? = null
     override val parent: Navigable.ExpandableItem<ProjectItem>? = null
     override val entries = listOf(directory)
+    override val isBulkExpandable: Boolean = true
 
     override fun reloadEntries() {
         directory.reloadEntries()

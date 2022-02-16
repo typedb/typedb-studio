@@ -49,14 +49,15 @@ class Directory internal constructor(
 ) : Navigable.ExpandableItem<ProjectItem>,
     ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
 
-    override var entries: List<ProjectItem> = emptyList()
-    override val isReadable: Boolean get() = path.isReadable()
-    override val isWritable: Boolean get() = path.isWritable()
-
     companion object {
         private const val UNTITLED = "Untitled"
         private val LOGGER = KotlinLogging.logger {}
     }
+
+    override var entries: List<ProjectItem> = emptyList()
+    override val isReadable: Boolean get() = path.isReadable()
+    override val isWritable: Boolean get() = path.isWritable()
+    override val isBulkExpandable: Boolean get() = !isProjectData
 
     override fun asDirectory(): Directory {
         return this

@@ -144,10 +144,13 @@ object Navigator {
         }
 
         open class Expandable<T : Navigable.Item<T>> internal constructor(
-            expandable: Navigable.ExpandableItem<T>, parent: Expandable<T>?, private val navState: NavigatorState<T>
+            expandable: Navigable.ExpandableItem<T>,
+            parent: Expandable<T>?,
+            private val navState: NavigatorState<T>
         ) : ItemState<T>(expandable as T, parent) {
 
             override val isExpandable: Boolean = true
+            val isBulkExpandable: Boolean = expandable.isBulkExpandable
             var isExpanded: Boolean by mutableStateOf(false)
             var entries: List<ItemState<T>> by mutableStateOf(emptyList())
 
@@ -310,12 +313,13 @@ object Navigator {
 
         private fun expand() {
             var i = 0
-            val queue = LinkedList(container.entries.filterIsInstance<Expandable<T>>())
+            fun filter(el: List<ItemState<T>>) = el.filterIsInstance<Expandable<T>>().filter { it.isBulkExpandable }
+            val queue = LinkedList(filter(container.entries))
             while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
                 val item = queue.pop()
                 item.expand(false)
                 i += 1 + item.entries.count { !it.isExpandable }
-                queue.addAll(item.entries.filterIsInstance<Expandable<T>>())
+                queue.addAll(filter(item.entries))
             }
             recomputeList()
             if (!queue.isEmpty()) {

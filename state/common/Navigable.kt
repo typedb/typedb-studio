@@ -29,6 +29,7 @@ object Navigable {
         val parent: ExpandableItem<T>?
         val info: String?
         val isExpandable: Boolean get() = false
+        val isBulkExpandable: Boolean get() = false
 
         fun asExpandable(): ExpandableItem<T> {
             throw TypeCastException(ILLEGAL_CAST.message(Item::class.simpleName, ExpandableItem::class.simpleName))
@@ -38,6 +39,7 @@ object Navigable {
     interface ExpandableItem<T : Item<T>> : Item<T> {
 
         override val isExpandable: Boolean get() = true
+        override val isBulkExpandable: Boolean
         override fun asExpandable(): ExpandableItem<T> {
             return this
         }
