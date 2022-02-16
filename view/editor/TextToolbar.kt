@@ -85,16 +85,15 @@ object TextToolbar {
     private val BUTTON_SPACING = 4.dp
     private val FIND_TEXT_DELAY = Duration.milliseconds(200)
 
-    internal class State(
+    internal class State constructor(
         private val finder: TextFinder,
         private val target: InputTarget,
-        initProcessor: TextProcessor
+        internal var processor: TextProcessor
     ) {
 
         enum class InputType { FINDER, REPLACER }
 
-        internal var processor: TextProcessor by mutableStateOf(initProcessor)
-        internal var showFinder by mutableStateOf(false)
+        private var showFinder = false
         internal var showReplacer by mutableStateOf(false)
         internal val showToolbar get() = showFinder || showReplacer
         internal var lineHeight by mutableStateOf(0.dp)

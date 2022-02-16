@@ -30,8 +30,8 @@ class ConfirmationManager {
     var message: String? by mutableStateOf(null); private set
     var cancelLabel: String? by mutableStateOf(null); private set
     var confirmLabel: String? by mutableStateOf(null); private set
-    private var onConfirm: (() -> Unit)? by mutableStateOf(null); private set
-    private var onCancel: (() -> Unit)? by mutableStateOf(null); private set
+    private var onConfirm: (() -> Unit)? = null
+    private var onCancel: (() -> Unit)? = null
 
     fun submit(
         title: String,

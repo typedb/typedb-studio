@@ -45,7 +45,7 @@ internal class InputTarget constructor(
     internal val lineHeight: Dp,
     private val horPadding: Dp,
     private val rendering: TextRendering,
-    initDensity: Float
+    internal var density: Float
 ) {
 
     companion object {
@@ -93,8 +93,7 @@ internal class InputTarget constructor(
 
     }
 
-    internal class Selection(val start: Cursor, endInit: Cursor) {
-        var end: Cursor by mutableStateOf(endInit)
+    internal class Selection(val start: Cursor, var end: Cursor) {
         val min: Cursor get() = if (start <= end) start else end
         val max: Cursor get() = if (end >= start) end else start
         val isForward: Boolean get() = start <= end
@@ -111,13 +110,12 @@ internal class InputTarget constructor(
 
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     internal var selection: Selection? by mutableStateOf(null); private set
-    internal var density: Float by mutableStateOf(initDensity)
     internal val verScroller = LazyColumn.createScrollState(lineHeight, END_OF_FILE_SPACE) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
-    private var mayDragSelect: Boolean by mutableStateOf(false)
-    private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
+    private var mayDragSelect: Boolean = false
+    private var textAreaRect: Rect = Rect.Zero
     private val lineCount: Int get() = content.size
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 

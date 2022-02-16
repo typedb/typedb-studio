@@ -50,7 +50,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
 
         var parent: Directory? by mutableStateOf(null)
         var type: ProjectItem.Type? by mutableStateOf(null)
-        var onSuccess: (() -> Unit)? by mutableStateOf(null)
+        var onSuccess: (() -> Unit)? = null
 
         fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
             isOpen = true
@@ -85,7 +85,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     class SaveFileDialog : DialogManager() {
 
         var file: File? by mutableStateOf(null)
-        var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
+        var onSuccess: ((Pageable) -> Unit)? = null
 
         fun open(file: File, onSuccess: ((Pageable) -> Unit)?) {
             isOpen = true
@@ -113,8 +113,8 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
             _current = value
             onProjectChange?.let { it(_current!!) }
         }
-    var dataDir: Directory? by mutableStateOf(null)
-    var unsavedFilesDir: Directory? by mutableStateOf(null)
+    var dataDir: Directory? = null
+    var unsavedFilesDir: Directory? = null
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()

@@ -18,9 +18,6 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
@@ -75,18 +72,18 @@ class File internal constructor(
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
 
-    private var content: List<String> by mutableStateOf(listOf())
-    private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
-    private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
-    private var onSave: (() -> Unit)? by mutableStateOf(null)
-    private var onClose: (() -> Unit)? by mutableStateOf(null)
-    private var watchFileSystem by mutableStateOf(false)
-    private var hasChanges by mutableStateOf(false)
+    private var content: List<String> = listOf()
+    private var onDiskChangeContent: ((File) -> Unit)? = null
+    private var onDiskChangePermission: ((File) -> Unit)? = null
+    private var onSave: (() -> Unit)? = null
+    private var onClose: (() -> Unit)? = null
+    private var watchFileSystem = false
+    private var hasChanges = false
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    override var onClosePage: (() -> Unit)? by mutableStateOf(null)
+    override var onClosePage: (() -> Unit)? = null
     override val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
     override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()

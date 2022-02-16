@@ -55,9 +55,9 @@ object LazyColumn {
     class ScrollState internal constructor(
         val itemHeight: Dp, private val bottomSpace: Dp, val itemCount: () -> Int
     ) : ScrollbarAdapter {
-        var offset: Dp by mutableStateOf(0.dp); private set
+        var offset: Dp = 0.dp; private set
         private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
-        private var viewHeight: Dp by mutableStateOf(0.dp)
+        private var viewHeight: Dp = 0.dp
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
         internal var lastVisibleIndexPossible: Int by mutableStateOf(0)
