@@ -34,5 +34,7 @@ object Sentence {
         "Rename the directory at %s."
     const val RENAME_FILE =
         "Rename the file at %s."
+    const val SAVE_OR_DELETE_FILE =
+        "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
 
 }

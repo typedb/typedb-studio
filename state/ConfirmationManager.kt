@@ -28,24 +28,39 @@ class ConfirmationManager {
     val dialog = DialogManager.Base()
     var title: String? by mutableStateOf(null); private set
     var message: String? by mutableStateOf(null); private set
-    private var action: (() -> Unit)? by mutableStateOf(null); private set
+    var cancelLabel: String? by mutableStateOf(null); private set
+    var confirmLabel: String? by mutableStateOf(null); private set
+    private var onConfirm: (() -> Unit)? by mutableStateOf(null); private set
+    private var onCancel: (() -> Unit)? by mutableStateOf(null); private set
 
-    fun submit(title: String, message: String, action: () -> Unit) {
+    fun submit(
+        title: String,
+        message: String,
+        cancelLabel: String? = null,
+        confirmLabel: String? = null,
+        onCancel: (() -> Unit)? = null,
+        onConfirm: () -> Unit,
+    ) {
         this.title = title
         this.message = message
-        this.action = action
+        this.cancelLabel = cancelLabel
+        this.confirmLabel = confirmLabel
+        this.onCancel = onCancel
+        this.onConfirm = onConfirm
         dialog.open()
     }
 
     fun cancel() {
+        onCancel?.let { it() }
+        dialog.close()
         title = null
         message = null
-        action = null
-        dialog.close()
+        onConfirm = null
+        onCancel = null
     }
 
     fun confirm() {
+        onConfirm?.let { it() }
         dialog.close()
-        action?.let { it() }
     }
 }

@@ -74,19 +74,20 @@ class File internal constructor(
     }
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
-    val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
 
     private var content: List<String> by mutableStateOf(listOf())
     private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
     private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
-    private var onClose: (() -> Unit)? by mutableStateOf(null)
     private var onSave: (() -> Unit)? by mutableStateOf(null)
+    private var onClose: (() -> Unit)? by mutableStateOf(null)
     private var watchFileSystem by mutableStateOf(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpen: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    override var onClosePage: (() -> Unit)? by mutableStateOf(null)
+    override val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
     override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
@@ -207,6 +208,10 @@ class File internal constructor(
 
     override fun onClose(function: () -> Unit) {
         onClose = function
+    }
+
+    override fun onClosePage(function: () -> Unit) {
+        onClosePage = function
     }
 
     override fun saveFile(onSuccess: ((Pageable) -> Unit)?) {

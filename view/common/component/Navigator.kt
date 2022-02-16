@@ -419,7 +419,7 @@ object Navigator {
         state: NavigatorState<T>,
         iconArgs: (ItemState<T>) -> IconArgs,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
-        contextMenuFn: ((item: ItemState<T>, onDelete: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
+        contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
         val density = LocalDensity.current.density
         val ctxMenuState = remember { ContextMenu.State() }

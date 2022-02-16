@@ -45,22 +45,23 @@ object ConfirmationDialog {
 
     @Composable
     fun Layout() {
+        val state = GlobalState.confirmation
         Dialog(
-            title = GlobalState.confirmation.title!!,
-            onCloseRequest = { GlobalState.confirmation.cancel() },
+            title = state.title!!,
+            onCloseRequest = { state.cancel() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
             Column(Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)) {
-                Form.Text(value = GlobalState.confirmation.message!!, softWrap = true)
+                Form.Text(value = state.message!!, softWrap = true)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CANCEL, onClick = { GlobalState.confirmation.cancel() })
+                    Form.TextButton(text = state.cancelLabel ?: Label.CANCEL, onClick = { state.cancel() })
                     Form.ComponentSpacer()
-                    Form.TextButton(text = Label.CONFIRM, onClick = { GlobalState.confirmation.confirm() })
+                    Form.TextButton(text = state.confirmLabel ?: Label.CONFIRM, onClick = { state.confirm() })
                 }
             }
         }

@@ -79,7 +79,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                 state = state,
                 iconArgs = { projectItemIcon(it) },
                 styleArgs = { projectItemStyles(it) },
-                contextMenuFn = { item, onDelete -> contextMenuItems(item, onDelete) }
+                contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
             )
         }
     }
@@ -127,17 +127,17 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
 
     @OptIn(ExperimentalFoundationApi::class)
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
+        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return when (itemState.item) {
-            is Directory -> directoryContextMenuItems(itemState, onDelete)
-            is File -> fileContextMenuItems(itemState, onDelete)
+            is Directory -> directoryContextMenuItems(itemState, onChangeEntries)
+            is File -> fileContextMenuItems(itemState, onChangeEntries)
         }
     }
 
     @OptIn(ExperimentalFoundationApi::class)
     private fun directoryContextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
+        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         val createItemDialog = GlobalState.project.createItemDialog
         val directory = itemState.item.asDirectory()
@@ -172,7 +172,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_DIRECTORY_DELETION,
                         message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                        action = { itemState.item.delete(); onDelete() }
+                        onConfirm = { itemState.item.delete(); onChangeEntries() }
                     )
                 }
             )
@@ -181,7 +181,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
 
     @OptIn(ExperimentalFoundationApi::class)
     private fun fileContextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onDelete: () -> Unit
+        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         val file = itemState.item
         return listOf(
@@ -205,7 +205,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_FILE_DELETION,
                         message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                        action = { file.delete(); onDelete() }
+                        onConfirm = { file.delete(); onChangeEntries() }
                     )
                 }
             )

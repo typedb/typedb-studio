@@ -61,6 +61,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -102,8 +103,22 @@ object PageArea {
         }
 
         internal fun closePage(pageable: Pageable): Boolean {
-            cachedPages.remove(pageable)
-            GlobalState.page.close(pageable)
+            pageable.onClosePage?.let { it() }
+            fun close() {
+                cachedPages.remove(pageable)
+                GlobalState.page.close(pageable)
+                if (pageable.isUnsavedFile) pageable.delete()
+            }
+            if (pageable.isUnsaved) {
+                GlobalState.confirmation.submit(
+                    title = Label.SAVE_OR_DELETE,
+                    message = Sentence.SAVE_OR_DELETE_FILE,
+                    confirmLabel = Label.SAVE,
+                    cancelLabel = Label.DELETE,
+                    onCancel = { close() },
+                    onConfirm = { pageable.saveFile() },
+                )
+            } else close()
             return true
         }
     }
