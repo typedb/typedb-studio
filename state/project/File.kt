@@ -78,9 +78,10 @@ class File internal constructor(
     private var content: List<String> by mutableStateOf(listOf())
     private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
     private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
+    private var onWatch: (() -> Unit)? by mutableStateOf(null)
     private var onSave: (() -> Unit)? by mutableStateOf(null)
     private var onClose: (() -> Unit)? by mutableStateOf(null)
-    private var watchFileSystem by mutableStateOf(false)
+    private var watchFileSystem = AtomicBoolean(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
@@ -159,15 +160,23 @@ class File internal constructor(
         if (settings.autosave) saveContent()
     }
 
-    override fun mayLaunchWatcher() = launchWatcher()
+    override fun onWatch(function: () -> Unit) {
+        onWatch = function
+    }
 
-    override fun mayStopWatcher() {
-        watchFileSystem = false
+    override fun stopWatcher() {
+        watchFileSystem.set(false)
+    }
+
+    override fun launchWatcher() {
+        onWatch?.let { it() }
+        if (watchFileSystem.compareAndSet(false, true)){
+            launchWatcherCoroutine()
+        }
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun launchWatcher() {
-        if (watchFileSystem) return else watchFileSystem = true
+    private fun launchWatcherCoroutine() {
         coroutineScope.launch {
             try {
                 do {
@@ -187,7 +196,7 @@ class File internal constructor(
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
-                } while (watchFileSystem)
+                } while (watchFileSystem.get())
             } catch (e: CancellationException) {
             } catch (e: java.lang.Exception) {
                 notificationMgr.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
@@ -234,7 +243,7 @@ class File internal constructor(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
-            watchFileSystem = false
+            watchFileSystem.set(false)
             onDiskChangeContent = null
             onDiskChangePermission = null
             onClose?.let { it() }

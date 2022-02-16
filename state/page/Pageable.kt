@@ -27,9 +27,11 @@ interface Pageable {
 
     fun tryOpen(): Boolean
 
-    fun mayLaunchWatcher()
+    fun launchWatcher()
 
-    fun mayStopWatcher()
+    fun stopWatcher()
+
+    fun onWatch(function: () -> Unit)
 
     fun onSave(function: () -> Unit)
 
@@ -44,5 +46,4 @@ interface Pageable {
     fun delete()
 
     fun close()
-
 }

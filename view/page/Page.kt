@@ -39,6 +39,8 @@ abstract class Page(val state: Pageable) {
         }
     }
 
+    abstract fun resetFocus()
+
     @Composable
     abstract fun Layout()
 }

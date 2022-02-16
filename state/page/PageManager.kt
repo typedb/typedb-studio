@@ -39,9 +39,9 @@ class PageManager(val notification: NotificationManager) {
     }
 
     fun select(page: Pageable) {
-        selectedPage?.mayStopWatcher()
+        selectedPage?.stopWatcher()
         selectedPage = page
-        selectedPage?.mayLaunchWatcher()
+        selectedPage?.launchWatcher()
     }
 
     fun saveAndReopen(page: Pageable) {
@@ -59,13 +59,13 @@ class PageManager(val notification: NotificationManager) {
     }
 
     fun open(page: Pageable, index: Int) {
-        selectedPage?.mayStopWatcher()
+        selectedPage?.stopWatcher()
         if (page !in openedPages) {
             if (page.tryOpen()) openedPages.add(index, page)
             else return
         }
         selectedPage = page
-        selectedPage?.mayLaunchWatcher()
+        selectedPage?.launchWatcher()
         selectedPage?.let { it.onClose { close(it) } }
     }
 

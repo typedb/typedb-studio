@@ -133,6 +133,7 @@ object PageArea {
             if (GlobalState.page.openedPages.isEmpty()) focusReq.requestFocus()
         }
         (state.cachedPages.keys - GlobalState.page.openedPages.toSet()).forEach { state.cachedPages.remove(it) }
+        state.cachedPages.values.forEach { it.resetFocus() }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
@@ -145,7 +146,9 @@ object PageArea {
                 NewPageButton(state)
             }
             Separator.Horizontal()
-            Row(Modifier.fillMaxWidth()) { GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() } }
+            Row(Modifier.fillMaxWidth()) {
+                GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() }
+            }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

@@ -39,8 +39,14 @@ class FilePage private constructor(val file: File, val editorState: TextEditor.S
     companion object {
         @Composable
         fun create(file: File): FilePage {
-            return FilePage(file, TextEditor.createState(file))
+            val editorState = TextEditor.createState(file)
+            file.onWatch { if (editorState.isFocusable) editorState.focusReq.requestFocus() }
+            return FilePage(file, editorState)
         }
+    }
+
+    override fun resetFocus() {
+        editorState.isFocusable = false
     }
 
     @Composable

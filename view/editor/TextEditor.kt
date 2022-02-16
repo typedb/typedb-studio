@@ -160,11 +160,12 @@ object TextEditor {
         initProcessor: TextProcessor,
     ) {
 
+        var isFocusable by mutableStateOf(false)
+        val focusReq = FocusRequester()
+        internal var isFocused by mutableStateOf(true)
         internal var processor: TextProcessor by mutableStateOf(initProcessor)
         internal val contextMenu = ContextMenu.State()
         internal val lineCount: Int get() = content.size
-        internal var isFocused by mutableStateOf(true)
-        internal val focusReq = FocusRequester()
         internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
         internal val showToolbar get() = toolbar.showToolbar
@@ -219,6 +220,7 @@ object TextEditor {
             if (!state.showToolbar) {
                 state.focusReq.requestFocus()
                 state.isFocused = true
+                state.isFocusable = true
             } else state.isFocused = false
         }
     }
