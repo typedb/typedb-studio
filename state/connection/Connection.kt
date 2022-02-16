@@ -26,7 +26,6 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 class Connection internal constructor(
@@ -42,9 +41,9 @@ class Connection internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    var isOpen = AtomicBoolean(true)
+    var isOpen: Boolean by mutableStateOf(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    private var session: TypeDBSession? = null
+    var session: TypeDBSession? by mutableStateOf(null); private set
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
@@ -77,9 +76,8 @@ class Connection internal constructor(
     }
 
     internal fun close() {
-        if (isOpen.compareAndSet(true, false)) {
-            closeSession()
-            client.close()
-        }
+        isOpen = false
+        closeSession()
+        client.close()
     }
 }

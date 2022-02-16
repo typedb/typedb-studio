@@ -113,7 +113,7 @@ object Frame {
 
     internal class FrameState(private val separatorSize: Dp?) {
         var resized: Boolean = false
-        var maxSize: Dp = 0.dp
+        var maxSize: Dp by mutableStateOf(0.dp)
         var panes: List<PaneState> by mutableStateOf(emptyList())
         private val currentSize: Dp
             get() {

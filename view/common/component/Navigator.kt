@@ -122,9 +122,9 @@ object Navigator {
         val name get() = item.name
         val info get() = item.info
         var focusReq: FocusRequester? = null
-        var next: ItemState<T>? = null
-        var previous: ItemState<T>? = null
-        var index: Int = 0
+        var next: ItemState<T>? by mutableStateOf(null)
+        var previous: ItemState<T>? by mutableStateOf(null)
+        var index: Int by mutableStateOf(0)
         var depth: Int by mutableStateOf(0)
 
         open fun asExpandable(): Expandable<T> {
@@ -152,7 +152,7 @@ object Navigator {
             override val isExpandable: Boolean = true
             val isBulkExpandable: Boolean = expandable.isBulkExpandable
             var isExpanded: Boolean by mutableStateOf(false)
-            var entries: List<ItemState<T>> = emptyList()
+            var entries: List<ItemState<T>> by mutableStateOf(emptyList())
 
             override fun asExpandable(): Expandable<T> {
                 return this
@@ -266,11 +266,11 @@ object Navigator {
         private val openFn: (ItemState<T>) -> Unit,
         private var coroutineScope: CoroutineScope
     ) {
-        private var container: Container<T> = Container(container, this)
+        private var container: Container<T> by mutableStateOf(Container(container, this)); private set
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
-        private var itemWidth = 0.dp
-        private var areaWidth = 0.dp
+        private var itemWidth by mutableStateOf(0.dp); private set
+        private var areaWidth by mutableStateOf(0.dp); private set
         internal val minWidth get() = max(itemWidth, areaWidth)
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set

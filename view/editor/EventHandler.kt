@@ -19,6 +19,9 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.text.isTypedEvent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -83,12 +86,14 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class EventHandler constructor(
+internal class EventHandler(
     private val target: InputTarget,
     private val toolbar: TextToolbar.State,
     private val clipboard: ClipboardManager,
-    internal var processor: TextProcessor
+    initProcessor: TextProcessor
 ) {
+
+    internal var processor: TextProcessor by mutableStateOf(initProcessor)
 
     internal fun handleEditorEvent(event: KeyEvent): Boolean {
         return if (event.type == KeyEventType.KeyUp) false

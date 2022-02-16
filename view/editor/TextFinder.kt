@@ -18,6 +18,9 @@
 
 package com.vaticle.typedb.studio.view.editor
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.studio.view.common.Label
@@ -31,12 +34,12 @@ internal class TextFinder(private val content: SnapshotStateList<AnnotatedString
 
     data class LineInfo(val start: Int, val length: Int)
 
-    private var contentAsString: String = ""
-    private var lineInfo: List<LineInfo> = listOf()
-    private var matches: List<Selection> = listOf()
-    private var matchesByLine: Map<Int, List<Selection>> = mapOf()
-    private var pattern: Pattern? = null
-    internal var position: Int = 0
+    private var contentAsString: String by mutableStateOf("")
+    private var lineInfo: List<LineInfo> by mutableStateOf(listOf())
+    private var matches: List<Selection> by mutableStateOf(listOf())
+    private var matchesByLine: Map<Int, List<Selection>> by mutableStateOf(mapOf())
+    private var pattern: Pattern? by mutableStateOf(null)
+    internal var position: Int by mutableStateOf(0)
     internal val hasMatches: Boolean get() = matches.isNotEmpty()
 
     companion object {

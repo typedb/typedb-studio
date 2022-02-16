@@ -408,8 +408,8 @@ object Form {
 
     class MultilineTextInputState(initDensity: Float) {
 
-        internal var value = TextFieldValue("")
-        internal var layout: TextLayoutResult? = null
+        internal var value by mutableStateOf(TextFieldValue(""))
+        internal var layout: TextLayoutResult? by mutableStateOf(null)
         internal var density by mutableStateOf(initDensity)
         internal var boxWidth by mutableStateOf(0.dp)
         internal var horScroller: ScrollState = ScrollState(0)

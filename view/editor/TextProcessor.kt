@@ -95,7 +95,7 @@ internal interface TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
-        private var lastTyped = System.currentTimeMillis()
+        private var lastTyped by mutableStateOf(System.currentTimeMillis())
 
         override fun replaceCurrentFound(text: String) = displayWarning()
         override fun replaceAllFound(text: String) = displayWarning()
