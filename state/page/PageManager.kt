@@ -44,9 +44,14 @@ class PageManager(val notification: NotificationManager) {
         selectedPage?.mayLaunchWatcher()
     }
 
-    fun saveSelectedPageAndReopen() {
-        val index = openedPages.indexOf(selectedPage)
-        selectedPage?.saveFile { open(it, index) }
+    fun saveAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.saveFile { open(it, index) }
+    }
+
+    fun moveAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.moveFile { open(it, index) }
     }
 
     fun open(page: Pageable) {

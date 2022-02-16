@@ -87,7 +87,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         var file: File? by mutableStateOf(null)
         var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
 
-        fun open(file: File, onSuccess: ((Pageable) -> Unit)?) {
+        fun open(file: File, onSuccess: ((Pageable) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess

@@ -68,6 +68,8 @@ object Icon {
         FILE_LINES(0xf15cu),
         FILE_PLUS(0xf319u),
         FLOPPY_DISK(0xf0c7u, 13.sp),
+        FOLDER_ARROW_DOWN(0xe053u),
+        FOLDER_ARROW_UP(0xe054u),
         FOLDER_OPEN(0xf07cu),
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),

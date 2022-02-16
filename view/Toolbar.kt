@@ -83,7 +83,7 @@ object Toolbar {
     private fun SaveButton() {
         ToolbarButton(
             icon = Icon.Code.FLOPPY_DISK,
-            onClick = { GlobalState.page.saveSelectedPageAndReopen() },
+            onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
             enabled = GlobalState.page.selectedPage?.isUnsaved == true
         )
     }

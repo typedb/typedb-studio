@@ -183,7 +183,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun fileContextMenuItems(
         itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
-        val file = itemState.item
+        val file = itemState.item.asFile()
         return listOf(
             listOf(
                 ContextMenu.Item(
@@ -197,6 +197,14 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     icon = Icon.Code.PEN,
                     enabled = !file.isProjectData,
                 ) { GlobalState.project.renameItemDialog.open(file) },
+                ContextMenu.Item(
+                    label = Label.MOVE,
+                    icon = Icon.Code.FOLDER_ARROW_DOWN,
+                    enabled = !file.isProjectData,
+                ) {
+                    if (file.isOpen) GlobalState.page.moveAndReopen(file)
+                    else file.moveFile()
+                },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

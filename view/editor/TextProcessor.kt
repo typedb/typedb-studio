@@ -85,7 +85,7 @@ internal interface TextProcessor {
                     target = target,
                     onChangeStart = { file.isChanged() },
                     onChangeEnd = { file.writeLines(it) },
-                    onSave = { GlobalState.page.saveSelectedPageAndReopen() }
+                    onSave = { GlobalState.page.saveAndReopen(file) }
                 )
             }
         }

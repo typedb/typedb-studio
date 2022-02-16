@@ -83,14 +83,15 @@ class File internal constructor(
     private var watchFileSystem by mutableStateOf(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
-    private var isOpen: AtomicBoolean = AtomicBoolean(false)
+    private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    override var onClosePage: (() -> Unit)? by mutableStateOf(null)
+    override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
     override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
+    override var onClosePage: (() -> Unit)? by mutableStateOf(null)
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
@@ -120,7 +121,7 @@ class File internal constructor(
             // TODO: find a more efficient way to verify access without having to load the entire file
             if (isTextFile) loadTextFileLines()
             else loadBinaryFileLines()
-            isOpen.set(true)
+            isOpenAtomic.set(true)
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
@@ -214,6 +215,11 @@ class File internal constructor(
         onClosePage = function
     }
 
+    override fun moveFile(onSuccess: ((Pageable) -> Unit)?) {
+        if (isUnsavedFile) saveContent()
+        projectMgr.saveFileDialog.open(this, onSuccess)
+    }
+
     override fun saveFile(onSuccess: ((Pageable) -> Unit)?) {
         saveContent()
         if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
@@ -227,7 +233,7 @@ class File internal constructor(
     }
 
     override fun close() {
-        if (isOpen.compareAndSet(true, false)) {
+        if (isOpenAtomic.compareAndSet(true, false)) {
             watchFileSystem = false
             onDiskChangeContent = null
             onDiskChangePermission = null

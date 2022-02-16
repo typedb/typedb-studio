@@ -48,6 +48,7 @@ object Label {
     const val FILE_NAME = "File Name"
     const val FIND = "Find"
     const val FOUND = "Found"
+    const val MOVE = "Move"
     const val NONE = "None"
     const val OPEN = "Open"
     const val OPEN_PROJECT = "Open Project"
