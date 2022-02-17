@@ -55,6 +55,8 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog
+import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog.SelectDirectoryForm
 import java.awt.FileDialog
 import java.io.File
 import javax.swing.JFileChooser
@@ -64,13 +66,9 @@ import mu.KotlinLogging
 
 object ProjectDialog {
 
-    private object OpenProjectForm : Form.State {
+    private object OpenProjectForm : SelectDirectoryForm() {
 
-        var directory: String? by mutableStateOf(GlobalState.project.current?.directory?.absolutePath?.toString())
-
-        override fun isValid(): Boolean {
-            return !directory.isNullOrBlank()
-        }
+        override var directory: String? by mutableStateOf(GlobalState.project.current?.directory?.absolutePath?.toString())
 
         override fun trySubmit() {
             assert(!directory.isNullOrBlank())
@@ -123,38 +121,8 @@ object ProjectDialog {
                     modifier = Modifier.fillMaxHeight().weight(1f),
                 )
                 ComponentSpacer()
-                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { launchFileDialog(window) })
+                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { DirectoryDialog.launch(OpenProjectForm, window) })
             }
-        }
-    }
-
-    private fun launchFileDialog(window: ComposeDialog) {
-        when (Property.OS.Current) {
-            MACOS -> macOSDialog(window)
-            else -> otherOSDialog()
-        }
-    }
-
-    private fun macOSDialog(window: ComposeDialog) {
-        val fileDialog = FileDialog(window, Label.OPEN_PROJECT_DIRECTORY, FileDialog.LOAD).apply {
-            file = OpenProjectForm.directory
-            isMultipleMode = false
-            isVisible = true
-        }
-        fileDialog.directory?.let { OpenProjectForm.directory = Path(it).resolve(fileDialog.file).toString() }
-    }
-
-    private fun otherOSDialog() {
-        val directoryChooser = JFileChooser().apply {
-            OpenProjectForm.directory?.let { currentDirectory = File(it) }
-            dialogTitle = Label.OPEN_PROJECT_DIRECTORY
-            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-        }
-        val option = directoryChooser.showOpenDialog(null)
-        if (option == JFileChooser.APPROVE_OPTION) {
-            val directory = directoryChooser.selectedFile
-            assert(directory.isDirectory)
-            OpenProjectForm.directory = directory.absolutePath
         }
     }
 
