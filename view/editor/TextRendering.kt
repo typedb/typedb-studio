@@ -60,7 +60,7 @@ internal class TextRendering(initSize: Int) {
         versions[int] = version
     }
 
-    fun isRendered(int: Int, version: Int): Boolean {
+    fun hasVersion(int: Int, version: Int): Boolean {
         return versions[int] == version
     }
 
