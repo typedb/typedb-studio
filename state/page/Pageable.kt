@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.page
 interface Pageable {
 
     val name: String
+    val fullName: String
     val isOpen: Boolean
     val isUnsaved: Boolean
     val isUnsavedFile: Boolean

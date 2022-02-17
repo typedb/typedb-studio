@@ -59,10 +59,12 @@ object Studio {
 
     private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
     private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
-    private val mainWindowTitle: String
-        get() = "${Label.TYPEDB_STUDIO}${GlobalState.project.current?.let { " — ${it.directory.name}" } ?: ""}"
-
     private val LOGGER = KotlinLogging.logger {}
+
+    private fun getMainWindowTitle(): String {
+        val pageName = GlobalState.page.selectedPage?.fullName ?: GlobalState.project.current?.directory?.name ?: ""
+        return Label.TYPEDB_STUDIO + " — " + pageName
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -103,7 +105,7 @@ object Studio {
         // TODO: we want no title bar, by passing undecorated=true, but it seems to cause intermittent crashes on startup
         //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
         Window(
-            title = mainWindowTitle,
+            title = getMainWindowTitle(),
             onCloseRequest = { onClose() },
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {

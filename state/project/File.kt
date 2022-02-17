@@ -45,6 +45,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
 import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
@@ -92,6 +93,7 @@ class File internal constructor(
     override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
+    override val fullName: String = computeFullName(path, projectMgr)
     override var onClosePage: (() -> Unit)? by mutableStateOf(null)
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
@@ -99,6 +101,11 @@ class File internal constructor(
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
         return type != null && type.startsWith("text")
+    }
+
+    private fun computeFullName(path: Path, projectMgr: ProjectManager): String {
+        return if (isUnsavedFile) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
+        else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
     private fun isContentEmpty(): Boolean {
