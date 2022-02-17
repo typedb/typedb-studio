@@ -24,7 +24,9 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
@@ -41,6 +43,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
+import kotlin.io.path.notExists
 import mu.KotlinLogging
 
 class Directory internal constructor(
@@ -138,7 +141,13 @@ class Directory internal constructor(
 
     fun tryMove(newParent: Path): Boolean {
         val newPath = newParent.resolve(name)
-        return if (newPath.exists()) {
+        return if (newParent == path.parent) {
+            notificationMgr.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
+            false
+        } else if (newParent.notExists()) {
+            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
+            false
+        } else if (newPath.exists()) {
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
             false
         } else try {
