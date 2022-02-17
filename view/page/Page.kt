@@ -19,15 +19,15 @@
 package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 
 abstract class Page(val state: Pageable) {
-
-    abstract val isWritable: Boolean
-    abstract val label: String
-    abstract val icon: Form.IconArgs
 
     companion object {
         @Composable
@@ -38,6 +38,12 @@ abstract class Page(val state: Pageable) {
             }
         }
     }
+
+    abstract val name: String
+    abstract val isWritable: Boolean
+    abstract val icon: Form.IconArgs
+
+    var tabSize by mutableStateOf(0.dp)
 
     abstract fun resetFocus()
 

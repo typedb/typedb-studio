@@ -72,7 +72,6 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -85,11 +84,13 @@ object PageArea {
     private val TAB_SCROLL_DELTA = 200.dp
     private val ICON_SIZE = 10.sp
 
-    internal class AreaState(val coroutineScope: CoroutineScope) {
+    internal class AreaState(private val coroutineScope: CoroutineScope) {
         var density: Float by mutableStateOf(0f)
-        val scrollState = ScrollState(0)
-        var scrollTabsToEnd by mutableStateOf(false)
-        val cachedPages: MutableMap<Pageable, Page> = mutableMapOf()
+        val tabsScroller = ScrollState(0)
+        var tabsScrollTo: Dp? by mutableStateOf(null)
+        var tabsRowMaxWidth by mutableStateOf(4096.dp)
+        val cachedOpenedPages: MutableMap<Pageable, Page> = mutableMapOf()
+        var cachedSelectedPage: Pageable? by mutableStateOf(null)
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -104,14 +105,29 @@ object PageArea {
             }
         }
 
-        internal fun scrollBy(dp: Dp) {
-            val pos = scrollState.value + (dp.value * density).toInt()
-            coroutineScope.launch { scrollState.animateScrollTo(pos) }
+        fun initTab(page: Page, rawWidth: Int) {
+            if (GlobalState.page.selectedPage == cachedSelectedPage) return
+            val newTabSize = toDP(rawWidth, density) + Separator.WEIGHT
+            if (newTabSize != page.tabSize) page.tabSize = newTabSize
+            if (GlobalState.page.selectedPage == page.state) {
+                var start = 0.dp
+                var found = false
+                cachedOpenedPages.values.forEach { if (it != page && !found) start += it.tabSize else found = true }
+                val end = start + page.tabSize
+                val scrollerPos = toDP(tabsScroller.value, density)
+                if (start + 5.dp < scrollerPos) tabsScrollTo = start
+                else if (end - 5.dp > scrollerPos + tabsRowMaxWidth) tabsScrollTo = end - tabsRowMaxWidth
+                cachedSelectedPage = GlobalState.page.selectedPage
+            }
+        }
+
+        internal fun scrollTabsBy(dp: Dp) {
+            val pos = tabsScroller.value + (dp.value * density).toInt()
+            coroutineScope.launch { tabsScroller.animateScrollTo(pos) }
         }
 
         internal fun createAndOpenNewFile(): Boolean {
             GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.page.open(it) }
-            scrollTabsToEnd = true
             return true
         }
 
@@ -122,7 +138,7 @@ object PageArea {
         internal fun closePage(pageable: Pageable): Boolean {
             pageable.onClosePage?.let { it() }
             fun close() {
-                cachedPages.remove(pageable)
+                cachedOpenedPages.remove(pageable)
                 GlobalState.page.close(pageable)
                 if (pageable.isUnsavedFile) pageable.delete()
             }
@@ -142,7 +158,7 @@ object PageArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Area() {
+    fun Layout() {
         val density = LocalDensity.current.density
         val coroutineScope = rememberCoroutineScope()
         val state = remember { AreaState(coroutineScope) }
@@ -151,33 +167,33 @@ object PageArea {
         fun mayRequestFocus() {
             if (GlobalState.page.openedPages.isEmpty()) focusReq.requestFocus()
         }
-        (state.cachedPages.keys - GlobalState.page.openedPages.toSet()).forEach { state.cachedPages.remove(it) }
-        state.cachedPages.values.forEach { it.resetFocus() }
+        state.cachedOpenedPages.values.forEach { it.resetFocus() }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
                 .onKeyEvent { state.handleKeyEvent(it) }
         ) {
-            TabArea(state, density)
+            TabArea(state)
             Separator.Horizontal()
-            GlobalState.page.selectedPage?.let { state.cachedPages[it]?.Layout() }
+            GlobalState.page.selectedPage?.let { state.cachedOpenedPages[it]?.Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }
 
     @Composable
-    private fun TabArea(state: AreaState, density: Float) {
-        var maxWidth by remember { mutableStateOf(4096.dp) }
-        val scrollState = state.scrollState
-        Row(Modifier.fillMaxWidth().height(TAB_HEIGHT).onSizeChanged { maxWidth = toDP(it.width, density) }) {
+    private fun TabArea(state: AreaState) {
+        val scrollState = state.tabsScroller
+        fun updateTabsRowMaxWidth(rawAreaWidth: Int) {
+            state.tabsRowMaxWidth = toDP(rawAreaWidth, state.density) - TAB_HEIGHT * 3
+        }
+        Row(Modifier.fillMaxWidth().height(TAB_HEIGHT).onSizeChanged { updateTabsRowMaxWidth(it.width) }) {
             if (scrollState.maxValue > 0) {
                 PreviousTabsButton(state)
                 Separator.Vertical()
             }
-            val tabRowWidth = maxWidth - TAB_HEIGHT * 3
-            Row(Modifier.widthIn(max = tabRowWidth).height(TAB_HEIGHT).horizontalScroll(scrollState)) {
+            Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(TAB_HEIGHT).horizontalScroll(scrollState)) {
                 GlobalState.page.openedPages.forEach {
-                    Tab(state, state.cachedPages.getOrPut(it) { Page.of(it) }, density)
+                    Tab(state, state.cachedOpenedPages.getOrPut(it) { Page.of(it) })
                 }
             }
             if (scrollState.maxValue > 0) {
@@ -188,30 +204,30 @@ object PageArea {
             NewPageButton(state)
             Separator.Vertical()
         }
-        LaunchedEffect(state.scrollTabsToEnd) {
-            if (state.scrollTabsToEnd) {
-                scrollState.scrollTo(scrollState.maxValue)
-                state.scrollTabsToEnd = false
+        LaunchedEffect(state.tabsScrollTo) {
+            state.tabsScrollTo?.let {
+                scrollState.scrollTo((it.value * state.density).toInt())
+                state.tabsScrollTo = null
             }
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(areaState: AreaState, page: Page, density: Float) {
+    private fun Tab(state: AreaState, page: Page) {
         val isSelected = GlobalState.page.isSelected(page.state)
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
         val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
-        Column {
+        Column(Modifier.onSizeChanged { state.initTab(page, it.width) }) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.height(height)
                     .background(color = bgColor)
                     .pointerHoverIcon(PointerIconDefaults.Hand)
                     .clickable { GlobalState.page.select(page.state) }
-                    .onSizeChanged { width = toDP(it.width, density) }
+                    .onSizeChanged { width = toDP(it.width, state.density) }
             ) {
                 Spacer(modifier = Modifier.width(TAB_SPACING))
                 Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
@@ -219,7 +235,7 @@ object PageArea {
                 Text(value = tabTitle(page))
                 IconButton(
                     icon = Icon.Code.XMARK,
-                    onClick = { areaState.closePage(page.state) },
+                    onClick = { state.closePage(page.state) },
                     modifier = Modifier.size(TAB_HEIGHT),
                     bgColor = Color.Transparent,
                     rounded = false,
@@ -234,11 +250,11 @@ object PageArea {
     private fun PreviousTabsButton(state: AreaState) {
         IconButton(
             icon = Icon.Code.CARET_LEFT,
-            onClick = { state.scrollBy(-TAB_SCROLL_DELTA) },
+            onClick = { state.scrollTabsBy(-TAB_SCROLL_DELTA) },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
-            enabled = state.scrollState.value > 0
+            enabled = state.tabsScroller.value > 0
         )
     }
 
@@ -246,11 +262,11 @@ object PageArea {
     private fun NextTabsButton(state: AreaState) {
         IconButton(
             icon = Icon.Code.CARET_RIGHT,
-            onClick = { state.scrollBy(TAB_SCROLL_DELTA) },
+            onClick = { state.scrollTabsBy(TAB_SCROLL_DELTA) },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
-            enabled = state.scrollState.value < state.scrollState.maxValue
+            enabled = state.tabsScroller.value < state.tabsScroller.maxValue
         )
     }
 
@@ -270,14 +286,14 @@ object PageArea {
     private fun tabTitle(page: Page): AnnotatedString {
         return if (page.isWritable) {
             val changeIndicator = " *"
-            AnnotatedString(page.label) + when {
+            AnnotatedString(page.name) + when {
                 page.state.isUnsaved -> AnnotatedString(changeIndicator)
                 else -> AnnotatedString(changeIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {
             val builder = AnnotatedString.Builder()
             val style = SpanStyle(color = Theme.colors.onPrimary.copy(alpha = 0.6f))
-            builder.append(page.label)
+            builder.append(page.name)
             builder.pushStyle(style)
             builder.append(" -- (${Label.READ_ONLY.lowercase()})")
             builder.pop()

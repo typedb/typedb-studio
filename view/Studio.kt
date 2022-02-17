@@ -122,7 +122,7 @@ object Studio {
                         id = PageArea.javaClass.name,
                         initSize = Either.second(1f),
                         minSize = PageArea.MIN_WIDTH
-                    ) { PageArea.Area() }
+                    ) { PageArea.Layout() }
                 )
                 Separator.Horizontal()
                 StatusBar.Layout()
