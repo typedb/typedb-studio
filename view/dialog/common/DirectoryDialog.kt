@@ -18,13 +18,26 @@
 
 package com.vaticle.typedb.studio.view.dialog.common
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
-import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Icon
 import java.awt.FileDialog
 import java.nio.file.Path
 import javax.swing.JFileChooser
@@ -32,48 +45,95 @@ import kotlin.io.path.Path
 
 object DirectoryDialog {
 
-    abstract class SelectDirectoryForm(initPath: Path?) : Form.State {
+    class SelectDirectoryForm(
+        initPath: Path?,
+        internal val onCancel: () -> Unit,
+        internal val onSubmit: (Path) -> Unit
+    ) : Form.State {
 
         var selectedPath: Path? by mutableStateOf(initPath)
 
         override fun isValid(): Boolean {
             return selectedPath != null
         }
-    }
 
-    internal fun launch(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
-        when (Property.OS.Current) {
-            Property.OS.MACOS -> macOSDialog(state, parent, title)
-            else -> otherOSDialog(state, title)
+        override fun trySubmit() {
+            assert(isValid())
+            onSubmit(selectedPath!!)
         }
     }
 
-    internal fun launch(state: SelectDirectoryForm, parent: ComposeWindow, title: String) {
-        when (Property.OS.Current) {
-            Property.OS.MACOS -> macOSDialog(state, parent, title)
-            else -> otherOSDialog(state, title)
+    private val DIRECTORY_DIALOG_WIDTH = 500.dp
+    private val DIRECTORY_DIALOG_HEIGHT = 200.dp
+
+    @Composable
+    fun Layout(state: SelectDirectoryForm, title: String, message: String, submitLabel: String) {
+        Dialog(
+            title = title,
+            onCloseRequest = { state.onCancel },
+            state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(DIRECTORY_DIALOG_WIDTH, DIRECTORY_DIALOG_HEIGHT)
+            )
+        ) {
+            Form.Submission(state = state) {
+                Form.Text(value = message, softWrap = true)
+                SelectDirectoryField(state, window, title)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    SelectDirectoryButtons(state, submitLabel)
+                }
+            }
         }
     }
 
-    private fun macOSDialog(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
-        macOSDialog(state, FileDialog(parent, title, FileDialog.LOAD))
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun SelectDirectoryField(state: SelectDirectoryForm, window: ComposeDialog, title: String) {
+        Form.Field(label = Label.DIRECTORY) {
+            Row {
+                Form.TextInput(
+                    value = state.selectedPath?.toString() ?: "",
+                    placeholder = Label.PATH_OF_DIRECTORY,
+                    onValueChange = { state.selectedPath = Path(it) },
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                )
+                Form.ComponentSpacer()
+                Form.IconButton(
+                    icon = Icon.Code.FOLDER_OPEN,
+                    onClick = { launchDirectorySelector(state, window, title) }
+                )
+            }
+        }
     }
 
-    private fun macOSDialog(state: SelectDirectoryForm, parent: ComposeWindow, title: String) {
-        macOSDialog(state, FileDialog(parent, title, FileDialog.LOAD))
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun SelectDirectoryButtons(state: SelectDirectoryForm, submitLabel: String) {
+        Form.TextButton(text = Label.CANCEL, onClick = { state.onCancel() })
+        Form.ComponentSpacer()
+        Form.TextButton(text = submitLabel, enabled = state.isValid(), onClick = { state.trySubmit() })
     }
 
-    private fun macOSDialog(state: SelectDirectoryForm, fileDialog: FileDialog) {
+    private fun launchDirectorySelector(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
+        when (Property.OS.Current) {
+            Property.OS.MACOS -> macOSDirectorySelector(state, parent, title)
+            else -> otherOSDirectorySelector(state, title)
+        }
+    }
+
+    private fun macOSDirectorySelector(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
+        val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
         fileDialog.apply {
             directory = state.selectedPath?.toString()
             isMultipleMode = false
             isVisible = true
         }
-        if (fileDialog.directory != null) state.selectedPath = Path(fileDialog.directory).resolve(fileDialog.file)
-        else state.selectedPath = null
+        fileDialog.directory?.let { state.selectedPath = Path(it).resolve(fileDialog.file) }
     }
 
-    private fun otherOSDialog(state: SelectDirectoryForm, title: String) {
+    private fun otherOSDirectorySelector(state: SelectDirectoryForm, title: String) {
         val directoryChooser = JFileChooser().apply {
             state.selectedPath?.let { currentDirectory = it.toFile() }
             dialogTitle = title

@@ -58,7 +58,7 @@ object Label {
     const val PASSWORD = "Password"
     const val PASTE = "Paste"
     const val PATH_TO_CA_CERTIFICATE = "/path/to/ca/certificate"
-    const val PATH_TO_PROJECT = "/path/to/project"
+    const val PATH_OF_DIRECTORY = "/path/of/directory"
     const val PROJECT = "Project"
     const val PROJECT_BROWSER = "Project Browser"
     const val READ_ONLY = "Read Only"

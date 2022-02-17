@@ -226,7 +226,8 @@ object ConnectionDialog {
         TextButton(
             text = Label.CONNECT,
             enabled = ConnectServerForm.isValid(),
-            onClick = { ConnectServerForm.trySubmit() })
+            onClick = { ConnectServerForm.trySubmit() }
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

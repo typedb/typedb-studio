@@ -36,5 +36,9 @@ object Sentence {
         "Rename the file at %s."
     const val SAVE_OR_DELETE_FILE =
         "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
+    const val SELECT_DIRECTORY_FOR_PROJECT =
+        "Select the directory that will serve as the project root directory."
+    const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =
+        "Select the parent directory in which %s will be moved under."
 
 }
