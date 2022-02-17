@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -83,12 +84,11 @@ object PageArea {
     private val TAB_UNDERLINE_HEIGHT = 2.dp
     private val ICON_SIZE = 10.sp
 
-    internal class AreaState {
+    internal class AreaState(val coroutineScope: CoroutineScope) {
         var density: Float by mutableStateOf(0f)
         val scrollState = ScrollState(0)
         var scrollTabsToEnd by mutableStateOf(false)
         val cachedPages: MutableMap<Pageable, Page> = mutableMapOf()
-        val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -105,7 +105,7 @@ object PageArea {
 
         internal fun scrollBy(dp: Dp) {
             val pos = scrollState.value + (dp.value * density).toInt()
-            coroutineScope.launch { scrollState.scrollTo(pos) }
+            coroutineScope.launch { scrollState.animateScrollTo(pos) }
         }
 
         internal fun createAndOpenNewFile(): Boolean {
@@ -143,7 +143,8 @@ object PageArea {
     @Composable
     fun Area() {
         val density = LocalDensity.current.density
-        val state = remember { AreaState() }
+        val coroutineScope = rememberCoroutineScope()
+        val state = remember { AreaState(coroutineScope) }
         state.density = density
         val focusReq = FocusRequester()
         fun mayRequestFocus() {
@@ -188,7 +189,7 @@ object PageArea {
         }
         LaunchedEffect(state.scrollTabsToEnd) {
             if (state.scrollTabsToEnd) {
-                scrollState.scrollTo(scrollState.maxValue)
+                scrollState.animateScrollTo(scrollState.maxValue)
                 state.scrollTabsToEnd = false
             }
         }
