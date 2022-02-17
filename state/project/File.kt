@@ -246,6 +246,7 @@ class File internal constructor(
             watchFileSystem.set(false)
             onDiskChangeContent = null
             onDiskChangePermission = null
+            onWatch = null
             onClose?.let { it() }
             onClose = null
         }
