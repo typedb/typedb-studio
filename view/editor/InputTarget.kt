@@ -40,11 +40,11 @@ import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal class InputTarget constructor(
+internal class InputTarget(
     private val content: SnapshotStateList<AnnotatedString>,
-    internal val lineHeight: Dp,
-    private val horPadding: Dp,
     private val rendering: TextRendering,
+    private val horPadding: Dp,
+    internal val lineHeight: Dp,
     initDensity: Float
 ) {
 
@@ -116,7 +116,9 @@ internal class InputTarget constructor(
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
-    private var mayDragSelect: Boolean by mutableStateOf(false)
+    private var mayDragSelectByChar: Boolean by mutableStateOf(false)
+    private var mayDragSelectByWord: Boolean by mutableStateOf(false)
+    private var mayDragSelectByLine: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineCount: Int get() = content.size
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -148,16 +150,14 @@ internal class InputTarget constructor(
         return Cursor(row, col)
     }
 
-    internal fun startDragSelection() {
-        mayDragSelect = true
-    }
-
     internal fun stopDragSelection() {
-        mayDragSelect = false
+        mayDragSelectByChar = false
+        mayDragSelectByWord = false
+        mayDragSelectByLine = false
     }
 
     internal fun mayUpdateDragSelection(x: Int, y: Int) {
-        if (!mayDragSelect) return
+        if (!mayDragSelectByChar) return
         var newCursor = createCursor(x, y)
         val horScrollOffset = Theme.toDP(horScroller.value, density).value
         val lineNumberBorder = textAreaRect.left - horScrollOffset - horPadding.value
@@ -182,6 +182,7 @@ internal class InputTarget constructor(
 
     internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
         updateCursor(createCursor(x, y), isSelecting, false)
+        mayDragSelectByChar = true
     }
 
     internal fun updateCursor(newCursor: Cursor, isSelecting: Boolean, mayScroll: Boolean = true) {
@@ -374,10 +375,12 @@ internal class InputTarget constructor(
             val boundary = wordBoundary(it, cursor.col)
             updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
         }
+        mayDragSelectByWord = true
     }
 
     internal fun selectLine() {
         updateSelection(Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length)))
+        mayDragSelectByLine = true
     }
 
     internal fun selectNone() {

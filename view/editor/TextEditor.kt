@@ -112,7 +112,7 @@ object TextEditor {
         val content = SnapshotStateList<AnnotatedString>().apply { addAll(SyntaxHighlighter.readFile(file)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
-        val target = InputTarget(content, lineHeight, AREA_PADDING_HOR, rendering, currentDensity.density)
+        val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, currentDensity.density)
         val processor = TextProcessor.create(file, content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
@@ -382,7 +382,6 @@ object TextEditor {
             pointerInputScope = this,
             onSinglePrimaryPressed = {
                 state.focusReq.requestFocus()
-                state.target.startDragSelection()
                 state.target.updateCursor(it.x, it.y, it.isShiftDown)
             },
             onDoublePrimaryPressed = { state.target.selectWord() },
