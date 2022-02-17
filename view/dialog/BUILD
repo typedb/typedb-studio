@@ -22,7 +22,7 @@ package(default_visibility = ["//view:__subpackages__"])
 
 kt_jvm_library(
     name = "dialog",
-    srcs = glob(["*.kt", "*/*.kt"]),
+    srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/common:common",
@@ -49,6 +49,6 @@ kt_jvm_library(
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*"]),
     license_type = "agpl",
 )

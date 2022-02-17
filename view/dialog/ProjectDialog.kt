@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -39,6 +40,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
@@ -50,27 +52,55 @@ import com.vaticle.typedb.studio.view.common.component.Form.Field
 import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
-import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog
-import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog.SelectDirectoryForm
+import com.vaticle.typedb.studio.view.common.component.Icon
 import java.awt.FileDialog
+import javax.swing.JFileChooser
 import kotlin.io.path.Path
 import mu.KotlinLogging
 
 
 object ProjectDialog {
 
+    private class ProjectItemForm constructor(
+        initField: String,
+        val onCancel: () -> Unit,
+        val onSubmit: (String) -> Unit
+    ) : Form.State {
+
+        var field: String by mutableStateOf(initField)
+
+        override fun isValid(): Boolean {
+            return field.isNotBlank()
+        }
+
+        override fun trySubmit() {
+            assert(field.isNotBlank())
+            onSubmit(field)
+        }
+    }
+
+    private val DIRECTORY_DIALOG_WIDTH = 500.dp
+    private val DIRECTORY_DIALOG_HEIGHT = 200.dp
     private val PROJECT_ITEM_NAMING_WINDOW_WIDTH = 500.dp
     private val PROJECT_ITEM_NAMING_WINDOW_HEIGHT = 200.dp
     private val LOGGER = KotlinLogging.logger {}
 
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun ProjectDialogButtons(form: ProjectItemForm, submitLabel: String) {
+        TextButton(text = Label.CANCEL, onClick = { form.onCancel() })
+        ComponentSpacer()
+        TextButton(text = submitLabel, enabled = form.isValid(), onClick = { form.trySubmit() })
+    }
+    
     @Composable
     fun OpenProject() {
-        val state = SelectDirectoryForm(
-            initPath = GlobalState.project.current?.directory?.path,
+        val state = ProjectItemForm(
+            initField = GlobalState.project.current?.directory?.path?.toString() ?: "",
             onCancel = { GlobalState.project.openProjectDialog.close() },
             onSubmit = {
                 val previous = GlobalState.project.current
-                if (GlobalState.project.tryOpenProject(it)) {
+                if (GlobalState.project.tryOpenProject(Path(it))) {
                     if (previous != GlobalState.project.current) {
                         GlobalState.page.closeAll()
                         GlobalState.project.unsavedFiles().forEach { GlobalState.page.open(it) }
@@ -78,7 +108,7 @@ object ProjectDialog {
                 }
             }
         )
-        DirectoryDialog.Layout(
+        SelectDirectoryDialog(
             state = state,
             title = Label.OPEN_PROJECT_DIRECTORY,
             message = Sentence.SELECT_DIRECTORY_FOR_PROJECT,
@@ -86,21 +116,92 @@ object ProjectDialog {
         )
     }
 
-    private class ProjectItemNamingForm constructor(
-        initName: String,
-        val onCancel: () -> Unit,
-        val onSubmit: (String) -> Unit
-    ) : Form.State {
+    @Composable
+    fun MoveDirectory() {
+        val directory = GlobalState.project.moveDirectoryDialog.item!!
+        val state = ProjectItemForm(
+            initField = directory.path.parent.toString(),
+            onCancel = { GlobalState.project.moveDirectoryDialog.close() },
+            onSubmit = { GlobalState.project.tryMoveDirectory(directory, Path(it)) }
+        )
+        SelectDirectoryDialog(
+            state = state,
+            title = Label.MOVE_DIRECTORY,
+            message = Sentence.SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER.format(directory.path),
+            submitLabel = Label.MOVE
+        )
+    }
 
-        var newName: String by mutableStateOf(initName)
-
-        override fun isValid(): Boolean {
-            return newName.isNotBlank()
+    @Composable
+    private fun SelectDirectoryDialog(state: ProjectItemForm, title: String, message: String, submitLabel: String) {
+        Dialog(
+            title = title,
+            onCloseRequest = { state.onCancel },
+            state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(DIRECTORY_DIALOG_WIDTH, DIRECTORY_DIALOG_HEIGHT)
+            )
+        ) {
+            Submission(state = state) {
+                Form.Text(value = message, softWrap = true)
+                SelectDirectoryField(state, window, title)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    this@ProjectDialog.ProjectDialogButtons(state, submitLabel)
+                }
+            }
         }
+    }
 
-        override fun trySubmit() {
-            assert(newName.isNotBlank())
-            onSubmit(newName)
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
+        Field(label = Label.DIRECTORY) {
+            Row {
+                TextInput(
+                    value = state.field,
+                    placeholder = Label.PATH_OF_DIRECTORY,
+                    onValueChange = { state.field = it },
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                )
+                ComponentSpacer()
+                Form.IconButton(
+                    icon = Icon.Code.FOLDER_OPEN,
+                    onClick = { launchDirectorySelector(state, window, title) }
+                )
+            }
+        }
+    }
+
+    private fun launchDirectorySelector(state: ProjectItemForm, parent: ComposeDialog, title: String) {
+        when (Property.OS.Current) {
+            Property.OS.MACOS -> macOSDirectorySelector(state, parent, title)
+            else -> otherOSDirectorySelector(state, title)
+        }
+    }
+
+    private fun macOSDirectorySelector(state: ProjectItemForm, parent: ComposeDialog, title: String) {
+        val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
+        fileDialog.apply {
+            directory = state.field
+            isMultipleMode = false
+            isVisible = true
+        }
+        fileDialog.directory?.let { state.field = Path(it).resolve(fileDialog.file).toString() }
+    }
+
+    private fun otherOSDirectorySelector(state: ProjectItemForm, title: String) {
+        val directoryChooser = JFileChooser().apply {
+            currentDirectory = Path(state.field).toFile()
+            dialogTitle = title
+            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+        }
+        val option = directoryChooser.showOpenDialog(null)
+        if (option == JFileChooser.APPROVE_OPTION) {
+            val directory = directoryChooser.selectedFile
+            assert(directory.isDirectory)
+            state.field = directory.absolutePath
         }
     }
 
@@ -116,8 +217,8 @@ object ProjectDialog {
     private fun CreateDirectory() {
         val parent = GlobalState.project.createItemDialog.parent!!
         val form = remember {
-            ProjectItemNamingForm(
-                initName = parent.nexUntitledDirName(),
+            ProjectItemForm(
+                initField = parent.nexUntitledDirName(),
                 onCancel = { GlobalState.project.createItemDialog.close() },
                 onSubmit = { GlobalState.project.tryCreateDirectory(parent, it) }
             )
@@ -134,8 +235,8 @@ object ProjectDialog {
     private fun CreateFile() {
         val parent = GlobalState.project.createItemDialog.parent!!
         val form = remember {
-            ProjectItemNamingForm(
-                initName = parent.nextUntitledFileName(),
+            ProjectItemForm(
+                initField = parent.nextUntitledFileName(),
                 onCancel = { GlobalState.project.createItemDialog.close() },
                 onSubmit = { GlobalState.project.tryCreateFile(parent, it) }
             )
@@ -152,8 +253,8 @@ object ProjectDialog {
     fun RenameProjectItem() {
         val item = GlobalState.project.renameItemDialog.item!!
         val form = remember {
-            ProjectItemNamingForm(
-                initName = item.name,
+            ProjectItemForm(
+                initField = item.name,
                 onCancel = { GlobalState.project.renameItemDialog.close() },
                 onSubmit = { GlobalState.project.tryRename(item, it) }
             )
@@ -165,7 +266,7 @@ object ProjectDialog {
     }
 
     @Composable
-    private fun RenameDirectory(form: ProjectItemNamingForm, item: ProjectItem) {
+    private fun RenameDirectory(form: ProjectItemForm, item: ProjectItem) {
         ProjectItemNamingDialog(
             form = form,
             title = Label.RENAME_DIRECTORY,
@@ -175,7 +276,7 @@ object ProjectDialog {
     }
 
     @Composable
-    private fun RenameFile(form: ProjectItemNamingForm, item: ProjectItem) {
+    private fun RenameFile(form: ProjectItemForm, item: ProjectItem) {
         ProjectItemNamingDialog(
             form = form,
             title = Label.RENAME_FILE,
@@ -186,7 +287,7 @@ object ProjectDialog {
 
     @Composable
     private fun ProjectItemNamingDialog(
-        form: ProjectItemNamingForm, title: String, message: String, submitLabel: String
+        form: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
         Dialog(
             title = title,
@@ -198,11 +299,11 @@ object ProjectDialog {
         ) {
             Submission(state = form) {
                 Form.Text(value = message, softWrap = true)
-                ProjectItemNamingField(form.newName) { form.newName = it }
+                ProjectItemNamingField(form.field) { form.field = it }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    ProjectItemNamingButtons(form, submitLabel, form.onCancel)
+                    this@ProjectDialog.ProjectDialogButtons(form, submitLabel)
                 }
             }
         }
@@ -223,14 +324,6 @@ object ProjectDialog {
         LaunchedEffect(Unit) { focusReq.requestFocus() }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun ProjectItemNamingButtons(form: Form.State, submitLabel: String, onCancel: () -> Unit) {
-        TextButton(text = Label.CANCEL, onClick = onCancel)
-        ComponentSpacer()
-        TextButton(text = submitLabel, enabled = form.isValid(), onClick = { form.trySubmit() })
-    }
-
     @Composable
     fun SaveFile(window: ComposeWindow) {
         val projectFile = GlobalState.project.saveFileDialog.file!!
@@ -244,21 +337,5 @@ object ProjectDialog {
             val newPath = Path(it).resolve(fileDialog.file)
             GlobalState.project.trySaveFileTo(projectFile, newPath, true)
         } ?: GlobalState.project.saveFileDialog.close()
-    }
-
-    @Composable
-    fun MoveDirectory() {
-        val directory = GlobalState.project.moveDirectoryDialog.item!!
-        val state = SelectDirectoryForm(
-            initPath = directory.path.parent,
-            onCancel = { GlobalState.project.moveDirectoryDialog.close() },
-            onSubmit = { GlobalState.project.tryMoveDirectory(directory, it) }
-        )
-        DirectoryDialog.Layout(
-            state = state,
-            title = Label.MOVE_DIRECTORY,
-            message = Sentence.SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER.format(directory.path),
-            submitLabel = Label.MOVE
-        )
     }
 }
