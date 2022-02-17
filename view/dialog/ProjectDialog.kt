@@ -40,8 +40,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.common.Property.OS.MACOS
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
@@ -58,8 +56,6 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog
 import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog.SelectDirectoryForm
 import java.awt.FileDialog
-import java.io.File
-import javax.swing.JFileChooser
 import kotlin.io.path.Path
 import mu.KotlinLogging
 
