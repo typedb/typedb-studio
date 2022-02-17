@@ -49,6 +49,7 @@ object Label {
     const val FIND = "Find"
     const val FOUND = "Found"
     const val MOVE = "Move"
+    const val MOVE_DIRECTORY = "Move Directory"
     const val NONE = "None"
     const val OPEN = "Open"
     const val OPEN_PROJECT = "Open Project"

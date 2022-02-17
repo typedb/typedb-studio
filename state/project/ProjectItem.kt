@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_SAVE_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
@@ -70,7 +70,7 @@ sealed class ProjectItem(
     internal fun tryRename(newName: String): Boolean {
         val newPath = path.resolveSibling(newName)
         return if (parent?.contains(newName) == true) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE, newPath)
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             false
         } else try {
             path.moveTo(newPath)

@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_DIRECTORY
@@ -67,11 +68,11 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    class RenameProjectItemDialog : DialogManager() {
+    class ProjectItemDialog<T : ProjectItem> : DialogManager() {
 
-        var item: ProjectItem? by mutableStateOf(null)
+        var item: T? by mutableStateOf(null)
 
-        fun open(item: ProjectItem) {
+        fun open(item: T) {
             isOpen = true
             this.item = item
         }
@@ -87,7 +88,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         var file: File? by mutableStateOf(null)
         var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
 
-        fun open(file: File, onSuccess: ((Pageable) -> Unit)? = null) {
+        internal fun open(file: File, onSuccess: ((Pageable) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess
@@ -113,17 +114,17 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createItemDialog = CreateItemDialog()
-    val renameItemDialog = RenameProjectItemDialog()
     val saveFileDialog = SaveFileDialog()
+    val moveDirectoryDialog = ProjectItemDialog<Directory>()
+    val renameItemDialog = ProjectItemDialog<ProjectItem>()
 
-    fun tryOpenProject(newDir: String): Boolean {
-        val dir = Path.of(newDir)
+    fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
         val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
-        if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, newDir)
-        else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, newDir)
-        else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, newDir)
-        else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, newDir)
+        if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, dir)
+        else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, dir)
+        else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, dir)
+        else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
         else if (dataDirPath.exists() && dataDirPath.isRegularFile()) {
             notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
         } else if (unsavedFilesDirPath.exists() && unsavedFilesDirPath.isRegularFile()) {
@@ -205,6 +206,16 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
             if (newPath.startsWith(current!!.path)) saveFileDialog.onSuccess?.let { it(toFile(newPath)) }
             else notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
             saveFileDialog.close()
+            onContentChange?.let { it() }
+        }
+    }
+
+    fun tryMoveDirectory(directory: Directory, newParent: Path) {
+        if (directory.tryMove(newParent)) {
+            if (!newParent.startsWith(current!!.path)) {
+                notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
+            }
+            moveDirectoryDialog.close()
             onContentChange?.let { it() }
         }
     }

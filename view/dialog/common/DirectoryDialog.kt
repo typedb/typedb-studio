@@ -18,55 +18,72 @@
 
 package com.vaticle.typedb.studio.view.dialog.common
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.awt.ComposeDialog
+import androidx.compose.ui.awt.ComposeWindow
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import java.awt.FileDialog
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JFileChooser
 import kotlin.io.path.Path
 
 object DirectoryDialog {
 
-    abstract class SelectDirectoryForm : Form.State {
+    abstract class SelectDirectoryForm(initPath: Path?) : Form.State {
 
-        abstract var directory: String?
+        var selectedPath: Path? by mutableStateOf(initPath)
 
         override fun isValid(): Boolean {
-            return !directory.isNullOrBlank()
+            return selectedPath != null
         }
     }
 
-    internal fun launch(state: SelectDirectoryForm, parent: ComposeDialog) {
+    internal fun launch(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
         when (Property.OS.Current) {
-            Property.OS.MACOS -> macOSDialog(state, parent)
-            else -> otherOSDialog(state)
+            Property.OS.MACOS -> macOSDialog(state, parent, title)
+            else -> otherOSDialog(state, title)
         }
     }
 
-    private fun macOSDialog(state: SelectDirectoryForm, parent: ComposeDialog) {
-        val fileDialog = FileDialog(parent, Label.OPEN_PROJECT_DIRECTORY, FileDialog.LOAD).apply {
-            file = state.directory
+    internal fun launch(state: SelectDirectoryForm, parent: ComposeWindow, title: String) {
+        when (Property.OS.Current) {
+            Property.OS.MACOS -> macOSDialog(state, parent, title)
+            else -> otherOSDialog(state, title)
+        }
+    }
+
+    private fun macOSDialog(state: SelectDirectoryForm, parent: ComposeDialog, title: String) {
+        macOSDialog(state, FileDialog(parent, title, FileDialog.LOAD))
+    }
+
+    private fun macOSDialog(state: SelectDirectoryForm, parent: ComposeWindow, title: String) {
+        macOSDialog(state, FileDialog(parent, title, FileDialog.LOAD))
+    }
+
+    private fun macOSDialog(state: SelectDirectoryForm, fileDialog: FileDialog) {
+        fileDialog.apply {
+            directory = state.selectedPath?.toString()
             isMultipleMode = false
             isVisible = true
         }
-        fileDialog.directory?.let {
-            state.directory = Path(it).resolve(fileDialog.file).toString()
-        }
+        if (fileDialog.directory != null) state.selectedPath = Path(fileDialog.directory).resolve(fileDialog.file)
+        else state.selectedPath = null
     }
 
-    private fun otherOSDialog(state: SelectDirectoryForm) {
+    private fun otherOSDialog(state: SelectDirectoryForm, title: String) {
         val directoryChooser = JFileChooser().apply {
-            state.directory?.let { currentDirectory = File(it) }
-            dialogTitle = Label.OPEN_PROJECT_DIRECTORY
+            state.selectedPath?.let { currentDirectory = it.toFile() }
+            dialogTitle = title
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         }
         val option = directoryChooser.showOpenDialog(null)
         if (option == JFileChooser.APPROVE_OPTION) {
             val directory = directoryChooser.selectedFile
             assert(directory.isDirectory)
-            state.directory = directory.absolutePath
+            state.selectedPath = Path(directory.absolutePath)
         }
     }
 }

@@ -40,6 +40,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
@@ -56,20 +57,18 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog
 import com.vaticle.typedb.studio.view.dialog.common.DirectoryDialog.SelectDirectoryForm
 import java.awt.FileDialog
+import java.nio.file.Path
 import kotlin.io.path.Path
 import mu.KotlinLogging
 
 
 object ProjectDialog {
 
-    private object OpenProjectForm : SelectDirectoryForm() {
-
-        override var directory: String? by mutableStateOf(GlobalState.project.current?.directory?.absolutePath?.toString())
-
+    private class OpenProjectForm(initDir: Path?) : SelectDirectoryForm(initDir) {
         override fun trySubmit() {
-            assert(!directory.isNullOrBlank())
+            assert(isValid())
             val previous = GlobalState.project.current
-            if (GlobalState.project.tryOpenProject(directory!!)) {
+            if (GlobalState.project.tryOpenProject(selectedPath!!)) {
                 if (previous != GlobalState.project.current) {
                     GlobalState.page.closeAll()
                     GlobalState.project.unsavedFiles().forEach { GlobalState.page.open(it) }
@@ -86,6 +85,7 @@ object ProjectDialog {
 
     @Composable
     fun OpenProject() {
+        val state = OpenProjectForm(GlobalState.project.current?.directory?.path)
         Dialog(
             title = Label.OPEN_PROJECT_DIRECTORY,
             onCloseRequest = { GlobalState.project.openProjectDialog.close() },
@@ -94,12 +94,12 @@ object ProjectDialog {
                 size = DpSize(OPEN_PROJECT_WINDOW_WIDTH, OPEN_PROJECT_WINDOW_HEIGHT)
             )
         ) {
-            Submission(state = OpenProjectForm) {
-                SelectDirectoryField(window)
+            Submission(state = state) {
+                SelectDirectoryField(state, window)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    OpenProjectButtons()
+                    OpenProjectButtons(state)
                 }
             }
         }
@@ -107,30 +107,33 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(window: ComposeDialog) {
+    private fun SelectDirectoryField(state: OpenProjectForm, window: ComposeDialog) {
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
-                    value = OpenProjectForm.directory ?: "",
+                    value = state.selectedPath?.toString() ?: "",
                     placeholder = Label.PATH_TO_PROJECT,
-                    onValueChange = { OpenProjectForm.directory = it },
+                    onValueChange = { state.selectedPath = Path(it) },
                     modifier = Modifier.fillMaxHeight().weight(1f),
                 )
                 ComponentSpacer()
-                IconButton(icon = Icon.Code.FOLDER_OPEN, onClick = { DirectoryDialog.launch(OpenProjectForm, window) })
+                IconButton(
+                    icon = Icon.Code.FOLDER_OPEN,
+                    onClick = { DirectoryDialog.launch(state, window, Label.OPEN_PROJECT_DIRECTORY) }
+                )
             }
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun OpenProjectButtons() {
+    private fun OpenProjectButtons(state: OpenProjectForm) {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.project.openProjectDialog.close() })
         ComponentSpacer()
-        TextButton(text = Label.OPEN, enabled = OpenProjectForm.isValid(), onClick = { OpenProjectForm.trySubmit() })
+        TextButton(text = Label.OPEN, enabled = state.isValid(), onClick = { state.trySubmit() })
     }
 
-    private class ProjectItemNamingForm(
+    private class ProjectItemNamingForm constructor(
         initName: String,
         val onCancel: () -> Unit,
         val onSubmit: (String) -> Unit
@@ -288,5 +291,20 @@ object ProjectDialog {
             val newPath = Path(it).resolve(fileDialog.file)
             GlobalState.project.trySaveFileTo(projectFile, newPath, true)
         } ?: GlobalState.project.saveFileDialog.close()
+    }
+
+    private class MoveDirectoryForm(val directory: Directory) : SelectDirectoryForm(directory.path) {
+        override fun trySubmit() {
+            assert(isValid())
+            GlobalState.project.tryMoveDirectory(directory, selectedPath!!)
+        }
+    }
+
+    @Composable
+    fun MoveDirectory(window: ComposeWindow) {
+        val state = MoveDirectoryForm(GlobalState.project.moveDirectoryDialog.item!!)
+        DirectoryDialog.launch(state, window, Label.MOVE_DIRECTORY)
+        state.selectedPath?.let { state.trySubmit() }
+        GlobalState.project.moveDirectoryDialog.close()
     }
 }

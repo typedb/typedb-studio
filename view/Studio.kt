@@ -134,6 +134,7 @@ object Studio {
             if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
             if (GlobalState.project.renameItemDialog.isOpen) ProjectDialog.RenameProjectItem()
             if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
+            if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory(window)
         }
     }
 

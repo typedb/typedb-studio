@@ -163,16 +163,21 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.renameItemDialog.open(itemState.item) },
+                ) { GlobalState.project.renameItemDialog.open(directory) },
+                ContextMenu.Item(
+                    label = Label.MOVE,
+                    icon = Icon.Code.FOLDER_ARROW_DOWN,
+                    enabled = !directory.isProjectData,
+                ) { GlobalState.project.moveDirectoryDialog.open(directory) },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
-                    enabled = !itemState.item.isRoot && !directory.isProjectData,
+                    enabled = !directory.isRoot && !directory.isProjectData,
                 ) {
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_DIRECTORY_DELETION,
                         message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
-                        onConfirm = { itemState.item.delete(); onChangeEntries() }
+                        onConfirm = { directory.delete(); onChangeEntries() }
                     )
                 }
             )
@@ -201,10 +206,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) {
-                    if (file.isOpen) GlobalState.page.moveAndReopen(file)
-                    else file.moveFile()
-                },
+                ) { if (file.isOpen) GlobalState.page.moveAndReopen(file) else file.moveFile() },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

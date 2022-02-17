@@ -109,22 +109,28 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(9, "Directory %s is not deletable.")
             val FILE_NOT_DELETABLE =
                 Project(10, "File %s is not deletable.")
-            val FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE =
-                Project(11, "Failed to create or rename file to %s, as it already exists.")
+            val FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE =
+                Project(11, "Failed to move directory to %s, as it already exists.")
+            val FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE =
+                Project(12, "Failed to create or rename file to %s, as it already exists.")
             val FAILED_TO_CREATE_DIRECTORY =
-                Project(12, "Failed to create new directory at %s.")
+                Project(13, "Failed to create new directory at %s.")
+            val FAILED_TO_MOVE_DIRECTORY =
+                Project(14, "Failed to create new directory at %s.")
             val FAILED_TO_CREATE_FILE =
-                Project(13, "Failed to create new file at %s.")
+                Project(15, "Failed to create new file at %s.")
             val FAILED_TO_SAVE_FILE =
-                Project(14, "Failed to save file to new location: %s.")
+                Project(16, "Failed to save file to new location: %s.")
             val FAILED_TO_RENAME_FILE =
-                Project(15, "Failed to rename file to %s.")
+                Project(17, "Failed to rename file to %s.")
+            val DIRECTORY_HAS_BEEN_MOVED_OUT =
+                Project(18, "Directory has been moved outside of project: %s.")
             val FILE_HAS_BEEN_MOVED_OUT =
-                Project(16, "File has been moved outside of project: %s.")
+                Project(19, "File has been moved outside of project: %s.")
             val FILE_CONTENT_CHANGED_ON_DISK: Message =
-                Project(17, "Content of file %s on the filesystem has changed, and has been reloaded in Studio.")
+                Project(20, "Content of file %s on the filesystem has changed, and has been reloaded in Studio.")
             val FILE_PERMISSION_CHANGED_ON_DISK: Message =
-                Project(18, "Permission of file %s on the filesystem has changed, and has been updated in Studio.")
+                Project(21, "Permission of file %s on the filesystem has changed, and has been updated in Studio.")
         }
     }
 }

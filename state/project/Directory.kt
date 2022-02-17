@@ -22,7 +22,9 @@ import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
@@ -37,6 +39,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import mu.KotlinLogging
 
@@ -121,7 +124,7 @@ class Directory internal constructor(
 
     private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): ProjectItem? {
         return if (newPath.exists()) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_TO_DUPLICATE, newPath)
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             createFn(newPath)
@@ -130,6 +133,20 @@ class Directory internal constructor(
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, failureMessage, newPath)
             null
+        }
+    }
+
+    fun tryMove(newParent: Path): Boolean {
+        val newPath = newParent.resolve(name)
+        return if (newPath.exists()) {
+            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
+            false
+        } else try {
+            path.moveTo(newPath)
+            true
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
+            false
         }
     }
 
