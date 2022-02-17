@@ -106,13 +106,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         const val UNSAVED_DATA_DIR_NAME = ".unsaved"
     }
 
-    var _current: Project? by mutableStateOf(null)
-    var current: Project?
-        get() = _current
-        set(value) {
-            _current = value
-            onProjectChange?.let { it(_current!!) }
-        }
+    var current: Project? by mutableStateOf(null)
     var dataDir: Directory? by mutableStateOf(null)
     var unsavedFilesDir: Directory? by mutableStateOf(null)
     var onProjectChange: ((Project) -> Unit)? = null
@@ -136,6 +130,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
             notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
         } else {
             initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
+            onProjectChange?.let { it(current!!) }
             openProjectDialog.close()
             return true
         }
