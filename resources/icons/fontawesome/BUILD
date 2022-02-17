@@ -22,13 +22,13 @@ package(default_visibility = ["//view/common:__pkg__"])
 filegroup(
     name = "icons",
     srcs = [
-        "font-awesome-6-pro-solid-900.otf",
+        "font-awesome-solid-900.ttf",
     ],
 )
 
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
-    exclude = glob(["*.otf"]),
+    exclude = glob(["*.ttf"]),
     license_type = "agpl",
 )

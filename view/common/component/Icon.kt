@@ -38,7 +38,7 @@ import java.nio.file.Path
 object Icon {
 
     private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
-    private val FONT_FILE = Path.of("resources/icons/fontawesome/font-awesome-6-pro-solid-900.otf").toFile()
+    private val FONT_FILE = Path.of("resources/icons/fontawesome/font-awesome-solid-900.ttf").toFile()
     private val FONT_AWESOME = FontFamily(Font(FONT_FILE))
 
     data class Offset(val x: Dp, val y: Dp)
