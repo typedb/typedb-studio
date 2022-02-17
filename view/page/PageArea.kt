@@ -82,6 +82,7 @@ object PageArea {
     private val TAB_SPACING = 8.dp
     private val TAB_HEIGHT = 28.dp
     private val TAB_UNDERLINE_HEIGHT = 2.dp
+    private val TAB_SCROLL_DELTA = 200.dp
     private val ICON_SIZE = 10.sp
 
     internal class AreaState(val coroutineScope: CoroutineScope) {
@@ -189,7 +190,7 @@ object PageArea {
         }
         LaunchedEffect(state.scrollTabsToEnd) {
             if (state.scrollTabsToEnd) {
-                scrollState.animateScrollTo(scrollState.maxValue)
+                scrollState.scrollTo(scrollState.maxValue)
                 state.scrollTabsToEnd = false
             }
         }
@@ -233,7 +234,7 @@ object PageArea {
     private fun PreviousTabsButton(state: AreaState) {
         IconButton(
             icon = Icon.Code.CARET_LEFT,
-            onClick = { state.scrollBy((-200).dp) },
+            onClick = { state.scrollBy(-TAB_SCROLL_DELTA) },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
@@ -245,7 +246,7 @@ object PageArea {
     private fun NextTabsButton(state: AreaState) {
         IconButton(
             icon = Icon.Code.CARET_RIGHT,
-            onClick = { state.scrollBy(200.dp) },
+            onClick = { state.scrollBy(TAB_SCROLL_DELTA) },
             modifier = Modifier.size(TAB_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
