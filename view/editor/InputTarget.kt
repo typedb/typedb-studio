@@ -370,8 +370,10 @@ internal class InputTarget constructor(
     }
 
     internal fun selectWord() {
-        val boundary = wordBoundary(rendering.get(cursor.row)!!, cursor.col)
-        updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
+        rendering.get(cursor.row)?.let {
+            val boundary = wordBoundary(it, cursor.col)
+            updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
+        }
     }
 
     internal fun selectLine() {
