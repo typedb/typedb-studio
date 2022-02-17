@@ -124,9 +124,9 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_RENAME_FILE =
                 Project(17, "Failed to rename file to %s.")
             val DIRECTORY_HAS_BEEN_MOVED_OUT =
-                Project(18, "Directory has been moved outside of project: %s.")
+                Project(18, "Directory has been moved to a location outside of project: %s.")
             val FILE_HAS_BEEN_MOVED_OUT =
-                Project(19, "File has been moved outside of project: %s.")
+                Project(19, "File has been moved to a location outside of project: %s.")
             val FILE_CONTENT_CHANGED_ON_DISK: Message =
                 Project(20, "Content of file %s on the filesystem has changed, and has been reloaded in Studio.")
             val FILE_PERMISSION_CHANGED_ON_DISK: Message =
