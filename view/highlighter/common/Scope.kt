@@ -51,12 +51,12 @@ class Scope private constructor(val name: String, var parent: Scope?) {
     companion object {
 
         internal const val GLOBAL_NAME = "global"
-        private val SCOPE_DEFINITION_FILE = Path.of("view/highlighter/common/scope_definitions.yml")
+        private val SCOPE_DEFINITION_FILE = "view/highlighter/common/scope_definitions.yml"
 
         fun instantiateNewScopes(): Map<String, Scope> {
             val globalScope = Scope(name = GLOBAL_NAME, parent = null)
             val scopes = mutableMapOf(GLOBAL_NAME to globalScope)
-            YAML.load(SCOPE_DEFINITION_FILE).asMap().content().map { entry ->
+            YAML.load(String(ClassLoader.getSystemClassLoader().getResourceAsStream(SCOPE_DEFINITION_FILE)!!.readAllBytes())).asMap().content().map { entry ->
                 createScope(entry.key, globalScope, entry.value, scopes)
             }.forEach { scopes[it.fullName] = it }
             return scopes

@@ -47,10 +47,10 @@ object Typography {
         }
     }
 
-    private val MONACO = Path.of("resources/fonts/monaco/Monaco.ttf").toFile()
-    private val TITILLIUM_WEB_REGULAR = Path.of("resources/fonts/titilliumweb/TitilliumWeb-Regular.ttf").toFile()
-    private val TITILLIUM_WEB_SEMI_BOLD = Path.of("resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf").toFile()
-    private val UBUNTU_MONO_REGULAR = Path.of("resources/fonts/ubuntumono/UbuntuMono-Regular.ttf").toFile()
+    private val MONACO = "resources/fonts/monaco/Monaco.ttf"
+    private val TITILLIUM_WEB_REGULAR = "resources/fonts/titilliumweb/TitilliumWeb-Regular.ttf"
+    private val TITILLIUM_WEB_SEMI_BOLD = "resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
+    private val UBUNTU_MONO_REGULAR = "resources/fonts/ubuntumono/UbuntuMono-Regular.ttf"
     private const val DEFAULT_BODY_FONT_SIZE_MEDIUM = 13
     private const val DEFAULT_BODY_FONT_SIZE_SMALL = 11
     private const val DEFAULT_CODE_FONT_SIZE_MEDIUM = 14

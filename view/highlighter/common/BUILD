@@ -36,7 +36,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    data = [
+    resources = [
         "scope_definitions.yml",
         "//resources/schemes:schemes",
     ],

@@ -47,7 +47,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    data = [
+    resources = [
         "//resources/fonts/monaco:monaco",
         "//resources/fonts/titilliumweb:titillium-web",
         "//resources/fonts/ubuntumono:ubuntu-mono",

@@ -41,7 +41,7 @@ class Scheme(val scopes: Map<String, Scope>) {
         private fun createScheme(filename: String): Scheme {
             val colors = mutableMapOf<String, Color>()
             val scopes = Scope.instantiateNewScopes()
-            val yaml = YAML.load(Path.of(filename)).asMap().content()
+            val yaml = YAML.load(String(ClassLoader.getSystemClassLoader().getResourceAsStream(filename)!!.readAllBytes())).asMap().content()
             yaml[COLORS]?.let { populateColors(colors, it.asMap().content()) }
             yaml[Scope.GLOBAL_NAME]?.let { populateGlobal(scopes, colors, it.asMap().content()) }
             yaml[RULES]?.let { populateRules(scopes, colors, it.asMap().content(), null) }
