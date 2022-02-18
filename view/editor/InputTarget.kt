@@ -280,11 +280,11 @@ internal class InputTarget(
         }
     }
 
-    private fun wordBoundary(textLayout: TextLayoutResult, col: Int): TextRange {
+    private fun wordBoundary(textLayout: TextLayoutResult, row: Int, col: Int): TextRange {
         // TODO: https://github.com/JetBrains/compose-jb/issues/1762
         //       We can remove this function once the above issue is resolved
-        if (content[cursor.row].isEmpty()) return TextRange(0, 0)
-        val colSafe = col.coerceIn(0, (content[cursor.row].length - 1).coerceAtLeast(0))
+        if (content[row].isEmpty()) return TextRange(0, 0)
+        val colSafe = col.coerceIn(0, (content[row].length - 1).coerceAtLeast(0))
         val boundary = textLayout.getWordBoundary(colSafe)
         val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
         val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
@@ -304,7 +304,7 @@ internal class InputTarget(
 
     private fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
         if (col < 0 || content[cursor.row].isEmpty()) return 0
-        val newCol = wordBoundary(textLayout, col).start
+        val newCol = wordBoundary(textLayout, cursor.row, col).start
         return if (newCol < col) newCol
         else getPrevWordOffset(textLayout, col - 1)
     }
@@ -318,7 +318,7 @@ internal class InputTarget(
 
     private fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
         if (col >= content[cursor.row].length) return content[cursor.row].length
-        val newCol = wordBoundary(textLayout, col).end
+        val newCol = wordBoundary(textLayout, cursor.row, col).end
         return if (newCol > col) newCol
         else getNextWordOffset(textLayout, col + 1)
     }
@@ -407,7 +407,7 @@ internal class InputTarget(
 
     private fun selectWord(cursor: Cursor): Selection? {
         return rendering.get(cursor.row)?.let {
-            val boundary = wordBoundary(it, cursor.col)
+            val boundary = wordBoundary(it, cursor.row, cursor.col)
             Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
         }
     }
