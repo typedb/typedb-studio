@@ -218,9 +218,6 @@ internal class EventHandler(
             listOf(
                 ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { toolbar.showFinder() },
                 ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { toolbar.showReplacer() }
-            ),
-            listOf(
-                ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", false) { }, // TODO
             )
         )
     }
