@@ -17,7 +17,8 @@
 
 colors:
   white: "#d5ccff"
-  green: "#55EAE2"
+  cyan: "#55EAE2"
+  green: "#4dc97c"
   red: "#ff8080"
   pink: "#ff7abd"
   purple: "#b7a3ff" # unused
@@ -30,11 +31,11 @@ global:
   foreground: pink
 rules:
   storage:
-    foreground: green
+    foreground: cyan
     rules:
       type:
         # thing, entity, attribute, relation, role, rule
-        foreground: green
+        foreground: cyan
         styles: [italic]
       modifier:
         # long, double, string, boolean, datetime
@@ -73,11 +74,11 @@ rules:
         foreground: blue
   variable:
     # $x, $y, $z
-    foreground: green
+    foreground: cyan
     rules:
       parameter:
         # $_
-        foreground: green
+        foreground: cyan
         styles: [italic]
       language:
         # 0x966e80018000000000000000
@@ -87,5 +88,5 @@ rules:
     foreground: white
   comment:
     # # This comment explains the code
-    foreground: grey
+    foreground: green
     styles: [italic]

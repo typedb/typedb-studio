@@ -69,7 +69,7 @@ object SyntaxHighlighter {
             color = scope.foreground ?: Color.Unspecified,
             background = scope.background ?: Color.Unspecified,
             fontStyle = if (scope.isItalic) FontStyle.Italic else null,
-            fontWeight = if (scope.isBold) FontWeight.SemiBold else null,
+            fontWeight = if (scope.isBold) FontWeight.Bold else null,
             textDecoration = if (scope.isUnderline) TextDecoration.Underline else null
         )
         this.pushStyle(style)
