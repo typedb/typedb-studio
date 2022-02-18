@@ -158,13 +158,13 @@ internal class InputTarget(
 
     internal fun mayUpdateDragSelection(x: Int, y: Int) {
         if (!mayDragSelectByChar) return
-        var newCursor = createCursor(x, y)
-        val horScrollOffset = Theme.toDP(horScroller.value, density).value
-        val lineNumberBorder = textAreaRect.left - horScrollOffset - horPadding.value
-        if (x < lineNumberBorder && selection != null && newCursor >= selection!!.start) {
-            newCursor = createCursor(x, y + lineHeight.value.toInt())
+        if (x < textAreaRect.left - horPadding.value) { // mouse press on line number area
+            val newCursor = createCursor(x, y + lineHeight.value.toInt())
+            updateCursor(newCursor, true)
+        } else {
+            val newCursor = createCursor(x, y)
+            if (newCursor != cursor) updateCursor(newCursor, true)
         }
-        if (newCursor != cursor) updateCursor(newCursor, true)
     }
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
