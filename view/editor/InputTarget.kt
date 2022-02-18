@@ -120,6 +120,7 @@ internal class InputTarget(
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
+    private val lineNumberBorder: Float get() = textAreaRect.left - horPadding.value
     private val lineCount: Int get() = content.size
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
@@ -157,14 +158,27 @@ internal class InputTarget(
     }
 
     internal fun mayUpdateDragSelection(x: Int, y: Int) {
-        if (!mayDragSelectByChar) return
-        if (x < textAreaRect.left - horPadding.value) { // mouse press on line number area
+        if (mayDragSelectByChar) mayUpdateDragSelectionByChar(x, y)
+        else if (mayDragSelectByWord) mayUpdateDragSelectionByWord(x, y)
+        else if (mayDragSelectByLine) mayUpdateDragSelectionByLine(x, y)
+    }
+
+    private fun mayUpdateDragSelectionByChar(x: Int, y: Int) {
+        if (x < lineNumberBorder) {
             val newCursor = createCursor(x, y + lineHeight.value.toInt())
             updateCursor(newCursor, true)
         } else {
             val newCursor = createCursor(x, y)
             if (newCursor != cursor) updateCursor(newCursor, true)
         }
+    }
+
+    private fun mayUpdateDragSelectionByWord(x: Int, y: Int) {
+
+    }
+
+    private fun mayUpdateDragSelectionByLine(x: Int, y: Int) {
+
     }
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
@@ -370,7 +384,11 @@ internal class InputTarget(
         updateSelection(Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false)
     }
 
-    internal fun selectWord() {
+    internal fun maySelectWord(x: Int) {
+        if (x > lineNumberBorder) selectWord()
+    }
+
+    private fun selectWord() {
         rendering.get(cursor.row)?.let {
             val boundary = wordBoundary(it, cursor.col)
             updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
@@ -378,7 +396,11 @@ internal class InputTarget(
         mayDragSelectByWord = true
     }
 
-    internal fun selectLine() {
+    internal fun maySelectLine(x: Int) {
+        if (x > lineNumberBorder) selectLine()
+    }
+
+    private fun selectLine() {
         updateSelection(Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length)))
         mayDragSelectByLine = true
     }

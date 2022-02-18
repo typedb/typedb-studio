@@ -384,8 +384,8 @@ object TextEditor {
                 state.focusReq.requestFocus()
                 state.target.updateCursor(it.x, it.y, it.isShiftDown)
             },
-            onDoublePrimaryPressed = { state.target.selectWord() },
-            onTriplePrimaryPressed = { state.target.selectLine() },
+            onDoublePrimaryPressed = { state.target.maySelectWord(it.x) },
+            onTriplePrimaryPressed = { state.target.maySelectLine(it.x) },
             onSecondaryClick = { state.target.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }
