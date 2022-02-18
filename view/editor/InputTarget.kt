@@ -442,9 +442,9 @@ internal class InputTarget(
     internal fun selectedText(): AnnotatedString {
         val builder = AnnotatedString.Builder()
         val textList = selectedTextLines()
-        textList.forEach {
-            builder.append(it)
-            if (textList.size > 1) builder.append("\n")
+        textList.forEachIndexed{ i, text ->
+            builder.append(text)
+            if (textList.size > 1 && i < textList.size - 1) builder.append("\n")
         }
         return builder.toAnnotatedString()
     }
