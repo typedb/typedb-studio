@@ -35,9 +35,9 @@ artifacts = [
     "org.jetbrains.kotlin:kotlin-test",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
-    "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64",
-    "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64",
-    "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64",
+    "org.jetbrains.skiko:skiko-awt-runtime-linux-x64",
+    "org.jetbrains.skiko:skiko-awt-runtime-macos-x64",
+    "org.jetbrains.skiko:skiko-awt-runtime-windows-x64",
     "org.slf4j:slf4j-api",
     "org.zeroturnaround:zt-exec",
 ]

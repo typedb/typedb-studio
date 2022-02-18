@@ -32,7 +32,7 @@ java_binary(
     main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
         "//view:view",
-        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_macos_x64",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
 )
@@ -42,7 +42,7 @@ java_binary(
     main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
         "//view:view",
-        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_windows_x64",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
 )
@@ -52,7 +52,7 @@ java_binary(
     main_class = "com.vaticle.typedb.studio.view.Studio",
     runtime_deps = [
         "//view:view",
-        "@maven//:org_jetbrains_skiko_skiko_jvm_runtime_linux_x64",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
 )
