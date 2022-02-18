@@ -84,7 +84,7 @@ assemble_jvm_platform(
     }),
     description = "TypeDB's Integrated Development Environment",
     vendor = "Vaticle Ltd",
-    copyright = "Copyright (C) 2021 Vaticle",
+    copyright = "Copyright (C) 2022 Vaticle",
     license_file = ":LICENSE",
     version_file = ":VERSION",
     icon = select({
@@ -104,7 +104,7 @@ assemble_jvm_platform(
     mac_app_id = "com.vaticle.typedb.studio",
     mac_entitlements = "//config/mac:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
-    mac_deep_sign_jars_regex = ".*(io-netty-netty|skiko-jvm-runtime).*",
+    mac_deep_sign_jars_regex = ".*io-netty-netty.*",
     windows_menu_group = "TypeDB Studio",
 )
 
