@@ -231,12 +231,17 @@ class File internal constructor(
         onClosePage = function
     }
 
-    override fun moveFile(onSuccess: ((Pageable) -> Unit)?) {
+    override fun rename(onSuccess: ((Pageable) -> Unit)?) {
+        if (isUnsavedFile) saveContent()
+        projectMgr.renameFileDialog.open(this, onSuccess)
+    }
+
+    override fun move(onSuccess: ((Pageable) -> Unit)?) {
         if (isUnsavedFile) saveContent()
         projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
-    override fun saveFile(onSuccess: ((Pageable) -> Unit)?) {
+    override fun save(onSuccess: ((Pageable) -> Unit)?) {
         saveContent()
         if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
     }

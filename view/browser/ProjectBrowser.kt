@@ -163,7 +163,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.renameItemDialog.open(directory) },
+                ) { GlobalState.project.renameDirectoryDialog.open(directory) },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
@@ -201,12 +201,12 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !file.isProjectData,
-                ) { GlobalState.project.renameItemDialog.open(file) },
+                ) { if (file.isOpen) GlobalState.page.renameAndReopen(file) else file.rename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.page.moveAndReopen(file) else file.moveFile() },
+                ) { if (file.isOpen) GlobalState.page.moveAndReopen(file) else file.move() },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

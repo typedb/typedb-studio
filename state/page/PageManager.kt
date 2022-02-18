@@ -44,14 +44,19 @@ class PageManager(val notification: NotificationManager) {
         selectedPage?.launchWatcher()
     }
 
+    fun renameAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.rename { open(it, index) }
+    }
+
     fun saveAndReopen(page: Pageable) {
         val index = openedPages.indexOf(page) // must be computed before passing into lambda
-        page.saveFile { open(it, index) }
+        page.save { open(it, index) }
     }
 
     fun moveAndReopen(page: Pageable) {
         val index = openedPages.indexOf(page) // must be computed before passing into lambda
-        page.moveFile { open(it, index) }
+        page.move { open(it, index) }
     }
 
     fun open(page: Pageable) {

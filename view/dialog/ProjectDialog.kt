@@ -41,7 +41,6 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.project.ProjectItem
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.Label
@@ -118,7 +117,7 @@ object ProjectDialog {
 
     @Composable
     fun MoveDirectory() {
-        val directory = GlobalState.project.moveDirectoryDialog.item!!
+        val directory = GlobalState.project.moveDirectoryDialog.directory!!
         val state = ProjectItemForm(
             initField = directory.path.parent.toString(),
             onCancel = { GlobalState.project.moveDirectoryDialog.close() },
@@ -250,37 +249,37 @@ object ProjectDialog {
     }
 
     @Composable
-    fun RenameProjectItem() {
-        val item = GlobalState.project.renameItemDialog.item!!
+    fun RenameDirectory() {
+        val directory = GlobalState.project.renameDirectoryDialog.directory!!
         val form = remember {
             ProjectItemForm(
-                initField = item.name,
-                onCancel = { GlobalState.project.renameItemDialog.close() },
-                onSubmit = { GlobalState.project.tryRename(item, it) }
+                initField = directory.name,
+                onCancel = { GlobalState.project.renameDirectoryDialog.close() },
+                onSubmit = { GlobalState.project.tryRenameDirectory(directory, it) }
             )
         }
-        when (GlobalState.project.renameItemDialog.item!!.projectItemType) {
-            DIRECTORY -> RenameDirectory(form, item)
-            FILE -> RenameFile(form, item)
-        }
-    }
-
-    @Composable
-    private fun RenameDirectory(form: ProjectItemForm, item: ProjectItem) {
         ProjectItemNamingDialog(
             form = form,
             title = Label.RENAME_DIRECTORY,
-            message = Sentence.RENAME_DIRECTORY.format(item),
+            message = Sentence.RENAME_DIRECTORY.format(directory),
             submitLabel = Label.RENAME,
         )
     }
 
     @Composable
-    private fun RenameFile(form: ProjectItemForm, item: ProjectItem) {
+    fun RenameFile() {
+        val file = GlobalState.project.renameFileDialog.file!!
+        val form = remember {
+            ProjectItemForm(
+                initField = file.name,
+                onCancel = { GlobalState.project.renameFileDialog.close() },
+                onSubmit = { GlobalState.project.tryRenameFile(file, it) }
+            )
+        }
         ProjectItemNamingDialog(
             form = form,
             title = Label.RENAME_FILE,
-            message = Sentence.RENAME_FILE.format(item),
+            message = Sentence.RENAME_FILE.format(file),
             submitLabel = Label.RENAME,
         )
     }

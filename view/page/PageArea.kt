@@ -153,7 +153,7 @@ object PageArea {
                     confirmLabel = Label.SAVE,
                     cancelLabel = Label.DELETE,
                     onCancel = { close() },
-                    onConfirm = { pageable.saveFile() },
+                    onConfirm = { pageable.save() },
                 )
             } else close()
             return true
@@ -164,7 +164,9 @@ object PageArea {
             val pageMgr = GlobalState.page
             return listOf(
                 listOf(
-                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) { pageMgr.saveAndReopen(page) },
+                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) {
+                        pageMgr.saveAndReopen(page)
+                    },
                     ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { closePage(page) }
                 )
             )

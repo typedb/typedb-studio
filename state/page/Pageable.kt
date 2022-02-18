@@ -41,9 +41,11 @@ interface Pageable {
 
     fun onClosePage(function: () -> Unit)
 
-    fun saveFile(onSuccess: ((Pageable) -> Unit)? = null)
+    fun rename(onSuccess: ((Pageable) -> Unit)? = null)
 
-    fun moveFile(onSuccess: ((Pageable) -> Unit)? = null)
+    fun save(onSuccess: ((Pageable) -> Unit)? = null)
+
+    fun move(onSuccess: ((Pageable) -> Unit)? = null)
 
     fun delete()
 

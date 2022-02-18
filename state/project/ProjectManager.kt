@@ -68,22 +68,22 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    class ProjectItemDialog<T : ProjectItem> : DialogManager() {
+    class ModifyDirectoryDialog : DialogManager() {
 
-        var item: T? by mutableStateOf(null)
+        var directory: Directory? by mutableStateOf(null)
 
-        fun open(item: T) {
+        fun open(item: Directory) {
             isOpen = true
-            this.item = item
+            this.directory = item
         }
 
         override fun close() {
             isOpen = false
-            item = null
+            directory = null
         }
     }
 
-    class SaveFileDialog : DialogManager() {
+    class ModifyFileDialog : DialogManager() {
 
         var file: File? by mutableStateOf(null)
         var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
@@ -114,9 +114,10 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createItemDialog = CreateItemDialog()
-    val saveFileDialog = SaveFileDialog()
-    val moveDirectoryDialog = ProjectItemDialog<Directory>()
-    val renameItemDialog = ProjectItemDialog<ProjectItem>()
+    val moveDirectoryDialog = ModifyDirectoryDialog()
+    val renameDirectoryDialog = ModifyDirectoryDialog()
+    val renameFileDialog = ModifyFileDialog()
+    val saveFileDialog = ModifyFileDialog()
 
     fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
@@ -194,9 +195,18 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    fun tryRename(item: ProjectItem, newName: String) {
+    fun tryRenameDirectory(item: Directory, newName: String) {
         if (item.tryRename(newName)) {
-            renameItemDialog.close()
+            renameDirectoryDialog.close()
+            onContentChange?.let { it() }
+        }
+    }
+
+    fun tryRenameFile(item: File, newName: String) {
+        val newPath = item.path.resolveSibling(newName)
+        if (item.tryRename(newName)) {
+            renameFileDialog.onSuccess?.let { it(toFile(newPath)) }
+            renameFileDialog.close()
             onContentChange?.let { it() }
         }
     }
