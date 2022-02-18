@@ -180,7 +180,7 @@ internal interface TextProcessor {
         private fun indent(strings: List<AnnotatedString>, spaces: Int): List<AnnotatedString> {
             return strings.map {
                 if (spaces > 0) AnnotatedString(" ".repeat(spaces)) + it
-                else if (spaces < 0) it.subSequence(spaces.coerceAtMost(prefixSpaces(it)), it.length)
+                else if (spaces < 0) it.subSequence((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
                 else it
             }
         }
@@ -266,7 +266,9 @@ internal interface TextProcessor {
         private fun applyOriginal(
             change: TextChange, newPosition: Either<Cursor, Selection>? = null, recomputeFinder: Boolean = true
         ) {
-            assert(newPosition == null || !recomputeFinder)
+            assert(recomputeFinder || (!recomputeFinder && newPosition == null)) {
+                "If recomputeFinder==false, then there should not be a newPosition provided"
+            }
             applyChange(change, recomputeFinder)
             if (newPosition != null) when {
                 newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
