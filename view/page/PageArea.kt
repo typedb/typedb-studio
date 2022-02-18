@@ -20,9 +20,9 @@ package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -51,9 +51,11 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -62,10 +64,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -154,6 +158,17 @@ object PageArea {
             } else close()
             return true
         }
+
+        internal fun contextMenuFn(page: Pageable): List<List<ContextMenu.Item>> {
+            val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
+            val pageMgr = GlobalState.page
+            return listOf(
+                listOf(
+                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) { pageMgr.saveAndReopen(page) },
+                    ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { closePage(page) }
+                )
+            )
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -216,34 +231,45 @@ object PageArea {
     @Composable
     private fun Tab(state: AreaState, page: Page) {
         val isSelected = GlobalState.page.isSelected(page.state)
+        val contextMenu = remember { ContextMenu.State() }
         val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
         val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
-        Column(Modifier.onSizeChanged { state.initTab(page, it.width) }) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.height(height)
-                    .background(color = bgColor)
-                    .pointerHoverIcon(PointerIconDefaults.Hand)
-                    .clickable { GlobalState.page.select(page.state) }
-                    .onSizeChanged { width = toDP(it.width, state.density) }
-            ) {
-                Spacer(modifier = Modifier.width(TAB_SPACING))
-                Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
-                Spacer(modifier = Modifier.width(TAB_SPACING))
-                Text(value = tabTitle(page))
-                IconButton(
-                    icon = Icon.Code.XMARK,
-                    onClick = { state.closePage(page.state) },
-                    modifier = Modifier.size(TAB_HEIGHT),
-                    bgColor = Color.Transparent,
-                    rounded = false,
-                )
+        Box {
+            ContextMenu.Popup(contextMenu) { state.contextMenuFn(page.state) }
+            Column(Modifier.onSizeChanged { state.initTab(page, it.width) }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.height(height)
+                        .background(color = bgColor)
+                        .pointerHoverIcon(PointerIconDefaults.Hand)
+                        .pointerInput(state, page) { onPointerInput(contextMenu, page) }
+                        .onSizeChanged { width = toDP(it.width, state.density) }
+                ) {
+                    Spacer(modifier = Modifier.width(TAB_SPACING))
+                    Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
+                    Spacer(modifier = Modifier.width(TAB_SPACING))
+                    Text(value = tabTitle(page))
+                    IconButton(
+                        icon = Icon.Code.XMARK,
+                        onClick = { state.closePage(page.state) },
+                        modifier = Modifier.size(TAB_HEIGHT),
+                        bgColor = Color.Transparent,
+                        rounded = false,
+                    )
+                }
+                if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }
-            if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
+            Separator.Vertical()
         }
-        Separator.Vertical()
+    }
+
+    private suspend fun PointerInputScope.onPointerInput(contextMenu: ContextMenu.State, page: Page) {
+        contextMenu.onPointerInput(
+            pointerInputScope = this,
+            onSinglePrimaryPressed = { GlobalState.page.select(page.state) }
+        )
     }
 
     @Composable
