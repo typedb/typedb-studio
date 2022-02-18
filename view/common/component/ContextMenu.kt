@@ -99,7 +99,7 @@ object ContextMenu {
                             when (event.awtEvent.clickCount) {
                                 0, 1 -> onSinglePrimaryPressed(event.awtEvent)
                                 2 -> onDoublePrimaryPressed(event.awtEvent)
-                                3 -> onTriplePrimaryPressed(event.awtEvent)
+                                else -> onTriplePrimaryPressed(event.awtEvent)
                             }
                         }
                         event.buttons.isSecondaryPressed -> {

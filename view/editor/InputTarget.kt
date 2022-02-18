@@ -102,6 +102,16 @@ internal class InputTarget(
             return "${start.label()} -- ${end.label()}"
         }
 
+        companion object {
+            fun coverage(start: Selection, end: Selection): Selection {
+                return if (start.min <= end.min && start.max >= end.max) start
+                else if (end.min <= start.min && end.max >= start.max) end
+                else if (start.min < end.min) Selection(start.min, end.max)
+                else if (end.min < start.min) Selection(start.max, end.min)
+                else throw IllegalStateException()
+            }
+        }
+
         override fun toString(): String {
             val startStatus = if (start == min) "min" else "max"
             val endStatus = if (end == max) "max" else "min"
@@ -119,6 +129,7 @@ internal class InputTarget(
     private var mayDragSelectByChar: Boolean by mutableStateOf(false)
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
+    private var selectionDragStart: Selection? by mutableStateOf(null)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineNumberBorder: Float get() = textAreaRect.left - horPadding.value
     private val lineCount: Int get() = content.size
@@ -155,6 +166,7 @@ internal class InputTarget(
         mayDragSelectByChar = false
         mayDragSelectByWord = false
         mayDragSelectByLine = false
+        selectionDragStart = null
     }
 
     internal fun mayUpdateDragSelection(x: Int, y: Int) {
@@ -174,11 +186,11 @@ internal class InputTarget(
     }
 
     private fun mayUpdateDragSelectionByWord(x: Int, y: Int) {
-
+        selectWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
     }
 
     private fun mayUpdateDragSelectionByLine(x: Int, y: Int) {
-
+        updateSelection(Selection.coverage(selectionDragStart!!, selectLine(createCursor(x, y))))
     }
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
@@ -385,24 +397,32 @@ internal class InputTarget(
     }
 
     internal fun maySelectWord(x: Int) {
-        if (x > lineNumberBorder) selectWord()
+        if (x > lineNumberBorder) {
+            val selectedWord = selectWord(cursor)
+            updateSelection(selectedWord)
+            selectionDragStart = selectedWord
+            mayDragSelectByWord = true
+        }
     }
 
-    private fun selectWord() {
-        rendering.get(cursor.row)?.let {
+    private fun selectWord(cursor: Cursor): Selection? {
+        return rendering.get(cursor.row)?.let {
             val boundary = wordBoundary(it, cursor.col)
-            updateSelection(Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end)))
+            Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
         }
-        mayDragSelectByWord = true
     }
 
     internal fun maySelectLine(x: Int) {
-        if (x > lineNumberBorder) selectLine()
+        if (x > lineNumberBorder) {
+            val selectedLine = selectLine(cursor)
+            updateSelection(selectedLine)
+            selectionDragStart = selectedLine
+            mayDragSelectByLine = true
+        }
     }
 
-    private fun selectLine() {
-        updateSelection(Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length)))
-        mayDragSelectByLine = true
+    private fun selectLine(cursor: Cursor): Selection {
+        return Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length))
     }
 
     internal fun selectNone() {
