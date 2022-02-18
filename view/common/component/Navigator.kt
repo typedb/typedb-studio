@@ -53,6 +53,7 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -65,6 +66,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
@@ -135,6 +137,10 @@ object Navigator {
             return item.compareTo(other.item)
         }
 
+        internal open fun isHoverButton(x: Int, y: Int): Boolean {
+            return false
+        }
+
         internal open fun navigables(depth: Int): List<ItemState<T>> {
             return listOf(this)
         }
@@ -150,9 +156,10 @@ object Navigator {
         ) : ItemState<T>(expandable as T, parent) {
 
             override val isExpandable: Boolean = true
-            val isBulkExpandable: Boolean = expandable.isBulkExpandable
+            internal var buttonArea: Rect? by mutableStateOf(null)
+            internal val isBulkExpandable: Boolean = expandable.isBulkExpandable
+            internal var entries: List<ItemState<T>> by mutableStateOf(emptyList())
             var isExpanded: Boolean by mutableStateOf(false)
-            var entries: List<ItemState<T>> by mutableStateOf(emptyList())
 
             override fun asExpandable(): Expandable<T> {
                 return this
@@ -197,6 +204,19 @@ object Navigator {
                 if (currentDepth < maxDepth) {
                     entries.filterIsInstance<Expandable<T>>().forEach { it.expand(currentDepth + 1, maxDepth) }
                 }
+            }
+
+            override fun isHoverButton(x: Int, y: Int): Boolean {
+                return buttonArea?.let { x >= it.left && x <= it.right && y >= it.top && y <= it.bottom } ?: false
+            }
+
+            internal fun updateButtonArea(rawRectangle: Rect) {
+                buttonArea = Rect(
+                    left = toDP(rawRectangle.left, navState.density).value,
+                    top = toDP(rawRectangle.top, navState.density).value,
+                    right = toDP(rawRectangle.right, navState.density).value,
+                    bottom = toDP(rawRectangle.bottom, navState.density).value
+                )
             }
 
             internal fun reloadEntries() {
@@ -275,7 +295,6 @@ object Navigator {
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
-        internal var isHoverButton by mutableStateOf(false)
         val buttons: List<Form.ButtonArgs> = listOf(
             Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
             Form.ButtonArgs(Icon.Code.CHEVRONS_UP) { collapse() }
@@ -468,7 +487,7 @@ object Navigator {
         }
 
         fun onDoublePrimaryReleased(event: MouseEvent) {
-            if (!state.isHoverButton && event.button == 1 && event.clickCount == 2) state.open(item)
+            if (event.button == 1 && event.clickCount == 2 && !item.isHoverButton(event.x, event.y)) state.open(item)
         }
 
         Row(
@@ -487,7 +506,7 @@ object Navigator {
                 modifier = Modifier.onGloballyPositioned { state.mayIncreaseItemWidth(it.size.width) }
             ) {
                 if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
-                ItemButton(state, item)
+                ItemButton(item)
                 ItemIcon(item, iconArgs)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
@@ -499,14 +518,13 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemButton(state: NavigatorState<T>, item: ItemState<T>) {
+    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
         if (item.isExpandable) Form.RawClickableIcon(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
-            modifier = Modifier.size(ITEM_HEIGHT).pointerMoveFilter(
-                onEnter = { state.isHoverButton = true; false },
-                onExit = { state.isHoverButton = false; false }
-            ),
+            modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {
+                item.asExpandable().updateButtonArea(it.boundsInWindow())
+            },
         ) else Spacer(Modifier.size(ITEM_HEIGHT))
     }
 
