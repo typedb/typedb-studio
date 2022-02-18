@@ -37,14 +37,15 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog.DatabaseDropdown
 
 object Toolbar {
 
-    private val TOOLBAR_HEIGHT = 32.dp
-    private val TOOLBAR_SPACING = 4.dp
-    private val COMPONENT_HEIGHT = 24.dp
+    private val TOOLBAR_HEIGHT = 34.dp
+    private val TOOLBAR_SPACING = 5.dp
+    private val BUTTON_HEIGHT = 24.dp
     private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
     @Composable
@@ -53,19 +54,13 @@ object Toolbar {
             modifier = Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ToolbarSpace()
-            OpenProjectButton()
-            ToolbarSpace()
-            SaveButton()
-            ToolbarSpace()
-            PlayButton()
-            ToolbarSpace()
-            StopButton()
+            Project.Buttons()
+            Separator.Vertical()
+            Query.Buttons()
+            Separator.Vertical()
             Spacer(Modifier.weight(1f))
-            DatabaseDropdown(Modifier.height(COMPONENT_HEIGHT).width(DATABASE_DROPDOWN_WIDTH))
-            ToolbarSpace()
-            ConnectionButton()
-            ToolbarSpace()
+            Separator.Vertical()
+            Connection.Buttons()
         }
     }
 
@@ -75,61 +70,96 @@ object Toolbar {
     }
 
     @Composable
-    private fun OpenProjectButton() {
-        ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
-    }
-
-    @Composable
-    private fun SaveButton() {
-        ToolbarButton(
-            icon = Icon.Code.FLOPPY_DISK,
-            onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
-            enabled = GlobalState.page.selectedPage?.isUnsaved == true
-        )
-    }
-
-    @Composable
-    private fun StopButton() {
-        ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
-    }
-
-    @Composable
-    private fun PlayButton() {
-        ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
-    }
-
-    @Composable
     private fun ToolbarButton(
         icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon, enabled: Boolean = true
     ) {
         IconButton(
             icon = icon,
             onClick = onClick,
-            modifier = Modifier.size(COMPONENT_HEIGHT),
+            modifier = Modifier.size(BUTTON_HEIGHT),
             iconColor = color,
             enabled = enabled
         )
     }
 
-    @Composable
-    private fun ConnectionButton() {
-        when (GlobalState.connection.status) {
-            DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
-            CONNECTING -> ConnectionButton(Label.CONNECTING)
-            CONNECTED -> ConnectionButton(
-                (GlobalState.connection.current!!.username?.let { "$it@" }
-                    ?: "") + GlobalState.connection.current!!.address
+    object Project {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            OpenProjectButton()
+            ToolbarSpace()
+            SaveButton()
+            ToolbarSpace()
+        }
+        @Composable
+        private fun OpenProjectButton() {
+            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
+        }
+
+        @Composable
+        private fun SaveButton() {
+            ToolbarButton(
+                icon = Icon.Code.FLOPPY_DISK,
+                onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
+                enabled = GlobalState.page.selectedPage?.isUnsaved == true
             )
         }
     }
 
-    @Composable
-    private fun ConnectionButton(text: String) {
-        TextButton(
-            text = text,
-            modifier = Modifier.height(COMPONENT_HEIGHT),
-            onClick = { GlobalState.connection.connectServerDialog.open() },
-            trailingIcon = Icon.Code.DATABASE,
-        )
+    object Query {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            PlayButton()
+            ToolbarSpace()
+            StopButton()
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun StopButton() {
+            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+        }
+
+        @Composable
+        private fun PlayButton() {
+            ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+        }
+    }
+
+    object Connection {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT).width(DATABASE_DROPDOWN_WIDTH))
+            ToolbarSpace()
+            ConnectionButton()
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun ConnectionButton() {
+            when (GlobalState.connection.status) {
+                DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
+                CONNECTING -> ConnectionButton(Label.CONNECTING)
+                CONNECTED -> ConnectionButton(
+                    (GlobalState.connection.current!!.username?.let { "$it@" }
+                        ?: "") + GlobalState.connection.current!!.address
+                )
+            }
+        }
+
+        @Composable
+        private fun ConnectionButton(text: String) {
+            TextButton(
+                text = text,
+                modifier = Modifier.height(BUTTON_HEIGHT),
+                onClick = { GlobalState.connection.connectServerDialog.open() },
+                trailingIcon = Icon.Code.DATABASE,
+            )
+        }
     }
 }
