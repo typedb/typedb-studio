@@ -385,7 +385,7 @@ object TextEditor {
             pointerInputScope = this,
             onSinglePrimaryPressed = {
                 state.focusReq.requestFocus()
-                state.target.updateCursor(it.x, it.y, it.isShiftDown)
+                state.target.mayUpdateCursor(it.x, it.y, it.isShiftDown)
             },
             onDoublePrimaryPressed = { state.target.maySelectWord(it.x) },
             onTriplePrimaryPressed = { state.target.maySelectLine(it.x) },

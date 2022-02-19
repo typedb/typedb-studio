@@ -206,9 +206,11 @@ internal class InputTarget(
         }
     }
 
-    internal fun updateCursor(x: Int, y: Int, isSelecting: Boolean) {
-        updateCursor(createCursor(x, y), isSelecting, false)
-        mayDragSelectByChar = true
+    internal fun mayUpdateCursor(x: Int, y: Int, isSelecting: Boolean) {
+        if (x <= textAreaRect.right) {
+            updateCursor(createCursor(x, y), isSelecting, false)
+            mayDragSelectByChar = true
+        }
     }
 
     internal fun updateCursor(newCursor: Cursor, isSelecting: Boolean, mayScroll: Boolean = true) {
