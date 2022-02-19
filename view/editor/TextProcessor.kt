@@ -134,7 +134,7 @@ internal interface TextProcessor {
     ) : TextProcessor {
 
         companion object {
-            private const val TAB_SIZE = 4
+            internal const val TAB_SIZE = 4
             private const val UNDO_LIMIT = 1_000
         }
 

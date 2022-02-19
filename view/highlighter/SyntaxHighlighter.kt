@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer.Token
 import com.vaticle.typedb.studio.view.highlighter.common.Scheme
@@ -34,10 +33,6 @@ import com.vaticle.typedb.studio.view.highlighter.common.Scope
 import com.vaticle.typedb.studio.view.highlighter.language.TypeQLLexer
 
 object SyntaxHighlighter {
-
-    fun readFile(file: File): List<AnnotatedString> {
-        return highlight(file.reloadFromDisk(), file.fileType)
-    }
 
     fun highlight(texts: List<String>, fileType: Property.FileType): List<AnnotatedString> {
         return texts.map { highlight(it, fileType) }
