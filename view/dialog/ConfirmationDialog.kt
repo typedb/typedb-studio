@@ -48,7 +48,7 @@ object ConfirmationDialog {
         val state = GlobalState.confirmation
         Dialog(
             title = state.title!!,
-            onCloseRequest = { state.cancel() },
+            onCloseRequest = { state.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)

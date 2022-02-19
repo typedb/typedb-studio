@@ -50,8 +50,7 @@ class ConfirmationManager {
         dialog.open()
     }
 
-    fun cancel() {
-        onCancel?.let { it() }
+    fun close() {
         dialog.close()
         title = null
         message = null
@@ -59,8 +58,13 @@ class ConfirmationManager {
         onCancel = null
     }
 
+    fun cancel() {
+        onCancel?.let { it() }
+        close()
+    }
+
     fun confirm() {
         onConfirm?.let { it() }
-        dialog.close()
+        close()
     }
 }
