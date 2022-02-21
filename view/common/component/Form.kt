@@ -560,22 +560,25 @@ object Form {
                 onDismissRequest = { state.expanded = false },
                 modifier = Modifier.background(Theme.colors.surface).defaultMinSize(minWidth = state.width)
             ) {
-                val padding = PaddingValues(horizontal = MULTILINE_INPUT_PADDING)
+                val padding = PaddingValues(horizontal = 0.dp)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
-                if (values.isEmpty()) DropdownMenuItem(
-                    onClick = {}, contentPadding = padding,
-                    modifier = itemModifier.background(Theme.colors.surface)
-                ) {
-                    Text(value = "(${Label.NONE})")
+                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.colors.surface)) {
+                    Row {
+                        Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+                        Text(value = "(${Label.NONE})")
+                    }
                 } else values.forEachIndexed { i, value ->
+                    val color = if (value == selected) Theme.colors.secondary else Theme.colors.onSurface
                     DropdownMenuItem(
                         onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     ) {
-                        val color = if (value == selected) Theme.colors.secondary else Theme.colors.onSurface
-                        Text(value = value.toString(), color = color)
+                        Row {
+                            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+                            Text(value = value.toString(), color = color)
+                        }
                     }
                 }
             }
