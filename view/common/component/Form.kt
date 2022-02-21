@@ -534,7 +534,7 @@ object Form {
                 text = selected?.let { displayFn(it).ifBlank { placeholder } } ?: placeholder,
                 onClick = { state.toggle() },
                 modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) },
-                textColor = fadeable(Theme.colors.onPrimary, selected == null || selected.toString().isBlank()),
+                textColor = Theme.colors.onPrimary,
                 trailingIcon = CARET_DOWN,
                 enabled = enabled,
             )

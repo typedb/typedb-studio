@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import java.nio.file.Path
 
 object Icon {
 
@@ -57,6 +56,9 @@ object Icon {
         CARET_LEFT(0xf0d9u),
         CARET_RIGHT(0xf0dau),
         CARET_UP(0xf0d8u),
+        CIRCLE_INFO(0xf05au),
+        CLOCK_ROTATE_LEFT(0xf1dau),
+        CODE_COMMIT(0xf386u),
         CHEVRON_DOWN(0xf078u),
         CHEVRON_LEFT(0xf053u),
         CHEVRON_RIGHT(0xf054u),
@@ -87,6 +89,7 @@ object Icon {
         PLUS(0x2bu),
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         RECTANGLE_CODE(0xe322u),
+        ROTATE(0xf2f1u),
         RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),

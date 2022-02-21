@@ -46,7 +46,7 @@ class Connection internal constructor(
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
-
+    val hasWrites: Boolean get() = false // TODO: implement tx.hasUncommittedWrites
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 

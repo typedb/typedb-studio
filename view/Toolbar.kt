@@ -59,7 +59,7 @@ object Toolbar {
         ) {
             Project.Buttons()
             Separator.Vertical()
-            TransactionConfig.Buttons()
+            TxConfig.Buttons()
             Separator.Vertical()
             QueryRun.Buttons()
             Separator.Vertical()
@@ -67,7 +67,7 @@ object Toolbar {
             Separator.Vertical()
             Spacer(Modifier.weight(1f))
             Separator.Vertical()
-            Connection.Buttons()
+            DBConnection.Buttons()
         }
     }
 
@@ -114,7 +114,7 @@ object Toolbar {
         }
     }
 
-    object TransactionConfig {
+    object TxConfig {
 
         @Composable
         internal fun Buttons() {
@@ -155,25 +155,24 @@ object Toolbar {
 
         @Composable
         private fun ConfigToggleButtons() {
-            val config = GlobalState.connection.current?.config
             Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
                 ToggleButton(
                     text = Label.KEEP_ALIVE,
-                    onClick = { config?.toggleKeepAlive() },
-                    isActive = config?.keepAlive ?: false,
-                    enabled = config?.keepAliveEnabled ?: false
+                    onClick = { GlobalState.connection.current?.config?.toggleKeepAlive() },
+                    isActive = GlobalState.connection.current?.config?.keepAlive ?: false,
+                    enabled = GlobalState.connection.current?.config?.keepAliveEnabled ?: false
                 )
                 ToggleButton(
                     text = Label.INFER,
-                    onClick = { config?.toggleInfer() },
-                    isActive = config?.infer ?: false,
-                    enabled = config?.inferEnabled ?: false
+                    onClick = { GlobalState.connection.current?.config?.toggleInfer() },
+                    isActive = GlobalState.connection.current?.config?.infer ?: false,
+                    enabled = GlobalState.connection.current?.config?.inferEnabled ?: false
                 )
                 ToggleButton(
                     text = Label.EXPLAIN,
-                    onClick = { config?.toggleExplain() },
-                    isActive = config?.explain ?: false,
-                    enabled = config?.explainEnabled ?: false
+                    onClick = { GlobalState.connection.current?.config?.toggleExplain() },
+                    isActive = GlobalState.connection.current?.config?.explain ?: false,
+                    enabled = GlobalState.connection.current?.config?.explainEnabled ?: false
                 )
             }
         }
@@ -216,44 +215,44 @@ object Toolbar {
         @Composable
         internal fun Buttons() {
             ToolbarSpace()
+            ReopenButton()
+            ToolbarSpace()
             CommitButton()
             ToolbarSpace()
             RollbackButton()
             ToolbarSpace()
-            ReopenButton()
-            ToolbarSpace()
+        }
+
+        @Composable
+        private fun ReopenButton() {
+            ToolbarButton(
+                icon = Icon.Code.ROTATE,
+                onClick = {},
+                enabled = GlobalState.connection.current?.config?.keepAlive ?: false
+            )
         }
 
         @Composable
         private fun CommitButton() {
-            TextButton(
-                text = Label.COMMIT,
+            ToolbarButton(
+                icon = Icon.Code.CODE_COMMIT,
                 onClick = {},
-                modifier = Modifier.height(BUTTON_HEIGHT)
+                enabled = GlobalState.connection.current?.hasWrites ?: false
             )
         }
 
         @Composable
         private fun RollbackButton() {
-            TextButton(
-                text = Label.ROLLBACK,
+            ToolbarButton(
+                icon = Icon.Code.CLOCK_ROTATE_LEFT,
                 onClick = {},
-                modifier = Modifier.height(BUTTON_HEIGHT)
-            )
-        }
-
-        @Composable
-        private fun ReopenButton() {
-            TextButton(
-                text = Label.REOPEN,
-                onClick = {},
-                modifier = Modifier.height(BUTTON_HEIGHT)
+                enabled = GlobalState.connection.current?.hasWrites ?: false
             )
         }
     }
 
 
-    object Connection {
+    object DBConnection {
 
         @Composable
         internal fun Buttons() {
@@ -270,8 +269,8 @@ object Toolbar {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
                 CONNECTED -> ConnectionButton(
-                    (GlobalState.connection.current!!.username?.let { "$it@" }
-                        ?: "") + GlobalState.connection.current!!.address
+                    (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
+                            GlobalState.connection.current!!.address
                 )
             }
         }
