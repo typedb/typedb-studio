@@ -235,7 +235,7 @@ object Toolbar {
         @Composable
         private fun CommitButton() {
             ToolbarButton(
-                icon = Icon.Code.CODE_COMMIT,
+                icon = Icon.Code.DATABASE,
                 onClick = {},
                 enabled = GlobalState.connection.current?.hasWrites ?: false
             )
@@ -244,7 +244,7 @@ object Toolbar {
         @Composable
         private fun RollbackButton() {
             ToolbarButton(
-                icon = Icon.Code.CLOCK_ROTATE_LEFT,
+                icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
                 enabled = GlobalState.connection.current?.hasWrites ?: false
             )

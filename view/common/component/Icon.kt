@@ -90,6 +90,7 @@ object Icon {
         PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
         RECTANGLE_CODE(0xe322u),
         ROTATE(0xf2f1u),
+        ROTATE_LEFT(0xf2eau),
         RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
