@@ -41,12 +41,12 @@ class Connection internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    val config = TransactionConfig(this)
     var isOpen: Boolean by mutableStateOf(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
-    var sessionType: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
-    var transactionType: TypeDBTransaction.Type by mutableStateOf(TypeDBTransaction.Type.READ); private set
+
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
@@ -59,22 +59,22 @@ class Connection internal constructor(
     }
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
-        if (transactionType == type) return
+        if (config.transactionType == type) return
         transaction?.let {
             it.close()
             transaction = null
         }
-        transactionType = type
+        config.transactionType = type
     }
 
     fun updateSessionType(type: TypeDBSession.Type) {
-        if (sessionType == type) return
-        sessionType = type
+        if (config.sessionType == type) return
+        config.sessionType = type
         openSession(getDatabase()!!, type)
     }
 
     fun openSession(database: String) {
-        openSession(database, sessionType)
+        openSession(database, config.sessionType)
     }
 
     fun openSession(database: String, type: TypeDBSession.Type) {

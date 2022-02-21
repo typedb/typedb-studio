@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +37,7 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNE
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -58,9 +59,11 @@ object Toolbar {
         ) {
             Project.Buttons()
             Separator.Vertical()
-            Transaction.Buttons()
+            TransactionConfig.Buttons()
             Separator.Vertical()
-            Query.Buttons()
+            QueryRun.Buttons()
+            Separator.Vertical()
+            TransactionControl.Buttons()
             Separator.Vertical()
             Spacer(Modifier.weight(1f))
             Separator.Vertical()
@@ -111,7 +114,7 @@ object Toolbar {
         }
     }
 
-    object Transaction {
+    object TransactionConfig {
 
         @Composable
         internal fun Buttons() {
@@ -120,11 +123,13 @@ object Toolbar {
             ToolbarSpace()
             TransactionTypeButton()
             ToolbarSpace()
+            ConfigToggleButtons()
+            ToolbarSpace()
         }
 
         @Composable
         private fun SessionTypeButton() {
-            Form.Dropdown(
+            Dropdown(
                 values = TypeDBSession.Type.values().asList(),
                 selected = GlobalState.connection.current?.session?.type(),
                 displayFn = { it.name.lowercase() },
@@ -137,19 +142,54 @@ object Toolbar {
 
         @Composable
         private fun TransactionTypeButton() {
-            Form.Dropdown(
+            Dropdown(
                 values = TypeDBTransaction.Type.values().asList(),
-                selected = GlobalState.connection.current?.transactionType,
+                selected = GlobalState.connection.current?.config?.transactionType,
                 displayFn = { it.name.lowercase() },
-                onSelection = { GlobalState.connection.current?.updateTransactionType(it)},
+                onSelection = { GlobalState.connection.current?.updateTransactionType(it) },
                 placeholder = Label.TRANSACTION_TYPE,
                 enabled = GlobalState.connection.hasSession(),
                 modifier = Modifier.height(BUTTON_HEIGHT),
             )
         }
+
+        @Composable
+        private fun ConfigToggleButtons() {
+            val config = GlobalState.connection.current?.config
+            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+                ToggleButton(
+                    text = Label.KEEP_ALIVE,
+                    onClick = { config?.toggleKeepAlive() },
+                    isActive = config?.keepAlive ?: false,
+                    enabled = config?.keepAliveEnabled ?: false
+                )
+                ToggleButton(
+                    text = Label.INFER,
+                    onClick = { config?.toggleInfer() },
+                    isActive = config?.infer ?: false,
+                    enabled = config?.inferEnabled ?: false
+                )
+                ToggleButton(
+                    text = Label.EXPLAIN,
+                    onClick = { config?.toggleExplain() },
+                    isActive = config?.explain ?: false,
+                    enabled = config?.explainEnabled ?: false
+                )
+            }
+        }
+
+        @Composable
+        private fun ToggleButton(text: String, onClick: () -> Unit, isActive: Boolean, enabled: Boolean) {
+            TextButton(
+                text = text,
+                onClick = onClick,
+                textColor = if (isActive) Theme.colors.secondary else Theme.colors.onPrimary,
+                enabled = enabled
+            )
+        }
     }
 
-    object Query {
+    object QueryRun {
 
         @Composable
         internal fun Buttons() {
@@ -170,6 +210,48 @@ object Toolbar {
             ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
         }
     }
+
+    object TransactionControl {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            CommitButton()
+            ToolbarSpace()
+            RollbackButton()
+            ToolbarSpace()
+            ReopenButton()
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun CommitButton() {
+            TextButton(
+                text = Label.COMMIT,
+                onClick = {},
+                modifier = Modifier.height(BUTTON_HEIGHT)
+            )
+        }
+
+        @Composable
+        private fun RollbackButton() {
+            TextButton(
+                text = Label.ROLLBACK,
+                onClick = {},
+                modifier = Modifier.height(BUTTON_HEIGHT)
+            )
+        }
+
+        @Composable
+        private fun ReopenButton() {
+            TextButton(
+                text = Label.REOPEN,
+                onClick = {},
+                modifier = Modifier.height(BUTTON_HEIGHT)
+            )
+        }
+    }
+
 
     object Connection {
 
@@ -193,7 +275,6 @@ object Toolbar {
                 )
             }
         }
-
         @Composable
         private fun ConnectionButton(text: String) {
             TextButton(
