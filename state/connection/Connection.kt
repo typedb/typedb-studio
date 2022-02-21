@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -43,6 +44,9 @@ class Connection internal constructor(
     var isOpen: Boolean by mutableStateOf(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
+    var sessionType: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); private set
+    var transaction: TypeDBTransaction? by mutableStateOf(null); private set
+    var transactionType: TypeDBTransaction.Type by mutableStateOf(TypeDBTransaction.Type.READ); private set
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
@@ -54,12 +58,23 @@ class Connection internal constructor(
         return session?.database()?.name()
     }
 
-    fun reopenSessionWithType(type: TypeDBSession.Type) {
+    fun updateTransactionType(type: TypeDBTransaction.Type) {
+        if (transactionType == type) return
+        transaction?.let {
+            it.close()
+            transaction = null
+        }
+        transactionType = type
+    }
+
+    fun updateSessionType(type: TypeDBSession.Type) {
+        if (sessionType == type) return
+        sessionType = type
         openSession(getDatabase()!!, type)
     }
 
     fun openSession(database: String) {
-        openSession(database, TypeDBSession.Type.DATA)
+        openSession(database, sessionType)
     }
 
     fun openSession(database: String, type: TypeDBSession.Type) {

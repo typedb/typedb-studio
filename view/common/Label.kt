@@ -78,6 +78,7 @@ object Label {
     const val STATUS = "Status"
     const val TITLE = "Title"
     const val TRACE = "Trace"
+    const val TRANSACTION_TYPE = "Transaction Type"
     const val TYPEDB_STUDIO = "TypeDB Studio"
     const val TYPEDB_STUDIO_APPLICATION_ERROR = "TypeDB Studio Application Error"
     const val TYPES = "Types"

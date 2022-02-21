@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
@@ -117,6 +118,8 @@ object Toolbar {
             ToolbarSpace()
             SessionTypeButton()
             ToolbarSpace()
+            TransactionTypeButton()
+            ToolbarSpace()
         }
 
         @Composable
@@ -125,9 +128,23 @@ object Toolbar {
                 values = TypeDBSession.Type.values().asList(),
                 selected = GlobalState.connection.current?.session?.type(),
                 displayFn = { it.name.lowercase() },
-                onSelection = { GlobalState.connection.current?.reopenSessionWithType(it) },
+                onSelection = { GlobalState.connection.current?.updateSessionType(it) },
                 placeholder = Label.SESSION_TYPE,
                 enabled = GlobalState.connection.hasSession(),
+                modifier = Modifier.height(BUTTON_HEIGHT),
+            )
+        }
+
+        @Composable
+        private fun TransactionTypeButton() {
+            Form.Dropdown(
+                values = TypeDBTransaction.Type.values().asList(),
+                selected = GlobalState.connection.current?.transactionType,
+                displayFn = { it.name.lowercase() },
+                onSelection = { GlobalState.connection.current?.updateTransactionType(it)},
+                placeholder = Label.TRANSACTION_TYPE,
+                enabled = GlobalState.connection.hasSession(),
+                modifier = Modifier.height(BUTTON_HEIGHT),
             )
         }
     }
