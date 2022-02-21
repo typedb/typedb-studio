@@ -106,8 +106,9 @@ object Form {
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
     private val INNER_SPACING = 10.dp
-    val FIELD_SPACING = 12.dp
+    private val FIELD_SPACING = 12.dp
     private val FIELD_HEIGHT = 28.dp
+    private val TRAILING_ICON_SIZE = 12.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
     private val ICON_SPACING = 6.dp
@@ -213,25 +214,42 @@ object Form {
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
-        wideMode: Boolean = false,
     ) {
-        BoxButton(onClick = onClick, color = bgColor, modifier = modifier, enabled = enabled) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = TEXT_BUTTON_PADDING)
-            ) {
-                @Composable
-                fun iconSpacing() {
-                    if (wideMode) Spacer(Modifier.weight(1f)) else Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+        val density = LocalDensity.current.density
+        var boxWidth by remember { mutableStateOf(0.dp) }
+        var rowWidth by remember { mutableStateOf(0.dp) }
+        var trailingIconWidth by remember { mutableStateOf(0.dp) }
+
+        @Composable
+        fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+
+        BoxButton(
+            onClick = onClick, color = bgColor, enabled = enabled,
+            modifier = modifier.onSizeChanged { boxWidth = toDP(it.width, density) }
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.onSizeChanged { rowWidth = toDP(it.width, density) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer()
+                    leadingIcon?.let {
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
+                            Icon.Render(icon = it, color = iconColor)
+                        }
+                        Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+                    }
+                    Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
+                    if (trailingIcon == null) Spacer()
                 }
-                leadingIcon?.let {
-                    Icon.Render(icon = it, color = iconColor)
-                    iconSpacing()
-                }
-                Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
                 trailingIcon?.let {
-                    iconSpacing()
-                    Icon.Render(icon = it, color = iconColor)
+                    Spacer(Modifier.width((boxWidth - rowWidth - trailingIconWidth).coerceAtLeast(TEXT_BUTTON_PADDING)))
+                    Row (Modifier.onSizeChanged { trailingIconWidth = toDP(it.width, density) },) {
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
+                            Icon.Render(icon = it, color = iconColor)
+                        }
+                        Spacer()
+                    }
                 }
             }
         }
@@ -495,7 +513,7 @@ object Form {
     @Composable
     fun <T : Any> Dropdown(
         values: List<T>,
-        selected: T,
+        selected: T?,
         onExpand: (() -> Unit)? = null,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
@@ -528,17 +546,14 @@ object Form {
 
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }
-        ) {
+        Box {
             TextButton(
-                text = selected.toString().ifBlank { placeholder },
-                textColor = fadeable(Theme.colors.onPrimary, selected.toString().isBlank()),
+                text = selected?.let { it.toString().ifBlank { placeholder } } ?: placeholder,
                 onClick = { state.toggle() },
+                modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) },
+                textColor = fadeable(Theme.colors.onPrimary, selected == null || selected.toString().isBlank()),
                 trailingIcon = CARET_DOWN,
                 enabled = enabled,
-                wideMode = true,
             )
             DropdownMenu(
                 expanded = state.expanded,
@@ -559,8 +574,7 @@ object Form {
                             .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     ) {
-                        val isSelected = value == selected
-                        val color = if (isSelected) Theme.colors.secondary else Theme.colors.onSurface
+                        val color = if (value == selected) Theme.colors.secondary else Theme.colors.onSurface
                         Text(value = value.toString(), color = color)
                     }
                 }

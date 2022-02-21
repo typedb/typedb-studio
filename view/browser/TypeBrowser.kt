@@ -40,14 +40,14 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
-    override val isActive: Boolean get() = GlobalState.connection.hasDatabase()
+    override val isActive: Boolean get() = GlobalState.connection.hasSession()
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
     override fun NavigatorLayout() {
         val connectionMgr = GlobalState.connection
         if (!connectionMgr.isConnected()) ConnectToServerHelper()
-        else if (!connectionMgr.hasDatabase() || connectionMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
+        else if (!connectionMgr.hasSession() || connectionMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
         else {
 
         }

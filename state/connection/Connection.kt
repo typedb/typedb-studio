@@ -47,15 +47,23 @@ class Connection internal constructor(
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
-    fun hasDatabase(): Boolean {
-        return session?.database() != null
+    fun hasSession(): Boolean {
+        return session != null
     }
 
     fun getDatabase(): String? {
         return session?.database()?.name()
     }
 
-    fun setDatabase(database: String) {
+    fun reopenSessionWithType(type: TypeDBSession.Type) {
+        openSession(getDatabase()!!, type)
+    }
+
+    fun openSession(database: String) {
+        openSession(database, TypeDBSession.Type.DATA)
+    }
+
+    fun openSession(database: String, type: TypeDBSession.Type) {
         if (session?.database()?.name() == database) return
         closeSession()
         try {

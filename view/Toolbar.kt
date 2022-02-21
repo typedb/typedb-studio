@@ -46,7 +46,6 @@ object Toolbar {
     private val TOOLBAR_HEIGHT = 34.dp
     private val TOOLBAR_SPACING = 5.dp
     private val BUTTON_HEIGHT = 24.dp
-    private val DATABASE_DROPDOWN_WIDTH = 120.dp
 
     @Composable
     fun Layout() {
@@ -134,7 +133,7 @@ object Toolbar {
         @Composable
         internal fun Buttons() {
             ToolbarSpace()
-            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT).width(DATABASE_DROPDOWN_WIDTH))
+            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT))
             ToolbarSpace()
             ConnectionButton()
             ToolbarSpace()
@@ -156,8 +155,8 @@ object Toolbar {
         private fun ConnectionButton(text: String) {
             TextButton(
                 text = text,
-                modifier = Modifier.height(BUTTON_HEIGHT),
                 onClick = { GlobalState.connection.connectServerDialog.open() },
+                modifier = Modifier.height(BUTTON_HEIGHT),
                 trailingIcon = Icon.Code.DATABASE,
             )
         }

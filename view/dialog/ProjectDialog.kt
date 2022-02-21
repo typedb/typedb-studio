@@ -89,7 +89,7 @@ object ProjectDialog {
     private fun ProjectDialogButtons(form: ProjectItemForm, submitLabel: String) {
         TextButton(text = Label.CANCEL, onClick = { form.onCancel() })
         ComponentSpacer()
-        TextButton(text = submitLabel, enabled = form.isValid(), onClick = { form.trySubmit() })
+        TextButton(text = submitLabel, onClick = { form.trySubmit() }, enabled = form.isValid())
     }
     
     @Composable

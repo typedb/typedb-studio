@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.dialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -225,8 +226,8 @@ object ConnectionDialog {
         ComponentSpacer()
         TextButton(
             text = Label.CONNECT,
-            enabled = ConnectServerForm.isValid(),
-            onClick = { ConnectServerForm.trySubmit() }
+            onClick = { ConnectServerForm.trySubmit() },
+            enabled = ConnectServerForm.isValid()
         )
     }
 
@@ -262,7 +263,7 @@ object ConnectionDialog {
             )
         ) {
             Submission {
-                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown() }
+                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -275,13 +276,13 @@ object ConnectionDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier) {
         Dropdown(
-            modifier = modifier,
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
-            selected = GlobalState.connection.current?.getDatabase() ?: "",
+            selected = GlobalState.connection.current?.getDatabase(),
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
-            onSelection = { GlobalState.connection.current?.setDatabase(it) },
+            onSelection = { GlobalState.connection.current?.openSession(it) },
             placeholder = Label.SELECT_DATABASE,
-            enabled = GlobalState.connection.isConnected()
+            enabled = GlobalState.connection.isConnected(),
+            modifier = modifier
         )
     }
 }
