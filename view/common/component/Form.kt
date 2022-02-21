@@ -313,7 +313,7 @@ object Form {
             checked = value,
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
-                .background(color = fadeable(Theme.colors.surface, !enabled))
+                .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
                 .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE)
                 .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
             enabled = enabled,
