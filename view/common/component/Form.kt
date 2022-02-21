@@ -514,6 +514,7 @@ object Form {
     fun <T : Any> Dropdown(
         values: List<T>,
         selected: T?,
+        displayFn: (T) -> String = { it.toString() },
         onExpand: (() -> Unit)? = null,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
@@ -548,7 +549,7 @@ object Form {
         val state = remember { DropdownState() }
         Box {
             TextButton(
-                text = selected?.let { it.toString().ifBlank { placeholder } } ?: placeholder,
+                text = selected?.let { displayFn(it).ifBlank { placeholder } } ?: placeholder,
                 onClick = { state.toggle() },
                 modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) },
                 textColor = fadeable(Theme.colors.onPrimary, selected == null || selected.toString().isBlank()),
@@ -577,7 +578,7 @@ object Form {
                     ) {
                         Row {
                             Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-                            Text(value = value.toString(), color = color)
+                            Text(value = displayFn(value), color = color)
                         }
                     }
                 }

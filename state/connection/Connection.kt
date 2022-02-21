@@ -37,7 +37,6 @@ class Connection internal constructor(
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
-        private val SESSION_TYPE = TypeDBSession.Type.DATA
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -64,10 +63,10 @@ class Connection internal constructor(
     }
 
     fun openSession(database: String, type: TypeDBSession.Type) {
-        if (session?.database()?.name() == database) return
+        if (session?.database()?.name() == database && session?.type() == type) return
         closeSession()
         try {
-            this.session = client.session(database, SESSION_TYPE)
+            this.session = client.session(database, type)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, UNABLE_CREATE_SESSION, database)
         }

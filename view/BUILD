@@ -39,6 +39,7 @@ kt_jvm_library(
         "//view/page:page",
 
         # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies

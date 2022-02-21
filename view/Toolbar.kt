@@ -29,11 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -54,6 +56,8 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Project.Buttons()
+            Separator.Vertical()
+            Transaction.Buttons()
             Separator.Vertical()
             Query.Buttons()
             Separator.Vertical()
@@ -102,6 +106,28 @@ object Toolbar {
                 icon = Icon.Code.FLOPPY_DISK,
                 onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
                 enabled = GlobalState.page.selectedPage?.isUnsaved == true
+            )
+        }
+    }
+
+    object Transaction {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            SessionTypeButton()
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun SessionTypeButton() {
+            Form.Dropdown(
+                values = TypeDBSession.Type.values().asList(),
+                selected = GlobalState.connection.current?.session?.type(),
+                displayFn = { it.name.lowercase() },
+                onSelection = { GlobalState.connection.current?.reopenSessionWithType(it) },
+                placeholder = Label.SESSION_TYPE,
+                enabled = GlobalState.connection.hasSession(),
             )
         }
     }
