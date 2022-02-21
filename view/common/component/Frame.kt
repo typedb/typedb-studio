@@ -79,7 +79,7 @@ object Frame {
         internal val isLast: Boolean get() = index == frameState.panes.size - 1
         internal val previous: PaneState? get() = if (isFirst) null else frameState.panes[index - 1]
         internal val next: PaneState? get() = if (isLast) null else frameState.panes[index + 1]
-        internal var _size: Dp by mutableStateOf(currentSize)
+        private var _size: Dp by mutableStateOf(currentSize)
         internal var freezeSize: Dp? by mutableStateOf(currentFreezeSize); private set
         internal var size: Dp
             get() = freezeSize ?: _size
