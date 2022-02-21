@@ -102,8 +102,8 @@ object Icon {
     @Composable
     fun Render(
         icon: Code,
-        size: TextUnit = icon.defaultSize,
         color: Color = Theme.colors.icon,
+        size: TextUnit = icon.defaultSize,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {

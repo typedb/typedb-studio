@@ -250,7 +250,7 @@ object PageArea {
                         .onSizeChanged { width = toDP(it.width, state.density) }
                 ) {
                     Spacer(modifier = Modifier.width(TAB_SPACING))
-                    Icon.Render(icon = page.icon.code, size = ICON_SIZE, color = page.icon.color())
+                    Icon.Render(icon = page.icon.code, color = page.icon.color(), size = ICON_SIZE)
                     Spacer(modifier = Modifier.width(TAB_SPACING))
                     Text(value = tabTitle(page))
                     IconButton(

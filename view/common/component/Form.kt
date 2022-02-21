@@ -215,39 +215,22 @@ object Form {
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
     ) {
-        val density = LocalDensity.current.density
-        var boxWidth by remember { mutableStateOf(0.dp) }
-        var rowWidth by remember { mutableStateOf(0.dp) }
-        var trailingIconWidth by remember { mutableStateOf(0.dp) }
-
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-
-        BoxButton(
-            onClick = onClick, color = bgColor, enabled = enabled,
-            modifier = modifier.onSizeChanged { boxWidth = toDP(it.width, density) }
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    Modifier.onSizeChanged { rowWidth = toDP(it.width, density) },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+        BoxButton(onClick = onClick, color = bgColor, enabled = enabled) {
+            Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
                     leadingIcon?.let {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
-                            Icon.Render(icon = it, color = iconColor)
-                        }
-                        Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
+                        Spacer()
                     }
                     Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
-                    if (trailingIcon == null) Spacer()
+                    Spacer()
                 }
                 trailingIcon?.let {
-                    Spacer(Modifier.width((boxWidth - rowWidth - trailingIconWidth).coerceAtLeast(TEXT_BUTTON_PADDING)))
-                    Row (Modifier.onSizeChanged { trailingIconWidth = toDP(it.width, density) },) {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
-                            Icon.Render(icon = it, color = iconColor)
-                        }
+                    Row {
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
                         Spacer()
                     }
                 }
@@ -312,7 +295,6 @@ object Form {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = modifier
-                    .height(FIELD_HEIGHT)
                     .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
                     .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                     .clickable(enabled = enabled) { onClick() }
