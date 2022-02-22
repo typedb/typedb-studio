@@ -63,7 +63,7 @@ object Toolbar {
             Separator.Vertical()
             QueryRun.Buttons()
             Separator.Vertical()
-            TransactionControl.Buttons()
+            TxControl.Buttons()
             Separator.Vertical()
             Spacer(Modifier.weight(1f))
             Separator.Vertical()
@@ -84,7 +84,7 @@ object Toolbar {
             icon = icon,
             onClick = onClick,
             modifier = Modifier.size(BUTTON_HEIGHT),
-            iconColor = color,
+            iconColor = if (enabled) color else Theme.colors.icon,
             enabled = enabled
         )
     }
@@ -200,17 +200,17 @@ object Toolbar {
         }
 
         @Composable
-        private fun StopButton() {
-            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
-        }
-
-        @Composable
         private fun PlayButton() {
             ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
         }
+
+        @Composable
+        private fun StopButton() {
+            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+        }
     }
 
-    object TransactionControl {
+    object TxControl {
 
         @Composable
         internal fun Buttons() {
@@ -228,16 +228,8 @@ object Toolbar {
             ToolbarButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
+                color = Theme.colors.quaternary2,
                 enabled = GlobalState.connection.current?.config?.keepAlive ?: false
-            )
-        }
-
-        @Composable
-        private fun CommitButton() {
-            ToolbarButton(
-                icon = Icon.Code.DATABASE,
-                onClick = {},
-                enabled = GlobalState.connection.current?.hasWrites ?: false
             )
         }
 
@@ -246,6 +238,17 @@ object Toolbar {
             ToolbarButton(
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
+                color = Theme.colors.quaternary2,
+                enabled = GlobalState.connection.current?.hasWrites ?: false
+            )
+        }
+
+        @Composable
+        private fun CommitButton() {
+            ToolbarButton(
+                icon = Icon.Code.DATABASE,
+                onClick = {},
+                color = Theme.colors.quaternary2,
                 enabled = GlobalState.connection.current?.hasWrites ?: false
             )
         }
