@@ -205,10 +205,10 @@ object Toolbar {
         private fun OptionsButtons(enabled: Boolean) {
             ToggleButtonRow {
                 ToggleButton(
-                    text = Label.KEEP_ALIVE.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleKeepAlive() },
-                    isActive = enabled && GlobalState.connection.current?.config?.keepAlive ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.keepAliveEnabled ?: false
+                    text = Label.SNAPSHOT.lowercase(),
+                    onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
+                    isActive = enabled && GlobalState.connection.current?.config?.snapshot ?: false,
+                    enabled = enabled && GlobalState.connection.current?.config?.snapshotEnabled ?: false
                 )
                 ToggleButton(
                     text = Label.INFER.lowercase(),
@@ -281,13 +281,13 @@ object Toolbar {
 
         @Composable
         private fun ReopenButton(enabled: Boolean) {
-            val isKeepAlive = GlobalState.connection.current?.config?.keepAlive ?: false
+            val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
             val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
                 color = Theme.colors.quinary,
-                enabled = enabled && isKeepAlive && hasTransaction
+                enabled = enabled && isSnapshot && hasTransaction
             )
         }
 

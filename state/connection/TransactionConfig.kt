@@ -29,20 +29,20 @@ class TransactionConfig(private val connection: Connection) {
     var sessionType: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); internal set
     var transactionType: TypeDBTransaction.Type by mutableStateOf(TypeDBTransaction.Type.READ); internal set
 
-    val keepAlive: Boolean get() = _keepAlive || transactionType.isWrite
-    val keepAliveEnabled: Boolean get() = connection.hasSession() && !transactionType.isWrite
-    private var _keepAlive: Boolean by mutableStateOf(false)
+    val snapshot: Boolean get() = _snapshot || transactionType.isWrite
+    val snapshotEnabled: Boolean get() = connection.hasSession() && !transactionType.isWrite
+    private var _snapshot: Boolean by mutableStateOf(false)
 
     val infer: Boolean get() = _infer && !transactionType.isWrite
     val inferEnabled: Boolean get() = connection.hasSession() && !transactionType.isWrite
     private var _infer: Boolean by mutableStateOf(false)
 
-    val explain: Boolean get() = _explain && infer && keepAlive
-    val explainEnabled: Boolean get() = connection.hasSession() && infer && keepAlive
+    val explain: Boolean get() = _explain && infer && snapshot
+    val explainEnabled: Boolean get() = connection.hasSession() && infer && snapshot
     private var _explain: Boolean by mutableStateOf(false)
 
-    fun toggleKeepAlive() {
-        _keepAlive = !_keepAlive
+    fun toggleSnapshot() {
+        _snapshot = !_snapshot
     }
 
     fun toggleInfer() {
