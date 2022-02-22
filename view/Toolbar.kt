@@ -47,7 +47,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.ConnectionDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
@@ -63,11 +63,11 @@ object Toolbar {
         ) {
             Project.Buttons()
             Separator.Vertical()
-            TxConfig.Buttons()
-            Separator.Vertical()
-            QueryRun.Buttons()
+            InteractionSettings.Buttons()
             Separator.Vertical()
             TxControl.Buttons()
+            Separator.Vertical()
+            Run.Buttons()
             Separator.Vertical()
             Spacer(Modifier.weight(1f))
             Separator.Vertical()
@@ -98,6 +98,21 @@ object Toolbar {
         )
     }
 
+    @Composable
+    private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
+        Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) { content() }
+    }
+
+    @Composable
+    private fun ToggleButton(text: String, onClick: () -> Unit, isActive: Boolean, enabled: Boolean) {
+        TextButton(
+            text = text,
+            onClick = onClick,
+            textColor = if (isActive) Theme.colors.secondary else Theme.colors.onPrimary,
+            enabled = enabled
+        )
+    }
+
     object Project {
 
         @Composable
@@ -125,40 +140,20 @@ object Toolbar {
         }
     }
 
-    object TxConfig {
+    object InteractionSettings {
 
         @Composable
         internal fun Buttons() {
-            val isQueryMode = GlobalState.connection.current?.isQueryMode ?: false
+            val isInteractive = GlobalState.connection.current?.isInteractiveMode ?: false
             ToolbarSpace()
-            RunTypeButton()
+            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT))
             ToolbarSpace()
-            SessionTypeButton(isQueryMode)
+            SessionTypeButton(isInteractive)
             ToolbarSpace()
-            TransactionTypeButtons(isQueryMode)
+            TransactionTypeButtons(isInteractive)
             ToolbarSpace()
-            OptionsButtons(isQueryMode)
+            OptionsButtons(isInteractive)
             ToolbarSpace()
-        }
-
-        @Composable
-        private fun RunTypeButton() {
-            val script = Connection.RunType.SCRIPT
-            val query = Connection.RunType.QUERY
-            ToggleButtonRow {
-                ToggleButton(
-                    text = script.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.runType = script },
-                    isActive = GlobalState.connection.current?.isScriptMode == true,
-                    enabled = GlobalState.connection.isConnected()
-                )
-                ToggleButton(
-                    text = query.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.runType = query },
-                    isActive = GlobalState.connection.current?.isQueryMode == true,
-                    enabled = GlobalState.connection.hasSession()
-                )
-            }
         }
 
         @Composable
@@ -170,13 +165,13 @@ object Toolbar {
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == schema,
-                    enabled = enabled && GlobalState.connection.hasSession()
+                    enabled = enabled && GlobalState.connection.hasSession
                 )
                 ToggleButton(
                     text = data.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == data,
-                    enabled = enabled && GlobalState.connection.hasSession()
+                    enabled = enabled && GlobalState.connection.hasSession
                 )
             }
         }
@@ -190,13 +185,13 @@ object Toolbar {
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == write,
-                    enabled = enabled && GlobalState.connection.hasSession()
+                    enabled = enabled && GlobalState.connection.hasSession
                 )
                 ToggleButton(
                     text = read.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == read,
-                    enabled = enabled && GlobalState.connection.hasSession()
+                    enabled = enabled && GlobalState.connection.hasSession
                 )
             }
         }
@@ -224,52 +219,13 @@ object Toolbar {
                 )
             }
         }
-
-        @Composable
-        private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
-            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
-                content()
-            }
-        }
-
-        @Composable
-        private fun ToggleButton(text: String, onClick: () -> Unit, isActive: Boolean, enabled: Boolean) {
-            TextButton(
-                text = text,
-                onClick = onClick,
-                textColor = if (isActive) Theme.colors.secondary else Theme.colors.onPrimary,
-                enabled = enabled
-            )
-        }
-    }
-
-    object QueryRun {
-
-        @Composable
-        internal fun Buttons() {
-            ToolbarSpace()
-            PlayButton()
-            ToolbarSpace()
-            StopButton()
-            ToolbarSpace()
-        }
-
-        @Composable
-        private fun PlayButton() {
-            ToolbarIconButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
-        }
-
-        @Composable
-        private fun StopButton() {
-            ToolbarIconButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
-        }
     }
 
     object TxControl {
 
         @Composable
         internal fun Buttons() {
-            val isQueryMode = GlobalState.connection.current?.isQueryMode ?: false
+            val isQueryMode = GlobalState.connection.current?.isInteractiveMode ?: false
             ToolbarSpace()
             ReopenButton(isQueryMode)
             ToolbarSpace()
@@ -317,13 +273,34 @@ object Toolbar {
         }
     }
 
+    object Run {
+
+        @Composable
+        internal fun Buttons() {
+            ToolbarSpace()
+            PlayButton()
+            ToolbarSpace()
+            StopButton()
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun PlayButton() {
+            ToolbarIconButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+        }
+
+        @Composable
+        private fun StopButton() {
+            ToolbarIconButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+        }
+    }
 
     object DBConnection {
 
         @Composable
         internal fun Buttons() {
             ToolbarSpace()
-            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT))
+            ModeButtons()
             ToolbarSpace()
             ConnectionButton()
             ToolbarSpace()
@@ -340,6 +317,27 @@ object Toolbar {
                 )
             }
         }
+
+        @Composable
+        private fun ModeButtons() {
+            val interactive = Connection.Mode.INTERACTIVE
+            val script = Connection.Mode.SCRIPT
+            ToggleButtonRow {
+                ToggleButton(
+                    text = interactive.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.mode = interactive },
+                    isActive = GlobalState.connection.isInteractiveMode,
+                    enabled = GlobalState.connection.isConnected
+                )
+                ToggleButton(
+                    text = script.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.mode = script },
+                    isActive = GlobalState.connection.isScriptMode,
+                    enabled = GlobalState.connection.isConnected
+                )
+            }
+        }
+
         @Composable
         private fun ConnectionButton(text: String) {
             TextButton(

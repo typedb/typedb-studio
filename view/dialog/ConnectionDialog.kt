@@ -57,8 +57,6 @@ object ConnectionDialog {
 
     private val CONNECT_SERVER_WINDOW_WIDTH = 500.dp
     private val CONNECT_SERVER_WINDOW_HEIGHT = 340.dp
-    private val SELECT_DB_WINDOW_WIDTH = 400.dp
-    private val SELECT_DB_WINDOW_HEIGHT = 200.dp
 
     private object ConnectServerForm : Form.State {
         // We keep this static to maintain the values through application lifetime,
@@ -133,7 +131,7 @@ object ConnectionDialog {
                 values = Property.Server.values().toList(),
                 selected = ConnectServerForm.server,
                 onSelection = { ConnectServerForm.server = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -147,7 +145,7 @@ object ConnectionDialog {
                 value = ConnectServerForm.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { ConnectServerForm.address = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -161,7 +159,7 @@ object ConnectionDialog {
                 value = ConnectServerForm.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { ConnectServerForm.username = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -175,7 +173,7 @@ object ConnectionDialog {
                 value = ConnectServerForm.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { ConnectServerForm.password = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -188,7 +186,7 @@ object ConnectionDialog {
             Checkbox(
                 value = ConnectServerForm.tlsEnabled,
                 onChange = { ConnectServerForm.tlsEnabled = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
             )
         }
     }
@@ -201,7 +199,7 @@ object ConnectionDialog {
                 value = ConnectServerForm.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { ConnectServerForm.caCertificate = it },
-                enabled = GlobalState.connection.isDisconnected(),
+                enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -249,40 +247,5 @@ object ConnectionDialog {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.disconnect() })
         ComponentSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
-    }
-
-    @Composable
-    fun SelectDatabase() {
-        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
-        Dialog(
-            title = Label.SELECT_DATABASE,
-            onCloseRequest = { selectDBDialog.close() },
-            state = rememberDialogState(
-                position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(SELECT_DB_WINDOW_WIDTH, SELECT_DB_WINDOW_HEIGHT)
-            )
-        ) {
-            Submission {
-                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
-                Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.CLOSE, onClick = { selectDBDialog.close() })
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun DatabaseDropdown(modifier: Modifier = Modifier) {
-        Dropdown(
-            values = GlobalState.connection.current?.databaseList ?: emptyList(),
-            selected = GlobalState.connection.current?.getDatabase(),
-            onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
-            onSelection = { GlobalState.connection.current?.openSession(it) },
-            placeholder = Label.SELECT_DATABASE,
-            enabled = GlobalState.connection.isConnected(),
-            modifier = modifier
-        )
     }
 }

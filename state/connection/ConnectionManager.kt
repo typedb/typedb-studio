@@ -47,24 +47,14 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
     val selectDatabaseDialog = DialogManager.Base()
     var current: Connection? by mutableStateOf(null)
     var status: Status by mutableStateOf(Status.DISCONNECTED)
+    val hasSession: Boolean get() = isConnected && current!!.hasSession()
+    val isInteractiveMode: Boolean get() = isConnected && current!!.isInteractiveMode
+    val isScriptMode: Boolean get() = isConnected && current!!.isScriptMode
+    val isConnected: Boolean get() = status == Status.CONNECTED
+    val isConnecting: Boolean get() = status == Status.CONNECTING
+    val isDisconnected: Boolean get() = status == Status.DISCONNECTED
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-    fun hasSession(): Boolean {
-        return isConnected() && current!!.hasSession()
-    }
-
-    fun isConnected(): Boolean {
-        return status == Status.CONNECTED
-    }
-
-    fun isConnecting(): Boolean {
-        return status == Status.CONNECTING
-    }
-
-    fun isDisconnected(): Boolean {
-        return status == Status.DISCONNECTED
-    }
 
     fun tryConnectToTypeDB(address: String) {
         tryConnect(address, null) { TypeDB.coreClient(address) }

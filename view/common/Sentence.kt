@@ -42,5 +42,7 @@ object Sentence {
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =
         "Select the parent directory in which %s will be moved under."
+    const val TYPE_BROWSER_ONLY_INTERACTIVE =
+        "The Type Browser only works in 'interactive' mode."
 
 }

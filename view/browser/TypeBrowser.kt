@@ -21,33 +21,38 @@ package com.vaticle.typedb.studio.view.browser
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
+import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 
 internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
     Browser(areaState, order, initOpen) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
-    override val isActive: Boolean get() = GlobalState.connection.hasSession()
+    override val isActive: Boolean get() = GlobalState.connection.hasSession
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
     override fun NavigatorLayout() {
         val connectionMgr = GlobalState.connection
-        if (!connectionMgr.isConnected()) ConnectToServerHelper()
-        else if (!connectionMgr.hasSession() || connectionMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
+        if (!connectionMgr.isConnected) ConnectToServerHelper()
+        else if (!connectionMgr.isInteractiveMode) NonInteractiveModeMessage()
+        else if (!connectionMgr.hasSession || connectionMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
         else {
 
         }
@@ -68,6 +73,21 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
     }
 
     @Composable
+    private fun NonInteractiveModeMessage() {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+        ) {
+            Form.Text(
+                value = Sentence.TYPE_BROWSER_ONLY_INTERACTIVE,
+                modifier = Modifier.padding(30.dp),
+                align = TextAlign.Center,
+                softWrap = true
+            )
+        }
+    }
+
+    @Composable
     private fun SelectDBHelper() {
         val selectDBDialog = GlobalState.connection.selectDatabaseDialog
         Box(
@@ -80,6 +100,6 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
                 leadingIcon = Icon.Code.DATABASE
             )
         }
-        if (selectDBDialog.isOpen) ConnectionDialog.SelectDatabase()
+        if (selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
     }
 }

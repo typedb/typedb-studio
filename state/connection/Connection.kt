@@ -36,7 +36,7 @@ class Connection internal constructor(
     private val notificationMgr: NotificationManager
 ) {
 
-    enum class RunType { SCRIPT, QUERY }
+    enum class Mode { SCRIPT, INTERACTIVE }
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
@@ -48,9 +48,9 @@ class Connection internal constructor(
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
-    var runType: RunType by mutableStateOf(RunType.QUERY)
-    val isScriptMode: Boolean get() = !hasSession() || runType == RunType.SCRIPT
-    val isQueryMode: Boolean get() = hasSession() && runType == RunType.QUERY
+    var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
+    val isScriptMode: Boolean get() = mode == Mode.SCRIPT
+    val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val hasWrites: Boolean get() = false // TODO: implement tx.hasUncommittedWrites
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
@@ -64,7 +64,7 @@ class Connection internal constructor(
     }
 
     fun getDatabase(): String? {
-        return session?.database()?.name()
+        return if (isInteractiveMode) session?.database()?.name() else null
     }
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
@@ -91,7 +91,6 @@ class Connection internal constructor(
         closeSession()
         try {
             session = client.session(database, type)
-            runType = RunType.QUERY
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, UNABLE_CREATE_SESSION, database)
         }
