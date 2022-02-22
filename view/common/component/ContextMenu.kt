@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -118,7 +117,7 @@ object ContextMenu {
             return event
         }
 
-        @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+        @OptIn(ExperimentalComposeUiApi::class)
         internal fun onKeyEvent(event: KeyEvent): Boolean {
             return when (event.key) {
                 Key.Escape -> {

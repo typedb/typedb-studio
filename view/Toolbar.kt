@@ -39,10 +39,13 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNE
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.view.common.URL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog.DatabaseDropdown
 
@@ -78,15 +81,20 @@ object Toolbar {
     }
 
     @Composable
-    private fun ToolbarButton(
-        icon: Icon.Code, onClick: () -> Unit, color: Color = Theme.colors.icon, enabled: Boolean = true
+    private fun ToolbarIconButton(
+        icon: Icon.Code,
+        onClick: () -> Unit,
+        color: Color = Theme.colors.icon,
+        enabled: Boolean = true,
+        tooltip: Tooltip.Args? = null
     ) {
         IconButton(
             icon = icon,
             onClick = onClick,
             modifier = Modifier.size(BUTTON_HEIGHT),
             iconColor = if (enabled) color else Theme.colors.icon,
-            enabled = enabled
+            enabled = enabled,
+            tooltip = tooltip
         )
     }
 
@@ -102,12 +110,14 @@ object Toolbar {
         }
         @Composable
         private fun OpenProjectButton() {
-            ToolbarButton(icon = Icon.Code.FOLDER_OPEN, onClick = { GlobalState.project.openProjectDialog.toggle() })
+            ToolbarIconButton(
+                icon = Icon.Code.FOLDER_OPEN,
+                onClick = { GlobalState.project.openProjectDialog.toggle() })
         }
 
         @Composable
         private fun SaveButton() {
-            ToolbarButton(
+            ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
                 onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
                 enabled = GlobalState.page.selectedPage?.isUnsaved == true
@@ -125,9 +135,9 @@ object Toolbar {
             ToolbarSpace()
             SessionTypeButton(isQueryMode)
             ToolbarSpace()
-            ParameterButtons(isQueryMode)
+            TransactionTypeButtons(isQueryMode)
             ToolbarSpace()
-            ConfigToggleButtons(isQueryMode)
+            OptionsButtons(isQueryMode)
             ToolbarSpace()
         }
 
@@ -172,7 +182,7 @@ object Toolbar {
         }
 
         @Composable
-        private fun ParameterButtons(enabled: Boolean) {
+        private fun TransactionTypeButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
             ToggleButtonRow {
@@ -192,7 +202,7 @@ object Toolbar {
         }
 
         @Composable
-        private fun ConfigToggleButtons(enabled: Boolean) {
+        private fun OptionsButtons(enabled: Boolean) {
             ToggleButtonRow {
                 ToggleButton(
                     text = Label.KEEP_ALIVE.lowercase(),
@@ -246,12 +256,12 @@ object Toolbar {
 
         @Composable
         private fun PlayButton() {
-            ToolbarButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+            ToolbarIconButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
         }
 
         @Composable
         private fun StopButton() {
-            ToolbarButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+            ToolbarIconButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
         }
     }
 
@@ -273,7 +283,7 @@ object Toolbar {
         private fun ReopenButton(enabled: Boolean) {
             val isKeepAlive = GlobalState.connection.current?.config?.keepAlive ?: false
             val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
-            ToolbarButton(
+            ToolbarIconButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
                 color = Theme.colors.quinary,
@@ -283,7 +293,7 @@ object Toolbar {
 
         @Composable
         private fun RollbackButton(enabled: Boolean) {
-            ToolbarButton(
+            ToolbarIconButton(
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
                 color = Theme.colors.quaternary2,
@@ -293,11 +303,16 @@ object Toolbar {
 
         @Composable
         private fun CommitButton(enabled: Boolean) {
-            ToolbarButton(
+            ToolbarIconButton(
                 icon = Icon.Code.CHECK,
                 onClick = {},
                 color = Theme.colors.secondary,
-                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false
+                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
+                tooltip = Tooltip.Args(
+                    title = Label.COMMIT_TRANSACTION,
+                    description = Sentence.COMMIT_TRANSACTION_DESCRIPTION,
+                    url = URL.DOCS_COMMIT_TRANSACTION
+                )
             )
         }
     }

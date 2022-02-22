@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.DropdownMenu
@@ -75,6 +76,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -97,6 +99,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
+import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -204,6 +207,17 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
+    fun TextURL(url: URL, text: String? = null) {
+        val uriHandler = LocalUriHandler.current
+        ClickableText(
+            text = AnnotatedString(text ?: url.toString()),
+            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
+            style = Theme.typography.body1.copy(color = Theme.colors.secondary)
+        ) { uriHandler.openUri(url.toString()) }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
     fun TextButton(
         text: String,
         onClick: () -> Unit,
@@ -214,10 +228,11 @@ object Form {
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
+        tooltip: Tooltip.Args? = null,
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-        BoxButton(onClick = onClick, color = bgColor, enabled = enabled) {
+        BoxButton(onClick = onClick, color = bgColor, enabled = enabled, tooltip = tooltip) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
@@ -264,14 +279,16 @@ object Form {
         iconColor: Color = Theme.colors.icon,
         bgColor: Color = Theme.colors.primary,
         rounded: Boolean = true,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        tooltip: Tooltip.Args? = null,
     ) {
         BoxButton(
             onClick = onClick,
             color = bgColor,
             modifier = modifier.size(FIELD_HEIGHT),
             rounded = rounded,
-            enabled = enabled
+            enabled = enabled,
+            tooltip = tooltip,
         ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
     }
 
@@ -283,22 +300,29 @@ object Form {
         modifier: Modifier = Modifier,
         rounded: Boolean = true,
         enabled: Boolean = true,
+        tooltip: Tooltip.Args? = null,
         content: @Composable BoxScope.() -> Unit
     ) {
+        val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = when {
             rounded -> roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
             else -> rectangleIndication(Theme.colors.indicationBase)
         }
-        CompositionLocalProvider(
-            LocalIndication provides hoverIndication
-        ) {
+        CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
-                    .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .clickable(enabled = enabled) { onClick() }
-            ) { content() }
+                    .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
+                    .pointerMoveFilter(
+                        onEnter = { tooltipState?.mayShowOnTargetHover(); false },
+                        onExit = { tooltipState?.mayHideOnTargetExit(); false }
+                    )
+            ) {
+                content()
+                tooltipState?.let { Tooltip.Popup(it) }
+            }
         }
     }
 
@@ -518,12 +542,12 @@ object Form {
                 onSelection(value); expanded = false
             }
 
-            fun mouseOutFrom(index: Int): Boolean {
-                if (mouseIndex == index) mouseIndex = null; return false
+            fun mouseOutFrom(index: Int) {
+                if (mouseIndex == index) mouseIndex = null
             }
 
-            fun mouseInTo(index: Int): Boolean {
-                mouseIndex = index; return true
+            fun mouseInTo(index: Int) {
+                mouseIndex = index
             }
         }
 
@@ -553,10 +577,14 @@ object Form {
                 } else values.forEachIndexed { i, value ->
                     val color = if (value == selected) Theme.colors.secondary else Theme.colors.onSurface
                     DropdownMenuItem(
-                        onClick = { state.select(value) }, contentPadding = padding, modifier = itemModifier
+                        onClick = { state.select(value) }, contentPadding = padding,
+                        modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
-                            .pointerMoveFilter(onExit = { state.mouseOutFrom(i) }, onEnter = { state.mouseInTo(i) })
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                            .pointerMoveFilter(
+                                onExit = { state.mouseOutFrom(i); false },
+                                onEnter = { state.mouseInTo(i); false }
+                            ),
                     ) {
                         Row {
                             Spacer(Modifier.width(TEXT_BUTTON_PADDING))
