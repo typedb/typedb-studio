@@ -26,6 +26,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import com.vaticle.typedb.studio.state.common.Property.OS
+import java.awt.event.KeyEvent.KEY_LOCATION_NUMPAD
 
 interface KeyMapper {
 
@@ -136,6 +137,7 @@ interface KeyMapper {
         val MoveEnd: Key = Key(java.awt.event.KeyEvent.VK_END)
         val Insert: Key = Key(java.awt.event.KeyEvent.VK_INSERT)
         val Enter: Key = Key(java.awt.event.KeyEvent.VK_ENTER)
+        val EnterNumPad: Key = Key(java.awt.event.KeyEvent.VK_ENTER, KEY_LOCATION_NUMPAD)
         val Backspace: Key = Key(java.awt.event.KeyEvent.VK_BACK_SPACE)
         val Delete: Key = Key(java.awt.event.KeyEvent.VK_DELETE)
         val Paste: Key = Key(java.awt.event.KeyEvent.VK_PASTE)
@@ -152,7 +154,7 @@ interface KeyMapper {
                 shortcutModifier(event) && event.isShiftPressed ->
                     when (event.key) {
                         Keys.Z -> Command.REDO
-                        Keys.Enter -> Command.ENTER_SHIFT_MOD
+                        Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT_MOD
                         else -> null
                     }
                 shortcutModifier(event) ->
@@ -182,7 +184,7 @@ interface KeyMapper {
                         Keys.MoveEnd -> Command.SELECT_LINE_END
                         Keys.Insert -> Command.PASTE
                         Keys.Tab -> Command.TAB_SHIFT
-                        Keys.Enter -> Command.ENTER_SHIFT
+                        Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT
                         else -> null
                     }
                 else ->
@@ -195,7 +197,7 @@ interface KeyMapper {
                         Keys.PageDown -> Command.MOVE_PAGE_DOWN
                         Keys.MoveHome -> Command.MOVE_LINE_START
                         Keys.MoveEnd -> Command.MOVE_LINE_END
-                        Keys.Enter -> Command.ENTER
+                        Keys.Enter, Keys.EnterNumPad -> Command.ENTER
                         Keys.Backspace -> Command.DELETE_CHAR_PREV
                         Keys.Delete -> Command.DELETE_CHAR_NEXT
                         Keys.Paste -> Command.PASTE
