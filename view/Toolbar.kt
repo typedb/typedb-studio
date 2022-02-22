@@ -54,6 +54,7 @@ object Toolbar {
     private val TOOLBAR_HEIGHT = 34.dp
     private val TOOLBAR_SPACING = 5.dp
     private val BUTTON_HEIGHT = 24.dp
+    private val SEPARATOR_HEIGHT = 20.dp
 
     @Composable
     fun Layout() {
@@ -62,17 +63,20 @@ object Toolbar {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Project.Buttons()
-            Separator.Vertical()
+            VerticalSeparator()
             InteractionSettings.Buttons()
-            Separator.Vertical()
+            VerticalSeparator()
             TxControl.Buttons()
-            Separator.Vertical()
+            VerticalSeparator()
             Run.Buttons()
-            Separator.Vertical()
             Spacer(Modifier.weight(1f))
-            Separator.Vertical()
             DBConnection.Buttons()
         }
+    }
+
+    @Composable
+    private fun VerticalSeparator() {
+        Separator.Vertical(modifier = Modifier.height(SEPARATOR_HEIGHT))
     }
 
     @Composable
