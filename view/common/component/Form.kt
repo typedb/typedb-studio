@@ -565,7 +565,9 @@ object Form {
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { state.expanded = false },
-                modifier = Modifier.background(Theme.colors.surface).defaultMinSize(minWidth = state.width)
+                modifier = Modifier.background(Theme.colors.surface)
+                    .defaultMinSize(minWidth = state.width)
+                    .border(BORDER_WIDTH, Theme.colors.border, ROUNDED_RECTANGLE) // TODO: how to make not rounded?
             ) {
                 val padding = PaddingValues(horizontal = 0.dp)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
