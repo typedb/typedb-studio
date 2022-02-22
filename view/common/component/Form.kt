@@ -250,7 +250,7 @@ object Form {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier.height(FIELD_HEIGHT)
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                 .onPointerEvent(PointerEventType.Press) { if (it.buttons.isPrimaryPressed) onClick() }
         ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
     }

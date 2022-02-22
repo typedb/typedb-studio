@@ -217,9 +217,9 @@ object Toolbar {
             ToolbarSpace()
             ReopenButton()
             ToolbarSpace()
-            CommitButton()
-            ToolbarSpace()
             RollbackButton()
+            ToolbarSpace()
+            CommitButton()
             ToolbarSpace()
         }
 
