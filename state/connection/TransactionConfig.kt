@@ -37,8 +37,8 @@ class TransactionConfig(private val connection: Connection) {
     val inferEnabled: Boolean get() = connection.hasSession() && !transactionType.isWrite
     private var _infer: Boolean by mutableStateOf(false)
 
-    val explain: Boolean get() = _explain && infer
-    val explainEnabled: Boolean get() = connection.hasSession() && infer
+    val explain: Boolean get() = _explain && infer && keepAlive
+    val explainEnabled: Boolean get() = connection.hasSession() && infer && keepAlive
     private var _explain: Boolean by mutableStateOf(false)
 
     fun toggleKeepAlive() {
