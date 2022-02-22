@@ -40,8 +40,6 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,7 +55,7 @@ object Theme {
     const val TARGET_SELECTION_ALPHA = 0.35f
     const val FIND_SELECTION_ALPHA = 0.3f
     const val INDICATION_HOVER_ALPHA = 0.1f
-    private const val INDICATION_PRESSED_ALPHA = 0.25f
+    private const val INDICATION_PRESSED_ALPHA = 0.2f
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
@@ -118,37 +116,23 @@ object Theme {
         return CornerRadius(x = ROUNDED_CORNER_RADIUS.value * density, y = ROUNDED_CORNER_RADIUS.value * density)
     }
 
-    fun leftRoundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
-        return rawIndication { isPressed, isHovered, isFocused ->
-            if (isHovered.value || isFocused.value) {
-                drawRect(
-                    topLeft = Offset(size.width / 2, 0f),
-                    color = color.copy(INDICATION_HOVER_ALPHA),
-                    size = Size(size.width / 2, size.height)
-                )
-                drawRoundRect(
-                    color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-                )
-            } else if (isPressed.value) drawRoundRect(
-                color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-            )
-        }
-    }
-
     fun roundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
-            if (isHovered.value || isFocused.value) drawRoundRect(
-                color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-            ) else if (isPressed.value) drawRoundRect(
+            if (isPressed.value) drawRoundRect(
                 color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
+            ) else if (isHovered.value || isFocused.value) drawRoundRect(
+                color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
             )
         }
     }
 
     fun rectangleIndication(color: androidx.compose.ui.graphics.Color): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
-            if (isHovered.value || isFocused.value) drawRect(color = color.copy(INDICATION_HOVER_ALPHA), size = size)
-            else if (isPressed.value) drawRect(color = color.copy(INDICATION_PRESSED_ALPHA), size = size)
+            if (isPressed.value) {
+                drawRect(color = color.copy(INDICATION_PRESSED_ALPHA), size = size)
+            } else if (isHovered.value || isFocused.value) {
+                drawRect(color = color.copy(INDICATION_HOVER_ALPHA), size = size)
+            }
         }
     }
 

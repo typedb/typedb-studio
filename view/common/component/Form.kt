@@ -296,7 +296,7 @@ object Form {
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
-                    .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                    .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .clickable(enabled = enabled) { onClick() }
             ) { content() }
         }
