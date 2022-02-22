@@ -241,7 +241,7 @@ object Toolbar {
             ToolbarButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
-                color = Theme.colors.quaternary2,
+                color = Theme.colors.quinary,
                 enabled = GlobalState.connection.current?.config?.keepAlive ?: false
             )
         }
@@ -259,9 +259,9 @@ object Toolbar {
         @Composable
         private fun CommitButton() {
             ToolbarButton(
-                icon = Icon.Code.DATABASE,
+                icon = Icon.Code.CHECK,
                 onClick = {},
-                color = Theme.colors.quaternary2,
+                color = Theme.colors.secondary,
                 enabled = GlobalState.connection.current?.hasWrites ?: false
             )
         }

@@ -243,7 +243,7 @@ object Form {
     fun RawClickableIcon(
         icon: Icon.Code,
         onClick: () -> Unit,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true
     ) {

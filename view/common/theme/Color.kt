@@ -31,6 +31,7 @@ object Color {
         val tertiary2: Color,
         val quaternary: Color,
         val quaternary2: Color,
+        val quinary: Color,
         val background: Color,
         val background2: Color,
         val disabled: Color,
@@ -51,6 +52,12 @@ object Color {
     )
 
     private object DarkPalette {
+        val Blue = Color(0xFF5ca8ff)
+        val Green = Color(0xFF02DAC9)
+        val Orange1 = Color(0xFFd68e11)
+        val Orange2 = Color(0xFFF6C94C)
+        val Pink1 = Color(0xFFF28DD7)
+        val Pink2 = Color(0xFFFFA9E8)
         val Purple0 = Color(0xFF080226)
         val Purple1 = Color(0xFF0E053F)
         val Purple2 = Color(0xFF180F49)
@@ -60,13 +67,8 @@ object Color {
         val Purple6 = Color(0xFF392D7F)
         val Purple7 = Color(0xFF544899)
         val Purple8 = Color(0xFF888DCA)
-        val Green = Color(0xFF02DAC9)
         val Red1 = Color(0xFFFA5765)
         val Red2 = Color(0xFFF66B65)
-        val Orange1 = Color(0xFFd68e11)
-        val Orange2 = Color(0xFFF6C94C)
-        val Pink1 = Color(0xFFF28DD7)
-        val Pink2 = Color(0xFFFFA9E8)
         val White = Color(0xFFFFFFFF)
         val White2 = Color(0xFFd5ccff)
     }
@@ -79,6 +81,7 @@ object Color {
             tertiary2 = DarkPalette.Pink2,
             quaternary = DarkPalette.Orange1,
             quaternary2 = DarkPalette.Orange2,
+            quinary = DarkPalette.Blue,
             background = DarkPalette.Purple1,
             background2 = DarkPalette.Purple0,
             disabled = DarkPalette.Purple2,
