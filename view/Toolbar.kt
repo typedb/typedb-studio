@@ -242,7 +242,8 @@ object Toolbar {
         @Composable
         private fun ReopenButton(enabled: Boolean) {
             val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
-            val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
+            val hasTransaction = GlobalState.connection.current?.hasSession() ?: false
+            // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
