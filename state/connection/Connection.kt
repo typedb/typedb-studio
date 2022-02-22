@@ -36,6 +36,8 @@ class Connection internal constructor(
     private val notificationMgr: NotificationManager
 ) {
 
+    enum class RunType { SCRIPT, QUERY }
+
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
         private val LOGGER = KotlinLogging.logger {}
@@ -46,12 +48,19 @@ class Connection internal constructor(
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
+    var runType: RunType by mutableStateOf(RunType.QUERY)
+    val isScriptMode: Boolean get() = !hasSession() || runType == RunType.SCRIPT
+    val isQueryMode: Boolean get() = hasSession() && runType == RunType.QUERY
     val hasWrites: Boolean get() = false // TODO: implement tx.hasUncommittedWrites
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
     fun hasSession(): Boolean {
-        return session != null
+        return session != null && session!!.isOpen
+    }
+
+    fun hasTransaction(): Boolean {
+        return transaction != null && transaction!!.isOpen
     }
 
     fun getDatabase(): String? {
@@ -81,7 +90,8 @@ class Connection internal constructor(
         if (session?.database()?.name() == database && session?.type() == type) return
         closeSession()
         try {
-            this.session = client.session(database, type)
+            session = client.session(database, type)
+            runType = RunType.QUERY
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, UNABLE_CREATE_SESSION, database)
         }

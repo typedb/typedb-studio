@@ -37,11 +37,11 @@ import mu.KotlinLogging
 
 class ConnectionManager(private val notificationMgr: NotificationManager) {
 
+    enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
-
-    enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
 
     val connectServerDialog = DialogManager.Base()
     val selectDatabaseDialog = DialogManager.Base()

@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.connection.Connection
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
@@ -117,76 +119,106 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
+            val isQueryMode = GlobalState.connection.current?.isQueryMode ?: false
             ToolbarSpace()
-            SessionTypeButton()
+            RunTypeButton()
             ToolbarSpace()
-            TransactionTypeButton()
+            SessionTypeButton(isQueryMode)
             ToolbarSpace()
-            ConfigToggleButtons()
+            ParameterButtons(isQueryMode)
+            ToolbarSpace()
+            ConfigToggleButtons(isQueryMode)
             ToolbarSpace()
         }
 
         @Composable
-        private fun SessionTypeButton() {
+        private fun RunTypeButton() {
+            val script = Connection.RunType.SCRIPT
+            val query = Connection.RunType.QUERY
+            ToggleButtonRow {
+                ToggleButton(
+                    text = script.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.runType = script },
+                    isActive = GlobalState.connection.current?.isScriptMode == true,
+                    enabled = GlobalState.connection.isConnected()
+                )
+                ToggleButton(
+                    text = query.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.runType = query },
+                    isActive = GlobalState.connection.current?.isQueryMode == true,
+                    enabled = GlobalState.connection.hasSession()
+                )
+            }
+        }
+
+        @Composable
+        private fun SessionTypeButton(enabled: Boolean) {
             val schema = TypeDBSession.Type.SCHEMA
             val data = TypeDBSession.Type.DATA
-            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+            ToggleButtonRow {
                 ToggleButton(
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
-                    isActive = GlobalState.connection.current?.config?.sessionType == schema,
-                    enabled = GlobalState.connection.hasSession()
+                    isActive = enabled && GlobalState.connection.current?.config?.sessionType == schema,
+                    enabled = enabled && GlobalState.connection.hasSession()
                 )
                 ToggleButton(
                     text = data.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
-                    isActive = GlobalState.connection.current?.config?.sessionType == data,
-                    enabled = GlobalState.connection.hasSession()
+                    isActive = enabled && GlobalState.connection.current?.config?.sessionType == data,
+                    enabled = enabled && GlobalState.connection.hasSession()
                 )
             }
         }
 
         @Composable
-        private fun TransactionTypeButton() {
+        private fun ParameterButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
-            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+            ToggleButtonRow {
                 ToggleButton(
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
-                    isActive = GlobalState.connection.current?.config?.transactionType == write,
-                    enabled = GlobalState.connection.hasSession()
+                    isActive = enabled && GlobalState.connection.current?.config?.transactionType == write,
+                    enabled = enabled && GlobalState.connection.hasSession()
                 )
                 ToggleButton(
                     text = read.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
-                    isActive = GlobalState.connection.current?.config?.transactionType == read,
-                    enabled = GlobalState.connection.hasSession()
+                    isActive = enabled && GlobalState.connection.current?.config?.transactionType == read,
+                    enabled = enabled && GlobalState.connection.hasSession()
                 )
             }
         }
 
         @Composable
-        private fun ConfigToggleButtons() {
-            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+        private fun ConfigToggleButtons(enabled: Boolean) {
+            ToggleButtonRow {
                 ToggleButton(
-                    text = Label.KEEP_ALIVE,
+                    text = Label.KEEP_ALIVE.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleKeepAlive() },
-                    isActive = GlobalState.connection.current?.config?.keepAlive ?: false,
-                    enabled = GlobalState.connection.current?.config?.keepAliveEnabled ?: false
+                    isActive = enabled && GlobalState.connection.current?.config?.keepAlive ?: false,
+                    enabled = enabled && GlobalState.connection.current?.config?.keepAliveEnabled ?: false
                 )
                 ToggleButton(
-                    text = Label.INFER,
+                    text = Label.INFER.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                    isActive = GlobalState.connection.current?.config?.infer ?: false,
-                    enabled = GlobalState.connection.current?.config?.inferEnabled ?: false
+                    isActive = enabled && GlobalState.connection.current?.config?.infer ?: false,
+                    enabled = enabled && GlobalState.connection.current?.config?.inferEnabled ?: false
                 )
                 ToggleButton(
-                    text = Label.EXPLAIN,
+                    text = Label.EXPLAIN.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                    isActive = GlobalState.connection.current?.config?.explain ?: false,
-                    enabled = GlobalState.connection.current?.config?.explainEnabled ?: false
+                    isActive = enabled && GlobalState.connection.current?.config?.explain ?: false,
+                    enabled = enabled && GlobalState.connection.current?.config?.explainEnabled ?: false
                 )
+            }
+        }
+
+        @Composable
+        private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
+            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+                content()
             }
         }
 
@@ -227,42 +259,45 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
+            val isQueryMode = GlobalState.connection.current?.isQueryMode ?: false
             ToolbarSpace()
-            ReopenButton()
+            ReopenButton(isQueryMode)
             ToolbarSpace()
-            RollbackButton()
+            RollbackButton(isQueryMode)
             ToolbarSpace()
-            CommitButton()
+            CommitButton(isQueryMode)
             ToolbarSpace()
         }
 
         @Composable
-        private fun ReopenButton() {
+        private fun ReopenButton(enabled: Boolean) {
+            val isKeepAlive = GlobalState.connection.current?.config?.keepAlive ?: false
+            val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             ToolbarButton(
                 icon = Icon.Code.ROTATE,
                 onClick = {},
                 color = Theme.colors.quinary,
-                enabled = GlobalState.connection.current?.config?.keepAlive ?: false
+                enabled = enabled && isKeepAlive && hasTransaction
             )
         }
 
         @Composable
-        private fun RollbackButton() {
+        private fun RollbackButton(enabled: Boolean) {
             ToolbarButton(
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
                 color = Theme.colors.quaternary2,
-                enabled = GlobalState.connection.current?.hasWrites ?: false
+                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false
             )
         }
 
         @Composable
-        private fun CommitButton() {
+        private fun CommitButton(enabled: Boolean) {
             ToolbarButton(
                 icon = Icon.Code.CHECK,
                 onClick = {},
                 color = Theme.colors.secondary,
-                enabled = GlobalState.connection.current?.hasWrites ?: false
+                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false
             )
         }
     }
