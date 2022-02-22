@@ -37,7 +37,6 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNE
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -129,28 +128,42 @@ object Toolbar {
 
         @Composable
         private fun SessionTypeButton() {
-            Dropdown(
-                values = TypeDBSession.Type.values().asList(),
-                selected = GlobalState.connection.current?.session?.type(),
-                displayFn = { it.name.lowercase() },
-                onSelection = { GlobalState.connection.current?.updateSessionType(it) },
-                placeholder = Label.SESSION_TYPE,
-                enabled = GlobalState.connection.hasSession(),
-                modifier = Modifier.height(BUTTON_HEIGHT),
-            )
+            val schema = TypeDBSession.Type.SCHEMA
+            val data = TypeDBSession.Type.DATA
+            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+                ToggleButton(
+                    text = schema.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.updateSessionType(schema) },
+                    isActive = GlobalState.connection.current?.config?.sessionType == schema,
+                    enabled = GlobalState.connection.hasSession()
+                )
+                ToggleButton(
+                    text = data.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.updateSessionType(data) },
+                    isActive = GlobalState.connection.current?.config?.sessionType == data,
+                    enabled = GlobalState.connection.hasSession()
+                )
+            }
         }
 
         @Composable
         private fun TransactionTypeButton() {
-            Dropdown(
-                values = TypeDBTransaction.Type.values().asList(),
-                selected = GlobalState.connection.current?.config?.transactionType,
-                displayFn = { it.name.lowercase() },
-                onSelection = { GlobalState.connection.current?.updateTransactionType(it) },
-                placeholder = Label.TRANSACTION_TYPE,
-                enabled = GlobalState.connection.hasSession(),
-                modifier = Modifier.height(BUTTON_HEIGHT),
-            )
+            val write = TypeDBTransaction.Type.WRITE
+            val read = TypeDBTransaction.Type.READ
+            Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) {
+                ToggleButton(
+                    text = write.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.updateTransactionType(write) },
+                    isActive = GlobalState.connection.current?.config?.transactionType == write,
+                    enabled = GlobalState.connection.hasSession()
+                )
+                ToggleButton(
+                    text = read.name.lowercase(),
+                    onClick = { GlobalState.connection.current?.updateTransactionType(read) },
+                    isActive = GlobalState.connection.current?.config?.transactionType == read,
+                    enabled = GlobalState.connection.hasSession()
+                )
+            }
         }
 
         @Composable
