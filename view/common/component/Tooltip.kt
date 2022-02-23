@@ -141,9 +141,11 @@ object Tooltip {
                 onDismissRequest = { state.isOpen = false },
                 onKeyEvent = { state.onKeyEvent(it) }
             ) {
+                val hasDetails = state.args.description != null || state.args.url != null
+                val boxMod = if (hasDetails) Modifier.width(TOOLTIP_WIDTH) else Modifier.widthIn(max = TOOLTIP_WIDTH)
+                val contentMod = if (hasDetails) Modifier.fillMaxWidth() else Modifier
                 Box(
-                    Modifier.width(TOOLTIP_WIDTH)
-                        .background(color = Theme.colors.surface)
+                    boxMod.background(color = Theme.colors.surface)
                         .border(BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .onSizeChanged { height = toDP(it.width, density) }
                         .pointerMoveFilter(
@@ -151,10 +153,10 @@ object Tooltip {
                             onExit = { state.mayHideOnTooltipExit(); false },
                         )
                 ) {
-                    Column(Modifier.fillMaxWidth().padding(TOOLTIP_SPACE)) {
-                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                    Column(contentMod.padding(TOOLTIP_SPACE)) {
+                        Row(contentMod, Arrangement.SpaceBetween) {
                             Text(value = state.args.title, softWrap = true)
-                            if (!showAll && (state.args.description != null || state.args.url != null)) {
+                            if (!showAll && hasDetails) {
                                 TextClickable(Label.READ_MORE) { showAll = true }
                             }
                         }

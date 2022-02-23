@@ -113,7 +113,7 @@ object Toolbar {
         onClick: () -> Unit,
         isActive: Boolean,
         enabled: Boolean,
-        tooltip: Tooltip.Args? = null
+        tooltip: Tooltip.Args
     ) {
         TextButton(
             text = text,
@@ -139,7 +139,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.FOLDER_OPEN,
                 onClick = { GlobalState.project.openProjectDialog.toggle() },
-                tooltip = Tooltip.Args(title = Label.OPEN_PROJECT)
+                tooltip = Tooltip.Args(title = Label.OPEN_PROJECT_DIRECTORY)
             )
         }
 
@@ -150,8 +150,8 @@ object Toolbar {
                 onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
                 enabled = GlobalState.page.selectedPage?.isUnsaved == true,
                 tooltip = Tooltip.Args(
-                    title = Label.SAVE_FILE,
-                    description = Sentence.SAVE_FILE_DESCRIPTION
+                    title = Label.SAVE_CURRENT_FILE,
+                    description = Sentence.SAVE_CURRENT_FILE_DESCRIPTION
                 )
             )
         }

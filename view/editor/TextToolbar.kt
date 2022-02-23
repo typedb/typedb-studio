@@ -58,6 +58,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.MultilineTextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -405,17 +406,17 @@ object TextToolbar {
     @Composable
     private fun FinderNextPreviousButtons(state: State) {
         Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
-            FinderButton(Icon.Code.CHEVRON_DOWN, { state.findNext() })
-            FinderButton(Icon.Code.CHEVRON_UP, { state.findPrevious() })
+            FinderButton(Icon.Code.CHEVRON_UP, Label.PREVIOUS_OCCURRENCE) { state.findPrevious() }
+            FinderButton(Icon.Code.CHEVRON_DOWN, Label.NEXT_OCCURRENCE) { state.findNext() }
         }
     }
 
     @Composable
     private fun FinderParameterButtons(state: State) {
         Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
-            FinderButton(Icon.Code.FONT_CASE, { state.toggleCaseSensitive() }, state.isCaseSensitive)
-            FinderButton(Icon.Code.LETTER_W, { state.toggleWord() }, state.isWord)
-            FinderButton(Icon.Code.ASTERISK, { state.toggleRegex() }, state.isRegex)
+            FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) { state.toggleCaseSensitive() }
+            FinderButton(Icon.Code.LETTER_W, Label.EXACT_WORD, state.isWord) { state.toggleWord() }
+            FinderButton(Icon.Code.ASTERISK, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() }
         }
     }
 
@@ -430,12 +431,13 @@ object TextToolbar {
     }
 
     @Composable
-    private fun FinderButton(icon: Icon.Code, onClick: () -> Unit, isActive: Boolean = false) {
+    private fun FinderButton(icon: Icon.Code, title: String? = null, isActive: Boolean = false, onClick: () -> Unit) {
         Form.IconButton(
             icon = icon,
             onClick = onClick,
             modifier = Modifier.size(BUTTON_HEIGHT),
-            iconColor = if (isActive) Theme.colors.secondary else Theme.colors.icon
+            iconColor = if (isActive) Theme.colors.secondary else Theme.colors.icon,
+            tooltip = title?.let { Tooltip.Args(title) }
         )
     }
 
@@ -443,18 +445,19 @@ object TextToolbar {
     private fun ReplacerButtons(state: State) {
         Row(Modifier.height(BUTTON_HEIGHT)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplacerButton(Label.REPLACE) { state.replaceCurrent() }
+            ReplacerButton(Label.REPLACE, Label.REPLACE_NEXT_OCCURRENCE) { state.replaceCurrent() }
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplacerButton(Label.REPLACE_ALL) { state.replaceAll() }
+            ReplacerButton(Label.REPLACE_ALL, Label.REPLACE_ALL_OCCURRENCES) { state.replaceAll() }
         }
     }
 
     @Composable
-    private fun ReplacerButton(text: String, onClick: () -> Unit) {
+    private fun ReplacerButton(text: String, title: String, onClick: () -> Unit) {
         Form.TextButton(
             text = text,
             onClick = onClick,
-            modifier = Modifier.height(BUTTON_HEIGHT)
+            modifier = Modifier.height(BUTTON_HEIGHT),
+            tooltip = Tooltip.Args(title)
         )
     }
 }

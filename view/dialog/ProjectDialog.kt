@@ -52,6 +52,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import java.awt.FileDialog
 import javax.swing.JFileChooser
 import kotlin.io.path.Path
@@ -167,7 +168,8 @@ object ProjectDialog {
                 ComponentSpacer()
                 Form.IconButton(
                     icon = Icon.Code.FOLDER_OPEN,
-                    onClick = { launchDirectorySelector(state, window, title) }
+                    onClick = { launchDirectorySelector(state, window, title) },
+                    tooltip = Tooltip.Args(Label.OPEN_PROJECT_DIRECTORY)
                 )
             }
         }
