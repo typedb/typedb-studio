@@ -20,6 +20,8 @@ package com.vaticle.typedb.studio.view.common
 
 object Sentence {
 
+    private const val BUTTON_ENABLED_WHEN_CONNECTED =
+        "This button will only be enabled when a connection has been established to a TypeDB server."
     private const val BUTTON_ENABLED_WHEN_SESSION_OPEN =
         "This button will only be enabled when there is an open session to a database."
     private const val BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED =
@@ -29,8 +31,6 @@ object Sentence {
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'read'."
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
-    const val BUTTON_ENABLED_WHEN_CONNECTED =
-        "This button will only be enabled when a connection has been established to a TypeDB server."
     const val BUTTON_ENABLED_WHEN_RUNNABLE_PAGE =
         "This button will only be enabled when a runnable page is opened and selected, such as a TypeQL file."
     const val CANNOT_BE_UNDONE =
@@ -73,8 +73,8 @@ object Sentence {
         "Reopening a transaction will close the current transaction (deleting any unsaved writes you've made through it), " +
                 "and open a new transaction at the latest snapshot of the database. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
     const val ROLLBACK_TRANSACTION_DESCRIPTION =
-        "Rolling back a transaction will delete all unsaved writes that you've made to the database through the transaction, " +
-                "while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
+        "Rolling back a transaction will delete all unsaved/uncommitted writes that you've made to the database through " +
+                "the transaction, while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
     const val SAVE_CURRENT_FILE_DESCRIPTION =
         "By default, edited text files are automatically saved, except for untitled files that have not been saved. " +
                 "This button will only be enabled if the currently opened file needs saving."
@@ -86,6 +86,8 @@ object Sentence {
                 "and transaction manually for each query you want to perform on the toolbar. In 'script' mode, you can " +
                 "declare these parameters in the script, and perform queries against the TypeDB server automatically " +
                 "through the script. " + BUTTON_ENABLED_WHEN_CONNECTED
+    const val SELECT_DATABASE_DESCRIPTION =
+        "Selecting a database will open a session onto that database on the TypeDB server. $BUTTON_ENABLED_WHEN_CONNECTED" // TODO: interactive
     const val SELECT_DIRECTORY_FOR_PROJECT =
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =

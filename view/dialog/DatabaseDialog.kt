@@ -74,7 +74,7 @@ object DatabaseDialog {
             modifier = modifier,
             tooltip = Tooltip.Args(
                 title = Label.SELECT_DATABASE,
-                description = Sentence.BUTTON_ENABLED_WHEN_CONNECTED
+                description = Sentence.SELECT_DATABASE_DESCRIPTION
             )
         )
     }
