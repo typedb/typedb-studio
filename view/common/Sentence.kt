@@ -87,6 +87,12 @@ object Sentence {
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =
         "Select the parent directory in which %s will be moved under."
+    const val SESSION_DATA_DESCRIPTION =
+        "Data sessions allow you to only modify data in the database, and not the schema. This means inserting and deleting data. " +
+                "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val SESSION_SCHEMA_DESCRIPTION =
+        "Schema sessions allow you to only modify the schema of the database, and not data. This means defining and undefining schema. " +
+                "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TRANSACTION_READ_DESCRIPTION =
         "Read transactions allow you to only read data from the database, and not write. For both data and schema sessions, " +
                 "this means reading any data and schema, but not inserting, deleting, defining, or undefining. " +
@@ -97,4 +103,5 @@ object Sentence {
                 "undefining schema, in addition to matching. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TYPE_BROWSER_ONLY_INTERACTIVE =
         "The Type Browser only works in 'interactive' mode."
+
 }

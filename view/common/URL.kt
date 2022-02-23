@@ -22,15 +22,16 @@ import java.net.URL
 
 object URL {
 
-    val DOCS_COMMIT_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_INFERENCE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_INFERENCE_EXPLANATION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_INTERACTIVE_MODE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_READ_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_REOPEN_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
-    val DOCS_ROLLBACK_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
-    val DOCS_SCRIPT_MODE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_SNAPSHOT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_WRITE_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-
+    val DOCS_ENABLE_INFERENCE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_ENABLE_INFERENCE_EXPLANATION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_ENABLE_SNAPSHOT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_MODE_INTERACTIVE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_MODE_SCRIPT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_SESSION_DATA = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_SESSION_SCHEMA = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_COMMIT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_READ = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_REOPEN = URL("https://docs.vaticle.com") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_ROLLBACK = URL("https://docs.vaticle.com") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_WRITE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
 }

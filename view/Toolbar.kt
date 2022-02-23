@@ -176,13 +176,23 @@ object Toolbar {
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == schema,
-                    enabled = enabled && GlobalState.connection.hasSession
+                    enabled = enabled && GlobalState.connection.hasSession,
+                    tooltip = Tooltip.Args(
+                        title = Label.SCHEMA_SESSION,
+                        description = Sentence.SESSION_SCHEMA_DESCRIPTION,
+                        url = URL.DOCS_SESSION_SCHEMA
+                    )
                 )
                 ToggleButton(
                     text = data.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == data,
-                    enabled = enabled && GlobalState.connection.hasSession
+                    enabled = enabled && GlobalState.connection.hasSession,
+                    tooltip = Tooltip.Args(
+                        title = Label.DATA_SESSION,
+                        description = Sentence.SESSION_DATA_DESCRIPTION,
+                        url = URL.DOCS_SESSION_DATA
+                    )
                 )
             }
         }
@@ -200,7 +210,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.WRITE_TRANSACTION,
                         description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
-                        url = URL.DOCS_WRITE_TRANSACTION
+                        url = URL.DOCS_TRANSACTION_WRITE
                     )
                 )
                 ToggleButton(
@@ -211,7 +221,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.READ_TRANSACTION,
                         description = Sentence.TRANSACTION_READ_DESCRIPTION,
-                        url = URL.DOCS_READ_TRANSACTION
+                        url = URL.DOCS_TRANSACTION_READ
                     )
                 )
             }
@@ -228,7 +238,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_SNAPSHOT,
                         description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                        url = URL.DOCS_SNAPSHOT
+                        url = URL.DOCS_ENABLE_SNAPSHOT
                     )
                 )
                 ToggleButton(
@@ -239,7 +249,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE,
                         description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                        url = URL.DOCS_INFERENCE
+                        url = URL.DOCS_ENABLE_INFERENCE
                     )
                 )
                 ToggleButton(
@@ -250,7 +260,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE_EXPLANATION,
                         description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                        url = URL.DOCS_INFERENCE_EXPLANATION,
+                        url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
                     )
                 )
             }
@@ -284,7 +294,7 @@ object Toolbar {
                 tooltip = Tooltip.Args(
                     title = Label.REOPEN_TRANSACTION,
                     description = Sentence.REOPEN_TRANSACTION_DESCRIPTION,
-                    url = URL.DOCS_REOPEN_TRANSACTION,
+                    url = URL.DOCS_TRANSACTION_REOPEN,
                 )
             )
         }
@@ -299,7 +309,7 @@ object Toolbar {
                 tooltip = Tooltip.Args(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.ROLLBACK_TRANSACTION_DESCRIPTION,
-                    url = URL.DOCS_ROLLBACK_TRANSACTION,
+                    url = URL.DOCS_TRANSACTION_ROLLBACK,
                 )
             )
         }
@@ -314,7 +324,7 @@ object Toolbar {
                 tooltip = Tooltip.Args(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.COMMIT_TRANSACTION_DESCRIPTION,
-                    url = URL.DOCS_COMMIT_TRANSACTION
+                    url = URL.DOCS_TRANSACTION_COMMIT
                 )
             )
         }
@@ -396,7 +406,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.INTERACTIVE_MODE,
                         description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
-                        url = URL.DOCS_INTERACTIVE_MODE,
+                        url = URL.DOCS_MODE_INTERACTIVE,
                     )
                 )
                 ToggleButton(
@@ -407,7 +417,7 @@ object Toolbar {
                     tooltip = Tooltip.Args(
                         title = Label.SCRIPT_MODE,
                         description = Sentence.SCRIPT_MODE_DESCRIPTION,
-                        url = URL.DOCS_SCRIPT_MODE,
+                        url = URL.DOCS_MODE_SCRIPT,
                     )
                 )
             }
