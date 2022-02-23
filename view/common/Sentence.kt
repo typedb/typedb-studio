@@ -87,7 +87,14 @@ object Sentence {
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =
         "Select the parent directory in which %s will be moved under."
+    const val TRANSACTION_READ_DESCRIPTION =
+        "Read transactions allow you to only read data from the database, and not write. For both data and schema sessions, " +
+                "this means reading any data and schema, but not inserting, deleting, defining, or undefining. " +
+                BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val TRANSACTION_WRITE_DESCRIPTION =
+        "Write transactions allow you to write data onto the database, in addition to reading. For data sessions, this " +
+                "means inserting and deleting data, in addition to matching. For schema sessions, this means defining and " +
+                "undefining schema, in addition to matching. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TYPE_BROWSER_ONLY_INTERACTIVE =
         "The Type Browser only works in 'interactive' mode."
-
 }

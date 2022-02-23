@@ -196,13 +196,23 @@ object Toolbar {
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == write,
-                    enabled = enabled && GlobalState.connection.hasSession
+                    enabled = enabled && GlobalState.connection.hasSession,
+                    tooltip = Tooltip.Args(
+                        title = Label.WRITE_TRANSACTION,
+                        description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
+                        url = URL.DOCS_WRITE_TRANSACTION
+                    )
                 )
                 ToggleButton(
                     text = read.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == read,
-                    enabled = enabled && GlobalState.connection.hasSession
+                    enabled = enabled && GlobalState.connection.hasSession,
+                    tooltip = Tooltip.Args(
+                        title = Label.READ_TRANSACTION,
+                        description = Sentence.TRANSACTION_READ_DESCRIPTION,
+                        url = URL.DOCS_READ_TRANSACTION
+                    )
                 )
             }
         }

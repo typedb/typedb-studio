@@ -70,7 +70,7 @@ object Tooltip {
 
     @OptIn(ExperimentalTime::class)
     private val TOOLTIP_DELAY = Duration.Companion.milliseconds(800)
-    private val TOOLTIP_WIDTH = 240.dp
+    private val TOOLTIP_WIDTH = 250.dp
     private val TOOLTIP_OFFSET = 24.dp
     private val TOOLTIP_SPACE = 8.dp
 

@@ -26,9 +26,11 @@ object URL {
     val DOCS_INFERENCE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_INFERENCE_EXPLANATION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_INTERACTIVE_MODE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_READ_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_REOPEN_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
     val DOCS_ROLLBACK_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
     val DOCS_SCRIPT_MODE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_SNAPSHOT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_WRITE_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
 
 }

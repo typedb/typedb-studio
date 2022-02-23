@@ -73,6 +73,7 @@ object Label {
     const val QUERY = "Query"
     const val READ_MORE = "Read More"
     const val READ_ONLY = "Read Only"
+    const val READ_TRANSACTION = "Read Transaction"
     const val RENAME = "Rename"
     const val RENAME_DIRECTORY = "Rename Directory"
     const val RENAME_FILE = "Rename File"
@@ -105,4 +106,5 @@ object Label {
     const val UNTITLED = "Untitled"
     const val USERNAME = "Username"
     const val USERS = "Users"
+    const val WRITE_TRANSACTION = "Write Transaction"
 }
