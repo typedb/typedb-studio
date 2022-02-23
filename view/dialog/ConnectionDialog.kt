@@ -21,14 +21,16 @@ package com.vaticle.typedb.studio.view.dialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -140,15 +142,17 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun AddressFormField() {
+        val focusReq = FocusRequester()
         Field(label = Label.ADDRESS) {
             TextInput(
                 value = ConnectServerForm.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { ConnectServerForm.address = it },
                 enabled = GlobalState.connection.isDisconnected,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize().focusRequester(focusReq)
             )
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
