@@ -20,11 +20,15 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +52,7 @@ import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.BORDER_WIDTH
 import com.vaticle.typedb.studio.view.common.component.Form.Text
+import com.vaticle.typedb.studio.view.common.component.Form.TextClickable
 import com.vaticle.typedb.studio.view.common.component.Form.TextURL
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
@@ -65,7 +70,7 @@ object Tooltip {
 
     @OptIn(ExperimentalTime::class)
     private val TOOLTIP_DELAY = Duration.Companion.milliseconds(800)
-    private val TOOLTIP_WIDTH = 320.dp
+    private val TOOLTIP_WIDTH = 240.dp
     private val TOOLTIP_OFFSET = 24.dp
     private val TOOLTIP_SPACE = 8.dp
 
@@ -125,6 +130,7 @@ object Tooltip {
     @Composable
     fun Popup(state: State) {
         if (state.isOpen) {
+            var showAll by remember { mutableStateOf(false) }
             val density = LocalDensity.current.density
             var height by remember { mutableStateOf(0.dp) }
             val hasSpaceBelow = MouseInfo.getPointerInfo().location.y < LocalWindow.current!!.height - height.value
@@ -136,7 +142,7 @@ object Tooltip {
                 onKeyEvent = { state.onKeyEvent(it) }
             ) {
                 Box(
-                    Modifier.widthIn(max = TOOLTIP_WIDTH)
+                    Modifier.width(TOOLTIP_WIDTH)
                         .background(color = Theme.colors.surface)
                         .border(BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .onSizeChanged { height = toDP(it.width, density) }
@@ -145,9 +151,14 @@ object Tooltip {
                             onExit = { state.mayHideOnTooltipExit(); false },
                         )
                 ) {
-                    Column(Modifier.padding(TOOLTIP_SPACE)) {
-                        Text(value = state.args.title, softWrap = true)
-                        if (state.args.description != null || state.args.url != null) {
+                    Column(Modifier.fillMaxWidth().padding(TOOLTIP_SPACE)) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                            Text(value = state.args.title, softWrap = true)
+                            if (!showAll && (state.args.description != null || state.args.url != null)) {
+                                TextClickable(Label.READ_MORE) { showAll = true }
+                            }
+                        }
+                        if (showAll) {
                             Spacer(Modifier.height(TOOLTIP_SPACE))
                             Separator.Horizontal()
                             state.args.description?.let {

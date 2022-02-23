@@ -21,10 +21,10 @@ package com.vaticle.typedb.studio.view.common
 object Sentence {
 
     private const val BUTTON_ENABLED_ON_WRITE_TRANSACTION =
-        "This button will only be enabled when there is an open session to a database, and transaction type is 'write'."
+        "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
     private const val BUTTON_ENABLED_ON_SNAPSHOT =
         "This button will only be enabled when a transaction is kept alive on a specific 'snapshot' -- " +
-                "which could happen by enabling 'snapshot' on a 'read' transaction, or transaction type is 'write'."
+                "which could happen by enabling 'snapshot' on a 'read' transaction, or the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     const val CANNOT_BE_UNDONE =

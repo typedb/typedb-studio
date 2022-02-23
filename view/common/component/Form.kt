@@ -205,15 +205,24 @@ object Form {
         )
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun TextURL(url: URL, text: String? = null) {
         val uriHandler = LocalUriHandler.current
+        TextClickable(
+            text = text ?: url.toString(),
+            onClick = { uriHandler.openUri(url.toString()) }
+        )
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun TextClickable(text: String, onClick: (Int) -> Unit) {
         ClickableText(
-            text = AnnotatedString(text ?: url.toString()),
+            text = AnnotatedString(text),
             modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
-            style = Theme.typography.body1.copy(color = Theme.colors.secondary)
-        ) { uriHandler.openUri(url.toString()) }
+            style = Theme.typography.body1.copy(color = Theme.colors.secondary),
+            onClick = onClick
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

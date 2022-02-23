@@ -68,6 +68,7 @@ object Label {
     const val PROJECT = "Project"
     const val PROJECT_BROWSER = "Project Browser"
     const val QUERY = "Query"
+    const val READ_MORE = "Read More"
     const val READ_ONLY = "Read Only"
     const val RENAME = "Rename"
     const val RENAME_DIRECTORY = "Rename Directory"
