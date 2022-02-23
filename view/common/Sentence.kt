@@ -21,10 +21,10 @@ package com.vaticle.typedb.studio.view.common
 object Sentence {
 
     private const val BUTTON_ENABLED_ON_WRITE_TRANSACTION =
-        "This button will only be enabled when there is an open session to a database, and a 'write' transaction type."
+        "This button will only be enabled when there is an open session to a database, and transaction type is 'write'."
     private const val BUTTON_ENABLED_ON_SNAPSHOT =
         "This button will only be enabled when a transaction is kept alive on a specific 'snapshot' -- " +
-                "which could happen by enabling 'snapshot' on a 'read' transaction, or when on a 'write' transaction."
+                "which could happen by enabling 'snapshot' on a 'read' transaction, or transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     const val CANNOT_BE_UNDONE =
@@ -40,6 +40,12 @@ object Sentence {
         "Create a new directory under %s."
     const val CREATE_FILE =
         "Create a new file under %s."
+    const val INTERACTIVE_MODE_DESCRIPTION =
+        "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
+                "TypeDB server interactively. In 'script' mode, you have to declare the user, database, session, and transaction " +
+                "that you're connecting in each script you run on TypeDB Server. In 'interactive' mode, you can set on these " +
+                "parameters in the toolbar, and perform queries against the TypeDB server with configured parameters interactively. " +
+                BUTTON_ENABLED_WHEN_CONNECTED
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
     const val RENAME_FILE =
@@ -52,6 +58,12 @@ object Sentence {
                 "while keeping the same transaction alive. " + BUTTON_ENABLED_ON_WRITE_TRANSACTION
     const val SAVE_OR_DELETE_FILE =
         "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
+    const val SCRIPT_MODE_DESCRIPTION =
+        "Running TypeDB Studio in 'script' mode (as opposed to 'interactive' mode), means that you can an end-to-end workflow " +
+                "on TypeDB server through a script. In 'interactive' mode, you have to configure the user, database, session, " +
+                "and transaction manually for each query you want to perform on the toolbar. In 'script' mode, you can declare these " +
+                "parameters in the script, and perform queries against the TypeDB server automatically through the script. " +
+                BUTTON_ENABLED_WHEN_CONNECTED
     const val SELECT_DIRECTORY_FOR_PROJECT =
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =

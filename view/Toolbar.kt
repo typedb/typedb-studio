@@ -108,12 +108,19 @@ object Toolbar {
     }
 
     @Composable
-    private fun ToggleButton(text: String, onClick: () -> Unit, isActive: Boolean, enabled: Boolean) {
+    private fun ToggleButton(
+        text: String,
+        onClick: () -> Unit,
+        isActive: Boolean,
+        enabled: Boolean,
+        tooltip: Tooltip.Args? = null
+    ) {
         TextButton(
             text = text,
             onClick = onClick,
             textColor = if (isActive) Theme.colors.secondary else Theme.colors.onPrimary,
-            enabled = enabled
+            enabled = enabled,
+            tooltip = tooltip
         )
     }
 
@@ -342,13 +349,23 @@ object Toolbar {
                     text = interactive.name.lowercase(),
                     onClick = { GlobalState.connection.current?.mode = interactive },
                     isActive = GlobalState.connection.isInteractiveMode,
-                    enabled = GlobalState.connection.isConnected
+                    enabled = GlobalState.connection.isConnected,
+                    tooltip = Tooltip.Args(
+                        title = Label.INTERACTIVE_MODE,
+                        description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
+                        url = URL.DOCS_INTERACTIVE_MODE,
+                    )
                 )
                 ToggleButton(
                     text = script.name.lowercase(),
                     onClick = { GlobalState.connection.current?.mode = script },
                     isActive = GlobalState.connection.isScriptMode,
-                    enabled = GlobalState.connection.isConnected
+                    enabled = GlobalState.connection.isConnected,
+                    tooltip = Tooltip.Args(
+                        title = Label.SCRIPT_MODE,
+                        description = Sentence.SCRIPT_MODE_DESCRIPTION,
+                        url = URL.DOCS_SCRIPT_MODE,
+                    )
                 )
             }
         }
