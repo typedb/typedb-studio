@@ -97,6 +97,10 @@ object Tooltip {
             }
         }
 
+        internal fun hideOnTargetHover() {
+            mouseHoverTarget.set(false)
+        }
+
         internal fun mayHideOnTooltipExit() {
             mouseHoverTooltip.set(false)
             delayHide()

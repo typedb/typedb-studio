@@ -322,7 +322,7 @@ object Form {
                 contentAlignment = Alignment.Center,
                 modifier = modifier
                     .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
-                    .clickable(enabled = enabled) { onClick() }
+                    .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
                         onEnter = { tooltipState?.mayShowOnTargetHover(); false },
