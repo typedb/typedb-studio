@@ -75,6 +75,9 @@ object Sentence {
     const val ROLLBACK_TRANSACTION_DESCRIPTION =
         "Rolling back a transaction will delete all unsaved writes that you've made to the database through the transaction, " +
                 "while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
+    const val SAVE_FILE_DESCRIPTION =
+        "By default, edited text files are automatically saved, except for untitled files that have not been saved. " +
+                "This button will only be enabled if there the opened file needs saving."
     const val SAVE_OR_DELETE_FILE =
         "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
     const val SCRIPT_MODE_DESCRIPTION =

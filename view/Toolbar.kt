@@ -138,7 +138,9 @@ object Toolbar {
         private fun OpenProjectButton() {
             ToolbarIconButton(
                 icon = Icon.Code.FOLDER_OPEN,
-                onClick = { GlobalState.project.openProjectDialog.toggle() })
+                onClick = { GlobalState.project.openProjectDialog.toggle() },
+                tooltip = Tooltip.Args(title = Label.OPEN_PROJECT)
+            )
         }
 
         @Composable
@@ -146,7 +148,11 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
                 onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
-                enabled = GlobalState.page.selectedPage?.isUnsaved == true
+                enabled = GlobalState.page.selectedPage?.isUnsaved == true,
+                tooltip = Tooltip.Args(
+                    title = Label.SAVE_FILE,
+                    description = Sentence.SAVE_FILE_DESCRIPTION
+                )
             )
         }
     }
