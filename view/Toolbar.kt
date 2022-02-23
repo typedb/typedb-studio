@@ -214,19 +214,34 @@ object Toolbar {
                     text = Label.SNAPSHOT.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
                     isActive = enabled && GlobalState.connection.current?.config?.snapshot ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.snapshotEnabled ?: false
+                    enabled = enabled && GlobalState.connection.current?.config?.snapshotEnabled ?: false,
+                    tooltip = Tooltip.Args(
+                        title = Label.ENABLE_SNAPSHOT,
+                        description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
+                        url = URL.DOCS_SNAPSHOT
+                    )
                 )
                 ToggleButton(
                     text = Label.INFER.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleInfer() },
                     isActive = enabled && GlobalState.connection.current?.config?.infer ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.inferEnabled ?: false
+                    enabled = enabled && GlobalState.connection.current?.config?.inferEnabled ?: false,
+                    tooltip = Tooltip.Args(
+                        title = Label.ENABLE_INFERENCE,
+                        description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
+                        url = URL.DOCS_INFERENCE
+                    )
                 )
                 ToggleButton(
                     text = Label.EXPLAIN.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleExplain() },
                     isActive = enabled && GlobalState.connection.current?.config?.explain ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.explainEnabled ?: false
+                    enabled = enabled && GlobalState.connection.current?.config?.explainEnabled ?: false,
+                    tooltip = Tooltip.Args(
+                        title = Label.ENABLE_INFERENCE_EXPLANATION,
+                        description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
+                        url = URL.DOCS_INFERENCE_EXPLANATION,
+                    )
                 )
             }
         }
