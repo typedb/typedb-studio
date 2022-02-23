@@ -308,12 +308,30 @@ object Toolbar {
 
         @Composable
         private fun PlayButton() {
-            ToolbarIconButton(icon = Icon.Code.PLAY, color = Theme.colors.secondary, onClick = {})
+            ToolbarIconButton(
+                icon = Icon.Code.PLAY,
+                color = Theme.colors.secondary,
+                onClick = {}, // TODO
+                enabled = GlobalState.page.selectedPage?.isRunnable == true,
+                tooltip = Tooltip.Args(
+                    title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
+                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE
+                )
+            )
         }
 
         @Composable
         private fun StopButton() {
-            ToolbarIconButton(icon = Icon.Code.STOP, color = Theme.colors.error, onClick = {})
+            ToolbarIconButton(
+                icon = Icon.Code.STOP,
+                color = Theme.colors.error,
+                onClick = {},
+                enabled = GlobalState.page.selectedPage?.isRunnable == true, // TODO: replace with isRunning() when ready
+                tooltip = Tooltip.Args(
+                    title = Label.STOP,
+                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE // TODO: replace once isRunning() is ready
+                )
+            )
         }
     }
 

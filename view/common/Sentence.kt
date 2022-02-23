@@ -27,6 +27,8 @@ object Sentence {
                 "which could happen by enabling 'snapshot' on a 'read' transaction, or the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
+    const val BUTTON_ENABLED_WHEN_RUNNABLE_PAGE =
+        "This button will only be enabled when a runnable page is opened and selected, such as a TypeQL file."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val COMMIT_TRANSACTION_DESCRIPTION =

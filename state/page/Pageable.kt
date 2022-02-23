@@ -25,6 +25,7 @@ interface Pageable {
     val isOpen: Boolean
     val isUnsaved: Boolean
     val isUnsavedFile: Boolean
+    val isRunnable: Boolean
     val onClosePage: (() -> Unit)?
 
     fun tryOpen(): Boolean

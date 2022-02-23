@@ -93,6 +93,7 @@ class File internal constructor(
     override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
+    override val isRunnable: Boolean = isTypeQL
     override val fullName: String = computeFullName(path, projectMgr)
     override var onClosePage: (() -> Unit)? by mutableStateOf(null)
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
