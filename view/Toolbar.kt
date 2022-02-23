@@ -66,7 +66,7 @@ object Toolbar {
             VerticalSeparator()
             InteractionSettings.Buttons()
             VerticalSeparator()
-            TxControl.Buttons()
+            TransactionControl.Buttons()
             VerticalSeparator()
             Run.Buttons()
             Spacer(Modifier.weight(1f))
@@ -225,7 +225,7 @@ object Toolbar {
         }
     }
 
-    object TxControl {
+    object TransactionControl {
 
         @Composable
         internal fun Buttons() {
@@ -248,7 +248,12 @@ object Toolbar {
                 icon = Icon.Code.ROTATE,
                 onClick = {},
                 color = Theme.colors.quinary,
-                enabled = enabled && isSnapshot && hasTransaction
+                enabled = enabled && isSnapshot && hasTransaction,
+                tooltip = Tooltip.Args(
+                    title = Label.REOPEN_TRANSACTION,
+                    description = Sentence.REOPEN_TRANSACTION_DESCRIPTION,
+                    url = URL.DOCS_REOPEN_TRANSACTION,
+                )
             )
         }
 
@@ -258,7 +263,12 @@ object Toolbar {
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
                 color = Theme.colors.quaternary2,
-                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false
+                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
+                tooltip = Tooltip.Args(
+                    title = Label.ROLLBACK_TRANSACTION,
+                    description = Sentence.ROLLBACK_TRANSACTION_DESCRIPTION,
+                    url = URL.DOCS_ROLLBACK_TRANSACTION,
+                )
             )
         }
 

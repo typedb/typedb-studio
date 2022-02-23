@@ -20,10 +20,16 @@ package com.vaticle.typedb.studio.view.common
 
 object Sentence {
 
+    private const val BUTTON_ENABLED_ON_WRITE_TRANSACTION =
+        "This button will only be enabled when there is an open session to a database, and a 'write' transaction type."
+    private const val BUTTON_ENABLED_ON_SNAPSHOT =
+        "This button will only be enabled when a transaction is kept alive on a specific 'snapshot' -- " +
+                "which could happen by enabling 'snapshot' on a 'read' transaction, or when on a 'write' transaction."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val COMMIT_TRANSACTION_DESCRIPTION =
-        "Committing the transaction will persist all unsaved writes that you've made to the database in the current transaction."
+        "Committing a transaction will persist all unsaved writes that you've made to the database through the transaction. " +
+                BUTTON_ENABLED_ON_WRITE_TRANSACTION
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content?"
     const val CONFIRM_FILE_DELETION =
@@ -36,6 +42,12 @@ object Sentence {
         "Rename the directory at %s."
     const val RENAME_FILE =
         "Rename the file at %s."
+    const val REOPEN_TRANSACTION_DESCRIPTION =
+        "Reopening a transaction will close the current transaction (deleting any unsaved writes you've made through it), " +
+                "and open a new transaction at the latest snapshot of the database. " + BUTTON_ENABLED_ON_SNAPSHOT
+    const val ROLLBACK_TRANSACTION_DESCRIPTION =
+        "Rolling back a transaction will delete all unsaved writes that you've made to the database through the transaction, " +
+                "while keeping the same transaction alive. " + BUTTON_ENABLED_ON_WRITE_TRANSACTION
     const val SAVE_OR_DELETE_FILE =
         "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
     const val SELECT_DIRECTORY_FOR_PROJECT =

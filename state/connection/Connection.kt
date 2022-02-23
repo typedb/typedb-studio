@@ -51,7 +51,7 @@ class Connection internal constructor(
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val hasWrites: Boolean get() = hasSession() // TODO: implement tx.hasUncommittedWrites
+    val hasWrites: Boolean get() = hasSession() && config.transactionType.isWrite // TODO: implement tx.hasUncommittedWrites
 
     private var databaseListRefreshedTime = System.currentTimeMillis()
 

@@ -23,4 +23,7 @@ import java.net.URL
 object URL {
 
     val DOCS_COMMIT_TRANSACTION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_REOPEN_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
+    val DOCS_ROLLBACK_TRANSACTION = URL("https://docs.vaticle.com") // TODO: provide accurate URL
+
 }
