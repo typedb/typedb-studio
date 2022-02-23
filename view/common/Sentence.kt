@@ -55,9 +55,9 @@ object Sentence {
                 "both enabled."
     const val ENABLE_SNAPSHOT_DESCRIPTION =
         "Enabling snapshot means that you will keep a transaction alive on a given snapshot of the data, " +
-                "until you either reopen or commit the transaction. Keeping the transaction alive on a given snapshot " +
-                "the default behaviour when you are in a 'write' transaction, but not in 'read'. Enabling snapshot in a " +
-                "'read' transaction allows you to query for explanation of inferred concept answers. " +
+                "until you either reopen or commit the transaction. In TypeDB Studio, keeping the transaction alive on a " +
+                "given snapshot is the de facto behaviour when you are in a 'write' transaction, but not in 'read'. " +
+                "Enabling snapshot in a 'read' transaction allows you to query for explanation of inferred concept answers. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val INTERACTIVE_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
