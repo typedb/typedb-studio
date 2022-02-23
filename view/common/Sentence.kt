@@ -25,6 +25,8 @@ object Sentence {
     private const val BUTTON_ENABLED_ON_SNAPSHOT =
         "This button will only be enabled when a transaction is kept alive on a specific 'snapshot' -- " +
                 "which could happen by enabling 'snapshot' on a 'read' transaction, or when on a 'write' transaction."
+    const val BUTTON_ENABLED_WHEN_CONNECTED =
+        "This button will only be enabled when a connection has been established to a TypeDB server."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val COMMIT_TRANSACTION_DESCRIPTION =

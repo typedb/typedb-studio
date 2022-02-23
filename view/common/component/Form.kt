@@ -526,6 +526,7 @@ object Form {
         placeholder: String = "",
         enabled: Boolean = true,
         modifier: Modifier = Modifier,
+        tooltip: Tooltip.Args? = null,
     ) {
 
         class DropdownState {
@@ -561,6 +562,7 @@ object Form {
                 textColor = Theme.colors.onPrimary,
                 trailingIcon = CARET_DOWN,
                 enabled = enabled,
+                tooltip = tooltip
             )
             DropdownMenu(
                 expanded = state.expanded,

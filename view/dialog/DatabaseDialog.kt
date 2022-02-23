@@ -31,7 +31,9 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 
 object DatabaseDialog {
 
@@ -69,7 +71,11 @@ object DatabaseDialog {
             onSelection = { GlobalState.connection.current?.openSession(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = GlobalState.connection.isInteractiveMode,
-            modifier = modifier
+            modifier = modifier,
+            tooltip = Tooltip.Args(
+                title = Label.SELECT_DATABASE,
+                description = Sentence.BUTTON_ENABLED_WHEN_CONNECTED
+            )
         )
     }
 }

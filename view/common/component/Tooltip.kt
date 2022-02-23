@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,8 +59,8 @@ object Tooltip {
 
     @OptIn(ExperimentalTime::class)
     private val TOOLTIP_DELAY = Duration.Companion.milliseconds(800)
-    private val TOOLTIP_WIDTH = 400.dp
-    private val TOOLTIP_OFFSET = 32.dp
+    private val TOOLTIP_WIDTH = 320.dp
+    private val TOOLTIP_OFFSET = 24.dp
     private val TOOLTIP_SPACE = 8.dp
 
     data class Args(val title: String, val description: String? = null, val url: URL? = null)
@@ -72,6 +73,11 @@ object Tooltip {
         private val mouseHoverTooltip = AtomicBoolean(false)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+        internal fun keepShowingOnTooltipHover() {
+            mouseHoverTooltip.set(true)
+            isOpen = true
+        }
+
         internal fun mayShowOnTargetHover() {
             mouseHoverTarget.set(true)
             coroutineScope.launch {
@@ -80,22 +86,21 @@ object Tooltip {
             }
         }
 
+        internal fun mayHideOnTooltipExit() {
+            mouseHoverTooltip.set(false)
+            delayHide()
+        }
+
         internal fun mayHideOnTargetExit() {
             mouseHoverTarget.set(false)
+            delayHide()
+        }
+
+        private fun delayHide() {
             coroutineScope.launch {
                 delay(TOOLTIP_DELAY)
                 if (!mouseHoverTarget.get() && !mouseHoverTooltip.get()) isOpen = false
             }
-        }
-
-        internal fun keepShowingOnTooltipHover() {
-            mouseHoverTooltip.set(true)
-            isOpen = true
-        }
-
-        internal fun mayHideOnTooltipExit() {
-            mouseHoverTooltip.set(false)
-            if (!mouseHoverTarget.get()) isOpen = false
         }
 
         @OptIn(ExperimentalComposeUiApi::class)
@@ -123,7 +128,7 @@ object Tooltip {
                 onKeyEvent = { state.onKeyEvent(it) }
             ) {
                 Box(
-                    Modifier.width(TOOLTIP_WIDTH).pointerMoveFilter(
+                    Modifier.widthIn(max = TOOLTIP_WIDTH).pointerMoveFilter(
                         onEnter = { state.keepShowingOnTooltipHover(); false },
                         onExit = { state.mayHideOnTooltipExit(); false },
                     )
