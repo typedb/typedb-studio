@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +42,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.view.browser.BrowserArea
+import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
@@ -109,35 +111,37 @@ object Studio {
             onCloseRequest = { onClose() },
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
-                Toolbar.Layout()
-                Separator.Horizontal()
-                Frame.Row(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(
-                        id = BrowserArea.javaClass.name,
-                        initSize = Either.first(BrowserArea.WIDTH),
-                        minSize = BrowserArea.MIN_WIDTH
-                    ) { BrowserArea.Layout(it) },
-                    Frame.Pane(
-                        id = PageArea.javaClass.name,
-                        initSize = Either.second(1f),
-                        minSize = PageArea.MIN_WIDTH
-                    ) { PageArea.Layout() }
-                )
-                Separator.Horizontal()
-                StatusBar.Layout()
+            CompositionLocalProvider(LocalWindow provides window) {
+                Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
+                    Toolbar.Layout()
+                    Separator.Horizontal()
+                    Frame.Row(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                        Frame.Pane(
+                            id = BrowserArea.javaClass.name,
+                            initSize = Either.first(BrowserArea.WIDTH),
+                            minSize = BrowserArea.MIN_WIDTH
+                        ) { BrowserArea.Layout(it) },
+                        Frame.Pane(
+                            id = PageArea.javaClass.name,
+                            initSize = Either.second(1f),
+                            minSize = PageArea.MIN_WIDTH
+                        ) { PageArea.Layout() }
+                    )
+                    Separator.Horizontal()
+                    StatusBar.Layout()
+                }
+                NotificationArea.Layout()
+                if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
+                if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
+                if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
+                if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
+                if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()
+                if (GlobalState.project.renameDirectoryDialog.isOpen) ProjectDialog.RenameDirectory()
+                if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
+                if (GlobalState.project.renameFileDialog.isOpen) ProjectDialog.RenameFile()
             }
-            NotificationArea.Layout()
-            if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
-            if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
-            if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
-            if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
-            if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()
-            if (GlobalState.project.renameDirectoryDialog.isOpen) ProjectDialog.RenameDirectory()
-            if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
-            if (GlobalState.project.renameFileDialog.isOpen) ProjectDialog.RenameFile()
         }
     }
 

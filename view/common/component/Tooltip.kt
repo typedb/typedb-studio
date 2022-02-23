@@ -25,11 +25,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -38,14 +38,20 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.BORDER_WIDTH
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextURL
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
@@ -119,37 +125,38 @@ object Tooltip {
     @Composable
     fun Popup(state: State) {
         if (state.isOpen) {
-            val colors = Theme.colors
-            val positionState = rememberCursorPositionProvider()
+            val density = LocalDensity.current.density
+            var height by remember { mutableStateOf(0.dp) }
+            val hasSpaceBelow = MouseInfo.getPointerInfo().location.y < LocalWindow.current!!.height - height.value
+            val offsetY = if (hasSpaceBelow) TOOLTIP_OFFSET else -TOOLTIP_OFFSET
             Popup(
                 focusable = true,
-                popupPositionProvider = positionState,
+                popupPositionProvider = rememberCursorPositionProvider(DpOffset(0.dp, offsetY)),
                 onDismissRequest = { state.isOpen = false },
                 onKeyEvent = { state.onKeyEvent(it) }
             ) {
                 Box(
-                    Modifier.widthIn(max = TOOLTIP_WIDTH).pointerMoveFilter(
-                        onEnter = { state.keepShowingOnTooltipHover(); false },
-                        onExit = { state.mayHideOnTooltipExit(); false },
-                    )
+                    Modifier.widthIn(max = TOOLTIP_WIDTH)
+                        .background(color = Theme.colors.surface)
+                        .border(BORDER_WIDTH, Theme.colors.border, RectangleShape)
+                        .onSizeChanged { height = toDP(it.width, density) }
+                        .pointerMoveFilter(
+                            onEnter = { state.keepShowingOnTooltipHover(); false },
+                            onExit = { state.mayHideOnTooltipExit(); false },
+                        )
                 ) {
-                    Box(
-                        Modifier.padding(vertical = TOOLTIP_OFFSET).background(colors.surface)
-                            .border(BORDER_WIDTH, colors.border, RectangleShape)
-                    ) {
-                        Column(Modifier.padding(TOOLTIP_SPACE)) {
-                            Text(value = state.args.title, softWrap = true)
-                            if (state.args.description != null || state.args.url != null) {
+                    Column(Modifier.padding(TOOLTIP_SPACE)) {
+                        Text(value = state.args.title, softWrap = true)
+                        if (state.args.description != null || state.args.url != null) {
+                            Spacer(Modifier.height(TOOLTIP_SPACE))
+                            Separator.Horizontal()
+                            state.args.description?.let {
                                 Spacer(Modifier.height(TOOLTIP_SPACE))
-                                Separator.Horizontal()
-                                state.args.description?.let {
-                                    Spacer(Modifier.height(TOOLTIP_SPACE))
-                                    Text(value = it, softWrap = true)
-                                }
-                                state.args.url?.let {
-                                    Spacer(Modifier.height(TOOLTIP_SPACE))
-                                    TextURL(it, text = Label.LEARN_MORE)
-                                }
+                                Text(value = it, softWrap = true)
+                            }
+                            state.args.url?.let {
+                                Spacer(Modifier.height(TOOLTIP_SPACE))
+                                TextURL(it, text = Label.LEARN_MORE)
                             }
                         }
                     }
