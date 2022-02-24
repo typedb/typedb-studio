@@ -64,7 +64,7 @@ object Studio {
     private val LOGGER = KotlinLogging.logger {}
 
     private fun getMainWindowTitle(): String {
-        val pageName = GlobalState.page.selectedPage?.fullName ?: GlobalState.project.current?.directory?.name ?: ""
+        val pageName = GlobalState.page.activePage?.fullName ?: GlobalState.project.current?.directory?.name ?: ""
         return Label.TYPEDB_STUDIO + " — " + pageName
     }
 

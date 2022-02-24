@@ -28,20 +28,20 @@ import mu.KotlinLogging
 class PageManager(val notification: NotificationManager) {
 
     val openedPages: MutableList<Pageable> = mutableStateListOf()
-    var selectedPage: Pageable? by mutableStateOf(null); private set
+    var activePage: Pageable? by mutableStateOf(null); private set
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    fun isSelected(page: Pageable): Boolean {
-        return selectedPage == page
+    fun isActive(page: Pageable): Boolean {
+        return activePage == page
     }
 
     fun select(page: Pageable) {
-        selectedPage?.stopWatcher()
-        selectedPage = page
-        selectedPage?.launchWatcher()
+        activePage?.stopWatcher()
+        activePage = page
+        activePage?.launchWatcher()
     }
 
     fun renameAndReopen(page: Pageable) {
@@ -64,31 +64,31 @@ class PageManager(val notification: NotificationManager) {
     }
 
     fun open(page: Pageable, index: Int) {
-        selectedPage?.stopWatcher()
+        activePage?.stopWatcher()
         if (page !in openedPages) {
             if (page.tryOpen()) openedPages.add(index, page)
             else return
         }
-        selectedPage = page
-        selectedPage?.launchWatcher()
-        selectedPage?.let { it.onClose { close(it) } }
+        activePage = page
+        activePage?.launchWatcher()
+        activePage?.let { it.onClose { close(it) } }
     }
 
     fun close(page: Pageable) {
         if (!openedPages.contains(page)) return
-        val selectedPageIndex = openedPages.indexOf(selectedPage)
+        val activePageIndex = openedPages.indexOf(activePage)
         val closingPageIndex = openedPages.indexOf(page)
         openedPages.remove(page)
         page.close()
         val newPageIndex = when {
-            selectedPageIndex > closingPageIndex -> selectedPageIndex - 1
+            activePageIndex > closingPageIndex -> activePageIndex - 1
             else -> closingPageIndex
         }.coerceIn(0, (openedPages.size - 1).coerceAtLeast(0))
-        selectedPage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
+        activePage = if (openedPages.isNotEmpty()) openedPages[newPageIndex] else null
     }
 
     fun closeAll() {
         openedPages.toList().forEach { it.close() }
-        selectedPage = null
+        activePage = null
     }
 }

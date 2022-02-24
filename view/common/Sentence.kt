@@ -32,7 +32,7 @@ object Sentence {
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_RUNNABLE_PAGE =
-        "This button will only be enabled when a session is opened to a database, and a runnable page is opened and selected, " +
+        "This button will only be enabled when a session is opened to a database, and a runnable page is opened and active, " +
                 "such as a TypeQL file."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."

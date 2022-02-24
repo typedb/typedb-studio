@@ -94,7 +94,7 @@ object PageArea {
         var tabsScrollTo: Dp? by mutableStateOf(null)
         var tabsRowMaxWidth by mutableStateOf(4096.dp)
         val cachedOpenedPages: MutableMap<Pageable, Page> = mutableMapOf()
-        var cachedSelectedPage: Pageable? by mutableStateOf(null)
+        var cachedActivePage: Pageable? by mutableStateOf(null)
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -104,16 +104,16 @@ object PageArea {
         private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
                 KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
-                KeyMapper.Command.CLOSE -> closeSelectedPage()
+                KeyMapper.Command.CLOSE -> closeActivePage()
                 else -> false
             }
         }
 
         fun initTab(page: Page, rawWidth: Int) {
-            if (GlobalState.page.selectedPage == cachedSelectedPage) return
+            if (GlobalState.page.activePage == cachedActivePage) return
             val newTabSize = toDP(rawWidth, density) + Separator.WEIGHT
             if (newTabSize != page.tabSize) page.tabSize = newTabSize
-            if (GlobalState.page.selectedPage == page.state) {
+            if (GlobalState.page.activePage == page.state) {
                 var start = 0.dp
                 var found = false
                 cachedOpenedPages.values.forEach { if (it != page && !found) start += it.tabSize else found = true }
@@ -121,7 +121,7 @@ object PageArea {
                 val scrollerPos = toDP(tabsScroller.value, density)
                 if (start + 5.dp < scrollerPos) tabsScrollTo = start
                 else if (end - 5.dp > scrollerPos + tabsRowMaxWidth) tabsScrollTo = end - tabsRowMaxWidth
-                cachedSelectedPage = GlobalState.page.selectedPage
+                cachedActivePage = GlobalState.page.activePage
             }
         }
 
@@ -135,13 +135,13 @@ object PageArea {
             return true
         }
 
-        private fun closeSelectedPage(): Boolean {
-            return GlobalState.page.selectedPage?.let { close(it) } ?: false
+        private fun closeActivePage(): Boolean {
+            return GlobalState.page.activePage?.let { close(it) } ?: false
         }
 
         internal fun removeCache(pageable: Pageable) {
             cachedOpenedPages.remove(pageable)
-            if (cachedSelectedPage == pageable) cachedSelectedPage = null
+            if (cachedActivePage == pageable) cachedActivePage = null
         }
 
         internal fun close(pageable: Pageable): Boolean {
@@ -204,7 +204,7 @@ object PageArea {
 
     @Composable
     private fun PageLayout(state: AreaState) {
-        GlobalState.page.selectedPage?.let { state.cachedOpenedPages[it]?.Layout() }
+        GlobalState.page.activePage?.let { state.cachedOpenedPages[it]?.Layout() }
     }
 
     @Composable
@@ -245,10 +245,10 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(state: AreaState, page: Page) {
-        val isSelected = GlobalState.page.isSelected(page.state)
+        val isActive = GlobalState.page.isActive(page.state)
         val contextMenu = remember { ContextMenu.State() }
-        val bgColor = if (isSelected) Theme.colors.primary else Theme.colors.background
-        val height = if (isSelected) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
+        val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
+        val height = if (isActive) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
         Box {
@@ -274,7 +274,7 @@ object PageArea {
                         rounded = false,
                     )
                 }
-                if (isSelected) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
+                if (isActive) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }
             Separator.Vertical()
         }

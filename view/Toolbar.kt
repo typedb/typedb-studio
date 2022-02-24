@@ -148,8 +148,8 @@ object Toolbar {
         private fun SaveButton() {
             ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
-                onClick = { GlobalState.page.saveAndReopen(GlobalState.page.selectedPage!!) },
-                enabled = GlobalState.page.selectedPage?.isUnsaved == true,
+                onClick = { GlobalState.page.saveAndReopen(GlobalState.page.activePage!!) },
+                enabled = GlobalState.page.activePage?.isUnsaved == true,
                 tooltip = Tooltip.Args(
                     title = Label.SAVE_CURRENT_FILE,
                     description = Sentence.SAVE_CURRENT_FILE_DESCRIPTION
@@ -373,7 +373,7 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = {}, // TODO
-                enabled = GlobalState.connection.hasSession && GlobalState.page.selectedPage?.isRunnable == true,
+                enabled = GlobalState.connection.hasSession && GlobalState.page.activePage?.isRunnable == true,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE
@@ -387,7 +387,7 @@ object Toolbar {
                 icon = Icon.Code.STOP,
                 color = Theme.colors.error,
                 onClick = {},
-                enabled = GlobalState.connection.hasSession && GlobalState.page.selectedPage?.isRunnable == true, // TODO: replace with isRunning() when ready
+                enabled = GlobalState.connection.hasSession && GlobalState.page.activePage?.isRunnable == true, // TODO: replace with isRunning() when ready
                 tooltip = Tooltip.Args(
                     title = Label.STOP,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE // TODO: replace once isRunning() is ready
