@@ -129,6 +129,7 @@ internal class InputTarget(
     private var mayDragSelectByChar: Boolean by mutableStateOf(false)
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
+    private var mayDragSelectByLineNumber: Boolean by mutableStateOf(false)
     private var selectionDragStart: Selection? by mutableStateOf(null)
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineNumberBorder: Float get() = textAreaRect.left - horPadding.value
@@ -166,31 +167,32 @@ internal class InputTarget(
         mayDragSelectByChar = false
         mayDragSelectByWord = false
         mayDragSelectByLine = false
+        mayDragSelectByLineNumber = false
         selectionDragStart = null
     }
 
-    internal fun mayUpdateDragSelection(x: Int, y: Int) {
-        if (mayDragSelectByChar) mayUpdateDragSelectionByChar(x, y)
-        else if (mayDragSelectByWord) mayUpdateDragSelectionByWord(x, y)
-        else if (mayDragSelectByLine) mayUpdateDragSelectionByLine(x, y)
+    internal fun mayDragSelect(x: Int, y: Int) {
+        if (mayDragSelectByChar) mayDragSelectByChar(x, y)
+        else if (mayDragSelectByWord) mayDragSelectByWord(x, y)
+        else if (mayDragSelectByLine) mayDragSelectByLine(x, y)
+        else if (mayDragSelectByLineNumber) mayDragSelectByLineNumber(x, y)
     }
 
-    private fun mayUpdateDragSelectionByChar(x: Int, y: Int) {
-        if (x < lineNumberBorder) {
-            val newCursor = createCursor(x, y + lineHeight.value.toInt())
-            updateCursor(newCursor, true)
-        } else {
-            val newCursor = createCursor(x, y)
-            if (newCursor != cursor) updateCursor(newCursor, true)
-        }
+    private fun mayDragSelectByChar(x: Int, y: Int) {
+        val newCursor = createCursor(x, y)
+        if (newCursor != cursor) updateCursor(newCursor, true)
     }
 
-    private fun mayUpdateDragSelectionByWord(x: Int, y: Int) {
+    private fun mayDragSelectByWord(x: Int, y: Int) {
         selectWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
     }
 
-    private fun mayUpdateDragSelectionByLine(x: Int, y: Int) {
+    private fun mayDragSelectByLine(x: Int, y: Int) {
         updateSelection(Selection.coverage(selectionDragStart!!, selectLine(createCursor(x, y))))
+    }
+
+    private fun mayDragSelectByLineNumber(x: Int, y: Int) {
+        updateCursor(createCursor(x, y + lineHeight.value.toInt()), true)
     }
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
@@ -209,7 +211,8 @@ internal class InputTarget(
     internal fun mayUpdateCursor(x: Int, y: Int, isSelecting: Boolean) {
         if (x <= textAreaRect.right) {
             updateCursor(createCursor(x, y), isSelecting, false)
-            mayDragSelectByChar = true
+            if (x > lineNumberBorder) mayDragSelectByChar = true
+            else mayDragSelectByLineNumber = true
         }
     }
 
