@@ -27,7 +27,6 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
-import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.COPY
@@ -207,7 +206,7 @@ internal class EventHandler(
 
     internal fun contextMenuFn(): List<List<ContextMenu.Item>> {
         val selection = target.selection
-        val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
+        val modKey = KeyMapper.CURRENT.modKey
         val hasClipboard = !clipboard.getText().isNullOrBlank()
         return listOf(
             listOf(

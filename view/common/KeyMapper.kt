@@ -30,6 +30,8 @@ import java.awt.event.KeyEvent.KEY_LOCATION_NUMPAD
 
 interface KeyMapper {
 
+    val modKey: String
+
     fun map(event: KeyEvent): Command?
 
     companion object {
@@ -212,6 +214,9 @@ interface KeyMapper {
     }
 
     object DefaultKeyMapper : KeyMapper {
+
+        override val modKey: String = Label.CTRL
+
         override fun map(event: KeyEvent): Command? {
             return when {
                 event.isShiftPressed && event.isCtrlPressed ->
@@ -246,6 +251,9 @@ interface KeyMapper {
     }
 
     object MacOSKeyMapper : KeyMapper {
+
+        override val modKey: String = Label.CMD
+
         override fun map(event: KeyEvent): Command? {
             return when {
                 event.isMetaPressed && event.isCtrlPressed ->
