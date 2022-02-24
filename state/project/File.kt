@@ -36,9 +36,9 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
@@ -81,9 +81,9 @@ class File internal constructor(
     private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
     private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
     private var onWatch: (() -> Unit)? by mutableStateOf(null)
-    private var beforeSave = AtomicReference<(() -> Unit)?>(null)
-    private var beforeClose = AtomicReference<(() -> Unit)?>(null)
-    private var onClose = AtomicReference<(() -> Unit)?>(null)
+    private var beforeSave = LinkedBlockingDeque<() -> Unit>()
+    private var beforeClose = LinkedBlockingDeque<() -> Unit>()
+    private var onClose = LinkedBlockingDeque<() -> Unit>()
     private var watchFileSystem = AtomicBoolean(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
@@ -222,27 +222,33 @@ class File internal constructor(
     }
 
     override fun beforeSave(function: () -> Unit) {
-        beforeSave.set(function)
+        beforeSave.push(function)
     }
 
     override fun beforeClose(function: () -> Unit) {
-        beforeClose.set(function)
+        beforeClose.push(function)
     }
 
     override fun onClose(function: () -> Unit) {
-        onClose.set(function)
+        onClose.push(function)
     }
 
     private fun execBeforeSave() {
-        beforeSave.getAndSet(null)?.let { it() }
+        execCallbacks(beforeSave)
     }
 
     override fun execBeforeClose() {
-        beforeClose.getAndSet(null)?.let { it() }
+        execCallbacks(beforeClose)
     }
 
     private fun execOnClose() {
-        onClose.getAndSet(null)?.let { it() }
+        execCallbacks(onClose)
+    }
+
+    private fun execCallbacks(callbacks: LinkedBlockingDeque<() -> Unit>) {
+        val functions = mutableListOf<() -> Unit>()
+        if (callbacks.isNotEmpty()) callbacks.drainTo(functions)
+        functions.forEach { it() }
     }
 
     override fun rename(onSuccess: ((Pageable) -> Unit)?) {

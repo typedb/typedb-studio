@@ -139,10 +139,15 @@ object PageArea {
             return GlobalState.page.selectedPage?.let { close(it) } ?: false
         }
 
+        internal fun removeCache(pageable: Pageable) {
+            cachedOpenedPages.remove(pageable)
+            if (cachedSelectedPage == pageable) cachedSelectedPage = null
+        }
+
         internal fun close(pageable: Pageable): Boolean {
             pageable.execBeforeClose()
             fun closeFn() {
-                cachedOpenedPages.remove(pageable)
+                removeCache(pageable)
                 GlobalState.page.close(pageable)
                 if (pageable.isUnsavedFile) pageable.delete()
             }
@@ -192,9 +197,14 @@ object PageArea {
         ) {
             TabArea(state)
             Separator.Horizontal()
-            GlobalState.page.selectedPage?.let { state.cachedOpenedPages[it]?.Layout() }
+            PageLayout(state)
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
+    }
+
+    @Composable
+    private fun PageLayout(state: AreaState) {
+        GlobalState.page.selectedPage?.let { state.cachedOpenedPages[it]?.Layout() }
     }
 
     @Composable
@@ -209,8 +219,11 @@ object PageArea {
                 Separator.Vertical()
             }
             Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(TAB_HEIGHT).horizontalScroll(scrollState)) {
-                GlobalState.page.openedPages.forEach {
-                    Tab(state, state.cachedOpenedPages.getOrPut(it) { Page.of(it) })
+                GlobalState.page.openedPages.forEach { pageState ->
+                    Tab(state, state.cachedOpenedPages.getOrPut(pageState) {
+                        pageState.onClose { state.removeCache(pageState) }
+                        Page.of(pageState)
+                    })
                 }
             }
             if (scrollState.maxValue > 0) {
