@@ -277,30 +277,30 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            val isQueryMode = GlobalState.connection.current?.isInteractiveMode ?: false
+            val isInteractiveMode = GlobalState.connection.current?.isInteractiveMode ?: false
             ToolbarSpace()
-            ReopenButton(isQueryMode)
+            CloseButton(isInteractiveMode)
             ToolbarSpace()
-            RollbackButton(isQueryMode)
+            RollbackButton(isInteractiveMode)
             ToolbarSpace()
-            CommitButton(isQueryMode)
+            CommitButton(isInteractiveMode)
             ToolbarSpace()
         }
 
         @Composable
-        private fun ReopenButton(enabled: Boolean) {
+        private fun CloseButton(enabled: Boolean) {
             val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
             val hasTransaction = GlobalState.connection.current?.hasSession() ?: false
             // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             ToolbarIconButton(
-                icon = Icon.Code.ROTATE,
+                icon = Icon.Code.XMARK,
                 onClick = {},
-                color = Theme.colors.quinary,
+                color = Theme.colors.error,
                 enabled = enabled && isSnapshot && hasTransaction,
                 tooltip = Tooltip.Args(
-                    title = Label.REOPEN_TRANSACTION,
-                    description = Sentence.REOPEN_TRANSACTION_DESCRIPTION,
-                    url = URL.DOCS_TRANSACTION_REOPEN,
+                    title = Label.CLOSE_TRANSACTION,
+                    description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
+                    url = URL.DOCS_TRANSACTION_CLOSE,
                 )
             )
         }
@@ -314,7 +314,7 @@ object Toolbar {
                 enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
                 tooltip = Tooltip.Args(
                     title = Label.ROLLBACK_TRANSACTION,
-                    description = Sentence.ROLLBACK_TRANSACTION_DESCRIPTION,
+                    description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
                     url = URL.DOCS_TRANSACTION_ROLLBACK,
                 )
             )
@@ -329,7 +329,7 @@ object Toolbar {
                 enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
                 tooltip = Tooltip.Args(
                     title = Label.COMMIT_TRANSACTION,
-                    description = Sentence.COMMIT_TRANSACTION_DESCRIPTION,
+                    description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
                     url = URL.DOCS_TRANSACTION_COMMIT
                 )
             )
@@ -353,7 +353,7 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = {}, // TODO
-                enabled = GlobalState.page.selectedPage?.isRunnable == true,
+                enabled = GlobalState.connection.hasSession && GlobalState.page.selectedPage?.isRunnable == true,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE
@@ -367,7 +367,7 @@ object Toolbar {
                 icon = Icon.Code.STOP,
                 color = Theme.colors.error,
                 onClick = {},
-                enabled = GlobalState.page.selectedPage?.isRunnable == true, // TODO: replace with isRunning() when ready
+                enabled = GlobalState.connection.hasSession && GlobalState.page.selectedPage?.isRunnable == true, // TODO: replace with isRunning() when ready
                 tooltip = Tooltip.Args(
                     title = Label.STOP,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE // TODO: replace once isRunning() is ready

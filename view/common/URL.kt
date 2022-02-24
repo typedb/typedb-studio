@@ -31,7 +31,7 @@ object URL {
     val DOCS_SESSION_SCHEMA = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_TRANSACTION_COMMIT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
     val DOCS_TRANSACTION_READ = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_REOPEN = URL("https://docs.vaticle.com") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_CLOSE = URL("https://docs.vaticle.com") // TODO: provide accurate URL
     val DOCS_TRANSACTION_ROLLBACK = URL("https://docs.vaticle.com") // TODO: provide accurate URL
     val DOCS_TRANSACTION_WRITE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
 }

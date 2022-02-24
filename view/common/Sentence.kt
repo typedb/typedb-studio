@@ -23,7 +23,7 @@ object Sentence {
     private const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     private const val BUTTON_ENABLED_WHEN_SESSION_OPEN =
-        "This button will only be enabled when there is an open session to a database."
+        "This button will only be enabled when a session is opened to a database."
     private const val BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED =
         "This button will only be enabled when a transaction is kept alive on a specific 'snapshot' -- " +
                 "which could happen by enabling 'snapshot' on a 'read' transaction, or the transaction type is 'write'."
@@ -32,12 +32,10 @@ object Sentence {
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_RUNNABLE_PAGE =
-        "This button will only be enabled when a runnable page is opened and selected, such as a TypeQL file."
+        "This button will only be enabled when a session is opened to a database, and a runnable page is opened and selected, " +
+                "such as a TypeQL file."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
-    const val COMMIT_TRANSACTION_DESCRIPTION =
-        "Committing a transaction will persist all unsaved writes that you've made to the database through the transaction. " +
-                BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content?"
     const val CONFIRM_FILE_DELETION =
@@ -58,6 +56,7 @@ object Sentence {
                 "until you either reopen or commit the transaction. In TypeDB Studio, keeping the transaction alive on a " +
                 "given snapshot is the de facto behaviour when you are in a 'write' transaction, but not in 'read'. " +
                 "Enabling snapshot in a 'read' transaction allows you to query for explanation of inferred concept answers. " +
+                "The transaction will be opened on the latest snapshot when the first query is ran. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val INTERACTIVE_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
@@ -69,12 +68,6 @@ object Sentence {
         "Rename the directory at %s."
     const val RENAME_FILE =
         "Rename the file at %s."
-    const val REOPEN_TRANSACTION_DESCRIPTION =
-        "Reopening a transaction will close the current transaction (deleting any unsaved writes you've made through it), " +
-                "and open a new transaction at the latest snapshot of the database. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
-    const val ROLLBACK_TRANSACTION_DESCRIPTION =
-        "Rolling back a transaction will delete all unsaved/uncommitted writes that you've made to the database through " +
-                "the transaction, while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
     const val SAVE_CURRENT_FILE_DESCRIPTION =
         "By default, edited text files are automatically saved, except for untitled files that have not been saved. " +
                 "This button will only be enabled if the currently opened file needs saving."
@@ -98,10 +91,19 @@ object Sentence {
     const val SESSION_SCHEMA_DESCRIPTION =
         "Schema sessions allow you to only modify the schema of the database, and not data. This means defining and undefining schema. " +
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val TRANSACTION_CLOSE_DESCRIPTION =
+        "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
+                "The next transaction will be opened at a newer and latest snapshot. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
+    const val TRANSACTION_COMMIT_DESCRIPTION =
+        "Committing a transaction will persist all unsaved writes that you've made to the database through the transaction. " +
+                BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
     const val TRANSACTION_READ_DESCRIPTION =
         "Read transactions allow you to only read data from the database, and not write. For both data and schema sessions, " +
                 "this means reading any data and schema, but not inserting, deleting, defining, or undefining. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val TRANSACTION_ROLLBACK_DESCRIPTION =
+        "Rolling back a transaction will delete all unsaved/uncommitted writes that you've made to the database through " +
+                "the transaction, while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
     const val TRANSACTION_WRITE_DESCRIPTION =
         "Write transactions allow you to write data onto the database, in addition to reading. For data sessions, this " +
                 "means inserting and deleting data, in addition to matching. For schema sessions, this means defining and " +

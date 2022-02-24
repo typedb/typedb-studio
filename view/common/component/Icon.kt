@@ -65,6 +65,7 @@ object Icon {
         CHEVRONS_LEFT(0xf323u),
         CHEVRONS_RIGHT(0xf324u),
         CHEVRONS_UP(0xf325u),
+        CIRCLE(0xf111u),
         COPY(0xf0c5u),
         CUT(0xf0c4u),
         DATABASE(0xf1c0u),
