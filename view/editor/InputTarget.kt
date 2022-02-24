@@ -171,27 +171,27 @@ internal class InputTarget(
         selectionDragStart = null
     }
 
-    internal fun mayDragSelect(x: Int, y: Int) {
-        if (mayDragSelectByChar) mayDragSelectByChar(x, y)
-        else if (mayDragSelectByWord) mayDragSelectByWord(x, y)
-        else if (mayDragSelectByLine) mayDragSelectByLine(x, y)
-        else if (mayDragSelectByLineNumber) mayDragSelectByLineNumber(x, y)
+    internal fun dragSelection(x: Int, y: Int) {
+        if (mayDragSelectByChar) dragSelectionByChar(x, y)
+        else if (mayDragSelectByWord) dragSelectionByWord(x, y)
+        else if (mayDragSelectByLine) dragSelectionByLine(x, y)
+        else if (mayDragSelectByLineNumber) dragSelectionByLineNumber(x, y)
     }
 
-    private fun mayDragSelectByChar(x: Int, y: Int) {
+    private fun dragSelectionByChar(x: Int, y: Int) {
         val newCursor = createCursor(x, y)
         if (newCursor != cursor) updateCursor(newCursor, true)
     }
 
-    private fun mayDragSelectByWord(x: Int, y: Int) {
+    private fun dragSelectionByWord(x: Int, y: Int) {
         selectWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
     }
 
-    private fun mayDragSelectByLine(x: Int, y: Int) {
+    private fun dragSelectionByLine(x: Int, y: Int) {
         updateSelection(Selection.coverage(selectionDragStart!!, selectLine(createCursor(x, y))))
     }
 
-    private fun mayDragSelectByLineNumber(x: Int, y: Int) {
+    private fun dragSelectionByLineNumber(x: Int, y: Int) {
         updateCursor(createCursor(x, y + lineHeight.value.toInt()), true)
     }
 
