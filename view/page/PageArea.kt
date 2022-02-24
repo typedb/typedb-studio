@@ -136,12 +136,12 @@ object PageArea {
         }
 
         private fun closeSelectedPage(): Boolean {
-            return GlobalState.page.selectedPage?.let { closePage(it) } ?: false
+            return GlobalState.page.selectedPage?.let { close(it) } ?: false
         }
 
-        internal fun closePage(pageable: Pageable): Boolean {
-            pageable.onClosePage?.let { it() }
-            fun close() {
+        internal fun close(pageable: Pageable): Boolean {
+            pageable.execBeforeClose()
+            fun closeFn() {
                 cachedOpenedPages.remove(pageable)
                 GlobalState.page.close(pageable)
                 if (pageable.isUnsavedFile) pageable.delete()
@@ -152,10 +152,10 @@ object PageArea {
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
                     cancelLabel = Label.DELETE,
-                    onCancel = { close() },
+                    onCancel = { closeFn() },
                     onConfirm = { pageable.save() },
                 )
-            } else close()
+            } else closeFn()
             return true
         }
 
@@ -167,7 +167,7 @@ object PageArea {
                     ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) {
                         pageMgr.saveAndReopen(page)
                     },
-                    ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { closePage(page) }
+                    ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { close(page) }
                 )
             )
         }
@@ -255,7 +255,7 @@ object PageArea {
                     Text(value = tabTitle(page))
                     IconButton(
                         icon = Icon.Code.XMARK,
-                        onClick = { state.closePage(page.state) },
+                        onClick = { state.close(page.state) },
                         modifier = Modifier.size(TAB_HEIGHT),
                         bgColor = Color.Transparent,
                         rounded = false,

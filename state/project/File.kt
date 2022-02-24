@@ -38,6 +38,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
@@ -80,8 +81,9 @@ class File internal constructor(
     private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
     private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
     private var onWatch: (() -> Unit)? by mutableStateOf(null)
-    private var onSave: (() -> Unit)? by mutableStateOf(null)
-    private var onClose: (() -> Unit)? by mutableStateOf(null)
+    private var beforeSave = AtomicReference<(() -> Unit)?>(null)
+    private var beforeClose = AtomicReference<(() -> Unit)?>(null)
+    private var onClose = AtomicReference<(() -> Unit)?>(null)
     private var watchFileSystem = AtomicBoolean(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
@@ -95,7 +97,6 @@ class File internal constructor(
     override val isWritable: Boolean get() = isWritableAtomic.get()
     override val isRunnable: Boolean = isTypeQL
     override val fullName: String = computeFullName(path, projectMgr)
-    override var onClosePage: (() -> Unit)? by mutableStateOf(null)
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
@@ -188,7 +189,7 @@ class File internal constructor(
         coroutineScope.launch {
             try {
                 do {
-                    if (!path.exists() || !path.isReadable()) onClose?.let { it() }
+                    if (!path.exists() || !path.isReadable()) close()
                     else {
                         var permissionChanged = false
                         if (isReadableAtomic.compareAndSet(!path.isReadable(), path.isReadable())) {
@@ -220,16 +221,28 @@ class File internal constructor(
         onDiskChangePermission = function
     }
 
-    override fun onSave(function: () -> Unit) {
-        onSave = function
+    override fun beforeSave(function: () -> Unit) {
+        beforeSave.set(function)
+    }
+
+    override fun beforeClose(function: () -> Unit) {
+        beforeClose.set(function)
     }
 
     override fun onClose(function: () -> Unit) {
-        onClose = function
+        onClose.set(function)
     }
 
-    override fun onClosePage(function: () -> Unit) {
-        onClosePage = function
+    private fun execBeforeSave() {
+        beforeSave.getAndSet(null)?.let { it() }
+    }
+
+    override fun execBeforeClose() {
+        beforeClose.getAndSet(null)?.let { it() }
+    }
+
+    private fun execOnClose() {
+        onClose.getAndSet(null)?.let { it() }
     }
 
     override fun rename(onSuccess: ((Pageable) -> Unit)?) {
@@ -248,7 +261,7 @@ class File internal constructor(
     }
 
     fun saveContent() {
-        onSave?.let { it() }
+        execBeforeSave()
         Files.write(path, content)
         lastModified.set(System.currentTimeMillis())
         hasChanges = false
@@ -260,8 +273,8 @@ class File internal constructor(
             onDiskChangeContent = null
             onDiskChangePermission = null
             onWatch = null
-            onClose?.let { it() }
-            onClose = null
+            execBeforeClose()
+            execOnClose()
         }
     }
 

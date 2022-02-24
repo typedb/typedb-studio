@@ -26,7 +26,6 @@ interface Pageable {
     val isUnsaved: Boolean
     val isUnsavedFile: Boolean
     val isRunnable: Boolean
-    val onClosePage: (() -> Unit)?
 
     fun tryOpen(): Boolean
 
@@ -36,11 +35,13 @@ interface Pageable {
 
     fun onWatch(function: () -> Unit)
 
-    fun onSave(function: () -> Unit)
+    fun beforeSave(function: () -> Unit)
+
+    fun beforeClose(function: () -> Unit)
 
     fun onClose(function: () -> Unit)
 
-    fun onClosePage(function: () -> Unit)
+    fun execBeforeClose()
 
     fun rename(onSuccess: ((Pageable) -> Unit)? = null)
 
