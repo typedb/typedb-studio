@@ -197,14 +197,10 @@ object PageArea {
         ) {
             TabArea(state)
             Separator.Horizontal()
-            PageLayout(state)
+            // TODO: figure why encapsulating the next line in a composable function breaks File.launchWatcher()
+            GlobalState.page.activePage?.let { state.cachedOpenedPages[it]?.Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
-    }
-
-    @Composable
-    private fun PageLayout(state: AreaState) {
-        GlobalState.page.activePage?.let { state.cachedOpenedPages[it]?.Layout() }
     }
 
     @Composable
