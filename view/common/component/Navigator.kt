@@ -519,7 +519,7 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
-        if (item.isExpandable) Form.RawClickableIcon(
+        if (item.isExpandable) Form.RawIconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
             modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {

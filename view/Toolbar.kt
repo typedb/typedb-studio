@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
+import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -279,12 +280,31 @@ object Toolbar {
         internal fun Buttons() {
             val isInteractiveMode = GlobalState.connection.current?.isInteractiveMode ?: false
             ToolbarSpace()
+            StatusIndicator(isInteractiveMode)
+            ToolbarSpace()
             CloseButton(isInteractiveMode)
             ToolbarSpace()
             RollbackButton(isInteractiveMode)
             ToolbarSpace()
             CommitButton(isInteractiveMode)
             ToolbarSpace()
+        }
+
+        @Composable
+        private fun StatusIndicator(enabled: Boolean) {
+            val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
+            val hasTransaction = GlobalState.connection.current?.hasSession() ?: false
+            // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
+            RawIconButton(
+                icon = Icon.Code.CIRCLE,
+                modifier = Modifier.size(BUTTON_HEIGHT),
+                iconColor = if (enabled && isSnapshot && hasTransaction) Theme.colors.secondary else Theme.colors.icon,
+                enabled = enabled && isSnapshot,
+                tooltip = Tooltip.Args(
+                    title = Label.TRANSACTION_STATUS,
+                    description = Sentence.TRANSACTION_STATUS_DESCRIPTION
+                )
+            )
         }
 
         @Composable

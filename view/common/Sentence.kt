@@ -104,6 +104,10 @@ object Sentence {
     const val TRANSACTION_ROLLBACK_DESCRIPTION =
         "Rolling back a transaction will delete all unsaved/uncommitted writes that you've made to the database through " +
                 "the transaction, while keeping the same transaction alive. " + BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE
+    const val TRANSACTION_STATUS_DESCRIPTION =
+        "The transaction status indicates whether a transaction is currently opened (when it lights up). In a read transaction, " +
+                "a transaction will be kept open if 'snapshot' is enabled. In a write transaction, a transaction is always " +
+                "be kept open until you close or commit the transaction."
     const val TRANSACTION_WRITE_DESCRIPTION =
         "Write transactions allow you to write data onto the database, in addition to reading. For data sessions, this " +
                 "means inserting and deleting data, in addition to matching. For schema sessions, this means defining and " +

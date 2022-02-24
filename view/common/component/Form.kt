@@ -264,19 +264,34 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun RawClickableIcon(
+    fun RawIconButton(
         icon: Icon.Code,
-        onClick: () -> Unit,
+        onClick: (() -> Unit)? = null,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        tooltip: Tooltip.Args? = null,
     ) {
+        val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
+        val mod = onClick?.let {
+            modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
+        } ?: modifier
         Box(
             contentAlignment = Alignment.Center,
-            modifier = modifier.height(FIELD_HEIGHT)
-                .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
-                .onPointerEvent(PointerEventType.Press) { if (it.buttons.isPrimaryPressed) onClick() }
-        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
+            modifier = mod.height(FIELD_HEIGHT)
+                .onPointerEvent(PointerEventType.Press) {
+                    if (it.buttons.isPrimaryPressed) {
+                        tooltipState?.hideOnTargetHover()
+                        onClick?.let { c -> c() }
+                    }
+                }.pointerMoveFilter(
+                    onEnter = { tooltipState?.mayShowOnTargetHover(); false },
+                    onExit = { tooltipState?.mayHideOnTargetExit(); false }
+                )
+        ) {
+            Icon.Render(icon = icon, color = iconColor, enabled = enabled)
+            tooltipState?.let { Tooltip.Popup(it) }
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
