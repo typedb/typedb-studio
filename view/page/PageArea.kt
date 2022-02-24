@@ -283,7 +283,7 @@ object PageArea {
     private suspend fun PointerInputScope.onPointerInput(contextMenu: ContextMenu.State, page: Page) {
         contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryPressed = { GlobalState.page.select(page.state) }
+            onSinglePrimaryPressed = { GlobalState.page.activate(page.state) }
         )
     }
 

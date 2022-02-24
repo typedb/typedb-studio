@@ -38,7 +38,7 @@ class PageManager(val notification: NotificationManager) {
         return activePage == page
     }
 
-    fun select(page: Pageable) {
+    fun activate(page: Pageable) {
         activePage?.stopWatcher()
         activePage = page
         activePage?.launchWatcher()
