@@ -24,7 +24,15 @@ popd > /dev/null
 OUT_DIR=$(cd "$(dirname "${path}")" && pwd -P)
 pushd "$OUT_DIR" > /dev/null
 
-bazel query "filter('^(?!(//dependencies|@vaticle|//test).*$).*', kind(kt_jvm_library, deps($1)))" --output graph > "$2".dot
+
+if [ -z "$3" ]
+  then
+    exclude=""
+  else
+    exclude="|$3"
+fi
+
+bazel query "filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($1)))" --output graph > "$2".dot
 dot -Tpng < "$2".dot > "$2".png
 open "$2".png
 
