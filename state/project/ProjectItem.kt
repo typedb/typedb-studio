@@ -65,7 +65,7 @@ sealed class ProjectItem(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
-    abstract fun copyStateFrom(item: ProjectItem)
+    abstract fun copyStateFrom(other: ProjectItem)
     abstract fun close()
     abstract fun delete()
 

@@ -123,6 +123,7 @@ object TextEditor {
         onChangeFromDisk(file, content, rendering, finder, target, processor, toolbar, handler, editor)
         file.beforeSave { processor.drainChanges() }
         file.beforeClose { processor.drainChanges() }
+        file.onClose { editor.clearStatus() }
         return editor
     }
 
@@ -191,6 +192,10 @@ object TextEditor {
             target.updateStatus()
         }
 
+        internal fun clearStatus() {
+            target.clearStatus()
+        }
+
         fun updateFile(file: File) {
             processor.updateFile(file)
         }
@@ -212,7 +217,7 @@ object TextEditor {
                 if (state.showToolbar) {
                     TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handler.handleToolbarEvent(it) })
                 }
-                Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused; state.updateStatus() }
+                Row(modifier = modifier.onFocusChanged { state.isFocused = it.isFocused }
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
                     .onKeyEvent { state.handler.handleEditorEvent(it) }
@@ -229,6 +234,7 @@ object TextEditor {
 
         LaunchedEffect(state, state.showToolbar) {
             if (!state.showToolbar) {
+                state.updateStatus()
                 state.focusReq.requestFocus()
                 state.isFocused = true
                 state.isFocusable = true

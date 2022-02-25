@@ -73,7 +73,7 @@ class Directory internal constructor(
         throw TypeCastException(ILLEGAL_CAST.message(Directory::class.simpleName, File::class.simpleName))
     }
 
-    override fun copyStateFrom(item: ProjectItem) {}
+    override fun copyStateFrom(other: ProjectItem) {}
 
     override fun reloadEntries() {
         val new = path.listDirectoryEntries().filter { it.isReadable() }.toSet()
