@@ -65,7 +65,7 @@ sealed class ProjectItem(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
-    abstract fun copyStateFrom(other: ProjectItem)
+    abstract fun initialiseWith(other: ProjectItem)
     abstract fun close()
     abstract fun delete()
 
@@ -96,7 +96,7 @@ sealed class ProjectItem(
         }
         dir.reloadEntries()
         val newItem = dir.entries.first { it.name == relPath.first().name }
-        newItem.copyStateFrom(this)
+        newItem.initialiseWith(this)
         return newItem
     }
 

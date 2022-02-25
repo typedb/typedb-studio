@@ -151,7 +151,7 @@ class File internal constructor(
         }
     }
     
-    override fun copyStateFrom(other: ProjectItem) {
+    override fun initialiseWith(other: ProjectItem) {
         val otherFile = other as File
         this.onDiskChangeContent.addAll(otherFile.onDiskChangeContent)
         this.onDiskChangePermission.addAll(otherFile.onDiskChangePermission)
@@ -160,6 +160,7 @@ class File internal constructor(
         this.beforeSave.addAll(otherFile.beforeSave)
         this.beforeClose.addAll(otherFile.beforeClose)
         this.onClose.addAll(otherFile.onClose)
+        this.lastModified.set(System.currentTimeMillis())
     }
 
     fun isChanged() {
