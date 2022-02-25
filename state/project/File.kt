@@ -141,6 +141,7 @@ class File internal constructor(
 
     internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
         return try {
+            if (overwrite && newPath.exists()) find(newPath)?.delete()
             path.moveTo(newPath, overwrite)
             val newFile = replaceWith(newPath)?.asFile()
             close()
@@ -160,7 +161,6 @@ class File internal constructor(
         this.beforeSave.addAll(otherFile.beforeSave)
         this.beforeClose.addAll(otherFile.beforeClose)
         this.onClose.addAll(otherFile.onClose)
-        this.lastModified.set(System.currentTimeMillis())
     }
 
     fun isChanged() {
@@ -306,6 +306,7 @@ class File internal constructor(
         try {
             close()
             path.deleteExisting()
+            parent.remove(this)
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
         }

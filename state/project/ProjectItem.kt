@@ -86,6 +86,12 @@ sealed class ProjectItem(
     }
 
     internal fun replaceWith(newPath: Path): ProjectItem? {
+        val newItem = find(newPath)
+        newItem?.initialiseWith(this)
+        return newItem
+    }
+
+    internal fun find(newPath: Path): ProjectItem? {
         if (!newPath.startsWith(projectMgr.current!!.path)) return null
         var relPath = newPath.relativeTo(projectMgr.current!!.path)
         var dir: Directory = projectMgr.current!!.directory
@@ -95,9 +101,7 @@ sealed class ProjectItem(
             relPath = relPath.relativeTo(relPath.first())
         }
         dir.reloadEntries()
-        val newItem = dir.entries.first { it.name == relPath.first().name }
-        newItem.initialiseWith(this)
-        return newItem
+        return dir.entries.first { it.name == relPath.first().name }
     }
 
     override fun toString(): String {

@@ -163,6 +163,10 @@ class Directory internal constructor(
         }
     }
 
+    fun remove(item: ProjectItem) {
+        entries = entries.filter { it != item }
+    }
+
     override fun close() {}
 
     override fun delete() {
@@ -172,6 +176,7 @@ class Directory internal constructor(
             entries.filter { it.isFile }.forEach { it.delete() }
             entries = emptyList()
             path.deleteExisting()
+            parent?.remove(this)
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
         }
