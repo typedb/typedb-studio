@@ -23,9 +23,10 @@ interface Resource {
     val name: String
     val fullName: String
     val isOpen: Boolean
-    val isUnsaved: Boolean
-    val isUnsavedFile: Boolean
     val isRunnable: Boolean
+    val isEmpty: Boolean
+    val isUnsavedFile: Boolean
+    val hasUnsavedChanges: Boolean
 
     fun tryOpen(): Boolean
 

@@ -146,10 +146,11 @@ object Toolbar {
 
         @Composable
         private fun SaveButton() {
+            val activePage = GlobalState.resource.active
             ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
-                onClick = { GlobalState.resource.saveAndReopen(GlobalState.resource.active!!) },
-                enabled = GlobalState.resource.active?.isUnsaved == true,
+                onClick = { GlobalState.resource.saveAndReopen(activePage!!) },
+                enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedFile == true,
                 tooltip = Tooltip.Args(
                     title = Label.SAVE_CURRENT_FILE,
                     description = Sentence.SAVE_CURRENT_FILE_DESCRIPTION

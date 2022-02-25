@@ -169,7 +169,7 @@ object PageArea {
                 GlobalState.resource.close(resource)
                 if (resource.isUnsavedFile) resource.delete()
             }
-            if (resource.isUnsaved) {
+            if (resource.hasUnsavedChanges || resource.isUnsavedFile) {
                 GlobalState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
@@ -184,11 +184,11 @@ object PageArea {
 
         internal fun contextMenuFn(page: Resource): List<List<ContextMenu.Item>> {
             val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
-            val pageMgr = GlobalState.resource
+            val enableSave = page.hasUnsavedChanges || page.isUnsavedFile
             return listOf(
                 listOf(
-                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) {
-                        pageMgr.saveAndReopen(page)
+                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", enableSave) {
+                        GlobalState.resource.saveAndReopen(page)
                     },
                     ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { close(page) }
                 )
@@ -345,10 +345,12 @@ object PageArea {
     @Composable
     private fun tabTitle(page: Page): AnnotatedString {
         return if (page.isWritable) {
-            val changeIndicator = " *"
+            val changedIndicator = " *"
+            val resource = page.resource
+            val showChangedIndicator = resource.hasUnsavedChanges || (resource.isUnsavedFile && !resource.isEmpty)
             AnnotatedString(page.name) + when {
-                page.resource.isUnsaved -> AnnotatedString(changeIndicator)
-                else -> AnnotatedString(changeIndicator, SpanStyle(color = Color.Transparent))
+                showChangedIndicator -> AnnotatedString(changedIndicator)
+                else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {
             val builder = AnnotatedString.Builder()

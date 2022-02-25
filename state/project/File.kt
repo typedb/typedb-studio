@@ -88,14 +88,14 @@ class File internal constructor(
     private val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
     private val onClose = LinkedBlockingDeque<(File) -> Unit>()
     private var watchFileSystem = AtomicBoolean(false)
-    private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     override val isOpen: Boolean get() = isOpenAtomic.get()
+    override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
     override val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
-    override val isUnsaved: Boolean get() = hasChanges || (isUnsavedFile && !isContentEmpty())
+    override var hasUnsavedChanges: Boolean by mutableStateOf(false)
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
     override val isRunnable: Boolean = isTypeQL
@@ -111,10 +111,6 @@ class File internal constructor(
     private fun computeFullName(path: Path, projectMgr: ProjectManager): String {
         return if (isUnsavedFile) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
-    }
-
-    private fun isContentEmpty(): Boolean {
-        return content.size == 1 && content[0].isBlank()
     }
 
     override fun asDirectory(): Directory {
@@ -167,7 +163,7 @@ class File internal constructor(
     }
 
     fun isChanged() {
-        hasChanges = true
+        hasUnsavedChanges = true
     }
 
     fun reloadFromDisk(): List<String> {
@@ -288,7 +284,7 @@ class File internal constructor(
         beforeSave.forEach { it(this) }
         Files.write(path, content)
         lastModified.set(System.currentTimeMillis())
-        hasChanges = false
+        hasUnsavedChanges = false
     }
 
     override fun close() {
