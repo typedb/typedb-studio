@@ -28,7 +28,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 
-class FilePage private constructor(val file: File, private val editor: TextEditor.State) : Page(file) {
+class FilePage private constructor(var file: File, private val editor: TextEditor.State) : Page(file) {
 
     override val name: String get() = file.name
     override val isWritable: Boolean get() = file.isWritable
@@ -47,7 +47,9 @@ class FilePage private constructor(val file: File, private val editor: TextEdito
     }
 
     override fun updateResourceInner(resource: Resource) {
-        editor.updateFile(resource as File)
+        // TODO: guarantee that new file has identical content as previous, or update content.
+        file = resource as File
+        editor.updateFile(file)
     }
 
     override fun resetFocus() {
