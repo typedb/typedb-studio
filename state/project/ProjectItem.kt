@@ -20,7 +20,6 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_SAVE_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -28,7 +27,9 @@ import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.moveTo
+import kotlin.io.path.name
 import kotlin.io.path.readSymbolicLink
+import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
 sealed class ProjectItem(
@@ -64,32 +65,39 @@ sealed class ProjectItem(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
+    abstract fun copyStateFrom(item: ProjectItem)
     abstract fun close()
     abstract fun delete()
 
-    internal fun tryRename(newName: String): Boolean {
+    internal fun tryRename(newName: String): ProjectItem? {
         val newPath = path.resolveSibling(newName)
         return if (parent?.contains(newName) == true) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
-            false
+            null
         } else try {
             path.moveTo(newPath)
-            true
+            val newItem = replaceWith(newPath)
+            close()
+            newItem
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
-            false
+            null
         }
     }
 
-    fun trySaveTo(newPath: Path, overwrite: Boolean): Boolean {
-        return try {
-            close()
-            path.moveTo(newPath, overwrite)
-            true
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
-            false
+    internal fun replaceWith(newPath: Path): ProjectItem? {
+        if (!newPath.startsWith(projectMgr.current!!.path)) return null
+        var relPath = newPath.relativeTo(projectMgr.current!!.path)
+        var dir: Directory = projectMgr.current!!.directory
+        while (relPath.nameCount > 1) {
+            dir.reloadEntries()
+            dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
+            relPath = relPath.relativeTo(relPath.first())
         }
+        dir.reloadEntries()
+        val newItem = dir.entries.first { it.name == relPath.first().name }
+        newItem.copyStateFrom(this)
+        return newItem
     }
 
     override fun toString(): String {

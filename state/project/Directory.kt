@@ -73,6 +73,8 @@ class Directory internal constructor(
         throw TypeCastException(ILLEGAL_CAST.message(Directory::class.simpleName, File::class.simpleName))
     }
 
+    override fun copyStateFrom(item: ProjectItem) {}
+
     override fun reloadEntries() {
         val new = path.listDirectoryEntries().filter { it.isReadable() }.toSet()
         val old = entries.map { it.path }.toSet()
@@ -139,23 +141,25 @@ class Directory internal constructor(
         }
     }
 
-    fun tryMove(newParent: Path): Boolean {
+    internal fun tryMove(newParent: Path): Directory? {
         val newPath = newParent.resolve(name)
         return if (newParent == path.parent) {
             notificationMgr.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
-            false
+            null
         } else if (newParent.notExists()) {
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
-            false
+            null
         } else if (newPath.exists()) {
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
-            false
+            null
         } else try {
             path.moveTo(newPath)
-            true
+            val newDirectory = replaceWith(newPath)?.asDirectory()
+            close()
+            newDirectory
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
-            false
+            null
         }
     }
 

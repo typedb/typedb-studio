@@ -40,9 +40,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isWritable
-import kotlin.io.path.name
 import kotlin.io.path.notExists
-import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
 class ProjectManager(private val settings: Settings, private val notificationMgr: NotificationManager) {
@@ -166,21 +164,6 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    private fun replaceFile(oldFile: File, newPath: Path): File {
-        assert(newPath.startsWith(current!!.path))
-        var relPath = newPath.relativeTo(current!!.path)
-        var dir: Directory = current!!.directory
-        while (relPath.nameCount > 1) {
-            dir.reloadEntries()
-            dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
-            relPath = relPath.relativeTo(relPath.first())
-        }
-        dir.reloadEntries()
-        val newFile = dir.entries.first { it.name == relPath.first().name }.asFile()
-        newFile.setCallbacks(oldFile)
-        return newFile
-    }
-
     fun tryCreateFile(parent: Directory, newFileName: String) {
         tryCreateItem { parent.createFile(newFileName) }
     }
@@ -198,41 +181,36 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     }
 
     fun tryRenameDirectory(item: Directory, newName: String) {
-        if (item.tryRename(newName)) {
+        item.tryRename(newName)?.let {
             renameDirectoryDialog.close()
-            onContentChange?.let { it() }
+            onContentChange?.let { fn -> fn() }
         }
     }
 
     fun tryRenameFile(file: File, newName: String) {
-        val newPath = file.path.resolveSibling(newName)
-        if (file.tryRename(newName)) {
-            val newFile = replaceFile(file, newPath)
-            newFile.reopen()
-            renameFileDialog.onSuccess?.let { it(newFile) }
+        file.tryRename(newName)?.let {
+            renameFileDialog.onSuccess?.let { fn -> fn(it.asFile()) }
             renameFileDialog.close()
-            onContentChange?.let { it() }
+            onContentChange?.let { fn -> fn() }
         }
     }
 
     fun trySaveFileTo(file: File, newPath: Path, overwrite: Boolean) {
-        if (file.trySaveTo(newPath, overwrite)) {
-            val newFile = replaceFile(file, newPath)
-            newFile.reopen()
-            if (newPath.startsWith(current!!.path)) saveFileDialog.onSuccess?.let { it(newFile) }
-            else notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
+        file.trySaveTo(newPath, overwrite)?.let { newFile ->
+            saveFileDialog.onSuccess?.let { it(newFile) }
             saveFileDialog.close()
             onContentChange?.let { it() }
+        } ?: if (!newPath.startsWith(current!!.path)) {
+            notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
         }
     }
 
     fun tryMoveDirectory(directory: Directory, newParent: Path) {
-        if (directory.tryMove(newParent)) {
-            if (!newParent.startsWith(current!!.path)) {
-                notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
-            }
+        directory.tryMove(newParent)?.let {
             moveDirectoryDialog.close()
             onContentChange?.let { it() }
+        } ?: if (!newParent.startsWith(current!!.path)) {
+            notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
         }
     }
 }

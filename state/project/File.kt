@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_SAVE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
@@ -45,6 +46,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
+import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration
@@ -78,13 +80,13 @@ class File internal constructor(
     val isTextFile: Boolean = checkIsTextFile()
 
     private var content: List<String> by mutableStateOf(listOf())
-    private var onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
-    private var onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
-    private var onReopen = LinkedBlockingDeque<(File) -> Unit>()
-    private var onWatch = LinkedBlockingDeque<(File) -> Unit>()
-    private var beforeSave = LinkedBlockingDeque<(File) -> Unit>()
-    private var beforeClose = LinkedBlockingDeque<(File) -> Unit>()
-    private var onClose = LinkedBlockingDeque<(File) -> Unit>()
+    private val onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
+    private val onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
+    private val onReopen = LinkedBlockingDeque<(File) -> Unit>()
+    private val onWatch = LinkedBlockingDeque<(File) -> Unit>()
+    private val beforeSave = LinkedBlockingDeque<(File) -> Unit>()
+    private val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
+    private val onClose = LinkedBlockingDeque<(File) -> Unit>()
     private var watchFileSystem = AtomicBoolean(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
@@ -133,11 +135,35 @@ class File internal constructor(
             if (isTextFile) loadTextFileLines()
             else loadBinaryFileLines()
             isOpenAtomic.set(true)
+            onReopen.forEach { it(this) }
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
             false
         }
+    }
+
+    internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
+        return try {
+            path.moveTo(newPath, overwrite)
+            val newFile = replaceWith(newPath)?.asFile()
+            close()
+            newFile
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            null
+        }
+    }
+    
+    override fun copyStateFrom(other: ProjectItem) {
+        val otherFile = other as File
+        this.onDiskChangeContent.addAll(otherFile.onDiskChangeContent)
+        this.onDiskChangePermission.addAll(otherFile.onDiskChangePermission)
+        this.onWatch.addAll(otherFile.onWatch)
+        this.onReopen.addAll(otherFile.onReopen)
+        this.beforeSave.addAll(otherFile.beforeSave)
+        this.beforeClose.addAll(otherFile.beforeClose)
+        this.onClose.addAll(otherFile.onClose)
     }
 
     fun isChanged() {
@@ -215,16 +241,6 @@ class File internal constructor(
         }
     }
 
-    fun setCallbacks(other: File) {
-        this.onDiskChangeContent = other.onDiskChangeContent
-        this.onDiskChangePermission = other.onDiskChangePermission
-        this.onWatch = other.onWatch
-        this.onReopen = other.onReopen
-        this.beforeSave = other.beforeSave
-        this.beforeClose = other.beforeClose
-        this.onClose = other.onClose
-    }
-
     fun onDiskChangeContent(function: (File) -> Unit) {
         onDiskChangeContent.push(function)
     }
@@ -275,15 +291,17 @@ class File internal constructor(
         hasChanges = false
     }
 
-    internal fun reopen() {
-        onReopen.forEach { it(this) }
-    }
-
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
             watchFileSystem.set(false)
-            execBeforeClose()
+            onDiskChangeContent.clear()
+            onDiskChangePermission.clear()
+            onWatch.clear()
+            onReopen.clear()
+            beforeSave.clear()
+            beforeClose.clear()
             onClose.forEach { it(this) }
+            onClose.clear()
         }
     }
 
