@@ -101,7 +101,7 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
         when (itemState.item) {
             is Directory -> itemState.asExpandable().toggle()
-            is File -> GlobalState.page.open(itemState.item.asFile())
+            is File -> GlobalState.resource.open(itemState.item.asFile())
         }
     }
 
@@ -194,19 +194,19 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
                 ContextMenu.Item(
                     label = Label.OPEN,
                     icon = Icon.Code.BLOCK_QUOTE
-                ) { GlobalState.page.open(file.asFile()) },
+                ) { GlobalState.resource.open(file.asFile()) },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.page.renameAndReopen(file) else file.rename() },
+                ) { if (file.isOpen) GlobalState.resource.renameAndReopen(file) else file.rename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.page.moveAndReopen(file) else file.move() },
+                ) { if (file.isOpen) GlobalState.resource.moveAndReopen(file) else file.move() },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

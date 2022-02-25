@@ -23,17 +23,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.component.Form
 
-abstract class Page(var state: Pageable) {
+abstract class Page(var resource: Resource) {
 
     companion object {
         @Composable
-        fun of(state: Pageable): Page {
-            return when (state) {
-                is File -> FilePage.create(state)
+        fun of(resource: Resource): Page {
+            return when (resource) {
+                is File -> FilePage.create(resource)
                 else -> throw IllegalStateException("should never be reached")
             }
         }
@@ -46,13 +46,13 @@ abstract class Page(var state: Pageable) {
     var tabSize by mutableStateOf(0.dp)
 
     abstract fun resetFocus()
-    abstract fun updateStateInner(state: Pageable)
+    abstract fun updateResourceInner(resource: Resource)
 
     @Composable
     abstract fun Layout()
 
-    fun updateState(state: Pageable) {
-        this.state = state
-        updateStateInner(state)
+    fun updateResource(resource: Resource) {
+        this.resource = resource
+        updateResourceInner(resource)
     }
 }

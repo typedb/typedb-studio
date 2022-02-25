@@ -102,8 +102,8 @@ object ProjectDialog {
                 val previous = GlobalState.project.current
                 if (GlobalState.project.tryOpenProject(Path(it))) {
                     if (previous != GlobalState.project.current) {
-                        GlobalState.page.closeAll()
-                        GlobalState.project.unsavedFiles().forEach { GlobalState.page.open(it) }
+                        GlobalState.resource.closeAll()
+                        GlobalState.project.unsavedFiles().forEach { GlobalState.resource.open(it) }
                     }
                 }
             }

@@ -21,8 +21,8 @@ package com.vaticle.typedb.studio.state
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.connection.ConnectionManager
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager
+import com.vaticle.typedb.studio.state.resource.ResourceManager
 import com.vaticle.typedb.studio.state.status.StatusManager
 
 object GlobalState {
@@ -33,5 +33,5 @@ object GlobalState {
     val status = StatusManager()
     val connection = ConnectionManager(notification)
     val project = ProjectManager(settings, notification)
-    val page = PageManager(notification)
+    val resource = ResourceManager(notification)
 }

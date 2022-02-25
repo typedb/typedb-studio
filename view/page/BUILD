@@ -28,8 +28,8 @@ kt_jvm_library(
         "//view/common:common",
         "//view/editor:editor",
         "//state/common:common",
-        "//state/page:page",
         "//state/project:project",
+        "//state/resource:resource",
         "//state:state",
 
         # External Maven Dependencies

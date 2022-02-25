@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
@@ -84,9 +84,9 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     class ModifyFileDialog : DialogManager() {
 
         var file: File? by mutableStateOf(null)
-        var onSuccess: ((Pageable) -> Unit)? by mutableStateOf(null)
+        var onSuccess: ((Resource) -> Unit)? by mutableStateOf(null)
 
-        internal fun open(file: File, onSuccess: ((Pageable) -> Unit)? = null) {
+        internal fun open(file: File, onSuccess: ((Resource) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess

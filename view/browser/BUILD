@@ -29,8 +29,8 @@ kt_jvm_library(
         "//state/common:common",
         "//state/connection:connection",
         "//state/notification:notification",
-        "//state/page:page",
         "//state/project:project",
+        "//state/resource:resource",
         "//state:state",
         "//view/dialog:dialog",
 

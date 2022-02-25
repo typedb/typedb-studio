@@ -16,9 +16,9 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.page
+package com.vaticle.typedb.studio.state.resource
 
-interface Pageable {
+interface Resource {
 
     val name: String
     val fullName: String
@@ -33,23 +33,23 @@ interface Pageable {
 
     fun stopWatcher()
 
-    fun onWatch(function: (Pageable) -> Unit)
+    fun onWatch(function: (Resource) -> Unit)
 
-    fun beforeSave(function: (Pageable) -> Unit)
+    fun beforeSave(function: (Resource) -> Unit)
 
-    fun beforeClose(function: (Pageable) -> Unit)
+    fun beforeClose(function: (Resource) -> Unit)
 
-    fun onClose(function: (Pageable) -> Unit)
+    fun onClose(function: (Resource) -> Unit)
 
-    fun onReopen(function: (Pageable) -> Unit)
+    fun onReopen(function: (Resource) -> Unit)
 
     fun execBeforeClose()
 
-    fun rename(onSuccess: ((Pageable) -> Unit)? = null)
+    fun rename(onSuccess: ((Resource) -> Unit)? = null)
 
-    fun save(onSuccess: ((Pageable) -> Unit)? = null)
+    fun save(onSuccess: ((Resource) -> Unit)? = null)
 
-    fun move(onSuccess: ((Pageable) -> Unit)? = null)
+    fun move(onSuccess: ((Resource) -> Unit)? = null)
 
     fun delete()
 

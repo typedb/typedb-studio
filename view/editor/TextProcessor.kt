@@ -86,7 +86,7 @@ internal interface TextProcessor {
                     target = target,
                     onChangeStart = { file.isChanged() },
                     onChangeEnd = { file.writeLines(it) },
-                    onSave = { GlobalState.page.saveAndReopen(file) }
+                    onSave = { GlobalState.resource.saveAndReopen(file) }
                 )
             }
         }
@@ -162,7 +162,7 @@ internal interface TextProcessor {
             fileType = file.fileType
             onChangeStart = { file.isChanged() }
             onChangeEnd = { file.writeLines(it) }
-            onSave = { GlobalState.page.saveAndReopen(file) }
+            onSave = { GlobalState.resource.saveAndReopen(file) }
         }
 
         override fun replaceCurrentFound(text: String) {

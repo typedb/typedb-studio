@@ -21,14 +21,14 @@ package com.vaticle.typedb.studio.view.page
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 
-class FilePage private constructor(val file: File, private val editorState: TextEditor.State) : Page(file) {
+class FilePage private constructor(val file: File, private val editor: TextEditor.State) : Page(file) {
 
     override val name: String get() = file.name
     override val isWritable: Boolean get() = file.isWritable
@@ -40,23 +40,22 @@ class FilePage private constructor(val file: File, private val editorState: Text
     companion object {
         @Composable
         fun create(file: File): FilePage {
-            val editorState = TextEditor.createState(file)
-            file.onWatch { if (editorState.isFocusable) editorState.focusReq.requestFocus() }
-            return FilePage(file, editorState)
+            val editor = TextEditor.createState(file)
+            file.onWatch { if (editor.isFocusable) editor.focusReq.requestFocus() }
+            return FilePage(file, editor)
         }
-
     }
 
-    override fun updateStateInner(state: Pageable) {
-        editorState.updateFile(state as File)
+    override fun updateResourceInner(resource: Resource) {
+        editor.updateFile(resource as File)
     }
 
     override fun resetFocus() {
-        editorState.isFocusable = false
+        editor.isFocusable = false
     }
 
     @Composable
     override fun Layout() {
-        TextEditor.Area(state = editorState, modifier = Modifier.fillMaxSize())
+        TextEditor.Area(state = editor, modifier = Modifier.fillMaxSize())
     }
 }

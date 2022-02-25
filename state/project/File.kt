@@ -31,7 +31,7 @@ import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
-import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.state.resource.Resource
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -63,7 +63,7 @@ class File internal constructor(
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Pageable {
+) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Resource {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -197,7 +197,7 @@ class File internal constructor(
         if (settings.autosave) saveContent()
     }
 
-    override fun onWatch(function: (Pageable) -> Unit) {
+    override fun onWatch(function: (Resource) -> Unit) {
         onWatch.push(function)
     }
 
@@ -249,19 +249,19 @@ class File internal constructor(
         onDiskChangePermission.push(function)
     }
 
-    override fun beforeSave(function: (Pageable) -> Unit) {
+    override fun beforeSave(function: (Resource) -> Unit) {
         beforeSave.push(function)
     }
 
-    override fun beforeClose(function: (Pageable) -> Unit) {
+    override fun beforeClose(function: (Resource) -> Unit) {
         beforeClose.push(function)
     }
 
-    override fun onClose(function: (Pageable) -> Unit) {
+    override fun onClose(function: (Resource) -> Unit) {
         onClose.push(function)
     }
 
-    override fun onReopen(function: (Pageable) -> Unit) {
+    override fun onReopen(function: (Resource) -> Unit) {
         onReopen.push(function)
     }
 
@@ -269,17 +269,17 @@ class File internal constructor(
         beforeClose.forEach { it(this) }
     }
 
-    override fun rename(onSuccess: ((Pageable) -> Unit)?) {
+    override fun rename(onSuccess: ((Resource) -> Unit)?) {
         if (isUnsavedFile) saveContent()
         projectMgr.renameFileDialog.open(this, onSuccess)
     }
 
-    override fun move(onSuccess: ((Pageable) -> Unit)?) {
+    override fun move(onSuccess: ((Resource) -> Unit)?) {
         if (isUnsavedFile) saveContent()
         projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
-    override fun save(onSuccess: ((Pageable) -> Unit)?) {
+    override fun save(onSuccess: ((Resource) -> Unit)?) {
         saveContent()
         if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
     }

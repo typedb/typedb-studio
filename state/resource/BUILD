@@ -24,7 +24,7 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "page",
+    name = "resource",
     srcs = glob(["*.kt"]),
     deps = [
         "//state/notification:notification",

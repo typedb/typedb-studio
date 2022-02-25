@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
@@ -93,8 +93,8 @@ object PageArea {
         val tabsScroller = ScrollState(0)
         var tabsScrollTo: Dp? by mutableStateOf(null)
         var tabsRowMaxWidth by mutableStateOf(4096.dp)
-        val cachedOpenedPages: MutableMap<Pageable, Page> = mutableMapOf()
-        var cachedActivePage: Pageable? by mutableStateOf(null)
+        val cachedOpenedPages: MutableMap<Resource, Page> = mutableMapOf()
+        var cachedActivePage: Resource? by mutableStateOf(null)
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -112,10 +112,10 @@ object PageArea {
         }
 
         fun initTab(page: Page, rawWidth: Int) {
-            if (GlobalState.page.activePage == cachedActivePage) return
+            if (GlobalState.resource.active == cachedActivePage) return
             val newTabSize = toDP(rawWidth, density) + Separator.WEIGHT
             if (newTabSize != page.tabSize) page.tabSize = newTabSize
-            if (GlobalState.page.activePage == page.state) {
+            if (GlobalState.resource.active == page.resource) {
                 var start = 0.dp
                 var found = false
                 cachedOpenedPages.values.forEach { if (it != page && !found) start += it.tabSize else found = true }
@@ -123,7 +123,7 @@ object PageArea {
                 val scrollerPos = toDP(tabsScroller.value, density)
                 if (start + 5.dp < scrollerPos) tabsScrollTo = start
                 else if (end - 5.dp > scrollerPos + tabsRowMaxWidth) tabsScrollTo = end - tabsRowMaxWidth
-                cachedActivePage = GlobalState.page.activePage
+                cachedActivePage = GlobalState.resource.active
             }
         }
 
@@ -133,52 +133,52 @@ object PageArea {
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.page.open(it) }
+            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.open(it) }
             return true
         }
 
         private fun showNextPage(): Boolean {
-            GlobalState.page.activateNext()
+            GlobalState.resource.activateNext()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            GlobalState.page.activatePrevious()
+            GlobalState.resource.activatePrevious()
             return true
         }
 
         private fun closeActivePage(): Boolean {
-            return GlobalState.page.activePage?.let { close(it) } ?: false
+            return GlobalState.resource.active?.let { close(it) } ?: false
         }
 
-        internal fun removeCache(pageable: Pageable) {
-            cachedOpenedPages.remove(pageable)
-            if (cachedActivePage == pageable) cachedActivePage = null
+        internal fun removeCache(resource: Resource) {
+            cachedOpenedPages.remove(resource)
+            if (cachedActivePage == resource) cachedActivePage = null
         }
 
-        internal fun close(pageable: Pageable): Boolean {
-            pageable.execBeforeClose()
+        internal fun close(resource: Resource): Boolean {
+            resource.execBeforeClose()
             fun closeFn() {
-                removeCache(pageable)
-                GlobalState.page.close(pageable)
-                if (pageable.isUnsavedFile) pageable.delete()
+                removeCache(resource)
+                GlobalState.resource.close(resource)
+                if (resource.isUnsavedFile) resource.delete()
             }
-            if (pageable.isUnsaved) {
+            if (resource.isUnsaved) {
                 GlobalState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
                     cancelLabel = Label.DELETE,
                     onCancel = { closeFn() },
-                    onConfirm = { pageable.save() },
+                    onConfirm = { resource.save() },
                 )
             } else closeFn()
             return true
         }
 
-        internal fun contextMenuFn(page: Pageable): List<List<ContextMenu.Item>> {
+        internal fun contextMenuFn(page: Resource): List<List<ContextMenu.Item>> {
             val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
-            val pageMgr = GlobalState.page
+            val pageMgr = GlobalState.resource
             return listOf(
                 listOf(
                     ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", page.isUnsaved) {
@@ -199,7 +199,7 @@ object PageArea {
         state.density = density
         val focusReq = FocusRequester()
         fun mayRequestFocus() {
-            if (GlobalState.page.openedPages.isEmpty()) focusReq.requestFocus()
+            if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
         }
         state.cachedOpenedPages.values.forEach { it.resetFocus() }
         Column(
@@ -210,7 +210,7 @@ object PageArea {
             TabArea(state)
             Separator.Horizontal()
             // TODO: figure why encapsulating the next line in a composable function breaks File.launchWatcher()
-            GlobalState.page.activePage?.let { state.cachedOpenedPages[it]?.Layout() }
+            GlobalState.resource.active?.let { state.cachedOpenedPages[it]?.Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }
@@ -227,12 +227,12 @@ object PageArea {
                 Separator.Vertical()
             }
             Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(TAB_HEIGHT).horizontalScroll(scrollState)) {
-                GlobalState.page.openedPages.forEach { pageState ->
+                GlobalState.resource.opened.forEach { pageState ->
                     Tab(state, state.cachedOpenedPages.getOrPut(pageState) {
                         val page = Page.of(pageState)
                         pageState.onClose { state.removeCache(it) }
                         pageState.onReopen {
-                            page.updateState(it)
+                            page.updateResource(it)
                             state.cachedOpenedPages[it] = page
                         }
                         return@getOrPut page
@@ -258,14 +258,14 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun Tab(state: AreaState, page: Page) {
-        val isActive = GlobalState.page.isActive(page.state)
+        val isActive = GlobalState.resource.isActive(page.resource)
         val contextMenu = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
         val height = if (isActive) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
         Box {
-            ContextMenu.Popup(contextMenu) { state.contextMenuFn(page.state) }
+            ContextMenu.Popup(contextMenu) { state.contextMenuFn(page.resource) }
             Column(Modifier.onSizeChanged { state.initTab(page, it.width) }) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -281,7 +281,7 @@ object PageArea {
                     Text(value = tabTitle(page))
                     IconButton(
                         icon = Icon.Code.XMARK,
-                        onClick = { state.close(page.state) },
+                        onClick = { state.close(page.resource) },
                         modifier = Modifier.size(TAB_HEIGHT),
                         bgColor = Color.Transparent,
                         rounded = false,
@@ -296,7 +296,7 @@ object PageArea {
     private suspend fun PointerInputScope.onPointerInput(contextMenu: ContextMenu.State, page: Page) {
         contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryPressed = { GlobalState.page.activate(page.state) }
+            onSinglePrimaryPressed = { GlobalState.resource.activate(page.resource) }
         )
     }
 
@@ -341,7 +341,7 @@ object PageArea {
         return if (page.isWritable) {
             val changeIndicator = " *"
             AnnotatedString(page.name) + when {
-                page.state.isUnsaved -> AnnotatedString(changeIndicator)
+                page.resource.isUnsaved -> AnnotatedString(changeIndicator)
                 else -> AnnotatedString(changeIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {
