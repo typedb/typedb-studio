@@ -169,7 +169,7 @@ object PageArea {
                 GlobalState.resource.close(resource)
                 if (resource.isUnsavedFile) resource.delete()
             }
-            if (resource.hasUnsavedChanges || resource.isUnsavedFile) {
+            if (resource.needSaving) {
                 GlobalState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
@@ -347,9 +347,8 @@ object PageArea {
         return if (page.isWritable) {
             val changedIndicator = " *"
             val resource = page.resource
-            val showChangedIndicator = resource.hasUnsavedChanges || (resource.isUnsavedFile && !resource.isEmpty)
             AnnotatedString(page.name) + when {
-                showChangedIndicator -> AnnotatedString(changedIndicator)
+                resource.needSaving -> AnnotatedString(changedIndicator)
                 else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {

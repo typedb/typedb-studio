@@ -27,6 +27,7 @@ interface Resource {
     val isEmpty: Boolean
     val isUnsavedFile: Boolean
     val hasUnsavedChanges: Boolean
+    val needSaving get() = hasUnsavedChanges || (isUnsavedFile && !isEmpty)
 
     fun tryOpen(): Boolean
 
