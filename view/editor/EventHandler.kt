@@ -59,7 +59,6 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.PASTE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REDO
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SAVE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_ALL
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_RIGHT
@@ -157,7 +156,6 @@ internal class EventHandler(
             PASTE -> paste()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            SAVE -> processor.save()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()

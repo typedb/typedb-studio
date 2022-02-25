@@ -63,7 +63,6 @@ internal interface TextProcessor {
     fun undo()
     fun redo()
     fun drainChanges()
-    fun save()
     fun reset()
     fun updateFile(file: File)
 
@@ -86,7 +85,6 @@ internal interface TextProcessor {
                     target = target,
                     onChangeStart = { file.isChanged() },
                     onChangeEnd = { file.writeLines(it) },
-                    onSave = { GlobalState.resource.saveAndReopen(file) }
                 )
             }
         }
@@ -108,7 +106,6 @@ internal interface TextProcessor {
         override fun undo() = displayWarning()
         override fun redo() = displayWarning()
         override fun drainChanges() {}
-        override fun save() {}
         override fun reset() {}
         override fun updateFile(file: File) {
             path = file.path
@@ -134,7 +131,6 @@ internal interface TextProcessor {
         private val target: InputTarget,
         private var onChangeStart: () -> Unit,
         private var onChangeEnd: (List<String>) -> Unit,
-        private var onSave: () -> Unit,
     ) : TextProcessor {
 
         companion object {
@@ -162,7 +158,6 @@ internal interface TextProcessor {
             fileType = file.fileType
             onChangeStart = { file.isChanged() }
             onChangeEnd = { file.writeLines(it) }
-            onSave = { GlobalState.resource.saveAndReopen(file) }
         }
 
         override fun replaceCurrentFound(text: String) {
@@ -382,11 +377,6 @@ internal interface TextProcessor {
 
         override fun drainChanges() {
             drainAndBatchChanges(isFinalChange = true)
-        }
-
-        override fun save() {
-            drainChanges()
-            onSave()
         }
     }
 }
