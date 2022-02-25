@@ -60,7 +60,7 @@ class ResourceManager(val notification: NotificationManager) {
 
     private fun openAndActivate(resource: Resource, index: Int) {
         if (resource !in opened) {
-            if (resource.tryOpen()) opened.add(index, resource)
+            if (resource.tryOpen()) opened.add(index.coerceIn(0, (opened.size).coerceAtLeast(0)), resource)
             else return
         }
         activate(resource)
