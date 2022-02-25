@@ -84,6 +84,8 @@ interface KeyMapper {
         ENTER_SHIFT_MOD,
         TAB,
         TAB_SHIFT,
+        TAB_CTRL,
+        TAB_CTRL_SHIFT,
 
         DELETE_CHAR_PREV,
         DELETE_CHAR_NEXT,
@@ -173,7 +175,16 @@ interface KeyMapper {
                         Keys.W -> Command.CLOSE
                         else -> null
                     }
-                event.isCtrlPressed -> null
+                event.isCtrlPressed && event.isShiftPressed ->
+                    when (event.key) {
+                        Keys.Tab -> Command.TAB_CTRL_SHIFT
+                        else -> null
+                    }
+                event.isCtrlPressed ->
+                    when (event.key) {
+                        Keys.Tab -> Command.TAB_CTRL
+                        else -> null
+                    }
                 event.isShiftPressed ->
                     when (event.key) {
                         Keys.DirectionLeft -> Command.SELECT_CHAR_LEFT

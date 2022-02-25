@@ -38,40 +38,48 @@ class PageManager(val notification: NotificationManager) {
         return activePage == page
     }
 
+    fun renameAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.rename { openAndActivate(it, index) }
+    }
+
+    fun saveAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.save { openAndActivate(it, index) }
+    }
+
+    fun moveAndReopen(page: Pageable) {
+        val index = openedPages.indexOf(page) // must be computed before passing into lambda
+        page.move { openAndActivate(it, index) }
+    }
+
+    fun open(page: Pageable) {
+        openAndActivate(page, openedPages.size)
+        page.onClose { close(it) }
+    }
+
+    private fun openAndActivate(page: Pageable, index: Int) {
+        if (page !in openedPages) {
+            if (page.tryOpen()) openedPages.add(index, page)
+            else return
+        }
+        activate(page)
+    }
+
     fun activate(page: Pageable) {
         activePage?.stopWatcher()
         activePage = page
         activePage?.launchWatcher()
     }
 
-    fun renameAndReopen(page: Pageable) {
-        val index = openedPages.indexOf(page) // must be computed before passing into lambda
-        page.rename { open(it, index) }
+    fun activateNext() {
+        activate(openedPages[(openedPages.indexOf(activePage) + 1) % openedPages.size])
     }
 
-    fun saveAndReopen(page: Pageable) {
-        val index = openedPages.indexOf(page) // must be computed before passing into lambda
-        page.save { open(it, index) }
-    }
-
-    fun moveAndReopen(page: Pageable) {
-        val index = openedPages.indexOf(page) // must be computed before passing into lambda
-        page.move { open(it, index) }
-    }
-
-    fun open(page: Pageable) {
-        open(page, openedPages.size)
-        page.onClose { close(it) }
-    }
-
-    private fun open(page: Pageable, index: Int) {
-        activePage?.stopWatcher()
-        if (page !in openedPages) {
-            if (page.tryOpen()) openedPages.add(index, page)
-            else return
-        }
-        page.launchWatcher()
-        activePage = page
+    fun activatePrevious() {
+        var previousIndex = openedPages.indexOf(activePage) - 1
+        if (previousIndex < 0) previousIndex += openedPages.size
+        activate(openedPages[previousIndex])
     }
 
     fun close(page: Pageable) {

@@ -105,6 +105,8 @@ object PageArea {
             return when (command) {
                 KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
                 KeyMapper.Command.CLOSE -> closeActivePage()
+                KeyMapper.Command.TAB_CTRL -> showNextPage()
+                KeyMapper.Command.TAB_CTRL_SHIFT -> showPreviousPage()
                 else -> false
             }
         }
@@ -132,6 +134,16 @@ object PageArea {
 
         internal fun createAndOpenNewFile(): Boolean {
             GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.page.open(it) }
+            return true
+        }
+
+        private fun showNextPage(): Boolean {
+            GlobalState.page.activateNext()
+            return true
+        }
+
+        private fun showPreviousPage(): Boolean {
+            GlobalState.page.activatePrevious()
             return true
         }
 
