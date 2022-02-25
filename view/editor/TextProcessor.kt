@@ -65,6 +65,7 @@ internal interface TextProcessor {
     fun drainChanges()
     fun save()
     fun reset()
+    fun updateFile(file: File)
 
     companion object {
 
@@ -91,7 +92,7 @@ internal interface TextProcessor {
         }
     }
 
-    class ReadOnly(val path: Path) : TextProcessor {
+    class ReadOnly(var path: Path) : TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
@@ -109,6 +110,9 @@ internal interface TextProcessor {
         override fun drainChanges() {}
         override fun save() {}
         override fun reset() {}
+        override fun updateFile(file: File) {
+            path = file.path
+        }
 
         private fun displayWarning() {
             GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, path)
@@ -124,13 +128,13 @@ internal interface TextProcessor {
 
     class Writable(
         private val content: SnapshotStateList<AnnotatedString>,
-        private val fileType: Property.FileType,
+        private var fileType: Property.FileType,
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
-        private val onChangeStart: () -> Unit,
-        private val onChangeEnd: (List<String>) -> Unit,
-        private val onSave: () -> Unit,
+        private var onChangeStart: () -> Unit,
+        private var onChangeEnd: (List<String>) -> Unit,
+        private var onSave: () -> Unit,
     ) : TextProcessor {
 
         companion object {
@@ -152,6 +156,13 @@ internal interface TextProcessor {
             redoStack.clear()
             changeQueue.clear()
             changeCount.set(0)
+        }
+
+        override fun updateFile(file: File) {
+            fileType = file.fileType
+            onChangeStart = { file.isChanged() }
+            onChangeEnd = { file.writeLines(it) }
+            onSave = { GlobalState.page.saveAndReopen(file) }
         }
 
         override fun replaceCurrentFound(text: String) {

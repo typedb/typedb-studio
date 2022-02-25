@@ -190,6 +190,10 @@ object TextEditor {
         internal fun updateStatus() {
             target.updateStatus()
         }
+
+        fun updateFile(file: File) {
+            processor.updateFile(file)
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

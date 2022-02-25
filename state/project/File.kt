@@ -78,12 +78,13 @@ class File internal constructor(
     val isTextFile: Boolean = checkIsTextFile()
 
     private var content: List<String> by mutableStateOf(listOf())
-    private var onDiskChangeContent: ((File) -> Unit)? by mutableStateOf(null)
-    private var onDiskChangePermission: ((File) -> Unit)? by mutableStateOf(null)
-    private var onWatch: (() -> Unit)? by mutableStateOf(null)
-    private var beforeSave = LinkedBlockingDeque<() -> Unit>()
-    private var beforeClose = LinkedBlockingDeque<() -> Unit>()
-    private var onClose = LinkedBlockingDeque<() -> Unit>()
+    private var onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
+    private var onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
+    private var onReopen = LinkedBlockingDeque<(File) -> Unit>()
+    private var onWatch = LinkedBlockingDeque<(File) -> Unit>()
+    private var beforeSave = LinkedBlockingDeque<(File) -> Unit>()
+    private var beforeClose = LinkedBlockingDeque<(File) -> Unit>()
+    private var onClose = LinkedBlockingDeque<(File) -> Unit>()
     private var watchFileSystem = AtomicBoolean(false)
     private var hasChanges by mutableStateOf(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
@@ -144,6 +145,7 @@ class File internal constructor(
     }
 
     fun reloadFromDisk(): List<String> {
+        if (!isOpenAtomic.get()) throw IllegalStateException()
         val loadedContent = if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
         content = loadedContent.ifEmpty { listOf("") }
         return content
@@ -169,8 +171,8 @@ class File internal constructor(
         if (settings.autosave) saveContent()
     }
 
-    override fun onWatch(function: () -> Unit) {
-        onWatch = function
+    override fun onWatch(function: (Pageable) -> Unit) {
+        onWatch.push(function)
     }
 
     override fun stopWatcher() {
@@ -178,8 +180,8 @@ class File internal constructor(
     }
 
     override fun launchWatcher() {
-        onWatch?.let { it() }
-        if (watchFileSystem.compareAndSet(false, true)){
+        onWatch.forEach { it(this) }
+        if (watchFileSystem.compareAndSet(false, true)) {
             launchWatcherCoroutine()
         }
     }
@@ -198,10 +200,10 @@ class File internal constructor(
                         if (isWritableAtomic.compareAndSet(!path.isWritable(), path.isWritable())) {
                             permissionChanged = true
                         }
-                        if (permissionChanged) onDiskChangePermission?.let { it(this@File) }
+                        if (permissionChanged) onDiskChangePermission.forEach { it(this@File) }
                         if (lastModified.get() < path.toFile().lastModified()) {
                             lastModified.set(path.toFile().lastModified())
-                            onDiskChangeContent?.let { it(this@File) }
+                            onDiskChangeContent.forEach { it(this@File) }
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -213,42 +215,42 @@ class File internal constructor(
         }
     }
 
+    fun setCallbacks(other: File) {
+        this.onDiskChangeContent = other.onDiskChangeContent
+        this.onDiskChangePermission = other.onDiskChangePermission
+        this.onWatch = other.onWatch
+        this.onReopen = other.onReopen
+        this.beforeSave = other.beforeSave
+        this.beforeClose = other.beforeClose
+        this.onClose = other.onClose
+    }
+
     fun onDiskChangeContent(function: (File) -> Unit) {
-        onDiskChangeContent = function
+        onDiskChangeContent.push(function)
     }
 
     fun onDiskChangePermission(function: (File) -> Unit) {
-        onDiskChangePermission = function
+        onDiskChangePermission.push(function)
     }
 
-    override fun beforeSave(function: () -> Unit) {
+    override fun beforeSave(function: (Pageable) -> Unit) {
         beforeSave.push(function)
     }
 
-    override fun beforeClose(function: () -> Unit) {
+    override fun beforeClose(function: (Pageable) -> Unit) {
         beforeClose.push(function)
     }
 
-    override fun onClose(function: () -> Unit) {
+    override fun onClose(function: (Pageable) -> Unit) {
         onClose.push(function)
     }
 
-    private fun execBeforeSave() {
-        execCallbacks(beforeSave)
+    override fun onReopen(function: (Pageable) -> Unit) {
+        onReopen.push(function)
     }
 
     override fun execBeforeClose() {
-        execCallbacks(beforeClose)
-    }
-
-    private fun execOnClose() {
-        execCallbacks(onClose)
-    }
-
-    private fun execCallbacks(callbacks: LinkedBlockingDeque<() -> Unit>) {
-        val functions = mutableListOf<() -> Unit>()
-        if (callbacks.isNotEmpty()) callbacks.drainTo(functions)
-        functions.forEach { it() }
+        beforeClose.forEach { it(this) }
     }
 
     override fun rename(onSuccess: ((Pageable) -> Unit)?) {
@@ -266,21 +268,22 @@ class File internal constructor(
         if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
-    fun saveContent() {
-        execBeforeSave()
+    private fun saveContent() {
+        beforeSave.forEach { it(this) }
         Files.write(path, content)
         lastModified.set(System.currentTimeMillis())
         hasChanges = false
     }
 
+    internal fun reopen() {
+        onReopen.forEach { it(this) }
+    }
+
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
             watchFileSystem.set(false)
-            onDiskChangeContent = null
-            onDiskChangePermission = null
-            onWatch = null
             execBeforeClose()
-            execOnClose()
+            onClose.forEach { it(this) }
         }
     }
 

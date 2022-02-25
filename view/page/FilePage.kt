@@ -21,13 +21,14 @@ package com.vaticle.typedb.studio.view.page
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 
-class FilePage private constructor(val file: File, val editorState: TextEditor.State) : Page(file) {
+class FilePage private constructor(val file: File, private val editorState: TextEditor.State) : Page(file) {
 
     override val name: String get() = file.name
     override val isWritable: Boolean get() = file.isWritable
@@ -43,6 +44,11 @@ class FilePage private constructor(val file: File, val editorState: TextEditor.S
             file.onWatch { if (editorState.isFocusable) editorState.focusReq.requestFocus() }
             return FilePage(file, editorState)
         }
+
+    }
+
+    override fun updateStateInner(state: Pageable) {
+        editorState.updateFile(state as File)
     }
 
     override fun resetFocus() {

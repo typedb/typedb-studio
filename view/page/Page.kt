@@ -27,13 +27,13 @@ import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.component.Form
 
-abstract class Page(val state: Pageable) {
+abstract class Page(var state: Pageable) {
 
     companion object {
         @Composable
-        fun of(pageable: Pageable): Page {
-            return when (pageable) {
-                is File -> FilePage.create(pageable)
+        fun of(state: Pageable): Page {
+            return when (state) {
+                is File -> FilePage.create(state)
                 else -> throw IllegalStateException("should never be reached")
             }
         }
@@ -46,7 +46,13 @@ abstract class Page(val state: Pageable) {
     var tabSize by mutableStateOf(0.dp)
 
     abstract fun resetFocus()
+    abstract fun updateStateInner(state: Pageable)
 
     @Composable
     abstract fun Layout()
+
+    fun updateState(state: Pageable) {
+        this.state = state
+        updateStateInner(state)
+    }
 }

@@ -166,7 +166,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    private fun toFile(newPath: Path): File {
+    private fun replaceFile(oldFile: File, newPath: Path): File {
         assert(newPath.startsWith(current!!.path))
         var relPath = newPath.relativeTo(current!!.path)
         var dir: Directory = current!!.directory
@@ -176,7 +176,9 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
             relPath = relPath.relativeTo(relPath.first())
         }
         dir.reloadEntries()
-        return dir.entries.first { it.name == relPath.first().name }.asFile()
+        val newFile = dir.entries.first { it.name == relPath.first().name }.asFile()
+        newFile.setCallbacks(oldFile)
+        return newFile
     }
 
     fun tryCreateFile(parent: Directory, newFileName: String) {
@@ -202,10 +204,12 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    fun tryRenameFile(item: File, newName: String) {
-        val newPath = item.path.resolveSibling(newName)
-        if (item.tryRename(newName)) {
-            renameFileDialog.onSuccess?.let { it(toFile(newPath)) }
+    fun tryRenameFile(file: File, newName: String) {
+        val newPath = file.path.resolveSibling(newName)
+        if (file.tryRename(newName)) {
+            val newFile = replaceFile(file, newPath)
+            newFile.reopen()
+            renameFileDialog.onSuccess?.let { it(newFile) }
             renameFileDialog.close()
             onContentChange?.let { it() }
         }
@@ -213,7 +217,9 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
 
     fun trySaveFileTo(file: File, newPath: Path, overwrite: Boolean) {
         if (file.trySaveTo(newPath, overwrite)) {
-            if (newPath.startsWith(current!!.path)) saveFileDialog.onSuccess?.let { it(toFile(newPath)) }
+            val newFile = replaceFile(file, newPath)
+            newFile.reopen()
+            if (newPath.startsWith(current!!.path)) saveFileDialog.onSuccess?.let { it(newFile) }
             else notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
             saveFileDialog.close()
             onContentChange?.let { it() }

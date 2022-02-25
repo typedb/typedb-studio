@@ -33,13 +33,15 @@ interface Pageable {
 
     fun stopWatcher()
 
-    fun onWatch(function: () -> Unit)
+    fun onWatch(function: (Pageable) -> Unit)
 
-    fun beforeSave(function: () -> Unit)
+    fun beforeSave(function: (Pageable) -> Unit)
 
-    fun beforeClose(function: () -> Unit)
+    fun beforeClose(function: (Pageable) -> Unit)
 
-    fun onClose(function: () -> Unit)
+    fun onClose(function: (Pageable) -> Unit)
+
+    fun onReopen(function: (Pageable) -> Unit)
 
     fun execBeforeClose()
 

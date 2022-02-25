@@ -61,17 +61,17 @@ class PageManager(val notification: NotificationManager) {
 
     fun open(page: Pageable) {
         open(page, openedPages.size)
+        page.onClose { close(it) }
     }
 
-    fun open(page: Pageable, index: Int) {
+    private fun open(page: Pageable, index: Int) {
         activePage?.stopWatcher()
         if (page !in openedPages) {
             if (page.tryOpen()) openedPages.add(index, page)
             else return
         }
+        page.launchWatcher()
         activePage = page
-        activePage?.launchWatcher()
-        activePage?.let { it.onClose { close(it) } }
     }
 
     fun close(page: Pageable) {
