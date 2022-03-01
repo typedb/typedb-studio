@@ -63,20 +63,20 @@ internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, init
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
-    override fun NavigatorLayout() {
+    override fun BrowserLayout() {
         if (!isActive) OpenProjectHelper()
         else {
-            val state = rememberNavigatorState(
+            val navState = rememberNavigatorState(
                 container = GlobalState.project.current!!,
                 title = Label.PROJECT_BROWSER,
                 initExpandDepth = 1,
                 liveUpdate = true
             ) { projectItemOpen(it) }
-            GlobalState.project.onProjectChange = { state.replaceContainer(it) }
-            GlobalState.project.onContentChange = { state.reloadEntries() }
-            buttons = state.buttons
+            GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
+            GlobalState.project.onContentChange = { navState.reloadEntries() }
+            buttons = navState.buttons
             Navigator.Layout(
-                state = state,
+                state = navState,
                 iconArgs = { projectItemIcon(it) },
                 styleArgs = { projectItemStyles(it) },
                 contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }

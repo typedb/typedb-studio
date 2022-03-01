@@ -32,7 +32,7 @@ internal class RuleBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
     override val buttons: List<ButtonArgs> = listOf()
 
     @Composable
-    override fun NavigatorLayout() {
+    override fun BrowserLayout() {
 
     }
 }

@@ -16,13 +16,13 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view.response
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -32,77 +32,64 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
-import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 
-sealed class Browser(private val areaState: BrowserArea.AreaState, internal val order: Int, initOpen: Boolean = false) {
+object Response {
 
-    companion object {
-        internal val MIN_HEIGHT = 80.dp
-    }
+    class State(private val paneState: Frame.PaneState, val name: String) {
 
-    internal abstract val label: String
-    internal abstract val icon: Icon.Code
-    internal abstract val isActive: Boolean
-    internal abstract val buttons: List<ButtonArgs>
+        internal var isOpen: Boolean by mutableStateOf(false)
 
-    internal var isOpen: Boolean by mutableStateOf(initOpen)
+        internal fun toggle() {
+            isOpen = !isOpen
+            mayUpdatePaneState()
+        }
 
-    @Composable
-    abstract fun BrowserLayout()
-
-    fun toggle() {
-        isOpen = !isOpen
-        areaState.mayUpdatePaneState()
-    }
-
-
-    @Composable
-    internal fun Layout() {
-        Column {
-            Bar()
-            Separator.Horizontal()
-            Box(modifier = Modifier.weight(1f)) { BrowserLayout() }
+        private fun mayUpdatePaneState() {
+            if (!isOpen) paneState.freeze(PANEL_BAR_HEIGHT)
+            else paneState.unfreeze()
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Bar() {
+    fun Layout(state: State) {
+        Column(Modifier.fillMaxSize()) {
+            Bar(state)
+            if (state.isOpen) {
+                Separator.Horizontal()
+            }
+        }
+    }
+
+    @Composable
+    private fun Bar(state: State) {
         Row(
             modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            Icon.Render(icon = icon)
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            Form.Text(value = label)
+            Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
+            Form.Text(value = Label.RUN + ":")
             Spacer(Modifier.weight(1f))
-            Buttons(*buttons.toTypedArray(), isActive = isActive)
-            Buttons(ButtonArgs(Icon.Code.XMARK) { toggle() }, isActive = true)
+            ToggleButton(state)
         }
     }
 
     @Composable
-    private fun Buttons(vararg buttons: ButtonArgs, isActive: Boolean) {
-        buttons.forEach {
-            Form.IconButton(
-                icon = it.icon,
-                onClick = { it.onClick() },
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
-                bgColor = Color.Transparent,
-                rounded = false,
-                enabled = isActive
-            )
-        }
+    private fun ToggleButton(state: State) {
+        Form.IconButton(
+            icon = if (state.isOpen) Icon.Code.CARET_DOWN else Icon.Code.CARET_UP,
+            onClick = { state.toggle() },
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
+            bgColor = Color.Transparent,
+            rounded = false,
+        )
     }
 }

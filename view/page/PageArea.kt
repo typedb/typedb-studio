@@ -75,6 +75,8 @@ import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -82,8 +84,6 @@ import kotlinx.coroutines.launch
 object PageArea {
 
     val MIN_WIDTH = 300.dp
-    private val TAB_SPACING = 8.dp
-    private val TAB_HEIGHT = 28.dp
     private val TAB_UNDERLINE_HEIGHT = 2.dp
     private val TAB_SCROLL_DELTA = 200.dp
     private val ICON_SIZE = 10.sp
@@ -225,14 +225,14 @@ object PageArea {
     private fun TabArea(state: AreaState) {
         val scrollState = state.tabsScroller
         fun updateTabsRowMaxWidth(rawAreaWidth: Int) {
-            state.tabsRowMaxWidth = toDP(rawAreaWidth, state.density) - TAB_HEIGHT * 3
+            state.tabsRowMaxWidth = toDP(rawAreaWidth, state.density) - PANEL_BAR_HEIGHT * 3
         }
-        Row(Modifier.fillMaxWidth().height(TAB_HEIGHT).onSizeChanged { updateTabsRowMaxWidth(it.width) }) {
+        Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged { updateTabsRowMaxWidth(it.width) }) {
             if (scrollState.maxValue > 0) {
                 PreviousTabsButton(state)
                 Separator.Vertical()
             }
-            Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(TAB_HEIGHT).horizontalScroll(scrollState)) {
+            Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(PANEL_BAR_HEIGHT).horizontalScroll(scrollState)) {
                 GlobalState.resource.opened.forEach { pageState ->
                     Tab(state, state.cachedOpenedPages.getOrPut(pageState) {
                         val page = Page.of(pageState)
@@ -267,7 +267,7 @@ object PageArea {
         val isActive = GlobalState.resource.isActive(page.resource)
         val contextMenu = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
-        val height = if (isActive) TAB_HEIGHT - TAB_UNDERLINE_HEIGHT else TAB_HEIGHT
+        val height = if (isActive) PANEL_BAR_HEIGHT - TAB_UNDERLINE_HEIGHT else PANEL_BAR_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
         Box {
@@ -281,14 +281,14 @@ object PageArea {
                         .pointerInput(state, page) { onPointerInput(contextMenu, page) }
                         .onSizeChanged { width = toDP(it.width, state.density) }
                 ) {
-                    Spacer(modifier = Modifier.width(TAB_SPACING))
+                    Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
                     Icon.Render(icon = page.icon.code, color = page.icon.color(), size = ICON_SIZE)
-                    Spacer(modifier = Modifier.width(TAB_SPACING))
+                    Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
                     Text(value = tabTitle(page))
                     IconButton(
                         icon = Icon.Code.XMARK,
                         onClick = { state.close(page.resource) },
-                        modifier = Modifier.size(TAB_HEIGHT),
+                        modifier = Modifier.size(PANEL_BAR_HEIGHT),
                         bgColor = Color.Transparent,
                         rounded = false,
                     )
@@ -311,7 +311,7 @@ object PageArea {
         IconButton(
             icon = Icon.Code.CARET_LEFT,
             onClick = { state.scrollTabsBy(-TAB_SCROLL_DELTA) },
-            modifier = Modifier.size(TAB_HEIGHT),
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
             enabled = state.tabsScroller.value > 0
@@ -323,7 +323,7 @@ object PageArea {
         IconButton(
             icon = Icon.Code.CARET_RIGHT,
             onClick = { state.scrollTabsBy(TAB_SCROLL_DELTA) },
-            modifier = Modifier.size(TAB_HEIGHT),
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
             enabled = state.tabsScroller.value < state.tabsScroller.maxValue
@@ -335,7 +335,7 @@ object PageArea {
         IconButton(
             icon = Icon.Code.PLUS,
             onClick = { state.createAndOpenNewFile() },
-            modifier = Modifier.size(TAB_HEIGHT),
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
             enabled = GlobalState.project.current != null

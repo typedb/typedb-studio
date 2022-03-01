@@ -71,16 +71,14 @@ object Frame {
         val initSize: Either<Dp, Float> = Either.second(1f),
         val minSize: Dp = PANE_MIN_SIZE,
         val order: Int,
-        currentSize: Dp = 0.dp,
-        currentFreezeSize: Dp? = null,
         val content: @Composable (PaneState) -> Unit
     ) {
         internal val isFirst: Boolean get() = index == 0
         internal val isLast: Boolean get() = index == frameState.panes.size - 1
         internal val previous: PaneState? get() = if (isFirst) null else frameState.panes[index - 1]
         internal val next: PaneState? get() = if (isLast) null else frameState.panes[index + 1]
-        private var _size: Dp by mutableStateOf(currentSize)
-        internal var freezeSize: Dp? by mutableStateOf(currentFreezeSize); private set
+        internal var freezeSize: Dp? by mutableStateOf(null); private set
+        private var _size: Dp by mutableStateOf(0.dp)
         internal var size: Dp
             get() = freezeSize ?: _size
             set(value) {
@@ -111,15 +109,15 @@ object Frame {
         }
     }
 
-    internal class FrameState(private val separatorSize: Dp?) {
-        var resized: Boolean = false
-        var maxSize: Dp by mutableStateOf(0.dp)
-        var panes: List<PaneState> by mutableStateOf(emptyList())
+    class FrameState internal constructor(internal val separator: SeparatorArgs?) {
+        internal var resized: Boolean = false
+        internal var panes: List<PaneState> by mutableStateOf(emptyList())
+        private var maxSize: Dp by mutableStateOf(0.dp)
         private val currentSize: Dp
             get() {
                 var size = 0.dp
                 panes.map { size += it.size }
-                separatorSize?.let { size += it * (panes.size - 1) }
+                separator?.size?.let { size += it * (panes.size - 1) }
                 return size
             }
 
@@ -163,11 +161,10 @@ object Frame {
                 fixedSize += it.initSize.first()
             }
             val weightedPanes = panes.filter { it.initSize.isSecond }
-            val weightedSize = maxSize - fixedSize
-            val weightedTotal = weightedPanes.sumOf { it.initSize.second().toDouble() }.toFloat()
+            val weightedTotalSize = maxSize - fixedSize
+            val weightedTotalWeight = weightedPanes.sumOf { it.initSize.second().toDouble() }.toFloat()
             weightedPanes.forEach {
-                it.size =
-                    max(it.minSize, weightedSize * (it.initSize.second() / weightedTotal))
+                it.size = max(it.minSize, weightedTotalSize * (it.initSize.second() / weightedTotalWeight))
             }
         }
 
@@ -184,52 +181,55 @@ object Frame {
         }
     }
 
+    fun createFrameState(separator: SeparatorArgs? = null, vararg panes: Pane): FrameState {
+        return FrameState(separator).also { it.sync(panes.toList()) }
+    }
+
     @Composable
-    fun Row(
-        modifier: Modifier = Modifier,
-        separator: SeparatorArgs? = null,
-        vararg panes: Pane
-    ) {
+    fun Row(modifier: Modifier = Modifier, separator: SeparatorArgs? = null, vararg panes: Pane) {
         assert(panes.size >= 2)
+        Row(remember { createFrameState(separator, *panes) }, modifier)
+    }
+
+    @Composable
+    fun Row(state: FrameState, modifier: Modifier = Modifier) {
         val pixelDensity = LocalDensity.current.density
-        val frameState = remember { FrameState(separator?.size) }
-        frameState.sync(panes.toList())
-        Box(modifier = modifier.onSizeChanged { frameState.onSizeChanged(Theme.toDP(it.width, pixelDensity)) }) {
+        Box(modifier = modifier.onSizeChanged { state.onSizeChanged(Theme.toDP(it.width, pixelDensity)) }) {
             Row(modifier = Modifier.fillMaxSize()) {
-                frameState.panes.forEach { pane ->
+                state.panes.forEach { pane ->
                     Box(Modifier.fillMaxHeight().width(pane.size)) { pane.content(pane) }
-                    separator?.let { if (!pane.isLast) Separator.Vertical(it.size, it.color()) }
+                    state.separator?.let { if (!pane.isLast) Separator.Vertical(it.size, it.color()) }
                 }
             }
             Row(modifier = Modifier.fillMaxSize()) {
-                frameState.panes.filter { !it.isLast }.forEach {
+                state.panes.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxHeight().width(it.nonDraggableSize))
-                    RowPaneResizer(it, separator?.size)
+                    RowPaneResizer(it, state.separator?.size)
                 }
             }
         }
     }
 
     @Composable
-    fun Column(
-        modifier: Modifier = Modifier,
-        separator: SeparatorArgs? = null,
-        vararg panes: Pane
-    ) {
+    fun Column(modifier: Modifier = Modifier, separator: SeparatorArgs? = null, vararg panes: Pane) {
+        assert(panes.size >= 2)
+        Column(remember { createFrameState(separator, *panes) }, modifier)
+    }
+
+    @Composable
+    fun Column(state: FrameState, modifier: Modifier = Modifier) {
         val pixelDensity = LocalDensity.current.density
-        val frameState = remember { FrameState(separator?.size) }
-        frameState.sync(panes.toList())
-        Box(modifier = modifier.onSizeChanged { frameState.onSizeChanged(Theme.toDP(it.height, pixelDensity)) }) {
+        Box(modifier = modifier.onSizeChanged { state.onSizeChanged(Theme.toDP(it.height, pixelDensity)) }) {
             Column(modifier = Modifier.fillMaxSize()) {
-                frameState.panes.forEach { pane ->
+                state.panes.forEach { pane ->
                     Box(Modifier.fillMaxWidth().height(pane.size)) { pane.content(pane) }
-                    separator?.let { if (!pane.isLast) Separator.Horizontal(it.size, it.color()) }
+                    state.separator?.let { if (!pane.isLast) Separator.Horizontal(it.size, it.color()) }
                 }
             }
             Column(modifier = Modifier.fillMaxSize()) {
-                frameState.panes.filter { !it.isLast }.forEach {
+                state.panes.filter { !it.isLast }.forEach {
                     Box(Modifier.fillMaxWidth().height(it.nonDraggableSize))
-                    ColumnPaneResizer(it, separator?.size)
+                    ColumnPaneResizer(it, state.separator?.size)
                 }
             }
         }

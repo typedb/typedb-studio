@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
@@ -57,7 +58,7 @@ class FilePage private constructor(var file: File, private val editor: TextEdito
     }
 
     @Composable
-    override fun Layout() {
+    override fun Content() {
         TextEditor.Area(state = editor, modifier = Modifier.fillMaxSize())
     }
 }

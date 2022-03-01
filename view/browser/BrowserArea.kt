@@ -43,7 +43,7 @@ import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.common.collection.Either.second
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -70,14 +70,14 @@ object BrowserArea {
         )
 
         init {
-            mayHidePanelArea()
+            mayUpdatePaneState()
         }
 
         fun openedBrowsers(): List<Browser> {
             return browsers.filter { it.isOpen }
         }
 
-        fun mayHidePanelArea() {
+        fun mayUpdatePaneState() {
             if (openedBrowsers().isEmpty()) paneState.freeze(SIDE_TAB_WIDTH)
             else paneState.unfreeze()
         }
@@ -99,7 +99,7 @@ object BrowserArea {
                     *openedBrowsers.map { browser ->
                         Frame.Pane(
                             id = browser.label,
-                            initSize = second(1f),
+                            initSize = Either.second(1f),
                             minSize = Browser.MIN_HEIGHT,
                             order = browser.order
                         ) { browser.Layout() }

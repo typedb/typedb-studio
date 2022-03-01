@@ -48,7 +48,7 @@ internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpe
     override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
 
     @Composable
-    override fun NavigatorLayout() {
+    override fun BrowserLayout() {
         val connectionMgr = GlobalState.connection
         if (!connectionMgr.isConnected) ConnectToServerHelper()
         else if (!connectionMgr.isInteractiveMode) NonInteractiveModeMessage()

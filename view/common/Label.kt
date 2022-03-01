@@ -84,6 +84,7 @@ object Label {
     const val RENAME_DIRECTORY = "Rename Directory"
     const val RENAME_FILE = "Rename File"
     const val REOPEN = "Reopen"
+    const val RUN = "Run"
     const val CLOSE_TRANSACTION = "Reopen Transaction"
     const val REPLACE = "Replace"
     const val REPLACE_ALL = "Replace All"

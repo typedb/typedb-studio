@@ -48,6 +48,8 @@ import kotlin.math.roundToInt
 object Theme {
 
     val DIALOG_PADDING = 16.dp
+    val PANEL_BAR_HEIGHT = 28.dp
+    val PANEL_BAR_SPACING = 8.dp
     val SCROLLBAR_LONG_PADDING = 4.dp
     val SCROLLBAR_END_PADDING = 6.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
