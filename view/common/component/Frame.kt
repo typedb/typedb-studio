@@ -188,7 +188,7 @@ object Frame {
     @Composable
     fun Row(modifier: Modifier = Modifier, separator: SeparatorArgs? = null, vararg panes: Pane) {
         assert(panes.size >= 2)
-        Row(remember { createFrameState(separator, *panes) }, modifier)
+        Row(remember { FrameState(separator) }.also { it.sync(panes.toList()) }, modifier)
     }
 
     @Composable
@@ -213,7 +213,7 @@ object Frame {
     @Composable
     fun Column(modifier: Modifier = Modifier, separator: SeparatorArgs? = null, vararg panes: Pane) {
         assert(panes.size >= 2)
-        Column(remember { createFrameState(separator, *panes) }, modifier)
+        Column(remember { FrameState(separator) }.also { it.sync(panes.toList()) }, modifier)
     }
 
     @Composable
