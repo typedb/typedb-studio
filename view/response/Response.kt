@@ -48,6 +48,10 @@ object Response {
 
         internal var isOpen: Boolean by mutableStateOf(false)
 
+        init {
+            mayUpdatePaneState()
+        }
+
         internal fun toggle() {
             isOpen = !isOpen
             mayUpdatePaneState()

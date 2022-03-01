@@ -42,9 +42,9 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.Cursor
@@ -88,14 +88,14 @@ object Frame {
         internal val nonDraggableSize: Dp
             get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAGGABLE_BAR_SIZE / 2) else DRAGGABLE_BAR_SIZE))
 
-        internal fun tryOverride(delta: Dp) {
-            _size += max(delta, minSize - _size)
+        internal fun tryResizeSelfBy(delta: Dp) {
+            _size = (_size + delta).coerceAtLeast(minSize)
         }
 
-        internal fun tryResizeSelfAndNext(delta: Dp) {
+        internal fun tryResizeSelfAndNextBy(delta: Dp) {
             assert(!isLast && next != null)
             frameState.resized = true
-            val cappedDelta = min(max(delta, minSize - _size), next!!.size - next!!.minSize)
+            val cappedDelta = delta.coerceIn(minSize - _size, next!!.size - next!!.minSize)
             _size += cappedDelta
             next!!.size -= cappedDelta
         }
@@ -148,7 +148,7 @@ object Frame {
             mayInitialiseSizes()
         }
 
-        internal fun onSizeChanged(newMaxSize: Dp) {
+        internal fun updateSize(newMaxSize: Dp) {
             maxSize = newMaxSize
             if (!resized) mayInitialiseSizes()
             mayShrinkOrExpandSizes()
@@ -173,11 +173,11 @@ object Frame {
             var size = currentSize
             // we add 1.dp only to accommodate for rounding errors never reaching equals
             while (size > maxSize + 1.dp && i >= 0) {
-                panes[i].tryOverride(maxSize - size)
+                panes[i].tryResizeSelfBy(maxSize - size)
                 size = currentSize
                 i--
             }
-            if (size < maxSize) panes.last().tryOverride(maxSize - size)
+            if (size < maxSize) panes.last().tryResizeSelfBy(maxSize - size)
         }
     }
 
@@ -193,7 +193,7 @@ object Frame {
     @Composable
     fun Row(state: FrameState, modifier: Modifier = Modifier) {
         val pixelDensity = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { state.onSizeChanged(Theme.toDP(it.width, pixelDensity)) }) {
+        Box(modifier = modifier.onSizeChanged { state.updateSize(Theme.toDP(it.width, pixelDensity)) }) {
             Row(modifier = Modifier.fillMaxSize()) {
                 state.panes.forEach { pane ->
                     Box(Modifier.fillMaxHeight().width(pane.size)) { pane.content(pane) }
@@ -217,7 +217,7 @@ object Frame {
     @Composable
     fun Column(state: FrameState, modifier: Modifier = Modifier) {
         val pixelDensity = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { state.onSizeChanged(Theme.toDP(it.height, pixelDensity)) }) {
+        Box(modifier = modifier.onSizeChanged { state.updateSize(Theme.toDP(it.height, pixelDensity)) }) {
             Column(modifier = Modifier.fillMaxSize()) {
                 state.panes.forEach { pane ->
                     Box(Modifier.fillMaxWidth().height(pane.size)) { pane.content(pane) }
@@ -245,7 +245,7 @@ object Frame {
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
-                        paneState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
+                        paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
             )
         }
@@ -263,7 +263,7 @@ object Frame {
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
-                        paneState.tryResizeSelfAndNext(Theme.toDP(it, pixelDensity))
+                        paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
             )
         }
