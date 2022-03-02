@@ -27,7 +27,6 @@ kt_jvm_library(
     deps = [
         "//view/common:common",
         "//view/editor:editor",
-        "//view/response:response",
         "//state/common:common",
         "//state/project:project",
         "//state/resource:resource",

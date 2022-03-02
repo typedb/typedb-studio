@@ -62,9 +62,7 @@ import mu.KotlinLogging
 object ProjectDialog {
 
     private class ProjectItemForm constructor(
-        initField: String,
-        val onCancel: () -> Unit,
-        val onSubmit: (String) -> Unit
+        initField: String, val onCancel: () -> Unit, val onSubmit: (String) -> Unit
     ) : Form.State {
 
         var field: String by mutableStateOf(initField)
@@ -92,7 +90,7 @@ object ProjectDialog {
         ComponentSpacer()
         TextButton(text = submitLabel, onClick = { form.trySubmit() }, enabled = form.isValid())
     }
-    
+
     @Composable
     fun OpenProject() {
         val state = ProjectItemForm(

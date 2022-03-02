@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.studio.view.common.theme.Color.hexToColor
 import com.vaticle.typedb.studio.view.common.theme.Typography
-import java.nio.file.Path
 
 class Scheme(val scopes: Map<String, Scope>) {
 
@@ -41,7 +40,8 @@ class Scheme(val scopes: Map<String, Scope>) {
         private fun createScheme(filename: String): Scheme {
             val colors = mutableMapOf<String, Color>()
             val scopes = Scope.instantiateNewScopes()
-            val yaml = YAML.load(String(ClassLoader.getSystemClassLoader().getResourceAsStream(filename)!!.readAllBytes())).asMap().content()
+            val fileStream = ClassLoader.getSystemClassLoader().getResourceAsStream(filename)!!
+            val yaml = YAML.load(String(fileStream.readAllBytes())).asMap().content()
             yaml[COLORS]?.let { populateColors(colors, it.asMap().content()) }
             yaml[Scope.GLOBAL_NAME]?.let { populateGlobal(scopes, colors, it.asMap().content()) }
             yaml[RULES]?.let { populateRules(scopes, colors, it.asMap().content(), null) }

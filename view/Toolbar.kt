@@ -135,6 +135,7 @@ object Toolbar {
             SaveButton()
             ToolbarSpace()
         }
+
         @Composable
         private fun OpenProjectButton() {
             ToolbarIconButton(

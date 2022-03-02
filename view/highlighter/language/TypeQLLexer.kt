@@ -24,7 +24,6 @@ import com.vaticle.typedb.studio.view.highlighter.common.Lexer.Token
 import com.vaticle.typedb.studio.view.highlighter.common.Scheme
 import com.vaticle.typeql.grammar.TypeQLLexer.VOCABULARY
 import com.vaticle.typeql.lang.TypeQL
-import java.nio.file.Path
 import org.antlr.v4.runtime.CommonTokenStream
 
 // TODO: we should reimplement this using a JFlex lexer,
@@ -37,7 +36,8 @@ object TypeQLLexer : Lexer {
 
     private fun loadTokenScopeDefinition(): Map<String, String> {
         val scopes = mutableMapOf<String, String>()
-        val yaml = YAML.load(String(ClassLoader.getSystemClassLoader().getResourceAsStream(TYPEQL_SCOPES_FILE)!!.readAllBytes())).asMap()
+        val fileStream = ClassLoader.getSystemClassLoader().getResourceAsStream(TYPEQL_SCOPES_FILE)!!
+        val yaml = YAML.load(String(fileStream.readAllBytes())).asMap()
         yaml.forEach { antlrToken, scope -> scopes[antlrToken] = scope.asString().value() }
         return scopes
     }

@@ -33,14 +33,13 @@ import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
-import com.vaticle.typedb.studio.view.response.Response
 
 abstract class Page(var resource: Resource) {
 
     companion object {
 
         private val CONTENT_MIN_HEIGHT = 64.dp
-        private val RESPONSE_MIN_HEIGHT = 64.dp
+        private val RUN_PANEL_MIN_HEIGHT = 64.dp
 
         @Composable
         fun of(resource: Resource): Page {
@@ -51,7 +50,7 @@ abstract class Page(var resource: Resource) {
         }
     }
 
-    private var responseState: Response.State? by mutableStateOf(null)
+    private var runPanelState: RunPanel.State? by mutableStateOf(null)
     private var frameState: Frame.FrameState? by mutableStateOf(null)
     internal var tabSize by mutableStateOf(0.dp)
 
@@ -67,13 +66,13 @@ abstract class Page(var resource: Resource) {
 
     fun updateResource(resource: Resource) {
         this.resource = resource
-        this.responseState = null
+        this.runPanelState = null
         updateResourceInner(resource)
     }
 
-    private fun responseState(paneState: Frame.PaneState): Response.State {
-        if (responseState == null) responseState = Response.State(paneState, resource.name)
-        return responseState!!
+    private fun runPanelState(paneState: Frame.PaneState): RunPanel.State {
+        if (runPanelState == null) runPanelState = RunPanel.State(paneState, resource.name)
+        return runPanelState!!
     }
 
     private fun frameState(): Frame.FrameState {
@@ -87,12 +86,12 @@ abstract class Page(var resource: Resource) {
                     initSize = Either.second(1f)
                 ) { Content() },
                 Frame.Pane(
-                    id = Response::class.java.canonicalName,
+                    id = RunPanel::class.java.canonicalName,
                     order = 2,
-                    minSize = RESPONSE_MIN_HEIGHT,
-                    initSize = if (!Response.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
-                    initFreeze = !Response.DEFAULT_OPEN
-                ) { paneState -> Response.Layout(responseState(paneState)) }
+                    minSize = RUN_PANEL_MIN_HEIGHT,
+                    initSize = if (!RunPanel.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initFreeze = !RunPanel.DEFAULT_OPEN
+                ) { paneState -> RunPanel.Layout(runPanelState(paneState)) }
             )
         }
         return frameState!!
@@ -101,6 +100,8 @@ abstract class Page(var resource: Resource) {
     @Composable
     internal fun Layout() {
         if (!resource.isRunnable) Content()
-        else { Frame.Column(state = frameState(), modifier = Modifier.fillMaxSize()) }
+        else {
+            Frame.Column(state = frameState(), modifier = Modifier.fillMaxSize())
+        }
     }
 }

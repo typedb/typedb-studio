@@ -24,7 +24,6 @@ import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.UNDERLINE
-import java.nio.file.Path
 
 class Scope private constructor(val name: String, var parent: Scope?) {
 
@@ -56,7 +55,8 @@ class Scope private constructor(val name: String, var parent: Scope?) {
         fun instantiateNewScopes(): Map<String, Scope> {
             val globalScope = Scope(name = GLOBAL_NAME, parent = null)
             val scopes = mutableMapOf(GLOBAL_NAME to globalScope)
-            YAML.load(String(ClassLoader.getSystemClassLoader().getResourceAsStream(SCOPE_DEFINITION_FILE)!!.readAllBytes())).asMap().content().map { entry ->
+            val fileStream = ClassLoader.getSystemClassLoader().getResourceAsStream(SCOPE_DEFINITION_FILE)!!
+            YAML.load(String(fileStream.readAllBytes())).asMap().content().map { entry ->
                 createScope(entry.key, globalScope, entry.value, scopes)
             }.forEach { scopes[it.fullName] = it }
             return scopes

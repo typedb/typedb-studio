@@ -414,7 +414,9 @@ object TextToolbar {
     @Composable
     private fun FinderParameterButtons(state: State) {
         Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
-            FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) { state.toggleCaseSensitive() }
+            FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
+                state.toggleCaseSensitive()
+            }
             FinderButton(Icon.Code.LETTER_W, Label.EXACT_WORD, state.isWord) { state.toggleWord() }
             FinderButton(Icon.Code.ASTERISK, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() }
         }

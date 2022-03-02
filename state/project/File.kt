@@ -151,7 +151,7 @@ class File internal constructor(
             null
         }
     }
-    
+
     override fun initialiseWith(other: ProjectItem) {
         val otherFile = other as File
         this.onDiskChangeContent.addAll(otherFile.onDiskChangeContent)
