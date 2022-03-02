@@ -50,7 +50,7 @@ abstract class Page(var resource: Resource) {
         }
     }
 
-    private var runPanelState: RunPanel.State? by mutableStateOf(null)
+    private var runOutputState: RunOutput.State? by mutableStateOf(null)
     private var frameState: Frame.FrameState? by mutableStateOf(null)
     internal var tabSize by mutableStateOf(0.dp)
 
@@ -66,13 +66,13 @@ abstract class Page(var resource: Resource) {
 
     fun updateResource(resource: Resource) {
         this.resource = resource
-        this.runPanelState = null
+        this.runOutputState = null
         updateResourceInner(resource)
     }
 
-    private fun runPanelState(paneState: Frame.PaneState): RunPanel.State {
-        if (runPanelState == null) runPanelState = RunPanel.State(paneState, resource.name)
-        return runPanelState!!
+    private fun runOutputState(paneState: Frame.PaneState): RunOutput.State {
+        if (runOutputState == null) runOutputState = RunOutput.State(paneState, resource.name)
+        return runOutputState!!
     }
 
     private fun frameState(): Frame.FrameState {
@@ -86,12 +86,12 @@ abstract class Page(var resource: Resource) {
                     initSize = Either.second(1f)
                 ) { Content() },
                 Frame.Pane(
-                    id = RunPanel::class.java.canonicalName,
+                    id = RunOutput::class.java.canonicalName,
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
-                    initSize = if (!RunPanel.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
-                    initFreeze = !RunPanel.DEFAULT_OPEN
-                ) { paneState -> RunPanel.Layout(runPanelState(paneState)) }
+                    initSize = if (!RunOutput.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initFreeze = !RunOutput.DEFAULT_OPEN
+                ) { paneState -> RunOutput.Layout(runOutputState(paneState)) }
             )
         }
         return frameState!!

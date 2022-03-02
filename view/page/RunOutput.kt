@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 
-internal object RunPanel {
+internal object RunOutput {
 
     internal const val DEFAULT_OPEN = false
 
