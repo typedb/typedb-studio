@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -102,10 +103,12 @@ object Frame {
 
         fun freeze(size: Dp) {
             freezeSize = size
+            frameState.mayShrinkOrExpandSizes()
         }
 
         fun unfreeze() {
             freezeSize = null
+            frameState.mayShrinkOrExpandSizes()
         }
     }
 
@@ -149,9 +152,11 @@ object Frame {
         }
 
         internal fun updateSize(newMaxSize: Dp) {
-            maxSize = newMaxSize
-            if (!resized) mayInitialiseSizes()
-            mayShrinkOrExpandSizes()
+            if (maxSize != newMaxSize) {
+                maxSize = newMaxSize
+                if (!resized) mayInitialiseSizes()
+                mayShrinkOrExpandSizes()
+            }
         }
 
         private fun mayInitialiseSizes() {
@@ -168,7 +173,7 @@ object Frame {
             }
         }
 
-        private fun mayShrinkOrExpandSizes() {
+        internal fun mayShrinkOrExpandSizes() {
             var i = panes.size - 1
             var size = currentSize
             // we add 1.dp only to accommodate for rounding errors never reaching equals
@@ -177,7 +182,12 @@ object Frame {
                 size = currentSize
                 i--
             }
-            if (size < maxSize) panes.last().tryResizeSelfBy(maxSize - size)
+            i = panes.size - 1
+            while (size < maxSize && i >= 0) {
+                panes[i].tryResizeSelfBy(maxSize - size)
+                size = currentSize
+                i--
+            }
         }
     }
 
