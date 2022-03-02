@@ -132,7 +132,7 @@ object Studio {
                     Separator.Horizontal()
                     StatusBar.Layout()
                 }
-                NotificationArea.Layout()
+                if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
                 if (GlobalState.confirmation.dialog.isOpen) ConfirmationDialog.Layout()
                 if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
                 if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()

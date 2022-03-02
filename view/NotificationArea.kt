@@ -32,6 +32,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.notification.Notification
 import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
@@ -56,7 +57,7 @@ object NotificationArea {
 
     @Composable
     fun Layout() {
-        androidx.compose.ui.window.Popup(alignment = Alignment.BottomEnd) {
+        Popup(alignment = Alignment.BottomEnd) {
             Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
                 if (GlobalState.notification.queue.size > 1) DismissAllButton()
                 GlobalState.notification.queue.forEach { notification ->
