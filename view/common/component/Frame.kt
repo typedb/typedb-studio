@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -59,63 +58,79 @@ object Frame {
 
     data class Pane(
         val id: String,
-        val initSize: Either<Dp, Float>,
-        val minSize: Dp = PANE_MIN_SIZE,
         val order: Int = 0,
+        val minSize: Dp = PANE_MIN_SIZE,
+        val initSize: Either<Dp, Float>,
+        val initFreeze: Boolean = false,
         val content: @Composable (PaneState) -> Unit
     )
 
     class PaneState internal constructor(
-        private val frameState: FrameState,
         internal var index: Int,
+        val frameState: FrameState,
         val id: String,
-        val initSize: Either<Dp, Float> = Either.second(1f),
-        val minSize: Dp = PANE_MIN_SIZE,
         val order: Int,
+        val minSize: Dp = PANE_MIN_SIZE,
+        val initSize: Either<Dp, Float> = Either.second(1f),
+        initFreeze: Boolean = false,
         val content: @Composable (PaneState) -> Unit
     ) {
         internal val isFirst: Boolean get() = index == 0
         internal val isLast: Boolean get() = index == frameState.panes.size - 1
         internal val previous: PaneState? get() = if (isFirst) null else frameState.panes[index - 1]
         internal val next: PaneState? get() = if (isLast) null else frameState.panes[index + 1]
-        internal var freezeSize: Dp? by mutableStateOf(null); private set
-        private var _size: Dp by mutableStateOf(0.dp)
-        internal var size: Dp
-            get() = freezeSize ?: _size
-            set(value) {
-                _size = value
-            }
+        var isFrozen by mutableStateOf(initFreeze)
+        var size: Dp by mutableStateOf(0.dp)
 
+        private val maxResize: Dp get() = if (isFrozen) 0.dp else size - minSize
         internal val nonDraggableSize: Dp
-            get() = freezeSize ?: (_size - (if (isFirst || isLast) (DRAGGABLE_BAR_SIZE / 2) else DRAGGABLE_BAR_SIZE))
+            get() = if (isFrozen) size
+            else (size - (if (isFirst || isLast) (DRAGGABLE_BAR_SIZE / 2) else DRAGGABLE_BAR_SIZE))
 
-        internal fun tryResizeSelfBy(delta: Dp) {
-            _size = (_size + delta).coerceAtLeast(minSize)
+        fun freeze(newSize: Dp) {
+            tryResizeSelfAndAdjacentBy(newSize - size, true)
+            isFrozen = true
         }
 
-        internal fun tryResizeSelfAndNextBy(delta: Dp) {
+        fun unfreeze(newSize: Dp) {
+            isFrozen = false
+            tryResizeSelfAndAdjacentBy(newSize - size)
+        }
+
+        private fun tryResizeSelfAndAdjacentBy(delta: Dp, overrideBounds: Boolean = false) {
+            if (isFrozen) return
+            if (frameState.panes.size == 1) tryResizeSelfBy(delta, overrideBounds)
+            else if (isLast) tryResizeSelfAndPreviousBy(delta, overrideBounds)
+            else tryResizeSelfAndNextBy(delta, overrideBounds)
+        }
+
+        internal fun tryResizeSelfBy(delta: Dp, overrideConstraints: Boolean = false) {
+            if (isFrozen) return
+            size += delta
+            if (!overrideConstraints) size.coerceAtLeast(minSize)
+        }
+
+        internal fun tryResizeSelfAndNextBy(delta: Dp, overrideBounds: Boolean = false) {
+            if (isFrozen) return
             assert(!isLast && next != null)
-            frameState.resized = true
-            val cappedDelta = delta.coerceIn(minSize - _size, next!!.size - next!!.minSize)
-            _size += cappedDelta
+            val cappedDelta = if (overrideBounds) delta else delta.coerceIn(minSize - size, next!!.maxResize)
+            size += cappedDelta
             next!!.size -= cappedDelta
         }
 
-        fun freeze(size: Dp) {
-            freezeSize = size
-            frameState.mayShrinkOrExpandSizes()
-        }
-
-        fun unfreeze() {
-            freezeSize = null
-            frameState.mayShrinkOrExpandSizes()
+        private fun tryResizeSelfAndPreviousBy(delta: Dp, overrideBounds: Boolean = false) {
+            if (isFrozen) return
+            assert(isLast && previous != null)
+            val cappedDelta = if (overrideBounds) delta else delta.coerceIn(minSize - size, previous!!.maxResize)
+            size += cappedDelta
+            previous!!.size -= cappedDelta
         }
     }
 
     class FrameState internal constructor(internal val separator: SeparatorArgs?) {
-        internal var resized: Boolean = false
+        var maxSize: Dp by mutableStateOf(0.dp)
         internal var panes: List<PaneState> by mutableStateOf(emptyList())
-        private var maxSize: Dp by mutableStateOf(0.dp)
+        internal var isManuallyResized: Boolean = false
         private val currentSize: Dp
             get() {
                 var size = 0.dp
@@ -144,8 +159,8 @@ object Frame {
         private fun add(added: List<Pane>) {
             panes = (panes + added.map {
                 PaneState(
-                    frameState = this, index = 0, id = it.id, initSize = it.initSize,
-                    minSize = it.minSize, order = it.order, content = it.content
+                    index = 0, frameState = this, id = it.id, order = it.order, minSize = it.minSize,
+                    initSize = it.initSize, initFreeze = it.initFreeze, content = it.content
                 )
             }).sortedBy { it.order }.onEachIndexed { i, pane -> pane.index = i }
             mayInitialiseSizes()
@@ -154,7 +169,7 @@ object Frame {
         internal fun updateSize(newMaxSize: Dp) {
             if (maxSize != newMaxSize) {
                 maxSize = newMaxSize
-                if (!resized) mayInitialiseSizes()
+                if (!isManuallyResized) mayInitialiseSizes()
                 mayShrinkOrExpandSizes()
             }
         }
@@ -173,7 +188,7 @@ object Frame {
             }
         }
 
-        internal fun mayShrinkOrExpandSizes() {
+        private fun mayShrinkOrExpandSizes() {
             var i = panes.size - 1
             var size = currentSize
             // we add 1.dp only to accommodate for rounding errors never reaching equals
@@ -246,36 +261,34 @@ object Frame {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun RowPaneResizer(paneState: PaneState, separatorWidth: Dp?) {
-        if (paneState.freezeSize != null) {
-            if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
-        } else {
+        if (!paneState.isFrozen) {
             val pixelDensity = LocalDensity.current.density
             Box(
                 modifier = Modifier.fillMaxHeight()
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
+                        paneState.frameState.isManuallyResized = true
                         paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
             )
-        }
+        } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ColumnPaneResizer(paneState: PaneState, separatorHeight: Dp?) {
-        if (paneState.freezeSize != null) {
-            if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))
-        } else {
+        if (!paneState.isFrozen) {
             val pixelDensity = LocalDensity.current.density
             Box(
                 modifier = Modifier.fillMaxWidth()
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
+                        paneState.frameState.isManuallyResized = true
                         paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
             )
-        }
+        } else if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))
     }
 }

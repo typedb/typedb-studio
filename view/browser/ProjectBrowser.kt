@@ -50,7 +50,7 @@ import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
 import mu.KotlinLogging
 
-internal class ProjectBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
+internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen: Boolean = false) :
     Browser(areaState, order, initOpen) {
 
     companion object {

@@ -39,8 +39,8 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 
-internal class TypeBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
-    Browser(areaState, order, initOpen) {
+internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boolean = false) :
+    Browser(state, order, initOpen) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP

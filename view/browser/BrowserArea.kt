@@ -33,7 +33,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -41,6 +44,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.common.collection.Either
@@ -60,8 +64,10 @@ object BrowserArea {
     private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 
-    internal class AreaState(private val paneState: Frame.PaneState) {
-        val browsers = listOf(
+    internal class State constructor(private val paneState: Frame.PaneState) {
+
+        private var unfreezeSize: Dp by mutableStateOf(MIN_WIDTH)
+        internal val browsers = listOf(
             ProjectBrowser(this, 1, true),
             TypeBrowser(this, 2, true),
             RuleBrowser(this, 3),
@@ -69,27 +75,25 @@ object BrowserArea {
             RoleBrowser(this, 5)
         )
 
-        init {
-            mayUpdatePaneState()
-        }
-
         fun openedBrowsers(): List<Browser> {
             return browsers.filter { it.isOpen }
         }
 
         fun mayUpdatePaneState() {
-            if (openedBrowsers().isEmpty()) paneState.freeze(SIDE_TAB_WIDTH)
-            else paneState.unfreeze()
+            if (openedBrowsers().isEmpty()) {
+                unfreezeSize = paneState.size
+                paneState.freeze(SIDE_TAB_WIDTH)
+            } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
         }
     }
 
     @Composable
     fun Layout(paneState: Frame.PaneState) {
-        val areaState = remember { AreaState(paneState) }
-        val openedBrowsers = areaState.openedBrowsers()
+        val state = remember { State(paneState) }
+        val openedBrowsers = state.openedBrowsers()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
-                areaState.browsers.forEach { Tab(it) }
+                state.browsers.forEach { Tab(it) }
             }
             if (openedBrowsers.isNotEmpty()) {
                 Separator.Vertical()
@@ -99,9 +103,9 @@ object BrowserArea {
                     *openedBrowsers.map { browser ->
                         Frame.Pane(
                             id = browser.label,
-                            initSize = Either.second(1f),
+                            order = browser.order,
                             minSize = Browser.MIN_HEIGHT,
-                            order = browser.order
+                            initSize = Either.second(1f)
                         ) { browser.Layout() }
                     }.toTypedArray()
                 )

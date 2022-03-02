@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Frame
@@ -44,13 +45,12 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 
 object Response {
 
-    class State(private val paneState: Frame.PaneState, val name: String) {
+    const val DEFAULT_OPEN = false
 
-        internal var isOpen: Boolean by mutableStateOf(false)
+    class State constructor(private val paneState: Frame.PaneState, val name: String) {
 
-        init {
-            mayUpdatePaneState()
-        }
+        internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
+        private var unfreezeSize: Dp? by mutableStateOf(null)
 
         internal fun toggle() {
             isOpen = !isOpen
@@ -58,8 +58,12 @@ object Response {
         }
 
         private fun mayUpdatePaneState() {
-            if (!isOpen) paneState.freeze(PANEL_BAR_HEIGHT)
-            else paneState.unfreeze()
+            if (!isOpen) {
+                unfreezeSize = paneState.size
+                paneState.freeze(PANEL_BAR_HEIGHT)
+            } else if (paneState.isFrozen) {
+                paneState.unfreeze(unfreezeSize ?: (paneState.frameState.maxSize / 2))
+            }
         }
     }
 
@@ -89,7 +93,7 @@ object Response {
     @Composable
     private fun ToggleButton(state: State) {
         Form.IconButton(
-            icon = if (state.isOpen) Icon.Code.CARET_DOWN else Icon.Code.CARET_UP,
+            icon = if (state.isOpen) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_UP,
             onClick = { state.toggle() },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,

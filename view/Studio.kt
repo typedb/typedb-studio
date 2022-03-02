@@ -76,6 +76,7 @@ object Studio {
             UserDataDirectory.initialise()
             application { MainWindow(it) }
         } catch (exception: Exception) {
+            LOGGER.error(exception.message, exception)
             application { ErrorWindow(exception, it) }
         } finally {
             LOGGER.debug { Label.CLOSING_TYPEDB_STUDIO }
@@ -120,13 +121,13 @@ object Studio {
                         separator = Frame.SeparatorArgs(Separator.WEIGHT),
                         Frame.Pane(
                             id = BrowserArea.javaClass.name,
-                            initSize = Either.first(BrowserArea.WIDTH),
-                            minSize = BrowserArea.MIN_WIDTH
+                            minSize = BrowserArea.MIN_WIDTH,
+                            initSize = Either.first(BrowserArea.WIDTH)
                         ) { BrowserArea.Layout(it) },
                         Frame.Pane(
                             id = PageArea.javaClass.name,
-                            initSize = Either.second(1f),
-                            minSize = PageArea.MIN_WIDTH
+                            minSize = PageArea.MIN_WIDTH,
+                            initSize = Either.second(1f)
                         ) { PageArea.Layout() }
                     )
                     Separator.Horizontal()

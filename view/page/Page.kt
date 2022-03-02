@@ -32,12 +32,16 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.response.Response
 
 abstract class Page(var resource: Resource) {
 
     companion object {
+
+        private val CONTENT_MIN_HEIGHT = 64.dp
+        private val RESPONSE_MIN_HEIGHT = 64.dp
+
         @Composable
         fun of(resource: Resource): Page {
             return when (resource) {
@@ -78,15 +82,16 @@ abstract class Page(var resource: Resource) {
                 separator = Frame.SeparatorArgs(Separator.WEIGHT),
                 Frame.Pane(
                     id = Page::class.java.canonicalName,
-                    initSize = Either.second(1f),
-                    minSize = Theme.PANEL_BAR_HEIGHT,
-                    order = 1
+                    order = 1,
+                    minSize = CONTENT_MIN_HEIGHT,
+                    initSize = Either.second(1f)
                 ) { Content() },
                 Frame.Pane(
                     id = Response::class.java.canonicalName,
-                    initSize = Either.second(1f),
-                    minSize = Theme.PANEL_BAR_HEIGHT,
-                    order = 2
+                    order = 2,
+                    minSize = RESPONSE_MIN_HEIGHT,
+                    initSize = if (!Response.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initFreeze = !Response.DEFAULT_OPEN
                 ) { paneState -> Response.Layout(responseState(paneState)) }
             )
         }

@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class RoleBrowser(areaState: BrowserArea.AreaState, order: Int, initOpen: Boolean = false) :
+internal class RoleBrowser(areaState: BrowserArea.State, order: Int, initOpen: Boolean = false) :
     Browser(areaState, order, initOpen) {
 
     override val label: String = Label.ROLES
