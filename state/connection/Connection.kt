@@ -121,7 +121,7 @@ class Connection internal constructor(
         if (hasRunningTx.compareAndSet(false, true)) {
             mayInitTransaction()
             val runner = TransactionRunner(transaction!!, queries)
-            resource.registerRunner(runner)
+            resource.runner.register(runner)
             runner.launch {
                 if (!config.snapshot) {
                     transaction!!.close()

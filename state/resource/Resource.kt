@@ -18,37 +18,20 @@
 
 package com.vaticle.typedb.studio.state.resource
 
-import com.vaticle.typedb.studio.state.runner.TransactionRunner
+import com.vaticle.typedb.studio.state.runner.RunnerManager
 
 interface Resource {
 
     val name: String
     val fullName: String
     val runContent: String
+    val runner: RunnerManager
     val isOpen: Boolean
     val isRunnable: Boolean
     val isEmpty: Boolean
     val isUnsavedResource: Boolean
     val hasUnsavedChanges: Boolean
     val needSaving get() = hasUnsavedChanges || (isUnsavedResource && !isEmpty)
-
-    var lastRunner: TransactionRunner?
-    var activeRunner: TransactionRunner?
-    val savedRunners: MutableList<TransactionRunner>
-
-    fun registerRunner(newRunner: TransactionRunner) {
-        lastRunner = newRunner
-        activeRunner = newRunner
-    }
-
-    fun activateRunner(runner: TransactionRunner) {
-        activeRunner = runner
-    }
-
-    fun saveLastRunner() {
-        lastRunner?.let { savedRunners.add(it) }
-        lastRunner = null
-    }
 
     fun tryOpen(): Boolean
 

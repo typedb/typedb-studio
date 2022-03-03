@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.state.project
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
@@ -33,7 +32,7 @@ import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.TransactionRunner
+import com.vaticle.typedb.studio.state.runner.RunnerManager
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -96,14 +95,12 @@ class File internal constructor(
 
     override val fullName: String = computeFullName(path, projectMgr)
     override val runContent: String get() = content.joinToString("\n")
+    override val runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = isTypeQL
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
     override val isUnsavedResource: Boolean get() = parent == projectMgr.unsavedFilesDir
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)
-    override var lastRunner: TransactionRunner? by mutableStateOf(null)
-    override var activeRunner: TransactionRunner? by mutableStateOf(null)
-    override val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
