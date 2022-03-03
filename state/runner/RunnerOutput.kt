@@ -18,6 +18,28 @@
 
 package com.vaticle.typedb.studio.state.runner
 
-class GraphOutput {
-    // TODO
+import androidx.compose.runtime.mutableStateListOf
+
+interface RunnerOutput {
+
+    class Log: RunnerOutput {
+
+        data class Text(val type: Type, val text: String) {
+            enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
+        }
+
+        private val lines: MutableList<Text> = mutableStateListOf()
+
+        internal fun append(type: Text.Type, text: String) {
+            lines.add(Text(type, text))
+        }
+    }
+
+    class Graph: RunnerOutput {
+        // TODO
+    }
+
+    class Table: RunnerOutput {
+        // TODO
+    }
 }
