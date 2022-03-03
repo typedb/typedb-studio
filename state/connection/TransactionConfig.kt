@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 
@@ -51,5 +52,9 @@ class TransactionConfig(private val connection: Connection) {
 
     fun toggleExplain() {
         _explain = !_explain
+    }
+
+    fun toTypeDBOptions(): TypeDBOptions? {
+        return TypeDBOptions.core().infer(infer).explain(explain)
     }
 }

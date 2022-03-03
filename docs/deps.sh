@@ -16,7 +16,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# RUN COMMAND: ./docs/deps.sh //... package-structure
+# RUN COMMAND #1: ./docs/deps.sh global-package-structure //...
+# RUN COMMAND #2: ./docs/deps.sh state-package-structure //state/...
+# RUN COMMAND #3: ./docs/deps.sh view-package-structure //view/... //state/...
 
 popd > /dev/null
 
@@ -32,8 +34,8 @@ if [ -z "$3" ]
     exclude="|$3"
 fi
 
-bazel query "filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($1)))" --output graph > "$2".dot
-dot -Tpng < "$2".dot > "$2".png
-open "$2".png
+bazel query "filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($2)))" --output graph > "$1".dot
+dot -Tpng < "$1".dot > "$1".png
+open "$1".png
 
 popd > /dev/null

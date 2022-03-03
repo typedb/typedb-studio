@@ -151,7 +151,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
                 onClick = { GlobalState.resource.saveAndReopen(activePage!!) },
-                enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedFile == true,
+                enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedResource == true,
                 tooltip = Tooltip.Args(
                     title = Label.SAVE_CURRENT_FILE,
                     description = Sentence.SAVE_CURRENT_FILE_DESCRIPTION
@@ -374,7 +374,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
-                onClick = {}, // TODO
+                onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
                 enabled = GlobalState.connection.hasSession && GlobalState.resource.active?.isRunnable == true,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,

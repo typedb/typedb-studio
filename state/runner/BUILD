@@ -24,26 +24,26 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "connection",
+    name = "runner",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/common:common",
         "//state/notification:notification",
-        "//state/resource:resource",
-        "//state/runner:runner",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typeql_lang_java//query:query",
+        "@vaticle_typeql_lang_java//:typeql-lang",
         "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-connection:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-runner:{pom_version}"],
 )
 
 checkstyle_test(

@@ -27,6 +27,10 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.runner.TransactionRunner
+import java.lang.IllegalStateException
+import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 class Connection internal constructor(
@@ -48,6 +52,7 @@ class Connection internal constructor(
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
+    val hasRunningTx = AtomicBoolean(false)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -100,6 +105,35 @@ class Connection internal constructor(
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
         client.let { c -> databaseList = c.databases().all().map { d -> d.name() } }
         databaseListRefreshedTime = System.currentTimeMillis()
+    }
+
+    fun run(resource: Resource, content: String = resource.runContent) {
+        if (isScriptMode) runScript(resource, content)
+        else if (isInteractiveMode) runTransaction(resource, content)
+        else throw IllegalStateException()
+    }
+
+    private fun runScript(resource: Resource, script: String = resource.runContent) {
+        // TODO
+    }
+
+    private fun runTransaction(resource: Resource, queries: String = resource.runContent) {
+        if (hasRunningTx.compareAndSet(false, true)) {
+            mayInitTransaction()
+            val runner = TransactionRunner(transaction!!, queries)
+            resource.registerRunner(runner)
+            runner.launch {
+                if (!config.snapshot) {
+                    transaction!!.close()
+                    transaction = null
+                }
+                hasRunningTx.set(false)
+            }
+        }
+    }
+
+    private fun mayInitTransaction() {
+        if (transaction == null) transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
     }
 
     private fun closeSession() {

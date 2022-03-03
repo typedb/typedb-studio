@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
@@ -32,6 +33,7 @@ import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -92,14 +94,18 @@ class File internal constructor(
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    override val fullName: String = computeFullName(path, projectMgr)
+    override val runContent: String get() = content.joinToString("\n")
     override val isOpen: Boolean get() = isOpenAtomic.get()
+    override val isRunnable: Boolean = isTypeQL
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
-    override val isUnsavedFile: Boolean get() = parent == projectMgr.unsavedFilesDir
+    override val isUnsavedResource: Boolean get() = parent == projectMgr.unsavedFilesDir
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)
+    override var lastRunner: TransactionRunner? by mutableStateOf(null)
+    override var activeRunner: TransactionRunner? by mutableStateOf(null)
+    override val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
-    override val isRunnable: Boolean = isTypeQL
-    override val fullName: String = computeFullName(path, projectMgr)
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
@@ -109,7 +115,7 @@ class File internal constructor(
     }
 
     private fun computeFullName(path: Path, projectMgr: ProjectManager): String {
-        return if (isUnsavedFile) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
+        return if (isUnsavedResource) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
@@ -267,18 +273,18 @@ class File internal constructor(
     }
 
     override fun rename(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedFile) saveContent()
+        if (isUnsavedResource) saveContent()
         projectMgr.renameFileDialog.open(this, onSuccess)
     }
 
     override fun move(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedFile) saveContent()
+        if (isUnsavedResource) saveContent()
         projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
     override fun save(onSuccess: ((Resource) -> Unit)?) {
         saveContent()
-        if (isUnsavedFile) projectMgr.saveFileDialog.open(this, onSuccess)
+        if (isUnsavedResource) projectMgr.saveFileDialog.open(this, onSuccess)
     }
 
     private fun saveContent() {

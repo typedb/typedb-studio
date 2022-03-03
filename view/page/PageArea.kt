@@ -167,7 +167,7 @@ object PageArea {
             fun closeFn() {
                 removeCache(resource)
                 GlobalState.resource.close(resource)
-                if (resource.isUnsavedFile) resource.delete()
+                if (resource.isUnsavedResource) resource.delete()
             }
             if (resource.needSaving) {
                 GlobalState.confirmation.submit(
@@ -184,7 +184,7 @@ object PageArea {
 
         internal fun contextMenuFn(page: Resource): List<List<ContextMenu.Item>> {
             val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
-            val enableSave = page.hasUnsavedChanges || page.isUnsavedFile
+            val enableSave = page.hasUnsavedChanges || page.isUnsavedResource
             return listOf(
                 listOf(
                     ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", enableSave) {

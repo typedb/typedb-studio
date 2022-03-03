@@ -28,13 +28,14 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//state/notification:notification",
+        "//state/runner:runner",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-page:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-resource:{pom_version}"],
 )
 
 checkstyle_test(
