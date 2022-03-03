@@ -49,28 +49,20 @@ class Connection internal constructor(
 
     val config = TransactionConfig(this)
     var isOpen: Boolean by mutableStateOf(true)
+    val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
     var transaction: TypeDBTransaction? by mutableStateOf(null); private set
-    val hasRunningTx = AtomicBoolean(false)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val hasWrites: Boolean get() = hasSession() && config.transactionType.isWrite // TODO: implement tx.hasUncommittedWrites
-
+    val isRead: Boolean get() = hasSession && config.transactionType.isRead
+    val isWrite: Boolean get() = hasSession && config.transactionType.isWrite
+    val hasSession: Boolean get() = session != null && session!!.isOpen
+    val hasTransaction: Boolean get() = transaction != null && transaction!!.isOpen
+    val hasRunningCommand get() = hasRunningCommandAtomic.get()
+    private val hasRunningCommandAtomic = AtomicBoolean(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
-
-    fun hasSession(): Boolean {
-        return session != null && session!!.isOpen
-    }
-
-    fun hasTransaction(): Boolean {
-        return transaction != null && transaction!!.isOpen
-    }
-
-    fun getDatabase(): String? {
-        return if (isInteractiveMode) session?.database()?.name() else null
-    }
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
         if (config.transactionType == type) return
@@ -84,7 +76,7 @@ class Connection internal constructor(
     fun updateSessionType(type: TypeDBSession.Type) {
         if (config.sessionType == type) return
         config.sessionType = type
-        openSession(getDatabase()!!, type)
+        openSession(database!!, type)
     }
 
     fun openSession(database: String) {
@@ -109,7 +101,7 @@ class Connection internal constructor(
 
     fun run(resource: Resource, content: String = resource.runContent) {
         if (isScriptMode) runScript(resource, content)
-        else if (isInteractiveMode) runTransaction(resource, content)
+        else if (isInteractiveMode) runQuery(resource, content)
         else throw IllegalStateException()
     }
 
@@ -117,8 +109,8 @@ class Connection internal constructor(
         // TODO
     }
 
-    private fun runTransaction(resource: Resource, queries: String = resource.runContent) {
-        if (hasRunningTx.compareAndSet(false, true)) {
+    private fun runQuery(resource: Resource, queries: String = resource.runContent) {
+        if (hasRunningCommandAtomic.compareAndSet(false, true)) {
             mayInitTransaction()
             val runner = TransactionRunner(transaction!!, queries)
             resource.runner.register(runner)
@@ -127,7 +119,7 @@ class Connection internal constructor(
                     transaction!!.close()
                     transaction = null
                 }
-                hasRunningTx.set(false)
+                hasRunningCommandAtomic.set(false)
             }
         }
     }

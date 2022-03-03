@@ -295,7 +295,7 @@ object Toolbar {
         @Composable
         private fun StatusIndicator(enabled: Boolean) {
             val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
-            val hasTransaction = GlobalState.connection.current?.hasSession() ?: false
+            val hasTransaction = GlobalState.connection.current?.hasSession ?: false
             // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             RawIconButton(
                 icon = Icon.Code.CIRCLE,
@@ -312,7 +312,7 @@ object Toolbar {
         @Composable
         private fun CloseButton(enabled: Boolean) {
             val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
-            val hasTransaction = GlobalState.connection.current?.hasSession() ?: false
+            val hasTransaction = GlobalState.connection.current?.hasSession ?: false
             // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             ToolbarIconButton(
                 icon = Icon.Code.XMARK,
@@ -333,7 +333,7 @@ object Toolbar {
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = {},
                 color = Theme.colors.quaternary2,
-                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
+                enabled = enabled && GlobalState.connection.current?.isWrite ?: false,
                 tooltip = Tooltip.Args(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -348,7 +348,7 @@ object Toolbar {
                 icon = Icon.Code.CHECK,
                 onClick = {},
                 color = Theme.colors.secondary,
-                enabled = enabled && GlobalState.connection.current?.hasWrites ?: false,
+                enabled = enabled && GlobalState.connection.current?.isWrite ?: false,
                 tooltip = Tooltip.Args(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
@@ -378,7 +378,7 @@ object Toolbar {
                 enabled = GlobalState.connection.hasSession && GlobalState.resource.active?.isRunnable == true,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
-                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE
+                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
                 )
             )
         }
@@ -389,11 +389,8 @@ object Toolbar {
                 icon = Icon.Code.STOP,
                 color = Theme.colors.error,
                 onClick = {},
-                enabled = GlobalState.connection.hasSession && GlobalState.resource.active?.isRunnable == true, // TODO: replace with isRunning() when ready
-                tooltip = Tooltip.Args(
-                    title = Label.STOP,
-                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE_PAGE // TODO: replace once isRunning() is ready
-                )
+                enabled = GlobalState.connection.current?.hasRunningCommand == true,
+                tooltip = Tooltip.Args(title = Label.STOP, description = Sentence.BUTTON_ENABLED_WHEN_RUNNING)
             )
         }
     }

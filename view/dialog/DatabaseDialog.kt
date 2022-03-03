@@ -66,7 +66,7 @@ object DatabaseDialog {
     fun DatabaseDropdown(modifier: Modifier = Modifier) {
         Form.Dropdown(
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
-            selected = GlobalState.connection.current?.getDatabase(),
+            selected = GlobalState.connection.current?.database,
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
             onSelection = { GlobalState.connection.current?.openSession(it) },
             placeholder = Label.SELECT_DATABASE,
