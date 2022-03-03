@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.page
+package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -43,11 +43,11 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 
-internal object RunOutput {
+object RunOutputArea {
 
-    internal const val DEFAULT_OPEN = false
+    const val DEFAULT_OPEN = false
 
-    internal class State constructor(private val paneState: Frame.PaneState, val name: String) {
+    class State constructor(private val paneState: Frame.PaneState, val name: String) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
         private var unfreezeSize: Dp? by mutableStateOf(null)
@@ -68,7 +68,7 @@ internal object RunOutput {
     }
 
     @Composable
-    internal fun Layout(state: State) {
+    fun Layout(state: State) {
         Column(Modifier.fillMaxSize()) {
             Bar(state)
             if (state.isOpen) {

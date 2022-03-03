@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 abstract class Page(var resource: Resource) {
 
@@ -50,7 +51,7 @@ abstract class Page(var resource: Resource) {
         }
     }
 
-    private var runOutputState: RunOutput.State? by mutableStateOf(null)
+    private var runOutputState: RunOutputArea.State? by mutableStateOf(null)
     private var frameState: Frame.FrameState? by mutableStateOf(null)
     internal var tabSize by mutableStateOf(0.dp)
 
@@ -70,8 +71,8 @@ abstract class Page(var resource: Resource) {
         updateResourceInner(resource)
     }
 
-    private fun runOutputState(paneState: Frame.PaneState): RunOutput.State {
-        if (runOutputState == null) runOutputState = RunOutput.State(paneState, resource.name)
+    private fun runOutputState(paneState: Frame.PaneState): RunOutputArea.State {
+        if (runOutputState == null) runOutputState = RunOutputArea.State(paneState, resource.name)
         return runOutputState!!
     }
 
@@ -86,12 +87,12 @@ abstract class Page(var resource: Resource) {
                     initSize = Either.second(1f)
                 ) { Content() },
                 Frame.Pane(
-                    id = RunOutput::class.java.canonicalName,
+                    id = RunOutputArea::class.java.canonicalName,
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
-                    initSize = if (!RunOutput.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
-                    initFreeze = !RunOutput.DEFAULT_OPEN
-                ) { paneState -> RunOutput.Layout(runOutputState(paneState)) }
+                    initSize = if (!RunOutputArea.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initFreeze = !RunOutputArea.DEFAULT_OPEN
+                ) { paneState -> RunOutputArea.Layout(runOutputState(paneState)) }
             )
         }
         return frameState!!
