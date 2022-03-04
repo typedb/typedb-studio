@@ -60,7 +60,7 @@ object PageArea {
 
     val MIN_WIDTH = 300.dp
 
-    internal class AreaState(coroutineScope: CoroutineScope) {
+    internal class State(coroutineScope: CoroutineScope) {
 
         val tabsState = Tabs.State<Resource>(coroutineScope)
         val openedPages: MutableMap<Resource, Page> = mutableMapOf()
@@ -150,7 +150,7 @@ object PageArea {
     fun Layout() {
         val density = LocalDensity.current.density
         val coroutineScope = rememberCoroutineScope()
-        val state = remember { AreaState(coroutineScope) }
+        val state = remember { State(coroutineScope) }
         state.density = density
         val focusReq = FocusRequester()
         fun mayRequestFocus() {
@@ -165,12 +165,12 @@ object PageArea {
             Tabs.Layout(
                 state = state.tabsState,
                 tabs = GlobalState.resource.opened,
-                tabIconFn = { resource -> state.openedPages[resource]?.icon ?: Form.IconArgs(Icon.Code.FILE_LINES) },
-                tabLabelFn = { tabLabel(it) },
-                tabIsActiveFn = { GlobalState.resource.isActive(it) },
-                tabOnClick = { GlobalState.resource.activate(it) },
-                tabOnClose = { state.close(it) },
-                tabContextMenuFn = { state.contextMenuFn(it) },
+                iconFn = { resource -> state.openedPages[resource]?.icon ?: Form.IconArgs(Icon.Code.FILE_LINES) },
+                labelFn = { tabLabel(it) },
+                isActiveFn = { GlobalState.resource.isActive(it) },
+                onClick = { GlobalState.resource.activate(it) },
+                onClose = { state.close(it) },
+                contextMenuFn = { state.contextMenuFn(it) },
                 ButtonArgs(Icon.Code.PLUS, GlobalState.project.current != null) { state.createAndOpenNewFile() }
             )
             Separator.Horizontal()

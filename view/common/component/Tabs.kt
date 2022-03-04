@@ -63,12 +63,12 @@ object Tabs {
     private val TAB_SCROLL_DELTA = 200.dp
     private val ICON_SIZE = 10.sp
 
-    class State<T : Any>(private val coroutineScope: CoroutineScope) {
+    class State<T : Any> constructor(private val coroutineScope: CoroutineScope) {
 
         var density: Float by mutableStateOf(0f)
-        val tabsScroller = ScrollState(0)
+        val scroller = ScrollState(0)
         var tabsScrollTo: Dp? by mutableStateOf(null)
-        var tabsRowMaxWidth by mutableStateOf(4096.dp)
+        var maxWidth by mutableStateOf(4096.dp)
         val openedTabSize: MutableMap<T, Dp> = mutableMapOf()
         var activeTab: T? by mutableStateOf(null)
 
@@ -81,52 +81,41 @@ object Tabs {
                 var found = false
                 openedTabSize.entries.forEach { if (it.key != tab && !found) start += it.value else found = true }
                 val end = start + openedTabSize[tab]!!
-                val scrollerPos = Theme.toDP(tabsScroller.value, density)
+                val scrollerPos = Theme.toDP(scroller.value, density)
                 if (start + 5.dp < scrollerPos) tabsScrollTo = start
-                else if (end - 5.dp > scrollerPos + tabsRowMaxWidth) tabsScrollTo = end - tabsRowMaxWidth
+                else if (end - 5.dp > scrollerPos + maxWidth) tabsScrollTo = end - maxWidth
                 activeTab = tab
             }
         }
 
         internal fun scrollTabsBy(dp: Dp) {
-            val pos = tabsScroller.value + (dp.value * density).toInt()
-            coroutineScope.launch { tabsScroller.animateScrollTo(pos) }
+            val pos = scroller.value + (dp.value * density).toInt()
+            coroutineScope.launch { scroller.animateScrollTo(pos) }
         }
     }
 
     @Composable
     fun <T : Any> Layout(
-        state: State<T>,
-        tabs: List<T>,
-        tabIconFn: (T) -> IconArgs?,
-        tabLabelFn: @Composable (T) -> AnnotatedString,
-        tabIsActiveFn: (T) -> Boolean,
-        tabOnClick: (T) -> Unit,
-        tabOnClose: (T) -> Unit,
-        tabContextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
-        vararg extraButtons: ButtonArgs
+        state: State<T>, tabs: List<T>, iconFn: (T) -> IconArgs?, labelFn: @Composable (T) -> AnnotatedString,
+        isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, onClose: (T) -> Unit,
+        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, vararg extraButtons: ButtonArgs
     ) {
-        val scrollState = state.tabsScroller
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
         closedTabs.forEach { state.openedTabSize.remove(it) }
-        fun updateTabsRowMaxWidth(rawAreaWidth: Int) {
-            state.tabsRowMaxWidth = Theme.toDP(rawAreaWidth, state.density) - PANEL_BAR_HEIGHT * 3
-        }
-        Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged { updateTabsRowMaxWidth(it.width) }) {
-            if (scrollState.maxValue > 0) {
+        Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged {
+            state.maxWidth = Theme.toDP(it.width, state.density) - PANEL_BAR_HEIGHT * 3
+        }) {
+            if (state.scroller.maxValue > 0) {
                 PreviousTabsButton(state)
                 Separator.Vertical()
             }
-            Row(Modifier.widthIn(max = state.tabsRowMaxWidth).height(PANEL_BAR_HEIGHT).horizontalScroll(scrollState)) {
-                tabs.forEach { tab ->
-                    Tab(
-                        state, tab, tabIconFn(tab), tabLabelFn(tab), tabIsActiveFn(tab),
-                        tabOnClick, tabOnClose, tabContextMenuFn
-                    )
+            Row(Modifier.widthIn(max = state.maxWidth).height(PANEL_BAR_HEIGHT).horizontalScroll(state.scroller)) {
+                tabs.forEach {
+                    Tab(state, it, iconFn(it), labelFn(it), isActiveFn(it), onClick, onClose, contextMenuFn)
                 }
             }
-            if (scrollState.maxValue > 0) {
-                if (scrollState.value < scrollState.maxValue) Separator.Vertical()
+            if (state.scroller.maxValue > 0) {
+                if (state.scroller.value < state.scroller.maxValue) Separator.Vertical()
                 NextTabsButton(state)
                 Separator.Vertical()
             }
@@ -135,7 +124,7 @@ object Tabs {
         }
         LaunchedEffect(state.tabsScrollTo) {
             state.tabsScrollTo?.let {
-                scrollState.scrollTo((it.value * state.density).toInt())
+                state.scroller.scrollTo((it.value * state.density).toInt())
                 state.tabsScrollTo = null
             }
         }
@@ -207,7 +196,7 @@ object Tabs {
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
-            enabled = state.tabsScroller.value > 0
+            enabled = state.scroller.value > 0
         )
     }
 
@@ -219,7 +208,7 @@ object Tabs {
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
-            enabled = state.tabsScroller.value < state.tabsScroller.maxValue
+            enabled = state.scroller.value < state.scroller.maxValue
         )
     }
 
