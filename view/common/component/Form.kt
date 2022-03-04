@@ -121,9 +121,16 @@ object Form {
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
-    data class ButtonArgs(val icon: Icon.Code, val enabled: Boolean = true, val onClick: () -> Unit)
-    data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
     data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
+    data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
+    data class ButtonArgs(
+        val icon: Icon.Code,
+        val hoverIcon: Icon.Code? = null,
+        val color: @Composable () -> Color = { Theme.colors.icon },
+        val hoverColor: @Composable () -> Color = { Theme.colors.icon },
+        val enabled: Boolean = true,
+        val onClick: () -> Unit
+    )
 
     interface State {
         fun isValid(): Boolean
@@ -298,22 +305,34 @@ object Form {
     @Composable
     fun IconButton(
         icon: Icon.Code,
+        hoverIcon: Icon.Code? = null,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
+        iconHoverColor: Color = Theme.colors.icon,
         bgColor: Color = Theme.colors.primary,
         rounded: Boolean = true,
         enabled: Boolean = true,
         tooltip: Tooltip.Args? = null,
     ) {
+        var isHover by remember { mutableStateOf(false) }
         BoxButton(
             onClick = onClick,
             color = bgColor,
-            modifier = modifier.size(FIELD_HEIGHT),
             rounded = rounded,
             enabled = enabled,
             tooltip = tooltip,
-        ) { Icon.Render(icon = icon, color = iconColor, enabled = enabled) }
+            modifier = modifier.size(FIELD_HEIGHT).pointerMoveFilter(
+                onEnter = { isHover = true; false },
+                onExit = { isHover = false; false }
+            ),
+        ) {
+            Icon.Render(
+                icon = if (hoverIcon != null && isHover) hoverIcon else icon,
+                color = if (isHover) iconHoverColor else iconColor,
+                enabled = enabled
+            )
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -98,6 +99,7 @@ object RunOutputArea {
 
     @Composable
     private fun Bar(state: State) {
+        val runner = state.resource.runner
         Row(
             modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
             verticalAlignment = Alignment.CenterVertically
@@ -108,11 +110,24 @@ object RunOutputArea {
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
                     state = state.tabsState,
-                    tabs = state.resource.runner.runners,
+                    tabs = runner.runners,
                     labelFn = { runnerName(state.resource, it) },
-                    isActiveFn = { state.resource.runner.isActive(it) },
-                    onClick = { state.resource.runner.activate(it) },
-                    onClose = { state.resource.runner.delete(it) }
+                    isActiveFn = { runner.isActive(it) },
+                    onClick = { runner.activate(it) },
+                    closeButtonFn = {
+                        ButtonArgs(
+                            icon = if (runner.isSaved(it)) Icon.Code.THUMBTACK else Icon.Code.XMARK,
+                            hoverIcon = if (runner.isSaved(it)) Icon.Code.XMARK else null,
+                            color = { if (runner.isSaved(it)) Theme.colors.quinary else Theme.colors.icon },
+                            hoverColor = { Theme.colors.icon }
+                        ) { runner.delete(it) }
+                    }, extraTabButtonsFn = {
+                        if (runner.isSaved(it)) listOf()
+                        else listOf(ButtonArgs(
+                            icon = Icon.Code.THUMBTACK,
+                            hoverColor = { Theme.colors.quinary }
+                        ) { runner.save(it) })
+                    }
                 )
             }
             ToggleButton(state)

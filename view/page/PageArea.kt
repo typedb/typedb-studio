@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.view.page
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -53,8 +52,8 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.component.Tabs
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import kotlinx.coroutines.CoroutineScope
 
 object PageArea {
@@ -170,9 +169,12 @@ object PageArea {
                 labelFn = { tabLabel(it) },
                 isActiveFn = { GlobalState.resource.isActive(it) },
                 onClick = { GlobalState.resource.activate(it) },
-                onClose = { state.close(it) },
                 contextMenuFn = { state.contextMenuFn(it) },
-                ButtonArgs(Icon.Code.PLUS, GlobalState.project.current != null) { state.createAndOpenNewFile() }
+                closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { state.close(it) } },
+                extraTabButtonsFn = null,
+                ButtonArgs(icon = Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
+                    state.createAndOpenNewFile()
+                }
             )
             Separator.Horizontal()
             GlobalState.resource.active?.let { resource ->

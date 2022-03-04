@@ -53,6 +53,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -97,8 +98,9 @@ object Tabs {
     @Composable
     fun <T : Any> Layout(
         state: State<T>, tabs: List<T>, iconFn: ((T) -> IconArgs?)? = null, labelFn: @Composable (T) -> AnnotatedString,
-        isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, onClose: (T) -> Unit,
-        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, vararg extraButtons: ButtonArgs
+        isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
+        closeButtonFn: ((T) -> ButtonArgs), extraTabButtonsFn: ((T) -> List<ButtonArgs>)? = null,
+        vararg extraBarButtons: ButtonArgs
     ) {
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
         closedTabs.forEach { state.openedTabSize.remove(it) }
@@ -114,7 +116,9 @@ object Tabs {
                     val icon = iconFn?.let { it(tab) }
                     val label = labelFn(tab)
                     val isActive = isActiveFn(tab)
-                    Tab(state, tab, icon, label, isActive, onClick, onClose, contextMenuFn)
+                    val closeButtonArgs = closeButtonFn(tab)
+                    val extraTabButtons = extraTabButtonsFn?.let { it(tab) } ?: listOf()
+                    Tab(state, tab, icon, label, isActive, closeButtonArgs, onClick, contextMenuFn, extraTabButtons)
                 }
             }
             if (state.scroller.maxValue > 0) {
@@ -122,7 +126,7 @@ object Tabs {
                 NextTabsButton(state)
                 Separator.Vertical()
             }
-            if (extraButtons.isNotEmpty()) ExtraButtons(*extraButtons)
+            if (extraBarButtons.isNotEmpty()) ExtraButtons(extraBarButtons.toList())
             if (tabs.isNotEmpty()) Separator.Vertical()
         }
         LaunchedEffect(state.tabsScrollTo) {
@@ -136,14 +140,9 @@ object Tabs {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Any> Tab(
-        state: State<T>,
-        tab: T,
-        icon: IconArgs?,
-        label: AnnotatedString,
-        isActive: Boolean,
-        onClick: (T) -> Unit,
-        onClose: (T) -> Unit,
-        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?
+        state: State<T>, tab: T, icon: IconArgs?, label: AnnotatedString, isActive: Boolean,
+        closeButtonArgs: ButtonArgs, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
+        extraTabButtons: List<ButtonArgs>
     ) {
         val contextMenuState = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
@@ -162,18 +161,13 @@ object Tabs {
                         .onSizeChanged { width = Theme.toDP(it.width, state.density) }
                 ) {
                     icon?.let {
-                        Spacer(modifier = Modifier.width(Theme.PANEL_BAR_SPACING))
+                        Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
                         Icon.Render(icon = it.code, color = it.color(), size = ICON_SIZE)
                     }
-                    Spacer(modifier = Modifier.width(Theme.PANEL_BAR_SPACING))
+                    Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
                     Form.Text(value = label)
-                    Form.IconButton(
-                        icon = Icon.Code.XMARK,
-                        onClick = { onClose(tab) },
-                        modifier = Modifier.size(PANEL_BAR_HEIGHT),
-                        bgColor = Color.Transparent,
-                        rounded = false,
-                    )
+                    if (extraTabButtons.isNotEmpty()) Spacer(Modifier.width(PANEL_BAR_SPACING))
+                    ExtraButtons(extraTabButtons.toList() + listOf(closeButtonArgs))
                 }
                 if (isActive) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }
@@ -216,10 +210,13 @@ object Tabs {
     }
 
     @Composable
-    private fun ExtraButtons(vararg buttons: ButtonArgs) {
+    private fun ExtraButtons(buttons: List<ButtonArgs>) {
         buttons.forEach {
             Form.IconButton(
                 icon = it.icon,
+                hoverIcon = it.hoverIcon,
+                iconColor = it.color(),
+                iconHoverColor = it.hoverColor(),
                 onClick = { it.onClick() },
                 modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,

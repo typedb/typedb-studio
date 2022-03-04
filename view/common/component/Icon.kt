@@ -93,6 +93,7 @@ object Icon {
         RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
+        THUMBTACK(0xf08du),
         TRASH_CAN(0xf2edu),
         USER(0xf007u),
         USER_GROUP(0xf500u),

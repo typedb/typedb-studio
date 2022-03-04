@@ -97,6 +97,9 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
         buttons.forEach {
             Form.IconButton(
                 icon = it.icon,
+                hoverIcon = it.hoverIcon,
+                iconColor = it.color(),
+                iconHoverColor = it.hoverColor(),
                 onClick = { it.onClick() },
                 modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,

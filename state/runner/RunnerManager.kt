@@ -22,14 +22,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.lang.IllegalStateException
 
 class RunnerManager {
 
     private var lastRunner: TransactionRunner? by mutableStateOf(null)
     private var activeRunner: TransactionRunner? by mutableStateOf(null)
     private val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
-    val runners: List<TransactionRunner> get() = savedRunners + (activeRunner?.let { listOf(it) } ?: listOf())
+    val runners: List<TransactionRunner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
 
 
     fun indexOf(runner: TransactionRunner): Int {
@@ -42,6 +41,10 @@ class RunnerManager {
         return runner == activeRunner
     }
 
+    fun isSaved(runner: TransactionRunner): Boolean {
+        return savedRunners.contains(runner)
+    }
+
     fun activate(runner: TransactionRunner) {
         activeRunner = runner
     }
@@ -51,9 +54,9 @@ class RunnerManager {
         activeRunner = newRunner
     }
 
-    fun saveLast() {
-        lastRunner?.let { savedRunners.add(it) }
-        lastRunner = null
+    fun save(runner: TransactionRunner) {
+        savedRunners.add(runner)
+        if (lastRunner == runner) lastRunner = null
     }
 
     fun delete(runner: TransactionRunner) {
