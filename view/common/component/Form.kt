@@ -121,7 +121,7 @@ object Form {
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
-    data class ButtonArgs(val icon: Icon.Code, val onClick: () -> Unit)
+    data class ButtonArgs(val icon: Icon.Code, val enabled: Boolean = true, val onClick: () -> Unit)
     data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
     data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
 

@@ -28,6 +28,7 @@ interface Resource {
     val runner: RunnerManager
     val isOpen: Boolean
     val isRunnable: Boolean
+    val isWritable: Boolean
     val isEmpty: Boolean
     val isUnsavedResource: Boolean
     val hasUnsavedChanges: Boolean

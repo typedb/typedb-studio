@@ -56,7 +56,6 @@ abstract class Page(var resource: Resource) {
     internal var tabSize by mutableStateOf(0.dp)
 
     internal abstract val name: String
-    internal abstract val isWritable: Boolean
     internal abstract val icon: Form.IconArgs
 
     internal abstract fun resetFocus()
