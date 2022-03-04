@@ -171,7 +171,7 @@ object PageArea {
                 onClick = { GlobalState.resource.activate(it) },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { state.close(it) } },
-                extraTabButtonsFn = null,
+                trailingTabButtonFn = null,
                 ButtonArgs(icon = Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
                     state.createAndOpenNewFile()
                 }

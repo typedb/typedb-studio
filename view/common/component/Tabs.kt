@@ -99,7 +99,7 @@ object Tabs {
     fun <T : Any> Layout(
         state: State<T>, tabs: List<T>, iconFn: ((T) -> IconArgs?)? = null, labelFn: @Composable (T) -> AnnotatedString,
         isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
-        closeButtonFn: ((T) -> ButtonArgs), extraTabButtonsFn: ((T) -> List<ButtonArgs>)? = null,
+        closeButtonFn: ((T) -> ButtonArgs), trailingTabButtonFn: ((T) -> ButtonArgs?)? = null,
         vararg extraBarButtons: ButtonArgs
     ) {
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
@@ -117,8 +117,8 @@ object Tabs {
                     val label = labelFn(tab)
                     val isActive = isActiveFn(tab)
                     val closeButtonArgs = closeButtonFn(tab)
-                    val extraTabButtons = extraTabButtonsFn?.let { it(tab) } ?: listOf()
-                    Tab(state, tab, icon, label, isActive, closeButtonArgs, onClick, contextMenuFn, extraTabButtons)
+                    val trailingButton = trailingTabButtonFn?.let { it(tab) }
+                    Tab(state, tab, icon, label, isActive, closeButtonArgs, onClick, contextMenuFn, trailingButton)
                 }
             }
             if (state.scroller.maxValue > 0) {
@@ -126,7 +126,7 @@ object Tabs {
                 NextTabsButton(state)
                 Separator.Vertical()
             }
-            if (extraBarButtons.isNotEmpty()) ExtraButtons(extraBarButtons.toList())
+            if (extraBarButtons.isNotEmpty()) Buttons(*extraBarButtons)
             if (tabs.isNotEmpty()) Separator.Vertical()
         }
         LaunchedEffect(state.tabsScrollTo) {
@@ -137,12 +137,17 @@ object Tabs {
         }
     }
 
+    @Composable
+    private fun Spacer() {
+        Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Any> Tab(
         state: State<T>, tab: T, icon: IconArgs?, label: AnnotatedString, isActive: Boolean,
         closeButtonArgs: ButtonArgs, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
-        extraTabButtons: List<ButtonArgs>
+        trailingButton: ButtonArgs?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
@@ -160,14 +165,16 @@ object Tabs {
                         .pointerInput(state, tab) { onPointerInput(contextMenuState) { onClick(tab) } }
                         .onSizeChanged { width = Theme.toDP(it.width, state.density) }
                 ) {
+                    trailingButton?.let { Buttons(it) }
                     icon?.let {
-                        Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
+                        Spacer()
                         Icon.Render(icon = it.code, color = it.color(), size = ICON_SIZE)
+                        Spacer()
                     }
-                    Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
+                    if (trailingButton == null && icon == null) Spacer()
                     Form.Text(value = label)
-                    if (extraTabButtons.isNotEmpty()) Spacer(Modifier.width(PANEL_BAR_SPACING))
-                    ExtraButtons(extraTabButtons.toList() + listOf(closeButtonArgs))
+                    Spacer()
+                    Buttons(closeButtonArgs)
                 }
                 if (isActive) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }
@@ -210,7 +217,7 @@ object Tabs {
     }
 
     @Composable
-    private fun ExtraButtons(buttons: List<ButtonArgs>) {
+    private fun Buttons(vararg buttons: ButtonArgs) {
         buttons.forEach {
             Form.IconButton(
                 icon = it.icon,

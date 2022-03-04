@@ -114,19 +114,13 @@ object RunOutputArea {
                     labelFn = { runnerName(state.resource, it) },
                     isActiveFn = { runner.isActive(it) },
                     onClick = { runner.activate(it) },
-                    closeButtonFn = {
+                    closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { runner.delete(it) } },
+                    trailingTabButtonFn = {
                         ButtonArgs(
-                            icon = if (runner.isSaved(it)) Icon.Code.THUMBTACK else Icon.Code.XMARK,
-                            hoverIcon = if (runner.isSaved(it)) Icon.Code.XMARK else null,
-                            color = { if (runner.isSaved(it)) Theme.colors.quinary else Theme.colors.icon },
-                            hoverColor = { Theme.colors.icon }
-                        ) { runner.delete(it) }
-                    }, extraTabButtonsFn = {
-                        if (runner.isSaved(it)) listOf()
-                        else listOf(ButtonArgs(
                             icon = Icon.Code.THUMBTACK,
-                            hoverColor = { Theme.colors.quinary }
-                        ) { runner.save(it) })
+                            color = { Theme.colors.icon.copy(if (runner.isSaved(it)) 1f else 0.4f) },
+                            hoverColor = { Theme.colors.icon },
+                        ) { if (!runner.isSaved(it)) runner.save(it) }
                     }
                 )
             }
@@ -135,7 +129,7 @@ object RunOutputArea {
     }
 
     private fun runnerName(resource: Resource, runner: TransactionRunner): AnnotatedString {
-        return AnnotatedString(text = resource.name + "::" + Label.RUN.lowercase() + resource.runner.indexOf(runner))
+        return AnnotatedString(text = resource.name + "::" + Label.RUN.lowercase() + resource.runner.numberOf(runner))
     }
 
     @Composable

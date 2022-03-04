@@ -31,8 +31,8 @@ class RunnerManager {
     val runners: List<TransactionRunner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
 
 
-    fun indexOf(runner: TransactionRunner): Int {
-        return if (savedRunners.contains(runner)) savedRunners.indexOf(runner)
+    fun numberOf(runner: TransactionRunner): Int {
+        return if (savedRunners.contains(runner)) savedRunners.indexOf(runner) + 1
         else if (lastRunner == runner) savedRunners.size + 1
         else throw IllegalStateException()
     }
@@ -55,6 +55,7 @@ class RunnerManager {
     }
 
     fun save(runner: TransactionRunner) {
+        if (savedRunners.contains(runner)) return
         savedRunners.add(runner)
         if (lastRunner == runner) lastRunner = null
     }

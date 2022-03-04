@@ -127,7 +127,7 @@ object Form {
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
         val color: @Composable () -> Color = { Theme.colors.icon },
-        val hoverColor: @Composable () -> Color = { Theme.colors.icon },
+        val hoverColor: @Composable () -> Color? = { null },
         val enabled: Boolean = true,
         val onClick: () -> Unit
     )
@@ -309,7 +309,7 @@ object Form {
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
-        iconHoverColor: Color = Theme.colors.icon,
+        iconHoverColor: Color? = null,
         bgColor: Color = Theme.colors.primary,
         rounded: Boolean = true,
         enabled: Boolean = true,
@@ -329,7 +329,7 @@ object Form {
         ) {
             Icon.Render(
                 icon = if (hoverIcon != null && isHover) hoverIcon else icon,
-                color = if (isHover) iconHoverColor else iconColor,
+                color = if (iconHoverColor != null && isHover) iconHoverColor else iconColor,
                 enabled = enabled
             )
         }
