@@ -26,18 +26,11 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//view/common:common",
-#        "//view/editor:editor",
-#        "//state/common:common",
-#        "//state/project:project",
-#        "//state/resource:resource",
-#        "//state:state",
-
-        # External Vaticle Dependencies
-#        "@vaticle_typedb_common//:common",
+        "//state/resource:resource",
+        "//state/runner:runner",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-#        "@maven//:org_jetbrains_compose_animation_animation_core_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
@@ -45,7 +38,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-#        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-output:{pom_version}"],

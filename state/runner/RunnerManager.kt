@@ -22,24 +22,43 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.lang.IllegalStateException
 
 class RunnerManager {
 
-    var lastRunner: TransactionRunner? by mutableStateOf(null)
-    var activeRunner: TransactionRunner? by mutableStateOf(null)
-    val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
+    private var lastRunner: TransactionRunner? by mutableStateOf(null)
+    private var activeRunner: TransactionRunner? by mutableStateOf(null)
+    private val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
+    val runners: List<TransactionRunner> get() = savedRunners + (activeRunner?.let { listOf(it) } ?: listOf())
 
-    fun register(newRunner: TransactionRunner) {
-        lastRunner = newRunner
-        activeRunner = newRunner
+
+    fun indexOf(runner: TransactionRunner): Int {
+        return if (savedRunners.contains(runner)) savedRunners.indexOf(runner)
+        else if (lastRunner == runner) savedRunners.size + 1
+        else throw IllegalStateException()
+    }
+
+    fun isActive(runner: TransactionRunner): Boolean {
+        return runner == activeRunner
     }
 
     fun activate(runner: TransactionRunner) {
         activeRunner = runner
     }
 
+    fun register(newRunner: TransactionRunner) {
+        lastRunner = newRunner
+        activeRunner = newRunner
+    }
+
     fun saveLast() {
         lastRunner?.let { savedRunners.add(it) }
         lastRunner = null
+    }
+
+    fun delete(runner: TransactionRunner) {
+        if (lastRunner == runner) lastRunner = null
+        if (activeRunner == runner) activeRunner = null
+        savedRunners.remove(runner)
     }
 }

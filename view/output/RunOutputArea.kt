@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,23 +35,40 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
+import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
+import kotlinx.coroutines.CoroutineScope
 
 object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State constructor(private val paneState: Frame.PaneState, val name: String) {
+    class State(
+        internal val resource: Resource,
+        private val paneState: Frame.PaneState,
+        coroutineScope: CoroutineScope
+    ) {
 
-        internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
         private var unfreezeSize: Dp? by mutableStateOf(null)
+        internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
+        internal val tabsState = Tabs.State<TransactionRunner>(coroutineScope)
+        internal var density: Float
+            get() = tabsState.density
+            set(value) {
+                tabsState.density = value
+            }
 
         internal fun toggle() {
             isOpen = !isOpen
@@ -69,6 +87,7 @@ object RunOutputArea {
 
     @Composable
     fun Layout(state: State) {
+        state.density = LocalDensity.current.density
         Column(Modifier.fillMaxSize()) {
             Bar(state)
             if (state.isOpen) {
@@ -83,11 +102,25 @@ object RunOutputArea {
             modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
             Form.Text(value = Label.RUN + ":")
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
+            Box(Modifier.weight(1f)) {
+                Tabs.Layout(
+                    state = state.tabsState,
+                    tabs = state.resource.runner.runners,
+                    labelFn = { runnerName(state.resource, it) },
+                    isActiveFn = { state.resource.runner.isActive(it) },
+                    onClick = { state.resource.runner.activate(it) },
+                    onClose = { state.resource.runner.delete(it) }
+                )
+            }
             ToggleButton(state)
         }
+    }
+
+    private fun runnerName(resource: Resource, runner: TransactionRunner): AnnotatedString {
+        return AnnotatedString(text = resource.name + "::" + Label.RUN.lowercase() + resource.runner.indexOf(runner))
     }
 
     @Composable

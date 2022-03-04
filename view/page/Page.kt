@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.output.RunOutputArea
+import kotlinx.coroutines.CoroutineScope
 
 abstract class Page(var resource: Resource) {
 
@@ -70,12 +72,12 @@ abstract class Page(var resource: Resource) {
         updateResourceInner(resource)
     }
 
-    private fun runOutputState(paneState: Frame.PaneState): RunOutputArea.State {
-        if (runOutputState == null) runOutputState = RunOutputArea.State(paneState, resource.name)
+    private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
+        if (runOutputState == null) runOutputState = RunOutputArea.State(resource, paneState, coroutineScope)
         return runOutputState!!
     }
 
-    private fun frameState(): Frame.FrameState {
+    private fun frameState(coroutineScope: CoroutineScope): Frame.FrameState {
         if (frameState == null) {
             frameState = createFrameState(
                 separator = Frame.SeparatorArgs(Separator.WEIGHT),
@@ -91,7 +93,7 @@ abstract class Page(var resource: Resource) {
                     minSize = RUN_PANEL_MIN_HEIGHT,
                     initSize = if (!RunOutputArea.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
                     initFreeze = !RunOutputArea.DEFAULT_OPEN
-                ) { paneState -> RunOutputArea.Layout(runOutputState(paneState)) }
+                ) { paneState -> RunOutputArea.Layout(runOutputState(paneState, coroutineScope)) }
             )
         }
         return frameState!!
@@ -101,7 +103,7 @@ abstract class Page(var resource: Resource) {
     internal fun Layout() {
         if (!resource.isRunnable) Content()
         else {
-            Frame.Column(state = frameState(), modifier = Modifier.fillMaxSize())
+            Frame.Column(state = frameState(rememberCoroutineScope()), modifier = Modifier.fillMaxSize())
         }
     }
 }

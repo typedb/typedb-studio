@@ -65,7 +65,7 @@ object Tabs {
 
     class State<T : Any> constructor(private val coroutineScope: CoroutineScope) {
 
-        var density: Float by mutableStateOf(0f)
+        var density: Float by mutableStateOf(1f)
         val scroller = ScrollState(0)
         var tabsScrollTo: Dp? by mutableStateOf(null)
         var maxWidth by mutableStateOf(4096.dp)
@@ -96,7 +96,7 @@ object Tabs {
 
     @Composable
     fun <T : Any> Layout(
-        state: State<T>, tabs: List<T>, iconFn: (T) -> IconArgs?, labelFn: @Composable (T) -> AnnotatedString,
+        state: State<T>, tabs: List<T>, iconFn: ((T) -> IconArgs?)? = null, labelFn: @Composable (T) -> AnnotatedString,
         isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, onClose: (T) -> Unit,
         contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, vararg extraButtons: ButtonArgs
     ) {
@@ -110,8 +110,11 @@ object Tabs {
                 Separator.Vertical()
             }
             Row(Modifier.widthIn(max = state.maxWidth).height(PANEL_BAR_HEIGHT).horizontalScroll(state.scroller)) {
-                tabs.forEach {
-                    Tab(state, it, iconFn(it), labelFn(it), isActiveFn(it), onClick, onClose, contextMenuFn)
+                tabs.forEach { tab ->
+                    val icon = iconFn?.let { it(tab) }
+                    val label = labelFn(tab)
+                    val isActive = isActiveFn(tab)
+                    Tab(state, tab, icon, label, isActive, onClick, onClose, contextMenuFn)
                 }
             }
             if (state.scroller.maxValue > 0) {
@@ -120,7 +123,7 @@ object Tabs {
                 Separator.Vertical()
             }
             if (extraButtons.isNotEmpty()) ExtraButtons(*extraButtons)
-            Separator.Vertical()
+            if (tabs.isNotEmpty()) Separator.Vertical()
         }
         LaunchedEffect(state.tabsScrollTo) {
             state.tabsScrollTo?.let {

@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.page
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -62,9 +63,9 @@ object PageArea {
 
     internal class State(coroutineScope: CoroutineScope) {
 
-        val tabsState = Tabs.State<Resource>(coroutineScope)
-        val openedPages: MutableMap<Resource, Page> = mutableMapOf()
-        var density: Float
+        internal val tabsState = Tabs.State<Resource>(coroutineScope)
+        internal val openedPages: MutableMap<Resource, Page> = mutableMapOf()
+        internal var density: Float
             get() = tabsState.density
             set(value) {
                 tabsState.density = value
