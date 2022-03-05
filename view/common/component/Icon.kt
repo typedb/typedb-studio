@@ -107,13 +107,14 @@ object Icon {
     fun Render(
         icon: Code,
         color: Color = Theme.colors.icon,
+        disabledColor: Color? = null,
         size: TextUnit = icon.defaultSize,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {
         Text(
             text = icon.unicode,
-            color = fadeable(color, !enabled),
+            color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
             fontSize = size,
             fontFamily = FONT_AWESOME,
             modifier = modifier.offset(icon.offset.x, icon.offset.y).rotate(icon.rotate)

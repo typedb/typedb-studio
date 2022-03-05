@@ -100,6 +100,7 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
                 hoverIcon = it.hoverIcon,
                 iconColor = it.color(),
                 iconHoverColor = it.hoverColor(),
+                disabledColor = it.disabledColor(),
                 onClick = { it.onClick() },
                 modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,
