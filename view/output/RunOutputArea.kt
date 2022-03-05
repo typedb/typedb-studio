@@ -71,8 +71,16 @@ object RunOutputArea {
                 tabsState.density = value
             }
 
+        init {
+            resource.runner.onRegister { toggle(true) }
+        }
+
         internal fun toggle() {
-            isOpen = !isOpen
+            toggle(!isOpen)
+        }
+
+        private fun toggle(isOpen: Boolean) {
+            this.isOpen = isOpen
             mayUpdatePaneState()
         }
 

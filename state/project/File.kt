@@ -294,6 +294,7 @@ class File internal constructor(
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
             watchFileSystem.set(false)
+            runner.reset()
             onDiskChangeContent.clear()
             onDiskChangePermission.clear()
             onWatch.clear()
