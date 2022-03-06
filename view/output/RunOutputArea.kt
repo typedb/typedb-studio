@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.runner.OutputManager
 import com.vaticle.typedb.studio.state.runner.RunnerOutput
 import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import com.vaticle.typedb.studio.view.common.Label
@@ -103,7 +104,9 @@ object RunOutputArea {
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.resource.runner.activeRunner?.let { RunOutputGroup(state, it, Modifier.fillMaxSize()) }
+                state.resource.runner.activeRunner?.let {
+                    RunOutputGroup(it.output, state.outputTabState(it), Modifier.fillMaxSize())
+                }
             }
         }
     }
@@ -152,11 +155,11 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroup(state: State, runner: TransactionRunner, modifier: Modifier) {
+    private fun RunOutputGroup(outputMgr: OutputManager, tabsState: Tabs.State<RunnerOutput>, modifier: Modifier) {
         Column(modifier) {
-            RunOutput(runner.activeOutput, Modifier.fillMaxWidth().weight(1f))
+            RunOutput(outputMgr.active, Modifier.fillMaxWidth().weight(1f))
             Separator.Horizontal()
-            RunOutputTabs(state, runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+            RunOutputTabs(outputMgr, tabsState, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
         }
     }
 
@@ -172,7 +175,7 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputTabs(state: State, runner: TransactionRunner, modifier: Modifier) {
+    private fun RunOutputTabs(outputMgr: OutputManager, tabsState: Tabs.State<RunnerOutput>, modifier: Modifier) {
         fun outputIcon(output: RunnerOutput): Icon.Code {
             return when (output) {
                 is RunnerOutput.Log -> Icon.Code.ALIGN_LEFT
@@ -184,22 +187,23 @@ object RunOutputArea {
         fun outputName(output: RunnerOutput): String {
             return when (output) {
                 is RunnerOutput.Log -> Label.LOG
-                is RunnerOutput.Graph -> Label.GRAPH + if (runner.graphs.size > 1) " (${runner.numberOf(output)})" else ""
-                is RunnerOutput.Table -> Label.TABLE + if (runner.tables.size > 1) " (${runner.numberOf(output)})" else ""
+                is RunnerOutput.Graph -> Label.GRAPH + if (outputMgr.hasMultipleGraphs) " (${outputMgr.numberOf(output)})" else ""
+                is RunnerOutput.Table -> Label.TABLE + if (outputMgr.hasMultipleTables) " (${outputMgr.numberOf(output)})" else ""
             }
         }
+
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Form.Text(value = Label.OUTPUT + ":")
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
-                    state = state.outputTabState(runner),
-                    tabs = runner.outputs,
+                    state = tabsState,
+                    tabs = outputMgr.outputs,
                     iconFn = { Form.IconArgs(outputIcon(it)) },
                     labelFn = { AnnotatedString(outputName(it)) },
-                    isActiveFn = { runner.isActiveOutput(it) },
-                    onClick = { runner.activateOutput(it) },
+                    isActiveFn = { outputMgr.isActive(it) },
+                    onClick = { outputMgr.activate(it) },
                 )
             }
         }
