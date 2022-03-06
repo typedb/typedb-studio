@@ -50,12 +50,14 @@ object Icon {
     ) {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
+        ALIGN_LEFT(0xf036u),
         ASTERISK(0x2au),
         BLOCK_QUOTE(0xe0b5u),
         CARET_DOWN(0xf0d7u),
         CARET_LEFT(0xf0d9u),
         CARET_RIGHT(0xf0dau),
         CARET_UP(0xf0d8u),
+        CHART_NETWORK(0xf78au),
         CHECK(0xf00cu),
         CHEVRON_DOWN(0xf078u),
         CHEVRON_LEFT(0xf053u),
@@ -93,6 +95,7 @@ object Icon {
         RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
+        TABLE(0xf0ceu),
         THUMBTACK(0xf08du),
         TRASH_CAN(0xf2edu),
         USER(0xf007u),

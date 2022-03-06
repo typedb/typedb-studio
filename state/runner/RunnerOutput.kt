@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.runner
 
 import androidx.compose.runtime.mutableStateListOf
 
-interface RunnerOutput {
+sealed interface RunnerOutput {
 
     class Log: RunnerOutput {
 

@@ -60,19 +60,35 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
         const val MATCH_QUERY_SUCCESS = "Matched Things Successfully:"
     }
 
-    private val graphs: MutableList<RunnerOutput.Graph> = mutableStateListOf(RunnerOutput.Graph()) // TODO: null
-    private val tables: MutableList<RunnerOutput.Table> = mutableStateListOf(RunnerOutput.Table()) // TODO: null
-    private val logs: RunnerOutput.Log = RunnerOutput.Log()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    var activeOutput: RunnerOutput by mutableStateOf(logs)
-    val outputs: List<RunnerOutput> get() = listOf(logs, *graphs.toTypedArray(), *tables.toTypedArray())
+    private val log: RunnerOutput.Log = RunnerOutput.Log()
+    val graphs: MutableList<RunnerOutput.Graph> = mutableStateListOf(RunnerOutput.Graph(), RunnerOutput.Graph()) // TODO: null
+    val tables: MutableList<RunnerOutput.Table> = mutableStateListOf(RunnerOutput.Table()) // TODO: null
+    var activeOutput: RunnerOutput by mutableStateOf(log)
+    val outputs: List<RunnerOutput> get() = listOf(log, *graphs.toTypedArray(), *tables.toTypedArray())
+
+    fun isActiveOutput(output: RunnerOutput): Boolean {
+        return activeOutput == output
+    }
+
+    fun activateOutput(output: RunnerOutput) {
+        activeOutput = output
+    }
+
+    fun numberOf(output: RunnerOutput.Graph): Int {
+        return graphs.indexOf(output) + 1
+    }
+
+    fun numberOf(output: RunnerOutput.Table): Int {
+        return tables.indexOf(output) + 1
+    }
 
     fun launch(onComplete: () -> Unit) {
         coroutineScope.launch {
             try {
                 runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
             } catch (e: Exception) {
-                logs.append(ERROR, e.message ?: e.toString())
+                log.append(ERROR, e.message ?: e.toString())
             } finally {
                 onComplete()
             }
@@ -90,65 +106,65 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
                 is TypeQLMatch -> runMatchQuery(query)
                 else -> throw IllegalStateException()
             }
-            logs.append(INFO, "")
+            log.append(INFO, "")
             if (!success) return
         }
     }
 
     private fun runDefineQuery(query: TypeQLDefine): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_DEFINE_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_DEFINE_QUERY)
+            log.append(TYPEQL, query.toString())
             transaction.query().define(query).get()
-            logs.append(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
+            log.append(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
         }
     }
 
     private fun runUndefineQuery(query: TypeQLUndefine): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_UNDEFINE_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_UNDEFINE_QUERY)
+            log.append(TYPEQL, query.toString())
             transaction.query().undefine(query).get()
-            logs.append(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
+            log.append(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
         }
     }
 
     private fun runDeleteQuery(query: TypeQLDelete): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_DELETE_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_DELETE_QUERY)
+            log.append(TYPEQL, query.toString())
             transaction.query().delete(query).get()
-            logs.append(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
+            log.append(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
         }
     }
 
     private fun runInsertQuery(query: TypeQLInsert): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_INSERT_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_INSERT_QUERY)
+            log.append(TYPEQL, query.toString())
             val result = transaction.query().insert(query)
-            logs.append(SUCCESS, RESULT_ + INSERTED_QUERY_SUCCESS)
-            result.forEach { logs.append(TYPEQL, printConceptMap(it)) }
+            log.append(SUCCESS, RESULT_ + INSERTED_QUERY_SUCCESS)
+            result.forEach { log.append(TYPEQL, printConceptMap(it)) }
         }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_UPDATE_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_UPDATE_QUERY)
+            log.append(TYPEQL, query.toString())
             val result = transaction.query().update(query)
-            logs.append(SUCCESS, RESULT_ + UPDATED_QUERY_SUCCESS)
-            result.forEach { logs.append(TYPEQL, printConceptMap(it)) }
+            log.append(SUCCESS, RESULT_ + UPDATED_QUERY_SUCCESS)
+            result.forEach { log.append(TYPEQL, printConceptMap(it)) }
         }
     }
 
     private fun runMatchQuery(query: TypeQLMatch): Boolean {
         return runLoggedQuery {
-            logs.append(INFO, RUNNING_MATCH_QUERY)
-            logs.append(TYPEQL, query.toString())
+            log.append(INFO, RUNNING_MATCH_QUERY)
+            log.append(TYPEQL, query.toString())
             val result = transaction.query().match(query)
-            logs.append(SUCCESS, RESULT_ + MATCH_QUERY_SUCCESS)
-            result.forEach { logs.append(TYPEQL, printConceptMap(it)) }
+            log.append(SUCCESS, RESULT_ + MATCH_QUERY_SUCCESS)
+            result.forEach { log.append(TYPEQL, printConceptMap(it)) }
         }
     }
 
@@ -157,7 +173,7 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
             function()
             true
         } catch (e: Exception) {
-            logs.append(ERROR, ERROR_ + e.message)
+            log.append(ERROR, ERROR_ + e.message)
             false
         }
     }

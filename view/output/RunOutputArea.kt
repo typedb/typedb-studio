@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
@@ -57,23 +56,23 @@ object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State(
+    class State constructor(
         internal val resource: Resource,
         private val paneState: Frame.PaneState,
-        coroutineScope: CoroutineScope
+        private val coroutineScope: CoroutineScope
     ) {
 
-        private var unfreezeSize: Dp? by mutableStateOf(null)
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
-        internal val tabsState = Tabs.State<TransactionRunner>(coroutineScope)
-        internal var density: Float
-            get() = tabsState.density
-            set(value) {
-                tabsState.density = value
-            }
+        internal val runnerTabsState = Tabs.State<TransactionRunner>(coroutineScope)
+        private val outputTabState: MutableMap<TransactionRunner, Tabs.State<RunnerOutput>> = mutableMapOf()
+        private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
             resource.runner.onRegister { toggle(true) }
+        }
+
+        internal fun outputTabState(runner: TransactionRunner): Tabs.State<RunnerOutput> {
+            return outputTabState.getOrPut(runner) { Tabs.State(coroutineScope) }
         }
 
         internal fun toggle() {
@@ -97,15 +96,14 @@ object RunOutputArea {
 
     @Composable
     fun Layout(state: State) {
-        state.density = LocalDensity.current.density
         Column(Modifier.fillMaxSize()) {
-            Row (Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
+            Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
                 RunOutputGroupTabs(state, Modifier.weight(1f))
                 ToggleButton(state)
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.resource.runner.activeRunner?.let { RunOutputGroup(it, Modifier.fillMaxSize()) }
+                state.resource.runner.activeRunner?.let { RunOutputGroup(state, it, Modifier.fillMaxSize()) }
             }
         }
     }
@@ -124,8 +122,8 @@ object RunOutputArea {
     @Composable
     private fun RunOutputGroupTabs(state: State, modifier: Modifier) {
         val runnerMgr = state.resource.runner
-        fun runnerName(runner: TransactionRunner): AnnotatedString {
-            return AnnotatedString(state.resource.name + "::" + Label.RUN.lowercase() + runnerMgr.numberOf(runner))
+        fun runnerName(runner: TransactionRunner): String {
+            return "${state.resource.name} (${runnerMgr.numberOf(runner)})"
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
@@ -133,9 +131,9 @@ object RunOutputArea {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
-                    state = state.tabsState,
+                    state = state.runnerTabsState,
                     tabs = runnerMgr.runners,
-                    labelFn = { runnerName(it) },
+                    labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
                     closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
@@ -154,11 +152,11 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroup(runner: TransactionRunner, modifier: Modifier) {
+    private fun RunOutputGroup(state: State, runner: TransactionRunner, modifier: Modifier) {
         Column(modifier) {
             RunOutput(runner.activeOutput, Modifier.fillMaxWidth().weight(1f))
             Separator.Horizontal()
-            RunOutputTabs(runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+            RunOutputTabs(state, runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
         }
     }
 
@@ -174,9 +172,36 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputTabs(runner: TransactionRunner, modifier: Modifier) {
-        Row(modifier) {
+    private fun RunOutputTabs(state: State, runner: TransactionRunner, modifier: Modifier) {
+        fun outputIcon(output: RunnerOutput): Icon.Code {
+            return when (output) {
+                is RunnerOutput.Log -> Icon.Code.ALIGN_LEFT
+                is RunnerOutput.Graph -> Icon.Code.CHART_NETWORK
+                is RunnerOutput.Table -> Icon.Code.TABLE
+            }
+        }
 
+        fun outputName(output: RunnerOutput): String {
+            return when (output) {
+                is RunnerOutput.Log -> Label.LOG
+                is RunnerOutput.Graph -> Label.GRAPH + if (runner.graphs.size > 1) " (${runner.numberOf(output)})" else ""
+                is RunnerOutput.Table -> Label.TABLE + if (runner.tables.size > 1) " (${runner.numberOf(output)})" else ""
+            }
+        }
+        Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
+            Form.Text(value = Label.OUTPUT + ":")
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
+            Box(Modifier.weight(1f)) {
+                Tabs.Layout(
+                    state = state.outputTabState(runner),
+                    tabs = runner.outputs,
+                    iconFn = { Form.IconArgs(outputIcon(it)) },
+                    labelFn = { AnnotatedString(outputName(it)) },
+                    isActiveFn = { runner.isActiveOutput(it) },
+                    onClick = { runner.activateOutput(it) },
+                )
+            }
         }
     }
 }

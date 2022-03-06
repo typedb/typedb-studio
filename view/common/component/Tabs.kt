@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -99,9 +101,10 @@ object Tabs {
     fun <T : Any> Layout(
         state: State<T>, tabs: List<T>, iconFn: (@Composable (T) -> IconArgs?)? = null,
         labelFn: @Composable (T) -> AnnotatedString, isActiveFn: (T) -> Boolean, onClick: (T) -> Unit,
-        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, closeButtonFn: ((T) -> ButtonArgs),
+        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, closeButtonFn: ((T) -> ButtonArgs)? = null,
         trailingTabButtonFn: ((T) -> ButtonArgs?)? = null, vararg extraBarButtons: ButtonArgs
     ) {
+        state.density = LocalDensity.current.density
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
         closedTabs.forEach { state.openedTabSize.remove(it) }
         Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged {
@@ -117,7 +120,7 @@ object Tabs {
                     val icon = iconFn?.let { it(tab) }
                     val label = labelFn(tab)
                     val isActive = isActiveFn(tab)
-                    val closeButtonArgs = closeButtonFn(tab)
+                    val closeButtonArgs = closeButtonFn?.let { it(tab) }
                     val trailingButton = trailingTabButtonFn?.let { it(tab) }
                     Tab(state, tab, icon, label, isActive, closeButtonArgs, onClick, contextMenuFn, trailingButton)
                     Separator.Vertical()
@@ -150,7 +153,7 @@ object Tabs {
     @Composable
     private fun <T : Any> Tab(
         state: State<T>, tab: T, icon: IconArgs?, label: AnnotatedString, isActive: Boolean,
-        closeButtonArgs: ButtonArgs, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
+        closeButtonArgs: ButtonArgs?, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
         trailingButton: ButtonArgs?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
@@ -178,7 +181,7 @@ object Tabs {
                     if (trailingButton == null && icon == null) Spacer()
                     Form.Text(value = label)
                     Spacer()
-                    Button(closeButtonArgs)
+                    closeButtonArgs?.let { Button(it) }
                 }
                 if (isActive) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }

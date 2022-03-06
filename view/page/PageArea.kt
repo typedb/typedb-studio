@@ -48,7 +48,6 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -64,11 +63,6 @@ object PageArea {
 
         private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
         internal val tabsState = Tabs.State<Resource>(coroutineScope)
-        internal var density: Float
-            get() = tabsState.density
-            set(value) {
-                tabsState.density = value
-            }
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -167,7 +161,6 @@ object PageArea {
         val density = LocalDensity.current.density
         val coroutineScope = rememberCoroutineScope()
         val state = remember { State(coroutineScope) }
-        state.density = density
         val focusReq = FocusRequester()
         fun mayRequestFocus() {
             if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()

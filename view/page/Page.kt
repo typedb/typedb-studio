@@ -102,8 +102,6 @@ abstract class Page(var resource: Resource) {
     @Composable
     internal fun Layout() {
         if (!resource.isRunnable) Content()
-        else {
-            Frame.Column(state = frameState(rememberCoroutineScope()), modifier = Modifier.fillMaxSize())
-        }
+        else Frame.Column(state = frameState(rememberCoroutineScope()), modifier = Modifier.fillMaxSize())
     }
 }
