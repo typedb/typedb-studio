@@ -128,7 +128,7 @@ object TextEditor {
     }
 
     private fun readFile(file: File): List<AnnotatedString> {
-        return highlight(file.reloadFromDisk().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType)
+        return highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType)
     }
 
     private fun onChangeFromDisk(

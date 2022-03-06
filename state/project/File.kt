@@ -130,9 +130,7 @@ class File internal constructor(
             return false
         }
         return try {
-            // TODO: find a more efficient way to verify access without having to load the entire file
-            if (isTextFile) loadTextFileLines()
-            else loadBinaryFileLines()
+            readContent()
             isOpenAtomic.set(true)
             onReopen.forEach { it(this) }
             true
@@ -170,8 +168,7 @@ class File internal constructor(
         hasUnsavedChanges = true
     }
 
-    fun reloadFromDisk(): List<String> {
-        if (!isOpenAtomic.get()) throw IllegalStateException()
+    fun readContent(): List<String> {
         val loadedContent = if (isTextFile) loadTextFileLines() else loadBinaryFileLines()
         content = loadedContent.ifEmpty { listOf("") }
         return content
