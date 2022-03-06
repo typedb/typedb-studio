@@ -99,52 +99,14 @@ object RunOutputArea {
     fun Layout(state: State) {
         state.density = LocalDensity.current.density
         Column(Modifier.fillMaxSize()) {
-            Bar(state)
+            Row (Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
+                RunOutputGroupTabs(state, Modifier.weight(1f))
+                ToggleButton(state)
+            }
             if (state.isOpen) {
                 Separator.Horizontal()
                 state.resource.runner.activeRunner?.let { RunOutputGroup(it, Modifier.fillMaxSize()) }
             }
-        }
-    }
-
-    @Composable
-    private fun Bar(state: State) {
-        Row(
-            Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            Form.Text(value = Label.RUN + ":")
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            RunOutputGroupTabs(state, Modifier.weight(1f))
-            ToggleButton(state)
-        }
-    }
-
-    @Composable
-    private fun RunOutputGroupTabs(state: State, modifier: Modifier) {
-        val runnerMgr = state.resource.runner
-        fun runnerName(runner: TransactionRunner): AnnotatedString {
-            return AnnotatedString(state.resource.name + "::" + Label.RUN.lowercase() + runnerMgr.numberOf(runner))
-        }
-        Box(modifier) {
-            Tabs.Layout(
-                state = state.tabsState,
-                tabs = runnerMgr.runners,
-                labelFn = { runnerName(it) },
-                isActiveFn = { runnerMgr.isActive(it) },
-                onClick = { runnerMgr.activate(it) },
-                closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
-                trailingTabButtonFn = {
-                    ButtonArgs(
-                        icon = Icon.Code.THUMBTACK,
-                        color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
-                        hoverColor = { Theme.colors.icon },
-                        disabledColor = { Theme.colors.icon },
-                        enabled = !runnerMgr.isSaved(it)
-                    ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
-                }
-            )
         }
     }
 
@@ -160,16 +122,48 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroup(runner: TransactionRunner, modifier: Modifier) {
-        Column(modifier) {
-            Output(runner.activeOutput, Modifier.fillMaxWidth().weight(1f))
-            Separator.Horizontal()
-            OutputTabs(runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+    private fun RunOutputGroupTabs(state: State, modifier: Modifier) {
+        val runnerMgr = state.resource.runner
+        fun runnerName(runner: TransactionRunner): AnnotatedString {
+            return AnnotatedString(state.resource.name + "::" + Label.RUN.lowercase() + runnerMgr.numberOf(runner))
+        }
+        Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
+            Form.Text(value = Label.RUN + ":")
+            Spacer(Modifier.width(PANEL_BAR_SPACING))
+            Box(Modifier.weight(1f)) {
+                Tabs.Layout(
+                    state = state.tabsState,
+                    tabs = runnerMgr.runners,
+                    labelFn = { runnerName(it) },
+                    isActiveFn = { runnerMgr.isActive(it) },
+                    onClick = { runnerMgr.activate(it) },
+                    closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
+                    trailingTabButtonFn = {
+                        ButtonArgs(
+                            icon = Icon.Code.THUMBTACK,
+                            color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
+                            hoverColor = { Theme.colors.icon },
+                            disabledColor = { Theme.colors.icon },
+                            enabled = !runnerMgr.isSaved(it)
+                        ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
+                    }
+                )
+            }
         }
     }
 
     @Composable
-    private fun Output(output: RunnerOutput, modifier: Modifier) {
+    private fun RunOutputGroup(runner: TransactionRunner, modifier: Modifier) {
+        Column(modifier) {
+            RunOutput(runner.activeOutput, Modifier.fillMaxWidth().weight(1f))
+            Separator.Horizontal()
+            RunOutputTabs(runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+        }
+    }
+
+    @Composable
+    private fun RunOutput(output: RunnerOutput, modifier: Modifier) {
         Box(modifier.background(Theme.colors.background2)) {
             when (output) {
                 is RunnerOutput.Log -> LogOutput.Layout()
@@ -180,7 +174,7 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun OutputTabs(runner: TransactionRunner, modifier: Modifier) {
+    private fun RunOutputTabs(runner: TransactionRunner, modifier: Modifier) {
         Row(modifier) {
 
         }
