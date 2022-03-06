@@ -181,9 +181,9 @@ object PageArea {
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,
-                ButtonArgs(icon = Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
+                extraBarButtons = listOf(ButtonArgs(Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
                     state.createAndOpenNewFile()
-                }
+                })
             )
             Separator.Horizontal()
             GlobalState.resource.active?.let { resource -> state.openedPages(resource).Layout() }

@@ -200,6 +200,7 @@ object RunOutputArea {
                 Tabs.Layout(
                     state = tabsState,
                     tabs = outputMgr.outputs,
+                    position = Tabs.Position.BOTTOM,
                     iconFn = { Form.IconArgs(outputIcon(it)) },
                     labelFn = { AnnotatedString(outputName(it)) },
                     isActiveFn = { outputMgr.isActive(it) },
