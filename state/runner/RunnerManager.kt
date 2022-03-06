@@ -26,10 +26,10 @@ import java.util.concurrent.LinkedBlockingDeque
 
 class RunnerManager {
 
-    private var lastRunner: TransactionRunner? by mutableStateOf(null)
-    private var activeRunner: TransactionRunner? by mutableStateOf(null)
-    private val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
     private val onRegister = LinkedBlockingDeque<() -> Unit>()
+    private var lastRunner: TransactionRunner? by mutableStateOf(null)
+    private val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
+    var activeRunner: TransactionRunner? by mutableStateOf(null)
     val runners: List<TransactionRunner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
 
 

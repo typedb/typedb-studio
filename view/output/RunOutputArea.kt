@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.runner.RunnerOutput
 import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -101,7 +102,7 @@ object RunOutputArea {
             Bar(state)
             if (state.isOpen) {
                 Separator.Horizontal()
-                RunOutputGroup(Modifier.fillMaxSize())
+                state.resource.runner.activeRunner?.let { RunOutputGroup(it, Modifier.fillMaxSize()) }
             }
         }
     }
@@ -159,23 +160,27 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroup(modifier: Modifier) {
+    private fun RunOutputGroup(runner: TransactionRunner, modifier: Modifier) {
         Column(modifier) {
-            Output(Modifier.fillMaxWidth().weight(1f))
+            Output(runner.activeOutput, Modifier.fillMaxWidth().weight(1f))
             Separator.Horizontal()
-            OutputTabs(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+            OutputTabs(runner, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
         }
     }
 
     @Composable
-    private fun Output(modifier: Modifier) {
-        Row(modifier.background(Theme.colors.background2)) {
-
+    private fun Output(output: RunnerOutput, modifier: Modifier) {
+        Box(modifier.background(Theme.colors.background2)) {
+            when (output) {
+                is RunnerOutput.Log -> LogOutput.Layout()
+                is RunnerOutput.Graph -> GraphOutput.Layout()
+                is RunnerOutput.Table -> TableOutput.Layout()
+            }
         }
     }
 
     @Composable
-    private fun OutputTabs(modifier: Modifier) {
+    private fun OutputTabs(runner: TransactionRunner, modifier: Modifier) {
         Row(modifier) {
 
         }
