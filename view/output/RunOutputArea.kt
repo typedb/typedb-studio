@@ -90,7 +90,7 @@ object RunOutputArea {
                 unfreezeSize = paneState.size
                 paneState.freeze(PANEL_BAR_HEIGHT)
             } else if (paneState.isFrozen) {
-                paneState.unfreeze(unfreezeSize ?: (paneState.frameState.maxSize / 2))
+                paneState.unfreeze(unfreezeSize ?: (paneState.frameState.maxSize * 0.6f))
             }
         }
     }

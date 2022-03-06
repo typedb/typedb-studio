@@ -85,13 +85,13 @@ abstract class Page(var resource: Resource) {
                     id = Page::class.java.canonicalName,
                     order = 1,
                     minSize = CONTENT_MIN_HEIGHT,
-                    initSize = Either.second(1f)
+                    initSize = Either.second(2f)
                 ) { Content() },
                 Frame.Pane(
                     id = RunOutputArea::class.java.canonicalName,
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
-                    initSize = if (!RunOutputArea.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initSize = if (!RunOutputArea.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(3f),
                     initFreeze = !RunOutputArea.DEFAULT_OPEN
                 ) { paneState -> RunOutputArea.Layout(runOutputState(paneState, coroutineScope)) }
             )
