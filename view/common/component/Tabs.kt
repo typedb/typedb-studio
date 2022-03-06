@@ -107,6 +107,7 @@ object Tabs {
         Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged {
             state.maxWidth = Theme.toDP(it.width, state.density) - PANEL_BAR_HEIGHT * 3
         }) {
+            if (tabs.isNotEmpty()) Separator.Vertical()
             if (state.scroller.maxValue > 0) {
                 PreviousTabsButton(state)
                 Separator.Vertical()
@@ -119,6 +120,7 @@ object Tabs {
                     val closeButtonArgs = closeButtonFn(tab)
                     val trailingButton = trailingTabButtonFn?.let { it(tab) }
                     Tab(state, tab, icon, label, isActive, closeButtonArgs, onClick, contextMenuFn, trailingButton)
+                    Separator.Vertical()
                 }
             }
             if (state.scroller.maxValue > 0) {
@@ -126,8 +128,10 @@ object Tabs {
                 NextTabsButton(state)
                 Separator.Vertical()
             }
-            if (extraBarButtons.isNotEmpty()) Buttons(*extraBarButtons)
-            if (tabs.isNotEmpty()) Separator.Vertical()
+            extraBarButtons.forEach {
+                Button(it)
+                Separator.Vertical()
+            }
         }
         LaunchedEffect(state.tabsScrollTo) {
             state.tabsScrollTo?.let {
@@ -150,7 +154,7 @@ object Tabs {
         trailingButton: ButtonArgs?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
-        val bgColor = if (isActive) Theme.colors.primary else Theme.colors.background
+        val bgColor = if (isActive) Theme.colors.primary else Color.Transparent
         val height = if (isActive) PANEL_BAR_HEIGHT - TAB_UNDERLINE_HEIGHT else PANEL_BAR_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
@@ -165,7 +169,7 @@ object Tabs {
                         .pointerInput(state, tab) { onPointerInput(contextMenuState) { onClick(tab) } }
                         .onSizeChanged { width = Theme.toDP(it.width, state.density) }
                 ) {
-                    trailingButton?.let { Buttons(it) }
+                    trailingButton?.let { Button(it) }
                     icon?.let {
                         Spacer()
                         Icon.Render(icon = it.code, color = it.color(), size = ICON_SIZE)
@@ -174,11 +178,10 @@ object Tabs {
                     if (trailingButton == null && icon == null) Spacer()
                     Form.Text(value = label)
                     Spacer()
-                    Buttons(closeButtonArgs)
+                    Button(closeButtonArgs)
                 }
                 if (isActive) Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
             }
-            Separator.Vertical()
         }
     }
 
@@ -217,20 +220,18 @@ object Tabs {
     }
 
     @Composable
-    private fun Buttons(vararg buttons: ButtonArgs) {
-        buttons.forEach {
-            Form.IconButton(
-                icon = it.icon,
-                hoverIcon = it.hoverIcon,
-                iconColor = it.color(),
-                iconHoverColor = it.hoverColor(),
-                disabledColor = it.disabledColor(),
-                onClick = { it.onClick() },
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
-                bgColor = Color.Transparent,
-                rounded = false,
-                enabled = it.enabled
-            )
-        }
+    private fun Button(buttonArgs: ButtonArgs) {
+        Form.IconButton(
+            icon = buttonArgs.icon,
+            hoverIcon = buttonArgs.hoverIcon,
+            iconColor = buttonArgs.color(),
+            iconHoverColor = buttonArgs.hoverColor(),
+            disabledColor = buttonArgs.disabledColor(),
+            onClick = { buttonArgs.onClick() },
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
+            bgColor = Color.Transparent,
+            rounded = false,
+            enabled = buttonArgs.enabled
+        )
     }
 }
