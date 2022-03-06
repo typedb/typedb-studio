@@ -62,8 +62,8 @@ object PageArea {
 
     internal class State(coroutineScope: CoroutineScope) {
 
+        private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
         internal val tabsState = Tabs.State<Resource>(coroutineScope)
-        internal val openedPages: MutableMap<Resource, Page> = mutableMapOf()
         internal var density: Float
             get() = tabsState.density
             set(value) {
@@ -86,6 +86,22 @@ object PageArea {
             }
         }
 
+        internal fun openedPages(): List<Page> {
+            return openedPages.values.toList()
+        }
+
+        @Composable
+        internal fun openedPages(resource: Resource): Page {
+            return openedPages.getOrPut(resource) {
+                val page = Page.of(resource)
+                resource.onClose { openedPages.remove(it) }
+                resource.onReopen {
+                    page.updateResource(it)
+                    openedPages[it] = page
+                }
+                page
+            }
+        }
 
         internal fun createAndOpenNewFile(): Boolean {
             GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.open(it) }
@@ -156,7 +172,7 @@ object PageArea {
         fun mayRequestFocus() {
             if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
         }
-        state.openedPages.values.forEach { it.resetFocus() }
+        state.openedPages().forEach { it.resetFocus() }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
@@ -165,7 +181,7 @@ object PageArea {
             Tabs.Layout(
                 state = state.tabsState,
                 tabs = GlobalState.resource.opened,
-                iconFn = { resource -> state.openedPages[resource]?.icon ?: Form.IconArgs(Icon.Code.FILE_LINES) },
+                iconFn = { resource -> state.openedPages(resource).icon },
                 labelFn = { tabLabel(it) },
                 isActiveFn = { GlobalState.resource.isActive(it) },
                 onClick = { GlobalState.resource.activate(it) },
@@ -177,17 +193,7 @@ object PageArea {
                 }
             )
             Separator.Horizontal()
-            GlobalState.resource.active?.let { resource ->
-                state.openedPages.getOrPut(resource) {
-                    val page = Page.of(resource)
-                    resource.onClose { state.openedPages.remove(it) }
-                    resource.onReopen {
-                        page.updateResource(it)
-                        state.openedPages[it] = page
-                    }
-                    page
-                }.Layout()
-            }
+            GlobalState.resource.active?.let { resource -> state.openedPages(resource).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

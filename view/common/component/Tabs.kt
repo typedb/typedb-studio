@@ -97,10 +97,10 @@ object Tabs {
 
     @Composable
     fun <T : Any> Layout(
-        state: State<T>, tabs: List<T>, iconFn: ((T) -> IconArgs?)? = null, labelFn: @Composable (T) -> AnnotatedString,
-        isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
-        closeButtonFn: ((T) -> ButtonArgs), trailingTabButtonFn: ((T) -> ButtonArgs?)? = null,
-        vararg extraBarButtons: ButtonArgs
+        state: State<T>, tabs: List<T>, iconFn: (@Composable (T) -> IconArgs?)? = null,
+        labelFn: @Composable (T) -> AnnotatedString, isActiveFn: (T) -> Boolean, onClick: (T) -> Unit,
+        contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null, closeButtonFn: ((T) -> ButtonArgs),
+        trailingTabButtonFn: ((T) -> ButtonArgs?)? = null, vararg extraBarButtons: ButtonArgs
     ) {
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
         closedTabs.forEach { state.openedTabSize.remove(it) }
