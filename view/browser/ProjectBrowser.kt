@@ -38,8 +38,8 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
-import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.FOLDER_PLUS
 import com.vaticle.typedb.studio.view.common.component.Navigator
@@ -60,7 +60,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
     override val isActive: Boolean get() = GlobalState.project.current != null
-    override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
+    override var buttons: List<ButtonArg> by mutableStateOf(emptyList())
 
     @Composable
     override fun BrowserLayout() {
@@ -77,7 +77,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
             buttons = navState.buttons
             Navigator.Layout(
                 state = navState,
-                iconArgs = { projectItemIcon(it) },
+                iconArg = { projectItemIcon(it) },
                 styleArgs = { projectItemStyles(it) },
                 contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
             )
@@ -105,18 +105,18 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
         }
     }
 
-    private fun projectItemIcon(itemState: Navigator.ItemState<ProjectItem>): IconArgs {
+    private fun projectItemIcon(itemState: Navigator.ItemState<ProjectItem>): IconArg {
         return when (itemState.item) {
             is Directory -> when {
-                itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
-                itemState.asExpandable().isExpanded -> IconArgs(Icon.Code.FOLDER_OPEN)
-                else -> IconArgs(Icon.Code.FOLDER_BLANK)
+                itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
+                itemState.asExpandable().isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
+                else -> IconArg(Icon.Code.FOLDER_BLANK)
             }
             is File -> when {
-                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE) { Theme.colors.secondary }
-                itemState.item.asFile().isTypeQL -> IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
-                itemState.item.isSymbolicLink -> IconArgs(Icon.Code.LINK_SIMPLE)
-                else -> IconArgs(Icon.Code.FILE_LINES)
+                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.colors.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
+                else -> IconArg(Icon.Code.FILE_LINES)
             }
         }
     }

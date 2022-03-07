@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.view.browser
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 
 internal class RoleBrowser(areaState: BrowserArea.State, order: Int, initOpen: Boolean = false) :
@@ -29,7 +29,7 @@ internal class RoleBrowser(areaState: BrowserArea.State, order: Int, initOpen: B
     override val label: String = Label.ROLES
     override val icon: Icon.Code = Icon.Code.USER_GROUP
     override val isActive: Boolean get() = false // TODO
-    override val buttons: List<ButtonArgs> = listOf()
+    override val buttons: List<ButtonArg> = listOf()
 
     @Composable
     override fun BrowserLayout() {

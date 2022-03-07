@@ -30,6 +30,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -58,7 +59,7 @@ abstract class Page(var resource: Resource) {
     internal var tabSize by mutableStateOf(0.dp)
 
     internal abstract val name: String
-    internal abstract val icon: Form.IconArgs
+    internal abstract val icon: IconArg
 
     internal abstract fun resetFocus()
     internal abstract fun updateResourceInner(resource: Resource)

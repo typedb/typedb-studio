@@ -50,8 +50,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
-import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
@@ -101,10 +101,10 @@ object Tabs {
     @Composable
     fun <T : Any> Layout(
         state: State<T>, tabs: List<T>, position: Position = Position.TOP,
-        iconFn: (@Composable (T) -> IconArgs?)? = null, labelFn: @Composable (T) -> AnnotatedString,
+        iconFn: (@Composable (T) -> IconArg?)? = null, labelFn: @Composable (T) -> AnnotatedString,
         isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
-        closeButtonFn: ((T) -> ButtonArgs)? = null, trailingTabButtonFn: ((T) -> ButtonArgs?)? = null,
-        extraBarButtons: List<ButtonArgs> = listOf()
+        closeButtonFn: ((T) -> ButtonArg)? = null, trailingTabButtonFn: ((T) -> ButtonArg?)? = null,
+        extraBarButtons: List<ButtonArg> = listOf()
     ) {
         state.density = LocalDensity.current.density
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
@@ -154,10 +154,10 @@ object Tabs {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Any> Tab(
-        state: State<T>, tab: T, position: Position, icon: IconArgs?, label: AnnotatedString,
-        isActive: Boolean, closeButtonArgs: ButtonArgs?, onClick: (T) -> Unit,
+        state: State<T>, tab: T, position: Position, icon: IconArg?, label: AnnotatedString,
+        isActive: Boolean, closeButtonArg: ButtonArg?, onClick: (T) -> Unit,
         contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
-        trailingButton: ButtonArgs?
+        trailingButton: ButtonArg?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Color.Transparent
@@ -185,7 +185,7 @@ object Tabs {
                     if (trailingButton == null && icon == null) Spacer()
                     Form.Text(value = label)
                     Spacer()
-                    closeButtonArgs?.let { Button(it) }
+                    closeButtonArg?.let { Button(it) }
                 }
                 if (isActive && position == Position.TOP) ActiveIndicator(width)
             }
@@ -232,18 +232,18 @@ object Tabs {
     }
 
     @Composable
-    private fun Button(buttonArgs: ButtonArgs) {
+    private fun Button(buttonArg: ButtonArg) {
         Form.IconButton(
-            icon = buttonArgs.icon,
-            hoverIcon = buttonArgs.hoverIcon,
-            iconColor = buttonArgs.color(),
-            iconHoverColor = buttonArgs.hoverColor(),
-            disabledColor = buttonArgs.disabledColor(),
-            onClick = { buttonArgs.onClick() },
+            icon = buttonArg.icon,
+            hoverIcon = buttonArg.hoverIcon,
+            iconColor = buttonArg.color(),
+            iconHoverColor = buttonArg.hoverColor(),
+            disabledColor = buttonArg.disabledColor(),
+            onClick = { buttonArg.onClick() },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             rounded = false,
-            enabled = buttonArgs.enabled
+            enabled = buttonArg.enabled
         )
     }
 }

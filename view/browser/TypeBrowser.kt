@@ -34,7 +34,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
@@ -45,7 +45,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
     override val isActive: Boolean get() = GlobalState.connection.hasSession
-    override var buttons: List<ButtonArgs> by mutableStateOf(emptyList())
+    override var buttons: List<ButtonArg> by mutableStateOf(emptyList())
 
     @Composable
     override fun BrowserLayout() {

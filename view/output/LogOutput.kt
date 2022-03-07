@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -42,10 +42,10 @@ internal object LogOutput {
         }
     }
 
-    private fun toolbarButtons(): List<ButtonArgs> {
+    private fun toolbarButtons(): List<ButtonArg> {
         return listOf(
-            ButtonArgs(Icon.Code.ARROW_UP_TO_LINE) {},
-            ButtonArgs(Icon.Code.ARROW_DOWN_TO_LINE) {}
+            ButtonArg(Icon.Code.ARROW_UP_TO_LINE) {},
+            ButtonArg(Icon.Code.ARROW_DOWN_TO_LINE) {}
         )
     }
 

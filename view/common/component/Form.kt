@@ -122,8 +122,8 @@ object Form {
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
     data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
-    data class IconArgs(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
-    data class ButtonArgs(
+    data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
+    data class ButtonArg(
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
         val color: @Composable () -> Color = { Theme.colors.icon },

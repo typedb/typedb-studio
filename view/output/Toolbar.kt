@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 internal object Toolbar {
 
     @Composable
-    internal fun Layout(modifier: Modifier, buttons: List<Form.ButtonArgs>) {
+    internal fun Layout(modifier: Modifier, buttons: List<Form.ButtonArg>) {
         Column(modifier.background(Theme.colors.background), horizontalAlignment = Alignment.CenterHorizontally) {
             buttons.forEach {
                 Spacer(Modifier.height(Theme.TOOLBAR_SPACING))
@@ -42,10 +42,10 @@ internal object Toolbar {
     }
 
     @Composable
-    private fun BarButton(buttonArgs: Form.ButtonArgs) {
+    private fun BarButton(buttonArg: Form.ButtonArg) {
         Form.IconButton(
-            icon = buttonArgs.icon,
-            onClick = buttonArgs.onClick,
+            icon = buttonArg.icon,
+            onClick = buttonArg.onClick,
             modifier = Modifier.size(Theme.TOOLBAR_BUTTON_SIZE)
         )
     }

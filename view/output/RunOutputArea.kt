@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.state.runner.RunnerOutput
 import com.vaticle.typedb.studio.state.runner.TransactionRunner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -139,9 +139,9 @@ object RunOutputArea {
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
-                    closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
+                    closeButtonFn = { ButtonArg(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
                     trailingTabButtonFn = {
-                        ButtonArgs(
+                        ButtonArg(
                             icon = Icon.Code.THUMBTACK,
                             color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
                             hoverColor = { Theme.colors.icon },
@@ -201,7 +201,7 @@ object RunOutputArea {
                     state = tabsState,
                     tabs = outputMgr.outputs,
                     position = Tabs.Position.BOTTOM,
-                    iconFn = { Form.IconArgs(outputIcon(it)) },
+                    iconFn = { Form.IconArg(outputIcon(it)) },
                     labelFn = { AnnotatedString(outputName(it)) },
                     isActiveFn = { outputMgr.isActive(it) },
                     onClick = { outputMgr.activate(it) },

@@ -48,7 +48,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tabs
@@ -179,9 +179,9 @@ object PageArea {
                 isActiveFn = { GlobalState.resource.isActive(it) },
                 onClick = { GlobalState.resource.activate(it) },
                 contextMenuFn = { state.contextMenuFn(it) },
-                closeButtonFn = { ButtonArgs(icon = Icon.Code.XMARK) { state.close(it) } },
+                closeButtonFn = { ButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,
-                extraBarButtons = listOf(ButtonArgs(Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
+                extraBarButtons = listOf(ButtonArg(Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
                     state.createAndOpenNewFile()
                 })
             )

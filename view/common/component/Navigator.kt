@@ -79,7 +79,10 @@ import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_C
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
-import com.vaticle.typedb.studio.view.common.component.Form.IconArgs
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconArg
+import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
+import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Container
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
@@ -295,9 +298,9 @@ object Navigator {
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
-        val buttons: List<Form.ButtonArgs> = listOf(
-            Form.ButtonArgs(Icon.Code.CHEVRONS_DOWN) { expand() },
-            Form.ButtonArgs(Icon.Code.CHEVRONS_UP) { collapse() }
+        val buttons: List<ButtonArg> = listOf(
+            ButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
+            ButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
         )
 
         init {
@@ -440,7 +443,7 @@ object Navigator {
     @Composable
     fun <T : Navigable.Item<T>> Layout(
         state: NavigatorState<T>,
-        iconArgs: (ItemState<T>) -> IconArgs,
+        iconArg: (ItemState<T>) -> IconArg,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
         contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
@@ -458,7 +461,7 @@ object Navigator {
                 state = lazyListState, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
-            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArgs, styleArgs) } } }
+            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArg, styleArgs) } } }
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(lazyListState),
                 modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
@@ -476,7 +479,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
         state: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
-        iconArgs: (ItemState<T>) -> IconArgs, styleArgs: ((ItemState<T>) -> List<Typography.Style>)
+        iconArg: (ItemState<T>) -> IconArg, styleArgs: ((ItemState<T>) -> List<Typography.Style>)
     ) {
         item.focusReq = remember { FocusRequester() }
         val styles = styleArgs(item)
@@ -507,7 +510,7 @@ object Navigator {
             ) {
                 if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
                 ItemButton(item)
-                ItemIcon(item, iconArgs)
+                ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
                 Spacer(modifier = Modifier.width(AREA_PADDING))
@@ -519,7 +522,7 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
-        if (item.isExpandable) Form.RawIconButton(
+        if (item.isExpandable) RawIconButton(
             icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.asExpandable().toggle() },
             modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {
@@ -529,16 +532,16 @@ object Navigator {
     }
 
     @Composable
-    private fun <T : Navigable.Item<T>> ItemIcon(item: ItemState<T>, iconArgs: (ItemState<T>) -> IconArgs) {
+    private fun <T : Navigable.Item<T>> ItemIcon(item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-            Icon.Render(icon = iconArgs(item).code, color = iconArgs(item).color())
+            Icon.Render(icon = iconArg(item).code, color = iconArg(item).color())
         }
     }
 
     @Composable
     private fun <T : Navigable.Item<T>> ItemText(item: ItemState<T>, styleArgs: List<Typography.Style>) {
         Row(modifier = Modifier.height(ICON_WIDTH)) {
-            Form.Text(
+            Text(
                 value = item.name,
                 fontStyle = if (styleArgs.contains(ITALIC)) FontStyle.Italic else null,
                 fontWeight = if (styleArgs.contains(BOLD)) FontWeight.SemiBold else null,
@@ -546,7 +549,7 @@ object Navigator {
             )
             item.info?.let {
                 Spacer(Modifier.width(TEXT_SPACING))
-                Form.Text(value = "( $it )", alpha = 0.4f)
+                Text(value = "( $it )", alpha = 0.4f)
             }
         }
     }

@@ -31,9 +31,9 @@ import com.vaticle.typedb.studio.view.editor.TextEditor
 class FilePage private constructor(var file: File, private val editor: TextEditor.State) : Page(file) {
 
     override val name: String get() = file.name
-    override val icon: Form.IconArgs = when {
-        file.isTypeQL -> Form.IconArgs(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
-        else -> Form.IconArgs(Icon.Code.FILE_LINES)
+    override val icon: Form.IconArg = when {
+        file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+        else -> Form.IconArg(Icon.Code.FILE_LINES)
     }
 
     companion object {
