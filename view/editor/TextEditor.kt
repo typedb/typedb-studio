@@ -108,39 +108,45 @@ object TextEditor {
 
     @Composable
     fun createState(file: File): State {
-        val content = SnapshotStateList<AnnotatedString>().apply {
-            addAll(highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType))
-        }
-        val editor = when {
-            !file.isWritable -> createState(content) { _, _, _ -> TextProcessor.ReadOnly(file.path.toString()) }
-            else -> createState(content) { rendering, finder, target ->
-                TextProcessor.Writable(
-                    content = content,
-                    fileType = file.fileType,
-                    rendering = rendering,
-                    finder = finder,
-                    target = target,
-                    onChangeStart = { file.isChanged() },
-                    onChangeEnd = { file.writeLines(it) }
-                )
+        val editor = createState(
+            content = SnapshotStateList<AnnotatedString>().apply {
+                val content = file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }
+                addAll(highlight(content, file.fileType))
+            },
+            processorFn = when {
+                !file.isWritable -> { _, _, _, _ -> TextProcessor.ReadOnly(file.path.toString()) }
+                else -> { content, rendering, finder, target ->
+                    TextProcessor.Writable(
+                        content = content,
+                        fileType = file.fileType,
+                        rendering = rendering,
+                        finder = finder,
+                        target = target,
+                        onChangeStart = { file.isChanged() },
+                        onChangeEnd = { file.writeLines(it) }
+                    )
+                }
             }
-        }
+        )
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
         file.onClose { editor.clearStatus() }
-        onChangeFromDisk(file, content, editor)
+        onChangeFromDisk(file, editor)
         return editor
     }
 
     @Composable
     fun createState(content: SnapshotStateList<AnnotatedString>): State {
-        return createState(content) { _, _, _ -> TextProcessor.ReadOnly() }
+        return createState(content) { _, _, _, _ -> TextProcessor.ReadOnly() }
     }
 
     @Composable
     private fun createState(
         content: SnapshotStateList<AnnotatedString>,
-        processorFn: (rendering: TextRendering, finder: TextFinder, target: InputTarget) -> TextProcessor
+        processorFn: (
+            content: SnapshotStateList<AnnotatedString>,
+            rendering: TextRendering, finder: TextFinder, target: InputTarget
+        ) -> TextProcessor
     ): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
@@ -149,17 +155,18 @@ object TextEditor {
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, currentDensity.density)
-        val processor = processorFn(rendering, finder, target)
+        val processor = processorFn(content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
         return State(content, font, rendering, finder, target, toolbar, handler, processor)
     }
 
-    private fun onChangeFromDisk(file: File, content: SnapshotStateList<AnnotatedString>, editor: State) {
+    private fun onChangeFromDisk(file: File, editor: State) {
         fun reinitialiseContent(file: File) {
-            content.clear()
-            content.addAll(highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType))
-            editor.rendering.reinitialize(content.size)
+            val newContent = file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }
+            editor.content.clear()
+            editor.content.addAll(highlight(newContent, file.fileType))
+            editor.rendering.reinitialize(editor.content.size)
         }
 
         file.onDiskChangeContent {
@@ -173,7 +180,7 @@ object TextEditor {
             val newProcessor = when {
                 !it.isWritable -> TextProcessor.ReadOnly(it.path.toString())
                 else -> TextProcessor.Writable(
-                    content = content,
+                    content = editor.content,
                     fileType = it.fileType,
                     rendering = editor.rendering,
                     finder = editor.finder,
