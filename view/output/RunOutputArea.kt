@@ -179,7 +179,7 @@ object RunOutputArea {
             return when (output) {
                 is RunnerOutput.Log -> Icon.Code.ALIGN_LEFT
                 is RunnerOutput.Graph -> Icon.Code.DIAGRAM_PROJECT
-                is RunnerOutput.Table -> Icon.Code.TABLE
+                is RunnerOutput.Table -> Icon.Code.TABLE_CELLS_LARGE
             }
         }
 

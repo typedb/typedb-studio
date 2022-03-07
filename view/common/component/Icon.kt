@@ -98,7 +98,7 @@ object Icon {
         RIGHT_LEFT(0xf362u),
         SITEMAP(0xf0e8u),
         STOP(0xf04du, 13.sp),
-        TABLE(0xf0ceu),
+        TABLE_CELLS_LARGE(0xf009u),
         THUMBTACK(0xf08du),
         TRASH_CAN(0xf2edu),
         USER(0xf007u),
