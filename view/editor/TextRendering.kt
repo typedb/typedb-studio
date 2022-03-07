@@ -53,7 +53,7 @@ internal class TextRendering(initSize: Int) {
         deleted = initDeleted()
     }
 
-    fun get(int: Int): TextLayoutResult? = results[int]
+    fun get(int: Int): TextLayoutResult? = results.getOrNull(int)
 
     fun set(int: Int, layout: TextLayoutResult, version: Int) {
         if (int >= results.size) addNew(int, int + 1 - results.size)
