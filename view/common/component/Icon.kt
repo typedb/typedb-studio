@@ -75,6 +75,7 @@ object Icon {
         DATABASE(0xf1c0u),
         DELETE_RIGHT(0xe154u),
         DIAGRAM_PROJECT(0xf542u),
+        DIAGRAM_SUBTASK(0xe479u),
         FILE_LINES(0xf15cu),
         FILE_PLUS(0xf319u),
         FLOPPY_DISK(0xf0c7u, 13.sp),

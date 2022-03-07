@@ -179,7 +179,7 @@ object RunOutputArea {
         fun outputIcon(output: RunnerOutput): Icon.Code {
             return when (output) {
                 is RunnerOutput.Log -> Icon.Code.ALIGN_LEFT
-                is RunnerOutput.Graph -> Icon.Code.CHART_NETWORK
+                is RunnerOutput.Graph -> Icon.Code.DIAGRAM_PROJECT
                 is RunnerOutput.Table -> Icon.Code.TABLE
             }
         }

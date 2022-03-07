@@ -27,7 +27,7 @@ internal class RuleBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     Browser(state, order, initOpen) {
 
     override val label: String = Label.RULES
-    override val icon: Icon.Code = Icon.Code.DIAGRAM_PROJECT
+    override val icon: Icon.Code = Icon.Code.DIAGRAM_SUBTASK
     override val isActive: Boolean get() = false // TODO
     override val buttons: List<ButtonArgs> = listOf()
 
