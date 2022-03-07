@@ -88,7 +88,7 @@ object RunOutputArea {
                 when (response) {
                     is Response.Log -> {
                         val editorState = TextEditor.createState(response.lines)
-                        runner.onComplete { editorState.moveCursorToEnd() }
+//                        runner.onComplete { editorState.moveCursorToEnd() } // TODO
                         LogOutput.State(editorState)
                     }
                     is Response.Graph -> GraphOutput.State(response)
@@ -162,11 +162,11 @@ object RunOutputArea {
                     trailingTabButtonFn = {
                         ButtonArg(
                             icon = Icon.Code.THUMBTACK,
-                            color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
+                            color = { Theme.colors.icon.copy(if (it.isSaved) 1f else 0.3f) },
                             hoverColor = { Theme.colors.icon },
                             disabledColor = { Theme.colors.icon },
-                            enabled = !runnerMgr.isSaved(it)
-                        ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
+                            enabled = !it.isSaved
+                        ) { if (!it.isSaved) it.save() }
                     }
                 )
             }

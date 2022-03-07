@@ -18,6 +18,9 @@
 
 package com.vaticle.typedb.studio.state.runner
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
@@ -57,10 +60,15 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
         const val MATCH_QUERY_SUCCESS = "Matched Things Successfully:"
     }
 
+    var isSaved by mutableStateOf(false)
     val response = ResponseManager()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     private val onComplete = LinkedBlockingDeque<(Runner) -> Unit>()
+
+    fun save() {
+        isSaved = true
+    }
 
     fun onComplete(function: (Runner) -> Unit) {
         onComplete.push(function)

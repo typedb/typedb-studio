@@ -22,21 +22,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import java.util.concurrent.LinkedBlockingDeque
 
 class RunnerManager {
 
-    private val onLaunch = LinkedBlockingDeque<(Runner) -> Unit>()
-    private var lastRunner: Runner? by mutableStateOf(null)
-    private val savedRunners: MutableList<Runner> = mutableStateListOf()
     var activeRunner: Runner? by mutableStateOf(null)
-    val runners: List<Runner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
-
+    val runners: SnapshotStateList<Runner> = mutableStateListOf()
+    private val onLaunch = LinkedBlockingDeque<(Runner) -> Unit>()
 
     fun numberOf(runner: Runner): Int {
-        return if (savedRunners.contains(runner)) savedRunners.indexOf(runner) + 1
-        else if (lastRunner == runner) savedRunners.size + 1
-        else throw IllegalStateException()
+        return runners.indexOf(runner) + 1
     }
 
     fun onLaunch(function: (Runner) -> Unit) {
@@ -47,38 +43,32 @@ class RunnerManager {
         return runner == activeRunner
     }
 
-    fun isSaved(runner: Runner): Boolean {
-        return savedRunners.contains(runner)
-    }
-
     fun activate(runner: Runner) {
         activeRunner = runner
     }
 
     fun launch(runner: Runner, onComplete: () -> Unit) {
-        lastRunner = runner
         activeRunner = runner
+        if (runners.isEmpty() || runners.all { it.isSaved }) runners.add(runner)
+        else runners[runners.indexOf(runners.first { !it.isSaved })] = runner
         onLaunch.forEach { it(runner) }
         runner.onComplete { onComplete() }
         runner.launch()
     }
 
-    fun save(runner: Runner) {
-        if (savedRunners.contains(runner)) return
-        savedRunners.add(runner)
-        if (lastRunner == runner) lastRunner = null
-    }
-
     fun delete(runner: Runner) {
-        if (lastRunner == runner) lastRunner = null
-        if (activeRunner == runner) activeRunner = null
-        savedRunners.remove(runner)
+        if (activeRunner == runner) {
+            val i = runners.indexOf(activeRunner)
+            activeRunner = if (runners.size == 1) null
+            else if (i > 0) runners[i - 1]
+            else runners[0]
+        }
+        runners.remove(runner)
     }
 
     fun reset() {
-        lastRunner = null
         activeRunner = null
-        savedRunners.clear()
+        runners.clear()
         onLaunch.clear()
     }
 }
