@@ -18,31 +18,15 @@
 
 package com.vaticle.typedb.studio.view.output
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
 
-internal object LogOutput {
+internal object LogOutput : RunOutput() {
 
-    @Composable
-    internal fun Layout() {
-        Row {
-            Toolbar.Layout(Modifier.fillMaxHeight().width(TOOLBAR_SIZE), toolbarButtons())
-            Separator.Vertical()
-            Content(Modifier.fillMaxHeight().weight(1f))
-        }
-    }
-
-    private fun toolbarButtons(): List<ButtonArg> {
+    override fun toolbarButtons(): List<ButtonArg> {
         return listOf(
             ButtonArg(Icon.Code.ARROW_UP_TO_LINE) {},
             ButtonArg(Icon.Code.ARROW_DOWN_TO_LINE) {}
@@ -50,7 +34,7 @@ internal object LogOutput {
     }
 
     @Composable
-    private fun Content(modifier: Modifier) {
-        Box(modifier.background(Theme.colors.background2))
+    override fun Content(modifier: Modifier) {
+        Box(modifier) // TODO
     }
 }

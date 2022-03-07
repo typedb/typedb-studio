@@ -18,12 +18,19 @@
 
 package com.vaticle.typedb.studio.view.output
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.vaticle.typedb.studio.view.common.component.Form
 
-internal object GraphOutput {
+internal object GraphOutput : RunOutput() {
+
+    override fun toolbarButtons(): List<Form.ButtonArg> {
+        return listOf()
+    }
 
     @Composable
-    internal fun Layout() {
-
+    override fun Content(modifier: Modifier) {
+        Box(modifier) // TODO
     }
 }

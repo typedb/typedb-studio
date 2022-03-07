@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.output
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -90,7 +89,7 @@ object RunOutputArea {
                 unfreezeSize = paneState.size
                 paneState.freeze(PANEL_BAR_HEIGHT)
             } else if (paneState.isFrozen) {
-                paneState.unfreeze(unfreezeSize ?: (paneState.frameState.maxSize * 0.6f))
+                paneState.unfreeze(unfreezeSize ?: (paneState.frameState.maxSize * 0.5f))
             }
         }
     }
@@ -165,7 +164,7 @@ object RunOutputArea {
 
     @Composable
     private fun RunOutput(output: RunnerOutput, modifier: Modifier) {
-        Box(modifier.background(Theme.colors.background2)) {
+        Box(modifier) {
             when (output) {
                 is RunnerOutput.Log -> LogOutput.Layout()
                 is RunnerOutput.Graph -> GraphOutput.Layout()
