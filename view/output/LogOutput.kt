@@ -18,9 +18,7 @@
 
 package com.vaticle.typedb.studio.view.output
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import com.vaticle.typedb.studio.state.common.Property
@@ -32,19 +30,18 @@ import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
+import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 
 internal object LogOutput : RunOutput() {
 
-    internal class State(response: Response.Log) : RunOutput.State() {
+    internal class State(internal val editorState: TextEditor.State) : RunOutput.State() {
 
     }
 
     @Composable
     internal fun Layout(state: State) {
-        super.Layout(buttons(state)) { modifier ->
-            Content(state, modifier)
-        }
+        super.Layout(buttons(state)) { modifier -> TextEditor.Layout(state.editorState, modifier, false) }
     }
 
     private fun buttons(state: State): List<ButtonArg> {
@@ -52,11 +49,6 @@ internal object LogOutput : RunOutput() {
             ButtonArg(Icon.Code.ARROW_UP_TO_LINE) {},
             ButtonArg(Icon.Code.ARROW_DOWN_TO_LINE) {}
         )
-    }
-
-    @Composable
-    private fun Content(state: State, modifier: Modifier) {
-        Box(modifier) // TODO
     }
 
     internal fun format(entry: Response.Log.Entry, colors: Color.Theme): AnnotatedString {

@@ -56,12 +56,13 @@ internal class TextRendering(initSize: Int) {
     fun get(int: Int): TextLayoutResult? = results[int]
 
     fun set(int: Int, layout: TextLayoutResult, version: Int) {
+        if (int >= results.size) addNew(int, int + 1 - results.size)
         results[int] = layout
         versions[int] = version
     }
 
     fun hasVersion(int: Int, version: Int): Boolean {
-        return versions[int] == version
+        return if (int >= 0 && int < versions.size) versions[int] == version else false
     }
 
     fun removeRange(startInc: Int, endExc: Int) {

@@ -34,7 +34,7 @@ sealed interface Response {
         var formatter: ((Entry) -> AnnotatedString) = { entry -> AnnotatedString(entry.text) }
 
         internal fun collect(type: Entry.Type, text: String) {
-            lines.add(formatter(Entry(type, text)))
+            text.split("\n").forEach { lines.add(formatter(Entry(type, it))) }
         }
     }
 

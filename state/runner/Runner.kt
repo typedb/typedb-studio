@@ -32,6 +32,7 @@ import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
+import java.util.concurrent.LinkedBlockingDeque
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineScope
@@ -59,14 +60,20 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
     val response = ResponseManager()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    internal fun launch(onComplete: () -> Unit) {
+    private val onComplete = LinkedBlockingDeque<(Runner) -> Unit>()
+
+    fun onComplete(function: (Runner) -> Unit) {
+        onComplete.push(function)
+    }
+
+    internal fun launch() {
         coroutineScope.launch {
             try {
                 runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
             } catch (e: Exception) {
                 response.log.collect(ERROR, e.message ?: e.toString())
             } finally {
-                onComplete()
+                onComplete.forEach { it(this@Runner) }
             }
         }
     }

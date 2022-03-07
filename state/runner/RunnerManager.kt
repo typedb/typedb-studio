@@ -59,7 +59,8 @@ class RunnerManager {
         lastRunner = runner
         activeRunner = runner
         onLaunch.forEach { it(runner) }
-        runner.launch(onComplete)
+        runner.onComplete { onComplete() }
+        runner.launch()
     }
 
     fun save(runner: Runner) {

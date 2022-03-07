@@ -57,6 +57,6 @@ class FilePage private constructor(var file: File, private val editor: TextEdito
 
     @Composable
     override fun Content() {
-        TextEditor.Area(state = editor, modifier = Modifier.fillMaxSize())
+        TextEditor.Layout(state = editor, modifier = Modifier.fillMaxSize())
     }
 }

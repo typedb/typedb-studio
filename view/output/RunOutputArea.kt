@@ -50,6 +50,7 @@ import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
+import com.vaticle.typedb.studio.view.editor.TextEditor
 import kotlinx.coroutines.CoroutineScope
 
 object RunOutputArea {
@@ -80,10 +81,16 @@ object RunOutputArea {
             return responseTabs.getOrPut(runner) { Tabs.State(coroutineScope) }
         }
 
-        internal fun output(response: Response): RunOutput.State {
+        @Composable
+        internal fun output(runner: Runner): RunOutput.State {
+            val response = runner.response.active
             return output.getOrPut(response) {
                 when (response) {
-                    is Response.Log -> LogOutput.State(response)
+                    is Response.Log -> {
+                        val editorState = TextEditor.createState(response.lines)
+                        runner.onComplete { editorState.moveCursorToEnd() }
+                        LogOutput.State(editorState)
+                    }
                     is Response.Graph -> GraphOutput.State(response)
                     is Response.Table -> TableOutput.State(response)
                 }
@@ -170,7 +177,7 @@ object RunOutputArea {
     private fun OutputGroup(state: State, modifier: Modifier) {
         state.resource.runner.activeRunner?.let { runner ->
             Column(modifier) {
-                Output(state.output(runner.response.active), Modifier.fillMaxWidth().weight(1f))
+                Output(state.output(runner), Modifier.fillMaxWidth().weight(1f))
                 Separator.Horizontal()
                 OutputTabs(runner.response, state.outputTabs(runner), Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
             }

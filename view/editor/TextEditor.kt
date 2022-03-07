@@ -238,11 +238,15 @@ object TextEditor {
         fun updateFile(file: File) {
             processor.updateFile(file)
         }
+
+        fun moveCursorToEnd() {
+            target.moveCursorToEnd(false)
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Area(state: State, modifier: Modifier = Modifier) {
+    fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true) {
         if (state.content.isEmpty()) return
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
@@ -264,9 +268,11 @@ object TextEditor {
                     .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
-                    LineNumberArea(state, fontStyle, fontWidth)
-                    Separator.Vertical()
-                    TextArea(state, fontStyle, fontWidth)
+                    if (showLine) {
+                        LineNumberArea(state, fontStyle, fontWidth)
+                        Separator.Vertical()
+                    }
+                    TextArea(state, fontStyle, fontWidth, showLine)
                 }
             }
         }
@@ -309,7 +315,7 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp) {
+    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, showLine: Boolean) {
         val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
 
         Box(modifier = Modifier.onGloballyPositioned {
@@ -324,7 +330,7 @@ object TextEditor {
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
                 LazyColumn.Area(state = lazyColumnState) { index, text ->
-                    TextLine(state, index, text, font, fontWidth)
+                    TextLine(state, index, text, font, fontWidth, showLine)
                 }
             }
             VerticalScrollbar(
@@ -341,11 +347,13 @@ object TextEditor {
     }
 
     @Composable
-    private fun TextLine(state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp) {
+    private fun TextLine(
+        state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp, showLine: Boolean
+    ) {
         val cursor = state.target.cursor
         val selection = state.target.selection
         val bgColor = when {
-            cursor.row == index && selection == null -> Theme.colors.primary
+            showLine && cursor.row == index && selection == null -> Theme.colors.primary
             else -> Theme.colors.background2
         }
         Box(
@@ -395,11 +403,7 @@ object TextEditor {
     @OptIn(ExperimentalTime::class)
     @Composable
     private fun Cursor(
-        state: State,
-        text: AnnotatedString,
-        textLayout: TextLayoutResult?,
-        font: TextStyle,
-        fontWidth: Dp
+        state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp
     ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
