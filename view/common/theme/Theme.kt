@@ -52,6 +52,10 @@ object Theme {
     val PANEL_BAR_SPACING = 8.dp
     val SCROLLBAR_LONG_PADDING = 4.dp
     val SCROLLBAR_END_PADDING = 6.dp
+    val TOOLBAR_SIZE = 34.dp
+    val TOOLBAR_SPACING = 5.dp
+    val TOOLBAR_BUTTON_SIZE = 24.dp
+    val TOOLBAR_SEPARATOR_HEIGHT = 20.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
     val ROUNDED_RECTANGLE = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
     const val TARGET_SELECTION_ALPHA = 0.35f

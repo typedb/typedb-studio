@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
@@ -48,19 +47,18 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
+import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
+import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
+import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SPACING
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
-    private val TOOLBAR_HEIGHT = 34.dp
-    private val TOOLBAR_SPACING = 5.dp
-    private val TOOLBAR_BUTTON_SIZE = 24.dp
-    private val SEPARATOR_HEIGHT = 20.dp
-
     @Composable
     fun Layout() {
         Row(
-            modifier = Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT),
+            modifier = Modifier.fillMaxWidth().height(TOOLBAR_SIZE),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Project.Buttons()
@@ -77,7 +75,7 @@ object Toolbar {
 
     @Composable
     private fun VerticalSeparator() {
-        Separator.Vertical(modifier = Modifier.height(SEPARATOR_HEIGHT))
+        Separator.Vertical(modifier = Modifier.height(TOOLBAR_SEPARATOR_HEIGHT))
     }
 
     @Composable
@@ -105,7 +103,9 @@ object Toolbar {
 
     @Composable
     private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
-        Row(Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) { content() }
+        Row(
+            Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)
+        ) { content() }
     }
 
     @Composable
