@@ -51,6 +51,8 @@ object Icon {
         // These codes can be found at https://fontawesome.com/v6.0/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
         ALIGN_LEFT(0xf036u),
+        ARROW_DOWN_TO_LINE(0xf33du),
+        ARROW_UP_TO_LINE(0xf341u),
         ASTERISK(0x2au),
         BLOCK_QUOTE(0xe0b5u),
         CARET_DOWN(0xf0d7u),

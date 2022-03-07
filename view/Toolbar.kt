@@ -54,7 +54,7 @@ object Toolbar {
 
     private val TOOLBAR_HEIGHT = 34.dp
     private val TOOLBAR_SPACING = 5.dp
-    private val BUTTON_HEIGHT = 24.dp
+    private val TOOLBAR_BUTTON_SIZE = 24.dp
     private val SEPARATOR_HEIGHT = 20.dp
 
     @Composable
@@ -96,7 +96,7 @@ object Toolbar {
         IconButton(
             icon = icon,
             onClick = onClick,
-            modifier = Modifier.size(BUTTON_HEIGHT),
+            modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
             iconColor = if (enabled) color else Theme.colors.icon,
             enabled = enabled,
             tooltip = tooltip
@@ -105,7 +105,7 @@ object Toolbar {
 
     @Composable
     private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
-        Row(Modifier.height(BUTTON_HEIGHT).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) { content() }
+        Row(Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)) { content() }
     }
 
     @Composable
@@ -166,7 +166,7 @@ object Toolbar {
         internal fun Buttons() {
             val isInteractive = GlobalState.connection.current?.isInteractiveMode ?: false
             ToolbarSpace()
-            DatabaseDropdown(Modifier.height(BUTTON_HEIGHT))
+            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE))
             ToolbarSpace()
             SessionTypeButton(isInteractive)
             ToolbarSpace()
@@ -299,7 +299,7 @@ object Toolbar {
             // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
             RawIconButton(
                 icon = Icon.Code.CIRCLE,
-                modifier = Modifier.size(BUTTON_HEIGHT),
+                modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
                 iconColor = if (enabled && isSnapshot && hasTransaction) Theme.colors.secondary else Theme.colors.icon,
                 enabled = enabled && isSnapshot,
                 tooltip = Tooltip.Args(
@@ -453,7 +453,7 @@ object Toolbar {
             TextButton(
                 text = text,
                 onClick = { GlobalState.connection.connectServerDialog.open() },
-                modifier = Modifier.height(BUTTON_HEIGHT),
+                modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
                 trailingIcon = Icon.Code.DATABASE,
             )
         }
