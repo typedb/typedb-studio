@@ -35,7 +35,6 @@ import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
-import java.nio.file.Path
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -67,57 +66,38 @@ internal interface TextProcessor {
     fun updateFile(file: File)
 
     companion object {
-
         private val LOGGER = KotlinLogging.logger {}
         internal val TYPING_WINDOW_MILLIS = 400
-
-        internal fun create(
-            file: File, content: SnapshotStateList<AnnotatedString>,
-            rendering: TextRendering, finder: TextFinder, target: InputTarget
-        ): TextProcessor {
-            return when {
-                !file.isWritable -> ReadOnly(file.path)
-                else -> Writable(
-                    content = content,
-                    fileType = file.fileType,
-                    rendering = rendering,
-                    finder = finder,
-                    target = target,
-                    onChangeStart = { file.isChanged() },
-                    onChangeEnd = { file.writeLines(it) },
-                )
-            }
-        }
     }
 
-    class ReadOnly(var path: Path) : TextProcessor {
+    class ReadOnly(var nameForWarning: String? = null) : TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
         private var lastTyped by mutableStateOf(System.currentTimeMillis())
 
-        override fun replaceCurrentFound(text: String) = displayWarning()
-        override fun replaceAllFound(text: String) = displayWarning()
+        override fun replaceCurrentFound(text: String) = mayDisplayWarning()
+        override fun replaceAllFound(text: String) = mayDisplayWarning()
         override fun insertText(toString: String): Boolean = displayWarningOnStartTyping()
-        override fun insertNewLine() = displayWarning()
-        override fun deleteSelection() = displayWarning()
-        override fun indentTab() = displayWarning()
-        override fun outdentTab() = displayWarning()
-        override fun undo() = displayWarning()
-        override fun redo() = displayWarning()
+        override fun insertNewLine() = mayDisplayWarning()
+        override fun deleteSelection() = mayDisplayWarning()
+        override fun indentTab() = mayDisplayWarning()
+        override fun outdentTab() = mayDisplayWarning()
+        override fun undo() = mayDisplayWarning()
+        override fun redo() = mayDisplayWarning()
         override fun drainChanges() {}
         override fun reset() {}
         override fun updateFile(file: File) {
-            path = file.path
+            nameForWarning = file.path.toString()
         }
 
-        private fun displayWarning() {
-            GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, path)
+        private fun mayDisplayWarning() {
+            nameForWarning?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
         }
 
         private fun displayWarningOnStartTyping(): Boolean {
             val currentTime = System.currentTimeMillis()
-            if (currentTime - lastTyped > TYPING_WINDOW_MILLIS) displayWarning()
+            if (currentTime - lastTyped > TYPING_WINDOW_MILLIS) mayDisplayWarning()
             lastTyped = currentTime
             return true
         }

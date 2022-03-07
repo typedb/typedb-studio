@@ -108,52 +108,84 @@ object TextEditor {
 
     @Composable
     fun createState(file: File): State {
+        val content = SnapshotStateList<AnnotatedString>().apply {
+            addAll(highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType))
+        }
+        val editor = when {
+            !file.isWritable -> createState(content) { _, _, _ -> TextProcessor.ReadOnly(file.path.toString()) }
+            else -> createState(content) { rendering, finder, target ->
+                TextProcessor.Writable(
+                    content = content,
+                    fileType = file.fileType,
+                    rendering = rendering,
+                    finder = finder,
+                    target = target,
+                    onChangeStart = { file.isChanged() },
+                    onChangeEnd = { file.writeLines(it) }
+                )
+            }
+        }
+        file.beforeSave { editor.processor.drainChanges() }
+        file.beforeClose { editor.processor.drainChanges() }
+        file.onClose { editor.clearStatus() }
+        onChangeFromDisk(file, content, editor)
+        return editor
+    }
+
+    @Composable
+    fun createState(content: SnapshotStateList<AnnotatedString>): State {
+        return createState(content) { _, _, _ -> TextProcessor.ReadOnly() }
+    }
+
+    @Composable
+    private fun createState(
+        content: SnapshotStateList<AnnotatedString>,
+        processorFn: (rendering: TextRendering, finder: TextFinder, target: InputTarget) -> TextProcessor
+    ): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>().apply { addAll(readFile(file)) }
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, currentDensity.density)
-        val processor = TextProcessor.create(file, content, rendering, finder, target)
+        val processor = processorFn(rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
-        val editor = State(content, font, rendering, finder, target, toolbar, handler, processor)
-        onChangeFromDisk(file, content, rendering, finder, target, processor, toolbar, handler, editor)
-        file.beforeSave { processor.drainChanges() }
-        file.beforeClose { processor.drainChanges() }
-        file.onClose { editor.clearStatus() }
-        return editor
+        return State(content, font, rendering, finder, target, toolbar, handler, processor)
     }
 
-    private fun readFile(file: File): List<AnnotatedString> {
-        return highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType)
-    }
-
-    private fun onChangeFromDisk(
-        file: File, content: SnapshotStateList<AnnotatedString>, rendering: TextRendering, finder: TextFinder,
-        target: InputTarget, processor: TextProcessor, toolbar: TextToolbar.State, handler: EventHandler, editor: State
-    ) {
+    private fun onChangeFromDisk(file: File, content: SnapshotStateList<AnnotatedString>, editor: State) {
         fun reinitialiseContent(file: File) {
             content.clear()
-            content.addAll(readFile(file))
-            rendering.reinitialize(content.size)
+            content.addAll(highlight(file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }, file.fileType))
+            editor.rendering.reinitialize(content.size)
         }
 
         file.onDiskChangeContent {
             reinitialiseContent(it)
-            processor.reset()
-            GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, file.path)
+            editor.processor.reset()
+            GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
         }
 
         file.onDiskChangePermission {
             reinitialiseContent(it)
-            val newProcessor = TextProcessor.create(file, content, rendering, finder, target)
-            toolbar.processor = newProcessor
-            handler.processor = newProcessor
+            val newProcessor = when {
+                !it.isWritable -> TextProcessor.ReadOnly(it.path.toString())
+                else -> TextProcessor.Writable(
+                    content = content,
+                    fileType = it.fileType,
+                    rendering = editor.rendering,
+                    finder = editor.finder,
+                    target = editor.target,
+                    onChangeStart = { it.isChanged() },
+                    onChangeEnd = { lines -> it.writeLines(lines) }
+                )
+            }
+            editor.toolbar.processor = newProcessor
+            editor.handler.processor = newProcessor
             editor.processor = newProcessor
-            GlobalState.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, file.path)
+            GlobalState.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, it.path)
         }
     }
 
