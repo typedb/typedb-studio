@@ -19,27 +19,30 @@
 package com.vaticle.typedb.studio.state.runner
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.text.AnnotatedString
 
-sealed interface RunnerOutput {
+sealed interface Response {
 
-    class Log: RunnerOutput {
+    class Log : Response {
 
-        data class Text(val type: Type, val text: String) {
+        data class Entry(val type: Type, val text: String) {
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        private val lines: MutableList<Text> = mutableStateListOf()
+        val lines: SnapshotStateList<AnnotatedString> = mutableStateListOf()
+        var formatter: ((Entry) -> AnnotatedString) = { entry -> AnnotatedString(entry.text) }
 
-        internal fun append(type: Text.Type, text: String) {
-            lines.add(Text(type, text))
+        internal fun collect(type: Entry.Type, text: String) {
+            lines.add(formatter(Entry(type, text)))
         }
     }
 
-    class Graph: RunnerOutput {
+    class Graph : Response {
         // TODO
     }
 
-    class Table: RunnerOutput {
+    class Table : Response {
         // TODO
     }
 }

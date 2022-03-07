@@ -36,19 +36,16 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 internal sealed class RunOutput {
 
+    abstract class State
+
     @Composable
-    internal fun Layout() {
+    internal fun Layout(buttons: List<Form.ButtonArg>, content: @Composable (Modifier) -> Unit) {
         Row {
-            Toolbar(Modifier.fillMaxHeight().width(Theme.TOOLBAR_SIZE), toolbarButtons())
+            Toolbar(Modifier.fillMaxHeight().width(Theme.TOOLBAR_SIZE), buttons)
             Separator.Vertical()
-            Content(Modifier.fillMaxHeight().weight(1f).background(Theme.colors.background2))
+            content(Modifier.fillMaxHeight().weight(1f).background(Theme.colors.background2))
         }
     }
-
-    protected abstract fun toolbarButtons(): List<Form.ButtonArg>
-
-    @Composable
-    protected abstract fun Content(modifier: Modifier)
 
     @Composable
     private fun Toolbar(modifier: Modifier, buttons: List<Form.ButtonArg>) {

@@ -28,8 +28,7 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.TransactionRunner
-import java.lang.IllegalStateException
+import com.vaticle.typedb.studio.state.runner.Runner
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
@@ -112,9 +111,7 @@ class Connection internal constructor(
     private fun runQuery(resource: Resource, queries: String = resource.runContent) {
         if (hasRunningCommandAtomic.compareAndSet(false, true)) {
             mayInitTransaction()
-            val runner = TransactionRunner(transaction!!, queries)
-            resource.runner.register(runner)
-            runner.launch {
+            resource.runner.launch(Runner(transaction!!, queries)) {
                 if (!config.snapshot) {
                     transaction!!.close()
                     transaction = null

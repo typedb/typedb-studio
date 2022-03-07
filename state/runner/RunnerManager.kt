@@ -26,48 +26,49 @@ import java.util.concurrent.LinkedBlockingDeque
 
 class RunnerManager {
 
-    private val onRegister = LinkedBlockingDeque<() -> Unit>()
-    private var lastRunner: TransactionRunner? by mutableStateOf(null)
-    private val savedRunners: MutableList<TransactionRunner> = mutableStateListOf()
-    var activeRunner: TransactionRunner? by mutableStateOf(null)
-    val runners: List<TransactionRunner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
+    private val onLaunch = LinkedBlockingDeque<(Runner) -> Unit>()
+    private var lastRunner: Runner? by mutableStateOf(null)
+    private val savedRunners: MutableList<Runner> = mutableStateListOf()
+    var activeRunner: Runner? by mutableStateOf(null)
+    val runners: List<Runner> get() = savedRunners + (lastRunner?.let { listOf(it) } ?: listOf())
 
 
-    fun numberOf(runner: TransactionRunner): Int {
+    fun numberOf(runner: Runner): Int {
         return if (savedRunners.contains(runner)) savedRunners.indexOf(runner) + 1
         else if (lastRunner == runner) savedRunners.size + 1
         else throw IllegalStateException()
     }
 
-    fun onRegister(onRegister: () -> Unit) {
-        this.onRegister.push(onRegister)
+    fun onLaunch(function: (Runner) -> Unit) {
+        this.onLaunch.push(function)
     }
 
-    fun isActive(runner: TransactionRunner): Boolean {
+    fun isActive(runner: Runner): Boolean {
         return runner == activeRunner
     }
 
-    fun isSaved(runner: TransactionRunner): Boolean {
+    fun isSaved(runner: Runner): Boolean {
         return savedRunners.contains(runner)
     }
 
-    fun activate(runner: TransactionRunner) {
+    fun activate(runner: Runner) {
         activeRunner = runner
     }
 
-    fun register(newRunner: TransactionRunner) {
-        lastRunner = newRunner
-        activeRunner = newRunner
-        onRegister.forEach { it() }
+    fun launch(runner: Runner, onComplete: () -> Unit) {
+        lastRunner = runner
+        activeRunner = runner
+        onLaunch.forEach { it(runner) }
+        runner.launch(onComplete)
     }
 
-    fun save(runner: TransactionRunner) {
+    fun save(runner: Runner) {
         if (savedRunners.contains(runner)) return
         savedRunners.add(runner)
         if (lastRunner == runner) lastRunner = null
     }
 
-    fun delete(runner: TransactionRunner) {
+    fun delete(runner: Runner) {
         if (lastRunner == runner) lastRunner = null
         if (activeRunner == runner) activeRunner = null
         savedRunners.remove(runner)
@@ -77,6 +78,6 @@ class RunnerManager {
         lastRunner = null
         activeRunner = null
         savedRunners.clear()
-        onRegister.clear()
+        onLaunch.clear()
     }
 }

@@ -37,9 +37,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.OutputManager
-import com.vaticle.typedb.studio.state.runner.RunnerOutput
-import com.vaticle.typedb.studio.state.runner.TransactionRunner
+import com.vaticle.typedb.studio.state.runner.Response
+import com.vaticle.typedb.studio.state.runner.ResponseManager
+import com.vaticle.typedb.studio.state.runner.Runner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
@@ -56,23 +56,38 @@ object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State constructor(
+    class State(
         internal val resource: Resource,
         private val paneState: Frame.PaneState,
+        private val colors: com.vaticle.typedb.studio.view.common.theme.Color.Theme,
         private val coroutineScope: CoroutineScope
     ) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
-        internal val runnerTabsState = Tabs.State<TransactionRunner>(coroutineScope)
-        private val outputTabState: MutableMap<TransactionRunner, Tabs.State<RunnerOutput>> = mutableMapOf()
+        internal val runnerTabs = Tabs.State<Runner>(coroutineScope)
+        private val responseTabs: MutableMap<Runner, Tabs.State<Response>> = mutableMapOf()
+        private val output: MutableMap<Response, RunOutput.State> = mutableMapOf()
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
-            resource.runner.onRegister { toggle(true) }
+            resource.runner.onLaunch { runner ->
+                runner.response.log.formatter = { entry -> LogOutput.format(entry, colors) }
+                toggle(true)
+            }
         }
 
-        internal fun outputTabState(runner: TransactionRunner): Tabs.State<RunnerOutput> {
-            return outputTabState.getOrPut(runner) { Tabs.State(coroutineScope) }
+        internal fun outputTabs(runner: Runner): Tabs.State<Response> {
+            return responseTabs.getOrPut(runner) { Tabs.State(coroutineScope) }
+        }
+
+        internal fun output(response: Response): RunOutput.State {
+            return output.getOrPut(response) {
+                when (response) {
+                    is Response.Log -> LogOutput.State(response)
+                    is Response.Graph -> GraphOutput.State(response)
+                    is Response.Table -> TableOutput.State(response)
+                }
+            }
         }
 
         internal fun toggle() {
@@ -98,14 +113,12 @@ object RunOutputArea {
     fun Layout(state: State) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
-                RunOutputGroupTabs(state, Modifier.weight(1f))
+                OutputGroupTabs(state, Modifier.weight(1f))
                 ToggleButton(state)
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.resource.runner.activeRunner?.let {
-                    RunOutputGroup(it.output, state.outputTabState(it), Modifier.fillMaxSize())
-                }
+                OutputGroup(state, Modifier.fillMaxSize())
             }
         }
     }
@@ -122,9 +135,9 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroupTabs(state: State, modifier: Modifier) {
+    private fun OutputGroupTabs(state: State, modifier: Modifier) {
         val runnerMgr = state.resource.runner
-        fun runnerName(runner: TransactionRunner): String {
+        fun runnerName(runner: Runner): String {
             return "${state.resource.name} (${runnerMgr.numberOf(runner)})"
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
@@ -133,7 +146,7 @@ object RunOutputArea {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
-                    state = state.runnerTabsState,
+                    state = state.runnerTabs,
                     tabs = runnerMgr.runners,
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
@@ -154,40 +167,42 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun RunOutputGroup(outputMgr: OutputManager, tabsState: Tabs.State<RunnerOutput>, modifier: Modifier) {
-        Column(modifier) {
-            RunOutput(outputMgr.active, Modifier.fillMaxWidth().weight(1f))
-            Separator.Horizontal()
-            RunOutputTabs(outputMgr, tabsState, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+    private fun OutputGroup(state: State, modifier: Modifier) {
+        state.resource.runner.activeRunner?.let { runner ->
+            Column(modifier) {
+                Output(state.output(runner.response.active), Modifier.fillMaxWidth().weight(1f))
+                Separator.Horizontal()
+                OutputTabs(runner.response, state.outputTabs(runner), Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+            }
         }
     }
 
     @Composable
-    private fun RunOutput(output: RunnerOutput, modifier: Modifier) {
+    private fun Output(outputState: RunOutput.State, modifier: Modifier) {
         Box(modifier) {
-            when (output) {
-                is RunnerOutput.Log -> LogOutput.Layout()
-                is RunnerOutput.Graph -> GraphOutput.Layout()
-                is RunnerOutput.Table -> TableOutput.Layout()
+            when (outputState) {
+                is LogOutput.State -> LogOutput.Layout(outputState)
+                is GraphOutput.State -> GraphOutput.Layout(outputState)
+                is TableOutput.State -> TableOutput.Layout(outputState)
             }
         }
     }
 
     @Composable
-    private fun RunOutputTabs(outputMgr: OutputManager, tabsState: Tabs.State<RunnerOutput>, modifier: Modifier) {
-        fun outputIcon(output: RunnerOutput): Icon.Code {
+    private fun OutputTabs(responseMgr: ResponseManager, tabsState: Tabs.State<Response>, modifier: Modifier) {
+        fun outputIcon(output: Response): Icon.Code {
             return when (output) {
-                is RunnerOutput.Log -> Icon.Code.ALIGN_LEFT
-                is RunnerOutput.Graph -> Icon.Code.DIAGRAM_PROJECT
-                is RunnerOutput.Table -> Icon.Code.TABLE_CELLS_LARGE
+                is Response.Log -> Icon.Code.ALIGN_LEFT
+                is Response.Graph -> Icon.Code.DIAGRAM_PROJECT
+                is Response.Table -> Icon.Code.TABLE_CELLS_LARGE
             }
         }
 
-        fun outputName(output: RunnerOutput): String {
+        fun outputName(output: Response): String {
             return when (output) {
-                is RunnerOutput.Log -> Label.LOG
-                is RunnerOutput.Graph -> Label.GRAPH + if (outputMgr.hasMultipleGraphs) " (${outputMgr.numberOf(output)})" else ""
-                is RunnerOutput.Table -> Label.TABLE + if (outputMgr.hasMultipleTables) " (${outputMgr.numberOf(output)})" else ""
+                is Response.Log -> Label.LOG
+                is Response.Graph -> Label.GRAPH + if (responseMgr.hasMultipleGraphs) " (${responseMgr.numberOf(output)})" else ""
+                is Response.Table -> Label.TABLE + if (responseMgr.hasMultipleTables) " (${responseMgr.numberOf(output)})" else ""
             }
         }
 
@@ -198,12 +213,12 @@ object RunOutputArea {
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
                     state = tabsState,
-                    tabs = outputMgr.outputs,
+                    tabs = responseMgr.responses,
                     position = Tabs.Position.BOTTOM,
                     iconFn = { Form.IconArg(outputIcon(it)) },
                     labelFn = { AnnotatedString(outputName(it)) },
-                    isActiveFn = { outputMgr.isActive(it) },
-                    onClick = { outputMgr.activate(it) },
+                    isActiveFn = { responseMgr.isActive(it) },
+                    onClick = { responseMgr.activate(it) },
                 )
             }
         }

@@ -23,29 +23,30 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class OutputManager {
+class ResponseManager {
 
-    internal val log: RunnerOutput.Log = RunnerOutput.Log()
-    internal val graphs: MutableList<RunnerOutput.Graph> = mutableStateListOf(RunnerOutput.Graph(), RunnerOutput.Graph()) // TODO: null
-    internal val tables: MutableList<RunnerOutput.Table> = mutableStateListOf(RunnerOutput.Table()) // TODO: null
+    internal val log: Response.Log = Response.Log()
+    internal val graphs: MutableList<Response.Graph> =
+        mutableStateListOf(Response.Graph(), Response.Graph()) // TODO: null
+    internal val tables: MutableList<Response.Table> = mutableStateListOf(Response.Table()) // TODO: null
     val hasMultipleGraphs get() = graphs.size > 1
     val hasMultipleTables get() = tables.size > 1
-    var active: RunnerOutput by mutableStateOf(log)
-    val outputs: List<RunnerOutput> get() = listOf(log, *graphs.toTypedArray(), *tables.toTypedArray())
+    var active: Response by mutableStateOf(log)
+    val responses: List<Response> get() = listOf(log, *graphs.toTypedArray(), *tables.toTypedArray())
 
-    fun isActive(output: RunnerOutput): Boolean {
-        return active == output
+    fun isActive(response: Response): Boolean {
+        return active == response
     }
 
-    fun activate(output: RunnerOutput) {
-        active = output
+    fun activate(response: Response) {
+        active = response
     }
 
-    fun numberOf(output: RunnerOutput.Graph): Int {
-        return graphs.indexOf(output) + 1
+    fun numberOf(response: Response.Graph): Int {
+        return graphs.indexOf(response) + 1
     }
 
-    fun numberOf(output: RunnerOutput.Table): Int {
-        return tables.indexOf(output) + 1
+    fun numberOf(response: Response.Table): Int {
+        return tables.indexOf(response) + 1
     }
 }

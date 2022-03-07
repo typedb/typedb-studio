@@ -29,11 +29,11 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.output.RunOutputArea
 import kotlinx.coroutines.CoroutineScope
@@ -73,11 +73,14 @@ abstract class Page(var resource: Resource) {
         updateResourceInner(resource)
     }
 
+    @Composable
     private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
-        if (runOutputState == null) runOutputState = RunOutputArea.State(resource, paneState, coroutineScope)
+        if (runOutputState == null) runOutputState =
+            RunOutputArea.State(resource, paneState, Theme.colors, coroutineScope)
         return runOutputState!!
     }
 
+    @Composable
     private fun frameState(coroutineScope: CoroutineScope): Frame.FrameState {
         if (frameState == null) {
             frameState = createFrameState(

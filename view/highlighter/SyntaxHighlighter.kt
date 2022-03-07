@@ -55,8 +55,7 @@ object SyntaxHighlighter {
 
     private fun Builder.appendToken(token: Token, globalScope: Scope) {
         val scope = token.scope
-        if (scope == null || !scope.hasScheme) this.appendText(token.text, globalScope)
-        else this.appendText(token.text, scope)
+        this.appendText(token.text, if (scope?.hasScheme == true) scope else globalScope)
     }
 
     private fun Builder.appendText(text: String, scope: Scope): Builder {

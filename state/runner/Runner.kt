@@ -20,10 +20,10 @@ package com.vaticle.typedb.studio.state.runner
 
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.studio.state.runner.RunnerOutput.Log.Text.Type.ERROR
-import com.vaticle.typedb.studio.state.runner.RunnerOutput.Log.Text.Type.INFO
-import com.vaticle.typedb.studio.state.runner.RunnerOutput.Log.Text.Type.SUCCESS
-import com.vaticle.typedb.studio.state.runner.RunnerOutput.Log.Text.Type.TYPEQL
+import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
+import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
+import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
+import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
@@ -37,7 +37,7 @@ import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class TransactionRunner constructor(private val transaction: TypeDBTransaction, private val queries: String) {
+class Runner constructor(private val transaction: TypeDBTransaction, private val queries: String) {
 
     companion object {
         const val RUNNING_DEFINE_QUERY = "Running Define Query:"
@@ -56,15 +56,15 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
         const val MATCH_QUERY_SUCCESS = "Matched Things Successfully:"
     }
 
-    val output = OutputManager()
+    val response = ResponseManager()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    fun launch(onComplete: () -> Unit) {
+    internal fun launch(onComplete: () -> Unit) {
         coroutineScope.launch {
             try {
                 runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
             } catch (e: Exception) {
-                output.log.append(ERROR, e.message ?: e.toString())
+                response.log.collect(ERROR, e.message ?: e.toString())
             } finally {
                 onComplete()
             }
@@ -82,65 +82,65 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
                 is TypeQLMatch -> runMatchQuery(query)
                 else -> throw IllegalStateException()
             }
-            output.log.append(INFO, "")
+            response.log.collect(INFO, "")
             if (!success) return
         }
     }
 
     private fun runDefineQuery(query: TypeQLDefine): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_DEFINE_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_DEFINE_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             transaction.query().define(query).get()
-            output.log.append(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
+            response.log.collect(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
         }
     }
 
     private fun runUndefineQuery(query: TypeQLUndefine): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_UNDEFINE_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_UNDEFINE_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             transaction.query().undefine(query).get()
-            output.log.append(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
+            response.log.collect(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
         }
     }
 
     private fun runDeleteQuery(query: TypeQLDelete): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_DELETE_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_DELETE_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             transaction.query().delete(query).get()
-            output.log.append(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
+            response.log.collect(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
         }
     }
 
     private fun runInsertQuery(query: TypeQLInsert): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_INSERT_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_INSERT_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             val result = transaction.query().insert(query)
-            output.log.append(SUCCESS, RESULT_ + INSERTED_QUERY_SUCCESS)
-            result.forEach { output.log.append(TYPEQL, printConceptMap(it)) }
+            response.log.collect(SUCCESS, RESULT_ + INSERTED_QUERY_SUCCESS)
+            result.forEach { response.log.collect(TYPEQL, printConceptMap(it)) }
         }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_UPDATE_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_UPDATE_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             val result = transaction.query().update(query)
-            output.log.append(SUCCESS, RESULT_ + UPDATED_QUERY_SUCCESS)
-            result.forEach { output.log.append(TYPEQL, printConceptMap(it)) }
+            response.log.collect(SUCCESS, RESULT_ + UPDATED_QUERY_SUCCESS)
+            result.forEach { response.log.collect(TYPEQL, printConceptMap(it)) }
         }
     }
 
     private fun runMatchQuery(query: TypeQLMatch): Boolean {
         return runLoggedQuery {
-            output.log.append(INFO, RUNNING_MATCH_QUERY)
-            output.log.append(TYPEQL, query.toString())
+            response.log.collect(INFO, RUNNING_MATCH_QUERY)
+            response.log.collect(TYPEQL, query.toString())
             val result = transaction.query().match(query)
-            output.log.append(SUCCESS, RESULT_ + MATCH_QUERY_SUCCESS)
-            result.forEach { output.log.append(TYPEQL, printConceptMap(it)) }
+            response.log.collect(SUCCESS, RESULT_ + MATCH_QUERY_SUCCESS)
+            result.forEach { response.log.collect(TYPEQL, printConceptMap(it)) }
         }
     }
 
@@ -149,7 +149,7 @@ class TransactionRunner constructor(private val transaction: TypeDBTransaction, 
             function()
             true
         } catch (e: Exception) {
-            output.log.append(ERROR, ERROR_ + e.message)
+            response.log.collect(ERROR, ERROR_ + e.message)
             false
         }
     }
