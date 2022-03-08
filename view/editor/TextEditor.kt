@@ -255,6 +255,10 @@ object TextEditor {
         fun mayUpdateBottomSpace(bottomSpace: Dp) {
             target.verScroller.mayUpdateBottomSpace(bottomSpace)
         }
+
+        fun onScrollToBottom(function: () -> Unit) {
+            target.verScroller.onScrollToBottom(function)
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

@@ -46,17 +46,13 @@ internal object LogOutput : RunOutput() {
     internal class State(internal val editorState: TextEditor.State) : RunOutput.State() {
 
         init {
+            editorState.onScrollToBottom { editorState.stickToBottom = true }
             editorState.stickToBottom = true
         }
 
         fun jumpToTop() {
             editorState.stickToBottom = false
             editorState.jumpToTop()
-        }
-
-        fun jumpAndStickToBottom() {
-            editorState.jumpToBottom()
-            editorState.stickToBottom = true
         }
 
     }
@@ -81,7 +77,7 @@ internal object LogOutput : RunOutput() {
             ButtonArg(
                 icon = Icon.Code.ARROW_DOWN_TO_LINE,
                 color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon }
-            ) { state.jumpAndStickToBottom() }
+            ) { state.editorState.stickToBottom = true }
         )
     }
 

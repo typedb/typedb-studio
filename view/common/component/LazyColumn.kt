@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.lang.Integer.min
+import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.floor
 
 /**
@@ -57,6 +58,7 @@ object LazyColumn {
         var bottomSpace: Dp by mutableStateOf(0.dp)
         private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
         private var viewHeight: Dp by mutableStateOf(0.dp)
+        private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
         internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
         internal var firstVisibleIndex: Int by mutableStateOf(0)
         internal var lastVisibleIndexPossible: Int by mutableStateOf(0)
@@ -73,6 +75,10 @@ object LazyColumn {
 
         fun mayUpdateBottomSpace(bottomSpace: Dp) {
             if (this.bottomSpace != bottomSpace) this.bottomSpace = bottomSpace
+        }
+
+        fun onScrollToBottom(function: () -> Unit) {
+            onScrollToBottom.push(function)
         }
 
         fun scrollToTop() {
@@ -96,6 +102,7 @@ object LazyColumn {
 
         private fun updateOffset(newOffset: Dp) {
             offset = newOffset.coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
+            if (newOffset >= max(contentHeight - viewHeight, 0.dp)) onScrollToBottom.forEach { it() }
             updateView()
         }
 
