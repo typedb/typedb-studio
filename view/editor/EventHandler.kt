@@ -122,7 +122,7 @@ internal class EventHandler(
             MOVE_LINE_DOWN -> target.moveCursorDownByLine()
             MOVE_PAGE_UP -> target.moveCursorUpByPage()
             MOVE_PAGE_DOWN -> target.moveCursorDownByPage()
-            MOVE_HOME -> target.moveCursorToHome()
+            MOVE_HOME -> target.moveCursorToStart()
             MOVE_END -> target.moveCursorToEnd()
             SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
             SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
@@ -138,7 +138,7 @@ internal class EventHandler(
             SELECT_LINE_DOWN -> target.moveCursorDownByLine(true)
             SELECT_PAGE_UP -> target.moveCursorUpByPage(true)
             SELECT_PAGE_DOWN -> target.moveCursorDownByPage(true)
-            SELECT_HOME -> target.moveCursorToHome(true)
+            SELECT_HOME -> target.moveCursorToStart(true)
             SELECT_END -> target.moveCursorToEnd(true)
             SELECT_ALL -> target.selectAll()
             SELECT_NONE -> target.selectNone()

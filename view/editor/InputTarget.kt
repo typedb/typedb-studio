@@ -51,7 +51,6 @@ internal class InputTarget constructor(
     companion object {
         // TODO: is this complete?
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
-        private val END_OF_FILE_SPACE = 100.dp
 
         fun prefixSpaces(line: AnnotatedString): Int {
             for (it in line.indices) if (line[it] != ' ') return it
@@ -122,7 +121,7 @@ internal class InputTarget constructor(
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
-    internal val verScroller = LazyColumn.createScrollState(lineHeight, END_OF_FILE_SPACE) { content.size }
+    internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
@@ -393,8 +392,8 @@ internal class InputTarget constructor(
         updateCursor(Cursor(newRow, newCol), isSelecting)
     }
 
-    internal fun moveCursorToHome(isSelecting: Boolean = false) {
-        updateCursor(Cursor(0, 0), isSelecting)
+    internal fun moveCursorToStart(isSelecting: Boolean = false, mayScroll: Boolean = true) {
+        updateCursor(Cursor(0, 0), isSelecting, mayScroll)
     }
 
     internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) {

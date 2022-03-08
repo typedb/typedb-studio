@@ -54,7 +54,12 @@ internal sealed class RunOutput {
                 Spacer(Modifier.height(Theme.TOOLBAR_SPACING))
                 IconButton(
                     icon = it.icon,
+                    hoverIcon = it.hoverIcon,
+                    iconColor = it.color(),
+                    iconHoverColor = it.hoverColor(),
+                    disabledColor = it.disabledColor(),
                     onClick = it.onClick,
+                    enabled = it.enabled,
                     modifier = Modifier.size(Theme.TOOLBAR_BUTTON_SIZE)
                 )
             }

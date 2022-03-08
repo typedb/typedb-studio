@@ -239,11 +239,11 @@ object Tabs {
             iconColor = buttonArg.color(),
             iconHoverColor = buttonArg.hoverColor(),
             disabledColor = buttonArg.disabledColor(),
-            onClick = { buttonArg.onClick() },
+            onClick = buttonArg.onClick,
+            enabled = buttonArg.enabled,
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            rounded = false,
-            enabled = buttonArg.enabled
+            rounded = false
         )
     }
 }

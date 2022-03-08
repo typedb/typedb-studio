@@ -56,7 +56,7 @@ internal class TextRendering(initSize: Int) {
     fun get(int: Int): TextLayoutResult? = results.getOrNull(int)
 
     fun set(int: Int, layout: TextLayoutResult, version: Int) {
-        if (int >= results.size) addNew(int, int + 1 - results.size)
+        if (int >= results.size) addNew(results.size, int + 1 - results.size)
         results[int] = layout
         versions[int] = version
     }

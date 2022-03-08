@@ -103,6 +103,7 @@ object TextEditor {
     private val DEFAULT_FONT_WIDTH = 12.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
+    private val END_OF_FILE_SPACE = 100.dp
     private val MAX_LINE_MIN_WIDTH: Dp = 100_000.dp // we need this cause Compose can't render components too large
     private val LOGGER = KotlinLogging.logger {}
 
@@ -196,6 +197,8 @@ object TextEditor {
         }
     }
 
+    enum class Mode { DEFAULT, CONSOLE }
+
     class State internal constructor(
         internal val content: SnapshotStateList<AnnotatedString>,
         internal val font: TextStyle,
@@ -206,9 +209,9 @@ object TextEditor {
         internal val handler: EventHandler,
         initProcessor: TextProcessor,
     ) {
-
         var isFocusable by mutableStateOf(false)
         val focusReq = FocusRequester()
+        var stickToBottom by mutableStateOf(false)
         internal var isFocused by mutableStateOf(true)
         internal var processor: TextProcessor by mutableStateOf(initProcessor)
         internal val contextMenu = ContextMenu.State()
@@ -239,20 +242,34 @@ object TextEditor {
             processor.updateFile(file)
         }
 
-        fun setCursorToEnd() {
+        fun jumpToTop() {
+            target.verScroller.scrollToTop()
+            target.moveCursorToStart(isSelecting = false, mayScroll = false)
+        }
+
+        fun jumpToBottom() {
+            target.verScroller.scrollToBottom()
             target.moveCursorToEnd(isSelecting = false, mayScroll = false)
+        }
+
+        fun mayUpdateBottomSpace(bottomSpace: Dp) {
+            target.verScroller.mayUpdateBottomSpace(bottomSpace)
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true) {
+    fun Layout(
+        state: State, modifier: Modifier = Modifier, bottomSpace: Dp = END_OF_FILE_SPACE, showLine: Boolean = true
+    ) {
         if (state.content.isEmpty()) return
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
         val fontStyle = state.font.copy(color = fontColor, lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
+        state.mayUpdateBottomSpace(bottomSpace)
+        if (state.stickToBottom) state.jumpToBottom()
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = fontStyle, onTextLayout = { fontWidth = toDP(it.size.width, density) })

@@ -19,8 +19,13 @@
 package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.mouse.mouseScrollFilter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.runner.Response
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
@@ -30,24 +35,53 @@ import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 
 internal object LogOutput : RunOutput() {
 
+    private val END_OF_OUPTUT_SPACE = 20.dp
+
     internal class State(internal val editorState: TextEditor.State) : RunOutput.State() {
+
+        init {
+            editorState.stickToBottom = true
+        }
+
+        fun jumpToTop() {
+            editorState.stickToBottom = false
+            editorState.jumpToTop()
+        }
+
+        fun jumpAndStickToBottom() {
+            editorState.jumpToBottom()
+            editorState.stickToBottom = true
+        }
 
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     internal fun Layout(state: State) {
-        super.Layout(buttons(state)) { modifier -> TextEditor.Layout(state.editorState, modifier, false) }
+        super.Layout(buttons(state)) { modifier ->
+            TextEditor.Layout(
+                state = state.editorState,
+                bottomSpace = END_OF_OUPTUT_SPACE,
+                showLine = false,
+                modifier = modifier.onPointerEvent(Press) { state.editorState.stickToBottom = false }
+                    .mouseScrollFilter { _, _ -> state.editorState.stickToBottom = false; false }
+            )
+        }
     }
 
     private fun buttons(state: State): List<ButtonArg> {
         return listOf(
-            ButtonArg(Icon.Code.ARROW_UP_TO_LINE) {},
-            ButtonArg(Icon.Code.ARROW_DOWN_TO_LINE) {}
+            ButtonArg(Icon.Code.ARROW_UP_TO_LINE) { state.jumpToTop() },
+            ButtonArg(
+                icon = Icon.Code.ARROW_DOWN_TO_LINE,
+                color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon }
+            ) { state.jumpAndStickToBottom() }
         )
     }
 
