@@ -397,8 +397,8 @@ internal class InputTarget constructor(
         updateCursor(Cursor(0, 0), isSelecting)
     }
 
-    internal fun moveCursorToEnd(isSelecting: Boolean = false) {
-        updateCursor(Cursor(content.size - 1, content.last().length), isSelecting)
+    internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) {
+        updateCursor(Cursor(content.size - 1, content.last().length), isSelecting, mayScroll)
     }
 
     internal fun selectAll() {

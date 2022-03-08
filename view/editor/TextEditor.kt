@@ -239,8 +239,8 @@ object TextEditor {
             processor.updateFile(file)
         }
 
-        fun moveCursorToEnd() {
-            target.moveCursorToEnd(false)
+        fun setCursorToEnd() {
+            target.moveCursorToEnd(isSelecting = false, mayScroll = false)
         }
     }
 

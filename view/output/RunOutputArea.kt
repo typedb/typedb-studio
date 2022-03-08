@@ -88,7 +88,7 @@ object RunOutputArea {
                 when (response) {
                     is Response.Log -> {
                         val editorState = TextEditor.createState(response.lines)
-//                        runner.onComplete { editorState.moveCursorToEnd() } // TODO
+                        runner.onComplete { editorState.setCursorToEnd() }
                         LogOutput.State(editorState)
                     }
                     is Response.Graph -> GraphOutput.State(response)
