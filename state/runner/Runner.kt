@@ -81,7 +81,7 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
                 runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
             } catch (e: Exception) {
                 response.log.emptyLine()
-                response.log.collect(ERROR, e.message ?: e.toString())
+                response.log.collect(ERROR, ERROR_ + e.message)
             } finally {
                 onComplete.forEach { it(this@Runner) }
             }
@@ -90,7 +90,7 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
 
     private fun runQueries(queries: List<TypeQLQuery>) {
         queries.forEach { query ->
-            val success = when (query) {
+            when (query) {
                 is TypeQLDefine -> runDefineQuery(query)
                 is TypeQLUndefine -> runUndefineQuery(query)
                 is TypeQLDelete -> runDeleteQuery(query)
@@ -99,89 +99,64 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
                 is TypeQLMatch -> runMatchQuery(query)
                 else -> throw IllegalStateException()
             }
-            response.log.collect(INFO, "")
-            if (!success) return
         }
     }
 
-    private fun runDefineQuery(query: TypeQLDefine): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + DEFINE_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            transaction.query().define(query).get()
-            response.log.emptyLine()
-            response.log.collect(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
-        }
+    private fun runDefineQuery(query: TypeQLDefine) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + DEFINE_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        transaction.query().define(query).get()
+        response.log.emptyLine()
+        response.log.collect(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
     }
 
-    private fun runUndefineQuery(query: TypeQLUndefine): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + UNDEFINE_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            transaction.query().undefine(query).get()
-            response.log.emptyLine()
-            response.log.collect(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
-        }
+    private fun runUndefineQuery(query: TypeQLUndefine) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + UNDEFINE_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        transaction.query().undefine(query).get()
+        response.log.emptyLine()
+        response.log.collect(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
     }
 
-    private fun runDeleteQuery(query: TypeQLDelete): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + DELETE_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            transaction.query().delete(query).get()
-            response.log.emptyLine()
-            response.log.collect(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
-        }
+    private fun runDeleteQuery(query: TypeQLDelete) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + DELETE_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        transaction.query().delete(query).get()
+        response.log.emptyLine()
+        response.log.collect(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
     }
 
-    private fun runInsertQuery(query: TypeQLInsert): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + INSERT_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            logResultStream(
-                result = transaction.query().insert(query),
-                successMessage = RESULT_ + INSERTED_QUERY_SUCCESS
-            )
-        }
+    private fun runInsertQuery(query: TypeQLInsert) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + INSERT_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        logResultStream(
+            result = transaction.query().insert(query),
+            successMessage = RESULT_ + INSERTED_QUERY_SUCCESS
+        )
     }
 
-    private fun runUpdateQuery(query: TypeQLUpdate): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + UPDATE_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            logResultStream(
-                result = transaction.query().update(query),
-                successMessage = RESULT_ + UPDATED_QUERY_SUCCESS
-            )
-        }
+    private fun runUpdateQuery(query: TypeQLUpdate) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + UPDATE_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        logResultStream(
+            result = transaction.query().update(query),
+            successMessage = RESULT_ + UPDATED_QUERY_SUCCESS
+        )
     }
 
-    private fun runMatchQuery(query: TypeQLMatch): Boolean {
-        return runLoggedQuery {
-            response.log.emptyLine()
-            response.log.collect(INFO, RUNNING_ + MATCH_QUERY)
-            response.log.collect(TYPEQL, query.toString())
-            logResultStream(
-                result = transaction.query().match(query),
-                successMessage = RESULT_ + MATCH_QUERY_SUCCESS
-            )
-        }
-    }
-
-    private fun runLoggedQuery(function: () -> Unit): Boolean {
-        return try {
-            function()
-            true
-        } catch (e: Exception) {
-            response.log.emptyLine()
-            response.log.collect(ERROR, ERROR_ + e.message)
-            false
-        }
+    private fun runMatchQuery(query: TypeQLMatch) {
+        response.log.emptyLine()
+        response.log.collect(INFO, RUNNING_ + MATCH_QUERY)
+        response.log.collect(TYPEQL, query.toString())
+        logResultStream(
+            result = transaction.query().match(query),
+            successMessage = RESULT_ + MATCH_QUERY_SUCCESS
+        )
     }
 
     private fun logResultStream(result: Stream<ConceptMap>, successMessage: String) {
