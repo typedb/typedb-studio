@@ -47,6 +47,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
@@ -103,9 +104,7 @@ object Toolbar {
 
     @Composable
     private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
-        Row(
-            Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, Theme.ROUNDED_RECTANGLE)
-        ) { content() }
+        Row(Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, ROUNDED_RECTANGLE)) { content() }
     }
 
     @Composable
@@ -180,12 +179,13 @@ object Toolbar {
         private fun SessionTypeButton(enabled: Boolean) {
             val schema = TypeDBSession.Type.SCHEMA
             val data = TypeDBSession.Type.DATA
+            val hasOpenTransaction = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == schema,
-                    enabled = enabled && GlobalState.connection.hasSession,
+                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTransaction,
                     tooltip = Tooltip.Args(
                         title = Label.SCHEMA_SESSION,
                         description = Sentence.SESSION_SCHEMA_DESCRIPTION,
@@ -196,7 +196,7 @@ object Toolbar {
                     text = data.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
                     isActive = enabled && GlobalState.connection.current?.config?.sessionType == data,
-                    enabled = enabled && GlobalState.connection.hasSession,
+                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTransaction,
                     tooltip = Tooltip.Args(
                         title = Label.DATA_SESSION,
                         description = Sentence.SESSION_DATA_DESCRIPTION,
@@ -210,12 +210,13 @@ object Toolbar {
         private fun TransactionTypeButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
+            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == write,
-                    enabled = enabled && GlobalState.connection.hasSession,
+                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.WRITE_TRANSACTION,
                         description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
@@ -226,7 +227,7 @@ object Toolbar {
                     text = read.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
                     isActive = enabled && GlobalState.connection.current?.config?.transactionType == read,
-                    enabled = enabled && GlobalState.connection.hasSession,
+                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.READ_TRANSACTION,
                         description = Sentence.TRANSACTION_READ_DESCRIPTION,
@@ -238,12 +239,14 @@ object Toolbar {
 
         @Composable
         private fun OptionsButtons(enabled: Boolean) {
+            val txConfig = GlobalState.connection.current?.config
+            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = Label.SNAPSHOT.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
-                    isActive = enabled && GlobalState.connection.current?.config?.snapshot ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.snapshotEnabled ?: false,
+                    onClick = { txConfig?.toggleSnapshot() },
+                    isActive = enabled && txConfig?.snapshot ?: false,
+                    enabled = enabled && !hasOpenTx && txConfig?.snapshotEnabled ?: false,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_SNAPSHOT,
                         description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
@@ -252,9 +255,9 @@ object Toolbar {
                 )
                 ToggleButton(
                     text = Label.INFER.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                    isActive = enabled && GlobalState.connection.current?.config?.infer ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.inferEnabled ?: false,
+                    onClick = { txConfig?.toggleInfer() },
+                    isActive = enabled && txConfig?.infer ?: false,
+                    enabled = enabled && !hasOpenTx && txConfig?.inferEnabled ?: false,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE,
                         description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
@@ -263,9 +266,9 @@ object Toolbar {
                 )
                 ToggleButton(
                     text = Label.EXPLAIN.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                    isActive = enabled && GlobalState.connection.current?.config?.explain ?: false,
-                    enabled = enabled && GlobalState.connection.current?.config?.explainEnabled ?: false,
+                    onClick = { txConfig?.toggleExplain() },
+                    isActive = enabled && txConfig?.explain ?: false,
+                    enabled = enabled && !hasOpenTx && txConfig?.explainEnabled ?: false,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE_EXPLANATION,
                         description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
@@ -280,28 +283,26 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            val isInteractiveMode = GlobalState.connection.current?.isInteractiveMode ?: false
+            val isInteractive = GlobalState.connection.current?.isInteractiveMode == true
             ToolbarSpace()
-            StatusIndicator(isInteractiveMode)
+            StatusIndicator(isInteractive)
             ToolbarSpace()
-            CloseButton(isInteractiveMode)
+            CloseButton(isInteractive)
             ToolbarSpace()
-            RollbackButton(isInteractiveMode)
+            RollbackButton(isInteractive)
             ToolbarSpace()
-            CommitButton(isInteractiveMode)
+            CommitButton(isInteractive)
             ToolbarSpace()
         }
 
         @Composable
         private fun StatusIndicator(enabled: Boolean) {
-            val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
-            val hasTransaction = GlobalState.connection.current?.hasSession ?: false
-            // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
+            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             RawIconButton(
                 icon = Icon.Code.CIRCLE,
                 modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
-                iconColor = if (enabled && isSnapshot && hasTransaction) Theme.colors.secondary else Theme.colors.icon,
-                enabled = enabled && isSnapshot,
+                iconColor = if (enabled && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
+                enabled = enabled,
                 tooltip = Tooltip.Args(
                     title = Label.TRANSACTION_STATUS,
                     description = Sentence.TRANSACTION_STATUS_DESCRIPTION
@@ -311,14 +312,12 @@ object Toolbar {
 
         @Composable
         private fun CloseButton(enabled: Boolean) {
-            val isSnapshot = GlobalState.connection.current?.config?.snapshot ?: false
-            val hasTransaction = GlobalState.connection.current?.hasSession ?: false
-            // TODO: val hasTransaction = GlobalState.connection.current?.hasTransaction() ?: false
+            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.XMARK,
-                onClick = {},
+                onClick = { connection?.closeTransaction() },
                 color = Theme.colors.error,
-                enabled = enabled && isSnapshot && hasTransaction,
+                enabled = enabled && connection?.hasOpenTransaction == true,
                 tooltip = Tooltip.Args(
                     title = Label.CLOSE_TRANSACTION,
                     description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
@@ -329,11 +328,12 @@ object Toolbar {
 
         @Composable
         private fun RollbackButton(enabled: Boolean) {
+            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE_LEFT,
-                onClick = {},
+                onClick = { connection?.transaction?.rollback() },
                 color = Theme.colors.quaternary2,
-                enabled = enabled && GlobalState.connection.current?.isWrite ?: false,
+                enabled = enabled && connection?.hasOpenTransaction == true && connection.isWrite,
                 tooltip = Tooltip.Args(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -344,11 +344,12 @@ object Toolbar {
 
         @Composable
         private fun CommitButton(enabled: Boolean) {
+            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.CHECK,
-                onClick = {},
+                onClick = { GlobalState.connection.current?.transaction?.commit() },
                 color = Theme.colors.secondary,
-                enabled = enabled && GlobalState.connection.current?.isWrite ?: false,
+                enabled = enabled && connection?.hasOpenTransaction == true && connection.isWrite,
                 tooltip = Tooltip.Args(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,

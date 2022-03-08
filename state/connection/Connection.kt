@@ -55,20 +55,17 @@ class Connection internal constructor(
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val isRead: Boolean get() = hasSession && config.transactionType.isRead
-    val isWrite: Boolean get() = hasSession && config.transactionType.isWrite
-    val hasSession: Boolean get() = session != null && session!!.isOpen
-    val hasTransaction: Boolean get() = transaction != null && transaction!!.isOpen
+    val isRead: Boolean get() = config.transactionType.isRead
+    val isWrite: Boolean get() = config.transactionType.isWrite
+    val hasOpenSession: Boolean get() = session != null && session!!.isOpen
+    val hasOpenTransaction: Boolean get() = transaction != null && transaction!!.isOpen
     var hasRunningCommand by mutableStateOf(false)
     val hasStopSignal = AtomicBoolean(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
         if (config.transactionType == type) return
-        transaction?.let {
-            it.close()
-            transaction = null
-        }
+        closeTransaction()
         config.transactionType = type
     }
 
@@ -114,25 +111,28 @@ class Connection internal constructor(
             hasStopSignal.set(false)
             mayInitTransaction()
             resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
-                if (!config.snapshot) {
-                    transaction!!.close()
-                    transaction = null
-                }
+                if (!config.snapshot) closeTransaction()
                 hasRunningCommand = false
             }
         }
+    }
+
+    private fun mayInitTransaction() {
+        if (!hasOpenTransaction) transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
     }
 
     fun signalStop() {
         hasStopSignal.set(true)
     }
 
-    private fun mayInitTransaction() {
-        if (transaction == null) transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
-    }
-
     private fun closeSession() {
         session?.let { it.close(); session = null }
+    }
+
+    fun closeTransaction() {
+        signalStop()
+        transaction?.close()
+        transaction = null
     }
 
     internal fun close() {
