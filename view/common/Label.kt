@@ -109,7 +109,7 @@ object Label {
     const val SESSION_TYPE = "Session Type"
     const val SNAPSHOT = "Snapshot"
     const val STATUS = "Status"
-    const val STOP = "Stop"
+    const val STOP_SIGNAL = "Stop Signal"
     const val TABLE = "Table"
     const val TITLE = "Title"
     const val TRACE = "Trace"

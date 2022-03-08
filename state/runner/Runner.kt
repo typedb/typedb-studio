@@ -36,13 +36,18 @@ import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Stream
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class Runner constructor(private val transaction: TypeDBTransaction, private val queries: String) {
+class Runner(
+    private val transaction: TypeDBTransaction,
+    private val queries: String,
+    private val hasStopSignal: AtomicBoolean
+) {
 
     companion object {
         const val RESULT_ = "## Result> "
@@ -90,6 +95,7 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
 
     private fun runQueries(queries: List<TypeQLQuery>) {
         queries.forEach { query ->
+            if (hasStopSignal.get()) return@forEach
             when (query) {
                 is TypeQLDefine -> runDefineQuery(query)
                 is TypeQLUndefine -> runUndefineQuery(query)
@@ -134,7 +140,7 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
         response.log.collect(INFO, RUNNING_ + INSERT_QUERY)
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
-            result = transaction.query().insert(query),
+            results = transaction.query().insert(query),
             successMessage = RESULT_ + INSERTED_QUERY_SUCCESS
         )
     }
@@ -144,7 +150,7 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
         response.log.collect(INFO, RUNNING_ + UPDATE_QUERY)
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
-            result = transaction.query().update(query),
+            results = transaction.query().update(query),
             successMessage = RESULT_ + UPDATED_QUERY_SUCCESS
         )
     }
@@ -154,19 +160,22 @@ class Runner constructor(private val transaction: TypeDBTransaction, private val
         response.log.collect(INFO, RUNNING_ + MATCH_QUERY)
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
-            result = transaction.query().match(query),
+            results = transaction.query().match(query),
             successMessage = RESULT_ + MATCH_QUERY_SUCCESS
         )
     }
 
-    private fun logResultStream(result: Stream<ConceptMap>, successMessage: String) {
+    private fun logResultStream(results: Stream<ConceptMap>, successMessage: String) {
         var started = false
-        result.peek {
+        results.peek {
             if (started) return@peek
             response.log.emptyLine()
             response.log.collect(SUCCESS, successMessage)
             started = true
-        }.forEach { response.log.collect(TYPEQL, printConceptMap(it)) }
+        }.forEach {
+            if (hasStopSignal.get()) return@forEach
+            response.log.collect(TYPEQL, printConceptMap(it))
+        }
     }
 
     private fun printConceptMap(conceptMap: ConceptMap?): String {

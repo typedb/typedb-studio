@@ -59,8 +59,8 @@ class Connection internal constructor(
     val isWrite: Boolean get() = hasSession && config.transactionType.isWrite
     val hasSession: Boolean get() = session != null && session!!.isOpen
     val hasTransaction: Boolean get() = transaction != null && transaction!!.isOpen
-    val hasRunningCommand get() = hasRunningCommandAtomic.get()
-    private val hasRunningCommandAtomic = AtomicBoolean(false)
+    var hasRunningCommand by mutableStateOf(false)
+    val hasStopSignal = AtomicBoolean(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
@@ -109,16 +109,22 @@ class Connection internal constructor(
     }
 
     private fun runQuery(resource: Resource, queries: String = resource.runContent) {
-        if (hasRunningCommandAtomic.compareAndSet(false, true)) {
+        if (!hasRunningCommand) {
+            hasRunningCommand = true
+            hasStopSignal.set(false)
             mayInitTransaction()
-            resource.runner.launch(Runner(transaction!!, queries)) {
+            resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
                 if (!config.snapshot) {
                     transaction!!.close()
                     transaction = null
                 }
-                hasRunningCommandAtomic.set(false)
+                hasRunningCommand = false
             }
         }
+    }
+
+    fun signalStop() {
+        hasStopSignal.set(true)
     }
 
     private fun mayInitTransaction() {

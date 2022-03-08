@@ -375,7 +375,9 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
-                enabled = GlobalState.connection.hasSession && GlobalState.resource.active?.isRunnable == true,
+                enabled = GlobalState.connection.hasSession &&
+                        GlobalState.resource.active?.isRunnable == true &&
+                        GlobalState.connection.current?.hasRunningCommand != true,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
@@ -386,11 +388,11 @@ object Toolbar {
         @Composable
         private fun StopButton() {
             ToolbarIconButton(
-                icon = Icon.Code.STOP,
+                icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
-                onClick = {},
+                onClick = { GlobalState.connection.current!!.signalStop() },
                 enabled = GlobalState.connection.current?.hasRunningCommand == true,
-                tooltip = Tooltip.Args(title = Label.STOP, description = Sentence.BUTTON_ENABLED_WHEN_RUNNING)
+                tooltip = Tooltip.Args(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }
     }

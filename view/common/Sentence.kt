@@ -93,6 +93,10 @@ object Sentence {
     const val SESSION_SCHEMA_DESCRIPTION =
         "Schema sessions allow you to only modify the schema of the database, and not data. This means defining and undefining schema. " +
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val STOP_SIGNAL_DESCRIPTION =
+        "A stop signal can be sent to the TypeDB Server when you have a running script/query. This action will stop the " +
+                "script/query once the current operation is completed. To stop script/query immediately, close the transaction instead. " +
+                BUTTON_ENABLED_WHEN_RUNNING
     const val TRANSACTION_CLOSE_DESCRIPTION =
         "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
                 "The next transaction will be opened at a newer and latest snapshot. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
