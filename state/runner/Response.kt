@@ -36,6 +36,10 @@ sealed interface Response {
         internal fun collect(type: Entry.Type, text: String) {
             text.split("\n").forEach { lines.add(formatter(Entry(type, it))) }
         }
+
+        fun emptyLine() {
+            lines.add(AnnotatedString(""))
+        }
     }
 
     class Graph : Response {

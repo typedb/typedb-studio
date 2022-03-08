@@ -54,7 +54,6 @@ internal object LogOutput : RunOutput() {
             editorState.stickToBottom = false
             editorState.jumpToTop()
         }
-
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
