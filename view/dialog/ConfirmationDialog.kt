@@ -62,7 +62,7 @@ object ConfirmationDialog {
     private fun executeCommand(command: KeyMapper.Command, state: ConfirmationManager): Boolean {
         return when (command) {
             ESCAPE -> {
-                state.cancel()
+                state.close()
                 true
             }
             else -> false
@@ -75,7 +75,7 @@ object ConfirmationDialog {
         val focusReq = FocusRequester()
         Dialog(
             title = state.title!!,
-            onCloseRequest = { state.cancel() },
+            onCloseRequest = { state.close() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -92,7 +92,7 @@ object ConfirmationDialog {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CANCEL, onClick = { state.cancel() })
+                    Form.TextButton(text = Label.CANCEL, onClick = { state.close() })
                     Form.ComponentSpacer()
                     if (state.hasReject) {
                         Form.TextButton(text = state.rejectLabel ?: "", onClick = { state.reject() })

@@ -23,9 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
 
-class ConfirmationManager {
+class ConfirmationManager: DialogManager() {
 
-    val dialog = DialogManager.Base()
     var title: String? by mutableStateOf(null); private set
     var message: String? by mutableStateOf(null); private set
     var rejectLabel: String? by mutableStateOf(null); private set
@@ -51,11 +50,11 @@ class ConfirmationManager {
         this.cancelOnConfirm = cancelOnConfirm
         this.onReject = onReject
         this.onConfirm = onConfirm
-        dialog.open()
+        isOpen = true
     }
 
-    fun cancel() {
-        dialog.close()
+    override fun close() {
+        isOpen = false
         title = null
         message = null
         onConfirm = null
@@ -64,11 +63,11 @@ class ConfirmationManager {
 
     fun reject() {
         onReject?.let { it() }
-        cancel()
+        close()
     }
 
     fun confirm() {
         onConfirm?.let { it() }
-        if (cancelOnConfirm) cancel()
+        if (cancelOnConfirm) close()
     }
 }

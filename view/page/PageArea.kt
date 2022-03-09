@@ -136,7 +136,7 @@ object PageArea {
                     rejectLabel = Label.DELETE,
                     cancelOnConfirm = false,
                     onReject = { closeFn() },
-                    onConfirm = { resource.save { it.close(); GlobalState.confirmation.cancel() } }
+                    onConfirm = { resource.save { it.close(); GlobalState.confirmation.close() } }
                 )
             } else closeFn()
             return true
