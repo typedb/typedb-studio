@@ -23,7 +23,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
-import com.vaticle.typedb.studio.state.notification.Notification.Type.SUCCESS
 import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -33,23 +32,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KLogger
 
+@OptIn(ExperimentalTime::class)
 class NotificationManager {
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    fun info(logger: KLogger, message: Message, vararg params: Any) {
-        logger.info { message }
-        queue += Notification(INFO, message.code(), stringOf(message, *params))
+    companion object {
+        private val HIDE_DELAY = Duration.seconds(10)
     }
 
-    @OptIn(ExperimentalTime::class)
-    fun success(logger: KLogger, message: Message, vararg params: Any) {
+    fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
-        val notification = Notification(SUCCESS, message.code(), stringOf(message, *params))
+        val notification = Notification(INFO, message.code(), stringOf(message, *params))
         queue += notification
         coroutineScope.launch {
-            delay(Duration.seconds(5))
+            delay(HIDE_DELAY)
             dismiss(notification)
         }
     }

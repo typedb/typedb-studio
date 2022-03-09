@@ -168,7 +168,7 @@ class Connection internal constructor(
         transaction?.commit()
         transaction = null
         hasOpenTransaction = false
-        notificationMgr.success(LOGGER, Message.Connection.TRANSACTION_COMMIT)
+        notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
     }
 
     internal fun close() {
