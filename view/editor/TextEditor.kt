@@ -207,15 +207,16 @@ object TextEditor {
         internal val handler: EventHandler,
         initProcessor: TextProcessor,
     ) {
-        var isFocusable by mutableStateOf(false)
         val focusReq = FocusRequester()
+        var isFocusable by mutableStateOf(false)
         var stickToBottom by mutableStateOf(false)
-        internal var isFocused by mutableStateOf(true)
-        internal var processor: TextProcessor by mutableStateOf(initProcessor)
         internal val contextMenu = ContextMenu.State()
-        internal val lineCount: Int get() = content.size
-        internal val lineHeight get() = target.lineHeight
         internal var areaWidth by mutableStateOf(0.dp)
+        internal var isFocused by mutableStateOf(true)
+        internal var processor by mutableStateOf(initProcessor)
+        internal val lineCount get() = content.size
+        internal val lineHeight get() = target.lineHeight
+        internal val isWritable get() = processor.isWritable
         internal val showToolbar get() = toolbar.showToolbar
 
         internal var density: Float
@@ -297,7 +298,7 @@ object TextEditor {
         }
 
         LaunchedEffect(state, state.showToolbar) {
-            if (!state.showToolbar) {
+            if (!state.showToolbar && state.isWritable) {
                 state.updateStatus()
                 state.focusReq.requestFocus()
                 state.isFocused = true
