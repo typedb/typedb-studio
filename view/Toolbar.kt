@@ -391,7 +391,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
-                onClick = { GlobalState.connection.current!!.signalStop() },
+                onClick = { GlobalState.connection.current!!.sendStopSignal() },
                 enabled = GlobalState.connection.current?.hasRunningCommand == true,
                 tooltip = Tooltip.Args(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )

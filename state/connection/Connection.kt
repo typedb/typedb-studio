@@ -25,7 +25,9 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_CREATE_SESSION
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_SESSION
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_TRANSACTION
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.Runner
@@ -58,7 +60,7 @@ class Connection internal constructor(
     val isRead: Boolean get() = config.transactionType.isRead
     val isWrite: Boolean get() = config.transactionType.isWrite
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
-    val hasOpenTransaction: Boolean get() = transaction != null && transaction!!.isOpen
+    var hasOpenTransaction: Boolean by mutableStateOf(false)
     var hasRunningCommand by mutableStateOf(false)
     val hasStopSignal = AtomicBoolean(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
@@ -85,7 +87,7 @@ class Connection internal constructor(
         try {
             session = client.session(database, type)
         } catch (exception: TypeDBClientException) {
-            notificationMgr.userError(LOGGER, UNABLE_CREATE_SESSION, database)
+            notificationMgr.userError(LOGGER, UNABLE_TO_OPEN_SESSION, database)
         }
     }
 
@@ -107,21 +109,35 @@ class Connection internal constructor(
 
     private fun runQuery(resource: Resource, queries: String = resource.runContent) {
         if (!hasRunningCommand) {
-            hasRunningCommand = true
-            hasStopSignal.set(false)
-            mayInitTransaction()
-            resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
-                if (!config.snapshot) closeTransaction()
+            try {
+                hasRunningCommand = true
+                hasStopSignal.set(false)
+                mayOpenTransaction()
+                resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
+                    if (!config.snapshot || !transaction!!.isOpen) closeTransaction()
+                    hasStopSignal.set(false)
+                    hasRunningCommand = false
+                }
+            } catch (e: Exception) {
+                notificationMgr.userError(LOGGER, UNABLE_TO_RUN_QUERY, e.message ?: e)
                 hasRunningCommand = false
             }
         }
     }
 
-    private fun mayInitTransaction() {
-        if (!hasOpenTransaction) transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
+    private fun mayOpenTransaction() {
+        if (!hasOpenTransaction) {
+            try {
+                transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
+                hasOpenTransaction = true
+            } catch (e: Exception) {
+                notificationMgr.userError(LOGGER, UNABLE_TO_OPEN_TRANSACTION)
+                hasOpenTransaction = false
+            }
+        }
     }
 
-    fun signalStop() {
+    fun sendStopSignal() {
         hasStopSignal.set(true)
     }
 
@@ -130,9 +146,10 @@ class Connection internal constructor(
     }
 
     fun closeTransaction() {
-        signalStop()
+        sendStopSignal()
         transaction?.close()
         transaction = null
+        hasOpenTransaction = false
     }
 
     internal fun close() {
