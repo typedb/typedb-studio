@@ -26,8 +26,8 @@ import androidx.compose.runtime.setValue
 class ResponseManager {
 
     val log: Response.Log = Response.Log()
-    val graphs: MutableList<Response.Graph> = mutableStateListOf(Response.Graph(), Response.Graph()) // TODO: null
-    val tables: MutableList<Response.Table> = mutableStateListOf(Response.Table()) // TODO: null
+    val graphs: MutableList<Response.Graph> = mutableStateListOf()
+    val tables: MutableList<Response.Table> = mutableStateListOf()
     val hasMultipleGraphs get() = graphs.size > 1
     val hasMultipleTables get() = tables.size > 1
     var active: Response by mutableStateOf(log)
