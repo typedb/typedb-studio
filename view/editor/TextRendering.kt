@@ -22,6 +22,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
+import mu.KotlinLogging
 
 /**
  * This class is a wrapper over [TextLayoutResult] which is produced after
@@ -38,6 +41,10 @@ internal class TextRendering(initSize: Int) {
     private var results = initResults(initSize)
     private var versions = initVersions(initSize)
     private var deleted = initDeleted()
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
         mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
@@ -62,7 +69,17 @@ internal class TextRendering(initSize: Int) {
     }
 
     fun hasVersion(int: Int, version: Int): Boolean {
-        return if (int >= 0 && int < versions.size) versions[int] == version else false
+        return try {
+            if (int >= 0 && int < versions.size) versions[int] == version else false
+        } catch (e: Exception) {
+            // TODO: Find out why there could be an exception here at all. Last error was:
+            // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
+            // ...
+            // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
+            // at com.vaticle.typedb.studio.view.editor.TextRendering.hasVersion(TextRendering.kt:65)
+            GlobalState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
+            false
+        }
     }
 
     fun removeRange(startInc: Int, endExc: Int) {
