@@ -131,7 +131,8 @@ object TextToolbar {
             showReplacer = false
         }
 
-        internal fun showReplacer() {
+        internal fun mayShowReplacer() {
+            if (!processor.isWritable) return
             initialiseFinder()
             showReplacer = true
         }

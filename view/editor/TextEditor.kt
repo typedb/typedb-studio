@@ -197,8 +197,6 @@ object TextEditor {
         }
     }
 
-    enum class Mode { DEFAULT, CONSOLE }
-
     class State internal constructor(
         internal val content: SnapshotStateList<AnnotatedString>,
         internal val font: TextStyle,

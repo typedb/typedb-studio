@@ -168,7 +168,7 @@ internal class EventHandler(
     private fun executeWindowCommand(command: Command): Boolean {
         when (command) {
             Command.FIND -> toolbar.showFinder()
-            Command.REPLACE -> toolbar.showReplacer()
+            Command.REPLACE -> toolbar.mayShowReplacer()
             Command.ESCAPE -> target.selection?.let { target.selectNone() } ?: hideToolbar()
             else -> return false
         }
@@ -208,13 +208,19 @@ internal class EventHandler(
         val hasClipboard = !clipboard.getText().isNullOrBlank()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.CUT, Icon.Code.CUT, "$modKey + X", selection != null) { cut() },
+                ContextMenu.Item(
+                    Label.CUT, Icon.Code.CUT, "$modKey + X", processor.isWritable && selection != null
+                ) { cut() },
                 ContextMenu.Item(Label.COPY, Icon.Code.COPY, "$modKey + C", selection != null) { copy() },
-                ContextMenu.Item(Label.PASTE, Icon.Code.PASTE, "$modKey + V", hasClipboard) { paste() }
+                ContextMenu.Item(
+                    Label.PASTE, Icon.Code.PASTE, "$modKey + V", processor.isWritable && hasClipboard
+                ) { paste() }
             ),
             listOf(
                 ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { toolbar.showFinder() },
-                ContextMenu.Item(Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R") { toolbar.showReplacer() }
+                ContextMenu.Item(
+                    Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R", processor.isWritable
+                ) { toolbar.mayShowReplacer() }
             )
         )
     }
