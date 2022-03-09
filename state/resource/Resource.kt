@@ -59,5 +59,6 @@ interface Resource {
     fun move(onSuccess: ((Resource) -> Unit)? = null)
 
     fun delete()
+
     fun close()
 }

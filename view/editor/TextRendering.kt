@@ -77,6 +77,7 @@ internal class TextRendering(initSize: Int) {
             // ...
             // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
             // at com.vaticle.typedb.studio.view.editor.TextRendering.hasVersion(TextRendering.kt:65)
+            // ...
             GlobalState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
             false
         }

@@ -155,6 +155,7 @@ class File internal constructor(
 
     override fun initialiseWith(other: ProjectItem) {
         val otherFile = other as File
+        this.isOpenAtomic.set(other.isOpenAtomic.get())
         this.onDiskChangeContent.addAll(otherFile.onDiskChangeContent)
         this.onDiskChangePermission.addAll(otherFile.onDiskChangePermission)
         this.onWatch.addAll(otherFile.onWatch)

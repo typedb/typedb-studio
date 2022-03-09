@@ -28,43 +28,47 @@ class ConfirmationManager {
     val dialog = DialogManager.Base()
     var title: String? by mutableStateOf(null); private set
     var message: String? by mutableStateOf(null); private set
-    var cancelLabel: String? by mutableStateOf(null); private set
+    var rejectLabel: String? by mutableStateOf(null); private set
     var confirmLabel: String? by mutableStateOf(null); private set
-    private var onConfirm: (() -> Unit)? by mutableStateOf(null); private set
-    private var onCancel: (() -> Unit)? by mutableStateOf(null); private set
+    val hasReject get() = rejectLabel != null || onReject != null
+    private var cancelOnConfirm by mutableStateOf(false)
+    private var onReject: (() -> Unit)? by mutableStateOf(null)
+    private var onConfirm: (() -> Unit)? by mutableStateOf(null)
 
     fun submit(
         title: String,
         message: String,
-        cancelLabel: String? = null,
+        rejectLabel: String? = null,
         confirmLabel: String? = null,
-        onCancel: (() -> Unit)? = null,
+        cancelOnConfirm: Boolean = true,
+        onReject: (() -> Unit)? = null,
         onConfirm: () -> Unit,
     ) {
         this.title = title
         this.message = message
-        this.cancelLabel = cancelLabel
+        this.rejectLabel = rejectLabel
         this.confirmLabel = confirmLabel
-        this.onCancel = onCancel
+        this.cancelOnConfirm = cancelOnConfirm
+        this.onReject = onReject
         this.onConfirm = onConfirm
         dialog.open()
     }
 
-    fun close() {
+    fun cancel() {
         dialog.close()
         title = null
         message = null
         onConfirm = null
-        onCancel = null
+        onReject = null
     }
 
-    fun cancel() {
-        onCancel?.let { it() }
-        close()
+    fun reject() {
+        onReject?.let { it() }
+        cancel()
     }
 
     fun confirm() {
         onConfirm?.let { it() }
-        close()
+        if (cancelOnConfirm) cancel()
     }
 }

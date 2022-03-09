@@ -19,20 +19,31 @@
 package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
+import com.vaticle.typedb.studio.state.ConfirmationManager
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.view.common.KeyMapper
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ESCAPE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -43,27 +54,54 @@ object ConfirmationDialog {
     private val WINDOW_HEIGHT = 140.dp
     private val WINDOW_WIDTH = 500.dp
 
+    private fun handleKeyEvent(event: KeyEvent, state: ConfirmationManager): Boolean {
+        return if (event.type == KeyEventType.KeyUp) false
+        else KeyMapper.CURRENT.map(event)?.let { executeCommand(it, state) } ?: false
+    }
+
+    private fun executeCommand(command: KeyMapper.Command, state: ConfirmationManager): Boolean {
+        return when (command) {
+            ESCAPE -> {
+                state.cancel()
+                true
+            }
+            else -> false
+        }
+    }
+
     @Composable
     fun Layout() {
         val state = GlobalState.confirmation
+        val focusReq = FocusRequester()
         Dialog(
             title = state.title!!,
-            onCloseRequest = { state.close() },
+            onCloseRequest = { state.cancel() },
             state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(WINDOW_WIDTH, WINDOW_HEIGHT)
             )
         ) {
-            Column(Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)) {
-                Form.Text(value = state.message!!, softWrap = true)
+            Column(
+                Modifier.fillMaxSize()
+                    .background(Theme.colors.background)
+                    .padding(Theme.DIALOG_PADDING)
+                    .focusRequester(focusReq).focusable()
+                    .onKeyEvent { handleKeyEvent(it, state) }
+            ) {
+                state.message?.let { Form.Text(value = it, softWrap = true) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = state.cancelLabel ?: Label.CANCEL, onClick = { state.cancel() })
+                    Form.TextButton(text = Label.CANCEL, onClick = { state.cancel() })
                     Form.ComponentSpacer()
+                    if (state.hasReject) {
+                        Form.TextButton(text = state.rejectLabel ?: "", onClick = { state.reject() })
+                        Form.ComponentSpacer()
+                    }
                     Form.TextButton(text = state.confirmLabel ?: Label.CONFIRM, onClick = { state.confirm() })
                 }
             }
         }
+        LaunchedEffect(Unit) { focusReq.requestFocus() }
     }
 }
