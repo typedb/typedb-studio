@@ -56,6 +56,21 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
+    private val hasOpenSession get() = GlobalState.connection.hasOpenSession
+    private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
+    private val isSchema get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.SCHEMA
+    private val isData get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.DATA
+    private val isRead get() = GlobalState.connection.current?.config?.transactionType == TypeDBTransaction.Type.READ
+    private val isWrite get() = GlobalState.connection.current?.config?.transactionType == TypeDBTransaction.Type.WRITE
+    private val isSnapshot get() = GlobalState.connection.current?.config?.snapshot == true
+    private val isSnapshotEnabled get() = GlobalState.connection.current?.config?.snapshotEnabled == true
+    private val isInfer get() = GlobalState.connection.current?.config?.infer == true
+    private val isInferEnabled get() = GlobalState.connection.current?.config?.inferEnabled == true
+    private val isExplain get() = GlobalState.connection.current?.config?.explain == true
+    private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
+    private val hasRunnable get() = GlobalState.resource.active?.isRunnable == true
+    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
+
     @Composable
     fun Layout() {
         Row(
@@ -163,7 +178,7 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            val isInteractive = GlobalState.connection.current?.isInteractiveMode ?: false
+            val isInteractive = GlobalState.connection.current?.isInteractiveMode == true
             ToolbarSpace()
             DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE))
             ToolbarSpace()
@@ -179,13 +194,12 @@ object Toolbar {
         private fun SessionTypeButton(enabled: Boolean) {
             val schema = TypeDBSession.Type.SCHEMA
             val data = TypeDBSession.Type.DATA
-            val hasOpenTransaction = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
-                    isActive = enabled && GlobalState.connection.current?.config?.sessionType == schema,
-                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTransaction,
+                    isActive = enabled && isSchema,
+                    enabled = enabled && hasOpenSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.SCHEMA_SESSION,
                         description = Sentence.SESSION_SCHEMA_DESCRIPTION,
@@ -195,8 +209,8 @@ object Toolbar {
                 ToggleButton(
                     text = data.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
-                    isActive = enabled && GlobalState.connection.current?.config?.sessionType == data,
-                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTransaction,
+                    isActive = enabled && isData,
+                    enabled = enabled && hasOpenSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.DATA_SESSION,
                         description = Sentence.SESSION_DATA_DESCRIPTION,
@@ -210,13 +224,12 @@ object Toolbar {
         private fun TransactionTypeButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
-            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
-                    isActive = enabled && GlobalState.connection.current?.config?.transactionType == write,
-                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTx,
+                    isActive = enabled && isWrite,
+                    enabled = enabled && hasOpenSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.WRITE_TRANSACTION,
                         description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
@@ -226,8 +239,8 @@ object Toolbar {
                 ToggleButton(
                     text = read.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
-                    isActive = enabled && GlobalState.connection.current?.config?.transactionType == read,
-                    enabled = enabled && GlobalState.connection.hasSession && !hasOpenTx,
+                    isActive = enabled && isRead,
+                    enabled = enabled && hasOpenSession && !hasOpenTx,
                     tooltip = Tooltip.Args(
                         title = Label.READ_TRANSACTION,
                         description = Sentence.TRANSACTION_READ_DESCRIPTION,
@@ -239,14 +252,12 @@ object Toolbar {
 
         @Composable
         private fun OptionsButtons(enabled: Boolean) {
-            val txConfig = GlobalState.connection.current?.config
-            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             ToggleButtonRow {
                 ToggleButton(
                     text = Label.SNAPSHOT.lowercase(),
-                    onClick = { txConfig?.toggleSnapshot() },
-                    isActive = enabled && txConfig?.snapshot ?: false,
-                    enabled = enabled && !hasOpenTx && txConfig?.snapshotEnabled ?: false,
+                    onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
+                    isActive = enabled && isSnapshot,
+                    enabled = enabled && !hasOpenTx && isSnapshotEnabled,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_SNAPSHOT,
                         description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
@@ -255,9 +266,9 @@ object Toolbar {
                 )
                 ToggleButton(
                     text = Label.INFER.lowercase(),
-                    onClick = { txConfig?.toggleInfer() },
-                    isActive = enabled && txConfig?.infer ?: false,
-                    enabled = enabled && !hasOpenTx && txConfig?.inferEnabled ?: false,
+                    onClick = { GlobalState.connection.current?.config?.toggleInfer() },
+                    isActive = enabled && isInfer,
+                    enabled = enabled && !hasOpenTx && isInferEnabled,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE,
                         description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
@@ -266,9 +277,9 @@ object Toolbar {
                 )
                 ToggleButton(
                     text = Label.EXPLAIN.lowercase(),
-                    onClick = { txConfig?.toggleExplain() },
-                    isActive = enabled && txConfig?.explain ?: false,
-                    enabled = enabled && !hasOpenTx && txConfig?.explainEnabled ?: false,
+                    onClick = { GlobalState.connection.current?.config?.toggleExplain() },
+                    isActive = enabled && isExplain,
+                    enabled = enabled && !hasOpenTx && isExplainEnabled,
                     tooltip = Tooltip.Args(
                         title = Label.ENABLE_INFERENCE_EXPLANATION,
                         description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
@@ -297,7 +308,6 @@ object Toolbar {
 
         @Composable
         private fun StatusIndicator(enabled: Boolean) {
-            val hasOpenTx = GlobalState.connection.current?.hasOpenTransaction == true
             RawIconButton(
                 icon = Icon.Code.CIRCLE,
                 modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
@@ -312,12 +322,11 @@ object Toolbar {
 
         @Composable
         private fun CloseButton(enabled: Boolean) {
-            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.XMARK,
-                onClick = { connection?.closeTransaction() },
+                onClick = { GlobalState.connection.current?.closeTransaction() },
                 color = Theme.colors.error,
-                enabled = enabled && connection?.hasOpenTransaction == true,
+                enabled = enabled && hasOpenTx,
                 tooltip = Tooltip.Args(
                     title = Label.CLOSE_TRANSACTION,
                     description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
@@ -328,12 +337,11 @@ object Toolbar {
 
         @Composable
         private fun RollbackButton(enabled: Boolean) {
-            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE_LEFT,
-                onClick = { connection?.transaction?.rollback() },
+                onClick = { GlobalState.connection.current?.transaction?.rollback() },
                 color = Theme.colors.quaternary2,
-                enabled = enabled && connection?.hasOpenTransaction == true && connection.isWrite,
+                enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Args(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -344,12 +352,11 @@ object Toolbar {
 
         @Composable
         private fun CommitButton(enabled: Boolean) {
-            val connection = GlobalState.connection.current
             ToolbarIconButton(
                 icon = Icon.Code.CHECK,
                 onClick = { GlobalState.connection.current?.transaction?.commit() },
                 color = Theme.colors.secondary,
-                enabled = enabled && connection?.hasOpenTransaction == true && connection.isWrite,
+                enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Args(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
@@ -376,9 +383,7 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
-                enabled = GlobalState.connection.hasSession &&
-                        GlobalState.resource.active?.isRunnable == true &&
-                        GlobalState.connection.current?.hasRunningCommand != true,
+                enabled = hasOpenSession && hasRunnable && !hasRunningCommand,
                 tooltip = Tooltip.Args(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
@@ -392,13 +397,17 @@ object Toolbar {
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
                 onClick = { GlobalState.connection.current!!.sendStopSignal() },
-                enabled = GlobalState.connection.current?.hasRunningCommand == true,
+                enabled = hasRunningCommand,
                 tooltip = Tooltip.Args(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }
     }
 
     object DBConnection {
+
+        private val connectionName
+            get() = (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
+                        GlobalState.connection.current!!.address
 
         @Composable
         internal fun Buttons() {
@@ -414,10 +423,7 @@ object Toolbar {
             when (GlobalState.connection.status) {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
-                CONNECTED -> ConnectionButton(
-                    (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
-                            GlobalState.connection.current!!.address
-                )
+                CONNECTED -> ConnectionButton(connectionName)
             }
         }
 
