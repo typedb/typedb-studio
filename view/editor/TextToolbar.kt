@@ -440,7 +440,7 @@ object TextToolbar {
             onClick = onClick,
             modifier = Modifier.size(BUTTON_HEIGHT),
             iconColor = if (isActive) Theme.colors.secondary else Theme.colors.icon,
-            tooltip = title?.let { Tooltip.Args(title) }
+            tooltip = title?.let { Tooltip.Arg(title) }
         )
     }
 
@@ -460,7 +460,7 @@ object TextToolbar {
             text = text,
             onClick = onClick,
             modifier = Modifier.height(BUTTON_HEIGHT),
-            tooltip = Tooltip.Args(title)
+            tooltip = Tooltip.Arg(title)
         )
     }
 }

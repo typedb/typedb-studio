@@ -66,6 +66,9 @@ object Sentence {
                 "transaction that you're connecting in each script you run on TypeDB Server. In 'interactive' mode, you " +
                 "can set on these parameters in the toolbar, and perform queries against the TypeDB server with configured " +
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
+    const val MANAGE_DATABASES_DESCRIPTION =
+        "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
+                BUTTON_ENABLED_WHEN_CONNECTED
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
     const val RENAME_FILE =

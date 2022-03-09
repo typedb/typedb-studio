@@ -56,6 +56,7 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
+    private val isConnected get() = GlobalState.connection.isConnected
     private val hasOpenSession get() = GlobalState.connection.hasOpenSession
     private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
     private val isSchema get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.SCHEMA
@@ -79,7 +80,9 @@ object Toolbar {
         ) {
             Project.Buttons()
             VerticalSeparator()
-            InteractionSettings.Buttons()
+            Database.Buttons()
+            VerticalSeparator()
+            TransactionConfig.Buttons()
             VerticalSeparator()
             TransactionControl.Buttons()
             VerticalSeparator()
@@ -105,7 +108,7 @@ object Toolbar {
         onClick: () -> Unit,
         color: Color = Theme.colors.icon,
         enabled: Boolean = true,
-        tooltip: Tooltip.Args? = null
+        tooltip: Tooltip.Arg? = null
     ) {
         IconButton(
             icon = icon,
@@ -128,7 +131,7 @@ object Toolbar {
         onClick: () -> Unit,
         isActive: Boolean,
         enabled: Boolean,
-        tooltip: Tooltip.Args
+        tooltip: Tooltip.Arg
     ) {
         TextButton(
             text = text,
@@ -155,7 +158,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.FOLDER_OPEN,
                 onClick = { GlobalState.project.openProjectDialog.toggle() },
-                tooltip = Tooltip.Args(title = Label.OPEN_PROJECT_DIRECTORY)
+                tooltip = Tooltip.Arg(title = Label.OPEN_PROJECT_DIRECTORY)
             )
         }
 
@@ -166,21 +169,45 @@ object Toolbar {
                 icon = Icon.Code.FLOPPY_DISK,
                 onClick = { GlobalState.resource.saveAndReopen(activePage!!) },
                 enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedResource == true,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = Label.SAVE_CURRENT_FILE,
                     description = Sentence.SAVE_CURRENT_FILE_DESCRIPTION
                 )
             )
         }
+
     }
 
-    object InteractionSettings {
+    object Database {
+
+        @Composable
+        fun Buttons() {
+            ToolbarSpace()
+            ManageDatabasesButton()
+            ToolbarSpace()
+            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE))
+            ToolbarSpace()
+        }
+
+        @Composable
+        private fun ManageDatabasesButton() {
+            ToolbarIconButton(
+                icon = Icon.Code.DATABASE,
+                onClick = {},
+                enabled = isConnected,
+                tooltip = Tooltip.Arg(
+                    title = Label.MANAGE_DATABASES,
+                    description = Sentence.MANAGE_DATABASES_DESCRIPTION,
+                )
+            )
+        }
+    }
+
+    object TransactionConfig {
 
         @Composable
         internal fun Buttons() {
             val isInteractive = GlobalState.connection.current?.isInteractiveMode == true
-            ToolbarSpace()
-            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE))
             ToolbarSpace()
             SessionTypeButton(isInteractive)
             ToolbarSpace()
@@ -200,7 +227,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
                     isActive = enabled && isSchema,
                     enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.SCHEMA_SESSION,
                         description = Sentence.SESSION_SCHEMA_DESCRIPTION,
                         url = URL.DOCS_SESSION_SCHEMA
@@ -211,7 +238,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.updateSessionType(data) },
                     isActive = enabled && isData,
                     enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.DATA_SESSION,
                         description = Sentence.SESSION_DATA_DESCRIPTION,
                         url = URL.DOCS_SESSION_DATA
@@ -230,7 +257,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
                     isActive = enabled && isWrite,
                     enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.WRITE_TRANSACTION,
                         description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
                         url = URL.DOCS_TRANSACTION_WRITE
@@ -241,7 +268,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.updateTransactionType(read) },
                     isActive = enabled && isRead,
                     enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.READ_TRANSACTION,
                         description = Sentence.TRANSACTION_READ_DESCRIPTION,
                         url = URL.DOCS_TRANSACTION_READ
@@ -258,7 +285,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
                     isActive = enabled && isSnapshot,
                     enabled = enabled && !hasOpenTx && isSnapshotEnabled,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.ENABLE_SNAPSHOT,
                         description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
                         url = URL.DOCS_ENABLE_SNAPSHOT
@@ -269,7 +296,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.config?.toggleInfer() },
                     isActive = enabled && isInfer,
                     enabled = enabled && !hasOpenTx && isInferEnabled,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.ENABLE_INFERENCE,
                         description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
                         url = URL.DOCS_ENABLE_INFERENCE
@@ -280,7 +307,7 @@ object Toolbar {
                     onClick = { GlobalState.connection.current?.config?.toggleExplain() },
                     isActive = enabled && isExplain,
                     enabled = enabled && !hasOpenTx && isExplainEnabled,
-                    tooltip = Tooltip.Args(
+                    tooltip = Tooltip.Arg(
                         title = Label.ENABLE_INFERENCE_EXPLANATION,
                         description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
                         url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
@@ -313,7 +340,7 @@ object Toolbar {
                 modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
                 iconColor = if (enabled && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
                 enabled = enabled,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = Label.TRANSACTION_STATUS,
                     description = Sentence.TRANSACTION_STATUS_DESCRIPTION
                 )
@@ -327,7 +354,7 @@ object Toolbar {
                 onClick = { GlobalState.connection.current?.closeTransaction() },
                 color = Theme.colors.error,
                 enabled = enabled && hasOpenTx,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = Label.CLOSE_TRANSACTION,
                     description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
                     url = URL.DOCS_TRANSACTION_CLOSE,
@@ -342,7 +369,7 @@ object Toolbar {
                 onClick = { GlobalState.connection.current?.rollbackTransaction() },
                 color = Theme.colors.quaternary2,
                 enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
                     url = URL.DOCS_TRANSACTION_ROLLBACK,
@@ -357,7 +384,7 @@ object Toolbar {
                 onClick = { GlobalState.connection.current?.commitTransaction() },
                 color = Theme.colors.secondary,
                 enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
                     url = URL.DOCS_TRANSACTION_COMMIT
@@ -384,7 +411,7 @@ object Toolbar {
                 color = Theme.colors.secondary,
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
                 enabled = hasOpenSession && hasRunnable && !hasRunningCommand,
-                tooltip = Tooltip.Args(
+                tooltip = Tooltip.Arg(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
                 )
@@ -398,7 +425,7 @@ object Toolbar {
                 color = Theme.colors.error,
                 onClick = { GlobalState.connection.current!!.sendStopSignal() },
                 enabled = hasRunningCommand,
-                tooltip = Tooltip.Args(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
+                tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }
     }
@@ -407,7 +434,7 @@ object Toolbar {
 
         private val connectionName
             get() = (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
-                        GlobalState.connection.current!!.address
+                    GlobalState.connection.current!!.address
 
         @Composable
         internal fun Buttons() {
@@ -436,8 +463,8 @@ object Toolbar {
                     text = interactive.name.lowercase(),
                     onClick = { GlobalState.connection.current?.mode = interactive },
                     isActive = GlobalState.connection.isInteractiveMode,
-                    enabled = GlobalState.connection.isConnected,
-                    tooltip = Tooltip.Args(
+                    enabled = isConnected,
+                    tooltip = Tooltip.Arg(
                         title = Label.INTERACTIVE_MODE,
                         description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
                         url = URL.DOCS_MODE_INTERACTIVE,
@@ -447,8 +474,8 @@ object Toolbar {
                     text = script.name.lowercase(),
                     onClick = { GlobalState.connection.current?.mode = script },
                     isActive = GlobalState.connection.isScriptMode,
-                    enabled = GlobalState.connection.isConnected,
-                    tooltip = Tooltip.Args(
+                    enabled = isConnected,
+                    tooltip = Tooltip.Arg(
                         title = Label.SCRIPT_MODE,
                         description = Sentence.SCRIPT_MODE_DESCRIPTION,
                         url = URL.DOCS_MODE_SCRIPT,
@@ -463,7 +490,7 @@ object Toolbar {
                 text = text,
                 onClick = { GlobalState.connection.connectServerDialog.open() },
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
-                trailingIcon = Icon.Code.DATABASE,
+                trailingIcon = Icon.Code.SERVER,
             )
         }
     }

@@ -162,7 +162,7 @@ object ProjectDialog {
                 Form.IconButton(
                     icon = Icon.Code.FOLDER_OPEN,
                     onClick = { launchDirectorySelector(state, window, title) },
-                    tooltip = Tooltip.Args(Label.OPEN_PROJECT_DIRECTORY)
+                    tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
                 )
             }
         }

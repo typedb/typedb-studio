@@ -245,7 +245,7 @@ object Form {
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
-        tooltip: Tooltip.Args? = null,
+        tooltip: Tooltip.Arg? = null,
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
@@ -278,7 +278,7 @@ object Form {
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
-        tooltip: Tooltip.Args? = null,
+        tooltip: Tooltip.Arg? = null,
     ) {
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val mod = onClick?.let {
@@ -315,7 +315,7 @@ object Form {
         bgColor: Color = Theme.colors.primary,
         rounded: Boolean = true,
         enabled: Boolean = true,
-        tooltip: Tooltip.Args? = null,
+        tooltip: Tooltip.Arg? = null,
     ) {
         var isHover by remember { mutableStateOf(false) }
         BoxButton(
@@ -345,7 +345,7 @@ object Form {
         modifier: Modifier = Modifier,
         rounded: Boolean = true,
         enabled: Boolean = true,
-        tooltip: Tooltip.Args? = null,
+        tooltip: Tooltip.Arg? = null,
         content: @Composable BoxScope.() -> Unit
     ) {
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
@@ -571,7 +571,7 @@ object Form {
         placeholder: String = "",
         enabled: Boolean = true,
         modifier: Modifier = Modifier,
-        tooltip: Tooltip.Args? = null,
+        tooltip: Tooltip.Arg? = null,
     ) {
 
         class DropdownState {

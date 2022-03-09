@@ -74,10 +74,10 @@ object Tooltip {
     private val TOOLTIP_OFFSET = 24.dp
     private val TOOLTIP_SPACE = 8.dp
 
-    data class Args(val title: String, val description: String? = null, val url: URL? = null)
+    data class Arg(val title: String, val description: String? = null, val url: URL? = null)
 
     @OptIn(ExperimentalTime::class)
-    class State(internal val args: Args) {
+    class State(internal val arg: Arg) {
 
         internal var isOpen by mutableStateOf(false)
         private val mouseHoverTarget = AtomicBoolean(false)
@@ -145,7 +145,7 @@ object Tooltip {
                 onDismissRequest = { state.isOpen = false },
                 onKeyEvent = { state.onKeyEvent(it) }
             ) {
-                val hasDetails = state.args.description != null || state.args.url != null
+                val hasDetails = state.arg.description != null || state.arg.url != null
                 val boxMod = if (hasDetails) Modifier.width(TOOLTIP_WIDTH) else Modifier.widthIn(max = TOOLTIP_WIDTH)
                 val contentMod = if (hasDetails) Modifier.fillMaxWidth() else Modifier
                 Box(
@@ -159,7 +159,7 @@ object Tooltip {
                 ) {
                     Column(contentMod.padding(TOOLTIP_SPACE)) {
                         Row(contentMod, Arrangement.SpaceBetween) {
-                            Text(value = state.args.title, softWrap = true)
+                            Text(value = state.arg.title, softWrap = true)
                             if (!showAll && hasDetails) {
                                 TextClickable(Label.READ_MORE) { showAll = true }
                             }
@@ -167,11 +167,11 @@ object Tooltip {
                         if (showAll) {
                             Spacer(Modifier.height(TOOLTIP_SPACE))
                             Separator.Horizontal()
-                            state.args.description?.let {
+                            state.arg.description?.let {
                                 Spacer(Modifier.height(TOOLTIP_SPACE))
                                 Text(value = it, softWrap = true)
                             }
-                            state.args.url?.let {
+                            state.arg.url?.let {
                                 Spacer(Modifier.height(TOOLTIP_SPACE))
                                 TextURL(it, text = Label.LEARN_MORE)
                             }

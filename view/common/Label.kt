@@ -62,6 +62,7 @@ object Label {
     const val INTERACTIVE_MODE = "Interactive Mode"
     const val LEARN_MORE = "Learn More"
     const val LOG = "Log"
+    const val MANAGE_DATABASES = "Manage Databases"
     const val MOVE = "Move"
     const val MOVE_DIRECTORY = "Move Directory"
     const val NEXT_OCCURRENCE = "Next Occurrence"

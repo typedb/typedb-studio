@@ -67,7 +67,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
                 onClick = { GlobalState.connection.connectServerDialog.open() },
-                leadingIcon = Icon.Code.DATABASE
+                leadingIcon = Icon.Code.SERVER
             )
         }
     }

@@ -97,6 +97,7 @@ object Icon {
         ROTATE(0xf2f1u),
         ROTATE_LEFT(0xf2eau),
         RIGHT_LEFT(0xf362u),
+        SERVER(0xf233u),
         SITEMAP(0xf0e8u),
         SQUARE_BOLT(0xe265u, 13.sp),
         STOP(0xf04du, 13.sp),

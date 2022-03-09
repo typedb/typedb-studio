@@ -61,7 +61,7 @@ object DatabaseDialog {
             placeholder = Label.SELECT_DATABASE,
             enabled = GlobalState.connection.isInteractiveMode,
             modifier = modifier,
-            tooltip = Tooltip.Args(
+            tooltip = Tooltip.Arg(
                 title = Label.SELECT_DATABASE,
                 description = Sentence.SELECT_DATABASE_DESCRIPTION
             )
