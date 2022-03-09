@@ -85,7 +85,7 @@ object Toolbar {
             VerticalSeparator()
             Run.Buttons()
             Spacer(Modifier.weight(1f))
-            DBConnection.Buttons()
+            Major.Buttons()
         }
     }
 
@@ -403,7 +403,7 @@ object Toolbar {
         }
     }
 
-    object DBConnection {
+    object Major {
 
         private val connectionName
             get() = (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
@@ -411,8 +411,8 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            ToolbarSpace()
-            ModeButtons()
+//            ToolbarSpace()
+//            ModeButtons() // TODO
             ToolbarSpace()
             ConnectionButton()
             ToolbarSpace()

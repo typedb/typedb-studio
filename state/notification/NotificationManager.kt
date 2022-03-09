@@ -23,16 +23,35 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.notification.Notification.Type.SUCCESS
 import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import mu.KLogger
 
 class NotificationManager {
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
         queue += Notification(INFO, message.code(), stringOf(message, *params))
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun success(logger: KLogger, message: Message, vararg params: Any) {
+        logger.info { message }
+        val notification = Notification(SUCCESS, message.code(), stringOf(message, *params))
+        queue += notification
+        coroutineScope.launch {
+            delay(Duration.seconds(5))
+            dismiss(notification)
+        }
     }
 
     fun userError(logger: KLogger, message: Message, vararg params: Any) {
@@ -52,8 +71,8 @@ class NotificationManager {
         systemNotification(logger, cause, ERROR, message.code(), stringOf(message, *params))
     }
 
-    fun dismiss(message: Notification) {
-        queue -= message
+    fun dismiss(notification: Notification) {
+        queue -= notification
     }
 
     fun dismissAll() {
@@ -70,8 +89,7 @@ class NotificationManager {
     }
 
     private fun systemNotification(
-        logger: KLogger, cause: Throwable, type: Notification.Type,
-        code: String, message: String
+        logger: KLogger, cause: Throwable, type: Notification.Type, code: String, message: String
     ) {
         when (type) {
             INFO -> logger.info { message }

@@ -37,6 +37,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.notification.Notification
 import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.notification.Notification.Type.SUCCESS
 import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -110,6 +111,7 @@ object NotificationArea {
     @Composable
     private fun colorArgsOf(type: Notification.Type): ColorArgs {
         return when (type) {
+            SUCCESS -> ColorArgs(Theme.colors.secondary, Theme.colors.onSecondary)
             INFO -> ColorArgs(Theme.colors.border, Theme.colors.onSurface)
             WARNING -> ColorArgs(Theme.colors.quaternary, Theme.colors.onSecondary)
             ERROR -> ColorArgs(Theme.colors.error, Theme.colors.onError)
