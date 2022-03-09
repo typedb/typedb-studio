@@ -339,7 +339,7 @@ object Toolbar {
         private fun RollbackButton(enabled: Boolean) {
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE_LEFT,
-                onClick = { GlobalState.connection.current?.transaction?.rollback() },
+                onClick = { GlobalState.connection.current?.rollbackTransaction() },
                 color = Theme.colors.quaternary2,
                 enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Args(
@@ -354,7 +354,7 @@ object Toolbar {
         private fun CommitButton(enabled: Boolean) {
             ToolbarIconButton(
                 icon = Icon.Code.CHECK,
-                onClick = { GlobalState.connection.current?.transaction?.commit() },
+                onClick = { GlobalState.connection.current?.commitTransaction() },
                 color = Theme.colors.secondary,
                 enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Args(

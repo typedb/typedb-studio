@@ -44,7 +44,7 @@ object Icon {
 
     enum class Code(
         hexcode: UShort,
-        val defaultSize: TextUnit = ICON_DEFAULT_SIZE,
+        val size: TextUnit = ICON_DEFAULT_SIZE,
         val offset: Offset = Offset(0.dp, 0.dp),
         val rotate: Float = 0f,
     ) {
@@ -105,7 +105,7 @@ object Icon {
         TRASH_CAN(0xf2edu),
         USER(0xf007u),
         USER_GROUP(0xf500u),
-        XMARK(0xf00du);
+        XMARK(0xf00du, 13.sp);
 
         val unicode: String = Char(hexcode).toString()
     }
@@ -116,7 +116,7 @@ object Icon {
         icon: Code,
         color: Color = Theme.colors.icon,
         disabledColor: Color? = null,
-        size: TextUnit = icon.defaultSize,
+        size: TextUnit = icon.size,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {

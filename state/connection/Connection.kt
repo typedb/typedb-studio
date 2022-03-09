@@ -25,6 +25,9 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_TRANSACTION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_RUN_QUERY
@@ -53,7 +56,6 @@ class Connection internal constructor(
     val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
-    var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -63,6 +65,7 @@ class Connection internal constructor(
     var hasOpenTransaction: Boolean by mutableStateOf(false)
     var hasRunningCommand by mutableStateOf(false)
     val hasStopSignal = AtomicBoolean(false)
+    private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
@@ -114,7 +117,8 @@ class Connection internal constructor(
                 hasStopSignal.set(false)
                 mayOpenTransaction()
                 resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
-                    if (!config.snapshot || !transaction!!.isOpen) closeTransaction()
+                    if (!config.snapshot) closeTransaction()
+                    else if (!transaction!!.isOpen) closeTransaction(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)
                     hasRunningCommand = false
                 }
@@ -145,11 +149,26 @@ class Connection internal constructor(
         session?.let { it.close(); session = null }
     }
 
-    fun closeTransaction() {
+    fun closeTransaction(message: Message? = null, vararg params: Any) {
         sendStopSignal()
         transaction?.close()
         transaction = null
         hasOpenTransaction = false
+        message?.let { notificationMgr.userError(LOGGER, message, params) }
+    }
+
+    fun rollbackTransaction() {
+        sendStopSignal()
+        transaction?.rollback()
+        notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
+    }
+
+    fun commitTransaction() {
+        sendStopSignal()
+        transaction?.commit()
+        transaction = null
+        hasOpenTransaction = false
+        notificationMgr.userWarning(LOGGER, Message.Connection.TRANSACTION_COMMIT)
     }
 
     internal fun close() {

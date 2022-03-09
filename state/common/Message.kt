@@ -83,6 +83,12 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(4, "Unable to open transaction: %s")
             val UNABLE_TO_RUN_QUERY =
                 Connection(5, "Unable to run query: %s")
+            val TRANSACTION_CLOSED_IN_QUERY =
+                Connection(6, "Transaction was closed to an error in the query.")
+            val TRANSACTION_ROLLBACK =
+                Connection(7, "Transaction has been rolled back the opened snapshot, and all uncommitted writes have been deleted.")
+            val TRANSACTION_COMMIT =
+                Connection(8, "Transaction has been committed and closed -- all writes have been persisted.")
         }
     }
 
