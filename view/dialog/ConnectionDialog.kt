@@ -31,11 +31,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Property.Server.TYPEDB
@@ -57,8 +53,8 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object ConnectionDialog {
 
-    private val CONNECT_SERVER_WINDOW_WIDTH = 500.dp
-    private val CONNECT_SERVER_WINDOW_HEIGHT = 340.dp
+    private val WIDTH = 500.dp
+    private val HEIGHT = 340.dp
 
     private object ConnectServerForm : Form.State {
         // We keep this static to maintain the values through application lifetime,
@@ -95,13 +91,9 @@ object ConnectionDialog {
 
     @Composable
     fun ConnectServer() {
-        Dialog(
-            title = Label.CONNECT_TO_TYPEDB,
-            onCloseRequest = { GlobalState.connection.connectServerDialog.close() },
-            state = rememberDialogState(
-                position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(CONNECT_SERVER_WINDOW_WIDTH, CONNECT_SERVER_WINDOW_HEIGHT)
-            )
+        Dialog.Layout(
+            GlobalState.connection.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT,
+            { GlobalState.connection.connectServerDialog.close() }
         ) {
             Submission(state = ConnectServerForm) {
                 ServerFormField()

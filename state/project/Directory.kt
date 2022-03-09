@@ -91,7 +91,7 @@ class Directory internal constructor(
         else File(it, this, settings, projectMgr, notificationMgr)
     }
 
-    fun nexUntitledDirName(): String {
+    fun nextUntitledDirName(): String {
         var counter = 1
         reloadEntries()
         while (entries.filter { it.name == UNTITLED + counter }.isNotEmpty()) counter++

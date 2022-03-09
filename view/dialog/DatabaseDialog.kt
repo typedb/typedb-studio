@@ -24,11 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
@@ -37,20 +33,13 @@ import com.vaticle.typedb.studio.view.common.component.Tooltip
 
 object DatabaseDialog {
 
-    private val SELECT_DB_WINDOW_WIDTH = 400.dp
-    private val SELECT_DB_WINDOW_HEIGHT = 200.dp
+    private val WIDTH = 400.dp
+    private val HEIGHT = 200.dp
 
     @Composable
     fun SelectDatabase() {
         val selectDBDialog = GlobalState.connection.selectDatabaseDialog
-        Dialog(
-            title = Label.SELECT_DATABASE,
-            onCloseRequest = { selectDBDialog.close() },
-            state = rememberDialogState(
-                position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(SELECT_DB_WINDOW_WIDTH, SELECT_DB_WINDOW_HEIGHT)
-            )
-        ) {
+        Dialog.Layout(selectDBDialog, Label.SELECT_DATABASE, WIDTH, HEIGHT, { selectDBDialog.close() }) {
             Form.Submission {
                 Form.Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
                 Spacer(Modifier.weight(1f))

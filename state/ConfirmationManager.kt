@@ -25,7 +25,7 @@ import com.vaticle.typedb.studio.state.common.DialogManager
 
 class ConfirmationManager: DialogManager() {
 
-    var title: String? by mutableStateOf(null); private set
+    var title: String? by mutableStateOf(null)
     var message: String? by mutableStateOf(null); private set
     var rejectLabel: String? by mutableStateOf(null); private set
     var confirmLabel: String? by mutableStateOf(null); private set
