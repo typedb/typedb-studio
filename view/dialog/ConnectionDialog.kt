@@ -91,10 +91,8 @@ object ConnectionDialog {
 
     @Composable
     fun ConnectServer() {
-        Dialog.Layout(
-            GlobalState.connection.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT,
-            { GlobalState.connection.connectServerDialog.close() }
-        ) {
+        val dialogState = GlobalState.connection.connectServerDialog
+        Dialog.Layout(dialogState, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
             Submission(state = ConnectServerForm) {
                 ServerFormField()
                 AddressFormField()

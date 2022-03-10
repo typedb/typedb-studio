@@ -41,20 +41,20 @@ object ConfirmationDialog {
 
     @Composable
     fun Layout() {
-        val state = GlobalState.confirmation
-        Dialog.Layout(state, state.title!!, WIDTH, HEIGHT, { state.close() }) {
+        val dialogState = GlobalState.confirmation
+        Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {
             Column(Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)) {
-                state.message?.let { Form.Text(value = it, softWrap = true) }
+                dialogState.message?.let { Form.Text(value = it, softWrap = true) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CANCEL, onClick = { state.close() })
+                    Form.TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
                     Form.ComponentSpacer()
-                    if (state.hasReject) {
-                        Form.TextButton(text = state.rejectLabel ?: "", onClick = { state.reject() })
+                    if (dialogState.hasReject) {
+                        Form.TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })
                         Form.ComponentSpacer()
                     }
-                    Form.TextButton(text = state.confirmLabel ?: Label.CONFIRM, onClick = { state.confirm() })
+                    Form.TextButton(text = dialogState.confirmLabel ?: Label.CONFIRM, onClick = { dialogState.confirm() })
                 }
             }
         }

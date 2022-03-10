@@ -38,14 +38,14 @@ object DatabaseDialog {
 
     @Composable
     fun SelectDatabase() {
-        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
-        Dialog.Layout(selectDBDialog, Label.SELECT_DATABASE, WIDTH, HEIGHT, { selectDBDialog.close() }) {
+        val dialogState = GlobalState.connection.selectDatabaseDialog
+        Dialog.Layout(dialogState, Label.SELECT_DATABASE, WIDTH, HEIGHT) {
             Form.Submission {
                 Form.Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CLOSE, onClick = { selectDBDialog.close() })
+                    Form.TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
                 }
             }
         }

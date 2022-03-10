@@ -58,12 +58,11 @@ object Dialog {
 
     @Composable
     fun Layout(
-        state: DialogManager, title: String, width: Dp, height: Dp, onClose: () -> Unit,
-        content: @Composable DialogWindowScope.() -> Unit
+        state: DialogManager, title: String, width: Dp, height: Dp, content: @Composable (DialogWindowScope.() -> Unit)
     ) {
         val focusReq = FocusRequester()
         Dialog(
-            title = title, onCloseRequest = onClose, state = rememberDialogState(
+            title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
                 size = DpSize(width, height)
             )

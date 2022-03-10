@@ -134,7 +134,7 @@ object ProjectDialog {
     private fun SelectDirectoryDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT, { formState.onCancel }) {
+        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
             Submission(state = formState) {
                 Form.Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title)
@@ -271,7 +271,7 @@ object ProjectDialog {
     private fun ProjectItemNamingDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT, formState.onCancel) {
+        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT) {
             Submission(state = formState) {
                 Form.Text(value = message, softWrap = true)
                 ProjectItemNamingField(formState.field) { formState.field = it }
