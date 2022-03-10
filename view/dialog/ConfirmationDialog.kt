@@ -18,12 +18,10 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.component.Form.FormSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 
 object ConfirmationDialog {
 
@@ -43,18 +42,18 @@ object ConfirmationDialog {
     fun Layout() {
         val dialogState = GlobalState.confirmation
         Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {
-            Column(Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)) {
+            Column(Modifier.fillMaxSize()) {
                 dialogState.message?.let { Form.Text(value = it, softWrap = true) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
-                    Form.ComponentSpacer()
+                    TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
+                    FormSpacer()
                     if (dialogState.hasReject) {
-                        Form.TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })
-                        Form.ComponentSpacer()
+                        TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })
+                        FormSpacer()
                     }
-                    Form.TextButton(text = dialogState.confirmLabel ?: Label.CONFIRM, onClick = { dialogState.confirm() })
+                    TextButton(text = dialogState.confirmLabel ?: Label.CONFIRM, onClick = { dialogState.confirm() })
                 }
             }
         }

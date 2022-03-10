@@ -18,8 +18,10 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -38,6 +40,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.state.common.DialogManager
 import com.vaticle.typedb.studio.view.common.KeyMapper
+import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Dialog {
 
@@ -67,7 +70,8 @@ object Dialog {
                 size = DpSize(width, height)
             )
         ) {
-            Box(Modifier.focusRequester(focusReq).focusable().onKeyEvent { handleKeyEvent(it, state) }) {
+            Box(Modifier.background(Theme.colors.background).padding(Theme.DIALOG_PADDING)
+                .focusRequester(focusReq).focusable().onKeyEvent { handleKeyEvent(it, state) }) {
                 content()
             }
         }

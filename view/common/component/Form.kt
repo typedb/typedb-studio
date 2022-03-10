@@ -150,16 +150,17 @@ object Form {
     }
 
     @Composable
-    fun Submission(state: State? = null, content: @Composable() (ColumnScope.() -> Unit)) {
+    fun Submission(state: State, content: @Composable() (ColumnScope.() -> Unit)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(Theme.DIALOG_PADDING)
-                .onKeyEvent { onKeyEvent(event = it, onEnter = { state?.trySubmitIfValid() }) }
+            modifier = Modifier.fillMaxSize().onKeyEvent {
+                onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() })
+            }
         ) { content() }
     }
 
     @Composable
-    fun ComponentSpacer() {
+    fun FormSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 

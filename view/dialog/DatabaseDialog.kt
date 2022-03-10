@@ -18,8 +18,10 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,24 +30,26 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
-import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
+import com.vaticle.typedb.studio.view.common.component.Form.Field
+import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 
 object DatabaseDialog {
 
-    private val WIDTH = 400.dp
-    private val HEIGHT = 200.dp
+    private val SELECTOR_WIDTH = 400.dp
+    private val SELECTOR_HEIGHT = 200.dp
 
     @Composable
     fun SelectDatabase() {
         val dialogState = GlobalState.connection.selectDatabaseDialog
-        Dialog.Layout(dialogState, Label.SELECT_DATABASE, WIDTH, HEIGHT) {
-            Form.Submission {
-                Form.Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
+        Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
+            Column(Modifier.fillMaxSize()) {
+                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    Form.TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
+                    TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
                 }
             }
         }
@@ -53,7 +57,7 @@ object DatabaseDialog {
 
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier) {
-        Form.Dropdown(
+        Dropdown(
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
             selected = GlobalState.connection.current?.database,
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
