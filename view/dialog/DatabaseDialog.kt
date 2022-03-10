@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,20 +32,19 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.view.common.component.ActionList
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.Field
-import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.ActionList
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.Dialog.DIALOG_SPACING
 
 object DatabaseDialog {
 
-    private val MANAGER_BUTTON_SIZE = 24.dp
     private val MANAGER_WIDTH = 400.dp
     private val MANAGER_HEIGHT = 400.dp
     private val SELECTOR_WIDTH = 400.dp
@@ -62,20 +60,20 @@ object DatabaseDialog {
                 ActionList.Layout(
                     items = GlobalState.connection.current!!.databaseList,
                     settingSide = ActionList.Side.RIGHT,
-                    modifier = Modifier.fillMaxWidth().weight(1f).border(1.dp, Theme.colors.border)
-                ) {
-                    IconButton(
-                        icon = Icon.Code.TRASH_CAN,
-                        modifier = Modifier.size(MANAGER_BUTTON_SIZE),
-                        onClick = {
-                            GlobalState.confirmation.submit(
-                                title = Label.DELETE_DATABASE,
-                                message = Sentence.CONFIRM_DATABASE_DELETION.format(it),
-                                onConfirm = { GlobalState.connection.current!!.deleteDatabase(it) }
-                            )
-                        }
-                    )
-                }
+                    modifier = Modifier.fillMaxWidth().weight(1f).border(1.dp, Theme.colors.border),
+                    buttonFn = {
+                        ButtonArg(
+                            icon = Icon.Code.TRASH_CAN,
+                            onClick = {
+                                GlobalState.confirmation.submit(
+                                    title = Label.DELETE_DATABASE,
+                                    message = Sentence.CONFIRM_DATABASE_DELETION.format(it),
+                                    onConfirm = { GlobalState.connection.current!!.deleteDatabase(it) }
+                                )
+                            }
+                        )
+                    }
+                )
                 Spacer(Modifier.height(DIALOG_SPACING))
             }
         }

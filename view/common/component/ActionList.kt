@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -39,12 +40,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
 object ActionList {
 
     private val ITEM_HEIGHT = 34.dp
+    private val BUTTON_SIZE = 24.dp
 
     enum class Side { LEFT, RIGHT }
 
@@ -54,7 +57,7 @@ object ActionList {
         settingSide: Side,
         modifier: Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
-        itemSetting: @Composable (T) -> Unit
+        buttonFn: (T) -> Form.ButtonArg
     ) {
         @Composable
         fun Separator() {
@@ -63,13 +66,13 @@ object ActionList {
 
         Row(modifier.verticalScroll(rememberScrollState())) {
             if (settingSide == Side.LEFT) {
-                SettingColumn(items, itemHeight, itemSetting)
+                SettingColumn(items, itemHeight, buttonFn)
                 Separator()
             }
             NameColumn(Modifier.weight(1f), items, itemHeight)
             if (settingSide == Side.RIGHT) {
                 Separator()
-                SettingColumn(items, itemHeight, itemSetting)
+                SettingColumn(items, itemHeight, buttonFn)
             }
         }
     }
@@ -102,11 +105,12 @@ object ActionList {
     }
 
     @Composable
-    private fun <T : Any> SettingColumn(items: List<T>, itemHeight: Dp, itemSetting: @Composable (T) -> Unit) {
+    private fun <T : Any> SettingColumn(items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.ButtonArg) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {
             items.forEachIndexed { i, item ->
+                val button = buttonFn(item)
                 Row(
                     Modifier.height(itemHeight)
                         .defaultMinSize(minWidth = minWidth)
@@ -115,7 +119,11 @@ object ActionList {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     FormRowSpacer()
-                    itemSetting(item)
+                    IconButton(
+                        icon = button.icon,
+                        modifier = Modifier.size(BUTTON_SIZE),
+                        onClick = button.onClick
+                    )
                     FormRowSpacer()
                 }
             }
