@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.dialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +36,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 object ConfirmationDialog {
 
     // The height has to be increased manually when we have longer messages to display
-    private val HEIGHT = 140.dp
+    private val HEIGHT = 180.dp
     private val WIDTH = 500.dp
 
     @Composable
@@ -45,7 +46,7 @@ object ConfirmationDialog {
             Column(Modifier.fillMaxSize()) {
                 dialogState.message?.let { Form.Text(value = it, softWrap = true) }
                 Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
+                Row(Modifier.defaultMinSize(minHeight = Form.FIELD_HEIGHT), verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
                     FormRowSpacer()

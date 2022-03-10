@@ -106,16 +106,16 @@ import kotlinx.coroutines.launch
 
 object Form {
 
+    val FIELD_HEIGHT = 28.dp
+    internal val BORDER_WIDTH = 1.dp
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
     private val INNER_SPACING = 10.dp
     private val FIELD_SPACING = 12.dp
-    private val FIELD_HEIGHT = 28.dp
     private val TRAILING_ICON_SIZE = 12.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
     private val ICON_SPACING = 6.dp
-    internal val BORDER_WIDTH = 1.dp
     private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)

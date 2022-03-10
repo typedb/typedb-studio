@@ -42,7 +42,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 
-object SettingsList {
+object ActionList {
 
     private val ITEM_HEIGHT = 34.dp
 
@@ -58,10 +58,7 @@ object SettingsList {
     ) {
         @Composable
         fun Separator() {
-            Separator.Vertical(
-                color = Theme.colors.background1,
-                modifier = Modifier.height(itemHeight * items.size)
-            )
+            Separator.Vertical(2.dp, Theme.colors.background1, Modifier.height(itemHeight * items.size))
         }
 
         Row(modifier.verticalScroll(rememberScrollState())) {

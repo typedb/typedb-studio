@@ -39,7 +39,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Field
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.SettingsList
+import com.vaticle.typedb.studio.view.common.component.ActionList
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.Dialog.DIALOG_SPACING
@@ -59,9 +59,9 @@ object DatabaseDialog {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(DIALOG_SPACING))
-                SettingsList.Layout(
+                ActionList.Layout(
                     items = GlobalState.connection.current!!.databaseList,
-                    settingSide = SettingsList.Side.RIGHT,
+                    settingSide = ActionList.Side.RIGHT,
                     modifier = Modifier.fillMaxWidth().weight(1f).border(1.dp, Theme.colors.border)
                 ) {
                     IconButton(
