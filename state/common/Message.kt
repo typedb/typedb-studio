@@ -76,19 +76,24 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val UNEXPECTED_ERROR =
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
             val UNABLE_TO_CONNECT =
-                Connection(2, "Unable to connect to TypeDB server with the provided address and credentials.")
-            val UNABLE_TO_OPEN_SESSION =
-                Connection(3, "Unable to establish session to database '%s'.")
-            val UNABLE_TO_OPEN_TRANSACTION =
-                Connection(4, "Unable to open transaction: %s")
-            val UNABLE_TO_RUN_QUERY =
-                Connection(5, "Unable to run query: %s")
+                Connection(2, "Failed to connect to TypeDB server with the provided address and credentials.")
+            val FAILED_TO_OPEN_SESSION =
+                Connection(3, "Failed to establish session to database '%s'.")
+            val FAILED_TO_OPEN_TRANSACTION =
+                Connection(4, "Failed to open transaction: %s")
+            val FAILED_TO_RUN_QUERY =
+                Connection(5, "Failed to run query: %s")
             val TRANSACTION_CLOSED_IN_QUERY =
                 Connection(6, "Transaction was closed due to an error in the query.")
             val TRANSACTION_ROLLBACK =
-                Connection(7, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
+                Connection(
+                    7,
+                    "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted."
+                )
             val TRANSACTION_COMMIT =
                 Connection(8, "Transaction has been committed and closed -- all writes have been persisted.")
+            val FAILED_TO_DELETE_DATABASE =
+                Connection(9, "Failed to delete database '%s' due to: '%s'.")
         }
     }
 

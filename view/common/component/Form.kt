@@ -160,7 +160,7 @@ object Form {
     }
 
     @Composable
-    fun FormSpacer() {
+    fun FormRowSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 

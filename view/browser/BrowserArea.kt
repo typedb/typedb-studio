@@ -67,6 +67,7 @@ object BrowserArea {
     internal class State constructor(private val paneState: Frame.PaneState) {
 
         private var unfreezeSize: Dp by mutableStateOf(MIN_WIDTH)
+        internal val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }
         internal val browsers = listOf(
             ProjectBrowser(this, 1, true),
             TypeBrowser(this, 2, true),
@@ -75,12 +76,8 @@ object BrowserArea {
             RoleBrowser(this, 5)
         )
 
-        fun openedBrowsers(): List<Browser> {
-            return browsers.filter { it.isOpen }
-        }
-
         fun mayUpdatePaneState() {
-            if (openedBrowsers().isEmpty()) {
+            if (openedBrowsers.isEmpty()) {
                 unfreezeSize = paneState.size
                 paneState.freeze(SIDE_TAB_WIDTH)
             } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
@@ -90,7 +87,7 @@ object BrowserArea {
     @Composable
     fun Layout(paneState: Frame.PaneState) {
         val state = remember { State(paneState) }
-        val openedBrowsers = state.openedBrowsers()
+        val openedBrowsers = state.openedBrowsers
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
                 state.browsers.forEach { Tab(it) }
@@ -117,7 +114,7 @@ object BrowserArea {
     @Composable
     private fun Tab(browser: Browser) {
         @Composable
-        fun bgColor(): Color = if (browser.isOpen) Theme.colors.surface else Theme.colors.background2
+        fun bgColor(): Color = if (browser.isOpen) Theme.colors.surface else Theme.colors.background0
         Box(
             modifier = Modifier
                 .fillMaxWidth()

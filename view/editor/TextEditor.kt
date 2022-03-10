@@ -322,7 +322,7 @@ object TextEditor {
     private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp) {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
-        val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background
+        val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background1
         val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
         Box(
             contentAlignment = Alignment.TopEnd,
@@ -337,14 +337,13 @@ object TextEditor {
     @Composable
     private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, showLine: Boolean) {
         val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
-
         Box(modifier = Modifier.onGloballyPositioned {
             state.updateAreaWidth(it.size.width)
             state.target.updateTextArea(it.boundsInWindow())
         }) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .background(Theme.colors.background2)
+                    .background(Theme.colors.background0)
                     .horizontalScroll(state.target.horScroller)
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
@@ -374,7 +373,7 @@ object TextEditor {
         val selection = state.target.selection
         val bgColor = when {
             showLine && cursor.row == index && selection == null -> Theme.colors.primary
-            else -> Theme.colors.background2
+            else -> Theme.colors.background0
         }
         Box(
             contentAlignment = Alignment.TopStart,
@@ -445,7 +444,7 @@ object TextEditor {
                 Text(
                     text.getOrNull(cursor.col)?.toString() ?: "",
                     Modifier.offset(y = -CURSOR_LINE_PADDING),
-                    style = font.copy(Theme.colors.background2)
+                    style = font.copy(Theme.colors.background0)
                 )
             }
         }

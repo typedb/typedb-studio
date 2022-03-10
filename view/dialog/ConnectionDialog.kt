@@ -44,7 +44,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Checkbox
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.Field
-import com.vaticle.typedb.studio.view.common.component.Form.FormSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
@@ -215,7 +215,7 @@ object ConnectionDialog {
     @Composable
     private fun DisconnectedFormButtons() {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.connectServerDialog.close() })
-        FormSpacer()
+        FormRowSpacer()
         TextButton(
             text = Label.CONNECT,
             onClick = { ConnectServerForm.trySubmit() },
@@ -231,7 +231,7 @@ object ConnectionDialog {
             onClick = { GlobalState.connection.disconnect() },
             textColor = Theme.colors.error2
         )
-        FormSpacer()
+        FormRowSpacer()
         TextButton(text = Label.CLOSE, onClick = { GlobalState.connection.connectServerDialog.close() })
     }
 
@@ -239,7 +239,7 @@ object ConnectionDialog {
     @Composable
     private fun ConnectingFormButtons() {
         TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.disconnect() })
-        FormSpacer()
+        FormRowSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
     }
 }

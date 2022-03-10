@@ -26,11 +26,12 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_SESSION
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_OPEN_TRANSACTION
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.Runner
@@ -90,13 +91,13 @@ class Connection internal constructor(
         try {
             session = client.session(database, type)
         } catch (exception: TypeDBClientException) {
-            notificationMgr.userError(LOGGER, UNABLE_TO_OPEN_SESSION, database)
+            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, database)
         }
     }
 
     fun refreshDatabaseList() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
-        client.let { c -> databaseList = c.databases().all().map { d -> d.name() } }
+        client.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
@@ -123,7 +124,7 @@ class Connection internal constructor(
                     hasRunningCommand = false
                 }
             } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, UNABLE_TO_RUN_QUERY, e.message ?: e)
+                notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
                 hasRunningCommand = false
             }
         }
@@ -135,9 +136,19 @@ class Connection internal constructor(
                 transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
                 hasOpenTransaction = true
             } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, UNABLE_TO_OPEN_TRANSACTION)
+                notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION)
                 hasOpenTransaction = false
             }
+        }
+    }
+
+    fun deleteDatabase(database: String) {
+        try {
+            if (this.database == database) closeSession()
+            client.databases().get(database).delete()
+            refreshDatabaseList()
+        } catch (e: Exception) {
+            notificationMgr.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
     }
 

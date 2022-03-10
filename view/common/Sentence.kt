@@ -38,6 +38,8 @@ object Sentence {
                 "(such as a TypeQL file), and no running script/query."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
+    const val CONFIRM_DATABASE_DELETION =
+        "Are you sure you would like to delete the database '%s' and all of its content?"
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content?"
     const val CONFIRM_FILE_DELETION =
@@ -69,6 +71,9 @@ object Sentence {
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED
+    const val MANAGE_DATABASES_MESSAGE =
+        "Below is the list of databases on the TypeDB Server. You can delete them individually, and create new ones. " +
+                "This action cannot be undone."
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
     const val RENAME_FILE =

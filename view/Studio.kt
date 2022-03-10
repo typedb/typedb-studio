@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.ConfirmationDialog
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
+import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
 import javax.swing.UIManager
@@ -113,7 +114,7 @@ object Studio {
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background)) {
+                Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background1)) {
                     Toolbar.Layout()
                     Separator.Horizontal()
                     Frame.Row(
@@ -136,6 +137,8 @@ object Studio {
                 if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
                 if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
                 if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
+                if (GlobalState.connection.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
+                if (GlobalState.connection.selectDatabaseDialog.isOpen) DatabaseDialog.SelectDatabase()
                 if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
                 if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
                 if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()
@@ -157,7 +160,7 @@ object Studio {
                 size = DpSize(ERROR_WINDOW_WIDTH, ERROR_WINDOW_HEIGHT),
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background).padding(5.dp)) {
+            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background1).padding(5.dp)) {
                 val rowVerticalAlignment = Alignment.Top
                 val rowModifier = Modifier.padding(5.dp)
                 val labelModifier = Modifier.width(40.dp)

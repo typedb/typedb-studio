@@ -45,7 +45,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Field
-import com.vaticle.typedb.studio.view.common.component.Form.FormSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
@@ -85,7 +85,7 @@ object ProjectDialog {
     @Composable
     private fun ProjectDialogButtons(form: ProjectItemForm, submitLabel: String) {
         TextButton(text = Label.CANCEL, onClick = { form.onCancel() })
-        FormSpacer()
+        FormRowSpacer()
         TextButton(text = submitLabel, onClick = { form.trySubmit() }, enabled = form.isValid())
     }
 
@@ -158,7 +158,7 @@ object ProjectDialog {
                     onValueChange = { state.field = it },
                     modifier = Modifier.fillMaxHeight().weight(1f),
                 )
-                FormSpacer()
+                FormRowSpacer()
                 Form.IconButton(
                     icon = Icon.Code.FOLDER_OPEN,
                     onClick = { launchDirectorySelector(state, window, title) },

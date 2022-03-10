@@ -88,7 +88,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
     private fun OpenProjectHelper() {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.background2)
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,

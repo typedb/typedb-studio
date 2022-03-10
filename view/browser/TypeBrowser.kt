@@ -37,7 +37,6 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 
 internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boolean = false) :
     Browser(state, order, initOpen) {
@@ -62,7 +61,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     private fun ConnectToServerHelper() {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.background2)
         ) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
@@ -76,7 +75,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     private fun NonInteractiveModeMessage() {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.background2)
         ) {
             Form.Text(
                 value = Sentence.TYPE_BROWSER_ONLY_INTERACTIVE,
@@ -89,17 +88,15 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     @Composable
     private fun SelectDBHelper() {
-        val selectDBDialog = GlobalState.connection.selectDatabaseDialog
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.colors.disabled)
+            modifier = Modifier.fillMaxSize().background(color = Theme.colors.background2)
         ) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                onClick = { selectDBDialog.open() },
+                onClick = { GlobalState.connection.selectDatabaseDialog.open() },
                 leadingIcon = Icon.Code.DATABASE
             )
         }
-        if (selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
     }
 }

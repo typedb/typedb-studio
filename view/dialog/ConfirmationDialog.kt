@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.FormSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 
 object ConfirmationDialog {
@@ -48,10 +48,10 @@ object ConfirmationDialog {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
-                    FormSpacer()
+                    FormRowSpacer()
                     if (dialogState.hasReject) {
                         TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })
-                        FormSpacer()
+                        FormRowSpacer()
                     }
                     TextButton(text = dialogState.confirmLabel ?: Label.CONFIRM, onClick = { dialogState.confirm() })
                 }

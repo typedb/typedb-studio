@@ -43,6 +43,7 @@ object Label {
     const val CUT = "Cut"
     const val DATA_SESSION = "Data Session"
     const val DELETE = "Delete"
+    const val DELETE_DATABASE = "Delete Database"
     const val DIRECTORY = "Directory"
     const val DIRECTORY_NAME = "Directory Name"
     const val DISCONNECT = "Disconnect"

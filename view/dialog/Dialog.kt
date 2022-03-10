@@ -34,6 +34,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.WindowPosition
@@ -43,6 +44,8 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Dialog {
+
+    internal val DIALOG_SPACING = 16.dp
 
     private fun handleKeyEvent(event: KeyEvent, state: DialogManager): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
@@ -70,7 +73,7 @@ object Dialog {
                 size = DpSize(width, height)
             )
         ) {
-            Box(Modifier.background(Theme.colors.background).padding(Theme.DIALOG_PADDING)
+            Box(Modifier.background(Theme.colors.background1).padding(Theme.DIALOG_PADDING)
                 .focusRequester(focusReq).focusable().onKeyEvent { handleKeyEvent(it, state) }) {
                 content()
             }

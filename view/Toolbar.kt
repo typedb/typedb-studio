@@ -175,7 +175,6 @@ object Toolbar {
                 )
             )
         }
-
     }
 
     object Database {
@@ -193,7 +192,10 @@ object Toolbar {
         private fun ManageDatabasesButton() {
             ToolbarIconButton(
                 icon = Icon.Code.DATABASE,
-                onClick = {},
+                onClick = {
+                    GlobalState.connection.current!!.refreshDatabaseList()
+                    GlobalState.connection.manageDatabasesDialog.open()
+                },
                 enabled = isConnected,
                 tooltip = Tooltip.Arg(
                     title = Label.MANAGE_DATABASES,
