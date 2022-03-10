@@ -215,17 +215,14 @@ class File internal constructor(
         coroutineScope.launch {
             try {
                 do {
-                    if (!path.exists() || !path.isReadable()) close()
+                    val isReadable = path.isReadable()
+                    val isWritable = path.isWritable()
+                    if (!path.exists() || !isReadable) close()
                     else {
-                        var permissionChanged = false
-                        if (isReadableAtomic.compareAndSet(!path.isReadable(), path.isReadable())) {
-                            permissionChanged = true
-                        }
-                        if (isWritableAtomic.compareAndSet(!path.isWritable(), path.isWritable())) {
-                            permissionChanged = true
-                        }
-                        if (permissionChanged) onDiskChangePermission.forEach { it(this@File) }
-                        if (lastModified.get() < path.toFile().lastModified()) {
+                        if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
+                            || isWritableAtomic.compareAndSet(!isWritable, isWritable)
+                        ) onDiskChangePermission.forEach { it(this@File) }
+                        if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
                             lastModified.set(path.toFile().lastModified())
                             onDiskChangeContent.forEach { it(this@File) }
                         }
@@ -284,8 +281,10 @@ class File internal constructor(
 
     private fun saveContent() {
         beforeSave.forEach { it(this) }
-        Files.write(path, content)
-        lastModified.set(System.currentTimeMillis())
+        synchronized(this) {
+            Files.write(path, content)
+            lastModified.set(path.toFile().lastModified())
+        }
         hasUnsavedChanges = false
     }
 
