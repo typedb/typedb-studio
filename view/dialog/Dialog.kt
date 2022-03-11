@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -27,7 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -64,9 +62,9 @@ object Dialog {
 
     @Composable
     fun Layout(
-        state: DialogManager, title: String, width: Dp, height: Dp, content: @Composable (DialogWindowScope.() -> Unit)
+        state: DialogManager, title: String, width: Dp, height: Dp, focusReq: FocusRequester,
+        content: @Composable (DialogWindowScope.() -> Unit)
     ) {
-        val focusReq = FocusRequester()
         Dialog(
             title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
                 position = WindowPosition.Aligned(Alignment.Center),
@@ -74,7 +72,7 @@ object Dialog {
             )
         ) {
             Box(Modifier.background(Theme.colors.background1).padding(Theme.DIALOG_PADDING)
-                .focusRequester(focusReq).focusable().onKeyEvent { handleKeyEvent(it, state) }) {
+                .onKeyEvent { handleKeyEvent(it, state) }) {
                 content()
             }
         }

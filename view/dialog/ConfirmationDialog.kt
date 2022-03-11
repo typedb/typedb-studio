@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
@@ -42,13 +45,18 @@ object ConfirmationDialog {
     @Composable
     fun Layout() {
         val dialogState = GlobalState.confirmation
-        Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT, focusReq) {
             Column(Modifier.fillMaxSize()) {
                 dialogState.message?.let { Form.Text(value = it, softWrap = true) }
                 Spacer(Modifier.weight(1f))
                 Row(Modifier.defaultMinSize(minHeight = Form.FIELD_HEIGHT), verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.CANCEL, onClick = { dialogState.close() })
+                    TextButton(
+                        text = Label.CANCEL,
+                        onClick = { dialogState.close() },
+                        modifier = Modifier.focusRequester(focusReq).focusable()
+                    )
                     FormRowSpacer()
                     if (dialogState.hasReject) {
                         TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })

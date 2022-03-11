@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -92,10 +91,11 @@ object ConnectionDialog {
     @Composable
     fun ConnectServer() {
         val dialogState = GlobalState.connection.connectServerDialog
-        Dialog.Layout(dialogState, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT, focusReq) {
             Submission(state = ConnectServerForm) {
                 ServerFormField()
-                AddressFormField()
+                AddressFormField(focusReq)
                 if (ConnectServerForm.server == TYPEDB_CLUSTER) {
                     UsernameFormField()
                     PasswordFormField()
@@ -131,8 +131,7 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun AddressFormField() {
-        val focusReq = FocusRequester()
+    private fun AddressFormField(focusReq: FocusRequester) {
         Field(label = Label.ADDRESS) {
             TextInput(
                 value = ConnectServerForm.address,
@@ -142,7 +141,6 @@ object ConnectionDialog {
                 modifier = Modifier.fillMaxSize().focusRequester(focusReq)
             )
         }
-        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

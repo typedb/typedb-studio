@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -134,10 +135,11 @@ object ProjectDialog {
     private fun SelectDirectoryDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT, focusReq) {
             Submission(state = formState) {
                 Form.Text(value = message, softWrap = true)
-                SelectDirectoryField(formState, window, title)
+                SelectDirectoryField(formState, window, title, focusReq)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -149,14 +151,19 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
+    private fun SelectDirectoryField(
+        state: ProjectItemForm,
+        window: ComposeDialog,
+        title: String,
+        focusReq: FocusRequester
+    ) {
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
                     value = state.field,
                     placeholder = Label.PATH_OF_DIRECTORY,
                     onValueChange = { state.field = it },
-                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    modifier = Modifier.fillMaxHeight().weight(1f).focusRequester(focusReq).focusable(),
                 )
                 FormRowSpacer()
                 Form.IconButton(
@@ -271,10 +278,11 @@ object ProjectDialog {
     private fun ProjectItemNamingDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT, focusReq) {
             Submission(state = formState) {
                 Form.Text(value = message, softWrap = true)
-                ProjectItemNamingField(formState.field) { formState.field = it }
+                ProjectItemNamingField(formState.field, focusReq) { formState.field = it }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -286,17 +294,15 @@ object ProjectDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ProjectItemNamingField(text: String, onChange: (String) -> Unit) {
-        val focusReq = FocusRequester()
+    private fun ProjectItemNamingField(text: String, focusReq: FocusRequester, onChange: (String) -> Unit) {
         Field(label = Label.FILE_NAME) {
             TextInput(
                 value = text,
                 placeholder = "",
                 onValueChange = onChange,
-                modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
+                modifier = Modifier.fillMaxHeight().focusRequester(focusReq).focusable(),
             )
         }
-        LaunchedEffect(Unit) { focusReq.requestFocus() }
     }
 
     @Composable

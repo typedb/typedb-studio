@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
@@ -53,7 +56,8 @@ object DatabaseDialog {
     @Composable
     fun ManageDatabases() {
         val dialogState = GlobalState.connection.manageDatabasesDialog
-        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT, focusReq) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(DIALOG_SPACING))
@@ -74,7 +78,7 @@ object DatabaseDialog {
                         )
                     }
                 )
-                Spacer(Modifier.height(DIALOG_SPACING))
+                Spacer(Modifier.height(DIALOG_SPACING).focusRequester(focusReq).focusable()) // TODO: temporary focus
             }
         }
     }
@@ -82,9 +86,12 @@ object DatabaseDialog {
     @Composable
     fun SelectDatabase() {
         val dialogState = GlobalState.connection.selectDatabaseDialog
-        Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
+        val focusReq = FocusRequester()
+        Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT, focusReq) {
             Column(Modifier.fillMaxSize()) {
-                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth()) }
+                Field(label = Label.SELECT_DATABASE) {
+                    DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq).focusable())
+                }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))

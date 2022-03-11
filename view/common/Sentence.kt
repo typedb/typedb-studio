@@ -72,7 +72,7 @@ object Sentence {
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_DATABASES_MESSAGE =
-        "Below is the list of databases on the TypeDB Server. You can delete them individually, and create new ones. " +
+        "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. " +
                 "This action cannot be undone."
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
