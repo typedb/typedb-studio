@@ -45,6 +45,8 @@ object Sentence {
         "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDON"
     const val CONFIRM_FILE_DELETION =
         "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDON"
+    const val CONFIRM_QUITING_APPLICATION = "Are you sure you want to close TypeDB Studio? " +
+            "Unsaved files will still be available when you reopen."
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =
         "Create a new database on your TypeDB Server. This button will only be enabled the provided name is valid, " +
                 "i.e. valid syntax and does not already exist."

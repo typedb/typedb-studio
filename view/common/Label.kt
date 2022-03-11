@@ -32,6 +32,7 @@ object Label {
     const val CONFIRM = "Confirm"
     const val CONFIRM_DIRECTORY_DELETION = "Confirm Directory Deletion"
     const val CONFIRM_FILE_DELETION = "Confirm File Deletion"
+    const val CONFIRM_QUITTING_APPLICATION = "Confirm Quitting Application"
     const val CONNECT = "Connect"
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
