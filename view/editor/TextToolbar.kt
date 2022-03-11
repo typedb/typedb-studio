@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonRow
 import com.vaticle.typedb.studio.view.common.component.Form.MultilineTextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -406,7 +408,7 @@ object TextToolbar {
 
     @Composable
     private fun FinderNextPreviousButtons(state: State) {
-        Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
+        ButtonRow(BUTTON_HEIGHT) {
             FinderButton(Icon.Code.CHEVRON_UP, Label.PREVIOUS_OCCURRENCE) { state.findPrevious() }
             FinderButton(Icon.Code.CHEVRON_DOWN, Label.NEXT_OCCURRENCE) { state.findNext() }
         }
@@ -414,7 +416,7 @@ object TextToolbar {
 
     @Composable
     private fun FinderParameterButtons(state: State) {
-        Row(Modifier.background(Theme.colors.primary, ROUNDED_RECTANGLE)) {
+        ButtonRow(BUTTON_HEIGHT) {
             FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
                 state.toggleCaseSensitive()
             }

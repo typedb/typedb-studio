@@ -18,9 +18,7 @@
 
 package com.vaticle.typedb.studio.view
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +38,7 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
+import com.vaticle.typedb.studio.view.common.component.Form.ButtonRow
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
@@ -47,7 +46,6 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
@@ -118,11 +116,6 @@ object Toolbar {
             enabled = enabled,
             tooltip = tooltip
         )
-    }
-
-    @Composable
-    private fun ToggleButtonRow(content: @Composable RowScope.() -> Unit) {
-        Row(Modifier.height(TOOLBAR_BUTTON_SIZE).background(Theme.colors.primary, ROUNDED_RECTANGLE)) { content() }
     }
 
     @Composable
@@ -223,7 +216,7 @@ object Toolbar {
         private fun SessionTypeButton(enabled: Boolean) {
             val schema = TypeDBSession.Type.SCHEMA
             val data = TypeDBSession.Type.DATA
-            ToggleButtonRow {
+            ButtonRow(TOOLBAR_BUTTON_SIZE) {
                 ToggleButton(
                     text = schema.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateSessionType(schema) },
@@ -253,7 +246,7 @@ object Toolbar {
         private fun TransactionTypeButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
-            ToggleButtonRow {
+            ButtonRow(TOOLBAR_BUTTON_SIZE) {
                 ToggleButton(
                     text = write.name.lowercase(),
                     onClick = { GlobalState.connection.current?.updateTransactionType(write) },
@@ -281,7 +274,7 @@ object Toolbar {
 
         @Composable
         private fun OptionsButtons(enabled: Boolean) {
-            ToggleButtonRow {
+            ButtonRow(TOOLBAR_BUTTON_SIZE) {
                 ToggleButton(
                     text = Label.SNAPSHOT.lowercase(),
                     onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
@@ -460,7 +453,7 @@ object Toolbar {
         private fun ModeButtons() {
             val interactive = Connection.Mode.INTERACTIVE
             val script = Connection.Mode.SCRIPT
-            ToggleButtonRow {
+            ButtonRow(TOOLBAR_BUTTON_SIZE) {
                 ToggleButton(
                     text = interactive.name.lowercase(),
                     onClick = { GlobalState.connection.current?.mode = interactive },

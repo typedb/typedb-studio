@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -252,6 +251,11 @@ object Form {
         )
     }
 
+    @Composable
+    fun ButtonRow(height: Dp, buttons: @Composable RowScope.() -> Unit) {
+        Row(Modifier.height(height).background(Theme.colors.surface2, ROUNDED_RECTANGLE)) { buttons() }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun TextButton(
@@ -259,7 +263,7 @@ object Form {
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.primary,
+        bgColor: Color = Theme.colors.surface2,
         focusReq: FocusRequester? = null,
         leadingIcon: Icon.Code? = null,
         trailingIcon: Icon.Code? = null,
@@ -269,7 +273,7 @@ object Form {
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-        BoxButton(onClick = onClick, focusReq = focusReq, color = bgColor, enabled = enabled, tooltip = tooltip) {
+        BoxButton(onClick = onClick, focusReq = focusReq, bgColor = bgColor, enabled = enabled, tooltip = tooltip) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
@@ -333,7 +337,7 @@ object Form {
         iconColor: Color = Theme.colors.icon,
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
-        bgColor: Color = Theme.colors.primary,
+        bgColor: Color = Theme.colors.surface2,
         rounded: Boolean = true,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
@@ -341,7 +345,7 @@ object Form {
         var isHover by remember { mutableStateOf(false) }
         BoxButton(
             onClick = onClick,
-            color = bgColor,
+            bgColor = bgColor,
             rounded = rounded,
             enabled = enabled,
             tooltip = tooltip,
@@ -363,7 +367,7 @@ object Form {
     @Composable
     private fun BoxButton(
         onClick: () -> Unit,
-        color: Color = Theme.colors.primary,
+        bgColor: Color = Theme.colors.surface2,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         rounded: Boolean = true,
@@ -380,7 +384,10 @@ object Form {
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = mod.background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
+                modifier = mod.background(
+                    fadeable(bgColor, !enabled),
+                    if (rounded) ROUNDED_RECTANGLE else RectangleShape
+                )
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
