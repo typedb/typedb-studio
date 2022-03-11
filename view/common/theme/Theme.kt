@@ -68,13 +68,13 @@ object Theme {
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
-    enum class RoundedSides(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
+    enum class RoundedCorners(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
         LEFT(4f, 0f, 0f, 4f),
         RIGHT(0f, 4f, 4f, 0f),
         ALL(4f, 4f, 4f, 4f),
         NONE(0f, 0f, 0f, 0f);
 
-        fun cornerShape(density: Float): RoundedCornerShape {
+        fun shape(density: Float): RoundedCornerShape {
             return RoundedCornerShape(
                 topStart = topLeft * density,
                 topEnd = topRight * density,
@@ -99,7 +99,7 @@ object Theme {
         get() = listOf(
             LocalMinimumTouchTargetEnforcement provides false,
             LocalScrollbarStyle provides scrollbarStyle(colors.scrollbar),
-            LocalIndication provides rectangleIndication(colors.indicationBase, 1f, RoundedSides.NONE),
+            LocalIndication provides rectangleIndication(colors.indicationBase, 1f, RoundedCorners.NONE),
             LocalTextSelectionColors provides TextSelectionColors(
                 backgroundColor = colors.tertiary.copy(alpha = TARGET_SELECTION_ALPHA),
                 handleColor = colors.tertiary
@@ -146,10 +146,10 @@ object Theme {
         )
 
     fun rectangleIndication(
-        color: androidx.compose.ui.graphics.Color, density: Float, roundedSides: RoundedSides = RoundedSides.ALL
+        color: androidx.compose.ui.graphics.Color, density: Float, roundedCorners: RoundedCorners = RoundedCorners.ALL
     ): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
-            val path = Path().apply { addRoundRect(roundedSides.rectangle(size, density)) }
+            val path = Path().apply { addRoundRect(roundedCorners.rectangle(size, density)) }
             if (isPressed.value) drawPath(path, color.copy(INDICATION_PRESSED_ALPHA))
             else if (isHovered.value || isFocused.value) drawPath(path, color.copy(INDICATION_HOVER_ALPHA))
         }

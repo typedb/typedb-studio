@@ -133,7 +133,7 @@ object RunOutputArea {
             onClick = { state.toggle() },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            roundedSides = Theme.RoundedSides.NONE,
+            roundedCorners = Theme.RoundedCorners.NONE,
         )
     }
 

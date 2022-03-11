@@ -95,6 +95,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_SHAPE
+import com.vaticle.typedb.studio.view.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
@@ -124,12 +125,21 @@ object Form {
 
     data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
     data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
+
     data class IconButtonArg(
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
         val color: @Composable () -> Color = { Theme.colors.icon },
         val hoverColor: @Composable (() -> Color)? = null,
         val disabledColor: @Composable (() -> Color)? = null,
+        val enabled: Boolean = true,
+        val tooltip: Tooltip.Arg? = null,
+        val onClick: () -> Unit
+    )
+
+    data class TextButtonArg(
+        val text: String,
+        val color: @Composable () -> Color = { Theme.colors.icon },
         val enabled: Boolean = true,
         val tooltip: Tooltip.Arg? = null,
         val onClick: () -> Unit
@@ -266,14 +276,34 @@ object Form {
     }
 
     @Composable
-    fun ButtonRow(height: Dp, buttons: @Composable RowScope.() -> Unit) {
-        Row(Modifier.height(height).background(Theme.colors.surface2, ROUNDED_CORNER_SHAPE)) { buttons() }
+    fun TextButtonRow(height: Dp, bgColor: Color = Theme.colors.surface2, buttons: List<TextButtonArg>) {
+        @Composable
+        fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
+            TextButton(
+                text = button.text,
+                onClick = button.onClick,
+                modifier = Modifier.height(height),
+                bgColor = bgColor,
+                textColor = button.color(),
+                roundedCorners = roundedCorners,
+                tooltip = button.tooltip,
+                enabled = button.enabled,
+            )
+        }
+
+        buttons.forEachIndexed { i, button ->
+            when (i) {
+                0 -> TextButton(button, RoundedCorners.LEFT)
+                buttons.size - 1 -> TextButton(button, RoundedCorners.RIGHT)
+                else -> TextButton(button, RoundedCorners.NONE)
+            }
+        }
     }
 
     @Composable
     fun IconButtonRow(size: Dp, bgColor: Color = Theme.colors.surface2, buttons: List<IconButtonArg>) {
         @Composable
-        fun IconButton(button: IconButtonArg, roundedSides: Theme.RoundedSides) {
+        fun IconButton(button: IconButtonArg, roundedCorners: RoundedCorners) {
             IconButton(
                 icon = button.icon,
                 hoverIcon = button.hoverIcon,
@@ -283,7 +313,7 @@ object Form {
                 iconColor = button.color(),
                 iconHoverColor = button.hoverColor?.invoke(),
                 disabledColor = button.disabledColor?.invoke(),
-                roundedSides = roundedSides,
+                roundedCorners = roundedCorners,
                 enabled = true,
                 tooltip = button.tooltip,
             )
@@ -291,9 +321,9 @@ object Form {
 
         buttons.forEachIndexed { i, button ->
             when (i) {
-                0 -> IconButton(button, Theme.RoundedSides.LEFT)
-                buttons.size - 1 -> IconButton(button, Theme.RoundedSides.RIGHT)
-                else -> IconButton(button, Theme.RoundedSides.NONE)
+                0 -> IconButton(button, RoundedCorners.LEFT)
+                buttons.size - 1 -> IconButton(button, RoundedCorners.RIGHT)
+                else -> IconButton(button, RoundedCorners.NONE)
             }
         }
     }
@@ -310,12 +340,16 @@ object Form {
         leadingIcon: Icon.Code? = null,
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-        BoxButton(onClick = onClick, focusReq = focusReq, bgColor = bgColor, enabled = enabled, tooltip = tooltip) {
+        BoxButton(
+            onClick = onClick, bgColor = bgColor, focusReq = focusReq,
+            roundedCorners = roundedCorners, enabled = enabled, tooltip = tooltip
+        ) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
@@ -380,7 +414,7 @@ object Form {
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
         bgColor: Color = Theme.colors.surface2,
-        roundedSides: Theme.RoundedSides = Theme.RoundedSides.ALL,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
     ) {
@@ -388,7 +422,7 @@ object Form {
         BoxButton(
             onClick = onClick,
             bgColor = bgColor,
-            roundedSides = roundedSides,
+            roundedCorners = roundedCorners,
             enabled = enabled,
             tooltip = tooltip,
             focusReq = focusReq,
@@ -412,7 +446,7 @@ object Form {
         bgColor: Color = Theme.colors.surface2,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
-        roundedSides: Theme.RoundedSides = Theme.RoundedSides.ALL,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
         content: @Composable BoxScope.() -> Unit
@@ -420,11 +454,11 @@ object Form {
         val density = LocalDensity.current.density
         val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
-        val hoverIndication = rectangleIndication(Theme.colors.indicationBase, density, roundedSides)
+        val hoverIndication = rectangleIndication(Theme.colors.indicationBase, density, roundedCorners)
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = mod.background(fadeable(bgColor, !enabled), roundedSides.cornerShape(density))
+                modifier = mod.background(fadeable(bgColor, !enabled), roundedCorners.shape(density))
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(

@@ -38,11 +38,12 @@ import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonRow
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.LoadingIndicator
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
+import com.vaticle.typedb.studio.view.common.component.Form.TextButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.TextButtonRow
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
@@ -128,11 +129,11 @@ object Toolbar {
         isActive: Boolean,
         enabled: Boolean,
         tooltip: Tooltip.Arg
-    ) {
-        TextButton(
+    ): TextButtonArg {
+        return TextButtonArg(
             text = text,
             onClick = onClick,
-            textColor = if (isActive) Theme.colors.secondary else Theme.colors.onPrimary,
+            color = { if (isActive) Theme.colors.secondary else Theme.colors.onPrimary },
             enabled = enabled,
             tooltip = tooltip
         )
@@ -219,99 +220,108 @@ object Toolbar {
         private fun SessionTypeButton(enabled: Boolean) {
             val schema = TypeDBSession.Type.SCHEMA
             val data = TypeDBSession.Type.DATA
-            ButtonRow(TOOLBAR_BUTTON_SIZE) {
-                ToggleButton(
-                    text = schema.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.updateSessionType(schema) },
-                    isActive = enabled && isSchema,
-                    enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Arg(
-                        title = Label.SCHEMA_SESSION,
-                        description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                        url = URL.DOCS_SESSION_SCHEMA
+            TextButtonRow(
+                height = TOOLBAR_BUTTON_SIZE,
+                buttons = listOf(
+                    ToggleButton(
+                        text = schema.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.updateSessionType(schema) },
+                        isActive = enabled && isSchema,
+                        enabled = enabled && hasOpenSession && !hasOpenTx,
+                        tooltip = Tooltip.Arg(
+                            title = Label.SCHEMA_SESSION,
+                            description = Sentence.SESSION_SCHEMA_DESCRIPTION,
+                            url = URL.DOCS_SESSION_SCHEMA
+                        )
+                    ),
+                    ToggleButton(
+                        text = data.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.updateSessionType(data) },
+                        isActive = enabled && isData,
+                        enabled = enabled && hasOpenSession && !hasOpenTx,
+                        tooltip = Tooltip.Arg(
+                            title = Label.DATA_SESSION,
+                            description = Sentence.SESSION_DATA_DESCRIPTION,
+                            url = URL.DOCS_SESSION_DATA
+                        )
                     )
                 )
-                ToggleButton(
-                    text = data.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.updateSessionType(data) },
-                    isActive = enabled && isData,
-                    enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Arg(
-                        title = Label.DATA_SESSION,
-                        description = Sentence.SESSION_DATA_DESCRIPTION,
-                        url = URL.DOCS_SESSION_DATA
-                    )
-                )
-            }
+            )
         }
 
         @Composable
         private fun TransactionTypeButtons(enabled: Boolean) {
             val write = TypeDBTransaction.Type.WRITE
             val read = TypeDBTransaction.Type.READ
-            ButtonRow(TOOLBAR_BUTTON_SIZE) {
-                ToggleButton(
-                    text = write.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.updateTransactionType(write) },
-                    isActive = enabled && isWrite,
-                    enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Arg(
-                        title = Label.WRITE_TRANSACTION,
-                        description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
-                        url = URL.DOCS_TRANSACTION_WRITE
+            TextButtonRow(
+                height = TOOLBAR_BUTTON_SIZE,
+                buttons = listOf(
+                    ToggleButton(
+                        text = write.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.updateTransactionType(write) },
+                        isActive = enabled && isWrite,
+                        enabled = enabled && hasOpenSession && !hasOpenTx,
+                        tooltip = Tooltip.Arg(
+                            title = Label.WRITE_TRANSACTION,
+                            description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
+                            url = URL.DOCS_TRANSACTION_WRITE
+                        )
+                    ),
+                    ToggleButton(
+                        text = read.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.updateTransactionType(read) },
+                        isActive = enabled && isRead,
+                        enabled = enabled && hasOpenSession && !hasOpenTx,
+                        tooltip = Tooltip.Arg(
+                            title = Label.READ_TRANSACTION,
+                            description = Sentence.TRANSACTION_READ_DESCRIPTION,
+                            url = URL.DOCS_TRANSACTION_READ
+                        )
                     )
                 )
-                ToggleButton(
-                    text = read.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.updateTransactionType(read) },
-                    isActive = enabled && isRead,
-                    enabled = enabled && hasOpenSession && !hasOpenTx,
-                    tooltip = Tooltip.Arg(
-                        title = Label.READ_TRANSACTION,
-                        description = Sentence.TRANSACTION_READ_DESCRIPTION,
-                        url = URL.DOCS_TRANSACTION_READ
-                    )
-                )
-            }
+            )
         }
 
         @Composable
         private fun OptionsButtons(enabled: Boolean) {
-            ButtonRow(TOOLBAR_BUTTON_SIZE) {
-                ToggleButton(
-                    text = Label.SNAPSHOT.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
-                    isActive = enabled && isSnapshot,
-                    enabled = enabled && !hasOpenTx && isSnapshotEnabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.ENABLE_SNAPSHOT,
-                        description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                        url = URL.DOCS_ENABLE_SNAPSHOT
+            TextButtonRow(
+                height = TOOLBAR_BUTTON_SIZE,
+                buttons = listOf(
+                    ToggleButton(
+                        text = Label.SNAPSHOT.lowercase(),
+                        onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
+                        isActive = enabled && isSnapshot,
+                        enabled = enabled && !hasOpenTx && isSnapshotEnabled,
+                        tooltip = Tooltip.Arg(
+                            title = Label.ENABLE_SNAPSHOT,
+                            description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
+                            url = URL.DOCS_ENABLE_SNAPSHOT
+                        )
+                    ),
+                    ToggleButton(
+                        text = Label.INFER.lowercase(),
+                        onClick = { GlobalState.connection.current?.config?.toggleInfer() },
+                        isActive = enabled && isInfer,
+                        enabled = enabled && !hasOpenTx && isInferEnabled,
+                        tooltip = Tooltip.Arg(
+                            title = Label.ENABLE_INFERENCE,
+                            description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
+                            url = URL.DOCS_ENABLE_INFERENCE
+                        )
+                    ),
+                    ToggleButton(
+                        text = Label.EXPLAIN.lowercase(),
+                        onClick = { GlobalState.connection.current?.config?.toggleExplain() },
+                        isActive = enabled && isExplain,
+                        enabled = enabled && !hasOpenTx && isExplainEnabled,
+                        tooltip = Tooltip.Arg(
+                            title = Label.ENABLE_INFERENCE_EXPLANATION,
+                            description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
+                            url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
+                        )
                     )
                 )
-                ToggleButton(
-                    text = Label.INFER.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                    isActive = enabled && isInfer,
-                    enabled = enabled && !hasOpenTx && isInferEnabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.ENABLE_INFERENCE,
-                        description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                        url = URL.DOCS_ENABLE_INFERENCE
-                    )
-                )
-                ToggleButton(
-                    text = Label.EXPLAIN.lowercase(),
-                    onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                    isActive = enabled && isExplain,
-                    enabled = enabled && !hasOpenTx && isExplainEnabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.ENABLE_INFERENCE_EXPLANATION,
-                        description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                        url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
-                    )
-                )
-            }
+            )
         }
     }
 
@@ -341,7 +351,7 @@ object Toolbar {
                 icon = Icon.Code.CIRCLE,
                 modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
                 iconColor = if (isInteractive && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
-                enabled = isInteractive,
+                enabled = isInteractive && hasOpenSession,
                 tooltip = Tooltip.Arg(
                     title = Label.TRANSACTION_STATUS,
                     description = Sentence.TRANSACTION_STATUS_DESCRIPTION
@@ -460,30 +470,33 @@ object Toolbar {
         private fun ModeButtons() {
             val interactive = Connection.Mode.INTERACTIVE
             val script = Connection.Mode.SCRIPT
-            ButtonRow(TOOLBAR_BUTTON_SIZE) {
-                ToggleButton(
-                    text = interactive.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.mode = interactive },
-                    isActive = GlobalState.connection.isInteractiveMode,
-                    enabled = isConnected,
-                    tooltip = Tooltip.Arg(
-                        title = Label.INTERACTIVE_MODE,
-                        description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
-                        url = URL.DOCS_MODE_INTERACTIVE,
+            TextButtonRow(
+                height = TOOLBAR_BUTTON_SIZE,
+                buttons = listOf(
+                    ToggleButton(
+                        text = interactive.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.mode = interactive },
+                        isActive = GlobalState.connection.isInteractiveMode,
+                        enabled = isConnected,
+                        tooltip = Tooltip.Arg(
+                            title = Label.INTERACTIVE_MODE,
+                            description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
+                            url = URL.DOCS_MODE_INTERACTIVE,
+                        )
+                    ),
+                    ToggleButton(
+                        text = script.name.lowercase(),
+                        onClick = { GlobalState.connection.current?.mode = script },
+                        isActive = GlobalState.connection.isScriptMode,
+                        enabled = isConnected,
+                        tooltip = Tooltip.Arg(
+                            title = Label.SCRIPT_MODE,
+                            description = Sentence.SCRIPT_MODE_DESCRIPTION,
+                            url = URL.DOCS_MODE_SCRIPT,
+                        )
                     )
                 )
-                ToggleButton(
-                    text = script.name.lowercase(),
-                    onClick = { GlobalState.connection.current?.mode = script },
-                    isActive = GlobalState.connection.isScriptMode,
-                    enabled = isConnected,
-                    tooltip = Tooltip.Arg(
-                        title = Label.SCRIPT_MODE,
-                        description = Sentence.SCRIPT_MODE_DESCRIPTION,
-                        url = URL.DOCS_MODE_SCRIPT,
-                    )
-                )
-            }
+            )
         }
 
         @Composable

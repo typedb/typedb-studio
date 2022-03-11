@@ -104,7 +104,7 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
                 onClick = { it.onClick() },
                 modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,
-                roundedSides = Theme.RoundedSides.NONE,
+                roundedCorners = Theme.RoundedCorners.NONE,
                 enabled = isActive
             )
         }

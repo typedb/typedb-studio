@@ -214,7 +214,7 @@ object Tabs {
             onClick = { state.scrollTabsBy(-TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            roundedSides = Theme.RoundedSides.NONE,
+            roundedCorners = Theme.RoundedCorners.NONE,
             enabled = state.scroller.value > 0
         )
     }
@@ -226,7 +226,7 @@ object Tabs {
             onClick = { state.scrollTabsBy(TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            roundedSides = Theme.RoundedSides.NONE,
+            roundedCorners = Theme.RoundedCorners.NONE,
             enabled = state.scroller.value < state.scroller.maxValue
         )
     }
@@ -243,7 +243,7 @@ object Tabs {
             enabled = buttonArg.enabled,
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            roundedSides = Theme.RoundedSides.NONE,
+            roundedCorners = Theme.RoundedCorners.NONE,
         )
     }
 }

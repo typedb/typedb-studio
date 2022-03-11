@@ -92,7 +92,7 @@ object Icon {
         PASTE(0xf0eau),
         PEN(0xf304u),
         PLUS(0x2bu),
-        PLAY(0xf04bu, offset = Offset((-1).dp, 0.dp)),
+        PLAY(0xf04bu),
         RECTANGLE_CODE(0xe322u),
         ROTATE(0xf2f1u),
         ROTATE_LEFT(0xf2eau),
