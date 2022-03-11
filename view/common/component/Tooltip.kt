@@ -82,10 +82,12 @@ object Tooltip {
         internal var isOpen by mutableStateOf(false)
         private val mouseHoverTarget = AtomicBoolean(false)
         private val mouseHoverTooltip = AtomicBoolean(false)
+        private var tooltipExpanded = AtomicBoolean(false)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-        internal fun keepShowingOnTooltipHover() {
+        internal fun keepShowingOnTooltipHover(expanded: Boolean = false) {
             mouseHoverTooltip.set(true)
+            tooltipExpanded.set(expanded)
             isOpen = true
         }
 
@@ -99,9 +101,11 @@ object Tooltip {
 
         internal fun hideOnTargetHover() {
             mouseHoverTarget.set(false)
+            isOpen = false
         }
 
         internal fun mayHideOnTooltipExit() {
+            if (tooltipExpanded.compareAndExchange(true, false)) return
             mouseHoverTooltip.set(false)
             delayHide()
         }
@@ -161,7 +165,10 @@ object Tooltip {
                         Row(contentMod, Arrangement.SpaceBetween) {
                             Text(value = state.arg.title, softWrap = true)
                             if (!showAll && hasDetails) {
-                                TextClickable(Label.READ_MORE) { showAll = true }
+                                TextClickable(Label.READ_MORE) {
+                                    state.keepShowingOnTooltipHover(true)
+                                    showAll = true
+                                }
                             }
                         }
                         if (showAll) {
