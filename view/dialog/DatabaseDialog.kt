@@ -90,7 +90,7 @@ object DatabaseDialog {
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT, focusReq) {
             Column(Modifier.fillMaxSize()) {
                 Field(label = Label.SELECT_DATABASE) {
-                    DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq).focusable())
+                    DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq))
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {

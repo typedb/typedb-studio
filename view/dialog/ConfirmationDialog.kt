@@ -52,11 +52,7 @@ object ConfirmationDialog {
                 Spacer(Modifier.weight(1f))
                 Row(Modifier.defaultMinSize(minHeight = Form.FIELD_HEIGHT), verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(
-                        text = Label.CANCEL,
-                        onClick = { dialogState.close() },
-                        modifier = Modifier.focusRequester(focusReq).focusable()
-                    )
+                    TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { dialogState.close() })
                     FormRowSpacer()
                     if (dialogState.hasReject) {
                         TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })

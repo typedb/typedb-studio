@@ -242,6 +242,7 @@ object Form {
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
+        focusReq: FocusRequester? = null,
         leadingIcon: Icon.Code? = null,
         trailingIcon: Icon.Code? = null,
         iconColor: Color = Theme.colors.icon,
@@ -250,7 +251,7 @@ object Form {
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-        BoxButton(onClick = onClick, color = bgColor, enabled = enabled, tooltip = tooltip) {
+        BoxButton(onClick = onClick, focusReq = focusReq, color = bgColor, enabled = enabled, tooltip = tooltip) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
@@ -310,6 +311,7 @@ object Form {
         hoverIcon: Icon.Code? = null,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
+        focusReq: FocusRequester? = null,
         iconColor: Color = Theme.colors.icon,
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
@@ -325,6 +327,7 @@ object Form {
             rounded = rounded,
             enabled = enabled,
             tooltip = tooltip,
+            focusReq = focusReq,
             modifier = modifier.size(FIELD_HEIGHT).pointerMoveFilter(
                 onEnter = { isHover = true; false },
                 onExit = { isHover = false; false }
@@ -344,11 +347,13 @@ object Form {
         onClick: () -> Unit,
         color: Color = Theme.colors.primary,
         modifier: Modifier = Modifier,
+        focusReq: FocusRequester? = null,
         rounded: Boolean = true,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
         content: @Composable BoxScope.() -> Unit
     ) {
+        val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = when {
             rounded -> roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
@@ -357,8 +362,7 @@ object Form {
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = modifier
-                    .background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
+                modifier = mod.background(fadeable(color, !enabled), if (rounded) ROUNDED_RECTANGLE else RectangleShape)
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
