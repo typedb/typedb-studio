@@ -94,6 +94,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(8, "Transaction has been committed and closed -- all writes have been persisted.")
             val FAILED_TO_DELETE_DATABASE =
                 Connection(9, "Failed to delete database '%s' due to: '%s'.")
+            val FAILED_TO_CREATE_DATABASE =
+                Connection(10, "Failed to create database '%s' due to: '%s'.")
+            val FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE =
+                Connection(11, "Failed to create database '%s' due to duplicate.")
         }
     }
 

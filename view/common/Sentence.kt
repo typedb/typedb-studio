@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.common
 
 object Sentence {
 
+    private const val ACTION_CANNOT_BE_UNDON = "This action cannot be undone."
     private const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     private const val BUTTON_ENABLED_WHEN_SESSION_OPEN =
@@ -39,11 +40,14 @@ object Sentence {
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =
-        "Are you sure you would like to delete the database '%s' and all of its content?"
+        "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDON"
     const val CONFIRM_DIRECTORY_DELETION =
-        "Are you sure you would like to delete this directory and all of its content?"
+        "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDON"
     const val CONFIRM_FILE_DELETION =
-        "Are you sure you would like to delete this file?"
+        "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDON"
+    const val CREATE_DATABASE_BUTTON_DESCRIPTION =
+        "Create a new database on your TypeDB Server. This button will only be enabled the provided name is valid, " +
+                "i.e. valid syntax and does not already exist."
     const val CREATE_DIRECTORY =
         "Create a new directory under %s."
     const val CREATE_FILE =
@@ -72,8 +76,7 @@ object Sentence {
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_DATABASES_MESSAGE =
-        "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. " +
-                "This action cannot be undone."
+        "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
     const val RENAME_FILE =

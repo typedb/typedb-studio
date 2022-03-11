@@ -153,13 +153,14 @@ object Form {
     @Composable
     fun Submission(
         state: State,
+        modifier: Modifier,
         showButtons: Boolean = true,
         submitLabel: String = Label.SUBMIT,
         content: @Composable() (ColumnScope.() -> Unit)
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = Modifier.fillMaxSize().onKeyEvent {
+            modifier = modifier.onKeyEvent {
                 onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() })
             }
         ) {

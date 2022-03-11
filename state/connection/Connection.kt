@@ -26,6 +26,8 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
@@ -140,6 +142,24 @@ class Connection internal constructor(
                 hasOpenTransaction = false
             }
         }
+    }
+
+    fun containsDatabase(database: String): Boolean {
+        refreshDatabaseList()
+        return databaseList.contains(database)
+    }
+
+    fun createDatabase(database: String): Boolean {
+        if (!containsDatabase(database)) {
+            try {
+                client.databases().create(database)
+                refreshDatabaseList()
+                return true
+            } catch (e: Exception) {
+                notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE, database, e.message ?: e.toString())
+            }
+        } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
+        return false
     }
 
     fun deleteDatabase(database: String) {

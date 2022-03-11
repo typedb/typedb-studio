@@ -97,7 +97,7 @@ object ConnectionDialog {
         val dialogState = GlobalState.connection.connectServerDialog
         val focusReq = FocusRequester()
         Dialog.Layout(dialogState, focusReq, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
-            Submission(state = ConnectServerForm, showButtons = false) {
+            Submission(state = ConnectServerForm, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField()
                 AddressFormField(focusReq)
                 if (ConnectServerForm.server == TYPEDB_CLUSTER) {

@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.dialog
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -134,7 +135,7 @@ object ProjectDialog {
     ) {
         val focusReq = FocusRequester()
         Dialog.Layout(dialogState, focusReq, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
-            Submission(state = formState, submitLabel = submitLabel) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title, focusReq)
             }
@@ -272,7 +273,7 @@ object ProjectDialog {
     ) {
         val focusReq = FocusRequester()
         Dialog.Layout(dialogState, focusReq, title, NAMING_WIDTH, NAMING_HEIGHT) {
-            Submission(state = formState, submitLabel = submitLabel) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 ProjectItemNamingField(formState.field, focusReq) { formState.field = it }
             }
