@@ -672,6 +672,7 @@ object Form {
         placeholder: String = "",
         enabled: Boolean = true,
         modifier: Modifier = Modifier,
+        focusReq: FocusRequester? = null,
         tooltip: Tooltip.Arg? = null,
     ) {
 
@@ -707,6 +708,7 @@ object Form {
                 modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) },
                 textColor = Theme.colors.onPrimary,
                 trailingIcon = CARET_DOWN,
+                focusReq = focusReq,
                 enabled = enabled,
                 tooltip = tooltip
             )

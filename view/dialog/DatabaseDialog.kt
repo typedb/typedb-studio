@@ -154,9 +154,7 @@ object DatabaseDialog {
         val focusReq = FocusRequester()
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
-                Field(label = Label.SELECT_DATABASE) {
-                    DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq))
-                }
+                Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth(), focusReq) }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -168,7 +166,7 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun DatabaseDropdown(modifier: Modifier = Modifier) {
+    fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null) {
         Dropdown(
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
             selected = GlobalState.connection.current?.database,
@@ -177,6 +175,7 @@ object DatabaseDialog {
             placeholder = Label.SELECT_DATABASE,
             enabled = GlobalState.connection.isInteractiveMode,
             modifier = modifier,
+            focusReq = focusReq,
             tooltip = Tooltip.Arg(
                 title = Label.SELECT_DATABASE,
                 description = Sentence.SELECT_DATABASE_DESCRIPTION

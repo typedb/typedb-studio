@@ -134,24 +134,18 @@ object ProjectDialog {
     private fun SelectDirectoryDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        val focusReq = FocusRequester()
         Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
-                SelectDirectoryField(formState, window, title, focusReq)
+                SelectDirectoryField(formState, window, title)
             }
         }
-        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun SelectDirectoryField(
-        state: ProjectItemForm,
-        window: ComposeDialog,
-        title: String,
-        focusReq: FocusRequester
-    ) {
+    private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
+        val focusReq = FocusRequester()
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
@@ -168,6 +162,7 @@ object ProjectDialog {
                 )
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     private fun launchDirectorySelector(state: ProjectItemForm, parent: ComposeDialog, title: String) {
@@ -273,19 +268,18 @@ object ProjectDialog {
     private fun ProjectItemNamingDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        val focusReq = FocusRequester()
         Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
-                ProjectItemNamingField(formState.field, focusReq) { formState.field = it }
+                ProjectItemNamingField(formState.field) { formState.field = it }
             }
         }
-        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ProjectItemNamingField(text: String, focusReq: FocusRequester, onChange: (String) -> Unit) {
+    private fun ProjectItemNamingField(text: String, onChange: (String) -> Unit) {
+        val focusReq = FocusRequester()
         Field(label = Label.FILE_NAME) {
             TextInput(
                 value = text,
@@ -294,6 +288,7 @@ object ProjectDialog {
                 modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
             )
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
