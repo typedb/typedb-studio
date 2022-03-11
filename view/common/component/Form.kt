@@ -276,7 +276,7 @@ object Form {
     }
 
     @Composable
-    fun TextButtonRow(height: Dp, bgColor: Color = Theme.colors.surface2, buttons: List<TextButtonArg>) {
+    fun TextButtonRow(height: Dp, bgColor: Color = Theme.colors.primary, buttons: List<TextButtonArg>) {
         @Composable
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
             TextButton(
@@ -301,7 +301,7 @@ object Form {
     }
 
     @Composable
-    fun IconButtonRow(size: Dp, bgColor: Color = Theme.colors.surface2, buttons: List<IconButtonArg>) {
+    fun IconButtonRow(size: Dp, bgColor: Color = Theme.colors.primary, buttons: List<IconButtonArg>) {
         @Composable
         fun IconButton(button: IconButtonArg, roundedCorners: RoundedCorners) {
             IconButton(
@@ -335,7 +335,7 @@ object Form {
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.surface2,
+        bgColor: Color = Theme.colors.primary,
         focusReq: FocusRequester? = null,
         leadingIcon: Icon.Code? = null,
         trailingIcon: Icon.Code? = null,
@@ -413,7 +413,7 @@ object Form {
         iconColor: Color = Theme.colors.icon,
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
-        bgColor: Color = Theme.colors.surface2,
+        bgColor: Color = Theme.colors.primary,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
@@ -443,7 +443,7 @@ object Form {
     @Composable
     private fun BoxButton(
         onClick: () -> Unit,
-        bgColor: Color = Theme.colors.surface2,
+        bgColor: Color = Theme.colors.primary,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,

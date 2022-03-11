@@ -82,14 +82,13 @@ object DatabaseDialog {
     fun ManageDatabases() {
         val dialogState = GlobalState.connection.manageDatabasesDialog
         val connection = GlobalState.connection.current!!
-        val focusReq = FocusRequester()
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(DIALOG_SPACING))
                 DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
                 Spacer(Modifier.height(DIALOG_SPACING))
-                CreateDatabaseForm(focusReq)
+                CreateDatabaseForm()
                 Spacer(Modifier.height(DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -99,7 +98,6 @@ object DatabaseDialog {
                 }
             }
         }
-        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
@@ -125,7 +123,8 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun CreateDatabaseForm(focusReq: FocusRequester) {
+    private fun CreateDatabaseForm() {
+        val focusReq = FocusRequester()
         Submission(CreateDatabaseForm, modifier = Modifier.height(FIELD_HEIGHT), showButtons = false) {
             Row {
                 TextInput(
@@ -146,6 +145,7 @@ object DatabaseDialog {
                 )
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
