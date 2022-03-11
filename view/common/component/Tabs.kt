@@ -214,7 +214,7 @@ object Tabs {
             onClick = { state.scrollTabsBy(-TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            rounded = false,
+            roundedSides = Theme.RoundedSides.NONE,
             enabled = state.scroller.value > 0
         )
     }
@@ -226,7 +226,7 @@ object Tabs {
             onClick = { state.scrollTabsBy(TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            rounded = false,
+            roundedSides = Theme.RoundedSides.NONE,
             enabled = state.scroller.value < state.scroller.maxValue
         )
     }
@@ -237,13 +237,13 @@ object Tabs {
             icon = buttonArg.icon,
             hoverIcon = buttonArg.hoverIcon,
             iconColor = buttonArg.color(),
-            iconHoverColor = buttonArg.hoverColor(),
-            disabledColor = buttonArg.disabledColor(),
+            iconHoverColor = buttonArg.hoverColor?.invoke(),
+            disabledColor = buttonArg.disabledColor?.invoke(),
             onClick = buttonArg.onClick,
             enabled = buttonArg.enabled,
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
-            rounded = false
+            roundedSides = Theme.RoundedSides.NONE,
         )
     }
 }

@@ -94,9 +94,8 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
+import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
-import com.vaticle.typedb.studio.view.common.theme.Theme.roundedIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_RELEASED
 import java.net.URL
@@ -118,7 +117,7 @@ object Form {
     private val LOADING_SPINNER_SIZE = 14.dp
     private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
-    private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
+    private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
@@ -129,9 +128,10 @@ object Form {
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
         val color: @Composable () -> Color = { Theme.colors.icon },
-        val hoverColor: @Composable () -> Color? = { null },
-        val disabledColor: @Composable () -> Color? = { null },
+        val hoverColor: @Composable (() -> Color)? = null,
+        val disabledColor: @Composable (() -> Color)? = null,
         val enabled: Boolean = true,
+        val tooltip: Tooltip.Arg? = null,
         val onClick: () -> Unit
     )
 
@@ -267,7 +267,35 @@ object Form {
 
     @Composable
     fun ButtonRow(height: Dp, buttons: @Composable RowScope.() -> Unit) {
-        Row(Modifier.height(height).background(Theme.colors.surface2, ROUNDED_RECTANGLE)) { buttons() }
+        Row(Modifier.height(height).background(Theme.colors.surface2, ROUNDED_CORNER_SHAPE)) { buttons() }
+    }
+
+    @Composable
+    fun IconButtonRow(size: Dp, bgColor: Color = Theme.colors.surface2, buttons: List<IconButtonArg>) {
+        @Composable
+        fun IconButton(button: IconButtonArg, roundedSides: Theme.RoundedSides) {
+            IconButton(
+                icon = button.icon,
+                hoverIcon = button.hoverIcon,
+                onClick = button.onClick,
+                modifier = Modifier.size(size),
+                bgColor = bgColor,
+                iconColor = button.color(),
+                iconHoverColor = button.hoverColor?.invoke(),
+                disabledColor = button.disabledColor?.invoke(),
+                roundedSides = roundedSides,
+                enabled = true,
+                tooltip = button.tooltip,
+            )
+        }
+
+        buttons.forEachIndexed { i, button ->
+            when (i) {
+                0 -> IconButton(button, Theme.RoundedSides.LEFT)
+                buttons.size - 1 -> IconButton(button, Theme.RoundedSides.RIGHT)
+                else -> IconButton(button, Theme.RoundedSides.NONE)
+            }
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -352,7 +380,7 @@ object Form {
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
         bgColor: Color = Theme.colors.surface2,
-        rounded: Boolean = true,
+        roundedSides: Theme.RoundedSides = Theme.RoundedSides.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
     ) {
@@ -360,7 +388,7 @@ object Form {
         BoxButton(
             onClick = onClick,
             bgColor = bgColor,
-            rounded = rounded,
+            roundedSides = roundedSides,
             enabled = enabled,
             tooltip = tooltip,
             focusReq = focusReq,
@@ -384,24 +412,19 @@ object Form {
         bgColor: Color = Theme.colors.surface2,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
-        rounded: Boolean = true,
+        roundedSides: Theme.RoundedSides = Theme.RoundedSides.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
         content: @Composable BoxScope.() -> Unit
     ) {
+        val density = LocalDensity.current.density
         val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
-        val hoverIndication = when {
-            rounded -> roundedIndication(Theme.colors.indicationBase, LocalDensity.current.density)
-            else -> rectangleIndication(Theme.colors.indicationBase)
-        }
+        val hoverIndication = rectangleIndication(Theme.colors.indicationBase, density, roundedSides)
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = mod.background(
-                    fadeable(bgColor, !enabled),
-                    if (rounded) ROUNDED_RECTANGLE else RectangleShape
-                )
+                modifier = mod.background(fadeable(bgColor, !enabled), roundedSides.cornerShape(density))
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
@@ -426,8 +449,8 @@ object Form {
             checked = value,
             onCheckedChange = onChange,
             modifier = modifier.size(FIELD_HEIGHT)
-                .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_RECTANGLE)
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_RECTANGLE)
+                .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_CORNER_SHAPE)
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_CORNER_SHAPE)
                 .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
             enabled = enabled,
             colors = CheckboxDefaults.colors(
@@ -470,7 +493,7 @@ object Form {
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-        shape: Shape? = ROUNDED_RECTANGLE,
+        shape: Shape? = ROUNDED_CORNER_SHAPE,
         border: Border? = DEFAULT_BORDER,
         trailingIcon: Icon.Code? = null,
         leadingIcon: Icon.Code? = null
@@ -658,7 +681,7 @@ object Form {
                 onDismissRequest = { state.expanded = false },
                 modifier = Modifier.background(Theme.colors.surface)
                     .defaultMinSize(minWidth = state.width)
-                    .border(BORDER_WIDTH, Theme.colors.border, ROUNDED_RECTANGLE) // TODO: how to make not rounded?
+                    .border(BORDER_WIDTH, Theme.colors.border, ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
             ) {
                 val padding = PaddingValues(horizontal = 0.dp)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)

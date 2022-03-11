@@ -56,8 +56,8 @@ internal sealed class RunOutput {
                     icon = it.icon,
                     hoverIcon = it.hoverIcon,
                     iconColor = it.color(),
-                    iconHoverColor = it.hoverColor(),
-                    disabledColor = it.disabledColor(),
+                    iconHoverColor = it.hoverColor?.invoke(),
+                    disabledColor = it.disabledColor?.invoke(),
                     onClick = it.onClick,
                     enabled = it.enabled,
                     modifier = Modifier.size(Theme.TOOLBAR_BUTTON_SIZE)

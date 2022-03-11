@@ -40,6 +40,9 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,7 +60,7 @@ object Theme {
     val TOOLBAR_BUTTON_SIZE = 24.dp
     val TOOLBAR_SEPARATOR_HEIGHT = 20.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
-    val ROUNDED_RECTANGLE = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
+    val ROUNDED_CORNER_SHAPE = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
     const val TARGET_SELECTION_ALPHA = 0.35f
     const val FIND_SELECTION_ALPHA = 0.3f
     const val INDICATION_HOVER_ALPHA = 0.1f
@@ -65,14 +68,38 @@ object Theme {
     private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
+    enum class RoundedSides(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
+        LEFT(4f, 0f, 0f, 4f),
+        RIGHT(0f, 4f, 4f, 0f),
+        ALL(4f, 4f, 4f, 4f),
+        NONE(0f, 0f, 0f, 0f);
+
+        fun cornerShape(density: Float): RoundedCornerShape {
+            return RoundedCornerShape(
+                topStart = topLeft * density,
+                topEnd = topRight * density,
+                bottomEnd = bottomRight * density,
+                bottomStart = bottomLeft * density
+            )
+        }
+
+        fun rectangle(size: Size, density: Float) = RoundRect(
+            0f, 0f, size.width, size.height,
+            CornerRadius(topLeft * density),
+            CornerRadius(topRight * density),
+            CornerRadius(bottomRight * density),
+            CornerRadius(bottomLeft * density)
+        )
+    }
+
     @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
     private val MaterialThemeOverrides
         @Composable
         @ReadOnlyComposable
         get() = listOf(
             LocalMinimumTouchTargetEnforcement provides false,
-            LocalScrollbarStyle provides scrollbarStyle(color = colors.scrollbar),
-            LocalIndication provides rectangleIndication(color = colors.indicationBase),
+            LocalScrollbarStyle provides scrollbarStyle(colors.scrollbar),
+            LocalIndication provides rectangleIndication(colors.indicationBase, 1f, RoundedSides.NONE),
             LocalTextSelectionColors provides TextSelectionColors(
                 backgroundColor = colors.tertiary.copy(alpha = TARGET_SELECTION_ALPHA),
                 handleColor = colors.tertiary
@@ -118,27 +145,13 @@ object Theme {
             hoverColor = color.copy(alpha = hoverAlpha)
         )
 
-    private fun roundedCornerRadius(density: Float): CornerRadius {
-        return CornerRadius(x = ROUNDED_CORNER_RADIUS.value * density, y = ROUNDED_CORNER_RADIUS.value * density)
-    }
-
-    fun roundedIndication(color: androidx.compose.ui.graphics.Color, density: Float): Indication {
+    fun rectangleIndication(
+        color: androidx.compose.ui.graphics.Color, density: Float, roundedSides: RoundedSides = RoundedSides.ALL
+    ): Indication {
         return rawIndication { isPressed, isHovered, isFocused ->
-            if (isPressed.value) drawRoundRect(
-                color = color.copy(INDICATION_PRESSED_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-            ) else if (isHovered.value || isFocused.value) drawRoundRect(
-                color = color.copy(INDICATION_HOVER_ALPHA), size = size, cornerRadius = roundedCornerRadius(density)
-            )
-        }
-    }
-
-    fun rectangleIndication(color: androidx.compose.ui.graphics.Color): Indication {
-        return rawIndication { isPressed, isHovered, isFocused ->
-            if (isPressed.value) {
-                drawRect(color = color.copy(INDICATION_PRESSED_ALPHA), size = size)
-            } else if (isHovered.value || isFocused.value) {
-                drawRect(color = color.copy(INDICATION_HOVER_ALPHA), size = size)
-            }
+            val path = Path().apply { addRoundRect(roundedSides.rectangle(size, density)) }
+            if (isPressed.value) drawPath(path, color.copy(INDICATION_PRESSED_ALPHA))
+            else if (isHovered.value || isFocused.value) drawPath(path, color.copy(INDICATION_HOVER_ALPHA))
         }
     }
 

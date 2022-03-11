@@ -18,14 +18,11 @@
 
 package com.vaticle.typedb.studio.view.editor
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.Text
@@ -56,13 +53,13 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonRow
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonRow
 import com.vaticle.typedb.studio.view.common.component.Form.MultilineTextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_RECTANGLE
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
@@ -408,21 +405,27 @@ object TextToolbar {
 
     @Composable
     private fun FinderNextPreviousButtons(state: State) {
-        ButtonRow(BUTTON_HEIGHT) {
-            FinderButton(Icon.Code.CHEVRON_UP, Label.PREVIOUS_OCCURRENCE) { state.findPrevious() }
-            FinderButton(Icon.Code.CHEVRON_DOWN, Label.NEXT_OCCURRENCE) { state.findNext() }
-        }
+        IconButtonRow(
+            size = BUTTON_HEIGHT,
+            buttons = listOf(
+                FinderButton(Icon.Code.CHEVRON_UP, Label.PREVIOUS_OCCURRENCE) { state.findPrevious() },
+                FinderButton(Icon.Code.CHEVRON_DOWN, Label.NEXT_OCCURRENCE) { state.findNext() }
+            )
+        )
     }
 
     @Composable
     private fun FinderParameterButtons(state: State) {
-        ButtonRow(BUTTON_HEIGHT) {
-            FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
-                state.toggleCaseSensitive()
-            }
-            FinderButton(Icon.Code.LETTER_W, Label.EXACT_WORD, state.isWord) { state.toggleWord() }
-            FinderButton(Icon.Code.ASTERISK, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() }
-        }
+        IconButtonRow(
+            size = BUTTON_HEIGHT,
+            buttons = listOf(
+                FinderButton(Icon.Code.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
+                    state.toggleCaseSensitive()
+                },
+                FinderButton(Icon.Code.LETTER_W, Label.EXACT_WORD, state.isWord) { state.toggleWord() },
+                FinderButton(Icon.Code.ASTERISK, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() },
+            )
+        )
     }
 
     @Composable
@@ -436,13 +439,14 @@ object TextToolbar {
     }
 
     @Composable
-    private fun FinderButton(icon: Icon.Code, title: String? = null, isActive: Boolean = false, onClick: () -> Unit) {
-        Form.IconButton(
+    private fun FinderButton(
+        icon: Icon.Code, title: String? = null, isActive: Boolean = false, onClick: () -> Unit
+    ): IconButtonArg {
+        return IconButtonArg(
             icon = icon,
-            onClick = onClick,
-            modifier = Modifier.size(BUTTON_HEIGHT),
-            iconColor = if (isActive) Theme.colors.secondary else Theme.colors.icon,
-            tooltip = title?.let { Tooltip.Arg(title) }
+            color = { if (isActive) Theme.colors.secondary else Theme.colors.icon },
+            tooltip = title?.let { Tooltip.Arg(title) },
+            onClick = onClick
         )
     }
 

@@ -90,7 +90,7 @@ object NotificationArea {
         Row(
             modifier = Modifier.width(NOTIFICATION_WIDTH)
                 .defaultMinSize(minHeight = NOTIFICATION_HEIGHT).padding(MESSAGE_PADDING)
-                .background(color = colorArgs.background, shape = Theme.ROUNDED_RECTANGLE)
+                .background(color = colorArgs.background, shape = Theme.ROUNDED_CORNER_SHAPE)
         ) {
             TextSelectable(
                 value = notification.message,
