@@ -66,6 +66,10 @@ object ConnectionDialog {
         var tlsEnabled: Boolean by mutableStateOf(false)
         var caCertificate: String by mutableStateOf("")
 
+        override fun cancel() {
+            GlobalState.connection.connectServerDialog.close()
+        }
+
         override fun isValid(): Boolean {
             return when (server) {
                 TYPEDB -> !address.isBlank()
@@ -92,8 +96,8 @@ object ConnectionDialog {
     fun ConnectServer() {
         val dialogState = GlobalState.connection.connectServerDialog
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT, focusReq) {
-            Submission(state = ConnectServerForm) {
+        Dialog.Layout(dialogState, focusReq, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
+            Submission(state = ConnectServerForm, showButtons = false) {
                 ServerFormField()
                 AddressFormField(focusReq)
                 if (ConnectServerForm.server == TYPEDB_CLUSTER) {
@@ -212,7 +216,7 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.connectServerDialog.close() })
+        TextButton(text = Label.CANCEL, onClick = { ConnectServerForm.cancel() })
         FormRowSpacer()
         TextButton(
             text = Label.CONNECT,
@@ -230,7 +234,7 @@ object ConnectionDialog {
             textColor = Theme.colors.error2
         )
         FormRowSpacer()
-        TextButton(text = Label.CLOSE, onClick = { GlobalState.connection.connectServerDialog.close() })
+        TextButton(text = Label.CLOSE, onClick = { ConnectServerForm.cancel() })
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

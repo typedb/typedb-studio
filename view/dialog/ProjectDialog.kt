@@ -18,17 +18,13 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
@@ -48,7 +44,6 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Field
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Submission
-import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Tooltip
@@ -65,6 +60,10 @@ object ProjectDialog {
     ) : Form.State {
 
         var field: String by mutableStateOf(initField)
+
+        override fun cancel() {
+            onCancel()
+        }
 
         override fun isValid(): Boolean {
             return field.isNotBlank()
@@ -85,9 +84,7 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ProjectDialogButtons(form: ProjectItemForm, submitLabel: String) {
-        TextButton(text = Label.CANCEL, onClick = { form.onCancel() })
-        FormRowSpacer()
-        TextButton(text = submitLabel, onClick = { form.trySubmit() }, enabled = form.isValid())
+
     }
 
     @Composable
@@ -136,15 +133,10 @@ object ProjectDialog {
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT, focusReq) {
-            Submission(state = formState) {
+        Dialog.Layout(dialogState, focusReq, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
+            Submission(state = formState, submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title, focusReq)
-                Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    this@ProjectDialog.ProjectDialogButtons(formState, submitLabel)
-                }
             }
         }
     }
@@ -279,15 +271,10 @@ object ProjectDialog {
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT, focusReq) {
-            Submission(state = formState) {
+        Dialog.Layout(dialogState, focusReq, title, NAMING_WIDTH, NAMING_HEIGHT) {
+            Submission(state = formState, submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 ProjectItemNamingField(formState.field, focusReq) { formState.field = it }
-                Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    this@ProjectDialog.ProjectDialogButtons(formState, submitLabel)
-                }
             }
         }
     }

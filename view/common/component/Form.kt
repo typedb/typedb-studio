@@ -134,6 +134,7 @@ object Form {
     )
 
     interface State {
+        fun cancel()
         fun isValid(): Boolean
         fun trySubmit()
         fun trySubmitIfValid() {
@@ -150,13 +151,29 @@ object Form {
     }
 
     @Composable
-    fun Submission(state: State, content: @Composable() (ColumnScope.() -> Unit)) {
+    fun Submission(
+        state: State,
+        showButtons: Boolean = true,
+        submitLabel: String = Label.SUBMIT,
+        content: @Composable() (ColumnScope.() -> Unit)
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = Modifier.fillMaxSize().onKeyEvent {
                 onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() })
             }
-        ) { content() }
+        ) {
+            content()
+            if (showButtons) {
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(text = Label.CANCEL, onClick = { state.cancel() })
+                    FormRowSpacer()
+                    TextButton(text = submitLabel, onClick = { state.trySubmit() }, enabled = state.isValid())
+                }
+            }
+        }
     }
 
     @Composable

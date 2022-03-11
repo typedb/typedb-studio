@@ -57,7 +57,7 @@ object DatabaseDialog {
     fun ManageDatabases() {
         val dialogState = GlobalState.connection.manageDatabasesDialog
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT, focusReq) {
+        Dialog.Layout(dialogState, focusReq, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(DIALOG_SPACING))
@@ -87,7 +87,7 @@ object DatabaseDialog {
     fun SelectDatabase() {
         val dialogState = GlobalState.connection.selectDatabaseDialog
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT, focusReq) {
+        Dialog.Layout(dialogState, focusReq, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Field(label = Label.SELECT_DATABASE) {
                     DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq))

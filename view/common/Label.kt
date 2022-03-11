@@ -112,6 +112,7 @@ object Label {
     const val SNAPSHOT = "Snapshot"
     const val STATUS = "Status"
     const val STOP_SIGNAL = "Stop Signal"
+    const val SUBMIT = "Submit"
     const val TABLE = "Table"
     const val TITLE = "Title"
     const val TRACE = "Trace"

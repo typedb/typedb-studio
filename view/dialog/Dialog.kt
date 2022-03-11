@@ -62,7 +62,7 @@ object Dialog {
 
     @Composable
     fun Layout(
-        state: DialogManager, title: String, width: Dp, height: Dp, focusReq: FocusRequester,
+        state: DialogManager, focusReq: FocusRequester, title: String, width: Dp, height: Dp,
         content: @Composable (DialogWindowScope.() -> Unit)
     ) {
         Dialog(
