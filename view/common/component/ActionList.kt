@@ -121,7 +121,12 @@ object ActionList {
                     FormRowSpacer()
                     IconButton(
                         icon = button.icon,
+                        hoverIcon = button.hoverIcon,
+                        iconColor = button.color(),
+                        iconHoverColor = button.hoverColor?.invoke(),
+                        disabledColor = button.disabledColor?.invoke(),
                         modifier = Modifier.size(BUTTON_SIZE),
+                        tooltip = button.tooltip,
                         onClick = button.onClick
                     )
                     FormRowSpacer()
