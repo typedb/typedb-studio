@@ -55,7 +55,7 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
 import javax.swing.UIManager
-import kotlin.system.exitProcess
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 object Studio {
@@ -72,6 +72,7 @@ object Studio {
     @JvmStatic
     fun main(args: Array<String>) {
         try {
+            addShutdownHook()
             setConfigurations()
             Message.loadClasses()
             UserDataDirectory.initialise()
@@ -79,10 +80,16 @@ object Studio {
         } catch (exception: Exception) {
             LOGGER.error(exception.message, exception)
             application { ErrorWindow(exception, it) }
-        } finally {
-            LOGGER.debug { Label.CLOSING_TYPEDB_STUDIO }
-            exitProcess(0)
         }
+    }
+
+    private fun addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(object : Thread() {
+            override fun run(): Unit = runBlocking {
+                LOGGER.debug { Label.CLOSING_TYPEDB_STUDIO }
+                GlobalState.connection.current?.close()
+            }
+        })
     }
 
     private fun setConfigurations() {

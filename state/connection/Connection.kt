@@ -202,7 +202,7 @@ class Connection internal constructor(
         notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
     }
 
-    internal fun close() {
+    fun close() {
         isOpen = false
         closeSession()
         client.close()
