@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
 import com.vaticle.typedb.studio.view.common.component.Form.ButtonRow
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
+import com.vaticle.typedb.studio.view.common.component.Form.LoadingIndicator
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -55,6 +56,7 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 object Toolbar {
 
     private val isConnected get() = GlobalState.connection.isConnected
+    private val isInteractive get() = GlobalState.connection.current?.isInteractiveMode == true
     private val hasOpenSession get() = GlobalState.connection.hasOpenSession
     private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
     private val isSchema get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.SCHEMA
@@ -67,6 +69,7 @@ object Toolbar {
     private val isInferEnabled get() = GlobalState.connection.current?.config?.inferEnabled == true
     private val isExplain get() = GlobalState.connection.current?.config?.explain == true
     private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
+    private val isCommitting get() = GlobalState.connection.current?.isCommitting == true
     private val hasRunnable get() = GlobalState.resource.active?.isRunnable == true
     private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
 
@@ -316,25 +319,29 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            val isInteractive = GlobalState.connection.current?.isInteractiveMode == true
             ToolbarSpace()
-            StatusIndicator(isInteractive)
+            StatusIndicator()
             ToolbarSpace()
-            CloseButton(isInteractive)
+            CloseButton()
             ToolbarSpace()
-            RollbackButton(isInteractive)
+            RollbackButton()
             ToolbarSpace()
-            CommitButton(isInteractive)
+            CommitButton()
             ToolbarSpace()
         }
 
         @Composable
-        private fun StatusIndicator(enabled: Boolean) {
+        private fun StatusIndicator() {
+            if (isCommitting) LoadingIndicator(Modifier.size(TOOLBAR_BUTTON_SIZE)) else OnlineIndicator()
+        }
+
+        @Composable
+        private fun OnlineIndicator() {
             RawIconButton(
                 icon = Icon.Code.CIRCLE,
                 modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
-                iconColor = if (enabled && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
-                enabled = enabled,
+                iconColor = if (isInteractive && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
+                enabled = isInteractive,
                 tooltip = Tooltip.Arg(
                     title = Label.TRANSACTION_STATUS,
                     description = Sentence.TRANSACTION_STATUS_DESCRIPTION
@@ -343,12 +350,12 @@ object Toolbar {
         }
 
         @Composable
-        private fun CloseButton(enabled: Boolean) {
+        private fun CloseButton() {
             ToolbarIconButton(
                 icon = Icon.Code.XMARK,
                 onClick = { GlobalState.connection.current?.closeTransaction() },
                 color = Theme.colors.error,
-                enabled = enabled && hasOpenTx,
+                enabled = isInteractive && !isCommitting && hasOpenTx,
                 tooltip = Tooltip.Arg(
                     title = Label.CLOSE_TRANSACTION,
                     description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
@@ -358,12 +365,12 @@ object Toolbar {
         }
 
         @Composable
-        private fun RollbackButton(enabled: Boolean) {
+        private fun RollbackButton() {
             ToolbarIconButton(
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = { GlobalState.connection.current?.rollbackTransaction() },
                 color = Theme.colors.quaternary2,
-                enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
+                enabled = isInteractive && !isCommitting && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Arg(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -373,12 +380,12 @@ object Toolbar {
         }
 
         @Composable
-        private fun CommitButton(enabled: Boolean) {
+        private fun CommitButton() {
             ToolbarIconButton(
                 icon = Icon.Code.CHECK,
                 onClick = { GlobalState.connection.current?.commitTransaction() },
                 color = Theme.colors.secondary,
-                enabled = enabled && hasOpenTx && GlobalState.connection.current!!.isWrite,
+                enabled = isInteractive && !isCommitting && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Arg(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
@@ -405,7 +412,7 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
-                enabled = hasOpenSession && hasRunnable && !hasRunningCommand,
+                enabled = hasOpenSession && hasRunnable && !hasRunningCommand && !isCommitting,
                 tooltip = Tooltip.Arg(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
@@ -419,7 +426,7 @@ object Toolbar {
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
                 onClick = { GlobalState.connection.current!!.sendStopSignal() },
-                enabled = hasRunningCommand,
+                enabled = hasRunningCommand && !isCommitting,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }

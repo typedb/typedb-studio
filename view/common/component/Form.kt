@@ -44,6 +44,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.Composable
@@ -114,6 +115,8 @@ object Form {
     private val TRAILING_ICON_SIZE = 12.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
+    private val LOADING_SPINNER_SIZE = 14.dp
+    private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
     private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_RECTANGLE)
 
@@ -249,6 +252,17 @@ object Form {
             style = Theme.typography.body1.copy(color = Theme.colors.secondary),
             onClick = onClick
         )
+    }
+
+    @Composable
+    fun LoadingIndicator(modifier: Modifier) {
+        Box(modifier.size(FIELD_HEIGHT), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(LOADING_SPINNER_SIZE),
+                color = Theme.colors.secondary,
+                strokeWidth = LOADING_SPINNER_STROKE_WIDTH
+            )
+        }
     }
 
     @Composable

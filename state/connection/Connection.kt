@@ -38,6 +38,9 @@ import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.Runner
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Connection internal constructor(
@@ -64,12 +67,14 @@ class Connection internal constructor(
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val isRead: Boolean get() = config.transactionType.isRead
     val isWrite: Boolean get() = config.transactionType.isWrite
+    var isCommitting by mutableStateOf(false)
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
     var hasOpenTransaction: Boolean by mutableStateOf(false)
     var hasRunningCommand by mutableStateOf(false)
     val hasStopSignal = AtomicBoolean(false)
     private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun updateTransactionType(type: TypeDBTransaction.Type) {
         if (config.transactionType == type) return
@@ -195,11 +200,15 @@ class Connection internal constructor(
     }
 
     fun commitTransaction() {
-        sendStopSignal()
-        transaction?.commit()
-        transaction = null
-        hasOpenTransaction = false
-        notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
+        coroutineScope.launch {
+            isCommitting = true
+            sendStopSignal()
+            transaction?.commit()
+            transaction = null
+            isCommitting = false
+            hasOpenTransaction = false
+            notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
+        }
     }
 
     fun close() {
