@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -82,7 +83,7 @@ object DatabaseDialog {
         val dialogState = GlobalState.connection.manageDatabasesDialog
         val connection = GlobalState.connection.current!!
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, focusReq, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
+        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(DIALOG_SPACING))
@@ -98,6 +99,7 @@ object DatabaseDialog {
                 }
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
@@ -150,7 +152,7 @@ object DatabaseDialog {
     fun SelectDatabase() {
         val dialogState = GlobalState.connection.selectDatabaseDialog
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, focusReq, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
+        Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Field(label = Label.SELECT_DATABASE) {
                     DatabaseDropdown(Modifier.fillMaxWidth().focusRequester(focusReq))
@@ -162,6 +164,7 @@ object DatabaseDialog {
                 }
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable

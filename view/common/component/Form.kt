@@ -168,7 +168,7 @@ object Form {
         modifier: Modifier,
         showButtons: Boolean = true,
         submitLabel: String = Label.SUBMIT,
-        content: @Composable() (ColumnScope.() -> Unit)
+        content: @Composable (ColumnScope.() -> Unit)
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),

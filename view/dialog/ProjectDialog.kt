@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -134,12 +135,13 @@ object ProjectDialog {
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, focusReq, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
+        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title, focusReq)
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -272,12 +274,13 @@ object ProjectDialog {
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
         val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, focusReq, title, NAMING_WIDTH, NAMING_HEIGHT) {
+        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 ProjectItemNamingField(formState.field, focusReq) { formState.field = it }
             }
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

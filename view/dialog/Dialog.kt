@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -62,8 +63,8 @@ object Dialog {
 
     @Composable
     fun Layout(
-        state: DialogManager, focusReq: FocusRequester, title: String, width: Dp, height: Dp,
-        content: @Composable (DialogWindowScope.() -> Unit)
+        state: DialogManager, title: String, width: Dp, height: Dp,
+        content: @Composable() (DialogWindowScope.() -> Unit)
     ) {
         Dialog(
             title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
@@ -76,6 +77,5 @@ object Dialog {
                 content()
             }
         }
-        LaunchedEffect(Unit) { focusReq.requestFocus() }
     }
 }

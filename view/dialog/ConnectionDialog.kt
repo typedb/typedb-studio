@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -95,11 +96,12 @@ object ConnectionDialog {
     @Composable
     fun ConnectServer() {
         val dialogState = GlobalState.connection.connectServerDialog
-        val focusReq = FocusRequester()
-        Dialog.Layout(dialogState, focusReq, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
+        val addressFocusReq = if (GlobalState.connection.isDisconnected) FocusRequester() else null
+        val buttonFocusReq = if (!GlobalState.connection.isDisconnected) FocusRequester() else null
+        Dialog.Layout(dialogState, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
             Submission(state = ConnectServerForm, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField()
-                AddressFormField(focusReq)
+                AddressFormField(addressFocusReq)
                 if (ConnectServerForm.server == TYPEDB_CLUSTER) {
                     UsernameFormField()
                     PasswordFormField()
@@ -112,8 +114,8 @@ object ConnectionDialog {
                     Spacer(modifier = Modifier.weight(1f))
                     when (GlobalState.connection.status) {
                         DISCONNECTED -> DisconnectedFormButtons()
-                        CONNECTED -> ConnectedFormButtons()
-                        CONNECTING -> ConnectingFormButtons()
+                        CONNECTING -> ConnectingFormButtons(buttonFocusReq)
+                        CONNECTED -> ConnectedFormButtons(buttonFocusReq)
                     }
                 }
             }
@@ -135,16 +137,19 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun AddressFormField(focusReq: FocusRequester) {
+    private fun AddressFormField(focusReq: FocusRequester?) {
+        var modifier = Modifier.fillMaxSize()
+        focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
             TextInput(
                 value = ConnectServerForm.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { ConnectServerForm.address = it },
                 enabled = GlobalState.connection.isDisconnected,
-                modifier = Modifier.fillMaxSize().focusRequester(focusReq)
+                modifier = modifier
             )
         }
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -227,21 +232,23 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ConnectedFormButtons() {
+    private fun ConnectedFormButtons(focusReq: FocusRequester?) {
         TextButton(
             text = Label.DISCONNECT,
             onClick = { GlobalState.connection.disconnect() },
             textColor = Theme.colors.error2
         )
         FormRowSpacer()
-        TextButton(text = Label.CLOSE, onClick = { ConnectServerForm.cancel() })
+        TextButton(text = Label.CLOSE, focusReq = focusReq, onClick = { ConnectServerForm.cancel() })
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ConnectingFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { GlobalState.connection.disconnect() })
+    private fun ConnectingFormButtons(focusReq: FocusRequester?) {
+        TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { GlobalState.connection.disconnect() })
         FormRowSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 }
