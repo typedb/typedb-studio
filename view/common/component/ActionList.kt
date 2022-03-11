@@ -57,7 +57,7 @@ object ActionList {
         settingSide: Side,
         modifier: Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
-        buttonFn: (T) -> Form.ButtonArg
+        buttonFn: (T) -> Form.IconButtonArg
     ) {
         @Composable
         fun Separator() {
@@ -105,7 +105,7 @@ object ActionList {
     }
 
     @Composable
-    private fun <T : Any> SettingColumn(items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.ButtonArg) {
+    private fun <T : Any> SettingColumn(items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {

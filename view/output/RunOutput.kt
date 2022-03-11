@@ -39,7 +39,7 @@ internal sealed class RunOutput {
     abstract class State
 
     @Composable
-    internal fun Layout(buttons: List<Form.ButtonArg>, content: @Composable (Modifier) -> Unit) {
+    internal fun Layout(buttons: List<Form.IconButtonArg>, content: @Composable (Modifier) -> Unit) {
         Row {
             Toolbar(Modifier.fillMaxHeight().width(Theme.TOOLBAR_SIZE), buttons)
             Separator.Vertical()
@@ -48,7 +48,7 @@ internal sealed class RunOutput {
     }
 
     @Composable
-    private fun Toolbar(modifier: Modifier, buttons: List<Form.ButtonArg>) {
+    private fun Toolbar(modifier: Modifier, buttons: List<Form.IconButtonArg>) {
         Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
             buttons.forEach {
                 Spacer(Modifier.height(Theme.TOOLBAR_SPACING))

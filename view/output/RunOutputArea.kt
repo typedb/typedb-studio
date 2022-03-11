@@ -42,7 +42,7 @@ import com.vaticle.typedb.studio.state.runner.ResponseManager
 import com.vaticle.typedb.studio.state.runner.Runner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -154,9 +154,9 @@ object RunOutputArea {
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
-                    closeButtonFn = { ButtonArg(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
+                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
                     trailingTabButtonFn = {
-                        ButtonArg(
+                        IconButtonArg(
                             icon = Icon.Code.THUMBTACK,
                             color = { Theme.colors.icon.copy(if (it.isSaved) 1f else 0.3f) },
                             hoverColor = { Theme.colors.icon },

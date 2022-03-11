@@ -37,7 +37,7 @@ internal object TableOutput : RunOutput() {
         }
     }
 
-    private fun toolbarButtons(state: State): List<Form.ButtonArg> {
+    private fun toolbarButtons(state: State): List<Form.IconButtonArg> {
         return listOf()
     }
 

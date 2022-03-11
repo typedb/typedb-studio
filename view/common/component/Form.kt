@@ -125,7 +125,7 @@ object Form {
 
     data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
     data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
-    data class ButtonArg(
+    data class IconButtonArg(
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
         val color: @Composable () -> Color = { Theme.colors.icon },

@@ -79,8 +79,8 @@ import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_C
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
@@ -298,9 +298,9 @@ object Navigator {
         internal var viewState: LazyListState? by mutableStateOf(null)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
-        val buttons: List<ButtonArg> = listOf(
-            ButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
-            ButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
+        val buttons: List<IconButtonArg> = listOf(
+            IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
+            IconButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
         )
 
         init {

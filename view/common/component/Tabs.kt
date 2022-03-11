@@ -50,8 +50,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
@@ -103,8 +103,8 @@ object Tabs {
         state: State<T>, tabs: List<T>, position: Position = Position.TOP,
         iconFn: (@Composable (T) -> IconArg?)? = null, labelFn: @Composable (T) -> AnnotatedString,
         isActiveFn: (T) -> Boolean, onClick: (T) -> Unit, contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
-        closeButtonFn: ((T) -> ButtonArg)? = null, trailingTabButtonFn: ((T) -> ButtonArg?)? = null,
-        extraBarButtons: List<ButtonArg> = listOf()
+        closeButtonFn: ((T) -> IconButtonArg)? = null, trailingTabButtonFn: ((T) -> IconButtonArg?)? = null,
+        extraBarButtons: List<IconButtonArg> = listOf()
     ) {
         state.density = LocalDensity.current.density
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
@@ -155,9 +155,9 @@ object Tabs {
     @Composable
     private fun <T : Any> Tab(
         state: State<T>, tab: T, position: Position, icon: IconArg?, label: AnnotatedString,
-        isActive: Boolean, closeButtonArg: ButtonArg?, onClick: (T) -> Unit,
+        isActive: Boolean, closeButtonArg: IconButtonArg?, onClick: (T) -> Unit,
         contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
-        trailingButton: ButtonArg?
+        trailingButton: IconButtonArg?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
         val bgColor = if (isActive) Theme.colors.primary else Color.Transparent
@@ -232,7 +232,7 @@ object Tabs {
     }
 
     @Composable
-    private fun Button(buttonArg: ButtonArg) {
+    private fun Button(buttonArg: IconButtonArg) {
         Form.IconButton(
             icon = buttonArg.icon,
             hoverIcon = buttonArg.hoverIcon,

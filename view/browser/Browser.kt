@@ -37,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -53,7 +53,7 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
     internal abstract val label: String
     internal abstract val icon: Icon.Code
     internal abstract val isActive: Boolean
-    internal abstract val buttons: List<ButtonArg>
+    internal abstract val buttons: List<IconButtonArg>
 
     internal var isOpen: Boolean by mutableStateOf(initOpen)
 
@@ -88,12 +88,12 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
             Form.Text(value = label)
             Spacer(Modifier.weight(1f))
             Buttons(*buttons.toTypedArray(), isActive = isActive)
-            Buttons(ButtonArg(Icon.Code.XMARK) { toggle() }, isActive = true)
+            Buttons(IconButtonArg(Icon.Code.XMARK) { toggle() }, isActive = true)
         }
     }
 
     @Composable
-    private fun Buttons(vararg buttons: ButtonArg, isActive: Boolean) {
+    private fun Buttons(vararg buttons: IconButtonArg, isActive: Boolean) {
         buttons.forEach {
             Form.IconButton(
                 icon = it.icon,

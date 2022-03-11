@@ -38,8 +38,8 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.FOLDER_PLUS
 import com.vaticle.typedb.studio.view.common.component.Navigator
@@ -60,7 +60,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
     override val isActive: Boolean get() = GlobalState.project.current != null
-    override var buttons: List<ButtonArg> by mutableStateOf(emptyList())
+    override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
     override fun BrowserLayout() {

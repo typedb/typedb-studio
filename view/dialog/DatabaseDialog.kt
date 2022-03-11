@@ -39,11 +39,11 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ActionList
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.FIELD_HEIGHT
 import com.vaticle.typedb.studio.view.common.component.Form.Field
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
@@ -107,7 +107,7 @@ object DatabaseDialog {
             settingSide = ActionList.Side.RIGHT,
             modifier = mod1.border(1.dp, Theme.colors.border),
             buttonFn = {
-                ButtonArg(
+                IconButtonArg(
                     icon = Icon.Code.TRASH_CAN,
                     onClick = {
                         GlobalState.confirmation.submit(

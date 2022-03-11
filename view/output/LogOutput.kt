@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
-import com.vaticle.typedb.studio.view.common.component.Form.ButtonArg
+import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -70,10 +70,10 @@ internal object LogOutput : RunOutput() {
         }
     }
 
-    private fun buttons(state: State): List<ButtonArg> {
+    private fun buttons(state: State): List<IconButtonArg> {
         return listOf(
-            ButtonArg(Icon.Code.ARROW_UP_TO_LINE) { state.jumpToTop() },
-            ButtonArg(
+            IconButtonArg(Icon.Code.ARROW_UP_TO_LINE) { state.jumpToTop() },
+            IconButtonArg(
                 icon = Icon.Code.ARROW_DOWN_TO_LINE,
                 color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon }
             ) { state.editorState.stickToBottom = true }
