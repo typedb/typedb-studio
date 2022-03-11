@@ -67,7 +67,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.isPrimaryPressed
@@ -386,16 +386,15 @@ object Form {
         } ?: modifier
         Box(
             contentAlignment = Alignment.Center,
-            modifier = mod.height(FIELD_HEIGHT)
-                .onPointerEvent(PointerEventType.Press) {
-                    if (it.buttons.isPrimaryPressed) {
-                        tooltipState?.hideOnTargetHover()
-                        onClick?.let { c -> c() }
-                    }
-                }.pointerMoveFilter(
-                    onEnter = { tooltipState?.mayShowOnTargetHover(); false },
-                    onExit = { tooltipState?.mayHideOnTargetExit(); false }
-                )
+            modifier = mod.height(FIELD_HEIGHT).onPointerEvent(Press) {
+                if (it.buttons.isPrimaryPressed) {
+                    tooltipState?.hideOnTargetHover()
+                    onClick?.let { c -> c() }
+                }
+            }.pointerMoveFilter(
+                onEnter = { tooltipState?.mayShowOnTargetHover(); false },
+                onExit = { tooltipState?.mayHideOnTargetExit(); false }
+            )
         ) {
             Icon.Render(icon = icon, color = iconColor, enabled = enabled)
             tooltipState?.let { Tooltip.Popup(it) }
@@ -678,6 +677,7 @@ object Form {
 
         class DropdownState {
             var expanded by mutableStateOf(false)
+            var isButtonHover by mutableStateOf(false)
             var mouseIndex: Int? by mutableStateOf(null)
             var width: Dp by mutableStateOf(0.dp)
 
@@ -705,16 +705,19 @@ object Form {
             TextButton(
                 text = selected?.let { displayFn(it).ifBlank { placeholder } } ?: placeholder,
                 onClick = { state.toggle() },
-                modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) },
                 textColor = Theme.colors.onPrimary,
                 trailingIcon = CARET_DOWN,
                 focusReq = focusReq,
                 enabled = enabled,
-                tooltip = tooltip
+                tooltip = tooltip,
+                modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }.pointerMoveFilter(
+                    onEnter = { state.isButtonHover = true; false },
+                    onExit = { state.isButtonHover = false; false }
+                ),
             )
             DropdownMenu(
                 expanded = state.expanded,
-                onDismissRequest = { state.expanded = false },
+                onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
                 modifier = Modifier.background(Theme.colors.surface)
                     .defaultMinSize(minWidth = state.width)
                     .border(BORDER_WIDTH, Theme.colors.border, ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
