@@ -141,8 +141,9 @@ object Tooltip {
             var showAll by remember { mutableStateOf(false) }
             val density = LocalDensity.current.density
             var height by remember { mutableStateOf(0.dp) }
-            val hasSpaceBelow = MouseInfo.getPointerInfo().location.y < LocalWindow.current!!.height - height.value
-            val offsetY = if (hasSpaceBelow) TOOLTIP_OFFSET else -TOOLTIP_OFFSET
+            val mouseY = MouseInfo.getPointerInfo().location.y
+            val positionBelowMouse = mouseY < LocalWindow.current!!.height - height.value - TOOLTIP_OFFSET.value
+            val offsetY = if (positionBelowMouse) TOOLTIP_OFFSET else -TOOLTIP_OFFSET
             Popup(
                 focusable = true,
                 popupPositionProvider = rememberCursorPositionProvider(DpOffset(0.dp, offsetY)),

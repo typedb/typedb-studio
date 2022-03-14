@@ -506,6 +506,7 @@ object Toolbar {
                 onClick = { GlobalState.connection.connectServerDialog.open() },
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
                 trailingIcon = Icon.Code.SERVER,
+                tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             )
         }
     }
