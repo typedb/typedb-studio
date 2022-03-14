@@ -268,6 +268,7 @@ object Frame {
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
+                        // TODO: We should only resize if the mouse is on the right side of the dragging direction
                         paneState.frameState.isManuallyResized = true
                         paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
@@ -285,6 +286,7 @@ object Frame {
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
                     .draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
+                        // TODO: We should only resize if the mouse is on the right side of the dragging direction
                         paneState.frameState.isManuallyResized = true
                         paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
                     })
