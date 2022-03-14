@@ -33,10 +33,10 @@ object Sentence {
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_RUNNING =
-        "This button will only be enabled when there is a running script/query."
+        "This button will only be enabled when there is a runningquery."
     const val BUTTON_ENABLED_WHEN_RUNNABLE =
         "This button will only be enabled when a session is opened to a database, and a runnable page is opened and active " +
-                "(such as a TypeQL file), and no running script/query."
+                "(such as a TypeQL file), and no running query."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =
@@ -107,8 +107,9 @@ object Sentence {
         "Schema sessions allow you to only modify the schema of the database, and not data. This means defining and undefining schema. " +
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val STOP_SIGNAL_DESCRIPTION =
-        "A stop signal allows you to stop the running script/query once the current operation is completed. " +
-                "To stop script/query immediately, close the transaction instead. " + BUTTON_ENABLED_WHEN_RUNNING
+        "A stop signal allows you to stop the currently running query when the next server response is received. " +
+                "To stop query immediately without waiting for any server response, close the transaction instead. " +
+                BUTTON_ENABLED_WHEN_RUNNING
     const val TRANSACTION_CLOSE_DESCRIPTION =
         "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
                 "The next transaction will be opened at a newer and latest snapshot. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
