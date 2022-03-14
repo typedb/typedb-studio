@@ -33,7 +33,7 @@ object Sentence {
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
     const val BUTTON_ENABLED_WHEN_RUNNING =
-        "This button will only be enabled when there is a runningquery."
+        "This button will only be enabled when there is a running query."
     const val BUTTON_ENABLED_WHEN_RUNNABLE =
         "This button will only be enabled when a session is opened to a database, and a runnable page is opened and active " +
                 "(such as a TypeQL file), and no running query."
