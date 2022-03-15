@@ -388,7 +388,7 @@ object Form {
             contentAlignment = Alignment.Center,
             modifier = mod.height(FIELD_HEIGHT).onPointerEvent(Press) {
                 if (it.buttons.isPrimaryPressed) {
-                    tooltipState?.hideOnTargetHover()
+                    tooltipState?.hideOnTargetClicked()
                     onClick?.let { c -> c() }
                 }
             }.pointerMoveFilter(
@@ -458,7 +458,7 @@ object Form {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = mod.background(fadeable(bgColor, !enabled), roundedCorners.shape(density))
-                    .clickable(enabled = enabled) { tooltipState?.hideOnTargetHover(); onClick() }
+                    .clickable(enabled = enabled) { tooltipState?.hideOnTargetClicked(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
                         onEnter = { tooltipState?.mayShowOnTargetHover(); false },

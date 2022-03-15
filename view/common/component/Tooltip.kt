@@ -81,7 +81,7 @@ object Tooltip {
 
         internal var isOpen by mutableStateOf(false)
         private val mouseHoverTarget = AtomicBoolean(false)
-        private val mouseHoverCancelled = AtomicBoolean(false)
+        private val mouseHoverDisabled = AtomicBoolean(false)
         private val mouseHoverTooltip = AtomicBoolean(false)
         private var tooltipExpanded = AtomicBoolean(false)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -93,7 +93,7 @@ object Tooltip {
         }
 
         internal fun mayShowOnTargetHover() {
-            if (mouseHoverCancelled.get()) return
+            if (mouseHoverDisabled.get()) return
             mouseHoverTarget.set(true)
             coroutineScope.launch {
                 delay(TOOLTIP_DELAY)
@@ -101,24 +101,24 @@ object Tooltip {
             }
         }
 
-        internal fun hideOnTargetHover() {
+        internal fun mayHideOnTargetExit() {
             mouseHoverTarget.set(false)
-            mouseHoverCancelled.set(true)
+            delayHide()
+        }
+
+        internal fun hideOnTargetClicked() {
+            mouseHoverTarget.set(false)
+            mouseHoverDisabled.set(true)
             isOpen = false
             coroutineScope.launch {
                 delay(TOOLTIP_DELAY)
-                mouseHoverCancelled.set(false)
+                mouseHoverDisabled.set(false)
             }
         }
 
         internal fun mayHideOnTooltipExit() {
             if (tooltipExpanded.compareAndExchange(true, false)) return
             mouseHoverTooltip.set(false)
-            delayHide()
-        }
-
-        internal fun mayHideOnTargetExit() {
-            mouseHoverTarget.set(false)
             delayHide()
         }
 
