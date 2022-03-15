@@ -69,12 +69,12 @@ object DatabaseDialog {
         }
 
         override fun isValid(): Boolean {
-            return name.isNotBlank() && !GlobalState.connection.current!!.containsDatabase(name)
+            return name.isNotBlank()
         }
 
         override fun trySubmit() {
             assert(name.isNotBlank())
-            if (GlobalState.connection.current!!.createDatabase(name)) name = ""
+            GlobalState.connection.current!!.tryCreateDatabase(name) { name = "" }
         }
     }
 
@@ -114,7 +114,7 @@ object DatabaseDialog {
                         GlobalState.confirmation.submit(
                             title = Label.DELETE_DATABASE,
                             message = Sentence.CONFIRM_DATABASE_DELETION.format(it),
-                            onConfirm = { GlobalState.connection.current!!.deleteDatabase(it) }
+                            onConfirm = { GlobalState.connection.current!!.tryDeleteDatabase(it) }
                         )
                     }
                 )
@@ -171,7 +171,7 @@ object DatabaseDialog {
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
             selected = GlobalState.connection.current?.database,
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
-            onSelection = { GlobalState.connection.current?.openSession(it) },
+            onSelection = { GlobalState.connection.current?.tryOpenSession(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = GlobalState.connection.isInteractiveMode,
             modifier = modifier,

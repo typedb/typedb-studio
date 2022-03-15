@@ -25,6 +25,7 @@ import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
@@ -58,7 +59,7 @@ class Connection internal constructor(
     }
 
     val config = TransactionConfig(this)
-    var isOpen: Boolean by mutableStateOf(true)
+    var isOpen = AtomicBooleanState(true)
     val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
@@ -67,33 +68,46 @@ class Connection internal constructor(
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val isRead: Boolean get() = config.transactionType.isRead
     val isWrite: Boolean get() = config.transactionType.isWrite
-    var isCommitting by mutableStateOf(false)
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
     var hasOpenTransaction: Boolean by mutableStateOf(false)
-    var hasRunningCommand by mutableStateOf(false)
-    val hasStopSignal = AtomicBoolean(false)
+    var hasRunningCommand = AtomicBooleanState(false)
+    var hasRunningQuery = AtomicBooleanState(false)
+    private val hasStopSignal = AtomicBoolean(false)
     private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    fun updateTransactionType(type: TypeDBTransaction.Type) {
-        if (config.transactionType == type) return
+    fun sendStopSignal() {
+        hasStopSignal.set(true)
+    }
+
+    private fun asyncCommand(function: () -> Unit) {
+        coroutineScope.launch {
+            if (hasRunningCommand.compareAndSet(false, true)) {
+                function()
+                hasRunningCommand.set(false)
+            }
+        }
+    }
+
+    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = asyncCommand {
+        if (config.transactionType == type) return@asyncCommand
         closeTransaction()
         config.transactionType = type
     }
 
-    fun updateSessionType(type: TypeDBSession.Type) {
-        if (config.sessionType == type) return
+    fun tryUpdateSessionType(type: TypeDBSession.Type) = asyncCommand {
+        if (config.sessionType == type) return@asyncCommand
         config.sessionType = type
-        openSession(database!!, type)
+        tryOpenSession(database!!, type)
     }
 
-    fun openSession(database: String) {
-        openSession(database, config.sessionType)
+    fun tryOpenSession(database: String) = asyncCommand {
+        tryOpenSession(database, config.sessionType)
     }
 
-    fun openSession(database: String, type: TypeDBSession.Type) {
-        if (session?.database()?.name() == database && session?.type() == type) return
+    fun tryOpenSession(database: String, type: TypeDBSession.Type) = asyncCommand {
+        if (hasOpenSession && session?.database()?.name() == database && session?.type() == type) return@asyncCommand
         closeSession()
         try {
             session = client.session(database, type)
@@ -102,7 +116,9 @@ class Connection internal constructor(
         }
     }
 
-    fun refreshDatabaseList() {
+    fun refreshDatabaseList() = asyncCommand { refreshDatabaseListFn() }
+
+    private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
         client.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
         databaseListRefreshedTime = System.currentTimeMillis()
@@ -114,75 +130,74 @@ class Connection internal constructor(
         else throw IllegalStateException()
     }
 
-    private fun runScript(resource: Resource, script: String = resource.runContent) {
+    private fun runScript(resource: Resource, script: String = resource.runContent) = asyncCommand {
         // TODO
     }
 
-    private fun runQuery(resource: Resource, queries: String = resource.runContent) {
-        if (!hasRunningCommand) {
+    private fun runQuery(resource: Resource, queries: String = resource.runContent) = asyncCommand {
+        if (hasRunningQuery.compareAndSet(false, true)) {
             try {
-                hasRunningCommand = true
                 hasStopSignal.set(false)
                 mayOpenTransaction()
                 resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
                     if (!config.snapshot) closeTransaction()
                     else if (!transaction!!.isOpen) closeTransaction(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)
-                    hasRunningCommand = false
+                    hasRunningQuery.set(false)
                 }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
-                hasRunningCommand = false
+                hasRunningQuery.set(false)
             }
         }
     }
 
     private fun mayOpenTransaction() {
-        if (!hasOpenTransaction) {
-            try {
-                transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
-                hasOpenTransaction = true
-            } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION)
-                hasOpenTransaction = false
-            }
+        if (hasOpenTransaction) return
+        try {
+            transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
+            hasOpenTransaction = true
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION)
+            hasOpenTransaction = false
         }
     }
 
-    fun containsDatabase(database: String): Boolean {
-        refreshDatabaseList()
-        return databaseList.contains(database)
-    }
-
-    fun createDatabase(database: String): Boolean {
-        if (!containsDatabase(database)) {
+    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = asyncCommand {
+        refreshDatabaseListFn()
+        if (!databaseList.contains(database)) {
             try {
                 client.databases().create(database)
-                refreshDatabaseList()
-                return true
+                refreshDatabaseListFn()
+                onSuccess()
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE, database, e.message ?: e.toString())
             }
         } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
-        return false
     }
 
-    fun deleteDatabase(database: String) {
+    fun tryDeleteDatabase(database: String) = asyncCommand {
         try {
             if (this.database == database) closeSession()
             client.databases().get(database).delete()
-            refreshDatabaseList()
+            refreshDatabaseListFn()
         } catch (e: Exception) {
             notificationMgr.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
     }
 
-    fun sendStopSignal() {
-        hasStopSignal.set(true)
+    fun commitTransaction() = asyncCommand {
+        sendStopSignal()
+        transaction?.commit()
+        transaction = null
+        hasOpenTransaction = false
+        notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
     }
 
-    private fun closeSession() {
-        session?.let { it.close(); session = null }
+    fun rollbackTransaction() = asyncCommand {
+        sendStopSignal()
+        transaction?.rollback()
+        notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
     }
 
     fun closeTransaction(message: Message? = null, vararg params: Any) {
@@ -193,27 +208,14 @@ class Connection internal constructor(
         message?.let { notificationMgr.userError(LOGGER, message, params) }
     }
 
-    fun rollbackTransaction() {
-        sendStopSignal()
-        transaction?.rollback()
-        notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
-    }
-
-    fun commitTransaction() {
-        coroutineScope.launch {
-            isCommitting = true
-            sendStopSignal()
-            transaction?.commit()
-            transaction = null
-            isCommitting = false
-            hasOpenTransaction = false
-            notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
-        }
+    private fun closeSession() {
+        session?.let { it.close(); session = null }
     }
 
     fun close() {
-        isOpen = false
-        closeSession()
-        client.close()
+        if (isOpen.compareAndSet(expected = true, new = false)) {
+            closeSession()
+            client.close()
+        }
     }
 }

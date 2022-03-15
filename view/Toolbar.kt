@@ -70,9 +70,9 @@ object Toolbar {
     private val isInferEnabled get() = GlobalState.connection.current?.config?.inferEnabled == true
     private val isExplain get() = GlobalState.connection.current?.config?.explain == true
     private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
-    private val isCommitting get() = GlobalState.connection.current?.isCommitting == true
     private val hasRunnable get() = GlobalState.resource.active?.isRunnable == true
-    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
+    private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery?.state == true
+    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand?.state == true
 
     @Composable
     fun Layout() {
@@ -225,7 +225,7 @@ object Toolbar {
                 buttons = listOf(
                     ToggleButton(
                         text = schema.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.updateSessionType(schema) },
+                        onClick = { GlobalState.connection.current?.tryUpdateSessionType(schema) },
                         isActive = enabled && isSchema,
                         enabled = enabled && hasOpenSession && !hasOpenTx,
                         tooltip = Tooltip.Arg(
@@ -236,7 +236,7 @@ object Toolbar {
                     ),
                     ToggleButton(
                         text = data.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.updateSessionType(data) },
+                        onClick = { GlobalState.connection.current?.tryUpdateSessionType(data) },
                         isActive = enabled && isData,
                         enabled = enabled && hasOpenSession && !hasOpenTx,
                         tooltip = Tooltip.Arg(
@@ -258,7 +258,7 @@ object Toolbar {
                 buttons = listOf(
                     ToggleButton(
                         text = write.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.updateTransactionType(write) },
+                        onClick = { GlobalState.connection.current?.tryUpdateTransactionType(write) },
                         isActive = enabled && isWrite,
                         enabled = enabled && hasOpenSession && !hasOpenTx,
                         tooltip = Tooltip.Arg(
@@ -269,7 +269,7 @@ object Toolbar {
                     ),
                     ToggleButton(
                         text = read.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.updateTransactionType(read) },
+                        onClick = { GlobalState.connection.current?.tryUpdateTransactionType(read) },
                         isActive = enabled && isRead,
                         enabled = enabled && hasOpenSession && !hasOpenTx,
                         tooltip = Tooltip.Arg(
@@ -342,7 +342,7 @@ object Toolbar {
 
         @Composable
         private fun StatusIndicator() {
-            if (isCommitting) LoadingIndicator(Modifier.size(TOOLBAR_BUTTON_SIZE)) else OnlineIndicator()
+            if (hasRunningCommand) LoadingIndicator(Modifier.size(TOOLBAR_BUTTON_SIZE)) else OnlineIndicator()
         }
 
         @Composable
@@ -365,7 +365,7 @@ object Toolbar {
                 icon = Icon.Code.XMARK,
                 onClick = { GlobalState.connection.current?.closeTransaction() },
                 color = Theme.colors.error,
-                enabled = isInteractive && !isCommitting && hasOpenTx,
+                enabled = isInteractive && !hasRunningCommand && hasOpenTx,
                 tooltip = Tooltip.Arg(
                     title = Label.CLOSE_TRANSACTION,
                     description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
@@ -380,7 +380,7 @@ object Toolbar {
                 icon = Icon.Code.ROTATE_LEFT,
                 onClick = { GlobalState.connection.current?.rollbackTransaction() },
                 color = Theme.colors.quaternary2,
-                enabled = isInteractive && !isCommitting && hasOpenTx && GlobalState.connection.current!!.isWrite,
+                enabled = isInteractive && !hasRunningCommand && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Arg(
                     title = Label.ROLLBACK_TRANSACTION,
                     description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -395,7 +395,7 @@ object Toolbar {
                 icon = Icon.Code.CHECK,
                 onClick = { GlobalState.connection.current?.commitTransaction() },
                 color = Theme.colors.secondary,
-                enabled = isInteractive && !isCommitting && hasOpenTx && GlobalState.connection.current!!.isWrite,
+                enabled = isInteractive && !hasRunningCommand && hasOpenTx && GlobalState.connection.current!!.isWrite,
                 tooltip = Tooltip.Arg(
                     title = Label.COMMIT_TRANSACTION,
                     description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
@@ -422,7 +422,7 @@ object Toolbar {
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
-                enabled = hasOpenSession && hasRunnable && !hasRunningCommand && !isCommitting,
+                enabled = hasOpenSession && hasRunnable && !hasRunningQuery && !hasRunningCommand,
                 tooltip = Tooltip.Arg(
                     title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
@@ -436,7 +436,7 @@ object Toolbar {
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
                 onClick = { GlobalState.connection.current!!.sendStopSignal() },
-                enabled = hasRunningCommand && !isCommitting,
+                enabled = hasRunningQuery && !hasRunningCommand,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }
