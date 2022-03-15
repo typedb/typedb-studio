@@ -98,7 +98,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.view.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import java.awt.event.KeyEvent.KEY_RELEASED
+import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -759,7 +759,7 @@ object Form {
         onSpace: (() -> Unit)? = null
     ): Boolean {
         return when {
-            event.awtEvent.id == KEY_RELEASED -> false
+            event.awtEvent.id == KEY_PRESSED -> false
             !enabled -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false
