@@ -27,8 +27,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -42,6 +48,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.view.browser.BrowserArea
+import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.Text
@@ -120,26 +127,33 @@ object Studio {
             onCloseRequest = { onClose() },
             state = rememberWindowState(WindowPlacement.Maximized)
         ) {
+            val density = LocalDensity.current.density
+            var titleBarHeight by remember { mutableStateOf(0.dp) }
+            val bgColor = Theme.colors.background1
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background1)) {
-                    Toolbar.Layout()
-                    Separator.Horizontal()
-                    Frame.Row(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                        Frame.Pane(
-                            id = BrowserArea.javaClass.name,
-                            minSize = BrowserArea.MIN_WIDTH,
-                            initSize = Either.first(BrowserArea.WIDTH)
-                        ) { BrowserArea.Layout(it) },
-                        Frame.Pane(
-                            id = PageArea.javaClass.name,
-                            minSize = PageArea.MIN_WIDTH,
-                            initSize = Either.second(1f)
-                        ) { PageArea.Layout() }
-                    )
-                    Separator.Horizontal()
-                    StatusBar.Layout()
+                Column(Modifier.fillMaxSize().background(bgColor).onGloballyPositioned {
+                    titleBarHeight = window.height.dp - Theme.toDP(it.size.height, density)
+                }) {
+                    CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
+                        Toolbar.Layout()
+                        Separator.Horizontal()
+                        Frame.Row(
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                            Frame.Pane(
+                                id = BrowserArea.javaClass.name,
+                                minSize = BrowserArea.MIN_WIDTH,
+                                initSize = Either.first(BrowserArea.WIDTH)
+                            ) { BrowserArea.Layout(it) },
+                            Frame.Pane(
+                                id = PageArea.javaClass.name,
+                                minSize = PageArea.MIN_WIDTH,
+                                initSize = Either.second(1f)
+                            ) { PageArea.Layout() }
+                        )
+                        Separator.Horizontal()
+                        StatusBar.Layout()
+                    }
                 }
                 if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
                 if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()

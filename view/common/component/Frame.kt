@@ -39,15 +39,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
+import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.Cursor
+import java.awt.MouseInfo
 
 object Frame {
 
@@ -67,7 +72,7 @@ object Frame {
 
     class PaneState internal constructor(
         internal var index: Int,
-        val frameState: FrameState,
+        val frame: FrameState,
         val id: String,
         val order: Int,
         val minSize: Dp = PANE_MIN_SIZE,
@@ -76,9 +81,11 @@ object Frame {
         val content: @Composable (PaneState) -> Unit
     ) {
         internal val isFirst: Boolean get() = index == 0
-        internal val isLast: Boolean get() = index == frameState.panes.size - 1
-        internal val previous: PaneState? get() = if (isFirst) null else frameState.panes[index - 1]
-        internal val next: PaneState? get() = if (isLast) null else frameState.panes[index + 1]
+        internal val isLast: Boolean get() = index == frame.panes.size - 1
+        internal val previous: PaneState? get() = if (isFirst) null else frame.panes[index - 1]
+        internal val next: PaneState? get() = if (isLast) null else frame.panes[index + 1]
+        private var start: Dp by mutableStateOf(0.dp)
+        private var end: Dp by mutableStateOf(0.dp)
         var isFrozen by mutableStateOf(initFreeze)
         var size: Dp by mutableStateOf(0.dp)
 
@@ -97,9 +104,21 @@ object Frame {
             tryResizeSelfAndAdjacentBy(newSize - size)
         }
 
+        internal fun updatePosition(start: Dp, end: Dp) {
+            this.start = start - frame.start
+            this.end = end - frame.start
+        }
+
+        internal fun dragResizerBy(delta: Dp, mousePos: Dp) {
+            val relMousePos = mousePos - frame.start
+            if ((delta > 0.dp && relMousePos > start) || (delta < 0.dp && relMousePos < end)) {
+                tryResizeSelfAndNextBy(delta)
+            }
+        }
+
         private fun tryResizeSelfAndAdjacentBy(delta: Dp, overrideBounds: Boolean = false) {
             if (isFrozen) return
-            if (frameState.panes.size == 1) tryResizeSelfBy(delta, overrideBounds)
+            if (frame.panes.size == 1) tryResizeSelfBy(delta, overrideBounds)
             else if (isLast) tryResizeSelfAndPreviousBy(delta, overrideBounds)
             else tryResizeSelfAndNextBy(delta, overrideBounds)
         }
@@ -110,7 +129,7 @@ object Frame {
             if (!overrideConstraints) size.coerceAtLeast(minSize)
         }
 
-        internal fun tryResizeSelfAndNextBy(delta: Dp, overrideBounds: Boolean = false) {
+        private fun tryResizeSelfAndNextBy(delta: Dp, overrideBounds: Boolean = false) {
             if (isFrozen) return
             assert(!isLast && next != null)
             val cappedDelta = if (overrideBounds) delta else delta.coerceIn(minSize - size, next!!.maxResize)
@@ -129,6 +148,7 @@ object Frame {
 
     class FrameState internal constructor(internal val separator: SeparatorArgs?) {
         var maxSize: Dp by mutableStateOf(0.dp)
+        internal var start by mutableStateOf(0.dp)
         internal var panes: List<PaneState> by mutableStateOf(emptyList())
         internal var isManuallyResized: Boolean = false
         private val currentSize: Dp
@@ -159,16 +179,17 @@ object Frame {
         private fun add(added: List<Pane>) {
             panes = (panes + added.map {
                 PaneState(
-                    index = 0, frameState = this, id = it.id, order = it.order, minSize = it.minSize,
+                    index = 0, frame = this, id = it.id, order = it.order, minSize = it.minSize,
                     initSize = it.initSize, initFreeze = it.initFreeze, content = it.content
                 )
             }).sortedBy { it.order }.onEachIndexed { i, pane -> pane.index = i }
             mayInitialiseSizes()
         }
 
-        internal fun updateSize(newMaxSize: Dp) {
-            if (maxSize != newMaxSize) {
-                maxSize = newMaxSize
+        internal fun updateSize(start: Dp, newSize: Dp) {
+            this.start = start
+            if (maxSize != newSize) {
+                maxSize = newSize
                 if (!isManuallyResized) mayInitialiseSizes()
                 mayShrinkOrExpandSizes()
             }
@@ -217,8 +238,11 @@ object Frame {
 
     @Composable
     fun Row(state: FrameState, modifier: Modifier = Modifier) {
-        val pixelDensity = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { state.updateSize(Theme.toDP(it.width, pixelDensity)) }) {
+        val density = LocalDensity.current.density
+        Box(modifier = modifier.onGloballyPositioned {
+            val bounds = it.boundsInWindow()
+            state.updateSize(toDP(bounds.left, density), toDP(bounds.width, density))
+        }) {
             Row(modifier = Modifier.fillMaxSize()) {
                 state.panes.forEach { pane ->
                     Box(Modifier.fillMaxHeight().width(pane.size)) { pane.content(pane) }
@@ -241,8 +265,11 @@ object Frame {
 
     @Composable
     fun Column(state: FrameState, modifier: Modifier = Modifier) {
-        val pixelDensity = LocalDensity.current.density
-        Box(modifier = modifier.onSizeChanged { state.updateSize(Theme.toDP(it.height, pixelDensity)) }) {
+        val density = LocalDensity.current.density
+        Box(modifier = modifier.onGloballyPositioned {
+            val bounds = it.boundsInWindow()
+            state.updateSize(toDP(bounds.top, density), toDP(bounds.height, density))
+        }) {
             Column(modifier = Modifier.fillMaxSize()) {
                 state.panes.forEach { pane ->
                     Box(Modifier.fillMaxWidth().height(pane.size)) { pane.content(pane) }
@@ -260,17 +287,20 @@ object Frame {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun RowPaneResizer(paneState: PaneState, separatorWidth: Dp?) {
-        if (!paneState.isFrozen) {
-            val pixelDensity = LocalDensity.current.density
+    private fun RowPaneResizer(pane: PaneState, separatorWidth: Dp?) {
+        if (!pane.isFrozen) {
+            val density = LocalDensity.current.density
+            val window = LocalWindow.current!!
             Box(
                 modifier = Modifier.fillMaxHeight()
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                    .draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
-                        // TODO: We should only resize if the mouse is on the right side of the dragging direction
-                        paneState.frameState.isManuallyResized = true
-                        paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
+                    .onGloballyPositioned {
+                        val bounds = it.boundsInWindow()
+                        pane.updatePosition(toDP(bounds.left, density), toDP(bounds.right, density))
+                    }.draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
+                        pane.frame.isManuallyResized = true
+                        pane.dragResizerBy(toDP(it, density), (MouseInfo.getPointerInfo().location.x - window.x).dp)
                     })
             )
         } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
@@ -278,17 +308,21 @@ object Frame {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ColumnPaneResizer(paneState: PaneState, separatorHeight: Dp?) {
-        if (!paneState.isFrozen) {
-            val pixelDensity = LocalDensity.current.density
+    private fun ColumnPaneResizer(pane: PaneState, separatorHeight: Dp?) {
+        if (!pane.isFrozen) {
+            val density = LocalDensity.current.density
+            val window = LocalWindow.current!!
+            val appTop = window.y + LocalTitleBarHeight.current.value
             Box(
                 modifier = Modifier.fillMaxWidth()
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
                     .pointerHoverIcon(icon = PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
-                    .draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
-                        // TODO: We should only resize if the mouse is on the right side of the dragging direction
-                        paneState.frameState.isManuallyResized = true
-                        paneState.tryResizeSelfAndNextBy(Theme.toDP(it, pixelDensity))
+                    .onGloballyPositioned {
+                        val bounds = it.boundsInWindow()
+                        pane.updatePosition(toDP(bounds.top, density), toDP(bounds.bottom, density))
+                    }.draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
+                        pane.frame.isManuallyResized = true
+                        pane.dragResizerBy(toDP(it, density), (MouseInfo.getPointerInfo().location.y - appTop).dp)
                     })
             )
         } else if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))

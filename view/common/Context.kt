@@ -20,8 +20,9 @@ package com.vaticle.typedb.studio.view.common
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.unit.dp
 
 object Context {
-
     val LocalWindow = staticCompositionLocalOf<ComposeWindow?> { null }
+    val LocalTitleBarHeight = staticCompositionLocalOf { 0.dp }
 }

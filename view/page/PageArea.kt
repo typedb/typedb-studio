@@ -37,7 +37,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
@@ -159,7 +158,6 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Layout() {
-        val density = LocalDensity.current.density
         val coroutineScope = rememberCoroutineScope()
         val state = remember { State(coroutineScope) }
         val focusReq = FocusRequester()
