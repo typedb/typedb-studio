@@ -49,10 +49,10 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
+import com.vaticle.typedb.studio.view.common.Util.mousePoint
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.Cursor
-import java.awt.MouseInfo
 
 object Frame {
 
@@ -110,6 +110,7 @@ object Frame {
         }
 
         internal fun dragResizerBy(delta: Dp, mousePos: Dp) {
+            println("delta: $delta, mousePos: $mousePos")
             val relMousePos = mousePos - frame.start
             if ((delta > 0.dp && relMousePos > start) || (delta < 0.dp && relMousePos < end)) {
                 tryResizeSelfAndNextBy(delta)
@@ -291,6 +292,7 @@ object Frame {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
             val window = LocalWindow.current!!
+            val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxHeight()
                     .width(if (separatorWidth != null) DRAGGABLE_BAR_SIZE + separatorWidth else DRAGGABLE_BAR_SIZE)
@@ -300,7 +302,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.left, density), toDP(bounds.right, density))
                     }.draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), (MouseInfo.getPointerInfo().location.x - window.x).dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).x.dp)
                     })
             )
         } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
@@ -312,7 +314,7 @@ object Frame {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
             val window = LocalWindow.current!!
-            val appTop = window.y + LocalTitleBarHeight.current.value
+            val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxWidth()
                     .height(if (separatorHeight != null) DRAGGABLE_BAR_SIZE + separatorHeight else DRAGGABLE_BAR_SIZE)
@@ -322,7 +324,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.top, density), toDP(bounds.bottom, density))
                     }.draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), (MouseInfo.getPointerInfo().location.y - appTop).dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).y.dp)
                     })
             )
         } else if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))

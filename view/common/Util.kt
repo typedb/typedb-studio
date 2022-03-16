@@ -1,9 +1,12 @@
 package com.vaticle.typedb.studio.view.common
 
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import java.awt.MouseInfo
+import java.awt.Point
 import kotlin.math.roundToInt
 
 object Util {
@@ -19,5 +22,10 @@ object Util {
 
     fun toDP(pixel: Number, density: Float): Dp {
         return (pixel.toDouble() / density).roundToInt().dp
+    }
+
+    fun mousePoint(window: ComposeWindow, titleBarHeight: Dp): Point {
+        val raw = MouseInfo.getPointerInfo().location
+        return Point(raw.x - window.x, raw.y - window.y - titleBarHeight.value.toInt())
     }
 }
