@@ -59,12 +59,15 @@ class Runner(
         const val DELETE_QUERY = "Delete Query:"
         const val UPDATE_QUERY = "Update Query:"
         const val MATCH_QUERY = "Match Query:"
-        const val DEFINE_QUERY_SUCCESS = "Defined Types Successfully."
-        const val UNDEFINE_QUERY_SUCCESS = "Undefined Types Successfully."
-        const val DELETE_QUERY_SUCCESS = "Deleted Things Successfully."
-        const val INSERTED_QUERY_SUCCESS = "Inserted Things Successfully:"
-        const val UPDATED_QUERY_SUCCESS = "Updated Things Successfully:"
-        const val MATCH_QUERY_SUCCESS = "Matched Things Successfully:"
+        const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
+        const val UNDEFINE_QUERY_SUCCESS = "Undefine query successfully undefined types in the schema."
+        const val DELETE_QUERY_SUCCESS = "Delete query successfully deleted things from the database."
+        const val INSERT_QUERY_SUCCESS = "Insert query successfully inserted new things to the database:"
+        const val INSERT_QUERY_NO_RESULT = "Insert query did not insert any new thing to the database."
+        const val UPDATE_QUERY_SUCCESS = "Update query successfully updated things in the databases:"
+        const val UPDATE_QUERY_NO_RESULT = "Update query did not update any thing in the databases."
+        const val MATCH_QUERY_SUCCESS = "Match query successfully matched concepts in the database:"
+        const val MATCH_QUERY_NO_RESULT = "Match query did not match any concepts in the database."
     }
 
     var isSaved by mutableStateOf(false)
@@ -141,7 +144,8 @@ class Runner(
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
             results = transaction.query().insert(query),
-            successMessage = RESULT_ + INSERTED_QUERY_SUCCESS
+            successMessage = RESULT_ + INSERT_QUERY_SUCCESS,
+            noResultMessage = RESULT_ + INSERT_QUERY_NO_RESULT
         )
     }
 
@@ -151,7 +155,8 @@ class Runner(
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
             results = transaction.query().update(query),
-            successMessage = RESULT_ + UPDATED_QUERY_SUCCESS
+            successMessage = RESULT_ + UPDATE_QUERY_SUCCESS,
+            noResultMessage = RESULT_ + UPDATE_QUERY_NO_RESULT
         )
     }
 
@@ -161,21 +166,23 @@ class Runner(
         response.log.collect(TYPEQL, query.toString())
         logResultStream(
             results = transaction.query().match(query),
-            successMessage = RESULT_ + MATCH_QUERY_SUCCESS
+            successMessage = RESULT_ + MATCH_QUERY_SUCCESS,
+            noResultMessage = RESULT_ + MATCH_QUERY_NO_RESULT
         )
     }
 
-    private fun logResultStream(results: Stream<ConceptMap>, successMessage: String) {
+    private fun logResultStream(results: Stream<ConceptMap>, successMessage: String, noResultMessage: String) {
         var started = false
+        response.log.emptyLine()
         results.peek {
             if (started) return@peek
-            response.log.emptyLine()
             response.log.collect(SUCCESS, successMessage)
             started = true
         }.forEach {
             if (hasStopSignal.get()) return@forEach
             response.log.collect(TYPEQL, printConceptMap(it))
         }
+        if (!started) response.log.collect(SUCCESS, noResultMessage)
     }
 
     private fun printConceptMap(conceptMap: ConceptMap?): String {

@@ -64,7 +64,7 @@ object Dialog {
     @Composable
     fun Layout(
         state: DialogManager, title: String, width: Dp, height: Dp,
-        content: @Composable() (DialogWindowScope.() -> Unit)
+        content: @Composable DialogWindowScope.() -> Unit
     ) {
         Dialog(
             title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
