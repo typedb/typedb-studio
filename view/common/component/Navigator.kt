@@ -89,7 +89,9 @@ import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
+import com.vaticle.typedb.studio.view.common.theme.Theme.contains
 import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.common.theme.Theme.toRectDP
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
@@ -210,16 +212,11 @@ object Navigator {
             }
 
             override fun isHoverButton(x: Int, y: Int): Boolean {
-                return buttonArea?.let { x >= it.left && x <= it.right && y >= it.top && y <= it.bottom } ?: false
+                return buttonArea?.contains(x, y) ?: false
             }
 
             internal fun updateButtonArea(rawRectangle: Rect) {
-                buttonArea = Rect(
-                    left = toDP(rawRectangle.left, navState.density).value,
-                    top = toDP(rawRectangle.top, navState.density).value,
-                    right = toDP(rawRectangle.right, navState.density).value,
-                    bottom = toDP(rawRectangle.bottom, navState.density).value
-                )
+                buttonArea = toRectDP(rawRectangle, navState.density)
             }
 
             internal fun reloadEntries() {

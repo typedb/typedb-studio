@@ -425,14 +425,14 @@ object Form {
         BoxButton(
             onClick = onClick,
             bgColor = bgColor,
-            roundedCorners = roundedCorners,
-            enabled = enabled,
-            tooltip = tooltip,
-            focusReq = focusReq,
             modifier = modifier.size(FIELD_HEIGHT).pointerMoveFilter(
                 onEnter = { isHover = true; false },
                 onExit = { isHover = false; false }
             ),
+            focusReq = focusReq,
+            roundedCorners = roundedCorners,
+            enabled = enabled,
+            tooltip = tooltip,
         ) {
             Icon.Render(
                 icon = if (hoverIcon != null && isHover) hoverIcon else icon,
