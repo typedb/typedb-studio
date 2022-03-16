@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -74,6 +75,8 @@ import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
@@ -90,8 +93,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
+import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.isMouseHover
 import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.Util.toRectDP
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -384,21 +391,32 @@ object Form {
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
     ) {
+        val density = LocalDensity.current.density
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
+        var area: Rect? by remember { mutableStateOf(null) }
+        val window = LocalWindow.current!!
+        val titleBarHeight = LocalTitleBarHeight.current
         val mod = onClick?.let {
             modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
         } ?: modifier
+
+        fun mayShowOnTargetHover() {
+            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+        }
+
         Box(
             contentAlignment = Alignment.Center,
-            modifier = mod.height(FIELD_HEIGHT).onPointerEvent(Press) {
-                if (it.buttons.isPrimaryPressed) {
-                    tooltipState?.hideOnTargetClicked()
-                    onClick?.let { c -> c() }
-                }
-            }.pointerMoveFilter(
-                onEnter = { tooltipState?.mayShowOnTargetHover(); false },
-                onExit = { tooltipState?.mayHideOnTargetExit(); false }
-            )
+            modifier = mod.height(FIELD_HEIGHT)
+                .onGloballyPositioned { area = toRectDP(it.boundsInWindow(), density) }
+                .onPointerEvent(Press) {
+                    if (it.buttons.isPrimaryPressed) {
+                        tooltipState?.hideOnTargetClicked()
+                        onClick?.let { c -> c() }
+                    }
+                }.pointerMoveFilter(
+                    onEnter = { mayShowOnTargetHover(); false },
+                    onExit = { tooltipState?.mayHideOnTargetExit(); false }
+                )
         ) {
             Icon.Render(icon = icon, color = iconColor, enabled = enabled)
             tooltipState?.let { Tooltip.Popup(it) }
@@ -458,14 +476,23 @@ object Form {
         val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = rectangleIndication(Theme.colors.indicationBase, density, roundedCorners)
+        var area: Rect? by remember { mutableStateOf(null) }
+        val window = LocalWindow.current!!
+        val titleBarHeight = LocalTitleBarHeight.current
+
+        fun mayShowOnTargetHover() {
+            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+        }
+
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = mod.background(fadeable(bgColor, !enabled), roundedCorners.shape(density))
+                    .onGloballyPositioned { area = toRectDP(it.boundsInWindow(), density) }
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetClicked(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
                     .pointerMoveFilter(
-                        onEnter = { tooltipState?.mayShowOnTargetHover(); false },
+                        onEnter = { mayShowOnTargetHover(); false },
                         onExit = { tooltipState?.mayHideOnTargetExit(); false }
                     )
             ) {
