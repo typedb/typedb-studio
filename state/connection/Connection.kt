@@ -26,6 +26,7 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
@@ -73,8 +74,11 @@ class Connection internal constructor(
     val isWrite: Boolean get() = config.transactionType.isWrite
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
     var hasOpenTransaction: Boolean by mutableStateOf(false)
-    var hasRunningCommand = AtomicBooleanState(false)
-    var hasRunningQuery = AtomicBooleanState(false)
+    val hasRunningQuery get() = hasRunningQueryAtomic.state
+    val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
+    var hasRunningQueryAtomic = AtomicBooleanState(false)
+    var hasRunningCommandAtomic = AtomicBooleanState(false)
+    var runningClosingCommands = AtomicIntegerState(0)
     private val hasStopSignal = AtomicBoolean(false)
     private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
@@ -88,18 +92,29 @@ class Connection internal constructor(
     private fun runAsyncCommand(function: () -> Unit) {
         val depth = asyncDepth.incrementAndGet()
         assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
-        if (hasRunningCommand.compareAndSet(expected = false, new = true)) {
+        if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
             coroutineScope.launch {
                 function()
-                hasRunningCommand.set(false)
+                hasRunningCommandAtomic.set(false)
                 asyncDepth.decrementAndGet()
             }
         }
     }
 
+    private fun runAsyncClosingCommand(function: () -> Unit) {
+        val depth = asyncDepth.incrementAndGet()
+        assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
+        runningClosingCommands.increment()
+        coroutineScope.launch {
+            function()
+            runningClosingCommands.decrement()
+            asyncDepth.decrementAndGet()
+        }
+    }
+
     fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = runAsyncCommand {
         if (config.transactionType == type) return@runAsyncCommand
-        closeTransaction()
+        closeTransactionFn()
         config.transactionType = type
     }
 
@@ -142,19 +157,19 @@ class Connection internal constructor(
     }
 
     private fun runQuery(resource: Resource, queries: String = resource.runContent) = runAsyncCommand {
-        if (hasRunningQuery.compareAndSet(expected = false, new = true)) {
+        if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignal.set(false)
                 mayOpenTransaction()
                 resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
-                    if (!config.snapshot) closeTransaction()
-                    else if (!transaction!!.isOpen) closeTransaction(TRANSACTION_CLOSED_IN_QUERY)
+                    if (!config.snapshot) closeTransactionFn()
+                    else if (!transaction!!.isOpen) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)
-                    hasRunningQuery.set(false)
+                    hasRunningQueryAtomic.set(false)
                 }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
-                hasRunningQuery.set(false)
+                hasRunningQueryAtomic.set(false)
             }
         }
     }
@@ -207,7 +222,12 @@ class Connection internal constructor(
         notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
     }
 
-    fun closeTransaction(message: Message? = null, vararg params: Any) {
+    fun closeTransaction(message: Message? = null, vararg params: Any) = runAsyncClosingCommand {
+        closeTransactionFn(message, params)
+    }
+
+    private fun closeTransactionFn(message: Message? = null, vararg params: Any) {
+        if (transaction == null) return
         sendStopSignal()
         transaction?.close()
         transaction = null
@@ -215,11 +235,12 @@ class Connection internal constructor(
         message?.let { notificationMgr.userError(LOGGER, message, params) }
     }
 
-    private fun closeSession() {
+    private fun closeSession() { // not async, always called from other async functions
+        closeTransactionFn()
         session?.let { it.close(); session = null }
     }
 
-    fun close() {
+    fun close() = runAsyncClosingCommand {
         if (isOpen.compareAndSet(expected = true, new = false)) {
             closeSession()
             client.close()

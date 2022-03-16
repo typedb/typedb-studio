@@ -73,8 +73,8 @@ object Toolbar {
     private val isExplain get() = GlobalState.connection.current?.config?.explain == true
     private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
     private val hasRunnable get() = GlobalState.resource.active?.isRunnable == true
-    private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery?.state == true
-    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand?.state == true
+    private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery == true
+    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
 
     @Composable
     fun Layout() {
