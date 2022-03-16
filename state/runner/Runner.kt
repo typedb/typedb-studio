@@ -40,9 +40,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Stream
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.toList
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalTime::class)
 class Runner(
     private val transaction: TypeDBTransaction,
     private val queries: String,
@@ -68,10 +72,13 @@ class Runner(
         const val UPDATE_QUERY_NO_RESULT = "Update query did not update any thing in the databases."
         const val MATCH_QUERY_SUCCESS = "Match query successfully matched concepts in the database:"
         const val MATCH_QUERY_NO_RESULT = "Match query did not match any concepts in the database."
+
+        private val RUNNING_INDICATOR_DELAY = Duration.Companion.seconds(3)
     }
 
     var isSaved by mutableStateOf(false)
     val response = ResponseManager()
+    private val isRunning = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     private val onComplete = LinkedBlockingDeque<(Runner) -> Unit>()
 
@@ -84,15 +91,35 @@ class Runner(
     }
 
     internal fun launch() {
-        coroutineScope.launch {
-            try {
-                runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
-            } catch (e: Exception) {
-                response.log.emptyLine()
-                response.log.collect(ERROR, ERROR_ + e.message)
-            } finally {
-                onComplete.forEach { it(this@Runner) }
+        isRunning.set(true)
+        coroutineScope.launch { runningQueryIndicator() }
+        coroutineScope.launch { runQueries() }
+    }
+
+    private suspend fun runningQueryIndicator() {
+        var duration = RUNNING_INDICATOR_DELAY
+        while (isRunning.get()) {
+            delay(duration)
+            if (!isRunning.get()) break
+            val sinceLastResponse = System.currentTimeMillis() - response.log.lastResponse.get()
+            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+                response.log.collect(INFO, "...")
+                duration = RUNNING_INDICATOR_DELAY
+            } else {
+                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
             }
+        }
+    }
+
+    private fun runQueries() {
+        try {
+            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
+        } catch (e: Exception) {
+            response.log.emptyLine()
+            response.log.collect(ERROR, ERROR_ + e.message)
+        } finally {
+            isRunning.set(false)
+            onComplete.forEach { it(this@Runner) }
         }
     }
 
