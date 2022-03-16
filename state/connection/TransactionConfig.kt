@@ -30,16 +30,16 @@ class TransactionConfig(private val connection: Connection) {
     var sessionType: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); internal set
     var transactionType: TypeDBTransaction.Type by mutableStateOf(TypeDBTransaction.Type.READ); internal set
 
-    val snapshot: Boolean get() = _snapshot || transactionType.isWrite
+    val snapshotSelected: Boolean get() = _snapshot || transactionType.isWrite
     val snapshotEnabled: Boolean get() = connection.hasOpenSession && !transactionType.isWrite
     private var _snapshot: Boolean by mutableStateOf(false)
 
-    val infer: Boolean get() = _infer && !transactionType.isWrite
+    val inferSelected: Boolean get() = _infer && !transactionType.isWrite
     val inferEnabled: Boolean get() = connection.hasOpenSession && !transactionType.isWrite
     private var _infer: Boolean by mutableStateOf(false)
 
-    val explain: Boolean get() = _explain && infer && snapshot
-    val explainEnabled: Boolean get() = connection.hasOpenSession && infer && snapshot
+    val explainSelected: Boolean get() = _explain && inferSelected && snapshotSelected
+    val explainEnabled: Boolean get() = connection.hasOpenSession && inferSelected && snapshotSelected
     private var _explain: Boolean by mutableStateOf(false)
 
     fun toggleSnapshot() {
@@ -55,6 +55,6 @@ class TransactionConfig(private val connection: Connection) {
     }
 
     fun toTypeDBOptions(): TypeDBOptions? {
-        return TypeDBOptions.core().infer(infer).explain(explain)
+        return TypeDBOptions.core().infer(inferSelected).explain(explainSelected)
     }
 }

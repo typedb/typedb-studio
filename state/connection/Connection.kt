@@ -60,22 +60,22 @@ class Connection internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    val config = TransactionConfig(this)
-    var isOpen = AtomicBooleanState(true)
-    val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
-    var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    var session: TypeDBSession? by mutableStateOf(null); private set
-    var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val isSchema: Boolean get() = config.sessionType == TypeDBSession.Type.SCHEMA
-    val isData: Boolean get() = config.sessionType == TypeDBSession.Type.DATA
-    val isRead: Boolean get() = config.transactionType.isRead
-    val isWrite: Boolean get() = config.transactionType.isWrite
+    val isSchemaSession: Boolean get() = config.sessionType == TypeDBSession.Type.SCHEMA
+    val isDataSession: Boolean get() = config.sessionType == TypeDBSession.Type.DATA
+    val isReadTransaction: Boolean get() = config.transactionType.isRead
+    val isWriteTransaction: Boolean get() = config.transactionType.isWrite
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
-    var hasOpenTransaction: Boolean by mutableStateOf(false)
     val hasRunningQuery get() = hasRunningQueryAtomic.state
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
+    val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
+    val config = TransactionConfig(this)
+    var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
+    var isOpen = AtomicBooleanState(true)
+    var databaseList: List<String> by mutableStateOf(emptyList()); private set
+    var session: TypeDBSession? by mutableStateOf(null); private set
+    var hasOpenTransaction: Boolean by mutableStateOf(false)
     var hasRunningQueryAtomic = AtomicBooleanState(false)
     var hasRunningCommandAtomic = AtomicBooleanState(false)
     var runningClosingCommands = AtomicIntegerState(0)
@@ -162,7 +162,7 @@ class Connection internal constructor(
                 hasStopSignal.set(false)
                 mayOpenTransaction()
                 resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
-                    if (!config.snapshot) closeTransactionFn()
+                    if (!config.snapshotSelected) closeTransactionFn()
                     else if (!transaction!!.isOpen) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)
                     hasRunningQueryAtomic.set(false)
