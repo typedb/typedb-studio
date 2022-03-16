@@ -18,12 +18,13 @@
 
 package com.vaticle.typedb.studio.view
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,11 +82,13 @@ object Toolbar {
             modifier = Modifier.fillMaxWidth().height(TOOLBAR_SIZE),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Project.Buttons()
-            VerticalSeparator()
-            Database.Buttons()
-            VerticalSeparator()
-            Run.Buttons()
+            ToolbarRow {
+                Project.Buttons()
+                VerticalSeparator()
+                Database.Buttons()
+                VerticalSeparator()
+                Run.Buttons()
+            }
             Spacer(Modifier.weight(1f))
             Major.Buttons()
         }
@@ -97,8 +100,11 @@ object Toolbar {
     }
 
     @Composable
-    private fun ToolbarSpace() {
-        Spacer(Modifier.width(TOOLBAR_SPACING))
+    private fun ToolbarRow(content: @Composable RowScope.() -> Unit) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(TOOLBAR_SPACING),
+            verticalAlignment = Alignment.CenterVertically
+        ) { content() }
     }
 
     @Composable
@@ -128,11 +134,10 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            ToolbarSpace()
-            OpenProjectButton()
-            ToolbarSpace()
-            SaveButton()
-            ToolbarSpace()
+            ToolbarRow {
+                OpenProjectButton()
+                SaveButton()
+            }
         }
 
         @Composable
@@ -164,29 +169,38 @@ object Toolbar {
         @Composable
         fun Buttons() {
             val dbButtonsEnabled = isConnected && isInteractive
-            ToolbarSpace()
-            ManageDatabasesButton(dbButtonsEnabled)
-            ToolbarSpace()
-            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbButtonsEnabled)
-            ToolbarSpace()
-            VerticalSeparator()
-            Transaction.Buttons(dbButtonsEnabled)
+            ToolbarRow {
+                Manager.Buttons(dbButtonsEnabled)
+                VerticalSeparator()
+                Transaction.Buttons(dbButtonsEnabled)
+            }
         }
 
-        @Composable
-        private fun ManageDatabasesButton(enabled: Boolean) {
-            ToolbarIconButton(
-                icon = Icon.Code.DATABASE,
-                onClick = {
-                    GlobalState.connection.current!!.refreshDatabaseList()
-                    GlobalState.connection.manageDatabasesDialog.open()
-                },
-                enabled = enabled,
-                tooltip = Tooltip.Arg(
-                    title = Label.MANAGE_DATABASES,
-                    description = Sentence.MANAGE_DATABASES_DESCRIPTION,
+        object Manager {
+
+            @Composable
+            internal fun Buttons(dbButtonsEnabled: Boolean) {
+                ToolbarRow {
+                    ManageDatabasesButton(dbButtonsEnabled)
+                    DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbButtonsEnabled)
+                }
+            }
+
+            @Composable
+            private fun ManageDatabasesButton(enabled: Boolean) {
+                ToolbarIconButton(
+                    icon = Icon.Code.DATABASE,
+                    onClick = {
+                        GlobalState.connection.current!!.refreshDatabaseList()
+                        GlobalState.connection.manageDatabasesDialog.open()
+                    },
+                    enabled = enabled,
+                    tooltip = Tooltip.Arg(
+                        title = Label.MANAGE_DATABASES,
+                        description = Sentence.MANAGE_DATABASES_DESCRIPTION,
+                    )
                 )
-            )
+            }
         }
 
         object Transaction {
@@ -194,9 +208,11 @@ object Toolbar {
             @Composable
             internal fun Buttons(enabled: Boolean) {
                 val txButtonsEnabled = enabled && hasOpenSession && !hasRunningCommand
-                Config.Buttons(txButtonsEnabled)
-                VerticalSeparator()
-                Controller.Buttons(txButtonsEnabled)
+                ToolbarRow {
+                    Config.Buttons(txButtonsEnabled)
+                    VerticalSeparator()
+                    Controller.Buttons(txButtonsEnabled)
+                }
             }
 
             object Config {
@@ -204,13 +220,11 @@ object Toolbar {
                 @Composable
                 internal fun Buttons(enabled: Boolean) {
                     val configEnabled = enabled && !hasOpenTx
-                    ToolbarSpace()
-                    SessionTypeButton(configEnabled)
-                    ToolbarSpace()
-                    TransactionTypeButtons(configEnabled)
-                    ToolbarSpace()
-                    OptionsButtons(configEnabled)
-                    ToolbarSpace()
+                    ToolbarRow {
+                        SessionTypeButton(configEnabled)
+                        TransactionTypeButtons(configEnabled)
+                        OptionsButtons(configEnabled)
+                    }
                 }
 
                 @Composable
@@ -327,15 +341,12 @@ object Toolbar {
                 @Composable
                 internal fun Buttons(enabled: Boolean) {
                     val controlsEnabled = enabled && hasOpenTx
-                    ToolbarSpace()
-                    StatusIndicator()
-                    ToolbarSpace()
-                    CloseButton(controlsEnabled)
-                    ToolbarSpace()
-                    RollbackButton(controlsEnabled)
-                    ToolbarSpace()
-                    CommitButton(controlsEnabled)
-                    ToolbarSpace()
+                    ToolbarRow {
+                        StatusIndicator()
+                        CloseButton(controlsEnabled)
+                        RollbackButton(controlsEnabled)
+                        CommitButton(controlsEnabled)
+                    }
                 }
 
                 @Composable
@@ -410,11 +421,10 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-            ToolbarSpace()
-            PlayButton()
-            ToolbarSpace()
-            StopButton()
-            ToolbarSpace()
+            ToolbarRow {
+                PlayButton()
+                StopButton()
+            }
         }
 
         @Composable
@@ -451,19 +461,9 @@ object Toolbar {
 
         @Composable
         internal fun Buttons() {
-//            ToolbarSpace()
-//            ModeButtons() // TODO
-            ToolbarSpace()
-            ConnectionButton()
-            ToolbarSpace()
-        }
-
-        @Composable
-        private fun ConnectionButton() {
-            when (GlobalState.connection.status) {
-                DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
-                CONNECTING -> ConnectionButton(Label.CONNECTING)
-                CONNECTED -> ConnectionButton(connectionName)
+            ToolbarRow {
+                // TODO: ModeButtons()
+                ConnectionButton()
             }
         }
 
@@ -498,6 +498,15 @@ object Toolbar {
                     )
                 )
             )
+        }
+
+        @Composable
+        private fun ConnectionButton() {
+            when (GlobalState.connection.status) {
+                DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
+                CONNECTING -> ConnectionButton(Label.CONNECTING)
+                CONNECTED -> ConnectionButton(connectionName)
+            }
         }
 
         @Composable
