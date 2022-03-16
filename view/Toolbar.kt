@@ -58,12 +58,12 @@ object Toolbar {
 
     private val isConnected get() = GlobalState.connection.isConnected
     private val isInteractive get() = GlobalState.connection.current?.isInteractiveMode == true
-    private val hasOpenSession get() = GlobalState.connection.hasOpenSession
+    private val hasOpenSession get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.hasOpenSession
     private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
-    private val isSchema get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.SCHEMA
-    private val isData get() = GlobalState.connection.current?.config?.sessionType == TypeDBSession.Type.DATA
-    private val isRead get() = GlobalState.connection.current?.config?.transactionType == TypeDBTransaction.Type.READ
-    private val isWrite get() = GlobalState.connection.current?.config?.transactionType == TypeDBTransaction.Type.WRITE
+    private val isSchema get() = GlobalState.connection.current?.isSchema == true
+    private val isData get() = GlobalState.connection.current?.isData == true
+    private val isRead get() = GlobalState.connection.current?.isRead == true
+    private val isWrite get() = GlobalState.connection.current?.isWrite == true
     private val isSnapshot get() = GlobalState.connection.current?.config?.snapshot == true
     private val isSnapshotEnabled get() = GlobalState.connection.current?.config?.snapshotEnabled == true
     private val isInfer get() = GlobalState.connection.current?.config?.infer == true
@@ -83,10 +83,6 @@ object Toolbar {
             Project.Buttons()
             VerticalSeparator()
             Database.Buttons()
-            VerticalSeparator()
-            TransactionConfig.Buttons()
-            VerticalSeparator()
-            TransactionControl.Buttons()
             VerticalSeparator()
             Run.Buttons()
             Spacer(Modifier.weight(1f))
@@ -178,230 +174,246 @@ object Toolbar {
 
         @Composable
         fun Buttons() {
+            val dbButtonsEnabled = isConnected && isInteractive
             ToolbarSpace()
-            ManageDatabasesButton()
+            ManageDatabasesButton(dbButtonsEnabled)
             ToolbarSpace()
-            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE))
+            DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbButtonsEnabled)
             ToolbarSpace()
+            VerticalSeparator()
+            Transaction.Buttons(dbButtonsEnabled)
         }
 
         @Composable
-        private fun ManageDatabasesButton() {
+        private fun ManageDatabasesButton(enabled: Boolean) {
             ToolbarIconButton(
                 icon = Icon.Code.DATABASE,
                 onClick = {
                     GlobalState.connection.current!!.refreshDatabaseList()
                     GlobalState.connection.manageDatabasesDialog.open()
                 },
-                enabled = isConnected,
+                enabled = enabled,
                 tooltip = Tooltip.Arg(
                     title = Label.MANAGE_DATABASES,
                     description = Sentence.MANAGE_DATABASES_DESCRIPTION,
                 )
             )
         }
-    }
 
-    object TransactionConfig {
+        object Transaction {
 
-        @Composable
-        internal fun Buttons() {
-            val isInteractive = GlobalState.connection.current?.isInteractiveMode == true
-            ToolbarSpace()
-            SessionTypeButton(isInteractive)
-            ToolbarSpace()
-            TransactionTypeButtons(isInteractive)
-            ToolbarSpace()
-            OptionsButtons(isInteractive)
-            ToolbarSpace()
-        }
+            @Composable
+            internal fun Buttons(enabled: Boolean) {
+                val txButtonsEnabled = enabled && hasOpenSession && !hasRunningCommand
+                Config.Buttons(txButtonsEnabled)
+                VerticalSeparator()
+                Controller.Buttons(txButtonsEnabled)
+            }
 
-        @Composable
-        private fun SessionTypeButton(enabled: Boolean) {
-            val schema = TypeDBSession.Type.SCHEMA
-            val data = TypeDBSession.Type.DATA
-            TextButtonRow(
-                height = TOOLBAR_BUTTON_SIZE,
-                buttons = listOf(
-                    ToggleButton(
-                        text = schema.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.tryUpdateSessionType(schema) },
-                        isActive = enabled && isSchema,
-                        enabled = enabled && hasOpenSession && !hasOpenTx,
-                        tooltip = Tooltip.Arg(
-                            title = Label.SCHEMA_SESSION,
-                            description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                            url = URL.DOCS_SESSION_SCHEMA
-                        )
-                    ),
-                    ToggleButton(
-                        text = data.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.tryUpdateSessionType(data) },
-                        isActive = enabled && isData,
-                        enabled = enabled && hasOpenSession && !hasOpenTx,
-                        tooltip = Tooltip.Arg(
-                            title = Label.DATA_SESSION,
-                            description = Sentence.SESSION_DATA_DESCRIPTION,
-                            url = URL.DOCS_SESSION_DATA
-                        )
-                    )
-                )
-            )
-        }
+            object Config {
 
-        @Composable
-        private fun TransactionTypeButtons(enabled: Boolean) {
-            val write = TypeDBTransaction.Type.WRITE
-            val read = TypeDBTransaction.Type.READ
-            TextButtonRow(
-                height = TOOLBAR_BUTTON_SIZE,
-                buttons = listOf(
-                    ToggleButton(
-                        text = write.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.tryUpdateTransactionType(write) },
-                        isActive = enabled && isWrite,
-                        enabled = enabled && hasOpenSession && !hasOpenTx,
-                        tooltip = Tooltip.Arg(
-                            title = Label.WRITE_TRANSACTION,
-                            description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
-                            url = URL.DOCS_TRANSACTION_WRITE
-                        )
-                    ),
-                    ToggleButton(
-                        text = read.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.tryUpdateTransactionType(read) },
-                        isActive = enabled && isRead,
-                        enabled = enabled && hasOpenSession && !hasOpenTx,
-                        tooltip = Tooltip.Arg(
-                            title = Label.READ_TRANSACTION,
-                            description = Sentence.TRANSACTION_READ_DESCRIPTION,
-                            url = URL.DOCS_TRANSACTION_READ
+                @Composable
+                internal fun Buttons(enabled: Boolean) {
+                    val configEnabled = enabled && !hasOpenTx
+                    ToolbarSpace()
+                    SessionTypeButton(configEnabled)
+                    ToolbarSpace()
+                    TransactionTypeButtons(configEnabled)
+                    ToolbarSpace()
+                    OptionsButtons(configEnabled)
+                    ToolbarSpace()
+                }
+
+                @Composable
+                private fun SessionTypeButton(enabled: Boolean) {
+                    val schema = TypeDBSession.Type.SCHEMA
+                    val data = TypeDBSession.Type.DATA
+                    TextButtonRow(
+                        height = TOOLBAR_BUTTON_SIZE,
+                        buttons = listOf(
+                            ToggleButton(
+                                text = schema.name.lowercase(),
+                                onClick = { GlobalState.connection.current?.tryUpdateSessionType(schema) },
+                                isActive = enabled && isSchema,
+                                enabled = enabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.SCHEMA_SESSION,
+                                    description = Sentence.SESSION_SCHEMA_DESCRIPTION,
+                                    url = URL.DOCS_SESSION_SCHEMA
+                                )
+                            ),
+                            ToggleButton(
+                                text = data.name.lowercase(),
+                                onClick = { GlobalState.connection.current?.tryUpdateSessionType(data) },
+                                isActive = enabled && isData,
+                                enabled = enabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.DATA_SESSION,
+                                    description = Sentence.SESSION_DATA_DESCRIPTION,
+                                    url = URL.DOCS_SESSION_DATA
+                                )
+                            )
                         )
                     )
-                )
-            )
-        }
+                }
 
-        @Composable
-        private fun OptionsButtons(enabled: Boolean) {
-            TextButtonRow(
-                height = TOOLBAR_BUTTON_SIZE,
-                buttons = listOf(
-                    ToggleButton(
-                        text = Label.SNAPSHOT.lowercase(),
-                        onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
-                        isActive = enabled && isSnapshot,
-                        enabled = enabled && !hasOpenTx && isSnapshotEnabled,
-                        tooltip = Tooltip.Arg(
-                            title = Label.ENABLE_SNAPSHOT,
-                            description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                            url = URL.DOCS_ENABLE_SNAPSHOT
-                        )
-                    ),
-                    ToggleButton(
-                        text = Label.INFER.lowercase(),
-                        onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                        isActive = enabled && isInfer,
-                        enabled = enabled && !hasOpenTx && isInferEnabled,
-                        tooltip = Tooltip.Arg(
-                            title = Label.ENABLE_INFERENCE,
-                            description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                            url = URL.DOCS_ENABLE_INFERENCE
-                        )
-                    ),
-                    ToggleButton(
-                        text = Label.EXPLAIN.lowercase(),
-                        onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                        isActive = enabled && isExplain,
-                        enabled = enabled && !hasOpenTx && isExplainEnabled,
-                        tooltip = Tooltip.Arg(
-                            title = Label.ENABLE_INFERENCE_EXPLANATION,
-                            description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                            url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
+                @Composable
+                private fun TransactionTypeButtons(enabled: Boolean) {
+                    val write = TypeDBTransaction.Type.WRITE
+                    val read = TypeDBTransaction.Type.READ
+                    TextButtonRow(
+                        height = TOOLBAR_BUTTON_SIZE,
+                        buttons = listOf(
+                            ToggleButton(
+                                text = write.name.lowercase(),
+                                onClick = { GlobalState.connection.current?.tryUpdateTransactionType(write) },
+                                isActive = enabled && isWrite,
+                                enabled = enabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.WRITE_TRANSACTION,
+                                    description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
+                                    url = URL.DOCS_TRANSACTION_WRITE
+                                )
+                            ),
+                            ToggleButton(
+                                text = read.name.lowercase(),
+                                onClick = { GlobalState.connection.current?.tryUpdateTransactionType(read) },
+                                isActive = enabled && isRead,
+                                enabled = enabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.READ_TRANSACTION,
+                                    description = Sentence.TRANSACTION_READ_DESCRIPTION,
+                                    url = URL.DOCS_TRANSACTION_READ
+                                )
+                            )
                         )
                     )
-                )
-            )
-        }
-    }
+                }
 
-    object TransactionControl {
+                @Composable
+                private fun OptionsButtons(enabled: Boolean) {
+                    TextButtonRow(
+                        height = TOOLBAR_BUTTON_SIZE,
+                        buttons = listOf(
+                            ToggleButton(
+                                text = Label.SNAPSHOT.lowercase(),
+                                onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
+                                isActive = enabled && isSnapshot,
+                                enabled = enabled && isSnapshotEnabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.ENABLE_SNAPSHOT,
+                                    description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
+                                    url = URL.DOCS_ENABLE_SNAPSHOT
+                                )
+                            ),
+                            ToggleButton(
+                                text = Label.INFER.lowercase(),
+                                onClick = { GlobalState.connection.current?.config?.toggleInfer() },
+                                isActive = enabled && isInfer,
+                                enabled = enabled && isInferEnabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.ENABLE_INFERENCE,
+                                    description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
+                                    url = URL.DOCS_ENABLE_INFERENCE
+                                )
+                            ),
+                            ToggleButton(
+                                text = Label.EXPLAIN.lowercase(),
+                                onClick = { GlobalState.connection.current?.config?.toggleExplain() },
+                                isActive = enabled && isExplain,
+                                enabled = enabled && isExplainEnabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.ENABLE_INFERENCE_EXPLANATION,
+                                    description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
+                                    url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
+                                )
+                            )
+                        )
+                    )
+                }
+            }
 
-        @Composable
-        internal fun Buttons() {
-            ToolbarSpace()
-            StatusIndicator()
-            ToolbarSpace()
-            CloseButton()
-            ToolbarSpace()
-            RollbackButton()
-            ToolbarSpace()
-            CommitButton()
-            ToolbarSpace()
-        }
+            object Controller {
 
-        @Composable
-        private fun StatusIndicator() {
-            if (hasRunningCommand) LoadingIndicator(Modifier.size(TOOLBAR_BUTTON_SIZE)) else OnlineIndicator()
-        }
+                @Composable
+                internal fun Buttons(enabled: Boolean) {
+                    val controlsEnabled = enabled && hasOpenTx
+                    ToolbarSpace()
+                    StatusIndicator()
+                    ToolbarSpace()
+                    CloseButton(controlsEnabled)
+                    ToolbarSpace()
+                    RollbackButton(controlsEnabled)
+                    ToolbarSpace()
+                    CommitButton(controlsEnabled)
+                    ToolbarSpace()
+                }
 
-        @Composable
-        private fun OnlineIndicator() {
-            RawIconButton(
-                icon = Icon.Code.CIRCLE,
-                modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
-                iconColor = if (isInteractive && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
-                enabled = isInteractive && hasOpenSession,
-                tooltip = Tooltip.Arg(
-                    title = Label.TRANSACTION_STATUS,
-                    description = Sentence.TRANSACTION_STATUS_DESCRIPTION
-                )
-            )
-        }
+                @Composable
+                private fun StatusIndicator() {
+                    if (hasRunningCommand || hasRunningQuery) LoadingIndicator(Modifier.size(TOOLBAR_BUTTON_SIZE))
+                    else OnlineIndicator()
+                }
 
-        @Composable
-        private fun CloseButton() {
-            ToolbarIconButton(
-                icon = Icon.Code.XMARK,
-                onClick = { GlobalState.connection.current?.closeTransaction() },
-                color = Theme.colors.error,
-                enabled = isInteractive && !hasRunningCommand && hasOpenTx,
-                tooltip = Tooltip.Arg(
-                    title = Label.CLOSE_TRANSACTION,
-                    description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
-                    url = URL.DOCS_TRANSACTION_CLOSE,
-                )
-            )
-        }
+                @Composable
+                private fun OnlineIndicator() {
+                    RawIconButton(
+                        icon = Icon.Code.CIRCLE,
+                        modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
+                        iconColor = if (isInteractive && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
+                        enabled = isInteractive && hasOpenSession,
+                        tooltip = Tooltip.Arg(
+                            title = Label.TRANSACTION_STATUS,
+                            description = Sentence.TRANSACTION_STATUS_DESCRIPTION
+                        )
+                    )
+                }
 
-        @Composable
-        private fun RollbackButton() {
-            ToolbarIconButton(
-                icon = Icon.Code.ROTATE_LEFT,
-                onClick = { GlobalState.connection.current?.rollbackTransaction() },
-                color = Theme.colors.quaternary2,
-                enabled = isInteractive && !hasRunningCommand && hasOpenTx && GlobalState.connection.current!!.isWrite,
-                tooltip = Tooltip.Arg(
-                    title = Label.ROLLBACK_TRANSACTION,
-                    description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
-                    url = URL.DOCS_TRANSACTION_ROLLBACK,
-                )
-            )
-        }
+                @Composable
+                private fun CloseButton(enabled: Boolean) {
+                    ToolbarIconButton(
+                        icon = Icon.Code.XMARK,
+                        onClick = { GlobalState.connection.current?.closeTransaction() },
+                        color = Theme.colors.error,
+                        enabled = enabled,
+                        tooltip = Tooltip.Arg(
+                            title = Label.CLOSE_TRANSACTION,
+                            description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
+                            url = URL.DOCS_TRANSACTION_CLOSE,
+                        )
+                    )
+                }
 
-        @Composable
-        private fun CommitButton() {
-            ToolbarIconButton(
-                icon = Icon.Code.CHECK,
-                onClick = { GlobalState.connection.current?.commitTransaction() },
-                color = Theme.colors.secondary,
-                enabled = isInteractive && !hasRunningCommand && hasOpenTx && GlobalState.connection.current!!.isWrite,
-                tooltip = Tooltip.Arg(
-                    title = Label.COMMIT_TRANSACTION,
-                    description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
-                    url = URL.DOCS_TRANSACTION_COMMIT
-                )
-            )
+                @Composable
+                private fun RollbackButton(enabled: Boolean) {
+                    ToolbarIconButton(
+                        icon = Icon.Code.ROTATE_LEFT,
+                        onClick = { GlobalState.connection.current?.rollbackTransaction() },
+                        color = Theme.colors.quaternary2,
+                        enabled = enabled && isWrite,
+                        tooltip = Tooltip.Arg(
+                            title = Label.ROLLBACK_TRANSACTION,
+                            description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
+                            url = URL.DOCS_TRANSACTION_ROLLBACK,
+                        )
+                    )
+                }
+
+                @Composable
+                private fun CommitButton(enabled: Boolean) {
+                    ToolbarIconButton(
+                        icon = Icon.Code.CHECK,
+                        onClick = { GlobalState.connection.current?.commitTransaction() },
+                        color = Theme.colors.secondary,
+                        enabled = enabled && isWrite,
+                        tooltip = Tooltip.Arg(
+                            title = Label.COMMIT_TRANSACTION,
+                            description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
+                            url = URL.DOCS_TRANSACTION_COMMIT
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -424,7 +436,7 @@ object Toolbar {
                 onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
                 enabled = hasOpenSession && hasRunnable && !hasRunningQuery && !hasRunningCommand,
                 tooltip = Tooltip.Arg(
-                    title = if (GlobalState.connection.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
+                    title = if (GlobalState.connection.isConnected && GlobalState.connection.current!!.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
                 )
             )
@@ -476,7 +488,7 @@ object Toolbar {
                     ToggleButton(
                         text = interactive.name.lowercase(),
                         onClick = { GlobalState.connection.current?.mode = interactive },
-                        isActive = GlobalState.connection.isInteractiveMode,
+                        isActive = GlobalState.connection.isConnected && GlobalState.connection.current!!.isInteractiveMode,
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.INTERACTIVE_MODE,
@@ -487,7 +499,7 @@ object Toolbar {
                     ToggleButton(
                         text = script.name.lowercase(),
                         onClick = { GlobalState.connection.current?.mode = script },
-                        isActive = GlobalState.connection.isScriptMode,
+                        isActive = GlobalState.connection.isConnected && GlobalState.connection.current!!.isScriptMode,
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.SCRIPT_MODE,

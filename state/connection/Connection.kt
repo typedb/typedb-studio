@@ -39,6 +39,7 @@ import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.Runner
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -66,6 +67,8 @@ class Connection internal constructor(
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
+    val isSchema: Boolean get() = config.sessionType == TypeDBSession.Type.SCHEMA
+    val isData: Boolean get() = config.sessionType == TypeDBSession.Type.DATA
     val isRead: Boolean get() = config.transactionType.isRead
     val isWrite: Boolean get() = config.transactionType.isWrite
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
@@ -75,48 +78,52 @@ class Connection internal constructor(
     private val hasStopSignal = AtomicBoolean(false)
     private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
+    private val asyncDepth = AtomicInteger(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun sendStopSignal() {
         hasStopSignal.set(true)
     }
 
-    private fun asyncCommand(function: () -> Unit) {
-        coroutineScope.launch {
-            if (hasRunningCommand.compareAndSet(false, true)) {
+    private fun runAsyncCommand(function: () -> Unit) {
+        val depth = asyncDepth.incrementAndGet()
+        assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
+        if (hasRunningCommand.compareAndSet(expected = false, new = true)) {
+            coroutineScope.launch {
                 function()
                 hasRunningCommand.set(false)
+                asyncDepth.decrementAndGet()
             }
         }
     }
 
-    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = asyncCommand {
-        if (config.transactionType == type) return@asyncCommand
+    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = runAsyncCommand {
+        if (config.transactionType == type) return@runAsyncCommand
         closeTransaction()
         config.transactionType = type
     }
 
-    fun tryUpdateSessionType(type: TypeDBSession.Type) = asyncCommand {
-        if (config.sessionType == type) return@asyncCommand
-        config.sessionType = type
+    fun tryUpdateSessionType(type: TypeDBSession.Type) {
+        if (config.sessionType == type) return
         tryOpenSession(database!!, type)
     }
 
-    fun tryOpenSession(database: String) = asyncCommand {
+    fun tryOpenSession(database: String) {
         tryOpenSession(database, config.sessionType)
     }
 
-    fun tryOpenSession(database: String, type: TypeDBSession.Type) = asyncCommand {
-        if (hasOpenSession && session?.database()?.name() == database && session?.type() == type) return@asyncCommand
+    fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand {
+        if (hasOpenSession && session?.database()?.name() == database && session?.type() == type) return@runAsyncCommand
         closeSession()
         try {
             session = client.session(database, type)
+            config.sessionType = type
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, database)
         }
     }
 
-    fun refreshDatabaseList() = asyncCommand { refreshDatabaseListFn() }
+    fun refreshDatabaseList() = runAsyncCommand { refreshDatabaseListFn() }
 
     private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
@@ -130,12 +137,12 @@ class Connection internal constructor(
         else throw IllegalStateException()
     }
 
-    private fun runScript(resource: Resource, script: String = resource.runContent) = asyncCommand {
+    private fun runScript(resource: Resource, script: String = resource.runContent) = runAsyncCommand {
         // TODO
     }
 
-    private fun runQuery(resource: Resource, queries: String = resource.runContent) = asyncCommand {
-        if (hasRunningQuery.compareAndSet(false, true)) {
+    private fun runQuery(resource: Resource, queries: String = resource.runContent) = runAsyncCommand {
+        if (hasRunningQuery.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignal.set(false)
                 mayOpenTransaction()
@@ -163,7 +170,7 @@ class Connection internal constructor(
         }
     }
 
-    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = asyncCommand {
+    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = runAsyncCommand {
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
             try {
@@ -176,7 +183,7 @@ class Connection internal constructor(
         } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
     }
 
-    fun tryDeleteDatabase(database: String) = asyncCommand {
+    fun tryDeleteDatabase(database: String) = runAsyncCommand {
         try {
             if (this.database == database) closeSession()
             client.databases().get(database).delete()
@@ -186,7 +193,7 @@ class Connection internal constructor(
         }
     }
 
-    fun commitTransaction() = asyncCommand {
+    fun commitTransaction() = runAsyncCommand {
         sendStopSignal()
         transaction?.commit()
         transaction = null
@@ -194,7 +201,7 @@ class Connection internal constructor(
         notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
     }
 
-    fun rollbackTransaction() = asyncCommand {
+    fun rollbackTransaction() = runAsyncCommand {
         sendStopSignal()
         transaction?.rollback()
         notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)

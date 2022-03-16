@@ -166,14 +166,14 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null) {
+    fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
         Dropdown(
             values = GlobalState.connection.current?.databaseList ?: emptyList(),
             selected = GlobalState.connection.current?.database,
             onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
             onSelection = { GlobalState.connection.current?.tryOpenSession(it) },
             placeholder = Label.SELECT_DATABASE,
-            enabled = GlobalState.connection.isInteractiveMode,
+            enabled = enabled,
             modifier = modifier,
             focusReq = focusReq,
             tooltip = Tooltip.Arg(

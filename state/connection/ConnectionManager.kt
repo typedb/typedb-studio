@@ -48,9 +48,6 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
     val manageDatabasesDialog = DialogManager.Base()
     var current: Connection? by mutableStateOf(null)
     var status: Status by mutableStateOf(Status.DISCONNECTED)
-    val hasOpenSession: Boolean get() = isConnected && current!!.hasOpenSession
-    val isInteractiveMode: Boolean get() = isConnected && current!!.isInteractiveMode
-    val isScriptMode: Boolean get() = isConnected && current!!.isScriptMode
     val isConnected: Boolean get() = status == Status.CONNECTED
     val isConnecting: Boolean get() = status == Status.CONNECTING
     val isDisconnected: Boolean get() = status == Status.DISCONNECTED
