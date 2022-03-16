@@ -57,6 +57,7 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 object Toolbar {
 
     private val isConnected get() = GlobalState.connection.isConnected
+    private val isScript get() = GlobalState.connection.current?.isScriptMode == true
     private val isInteractive get() = GlobalState.connection.current?.isInteractiveMode == true
     private val hasOpenSession get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.hasOpenSession
     private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
@@ -119,20 +120,8 @@ object Toolbar {
     }
 
     @Composable
-    private fun ToggleButton(
-        text: String,
-        onClick: () -> Unit,
-        isActive: Boolean,
-        enabled: Boolean,
-        tooltip: Tooltip.Arg
-    ): TextButtonArg {
-        return TextButtonArg(
-            text = text,
-            onClick = onClick,
-            color = { if (isActive) Theme.colors.secondary else Theme.colors.onPrimary },
-            enabled = enabled,
-            tooltip = tooltip
-        )
+    private fun toggleButtonColor(isActive: Boolean): Color {
+        return if (isActive) Theme.colors.secondary else Theme.colors.onPrimary
     }
 
     object Project {
@@ -231,10 +220,10 @@ object Toolbar {
                     TextButtonRow(
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
-                            ToggleButton(
+                            TextButtonArg(
                                 text = schema.name.lowercase(),
                                 onClick = { GlobalState.connection.current?.tryUpdateSessionType(schema) },
-                                isActive = enabled && isSchema,
+                                color = { toggleButtonColor(isActive = enabled && isSchema) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.SCHEMA_SESSION,
@@ -242,10 +231,10 @@ object Toolbar {
                                     url = URL.DOCS_SESSION_SCHEMA
                                 )
                             ),
-                            ToggleButton(
+                            TextButtonArg(
                                 text = data.name.lowercase(),
                                 onClick = { GlobalState.connection.current?.tryUpdateSessionType(data) },
-                                isActive = enabled && isData,
+                                color = { toggleButtonColor(isActive = enabled && isData) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.DATA_SESSION,
@@ -264,10 +253,10 @@ object Toolbar {
                     TextButtonRow(
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
-                            ToggleButton(
+                            TextButtonArg(
                                 text = write.name.lowercase(),
                                 onClick = { GlobalState.connection.current?.tryUpdateTransactionType(write) },
-                                isActive = enabled && isWrite,
+                                color = { toggleButtonColor(isActive = enabled && isWrite) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.WRITE_TRANSACTION,
@@ -275,10 +264,10 @@ object Toolbar {
                                     url = URL.DOCS_TRANSACTION_WRITE
                                 )
                             ),
-                            ToggleButton(
+                            TextButtonArg(
                                 text = read.name.lowercase(),
                                 onClick = { GlobalState.connection.current?.tryUpdateTransactionType(read) },
-                                isActive = enabled && isRead,
+                                color = { toggleButtonColor(isActive = enabled && isRead) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.READ_TRANSACTION,
@@ -295,10 +284,10 @@ object Toolbar {
                     TextButtonRow(
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
-                            ToggleButton(
+                            TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
                                 onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
-                                isActive = enabled && isSnapshot,
+                                color = { toggleButtonColor(isActive = enabled && isSnapshot) },
                                 enabled = enabled && isSnapshotEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_SNAPSHOT,
@@ -306,10 +295,10 @@ object Toolbar {
                                     url = URL.DOCS_ENABLE_SNAPSHOT
                                 )
                             ),
-                            ToggleButton(
+                            TextButtonArg(
                                 text = Label.INFER.lowercase(),
                                 onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                                isActive = enabled && isInfer,
+                                color = { toggleButtonColor(isActive = enabled && isInfer) },
                                 enabled = enabled && isInferEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE,
@@ -317,10 +306,10 @@ object Toolbar {
                                     url = URL.DOCS_ENABLE_INFERENCE
                                 )
                             ),
-                            ToggleButton(
+                            TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
                                 onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                                isActive = enabled && isExplain,
+                                color = { toggleButtonColor(isActive = enabled && isExplain) },
                                 enabled = enabled && isExplainEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE_EXPLANATION,
@@ -485,10 +474,10 @@ object Toolbar {
             TextButtonRow(
                 height = TOOLBAR_BUTTON_SIZE,
                 buttons = listOf(
-                    ToggleButton(
+                    TextButtonArg(
                         text = interactive.name.lowercase(),
                         onClick = { GlobalState.connection.current?.mode = interactive },
-                        isActive = GlobalState.connection.isConnected && GlobalState.connection.current!!.isInteractiveMode,
+                        color = { toggleButtonColor(isActive = isConnected && isInteractive) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.INTERACTIVE_MODE,
@@ -496,10 +485,10 @@ object Toolbar {
                             url = URL.DOCS_MODE_INTERACTIVE,
                         )
                     ),
-                    ToggleButton(
+                    TextButtonArg(
                         text = script.name.lowercase(),
                         onClick = { GlobalState.connection.current?.mode = script },
-                        isActive = GlobalState.connection.isConnected && GlobalState.connection.current!!.isScriptMode,
+                        color = { toggleButtonColor(isActive = isConnected && isScript) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.SCRIPT_MODE,
