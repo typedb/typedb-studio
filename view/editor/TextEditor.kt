@@ -81,7 +81,7 @@ import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
-import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Writable.Companion.TAB_SIZE
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight

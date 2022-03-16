@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.Cursor
 import java.awt.MouseInfo
 

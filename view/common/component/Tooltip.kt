@@ -50,12 +50,12 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.BORDER_WIDTH
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextClickable
 import com.vaticle.typedb.studio.view.common.component.Form.TextURL
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean

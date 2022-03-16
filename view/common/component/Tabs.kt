@@ -50,6 +50,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -78,14 +79,14 @@ object Tabs {
 
         internal fun initTab(tab: T, isActive: Boolean, rawWidth: Int) {
             if (tab == activeTab) return
-            val newTabSize = Theme.toDP(rawWidth, density) + Separator.WEIGHT
+            val newTabSize = toDP(rawWidth, density) + Separator.WEIGHT
             if (newTabSize != openedTabSize[tab]) openedTabSize[tab] = newTabSize
             if (isActive) {
                 var start = 0.dp
                 var found = false
                 openedTabSize.entries.forEach { if (it.key != tab && !found) start += it.value else found = true }
                 val end = start + openedTabSize[tab]!!
-                val scrollerPos = Theme.toDP(scroller.value, density)
+                val scrollerPos = toDP(scroller.value, density)
                 if (start + 5.dp < scrollerPos) tabsScrollTo = start
                 else if (end - 5.dp > scrollerPos + maxWidth) tabsScrollTo = end - maxWidth
                 activeTab = tab
@@ -110,7 +111,7 @@ object Tabs {
         val closedTabs = state.openedTabSize.keys - tabs.toSet()
         closedTabs.forEach { state.openedTabSize.remove(it) }
         Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged {
-            state.maxWidth = Theme.toDP(it.width, state.density) - PANEL_BAR_HEIGHT * 3
+            state.maxWidth = toDP(it.width, state.density) - PANEL_BAR_HEIGHT * 3
         }) {
             if (tabs.isNotEmpty()) Separator.Vertical()
             if (state.scroller.maxValue > 0) {
@@ -174,7 +175,7 @@ object Tabs {
                         .background(color = bgColor)
                         .pointerHoverIcon(PointerIconDefaults.Hand)
                         .pointerInput(state, tab) { onPointerInput(contextMenuState) { onClick(tab) } }
-                        .onSizeChanged { width = Theme.toDP(it.width, state.density) }
+                        .onSizeChanged { width = toDP(it.width, state.density) }
                 ) {
                     trailingButton?.let { Button(it) }
                     icon?.let {

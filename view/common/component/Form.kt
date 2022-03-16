@@ -91,13 +91,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.view.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
-import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext

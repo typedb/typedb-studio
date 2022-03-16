@@ -40,14 +40,12 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 
 object Theme {
 
@@ -124,24 +122,6 @@ object Theme {
                 content()
             }
         }
-    }
-
-    // TODO: this may be more suitable in a utility class when we have one
-    fun Rect.contains(x: Int, y: Int): Boolean {
-        return x >= left && x <= right && y >= top && y <= bottom
-    }
-
-    // TODO: this may be more suitable in a utility class when we have one
-    fun toRectDP(rawRectangle: Rect, density: Float) = Rect(
-        left = toDP(rawRectangle.left, density).value,
-        top = toDP(rawRectangle.top, density).value,
-        right = toDP(rawRectangle.right, density).value,
-        bottom = toDP(rawRectangle.bottom, density).value
-    )
-
-    // TODO: this may be more suitable in a utility class when we have one
-    fun toDP(pixel: Number, density: Float): Dp {
-        return (pixel.toDouble() / density).roundToInt().dp
     }
 
     fun scrollbarStyle(

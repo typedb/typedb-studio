@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.view.browser.BrowserArea
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
@@ -132,7 +133,7 @@ object Studio {
             val bgColor = Theme.colors.background1
             CompositionLocalProvider(LocalWindow provides window) {
                 Column(Modifier.fillMaxSize().background(bgColor).onGloballyPositioned {
-                    titleBarHeight = window.height.dp - Theme.toDP(it.size.height, density)
+                    titleBarHeight = window.height.dp - toDP(it.size.height, density)
                 }) {
                     CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
                         Toolbar.Layout()

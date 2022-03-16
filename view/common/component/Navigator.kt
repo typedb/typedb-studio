@@ -79,6 +79,9 @@ import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_C
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.view.common.Util.contains
+import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.Util.toRectDP
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
@@ -89,9 +92,6 @@ import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
 import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
-import com.vaticle.typedb.studio.view.common.theme.Theme.contains
-import com.vaticle.typedb.studio.view.common.theme.Theme.toDP
-import com.vaticle.typedb.studio.view.common.theme.Theme.toRectDP
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC

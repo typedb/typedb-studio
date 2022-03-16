@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.status.StatusManager.Key.TEXT_POSITION
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
-import com.vaticle.typedb.studio.view.common.theme.Theme
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
@@ -136,7 +136,7 @@ internal class InputTarget constructor(
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     internal fun mayIncreaseTextWidth(newRawWidth: Int) {
-        val newWidth = Theme.toDP(newRawWidth, density)
+        val newWidth = toDP(newRawWidth, density)
         if (newWidth > textWidth) textWidth = newWidth
     }
 
@@ -146,15 +146,15 @@ internal class InputTarget constructor(
 
     internal fun updateTextArea(rawRectangle: Rect) {
         textAreaRect = Rect(
-            left = Theme.toDP(rawRectangle.left, density).value + horPadding.value,
-            top = Theme.toDP(rawRectangle.top, density).value,
-            right = Theme.toDP(rawRectangle.right, density).value - horPadding.value,
-            bottom = Theme.toDP(rawRectangle.bottom, density).value
+            left = toDP(rawRectangle.left, density).value + horPadding.value,
+            top = toDP(rawRectangle.top, density).value,
+            right = toDP(rawRectangle.right, density).value - horPadding.value,
+            bottom = toDP(rawRectangle.bottom, density).value
         )
     }
 
     private fun createCursor(x: Int, y: Int): Cursor {
-        val relX = x - textAreaRect.left + Theme.toDP(horScroller.value, density).value
+        val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
         val relY = y - textAreaRect.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
@@ -251,7 +251,7 @@ internal class InputTarget constructor(
         val cursorRect = rendering.get(cursor.row)?.let {
             it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
         } ?: Rect(0f, 0f, 0f, 0f)
-        val x = textAreaRect.left + Theme.toDP(cursorRect.left - horScroller.value, density).value
+        val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
         mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt())
     }
