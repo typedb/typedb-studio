@@ -168,7 +168,7 @@ object Toolbar {
 
         @Composable
         fun Buttons() {
-            val dbButtonsEnabled = isConnected && isInteractive
+            val dbButtonsEnabled = isConnected && isInteractive && !hasRunningCommand
             ToolbarRow {
                 Manager.Buttons(dbButtonsEnabled)
                 VerticalSeparator()
@@ -179,10 +179,11 @@ object Toolbar {
         object Manager {
 
             @Composable
-            internal fun Buttons(dbButtonsEnabled: Boolean) {
+            internal fun Buttons(enabled: Boolean) {
+                val dbManagerEnabled = enabled && !hasOpenTx
                 ToolbarRow {
-                    ManageDatabasesButton(dbButtonsEnabled)
-                    DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbButtonsEnabled)
+                    ManageDatabasesButton(dbManagerEnabled)
+                    DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbManagerEnabled)
                 }
             }
 
@@ -207,7 +208,7 @@ object Toolbar {
 
             @Composable
             internal fun Buttons(enabled: Boolean) {
-                val txButtonsEnabled = enabled && hasOpenSession && !hasRunningCommand
+                val txButtonsEnabled = enabled && hasOpenSession
                 ToolbarRow {
                     Config.Buttons(txButtonsEnabled)
                     VerticalSeparator()
