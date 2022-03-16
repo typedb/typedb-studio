@@ -291,11 +291,13 @@ object Form {
             )
         }
 
-        buttons.forEachIndexed { i, button ->
-            when (i) {
-                0 -> TextButton(button, RoundedCorners.LEFT)
-                buttons.size - 1 -> TextButton(button, RoundedCorners.RIGHT)
-                else -> TextButton(button, RoundedCorners.NONE)
+        Row {
+            buttons.forEachIndexed { i, button ->
+                when (i) {
+                    0 -> TextButton(button, RoundedCorners.LEFT)
+                    buttons.size - 1 -> TextButton(button, RoundedCorners.RIGHT)
+                    else -> TextButton(button, RoundedCorners.NONE)
+                }
             }
         }
     }
@@ -319,11 +321,13 @@ object Form {
             )
         }
 
-        buttons.forEachIndexed { i, button ->
-            when (i) {
-                0 -> IconButton(button, RoundedCorners.LEFT)
-                buttons.size - 1 -> IconButton(button, RoundedCorners.RIGHT)
-                else -> IconButton(button, RoundedCorners.NONE)
+        Row {
+            buttons.forEachIndexed { i, button ->
+                when (i) {
+                    0 -> IconButton(button, RoundedCorners.LEFT)
+                    buttons.size - 1 -> IconButton(button, RoundedCorners.RIGHT)
+                    else -> IconButton(button, RoundedCorners.NONE)
+                }
             }
         }
     }
