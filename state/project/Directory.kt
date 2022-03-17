@@ -27,6 +27,7 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
@@ -41,7 +42,6 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.notExists
 import mu.KotlinLogging
@@ -65,6 +65,8 @@ class Directory internal constructor(
     override val isWritable: Boolean get() = path.isWritable()
     override val isBulkExpandable: Boolean get() = !isProjectData
 
+    override fun close() {}
+
     override fun asDirectory(): Directory {
         return this
     }
@@ -72,8 +74,6 @@ class Directory internal constructor(
     override fun asFile(): File {
         throw TypeCastException(ILLEGAL_CAST.message(Directory::class.simpleName, File::class.simpleName))
     }
-
-    override fun initialiseWith(other: ProjectItem) {}
 
     override fun reloadEntries() {
         val new = path.listDirectoryEntries().filter { it.isReadable() }.toSet()
@@ -141,6 +141,21 @@ class Directory internal constructor(
         }
     }
 
+    internal fun tryRename(newName: String): Directory? {
+        val newPath = path.resolveSibling(newName)
+        return if (parent?.contains(newName) == true) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            close()
+            movePathTo(newPath)
+            find(newPath)?.asDirectory()
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            null
+        }
+    }
+
     internal fun tryMove(newParent: Path): Directory? {
         val newPath = newParent.resolve(name)
         return if (newParent == path.parent) {
@@ -153,10 +168,9 @@ class Directory internal constructor(
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
             null
         } else try {
-            path.moveTo(newPath)
-            val newDirectory = replaceWith(newPath)?.asDirectory()
             close()
-            newDirectory
+            movePathTo(newPath)
+            find(newPath)?.asDirectory()
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
             null
@@ -166,8 +180,6 @@ class Directory internal constructor(
     fun remove(item: ProjectItem) {
         entries = entries.filter { it != item }
     }
-
-    override fun close() {}
 
     override fun delete() {
         try {

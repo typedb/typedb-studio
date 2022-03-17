@@ -164,7 +164,6 @@ object PageArea {
         fun mayRequestFocus() {
             if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
         }
-        state.openedPages().forEach { it.resetFocus() }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }

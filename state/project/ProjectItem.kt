@@ -18,12 +18,12 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.nio.channels.FileChannel
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.Objects
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.moveTo
@@ -55,7 +55,6 @@ sealed class ProjectItem(
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
     val isRoot get() = parent == null
 
-    val absolutePath: Path = path.toAbsolutePath()
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
@@ -65,30 +64,12 @@ sealed class ProjectItem(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
-    abstract fun initialiseWith(other: ProjectItem)
     abstract fun close()
     abstract fun delete()
 
-    internal fun tryRename(newName: String): ProjectItem? {
-        val newPath = path.resolveSibling(newName)
-        return if (parent?.contains(newName) == true) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
-            null
-        } else try {
-            path.moveTo(newPath)
-            val newItem = replaceWith(newPath)
-            close()
-            newItem
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
-            null
-        }
-    }
-
-    internal fun replaceWith(newPath: Path): ProjectItem? {
-        val newItem = find(newPath)
-        newItem?.initialiseWith(this)
-        return newItem
+    internal fun movePathTo(newPath: Path, overwrite: Boolean = false) {
+        path.moveTo(newPath, overwrite)
+        FileChannel.open(newPath, StandardOpenOption.WRITE).lock().release() // This waits till file is ready
     }
 
     internal fun find(newPath: Path): ProjectItem? {

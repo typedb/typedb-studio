@@ -22,6 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_SAVE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_READABLE
@@ -47,7 +49,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
-import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration
@@ -72,6 +73,36 @@ class File internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    private class Callbacks {
+
+        val onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
+        val onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
+        val onReopen = LinkedBlockingDeque<(File) -> Unit>()
+        val beforeSave = LinkedBlockingDeque<(File) -> Unit>()
+        val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
+        val onClose = LinkedBlockingDeque<(File) -> Unit>()
+
+        fun clone(): Callbacks {
+            val newCallbacks = Callbacks()
+            newCallbacks.onDiskChangeContent.addAll(this.onDiskChangeContent)
+            newCallbacks.onDiskChangePermission.addAll(this.onDiskChangePermission)
+            newCallbacks.onReopen.addAll(this.onReopen)
+            newCallbacks.beforeSave.addAll(this.beforeSave)
+            newCallbacks.beforeClose.addAll(this.beforeClose)
+            newCallbacks.onClose.addAll(this.onClose)
+            return newCallbacks
+        }
+
+        fun clear() {
+            onDiskChangeContent.clear()
+            onDiskChangePermission.clear()
+            onReopen.clear()
+            beforeSave.clear()
+            beforeClose.clear()
+            onClose.clear()
+        }
+    }
+
     val extension: String = this.path.extension
     val fileType: FileType = when {
         TYPEQL.extensions.contains(extension) -> TYPEQL
@@ -80,14 +111,8 @@ class File internal constructor(
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
 
+    private var callbacks = Callbacks()
     private var content: List<String> by mutableStateOf(listOf())
-    private val onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
-    private val onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
-    private val onReopen = LinkedBlockingDeque<(File) -> Unit>()
-    private val onWatch = LinkedBlockingDeque<(File) -> Unit>()
-    private val beforeSave = LinkedBlockingDeque<(File) -> Unit>()
-    private val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
-    private val onClose = LinkedBlockingDeque<(File) -> Unit>()
     private var watchFileSystem = AtomicBoolean(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
@@ -132,7 +157,7 @@ class File internal constructor(
         return try {
             readContent()
             isOpenAtomic.set(true)
-            onReopen.forEach { it(this) }
+            callbacks.onReopen.forEach { it(this) }
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
@@ -140,29 +165,33 @@ class File internal constructor(
         }
     }
 
-    internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
-        return try {
-            if (overwrite && newPath.exists()) find(newPath)?.delete()
-            path.moveTo(newPath, overwrite)
-            val newFile = replaceWith(newPath)?.asFile()
+    internal fun tryRename(newName: String): File? {
+        val newPath = path.resolveSibling(newName)
+        return if (parent.contains(newName)) {
+            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            val clonedCallbacks = callbacks.clone()
             close()
-            newFile
+            movePathTo(newPath)
+            find(newPath)?.asFile()?.also { it.callbacks = clonedCallbacks }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
             null
         }
     }
 
-    override fun initialiseWith(other: ProjectItem) {
-        val otherFile = other as File
-        this.isOpenAtomic.set(other.isOpenAtomic.get())
-        this.onDiskChangeContent.addAll(otherFile.onDiskChangeContent)
-        this.onDiskChangePermission.addAll(otherFile.onDiskChangePermission)
-        this.onWatch.addAll(otherFile.onWatch)
-        this.onReopen.addAll(otherFile.onReopen)
-        this.beforeSave.addAll(otherFile.beforeSave)
-        this.beforeClose.addAll(otherFile.beforeClose)
-        this.onClose.addAll(otherFile.onClose)
+    internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
+        return try {
+            val clonedCallbacks = callbacks.clone()
+            close()
+            if (overwrite && newPath.exists()) find(newPath)?.delete()
+            movePathTo(newPath, overwrite)
+            find(newPath)?.asFile()?.also { it.callbacks = clonedCallbacks }
+        } catch (e: Exception) {
+            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            null
+        }
     }
 
     fun isChanged() {
@@ -195,16 +224,11 @@ class File internal constructor(
         if (settings.autosave) saveContent()
     }
 
-    override fun onWatch(function: (Resource) -> Unit) {
-        onWatch.push(function)
-    }
-
     override fun stopWatcher() {
         watchFileSystem.set(false)
     }
 
     override fun launchWatcher() {
-        onWatch.forEach { it(this) }
         if (watchFileSystem.compareAndSet(false, true)) {
             launchWatcherCoroutine()
         }
@@ -221,10 +245,10 @@ class File internal constructor(
                     else {
                         if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
                             || isWritableAtomic.compareAndSet(!isWritable, isWritable)
-                        ) onDiskChangePermission.forEach { it(this@File) }
+                        ) callbacks.onDiskChangePermission.forEach { it(this@File) }
                         if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
                             lastModified.set(path.toFile().lastModified())
-                            onDiskChangeContent.forEach { it(this@File) }
+                            callbacks.onDiskChangeContent.forEach { it(this@File) }
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -237,31 +261,31 @@ class File internal constructor(
     }
 
     fun onDiskChangeContent(function: (File) -> Unit) {
-        onDiskChangeContent.push(function)
+        callbacks.onDiskChangeContent.push(function)
     }
 
     fun onDiskChangePermission(function: (File) -> Unit) {
-        onDiskChangePermission.push(function)
+        callbacks.onDiskChangePermission.push(function)
     }
 
     override fun beforeSave(function: (Resource) -> Unit) {
-        beforeSave.push(function)
+        callbacks.beforeSave.push(function)
     }
 
     override fun beforeClose(function: (Resource) -> Unit) {
-        beforeClose.push(function)
+        callbacks.beforeClose.push(function)
     }
 
     override fun onClose(function: (Resource) -> Unit) {
-        onClose.push(function)
+        callbacks.onClose.push(function)
     }
 
     override fun onReopen(function: (Resource) -> Unit) {
-        onReopen.push(function)
+        callbacks.onReopen.push(function)
     }
 
     override fun execBeforeClose() {
-        beforeClose.forEach { it(this) }
+        callbacks.beforeClose.forEach { it(this) }
     }
 
     override fun rename(onSuccess: ((Resource) -> Unit)?) {
@@ -280,7 +304,7 @@ class File internal constructor(
     }
 
     private fun saveContent() {
-        beforeSave.forEach { it(this) }
+        callbacks.beforeSave.forEach { it(this) }
         synchronized(this) {
             Files.write(path, content)
             lastModified.set(path.toFile().lastModified())
@@ -290,16 +314,10 @@ class File internal constructor(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
-            watchFileSystem.set(false)
             runner.reset()
-            onDiskChangeContent.clear()
-            onDiskChangePermission.clear()
-            onWatch.clear()
-            onReopen.clear()
-            beforeSave.clear()
-            beforeClose.clear()
-            onClose.forEach { it(this) }
-            onClose.clear()
+            watchFileSystem.set(false)
+            callbacks.onClose.forEach { it(this) }
+            callbacks.clear()
         }
     }
 

@@ -34,6 +34,7 @@ import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -41,9 +42,11 @@ import kotlin.io.path.isReadable
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class ProjectManager(private val settings: Settings, private val notificationMgr: NotificationManager) {
+class ProjectManager constructor(private val settings: Settings, private val notificationMgr: NotificationManager) {
 
     class CreateItemDialog : DialogManager() {
 
@@ -116,6 +119,7 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
     val renameDirectoryDialog = ModifyDirectoryDialog()
     val renameFileDialog = ModifyFileDialog()
     val saveFileDialog = ModifyFileDialog()
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
@@ -180,14 +184,14 @@ class ProjectManager(private val settings: Settings, private val notificationMgr
         }
     }
 
-    fun tryRenameDirectory(item: Directory, newName: String) {
-        item.tryRename(newName)?.let {
+    fun tryRenameDirectory(directory: Directory, newName: String) {
+        directory.tryRename(newName)?.let {
             renameDirectoryDialog.close()
             onContentChange?.let { fn -> fn() }
         }
     }
 
-    fun tryRenameFile(file: File, newName: String) {
+    fun tryRenameFile(file: File, newName: String) = coroutineScope.launch {
         file.tryRename(newName)?.let {
             renameFileDialog.onSuccess?.let { fn -> fn(it.asFile()) }
             renameFileDialog.close()

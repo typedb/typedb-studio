@@ -302,7 +302,6 @@ object TextEditor {
                 state.updateStatus()
                 state.focusReq.requestFocus()
                 state.isFocused = true
-                state.isFocusable = true
             } else state.isFocused = false
         }
     }

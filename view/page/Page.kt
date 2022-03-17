@@ -61,7 +61,6 @@ abstract class Page(var resource: Resource) {
     internal abstract val name: String
     internal abstract val icon: IconArg
 
-    internal abstract fun resetFocus()
     internal abstract fun updateResourceInner(resource: Resource)
 
     @Composable

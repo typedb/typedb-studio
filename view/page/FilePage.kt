@@ -39,9 +39,7 @@ class FilePage private constructor(var file: File, private val editor: TextEdito
     companion object {
         @Composable
         fun create(file: File): FilePage {
-            val editor = TextEditor.createState(file)
-            file.onWatch { if (editor.isFocusable) editor.focusReq.requestFocus() }
-            return FilePage(file, editor)
+            return FilePage(file, TextEditor.createState(file))
         }
     }
 
@@ -49,10 +47,6 @@ class FilePage private constructor(var file: File, private val editor: TextEdito
         // TODO: guarantee that new file has identical content as previous, or update content.
         file = resource as File
         editor.updateFile(file)
-    }
-
-    override fun resetFocus() {
-        editor.isFocusable = false
     }
 
     @Composable

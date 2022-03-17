@@ -40,8 +40,6 @@ interface Resource {
 
     fun stopWatcher()
 
-    fun onWatch(function: (Resource) -> Unit)
-
     fun beforeSave(function: (Resource) -> Unit)
 
     fun beforeClose(function: (Resource) -> Unit)
