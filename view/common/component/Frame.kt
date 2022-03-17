@@ -110,7 +110,6 @@ object Frame {
         }
 
         internal fun dragResizerBy(delta: Dp, mousePos: Dp) {
-            println("delta: $delta, mousePos: $mousePos")
             val relMousePos = mousePos - frame.start
             if ((delta > 0.dp && relMousePos > start) || (delta < 0.dp && relMousePos < end)) {
                 tryResizeSelfAndNextBy(delta)
