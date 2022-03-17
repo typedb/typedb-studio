@@ -74,8 +74,9 @@ abstract class Page(var resource: Resource) {
 
     @Composable
     private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
-        if (runOutputState == null) runOutputState =
-            RunOutputArea.State(resource, paneState, Theme.colors, coroutineScope)
+        if (runOutputState == null) {
+            runOutputState = RunOutputArea.State(resource, paneState, Theme.colors, coroutineScope)
+        }
         return runOutputState!!
     }
 
@@ -94,7 +95,7 @@ abstract class Page(var resource: Resource) {
                     id = RunOutputArea::class.java.canonicalName,
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
-                    initSize = if (!RunOutputArea.DEFAULT_OPEN) Either.first(PANEL_BAR_HEIGHT) else Either.second(1f),
+                    initSize = Either.first(PANEL_BAR_HEIGHT),
                     initFreeze = !RunOutputArea.DEFAULT_OPEN
                 ) { paneState -> RunOutputArea.Layout(runOutputState(paneState, coroutineScope)) }
             )

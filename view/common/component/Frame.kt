@@ -61,7 +61,7 @@ object Frame {
 
     data class SeparatorArgs(val size: Dp, val color: @Composable () -> Color = { Theme.colors.border })
 
-    data class Pane(
+    data class Pane constructor(
         val id: String,
         val order: Int = 0,
         val minSize: Dp = PANE_MIN_SIZE,
@@ -102,6 +102,10 @@ object Frame {
         fun unfreeze(newSize: Dp) {
             isFrozen = false
             tryResizeSelfAndAdjacentBy(newSize - size)
+        }
+
+        fun hasBeenResized() {
+            frame.isManuallyResized = true
         }
 
         internal fun updatePosition(start: Dp, end: Dp) {

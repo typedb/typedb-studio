@@ -57,7 +57,7 @@ object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State(
+    class State constructor(
         internal val resource: Resource,
         private val paneState: Frame.PaneState,
         private val colors: com.vaticle.typedb.studio.view.common.theme.Color.Theme,
@@ -109,6 +109,7 @@ object RunOutputArea {
             } else if (paneState.isFrozen) {
                 paneState.unfreeze(unfreezeSize ?: (paneState.frame.maxSize * 0.5f))
             }
+            paneState.hasBeenResized()
         }
     }
 
