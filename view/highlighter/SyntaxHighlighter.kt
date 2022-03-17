@@ -49,6 +49,7 @@ object SyntaxHighlighter {
         if (text.isBlank()) return AnnotatedString(text)
         val builder = Builder()
         val tokens = lexer.tokenize(text, scheme)
+        if (tokens.size > 64) return AnnotatedString(text) // TODO: figure out why lines with long tokens slow down rendering
         tokens.forEach { builder.appendToken(it, scheme.globalScope) }
         return builder.toAnnotatedString()
     }
