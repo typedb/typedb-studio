@@ -18,14 +18,17 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,21 +62,26 @@ object ActionList {
         itemHeight: Dp = ITEM_HEIGHT,
         buttonFn: (T) -> Form.IconButtonArg
     ) {
+        val scrollState = rememberScrollState()
+
         @Composable
         fun Separator() {
             Separator.Vertical(2.dp, Theme.colors.background1, Modifier.height(itemHeight * items.size))
         }
 
-        Row(modifier.verticalScroll(rememberScrollState())) {
-            if (settingSide == Side.LEFT) {
-                SettingColumn(items, itemHeight, buttonFn)
-                Separator()
+        Box(modifier) {
+            Row(Modifier.verticalScroll(scrollState)) {
+                if (settingSide == Side.LEFT) {
+                    SettingColumn(items, itemHeight, buttonFn)
+                    Separator()
+                }
+                NameColumn(Modifier.weight(1f), items, itemHeight)
+                if (settingSide == Side.RIGHT) {
+                    Separator()
+                    SettingColumn(items, itemHeight, buttonFn, scrollState)
+                }
             }
-            NameColumn(Modifier.weight(1f), items, itemHeight)
-            if (settingSide == Side.RIGHT) {
-                Separator()
-                SettingColumn(items, itemHeight, buttonFn)
-            }
+            Scrollbar.Vertical(rememberScrollbarAdapter(scrollState), Modifier.align(Alignment.CenterEnd))
         }
     }
 
@@ -105,7 +113,9 @@ object ActionList {
     }
 
     @Composable
-    private fun <T : Any> SettingColumn(items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg) {
+    private fun <T : Any> SettingColumn(
+        items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg, scrollState: ScrollState? = null
+    ) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {
@@ -130,6 +140,7 @@ object ActionList {
                         onClick = button.onClick
                     )
                     FormRowSpacer()
+                    scrollState?.let { if (it.maxValue > 0 && it.maxValue < Int.MAX_VALUE) FormRowSpacer() }
                 }
             }
         }
