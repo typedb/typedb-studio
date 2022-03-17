@@ -65,7 +65,7 @@ object Sentence {
         "Enabling snapshot means that you will keep a transaction alive on a given snapshot of the data, " +
                 "until you either reopen or commit the transaction. In TypeDB Studio, keeping the transaction alive on a " +
                 "given snapshot is the de facto behaviour when you are in a 'write' transaction, but not in 'read'. " +
-                "Enabling snapshot in a 'read' transaction allows you to query for explanation of inferred concept answers. " +
+                "Enabling snapshot in a 'read' transaction allows you to query for explanations of inferred concept answers. " +
                 "The transaction will be opened on the latest snapshot when the first query is ran. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val INTERACTIVE_MODE_DESCRIPTION =
@@ -108,7 +108,7 @@ object Sentence {
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val STOP_SIGNAL_DESCRIPTION =
         "A stop signal allows you to stop the currently running query when the next server response is received. " +
-                "To stop query immediately without waiting for any server response, close the transaction instead. " +
+                "To stop the query immediately without waiting for any server response, close the transaction instead. " +
                 BUTTON_ENABLED_WHEN_RUNNING
     const val TRANSACTION_CLOSE_DESCRIPTION =
         "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
