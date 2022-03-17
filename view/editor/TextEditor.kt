@@ -18,8 +18,6 @@
 
 package com.vaticle.typedb.studio.view.editor
 
-import androidx.compose.foundation.HorizontalScrollbar
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -27,9 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -74,14 +70,13 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.LazyColumn
+import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_END_PADDING
-import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
-import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Writable.Companion.TAB_SIZE
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
@@ -351,16 +346,8 @@ object TextEditor {
                     TextLine(state, index, text, font, fontWidth, showLine)
                 }
             }
-            VerticalScrollbar(
-                adapter = state.target.verScroller,
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
-                    .padding(SCROLLBAR_LONG_PADDING, SCROLLBAR_END_PADDING)
-            )
-            HorizontalScrollbar(
-                adapter = state.target.horScrollerAdapter,
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-                    .padding(SCROLLBAR_END_PADDING, SCROLLBAR_LONG_PADDING)
-            )
+            Scrollbar.Vertical(state.target.verScroller, Modifier.align(Alignment.CenterEnd))
+            Scrollbar.Horizontal(state.target.horScrollerAdapter, Modifier.align(Alignment.BottomCenter))
         }
     }
 

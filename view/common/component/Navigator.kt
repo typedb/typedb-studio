@@ -19,19 +19,14 @@
 package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.HorizontalScrollbar
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -91,7 +86,6 @@ import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expan
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
-import com.vaticle.typedb.studio.view.common.theme.Theme.SCROLLBAR_LONG_PADDING
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
@@ -459,16 +453,8 @@ object Navigator {
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
             ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArg, styleArgs) } } }
-            VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(lazyListState),
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd)
-                    .padding(SCROLLBAR_LONG_PADDING, Theme.SCROLLBAR_END_PADDING)
-            )
-            HorizontalScrollbar(
-                adapter = rememberScrollbarAdapter(horScrollState),
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-                    .padding(Theme.SCROLLBAR_END_PADDING, SCROLLBAR_LONG_PADDING)
-            )
+            Scrollbar.Vertical(rememberScrollbarAdapter(lazyListState), Modifier.align(Alignment.CenterEnd))
+            Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
         }
     }
 
