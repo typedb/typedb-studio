@@ -72,7 +72,8 @@ object Toolbar {
     private val isInferEnabled get() = GlobalState.connection.current?.config?.inferEnabled == true
     private val isExplainSelected get() = GlobalState.connection.current?.config?.explainSelected == true
     private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
-    private val hasRunnable get() = GlobalState.resource.active?.isRunnable == true
+    private val isReadyToRunQuery get() = GlobalState.connection.current?.isReadyToRunQuery == true
+    private val hasRunnablePage get() = GlobalState.resource.active?.isRunnable == true
     private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery == true
     private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
 
@@ -433,8 +434,8 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.PLAY,
                 color = Theme.colors.secondary,
-                onClick = { GlobalState.connection.current?.run(GlobalState.resource.active!!) },
-                enabled = hasOpenSession && hasRunnable && !hasRunningQuery && !hasRunningCommand,
+                onClick = { GlobalState.resource.active?.let { GlobalState.connection.current?.mayRun(it) } },
+                enabled = isReadyToRunQuery && hasRunnablePage,
                 tooltip = Tooltip.Arg(
                     title = if (GlobalState.connection.isConnected && GlobalState.connection.current!!.isScriptMode) Label.RUN_SCRIPT else Label.RUN_QUERY,
                     description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE

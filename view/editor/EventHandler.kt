@@ -40,7 +40,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_PREV
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT_MOD
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -150,7 +150,7 @@ internal class EventHandler(
             DELETE_LINE_END -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
-            ENTER, ENTER_SHIFT, ENTER_SHIFT_MOD -> processor.insertNewLine()
+            ENTER, ENTER_SHIFT -> processor.insertNewLine()
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()

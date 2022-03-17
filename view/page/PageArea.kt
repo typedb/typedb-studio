@@ -70,17 +70,14 @@ object PageArea {
 
         private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
+                KeyMapper.Command.MOD_ENTER -> runCurrentPage()
                 KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
                 KeyMapper.Command.SAVE -> saveActivePage()
                 KeyMapper.Command.CLOSE -> closeActivePage()
-                KeyMapper.Command.TAB_CTRL -> showNextPage()
-                KeyMapper.Command.TAB_CTRL_SHIFT -> showPreviousPage()
+                KeyMapper.Command.CTRL_TAB -> showNextPage()
+                KeyMapper.Command.CTRL_TAB_SHIFT -> showPreviousPage()
                 else -> false
             }
-        }
-
-        internal fun openedPages(): List<Page> {
-            return openedPages.values.toList()
         }
 
         @Composable
@@ -94,6 +91,15 @@ object PageArea {
                 }
                 page
             }
+        }
+
+        private fun runCurrentPage(): Boolean {
+            GlobalState.connection.current?.let { connection ->
+                if (connection.isReadyToRunQuery) GlobalState.resource.active?.let { resource ->
+                    if (resource.isRunnable) connection.mayRun(resource)
+                }
+            }
+            return true
         }
 
         internal fun createAndOpenNewFile(): Boolean {

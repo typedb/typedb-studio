@@ -81,11 +81,12 @@ interface KeyMapper {
 
         ENTER,
         ENTER_SHIFT,
-        ENTER_SHIFT_MOD,
         TAB,
         TAB_SHIFT,
-        TAB_CTRL,
-        TAB_CTRL_SHIFT,
+        MOD_ENTER,
+        MOD_ENTER_SHIFT,
+        CTRL_TAB,
+        CTRL_TAB_SHIFT,
 
         DELETE_CHAR_PREV,
         DELETE_CHAR_NEXT,
@@ -155,12 +156,6 @@ interface KeyMapper {
     private object CommonKeyMapper {
         fun map(event: KeyEvent, shortcutModifier: (KeyEvent) -> Boolean): Command? {
             return when {
-                shortcutModifier(event) && event.isShiftPressed ->
-                    when (event.key) {
-                        Keys.Z -> Command.REDO
-                        Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT_MOD
-                        else -> null
-                    }
                 shortcutModifier(event) ->
                     when (event.key) {
                         Keys.C, Keys.Insert -> Command.COPY
@@ -173,16 +168,23 @@ interface KeyMapper {
                         Keys.S -> Command.SAVE
                         Keys.T -> Command.NEW_PAGE
                         Keys.W -> Command.CLOSE
+                        Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
                         else -> null
                     }
-                event.isCtrlPressed && event.isShiftPressed ->
+                shortcutModifier(event) && event.isShiftPressed ->
                     when (event.key) {
-                        Keys.Tab -> Command.TAB_CTRL_SHIFT
+                        Keys.Z -> Command.REDO
+                        Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER_SHIFT
                         else -> null
                     }
                 event.isCtrlPressed ->
                     when (event.key) {
-                        Keys.Tab -> Command.TAB_CTRL
+                        Keys.Tab -> Command.CTRL_TAB
+                        else -> null
+                    }
+                event.isCtrlPressed && event.isShiftPressed ->
+                    when (event.key) {
+                        Keys.Tab -> Command.CTRL_TAB_SHIFT
                         else -> null
                     }
                 event.isShiftPressed ->

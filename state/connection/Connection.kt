@@ -69,6 +69,7 @@ class Connection internal constructor(
     val hasOpenSession: Boolean get() = session != null && session!!.isOpen
     val hasRunningQuery get() = hasRunningQueryAtomic.state
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
+    val isReadyToRunQuery get() = hasOpenSession && !hasRunningQuery && !hasRunningCommand
     val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
     val config = TransactionConfig(this)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
@@ -146,7 +147,8 @@ class Connection internal constructor(
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun run(resource: Resource, content: String = resource.runContent) {
+    fun mayRun(resource: Resource, content: String = resource.runContent) {
+        if (!isReadyToRunQuery) return
         if (isScriptMode) runScript(resource, content)
         else if (isInteractiveMode) runQuery(resource, content)
         else throw IllegalStateException()

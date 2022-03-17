@@ -193,7 +193,7 @@ object TextToolbar {
                 KeyMapper.Command.TAB -> moveFocusNext(focusManager)
                 KeyMapper.Command.ENTER -> onEnter(inputType)
                 KeyMapper.Command.ENTER_SHIFT -> onEnterShift(inputType)
-                KeyMapper.Command.ENTER_SHIFT_MOD -> insertNewLine(inputType)
+                KeyMapper.Command.MOD_ENTER_SHIFT -> insertNewLine(inputType)
                 else -> false
             }
         }
