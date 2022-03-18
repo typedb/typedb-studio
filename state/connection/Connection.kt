@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.runner.Runner
@@ -95,21 +96,29 @@ class Connection internal constructor(
         assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
             coroutineScope.launch {
-                function()
-                hasRunningCommandAtomic.set(false)
-                asyncDepth.decrementAndGet()
+                try {
+                    function()
+                } catch (e: Exception) {
+                    notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
+                } finally {
+                    hasRunningCommandAtomic.set(false)
+                    asyncDepth.decrementAndGet()
+                }
             }
         }
     }
 
     private fun runAsyncClosingCommand(function: () -> Unit) {
-        val depth = asyncDepth.incrementAndGet()
-        assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
-        runningClosingCommands.increment()
+        val depth = runningClosingCommands.incrementAndGet()
+        assert(depth == 1) { "You should not call runAsyncClosingCommand nested in each other" }
         coroutineScope.launch {
-            function()
-            runningClosingCommands.decrement()
-            asyncDepth.decrementAndGet()
+            try {
+                function()
+            } catch (e: Exception) {
+                notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
+            } finally {
+                runningClosingCommands.decrementAndGet()
+            }
         }
     }
 
@@ -171,6 +180,7 @@ class Connection internal constructor(
                 }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
+            } finally {
                 hasRunningQueryAtomic.set(false)
             }
         }

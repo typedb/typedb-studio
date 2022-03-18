@@ -34,11 +34,13 @@ class AtomicIntegerState(initValue: Int) {
         state = value
     }
 
-    fun increment() {
+    fun incrementAndGet(): Int {
         state = atomic.incrementAndGet()
+        return state
     }
 
-    fun decrement() {
+    fun decrementAndGet(): Int {
         state = atomic.decrementAndGet()
+        return state
     }
 }
