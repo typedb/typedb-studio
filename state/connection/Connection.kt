@@ -165,7 +165,7 @@ class Connection internal constructor(
                 mayOpenTransaction()
                 resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
                     if (!config.snapshotSelected) closeTransactionFn()
-                    else if (!transaction!!.isOpen) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
+                    else if (transaction?.isOpen != true) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)
                     hasRunningQueryAtomic.set(false)
                 }
