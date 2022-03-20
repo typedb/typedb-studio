@@ -180,7 +180,6 @@ class Connection internal constructor(
                 }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
-            } finally {
                 hasRunningQueryAtomic.set(false)
             }
         }
