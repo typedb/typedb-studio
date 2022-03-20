@@ -133,7 +133,7 @@ class Runner(
                 is TypeQLInsert -> runInsertQuery(query)
                 is TypeQLUpdate -> runUpdateQuery(query)
                 is TypeQLMatch -> runMatchQuery(query)
-                else -> throw IllegalStateException()
+                else -> throw IllegalStateException("Unrecognised TypeQL query")
             }
         }
     }

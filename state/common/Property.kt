@@ -64,7 +64,7 @@ object Property {
         return when (displayName) {
             Server.TYPEDB.displayName -> Server.TYPEDB
             Server.TYPEDB_CLUSTER.displayName -> Server.TYPEDB_CLUSTER
-            else -> throw IllegalStateException()
+            else -> throw IllegalStateException("Unrecognised TypeDB server type")
         }
     }
 }

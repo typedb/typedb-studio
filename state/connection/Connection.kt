@@ -160,7 +160,7 @@ class Connection internal constructor(
         if (!isReadyToRunQuery) return
         if (isScriptMode) runScript(resource, content)
         else if (isInteractiveMode) runQuery(resource, content)
-        else throw IllegalStateException()
+        else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
     private fun runScript(resource: Resource, script: String = resource.runContent) = runAsyncCommand {

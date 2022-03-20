@@ -107,7 +107,7 @@ internal class InputTarget constructor(
                 else if (end.min <= start.min && end.max >= start.max) end
                 else if (start.min < end.min) Selection(start.min, end.max)
                 else if (end.min < start.min) Selection(start.max, end.min)
-                else throw IllegalStateException()
+                else throw IllegalStateException("Invalid selection coverage logic")
             }
         }
 
