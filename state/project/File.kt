@@ -120,7 +120,7 @@ class File internal constructor(
 
     override val fullName: String = computeFullName(path, projectMgr)
     override val runContent: String get() = content.joinToString("\n")
-    override val runner: RunnerManager = RunnerManager()
+    override var runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = isTypeQL
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
@@ -171,10 +171,14 @@ class File internal constructor(
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
+            val clonedRunner = runner.clone()
             val clonedCallbacks = callbacks.clone()
             close()
             movePathTo(newPath)
-            find(newPath)?.asFile()?.also { it.callbacks = clonedCallbacks }
+            find(newPath)?.asFile()?.also {
+                it.runner = clonedRunner
+                it.callbacks = clonedCallbacks
+            }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
             null
@@ -183,11 +187,15 @@ class File internal constructor(
 
     internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
         return try {
+            val clonedRunner = runner.clone()
             val clonedCallbacks = callbacks.clone()
             close()
             if (overwrite && newPath.exists()) find(newPath)?.delete()
             movePathTo(newPath, overwrite)
-            find(newPath)?.asFile()?.also { it.callbacks = clonedCallbacks }
+            find(newPath)?.asFile()?.also {
+                it.runner = clonedRunner
+                it.callbacks = clonedCallbacks
+            }
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
             null

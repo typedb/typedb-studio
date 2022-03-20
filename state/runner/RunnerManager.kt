@@ -31,6 +31,14 @@ class RunnerManager {
     val runners: SnapshotStateList<Runner> = mutableStateListOf()
     private val onLaunch = LinkedBlockingDeque<(Runner) -> Unit>()
 
+    fun clone(): RunnerManager {
+        val newRunnerMgr = RunnerManager()
+        newRunnerMgr.activeRunner = this.activeRunner
+        newRunnerMgr.runners.addAll(this.runners)
+        newRunnerMgr.onLaunch.addAll(onLaunch)
+        return newRunnerMgr
+    }
+
     fun numberOf(runner: Runner): Int {
         return runners.indexOf(runner) + 1
     }

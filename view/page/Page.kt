@@ -68,7 +68,7 @@ abstract class Page(var resource: Resource) {
 
     fun updateResource(resource: Resource) {
         this.resource = resource
-        this.runOutputState = null
+        runOutputState?.let { it.resource = resource }
         updateResourceInner(resource)
     }
 
@@ -96,7 +96,7 @@ abstract class Page(var resource: Resource) {
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
                     initSize = Either.first(PANEL_BAR_HEIGHT),
-                    initFreeze = !RunOutputArea.DEFAULT_OPEN
+                    initFreeze = true
                 ) { paneState -> RunOutputArea.Layout(runOutputState(paneState, coroutineScope)) }
             )
         }

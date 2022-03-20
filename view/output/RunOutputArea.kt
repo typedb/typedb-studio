@@ -58,7 +58,7 @@ object RunOutputArea {
     const val DEFAULT_OPEN = false
 
     class State constructor(
-        internal val resource: Resource,
+        var resource: Resource,
         private val paneState: Frame.PaneState,
         private val colors: com.vaticle.typedb.studio.view.common.theme.Color.Theme,
         private val coroutineScope: CoroutineScope
