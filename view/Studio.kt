@@ -33,6 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +53,9 @@ import com.vaticle.typedb.studio.state.config.UserDataDirectory
 import com.vaticle.typedb.studio.view.browser.BrowserArea
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
+import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
@@ -113,9 +118,29 @@ object Studio {
     private fun application(window: @Composable (onExit: () -> Unit) -> Unit) {
         androidx.compose.ui.window.application {
             Theme.Material {
-                // TODO: we don't want to call exitApplication() onCloseRequest for MacOS
-                window { exitApplication() }
+                window {
+                    GlobalState.confirmation.submit(
+                        title = Label.CONFIRM_QUITTING_APPLICATION,
+                        message = Sentence.CONFIRM_QUITING_APPLICATION,
+                        onConfirm = { exitApplication() } // TODO: we don't want to call exitApplication() for MacOS
+                    )
+                }
             }
+        }
+    }
+
+    private fun handleKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean {
+        return if (event.type == KeyEventType.KeyUp) false
+        else KeyMapper.CURRENT.map(event)?.let { executeCommand(it, onClose) } ?: false
+    }
+
+    private fun executeCommand(command: KeyMapper.Command, onClose: () -> Unit): Boolean {
+        return when (command) {
+            KeyMapper.Command.QUIT -> {
+                onClose()
+                true
+            }
+            else -> false
         }
     }
 
@@ -126,7 +151,8 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             onCloseRequest = { onClose() },
-            state = rememberWindowState(WindowPlacement.Maximized)
+            state = rememberWindowState(WindowPlacement.Maximized),
+            onPreviewKeyEvent = { handleKeyEvent(it, onClose) },
         ) {
             val density = LocalDensity.current.density
             var titleBarHeight by remember { mutableStateOf(0.dp) }
