@@ -118,9 +118,7 @@ object Theme {
     @Composable
     fun Material(content: @Composable () -> Unit) {
         MaterialTheme(colors = Color.materialOf(colors), typography = Typography.materialOf(typography)) {
-            CompositionLocalProvider(*MaterialThemeOverrides.toTypedArray()) {
-                content()
-            }
+            CompositionLocalProvider(*MaterialThemeOverrides.toTypedArray()) { content() }
         }
     }
 

@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -42,7 +43,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.ApplicationScope
+import androidx.compose.ui.window.LocalWindowExceptionHandlerFactory
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowExceptionHandler
+import androidx.compose.ui.window.WindowExceptionHandlerFactory
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
@@ -67,7 +72,10 @@ import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
 import com.vaticle.typedb.studio.view.page.PageArea
+import java.awt.Window
+import java.awt.event.WindowEvent
 import javax.swing.UIManager
+import kotlin.system.exitProcess
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
@@ -76,6 +84,18 @@ object Studio {
     private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
     private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
     private val LOGGER = KotlinLogging.logger {}
+
+    private var error: Throwable? by mutableStateOf(null)
+    private var quit: Boolean by mutableStateOf(false)
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    private object ExceptionHandler : WindowExceptionHandlerFactory {
+        override fun exceptionHandler(window: Window) = WindowExceptionHandler {
+            error = it
+            window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
+            throw it
+        }
+    }
 
     private fun getMainWindowTitle(): String {
         val pageName = GlobalState.resource.active?.fullName ?: GlobalState.project.current?.directory?.name ?: ""
@@ -89,10 +109,17 @@ object Studio {
             setConfigurations()
             Message.loadClasses()
             UserDataDirectory.initialise()
-            application { MainWindow(it) }
+            while (!quit) {
+                application { MainWindow(::exitApplication) }
+                error?.let { exception ->
+                    LOGGER.error(exception.message, exception)
+                    application { ErrorWindow(exception) { error = null; exitApplication() } }
+                }
+            }
+            exitProcess(0)
         } catch (exception: Exception) {
             LOGGER.error(exception.message, exception)
-            application { ErrorWindow(exception, it) }
+            exitProcess(1)
         }
     }
 
@@ -110,20 +137,17 @@ object Studio {
         System.setProperty("awt.useSystemAAFontSettings", "on")
         System.setProperty("swing.aatext", "true")
         // Enable FileDialog to select "directories" on MacOS
-        System.setProperty("apple.awt.fileDialogForDirectories", "true");
+        System.setProperty("apple.awt.fileDialogForDirectories", "true")
         // Enable native Windows UI style
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
     }
 
-    private fun application(window: @Composable (onExit: () -> Unit) -> Unit) {
-        androidx.compose.ui.window.application {
+    @OptIn(ExperimentalComposeUiApi::class)
+    private fun application(window: @Composable ApplicationScope.() -> Unit) {
+        androidx.compose.ui.window.application(exitProcessOnExit = false) {
             Theme.Material {
-                window {
-                    GlobalState.confirmation.submit(
-                        title = Label.CONFIRM_QUITTING_APPLICATION,
-                        message = Sentence.CONFIRM_QUITING_APPLICATION,
-                        onConfirm = { exitApplication() } // TODO: we don't want to call exitApplication() for MacOS
-                    )
+                CompositionLocalProvider(LocalWindowExceptionHandlerFactory provides ExceptionHandler) {
+                    window()
                 }
             }
         }
@@ -145,14 +169,21 @@ object Studio {
     }
 
     @Composable
-    private fun MainWindow(onClose: () -> Unit) {
+    private fun MainWindow(exitApplicationFn: () -> Unit) {
+        fun confirmClose() = GlobalState.confirmation.submit(
+            title = Label.CONFIRM_QUITTING_APPLICATION,
+            message = Sentence.CONFIRM_QUITING_APPLICATION,
+            onConfirm = { quit = true; exitApplicationFn() }
+            // TODO: we don't want to call exitApplication() for MacOS
+        )
+
         // TODO: we want no title bar, by passing undecorated=true, but it seems to cause intermittent crashes on startup
         //       (see #40). Test if they occur when running the distribution, or only with bazel run :studio-bin-*
         Window(
             title = getMainWindowTitle(),
-            onCloseRequest = { onClose() },
             state = rememberWindowState(WindowPlacement.Maximized),
-            onPreviewKeyEvent = { handleKeyEvent(it, onClose) },
+            onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
+            onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             val density = LocalDensity.current.density
             var titleBarHeight by remember { mutableStateOf(0.dp) }
@@ -198,7 +229,7 @@ object Studio {
     }
 
     @Composable
-    private fun ErrorWindow(exception: Exception, onClose: () -> Unit) {
+    private fun ErrorWindow(exception: Throwable, onClose: () -> Unit) {
         Window(
             title = Label.TYPEDB_STUDIO_APPLICATION_ERROR,
             onCloseRequest = { onClose() },
