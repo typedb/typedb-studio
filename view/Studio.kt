@@ -19,8 +19,11 @@
 package com.vaticle.typedb.studio.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -38,9 +41,10 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
@@ -62,11 +66,14 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.Text
+import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.view.dialog.ConfirmationDialog
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
@@ -81,8 +88,10 @@ import mu.KotlinLogging
 
 object Studio {
 
-    private val ERROR_WINDOW_WIDTH: Dp = 1000.dp
-    private val ERROR_WINDOW_HEIGHT: Dp = 610.dp
+    private val ERROR_WINDOW_WIDTH = 1000.dp
+    private val ERROR_WINDOW_HEIGHT = 610.dp
+    private val ERROR_WINDOW_CONTENT_PADDING = 10.dp
+    private val ERROR_WINDOW_LABEL_WIDTH = 40.dp
     private val LOGGER = KotlinLogging.logger {}
 
     private var error: Throwable? by mutableStateOf(null)
@@ -239,19 +248,39 @@ object Studio {
                 size = DpSize(ERROR_WINDOW_WIDTH, ERROR_WINDOW_HEIGHT),
             )
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Theme.colors.background1).padding(5.dp)) {
-                val rowVerticalAlignment = Alignment.Top
-                val rowModifier = Modifier.padding(5.dp)
-                val labelModifier = Modifier.width(40.dp)
-                val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
-                val contentColor = Theme.colors.error2
-                Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
-                    exception.message?.let { TextSelectable(value = it, color = contentColor) }
-                }
-                Row(verticalAlignment = rowVerticalAlignment, modifier = rowModifier) {
-                    Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
-                    TextSelectable(value = exception.stackTraceToString(), color = contentColor)
+            val clipboard = LocalClipboardManager.current
+            val labelModifier = Modifier.width(ERROR_WINDOW_LABEL_WIDTH)
+            val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
+            val contentColor = Theme.colors.error2
+            val contentModifier = Modifier.fillMaxWidth().border(1.dp, Theme.colors.border)
+                .background(Theme.colors.background0).padding(horizontal = ERROR_WINDOW_CONTENT_PADDING)
+
+            fun exceptionText(): String =
+                "${Label.TITLE}: ${exception.message}\n${Label.TRACE}: ${exception.stackTraceToString()}"
+
+            CompositionLocalProvider(LocalWindow provides window) {
+                Column(
+                    modifier = Modifier.fillMaxSize().background(Theme.colors.background1).padding(DIALOG_PADDING),
+                    verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
+                        exception.message?.let { TextSelectable(value = it, color = contentColor) }
+                    }
+                    Row(Modifier.weight(1f)) {
+                        Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
+                        TextSelectable(
+                            value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
+                        )
+                    }
+                    Row {
+                        Spacer(Modifier.weight(1f))
+                        TextButton(text = Label.COPY, onClick = { clipboard.setText(AnnotatedString(exceptionText())) })
+                        FormRowSpacer()
+                        TextButton(text = Label.QUIT, onClick = { quit = true; onClose() })
+                        FormRowSpacer()
+                        TextButton(text = Label.REOPEN, onClick = onClose)
+                    }
                 }
             }
         }

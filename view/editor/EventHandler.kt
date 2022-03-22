@@ -84,7 +84,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-internal class EventHandler(
+internal class EventHandler constructor(
     private val target: InputTarget,
     private val toolbar: TextToolbar.State,
     private val clipboard: ClipboardManager,
