@@ -119,13 +119,20 @@ internal class InputTarget constructor(
         }
     }
 
-    internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
+    internal val cursor: Cursor get() = if (!stickToBottom) _cursor else end
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
     internal val verScroller = LazyColumn.createScrollState(lineHeight, bottomSpace) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
+    internal var stickToBottom
+        get() = verScroller.stickToBottom
+        set(value) {
+            verScroller.stickToBottom = value
+        }
+
+    private var _cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     private var mayDragSelectByChar: Boolean by mutableStateOf(false)
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
@@ -134,6 +141,7 @@ internal class InputTarget constructor(
     private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
     private val lineNumberBorder: Float get() = textAreaRect.left - horPadding.value
     private val lineCount: Int get() = content.size
+    private val end: Cursor get() = Cursor(content.size - 1, content.last().length)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     internal fun mayIncreaseTextWidth(newRawWidth: Int) {
@@ -221,7 +229,7 @@ internal class InputTarget constructor(
             if (selection == null) selection = Selection(cursor, newCursor)
             else selection!!.end = newCursor
         } else selection = null
-        cursor = newCursor
+        _cursor = newCursor
         if (mayScroll) mayScrollToCursor()
         updateStatus()
     }
@@ -398,7 +406,7 @@ internal class InputTarget constructor(
     }
 
     internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) {
-        updateCursor(Cursor(content.size - 1, content.last().length), isSelecting, mayScroll)
+        updateCursor(end, isSelecting, mayScroll)
     }
 
     internal fun selectAll() {

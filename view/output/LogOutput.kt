@@ -20,7 +20,6 @@ package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.input.mouse.mouseScrollFilter
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
@@ -62,9 +61,9 @@ internal object LogOutput : RunOutput() {
         super.Layout(buttons(state)) { modifier ->
             TextEditor.Layout(
                 state = state.editorState,
-                modifier = modifier.onPointerEvent(Press) { state.editorState.stickToBottom = false }
-                    .mouseScrollFilter { _, _ -> state.editorState.stickToBottom = false; false },
-                showLine = false
+                modifier = modifier.onPointerEvent(Press) { state.editorState.stickToBottom = false },
+                showLine = false,
+                onScroll = { state.editorState.stickToBottom = false }
             )
         }
     }

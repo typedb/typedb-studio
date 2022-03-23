@@ -205,8 +205,11 @@ object TextEditor {
         initProcessor: TextProcessor,
     ) {
         val focusReq = FocusRequester()
-        var isFocusable by mutableStateOf(false)
-        var stickToBottom by mutableStateOf(false)
+        var stickToBottom
+            get() = target.stickToBottom
+            set(value) {
+                target.stickToBottom = value
+            }
         internal val contextMenu = ContextMenu.State()
         internal var areaWidth by mutableStateOf(0.dp)
         internal var isFocused by mutableStateOf(true)
@@ -243,11 +246,6 @@ object TextEditor {
             target.moveCursorToStart(isSelecting = false, mayScroll = false)
         }
 
-        fun jumpToBottom() {
-            target.verScroller.scrollToBottom()
-            target.moveCursorToEnd(isSelecting = false, mayScroll = false)
-        }
-
         fun onScrollToBottom(function: () -> Unit) {
             target.verScroller.onScrollToBottom(function)
         }
@@ -255,14 +253,13 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true) {
+    fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
         val fontStyle = state.font.copy(color = fontColor, lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
-        if (state.stickToBottom) state.jumpToBottom()
 
         Box { // We render a number to find out the default width of a digit for the given font
             Text(text = "0", style = fontStyle, onTextLayout = { fontWidth = toDP(it.size.width, density) })
@@ -279,10 +276,10 @@ object TextEditor {
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
                     if (showLine) {
-                        LineNumberArea(state, fontStyle, fontWidth)
+                        LineNumberArea(state, fontStyle, fontWidth, onScroll)
                         Separator.Vertical()
                     }
-                    TextArea(state, fontStyle, fontWidth, showLine)
+                    TextArea(state, fontStyle, fontWidth, showLine, onScroll)
                 }
             }
         }
@@ -297,14 +294,14 @@ object TextEditor {
     }
 
     @Composable
-    private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp) {
+    private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp, onScroll: () -> Unit) {
         val maxDigits = ceil(log10(state.lineCount + 1.0)).toInt()
         val minWidth = fontWidth * maxDigits + AREA_PADDING_HOR * 2 + 2.dp
         val lazyColumnState: LazyColumn.State<Int> = LazyColumn.createState(
             items = (0 until state.lineCount).map { it },
             scroller = state.target.verScroller
         )
-        LazyColumn.Area(state = lazyColumnState) { index, _ -> LineNumber(state, index, font, minWidth) }
+        LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, _ -> LineNumber(state, index, font, minWidth) }
     }
 
     @Composable
@@ -324,7 +321,7 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, showLine: Boolean) {
+    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, showLine: Boolean, onScroll: () -> Unit) {
         val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
         Box(modifier = Modifier.onGloballyPositioned {
             state.updateAreaWidth(it.size.width)
@@ -337,7 +334,7 @@ object TextEditor {
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
-                LazyColumn.Area(state = lazyColumnState) { index, text ->
+                LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, text ->
                     TextLine(state, index, text, font, fontWidth, showLine)
                 }
             }

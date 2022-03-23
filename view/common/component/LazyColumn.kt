@@ -56,13 +56,23 @@ object LazyColumn {
     class ScrollState internal constructor(
         val itemHeight: Dp, var bottomSpace: Dp, val itemCount: () -> Int
     ) : ScrollbarAdapter {
-        var offset: Dp by mutableStateOf(0.dp); private set
+        val offset: Dp get() = if (!stickToBottom) _offset else maxOffset
+        var stickToBottom
+            get() = _stickToBottom
+            set(value) {
+                if (_stickToBottom && !value) _offset = maxOffset
+                _stickToBottom = value
+            }
+        private var _stickToBottom by mutableStateOf(false)
+        private var _offset: Dp by mutableStateOf(0.dp); private set
         private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
-        private var viewHeight: Dp by mutableStateOf(0.dp)
+        private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
         private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
-        internal var firstVisibleOffset: Dp by mutableStateOf(0.dp)
-        internal var firstVisibleIndex: Int by mutableStateOf(0)
-        internal var lastVisibleIndexPossible: Int by mutableStateOf(0)
+        internal var viewHeight: Dp by mutableStateOf(0.dp)
+        internal val firstVisibleIndex: Int get() = floor(offset.value / itemHeight.value).toInt()
+        internal val firstVisibleOffset: Dp get() = offset - itemHeight * firstVisibleIndex
+        internal val lastVisibleIndexPossible: Int
+            get() = firstVisibleIndex + floor((viewHeight.value + firstVisibleOffset.value) / itemHeight.value).toInt()
 
         override val scrollOffset: Float get() = offset.value
 
@@ -98,21 +108,8 @@ object LazyColumn {
         }
 
         private fun updateOffset(newOffset: Dp) {
-            offset = newOffset.coerceIn(0.dp, max(contentHeight - viewHeight, 0.dp))
-            if (newOffset >= max(contentHeight - viewHeight, 0.dp)) onScrollToBottom.forEach { it() }
-            updateView()
-        }
-
-        internal fun updateViewHeight(newHeight: Dp) {
-            viewHeight = newHeight
-            updateView()
-        }
-
-        private fun updateView() {
-            firstVisibleIndex = floor(offset.value / itemHeight.value).toInt()
-            firstVisibleOffset = offset - itemHeight * firstVisibleIndex
-            val visibleItems = floor((viewHeight.value + firstVisibleOffset.value) / itemHeight.value).toInt()
-            lastVisibleIndexPossible = firstVisibleIndex + visibleItems
+            _offset = newOffset.coerceIn(0.dp, maxOffset)
+            if (newOffset >= maxOffset) onScrollToBottom.forEach { it() }
         }
     }
 
@@ -137,13 +134,14 @@ object LazyColumn {
     @Composable
     fun <T : Any> Area(
         state: State<T>,
+        onScroll: () -> Unit,
         modifier: Modifier = Modifier,
         itemFn: @Composable (index: Int, item: T) -> Unit
     ) {
         val density = LocalDensity.current.density
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
-            .mouseScrollFilter { event, _ -> state.scroller.updateOffset(event) }
-            .onSizeChanged { state.scroller.updateViewHeight(toDP(it.height, density)) }) {
+            .mouseScrollFilter { event, _ -> onScroll(); state.scroller.updateOffset(event) }
+            .onSizeChanged { state.scroller.viewHeight = toDP(it.height, density) }) {
             if (state.items.isNotEmpty()) {
                 val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.itemCount() - 1)
                 (state.scroller.firstVisibleIndex..lastVisibleIndex).forEach { i ->
