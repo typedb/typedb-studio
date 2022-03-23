@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import com.vaticle.typedb.studio.view.output.LogOutput.END_OF_OUTPUT_SPACE
 import kotlinx.coroutines.CoroutineScope
 
 object RunOutputArea {
@@ -86,7 +87,7 @@ object RunOutputArea {
             val response = runner.response.active
             return output.getOrPut(response) {
                 when (response) {
-                    is Response.Log -> LogOutput.State(TextEditor.createState(response.lines))
+                    is Response.Log -> LogOutput.State(TextEditor.createState(response.lines, END_OF_OUTPUT_SPACE))
                     is Response.Graph -> GraphOutput.State(response)
                     is Response.Table -> TableOutput.State(response)
                 }

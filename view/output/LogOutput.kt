@@ -41,9 +41,9 @@ import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 
 internal object LogOutput : RunOutput() {
 
-    private val END_OF_OUPTUT_SPACE = 20.dp
+    internal val END_OF_OUTPUT_SPACE = 20.dp
 
-    internal class State(internal val editorState: TextEditor.State) : RunOutput.State() {
+    internal class State constructor(internal val editorState: TextEditor.State) : RunOutput.State() {
 
         init {
             editorState.onScrollToBottom { editorState.stickToBottom = true }
@@ -62,10 +62,9 @@ internal object LogOutput : RunOutput() {
         super.Layout(buttons(state)) { modifier ->
             TextEditor.Layout(
                 state = state.editorState,
-                bottomSpace = END_OF_OUPTUT_SPACE,
-                showLine = false,
                 modifier = modifier.onPointerEvent(Press) { state.editorState.stickToBottom = false }
-                    .mouseScrollFilter { _, _ -> state.editorState.stickToBottom = false; false }
+                    .mouseScrollFilter { _, _ -> state.editorState.stickToBottom = false; false },
+                showLine = false
             )
         }
     }

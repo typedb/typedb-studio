@@ -45,6 +45,7 @@ internal class InputTarget constructor(
     private val rendering: TextRendering,
     private val horPadding: Dp,
     internal val lineHeight: Dp,
+    bottomSpace: Dp,
     initDensity: Float
 ) {
 
@@ -121,7 +122,7 @@ internal class InputTarget constructor(
     internal var cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
-    internal val verScroller = LazyColumn.createScrollState(lineHeight) { content.size }
+    internal val verScroller = LazyColumn.createScrollState(lineHeight, bottomSpace) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)

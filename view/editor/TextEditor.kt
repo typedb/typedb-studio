@@ -103,12 +103,13 @@ object TextEditor {
     private val LOGGER = KotlinLogging.logger {}
 
     @Composable
-    fun createState(file: File): State {
+    fun createState(file: File, bottomSpace: Dp = END_OF_FILE_SPACE): State {
         val editor = createState(
             content = SnapshotStateList<AnnotatedString>().apply {
                 val content = file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }
                 addAll(highlight(content, file.fileType))
             },
+            bottomSpace = bottomSpace,
             processorFn = when {
                 !file.isWritable -> { _, _, _, _ -> TextProcessor.ReadOnly(file.path.toString()) }
                 else -> { content, rendering, finder, target ->
@@ -132,13 +133,14 @@ object TextEditor {
     }
 
     @Composable
-    fun createState(content: SnapshotStateList<AnnotatedString>): State {
-        return createState(content) { _, _, _, _ -> TextProcessor.ReadOnly() }
+    fun createState(content: SnapshotStateList<AnnotatedString>, bottomSpace: Dp): State {
+        return createState(content, bottomSpace) { _, _, _, _ -> TextProcessor.ReadOnly() }
     }
 
     @Composable
     private fun createState(
         content: SnapshotStateList<AnnotatedString>,
+        bottomSpace: Dp,
         processorFn: (
             content: SnapshotStateList<AnnotatedString>,
             rendering: TextRendering, finder: TextFinder, target: InputTarget
@@ -150,7 +152,7 @@ object TextEditor {
         val clipboard = LocalClipboardManager.current
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
-        val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, currentDensity.density)
+        val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, bottomSpace, currentDensity.density)
         val processor = processorFn(content, rendering, finder, target)
         val toolbar = TextToolbar.State(finder, target, processor)
         val handler = EventHandler(target, toolbar, clipboard, processor)
@@ -246,10 +248,6 @@ object TextEditor {
             target.moveCursorToEnd(isSelecting = false, mayScroll = false)
         }
 
-        fun mayUpdateBottomSpace(bottomSpace: Dp) {
-            target.verScroller.mayUpdateBottomSpace(bottomSpace)
-        }
-
         fun onScrollToBottom(function: () -> Unit) {
             target.verScroller.onScrollToBottom(function)
         }
@@ -257,16 +255,13 @@ object TextEditor {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Layout(
-        state: State, modifier: Modifier = Modifier, bottomSpace: Dp = END_OF_FILE_SPACE, showLine: Boolean = true
-    ) {
+    fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true) {
         if (state.content.isEmpty()) return
         val density = LocalDensity.current.density
         val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
         val fontColor = Theme.colors.onBackground
         val fontStyle = state.font.copy(color = fontColor, lineHeight = fontHeight)
         var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
-        state.mayUpdateBottomSpace(bottomSpace)
         if (state.stickToBottom) state.jumpToBottom()
 
         Box { // We render a number to find out the default width of a digit for the given font

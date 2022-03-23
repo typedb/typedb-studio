@@ -53,9 +53,10 @@ import kotlin.math.floor
  */
 object LazyColumn {
 
-    class ScrollState internal constructor(val itemHeight: Dp, val itemCount: () -> Int) : ScrollbarAdapter {
+    class ScrollState internal constructor(
+        val itemHeight: Dp, var bottomSpace: Dp, val itemCount: () -> Int
+    ) : ScrollbarAdapter {
         var offset: Dp by mutableStateOf(0.dp); private set
-        var bottomSpace: Dp by mutableStateOf(0.dp)
         private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
         private var viewHeight: Dp by mutableStateOf(0.dp)
         private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
@@ -71,10 +72,6 @@ object LazyColumn {
 
         override suspend fun scrollTo(containerSize: Int, scrollOffset: Float) {
             updateOffset(scrollOffset.dp)
-        }
-
-        fun mayUpdateBottomSpace(bottomSpace: Dp) {
-            if (this.bottomSpace != bottomSpace) this.bottomSpace = bottomSpace
         }
 
         fun onScrollToBottom(function: () -> Unit) {
@@ -124,12 +121,12 @@ object LazyColumn {
         internal val scroller: ScrollState
     )
 
-    fun createScrollState(itemHeight: Dp, itemCount: () -> Int): ScrollState {
-        return ScrollState(itemHeight, itemCount)
+    fun createScrollState(itemHeight: Dp, bottomSpace: Dp = 0.dp, itemCount: () -> Int): ScrollState {
+        return ScrollState(itemHeight, bottomSpace, itemCount)
     }
 
-    fun <T : Any> createState(items: List<T>, itemHeight: Dp): State<T> {
-        return State(items, createScrollState(itemHeight) { items.size })
+    fun <T : Any> createState(items: List<T>, itemHeight: Dp, bottomSpace: Dp = 0.dp): State<T> {
+        return State(items, createScrollState(itemHeight, bottomSpace) { items.size })
     }
 
     fun <T : Any> createState(items: List<T>, scroller: ScrollState): State<T> {
