@@ -81,7 +81,6 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Writable.Companion.TAB_SIZE
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import java.awt.event.MouseEvent.BUTTON1
-import java.time.LocalDateTime
 import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.time.Duration
@@ -435,7 +434,6 @@ object TextEditor {
                 )
             }
         }
-        if (LocalDateTime.now().second % 20 == 0) throw IllegalStateException("Fucking bug")
         if (state.isFocused) LaunchedEffect(cursor) {
             visible = true
             while (true) {
