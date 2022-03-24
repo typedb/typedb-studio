@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
+import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
@@ -58,23 +59,29 @@ class Runner(
         const val ERROR_ = "## Error> "
         const val RUNNING_ = "## Running> "
         const val DEFINE_QUERY = "Define Query:"
-        const val UNDEFINE_QUERY = "Undefine Query:"
-        const val INSERT_QUERY = "Insert Query:"
-        const val DELETE_QUERY = "Delete Query:"
-        const val UPDATE_QUERY = "Update Query:"
-        const val MATCH_QUERY = "Match Query:"
-        const val MATCH_AGGREGATE_QUERY = "Match Aggregate Query:"
-        const val MATCH_GROUP_QUERY = "Match Group Query:"
-        const val MATCH_GROUP_AGGREGATE_QUERY = "Match Group Aggregate Query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
+        const val UNDEFINE_QUERY = "Undefine Query:"
         const val UNDEFINE_QUERY_SUCCESS = "Undefine query successfully undefined types in the schema."
+        const val DELETE_QUERY = "Delete Query:"
         const val DELETE_QUERY_SUCCESS = "Delete query successfully deleted things from the database."
+        const val INSERT_QUERY = "Insert Query:"
         const val INSERT_QUERY_SUCCESS = "Insert query successfully inserted new things to the database:"
         const val INSERT_QUERY_NO_RESULT = "Insert query did not insert any new thing to the database."
+        const val UPDATE_QUERY = "Update Query:"
         const val UPDATE_QUERY_SUCCESS = "Update query successfully updated things in the databases:"
         const val UPDATE_QUERY_NO_RESULT = "Update query did not update any thing in the databases."
+        const val MATCH_QUERY = "Match Query:"
         const val MATCH_QUERY_SUCCESS = "Match query successfully matched concepts in the database:"
         const val MATCH_QUERY_NO_RESULT = "Match query did not match any concepts in the database."
+        const val MATCH_AGGREGATE_QUERY = "Match Aggregate Query:"
+        const val MATCH_GROUP_QUERY = "Match Group Query:"
+        const val MATCH_GROUP_QUERY_SUCCESS = "Match Group query successfully matched concept groups in the database:"
+        const val MATCH_GROUP_QUERY_NO_RESULT = "Match Group query did not match any concept groups in the database."
+        const val MATCH_GROUP_AGGREGATE_QUERY = "Match Group Aggregate Query:"
+        const val MATCH_GROUP_AGGREGATE_QUERY_SUCCESS =
+            "Match Group Aggregate query successfully aggregated matched concept groups in the database:"
+        const val MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT =
+            "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
         private val RUNNING_INDICATOR_DELAY = Duration.Companion.seconds(3)
     }
@@ -137,6 +144,7 @@ class Runner(
                 is TypeQLUpdate -> runUpdateQuery(query)
                 is TypeQLMatch -> runMatchQuery(query)
                 is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
+                is TypeQLMatch.Group -> runMatchGroupQuery(query)
                 else -> throw IllegalStateException("Unrecognised TypeQL query")
             }
         }
@@ -162,50 +170,56 @@ class Runner(
 
     private fun runInsertQuery(query: TypeQLInsert) {
         runStreamingQuery(INSERT_QUERY, INSERT_QUERY_SUCCESS, INSERT_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().insert(query)
+            transaction.query().insert(query).map { printConceptMap(it) }
         }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
         runStreamingQuery(UPDATE_QUERY, UPDATE_QUERY_SUCCESS, UPDATE_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().update(query)
+            transaction.query().update(query).map { printConceptMap(it) }
         }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {
         runStreamingQuery(MATCH_QUERY, MATCH_QUERY_SUCCESS, MATCH_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().match(query)
+            transaction.query().match(query).map { printConceptMap(it) }
         }
     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
-        printQuery(MATCH_AGGREGATE_QUERY, query.toString())
+        printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
         val result = transaction.query().match(query).get()
         response.log.emptyLine()
         response.log.collect(SUCCESS, RESULT_ + result)
     }
 
+    private fun runMatchGroupQuery(query: TypeQLMatch.Group) {
+        runStreamingQuery(MATCH_GROUP_QUERY, MATCH_GROUP_QUERY_SUCCESS, MATCH_GROUP_QUERY_NO_RESULT, query.toString()) {
+            transaction.query().match(query).map { printConceptMapGroup(it) }
+        }
+    }
+
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
-        printQuery(name, queryStr)
+        printQueryStart(name, queryStr)
         queryFn()
         response.log.emptyLine()
         response.log.collect(SUCCESS, RESULT_ + successMsg)
     }
 
     private fun runStreamingQuery(
-        name: String, successMsg: String, noResultMsg: String, queryStr: String, queryFn: () -> Stream<ConceptMap>
+        name: String, successMsg: String, noResultMsg: String, queryStr: String, queryFn: () -> Stream<String>
     ) {
-        printQuery(name, queryStr)
+        printQueryStart(name, queryStr)
         logResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg)
     }
 
-    private fun printQuery(name: String, queryStr: String) {
+    private fun printQueryStart(name: String, queryStr: String) {
         response.log.emptyLine()
         response.log.collect(INFO, RUNNING_ + name)
         response.log.collect(TYPEQL, queryStr)
     }
 
-    private fun logResultStream(results: Stream<ConceptMap>, successMessage: String, noResultMessage: String) {
+    private fun logResultStream(results: Stream<String>, successMessage: String, noResultMessage: String) {
         var started = false
         response.log.emptyLine()
         results.peek {
@@ -214,12 +228,16 @@ class Runner(
             started = true
         }.forEach {
             if (hasStopSignal.get()) return@forEach
-            response.log.collect(TYPEQL, printConceptMap(it))
+            response.log.collect(TYPEQL, it)
         }
         if (!started) response.log.collect(SUCCESS, noResultMessage)
     }
 
-    private fun printConceptMap(conceptMap: ConceptMap?): String {
+    private fun printConceptMap(conceptMap: ConceptMap): String {
         return conceptMap.toString() // TODO
+    }
+
+    private fun printConceptMapGroup(group: ConceptMapGroup): String {
+        return group.toString() // TODO
     }
 }
