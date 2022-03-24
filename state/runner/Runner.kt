@@ -139,30 +139,30 @@ class Runner(
     }
 
     private fun runDefineQuery(query: TypeQLDefine) {
-        response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + DEFINE_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        transaction.query().define(query).get()
-        response.log.emptyLine()
-        response.log.collect(SUCCESS, RESULT_ + DEFINE_QUERY_SUCCESS)
+        runUnitQuery(DEFINE_QUERY, DEFINE_QUERY_SUCCESS, query.toString()) {
+            transaction.query().define(query).get()
+        }
     }
 
     private fun runUndefineQuery(query: TypeQLUndefine) {
-        response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + UNDEFINE_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        transaction.query().undefine(query).get()
-        response.log.emptyLine()
-        response.log.collect(SUCCESS, RESULT_ + UNDEFINE_QUERY_SUCCESS)
+        runUnitQuery(UNDEFINE_QUERY, UNDEFINE_QUERY_SUCCESS, query.toString()) {
+            transaction.query().undefine(query).get()
+        }
     }
 
     private fun runDeleteQuery(query: TypeQLDelete) {
+        runUnitQuery(DELETE_QUERY, DELETE_QUERY_SUCCESS, query.toString()) {
+            transaction.query().delete(query).get()
+        }
+    }
+
+    private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Void) {
         response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + DELETE_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        transaction.query().delete(query).get()
+        response.log.collect(INFO, RUNNING_ + name)
+        response.log.collect(TYPEQL, queryStr)
+        queryFn()
         response.log.emptyLine()
-        response.log.collect(SUCCESS, RESULT_ + DELETE_QUERY_SUCCESS)
+        response.log.collect(SUCCESS, RESULT_ + successMsg)
     }
 
     private fun runInsertQuery(query: TypeQLInsert) {
