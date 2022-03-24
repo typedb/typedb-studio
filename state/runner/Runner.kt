@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
+import com.vaticle.typedb.client.api.answer.NumericGroup
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
@@ -145,6 +146,7 @@ class Runner(
                 is TypeQLMatch -> runMatchQuery(query)
                 is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
                 is TypeQLMatch.Group -> runMatchGroupQuery(query)
+                is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
                 else -> throw IllegalStateException("Unrecognised TypeQL query")
             }
         }
@@ -199,6 +201,15 @@ class Runner(
         }
     }
 
+    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) {
+        runStreamingQuery(
+            MATCH_GROUP_AGGREGATE_QUERY,
+            MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
+            MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
+            query.toString()
+        ) { transaction.query().match(query).map { printNumericGroup(it) } }
+    }
+
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
         printQueryStart(name, queryStr)
         queryFn()
@@ -238,6 +249,10 @@ class Runner(
     }
 
     private fun printConceptMapGroup(group: ConceptMapGroup): String {
+        return group.toString() // TODO
+    }
+
+    private fun printNumericGroup(group: NumericGroup): String {
         return group.toString() // TODO
     }
 }
