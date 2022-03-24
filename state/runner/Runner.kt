@@ -156,6 +156,24 @@ class Runner(
         }
     }
 
+    private fun runInsertQuery(query: TypeQLInsert) {
+        runStreamingQuery(INSERT_QUERY, INSERT_QUERY_SUCCESS, INSERT_QUERY_NO_RESULT, query.toString()) {
+            transaction.query().insert(query)
+        }
+    }
+
+    private fun runUpdateQuery(query: TypeQLUpdate) {
+        runStreamingQuery(UPDATE_QUERY, UPDATE_QUERY_SUCCESS, UPDATE_QUERY_NO_RESULT, query.toString()) {
+            transaction.query().update(query)
+        }
+    }
+
+    private fun runMatchQuery(query: TypeQLMatch) {
+        runStreamingQuery(MATCH_QUERY, MATCH_QUERY_SUCCESS, MATCH_QUERY_NO_RESULT, query.toString()) {
+            transaction.query().match(query)
+        }
+    }
+
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Void) {
         response.log.emptyLine()
         response.log.collect(INFO, RUNNING_ + name)
@@ -165,37 +183,13 @@ class Runner(
         response.log.collect(SUCCESS, RESULT_ + successMsg)
     }
 
-    private fun runInsertQuery(query: TypeQLInsert) {
+    private fun runStreamingQuery(
+        name: String, successMsg: String, noResultMsg: String, queryStr: String, queryFn: () -> Stream<ConceptMap>
+    ) {
         response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + INSERT_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        logResultStream(
-            results = transaction.query().insert(query),
-            successMessage = RESULT_ + INSERT_QUERY_SUCCESS,
-            noResultMessage = RESULT_ + INSERT_QUERY_NO_RESULT
-        )
-    }
-
-    private fun runUpdateQuery(query: TypeQLUpdate) {
-        response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + UPDATE_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        logResultStream(
-            results = transaction.query().update(query),
-            successMessage = RESULT_ + UPDATE_QUERY_SUCCESS,
-            noResultMessage = RESULT_ + UPDATE_QUERY_NO_RESULT
-        )
-    }
-
-    private fun runMatchQuery(query: TypeQLMatch) {
-        response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + MATCH_QUERY)
-        response.log.collect(TYPEQL, query.toString())
-        logResultStream(
-            results = transaction.query().match(query),
-            successMessage = RESULT_ + MATCH_QUERY_SUCCESS,
-            noResultMessage = RESULT_ + MATCH_QUERY_NO_RESULT
-        )
+        response.log.collect(INFO, RUNNING_ + name)
+        response.log.collect(TYPEQL, queryStr)
+        logResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg)
     }
 
     private fun logResultStream(results: Stream<ConceptMap>, successMessage: String, noResultMessage: String) {
