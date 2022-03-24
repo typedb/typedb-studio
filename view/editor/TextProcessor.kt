@@ -260,7 +260,7 @@ internal interface TextProcessor {
                 newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
                 newPosition.isSecond -> target.updateSelection(newPosition.second())
             }
-            queueChangeAndHighlighting(change)
+            queueChange(change)
         }
 
         private fun applyReplay(change: TextChange, replayType: ReplayType) {
@@ -320,16 +320,13 @@ internal interface TextProcessor {
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun queueChangeAndHighlighting(change: TextChange) {
+        private fun queueChange(change: TextChange) {
             redoStack.clear()
             changeQueue.put(change)
             changeCount.incrementAndGet()
             coroutineScope.launch {
                 delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
-                if (changeCount.decrementAndGet() == 0) {
-                    val changes = drainAndBatchChanges(isFinalChange = true)
-                    changes?.let { highlight(it.lines()) }
-                }
+                if (changeCount.decrementAndGet() == 0) drainAndBatchChanges(isFinalChange = true)
             }
         }
 
@@ -343,6 +340,7 @@ internal interface TextProcessor {
                 undoStack.addLast(batchedChanges.invert())
                 while (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
                 if (isFinalChange) callOnChangeEnd()
+                highlight(batchedChanges.lines())
             }
             return batchedChanges
         }

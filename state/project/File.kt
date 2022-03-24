@@ -78,6 +78,7 @@ class File internal constructor(
         val onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
         val onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
         val onReopen = LinkedBlockingDeque<(File) -> Unit>()
+        val beforeRun = LinkedBlockingDeque<(File) -> Unit>()
         val beforeSave = LinkedBlockingDeque<(File) -> Unit>()
         val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
         val onClose = LinkedBlockingDeque<(File) -> Unit>()
@@ -87,6 +88,7 @@ class File internal constructor(
             newCallbacks.onDiskChangeContent.addAll(this.onDiskChangeContent)
             newCallbacks.onDiskChangePermission.addAll(this.onDiskChangePermission)
             newCallbacks.onReopen.addAll(this.onReopen)
+            newCallbacks.beforeRun.addAll(this.beforeRun)
             newCallbacks.beforeSave.addAll(this.beforeSave)
             newCallbacks.beforeClose.addAll(this.beforeClose)
             newCallbacks.onClose.addAll(this.onClose)
@@ -97,6 +99,7 @@ class File internal constructor(
             onDiskChangeContent.clear()
             onDiskChangePermission.clear()
             onReopen.clear()
+            beforeRun.clear()
             beforeSave.clear()
             beforeClose.clear()
             onClose.clear()
@@ -119,7 +122,10 @@ class File internal constructor(
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     override val fullName: String = computeFullName(path, projectMgr)
-    override val runContent: String get() = content.joinToString("\n")
+    override val runContent: String get() {
+        callbacks.beforeSave.forEach { it(this) }
+        return content.joinToString("\n")
+    }
     override var runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = isTypeQL
@@ -274,6 +280,10 @@ class File internal constructor(
 
     fun onDiskChangePermission(function: (File) -> Unit) {
         callbacks.onDiskChangePermission.push(function)
+    }
+
+    override fun beforeRun(function: (Resource) -> Unit) {
+        callbacks.beforeRun.push(function)
     }
 
     override fun beforeSave(function: (Resource) -> Unit) {

@@ -125,6 +125,7 @@ object TextEditor {
                 }
             }
         )
+        file.beforeRun { editor.processor.drainChanges() }
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
         file.onClose { editor.clearStatus() }
