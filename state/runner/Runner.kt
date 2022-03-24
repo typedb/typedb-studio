@@ -59,6 +59,7 @@ class Runner(
         const val RESULT_ = "## Result> "
         const val ERROR_ = "## Error> "
         const val RUNNING_ = "## Running> "
+        const val COMPLETED = "## Completed"
         const val DEFINE_QUERY = "Define Query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY = "Undefine Query:"
@@ -241,7 +242,10 @@ class Runner(
             if (hasStopSignal.get()) return@forEach
             response.log.collect(TYPEQL, it)
         }
-        if (!started) response.log.collect(SUCCESS, noResultMessage)
+        if (started) {
+            response.log.emptyLine()
+            response.log.collect(SUCCESS, COMPLETED)
+        } else response.log.collect(SUCCESS, noResultMessage)
     }
 
     private fun printConceptMap(conceptMap: ConceptMap): String {
