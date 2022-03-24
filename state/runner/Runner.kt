@@ -63,6 +63,9 @@ class Runner(
         const val DELETE_QUERY = "Delete Query:"
         const val UPDATE_QUERY = "Update Query:"
         const val MATCH_QUERY = "Match Query:"
+        const val MATCH_AGGREGATE_QUERY = "Match Aggregate Query:"
+        const val MATCH_GROUP_QUERY = "Match Group Query:"
+        const val MATCH_GROUP_AGGREGATE_QUERY = "Match Group Aggregate Query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY_SUCCESS = "Undefine query successfully undefined types in the schema."
         const val DELETE_QUERY_SUCCESS = "Delete query successfully deleted things from the database."
@@ -133,6 +136,7 @@ class Runner(
                 is TypeQLInsert -> runInsertQuery(query)
                 is TypeQLUpdate -> runUpdateQuery(query)
                 is TypeQLMatch -> runMatchQuery(query)
+                is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
                 else -> throw IllegalStateException("Unrecognised TypeQL query")
             }
         }
@@ -174,10 +178,15 @@ class Runner(
         }
     }
 
-    private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Void) {
+    private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
+        printQuery(MATCH_AGGREGATE_QUERY, query.toString())
+        val result = transaction.query().match(query).get()
         response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + name)
-        response.log.collect(TYPEQL, queryStr)
+        response.log.collect(SUCCESS, RESULT_ + result)
+    }
+
+    private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
+        printQuery(name, queryStr)
         queryFn()
         response.log.emptyLine()
         response.log.collect(SUCCESS, RESULT_ + successMsg)
@@ -186,10 +195,14 @@ class Runner(
     private fun runStreamingQuery(
         name: String, successMsg: String, noResultMsg: String, queryStr: String, queryFn: () -> Stream<ConceptMap>
     ) {
+        printQuery(name, queryStr)
+        logResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg)
+    }
+
+    private fun printQuery(name: String, queryStr: String) {
         response.log.emptyLine()
         response.log.collect(INFO, RUNNING_ + name)
         response.log.collect(TYPEQL, queryStr)
-        logResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg)
     }
 
     private fun logResultStream(results: Stream<ConceptMap>, successMessage: String, noResultMessage: String) {
