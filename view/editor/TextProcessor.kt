@@ -137,7 +137,7 @@ internal interface TextProcessor {
         override fun updateFile(file: File) {
             fileType = file.fileType
             onChangeStart = { file.isChanged() }
-            onChangeEnd = { file.writeLines(it) }
+            onChangeEnd = { file.content(it) }
         }
 
         override fun replaceCurrentFound(text: String) {

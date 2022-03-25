@@ -156,23 +156,23 @@ class Connection internal constructor(
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun mayRun(resource: Resource, content: String = resource.runContent) {
+    fun mayRun(resource: Resource) {
         if (!isReadyToRunQuery) return
-        if (isScriptMode) runScript(resource, content)
-        else if (isInteractiveMode) runQuery(resource, content)
+        if (isScriptMode) runScript(resource)
+        else if (isInteractiveMode) runQuery(resource)
         else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
-    private fun runScript(resource: Resource, script: String = resource.runContent) = runAsyncCommand {
+    private fun runScript(resource: Resource) = runAsyncCommand {
         // TODO
     }
 
-    private fun runQuery(resource: Resource, queries: String = resource.runContent) = runAsyncCommand {
+    private fun runQuery(resource: Resource) = runAsyncCommand {
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignal.set(false)
                 mayOpenTransaction()
-                resource.runner.launch(Runner(transaction!!, queries, hasStopSignal)) {
+                resource.runner.launch(Runner(transaction!!, resource.runContent, hasStopSignal)) {
                     if (!config.snapshotSelected) closeTransactionFn()
                     else if (transaction?.isOpen != true) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignal.set(false)

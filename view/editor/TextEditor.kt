@@ -120,15 +120,18 @@ object TextEditor {
                         finder = finder,
                         target = target,
                         onChangeStart = { file.isChanged() },
-                        onChangeEnd = { file.writeLines(it) }
+                        onChangeEnd = { file.content(it) }
                     )
                 }
             }
         )
-        file.beforeRun { editor.processor.drainChanges() }
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
         file.onClose { editor.clearStatus() }
+        file.beforeRun { resource ->
+            editor.processor.drainChanges()
+            (resource as File).selected(editor.target.selectedText().text)
+        }
         onChangeFromDisk(file, editor)
         return editor
     }
@@ -185,7 +188,7 @@ object TextEditor {
                     finder = editor.finder,
                     target = editor.target,
                     onChangeStart = { it.isChanged() },
-                    onChangeEnd = { lines -> it.writeLines(lines) }
+                    onChangeEnd = { lines -> it.content(lines) }
                 )
             }
             editor.toolbar.processor = newProcessor
