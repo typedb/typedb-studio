@@ -41,7 +41,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
@@ -148,17 +147,26 @@ object PageArea {
         }
 
         internal fun contextMenuFn(resource: Resource): List<List<ContextMenu.Item>> {
-            val modKey = if (Property.OS.Current == Property.OS.MACOS) Label.CMD else Label.CTRL
-            val enableSave = resource.hasUnsavedChanges || resource.isUnsavedResource
             return listOf(
                 listOf(
-                    ContextMenu.Item(Label.SAVE, Icon.Code.FLOPPY_DISK, "$modKey + S", enableSave) {
-                        GlobalState.resource.saveAndReopen(resource)
-                    },
-                    ContextMenu.Item(Label.CLOSE, Icon.Code.XMARK, "$modKey + W") { close(resource) }
+                    saveMenuItem(resource),
+                    closeMenuItem(resource)
                 )
             )
         }
+
+        private fun closeMenuItem(resource: Resource) = ContextMenu.Item(
+            label = Label.CLOSE,
+            icon = Icon.Code.XMARK,
+            info = "${KeyMapper.CURRENT.modKey} + W"
+        ) { close(resource) }
+
+        private fun saveMenuItem(resource: Resource) = ContextMenu.Item(
+            label = Label.SAVE,
+            icon = Icon.Code.FLOPPY_DISK,
+            info = "${KeyMapper.CURRENT.modKey} + S",
+            enabled = resource.hasUnsavedChanges || resource.isUnsavedResource
+        ) { GlobalState.resource.saveAndReopen(resource) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

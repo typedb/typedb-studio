@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.COPY
@@ -40,7 +41,6 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_PREV
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -83,6 +83,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.theme.Theme
 
 internal class EventHandler constructor(
     private val target: InputTarget,
@@ -203,25 +204,54 @@ internal class EventHandler constructor(
     }
 
     internal fun contextMenuFn(): List<List<ContextMenu.Item>> {
-        val selection = target.selection
-        val modKey = KeyMapper.CURRENT.modKey
-        val hasClipboard = !clipboard.getText().isNullOrBlank()
         return listOf(
-            listOf(
-                ContextMenu.Item(
-                    Label.CUT, Icon.Code.CUT, "$modKey + X", processor.isWritable && selection != null
-                ) { cut() },
-                ContextMenu.Item(Label.COPY, Icon.Code.COPY, "$modKey + C", selection != null) { copy() },
-                ContextMenu.Item(
-                    Label.PASTE, Icon.Code.PASTE, "$modKey + V", processor.isWritable && hasClipboard
-                ) { paste() }
-            ),
-            listOf(
-                ContextMenu.Item(Label.FIND, Icon.Code.MAGNIFYING_GLASS, "$modKey + F") { toolbar.showFinder() },
-                ContextMenu.Item(
-                    Label.REPLACE, Icon.Code.RIGHT_LEFT, "$modKey + R", processor.isWritable
-                ) { toolbar.mayShowReplacer() }
-            )
+            listOf(cutSelectionMenuItem(), copySelectionMenuItem(), pasteTextMenuItem()),
+            listOf(findTextMenuItem(), replaceMenuItem()),
+            listOf(runQueryMenuItem())
         )
     }
+
+    private fun cutSelectionMenuItem() = ContextMenu.Item(
+        label = Label.CUT,
+        icon = Icon.Code.CUT,
+        info = "${KeyMapper.CURRENT.modKey} + X",
+        enabled = processor.isWritable && target.selection != null
+    ) { cut() }
+
+    private fun copySelectionMenuItem() = ContextMenu.Item(
+        label = Label.COPY,
+        icon = Icon.Code.COPY,
+        info = "${KeyMapper.CURRENT.modKey} + C",
+        enabled = target.selection != null
+    ) { copy() }
+
+    private fun pasteTextMenuItem() = ContextMenu.Item(
+        label = Label.PASTE,
+        icon = Icon.Code.PASTE,
+        info = "${KeyMapper.CURRENT.modKey} + V",
+        enabled = processor.isWritable && !clipboard.getText().isNullOrBlank()
+    ) { paste() }
+
+    private fun findTextMenuItem() = ContextMenu.Item(
+        label = Label.FIND,
+        icon = Icon.Code.MAGNIFYING_GLASS,
+        info = "${KeyMapper.CURRENT.modKey} + F"
+    ) { toolbar.showFinder() }
+
+    private fun replaceMenuItem() = ContextMenu.Item(
+        label = Label.REPLACE,
+        icon = Icon.Code.RIGHT_LEFT,
+        info = "${KeyMapper.CURRENT.modKey} + R",
+        enabled = processor.isWritable
+    ) { toolbar.mayShowReplacer() }
+
+    // TODO: It's awkward that this EventHandler has to go through GlobalState to access current page
+    private fun runQueryMenuItem() = ContextMenu.Item(
+        label = Label.RUN_QUERY,
+        icon = Icon.Code.PLAY,
+        iconColor = { Theme.colors.secondary },
+        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        enabled = GlobalState.resource.active?.isRunnable == true &&
+                GlobalState.connection.current?.isReadyToRunQuery == true
+    ) { GlobalState.resource.active?.let { GlobalState.connection.current?.mayRun(it) } }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -73,6 +74,7 @@ object ContextMenu {
     data class Item(
         val label: String,
         val icon: Icon.Code? = null,
+        val iconColor: @Composable () -> Color = { Theme.colors.icon },
         val info: String? = null,
         val enabled: Boolean = true,
         val onClick: () -> Unit
@@ -163,7 +165,7 @@ object ContextMenu {
             .clickable { state.isOpen = false; item.onClick() }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
             Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
-                item.icon?.let { Icon.Render(icon = it, enabled = item.enabled) }
+                item.icon?.let { Icon.Render(icon = it, color = item.iconColor(), enabled = item.enabled) }
             }
             Text(value = item.label, enabled = item.enabled)
             item.info?.let {
