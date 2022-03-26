@@ -116,7 +116,6 @@ class File internal constructor(
 
     private var callbacks = Callbacks()
     private var content: List<String> by mutableStateOf(listOf())
-    private var selected: String by mutableStateOf("")
     private var watchFileSystem = AtomicBoolean(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
@@ -125,7 +124,7 @@ class File internal constructor(
     override val fullName: String = computeFullName(path, projectMgr)
     override val runContent: String get() {
         callbacks.beforeRun.forEach { it(this) }
-        return selected.ifEmpty { content.joinToString("\n") }
+        return content.joinToString("\n")
     }
     override var runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
@@ -237,10 +236,6 @@ class File internal constructor(
     fun content(lines: List<String>) {
         content = lines
         if (settings.autosave) saveContent()
-    }
-
-    fun selected(string: String) {
-        selected = string
     }
 
     override fun stopWatcher() {

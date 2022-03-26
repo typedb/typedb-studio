@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_PREV
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -152,6 +153,7 @@ internal class EventHandler constructor(
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT -> processor.insertNewLine()
+            MOD_ENTER -> runSelectionOrFile()
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()
@@ -196,6 +198,17 @@ internal class EventHandler constructor(
         clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(it.text) }
     }
 
+    private fun runSelectionOrFile() {
+        if (processor.file?.isRunnable != true || GlobalState.connection.current?.isReadyToRunQuery != true) return
+        runSelectionOrFile(target.selection != null)
+    }
+
+    private fun runSelectionOrFile(hasSelection: Boolean) {
+        val connection = GlobalState.connection.current
+        if (hasSelection) processor.file?.let { connection?.mayRun(it, target.selectedText().text) }
+        else processor.file?.let { connection?.mayRun(it) }
+    }
+
     private fun hideToolbar(): Boolean {
         return if (toolbar.showToolbar) {
             toolbar.hide()
@@ -207,7 +220,7 @@ internal class EventHandler constructor(
         return listOf(
             listOf(cutSelectionMenuItem(), copySelectionMenuItem(), pasteTextMenuItem()),
             listOf(findTextMenuItem(), replaceMenuItem()),
-            listOf(runQueryMenuItem())
+            listOf(runFileMenuItem(), runSelectionMenuItem())
         )
     }
 
@@ -245,13 +258,20 @@ internal class EventHandler constructor(
         enabled = processor.isWritable
     ) { toolbar.mayShowReplacer() }
 
-    // TODO: It's awkward that this EventHandler has to go through GlobalState to access current page
-    private fun runQueryMenuItem() = ContextMenu.Item(
-        label = Label.RUN_QUERY,
+    private fun runFileMenuItem() = ContextMenu.Item(
+        label = Label.RUN_FILE,
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
         info = "${KeyMapper.CURRENT.modKey} + Enter",
-        enabled = GlobalState.resource.active?.isRunnable == true &&
+        enabled = processor.file?.isRunnable == true && GlobalState.connection.current?.isReadyToRunQuery == true
+    ) { runSelectionOrFile(false) }
+
+    private fun runSelectionMenuItem() = ContextMenu.Item(
+        label = Label.RUN_SELECTION,
+        icon = Icon.Code.PLAY,
+        iconColor = { Theme.colors.secondary },
+        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        enabled = processor.file?.isRunnable == true && target.selection != null &&
                 GlobalState.connection.current?.isReadyToRunQuery == true
-    ) { GlobalState.resource.active?.let { GlobalState.connection.current?.mayRun(it) } }
+    ) { runSelectionOrFile(true) }
 }

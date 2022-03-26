@@ -69,7 +69,6 @@ object PageArea {
 
         private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
-                KeyMapper.Command.MOD_ENTER -> runCurrentPage()
                 KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
                 KeyMapper.Command.SAVE -> saveActivePage()
                 KeyMapper.Command.CLOSE -> closeActivePage()

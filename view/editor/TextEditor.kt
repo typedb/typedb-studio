@@ -111,11 +111,11 @@ object TextEditor {
             },
             bottomSpace = bottomSpace,
             processorFn = when {
-                !file.isWritable -> { _, _, _, _ -> TextProcessor.ReadOnly(file.path.toString()) }
+                !file.isWritable -> { _, _, _, _ -> TextProcessor.ReadOnly(file) }
                 else -> { content, rendering, finder, target ->
                     TextProcessor.Writable(
+                        file = file,
                         content = content,
-                        fileType = file.fileType,
                         rendering = rendering,
                         finder = finder,
                         target = target,
@@ -125,20 +125,17 @@ object TextEditor {
                 }
             }
         )
+        file.beforeRun { editor.processor.drainChanges() }
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
         file.onClose { editor.clearStatus() }
-        file.beforeRun { resource ->
-            editor.processor.drainChanges()
-            (resource as File).selected(editor.target.selectedText().text)
-        }
         onChangeFromDisk(file, editor)
         return editor
     }
 
     @Composable
     fun createState(content: SnapshotStateList<AnnotatedString>, bottomSpace: Dp): State {
-        return createState(content, bottomSpace) { _, _, _, _ -> TextProcessor.ReadOnly() }
+        return createState(content = content, bottomSpace = bottomSpace) { _, _, _, _ -> TextProcessor.ReadOnly() }
     }
 
     @Composable
@@ -180,10 +177,10 @@ object TextEditor {
         file.onDiskChangePermission {
             reinitialiseContent(it)
             val newProcessor = when {
-                !it.isWritable -> TextProcessor.ReadOnly(it.path.toString())
+                !it.isWritable -> TextProcessor.ReadOnly(it)
                 else -> TextProcessor.Writable(
+                    file = it,
                     content = editor.content,
-                    fileType = it.fileType,
                     rendering = editor.rendering,
                     finder = editor.finder,
                     target = editor.target,

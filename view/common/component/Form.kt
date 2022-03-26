@@ -243,7 +243,7 @@ object Form {
             fontStyle = fontStyle,
             fontWeight = fontWeight,
             textDecoration = textDecoration,
-            color = fadeable(alpha?.let { color.copy(alpha = alpha) } ?: color, !enabled),
+            color = fadeable(alpha?.let { color.copy(alpha = it) } ?: color, !enabled),
             modifier = modifier,
             overflow = overflow,
             softWrap = softWrap,

@@ -170,6 +170,7 @@ object ContextMenu {
             Text(value = item.label, enabled = item.enabled)
             item.info?.let {
                 Spacer(Modifier.weight(1f))
+                Spacer(Modifier.width(ITEM_PADDING))
                 Text(value = it, enabled = false)
                 Spacer(Modifier.width(ITEM_PADDING))
             }

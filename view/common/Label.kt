@@ -103,6 +103,8 @@ object Label {
     const val ROLLBACK = "Rollback"
     const val ROLLBACK_TRANSACTION = "Rollback Transaction"
     const val RULES = "Rules"
+    const val RUN_FILE = "Run File"
+    const val RUN_SELECTION = "Run Selection"
     const val RUN_QUERY = "Run Query"
     const val RUN_SCRIPT = "Run Script"
     const val SAVE = "Save"

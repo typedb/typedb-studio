@@ -51,6 +51,7 @@ internal interface TextProcessor {
 
     val version: Int
     val isWritable: Boolean
+    val file: File?
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
@@ -70,7 +71,7 @@ internal interface TextProcessor {
         internal val TYPING_WINDOW_MILLIS = 400
     }
 
-    class ReadOnly(var nameForWarning: String? = null) : TextProcessor {
+    class ReadOnly constructor(override var file: File? = null) : TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
@@ -88,11 +89,11 @@ internal interface TextProcessor {
         override fun drainChanges() {}
         override fun reset() {}
         override fun updateFile(file: File) {
-            nameForWarning = file.path.toString()
+            this.file = file
         }
 
         private fun mayDisplayWarning() {
-            nameForWarning?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
+            file?.path?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
         }
 
         private fun displayWarningOnStartTyping(): Boolean {
@@ -103,9 +104,9 @@ internal interface TextProcessor {
         }
     }
 
-    class Writable(
+    class Writable constructor(
+        override var file: File,
         private val content: SnapshotStateList<AnnotatedString>,
-        private var fileType: Property.FileType,
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
@@ -120,6 +121,7 @@ internal interface TextProcessor {
 
         override var version by mutableStateOf(0)
         override val isWritable: Boolean = true
+        private val fileType: Property.FileType get() = file.fileType
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
@@ -135,7 +137,7 @@ internal interface TextProcessor {
         }
 
         override fun updateFile(file: File) {
-            fileType = file.fileType
+            this.file = file
             onChangeStart = { file.isChanged() }
             onChangeEnd = { file.content(it) }
         }
