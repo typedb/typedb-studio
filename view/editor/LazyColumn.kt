@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.layout.Box
@@ -51,28 +51,31 @@ import kotlin.math.floor
  * the column has the same, fixed height, and uses the same lambda to produced a
  * [androidx.compose.runtime.Composable]
  */
-object LazyColumn {
+internal object LazyColumn {
 
-    class ScrollState internal constructor(
+    internal class ScrollState internal constructor(
         val itemHeight: Dp, var bottomSpace: Dp, val itemCount: () -> Int
     ) : ScrollbarAdapter {
-        val offset: Dp get() = if (!stickToBottom) _offset else maxOffset
-        var stickToBottom
+        private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
+        private var _offset: Dp by mutableStateOf(0.dp)
+        private var _stickToBottom by mutableStateOf(false)
+        internal var viewHeight: Dp by mutableStateOf(0.dp)
+        private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
+        private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
+        internal val offset: Dp get() = if (!stickToBottom) _offset else maxOffset
+        internal val firstVisibleIndex: Int get() = floor(offset.value / itemHeight.value).toInt()
+        internal val firstVisibleOffset: Dp get() = offset - itemHeight * firstVisibleIndex
+        internal val lastVisibleIndexPossible: Int
+            get() {
+                val itemArea = viewHeight.value + firstVisibleOffset.value
+                return firstVisibleIndex + floor(itemArea / itemHeight.value).toInt()
+            }
+        internal var stickToBottom
             get() = _stickToBottom
             set(value) {
                 if (_stickToBottom && !value) _offset = maxOffset
                 _stickToBottom = value
             }
-        private var _stickToBottom by mutableStateOf(false)
-        private var _offset: Dp by mutableStateOf(0.dp); private set
-        private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
-        private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
-        private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
-        internal var viewHeight: Dp by mutableStateOf(0.dp)
-        internal val firstVisibleIndex: Int get() = floor(offset.value / itemHeight.value).toInt()
-        internal val firstVisibleOffset: Dp get() = offset - itemHeight * firstVisibleIndex
-        internal val lastVisibleIndexPossible: Int
-            get() = firstVisibleIndex + floor((viewHeight.value + firstVisibleOffset.value) / itemHeight.value).toInt()
 
         override val scrollOffset: Float get() = offset.value
 

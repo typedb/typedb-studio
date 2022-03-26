@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.status.StatusManager.Key.TEXT_POSITION
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope

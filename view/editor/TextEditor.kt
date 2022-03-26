@@ -72,7 +72,6 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_PER
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.LazyColumn
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
