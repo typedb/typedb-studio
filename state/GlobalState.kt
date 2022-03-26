@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.status.StatusManager
 object GlobalState {
 
     val settings = Settings()
+    val appearance = AppearanceManager()
     val confirmation = ConfirmationManager()
     val notification = NotificationManager()
     val status = StatusManager()

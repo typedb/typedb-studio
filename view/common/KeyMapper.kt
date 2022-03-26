@@ -102,6 +102,10 @@ interface KeyMapper {
         UNDO,
         REDO,
 
+        TEXT_SIZE_INCREASE,
+        TEXT_SIZE_DECREASE,
+        TEXT_SIZE_RESET,
+
         FIND,
         REPLACE,
         NEW_PAGE,
@@ -153,6 +157,9 @@ interface KeyMapper {
         val Tab: Key = Key(java.awt.event.KeyEvent.VK_TAB)
         val Space: Key = Key(java.awt.event.KeyEvent.VK_SPACE)
         val Escape: Key = Key(java.awt.event.KeyEvent.VK_ESCAPE)
+        val Zero: Key = Key(java.awt.event.KeyEvent.VK_0)
+        val Minus: Key = Key(java.awt.event.KeyEvent.VK_MINUS)
+        val Equals: Key = Key(java.awt.event.KeyEvent.VK_EQUALS)
     }
 
     private object CommonKeyMapper {
@@ -175,6 +182,9 @@ interface KeyMapper {
                     Keys.T -> Command.NEW_PAGE
                     Keys.W -> Command.CLOSE
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
+                    Keys.Equals -> Command.TEXT_SIZE_INCREASE
+                    Keys.Minus -> Command.TEXT_SIZE_DECREASE
+                    Keys.Zero -> Command.TEXT_SIZE_RESET
                     else -> null
                 }
                 event.isCtrlPressed && event.isShiftPressed -> when (event.key) {

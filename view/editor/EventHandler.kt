@@ -80,6 +80,9 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_WORD_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_WORD_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB_SHIFT
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_DECREASE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_INCREASE
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_RESET
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -159,6 +162,9 @@ internal class EventHandler constructor(
             PASTE -> paste()
             UNDO -> processor.undo()
             REDO -> processor.redo()
+            TEXT_SIZE_INCREASE -> GlobalState.appearance.increaseTextEditorScale()
+            TEXT_SIZE_DECREASE -> GlobalState.appearance.decreaseTextEditorScale()
+            TEXT_SIZE_RESET -> GlobalState.appearance.resetTextEditorScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
