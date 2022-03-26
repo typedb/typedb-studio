@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.common.DialogManager
 
-class ConfirmationManager: DialogManager() {
+class ConfirmationManager : DialogManager() {
 
     var title: String? by mutableStateOf(null)
     var message: String? by mutableStateOf(null); private set

@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonRow
@@ -60,7 +61,6 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.FINDER
 import com.vaticle.typedb.studio.view.editor.TextToolbar.State.InputType.REPLACER
 import java.util.concurrent.atomic.AtomicInteger

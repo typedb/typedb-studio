@@ -302,7 +302,9 @@ object TextEditor {
             items = (0 until state.lineCount).map { it },
             scroller = state.target.verScroller
         )
-        LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, _ -> LineNumber(state, index, font, minWidth) }
+        LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, _ ->
+            LineNumber(state, index, font, minWidth)
+        }
     }
 
     @Composable

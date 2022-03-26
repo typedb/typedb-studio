@@ -36,11 +36,11 @@ rules:
       type:
         # thing, entity, attribute, relation, role, rule
         foreground: cyan
-        styles: [italic]
+        styles: [ italic ]
       modifier:
         # long, double, string, boolean, datetime
         foreground: blue
-        styles: [italic]
+        styles: [ italic ]
   keyword:
     foreground: pink
     rules:
@@ -58,7 +58,7 @@ rules:
       function:
         # group, count, max, min, mean, median, std, sum,
         foreground: pink
-        styles: [italic]
+        styles: [ italic ]
   string:
     # "first name"
     foreground: yellow
@@ -79,7 +79,7 @@ rules:
       parameter:
         # $_
         foreground: cyan
-        styles: [italic]
+        styles: [ italic ]
       language:
         # 0x966e80018000000000000000
         foreground: red
@@ -89,4 +89,4 @@ rules:
   comment:
     # # This comment explains the code
     foreground: green
-    styles: [italic]
+    styles: [ italic ]

@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.state.common
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class AtomicIntegerState(initValue: Int) {
