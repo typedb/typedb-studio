@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
+import com.vaticle.typedb.studio.view.common.component.Form.SelectableText
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -92,7 +92,7 @@ object NotificationArea {
                 .defaultMinSize(minHeight = NOTIFICATION_HEIGHT).padding(MESSAGE_PADDING)
                 .background(color = colorArgs.background, shape = Theme.ROUNDED_CORNER_SHAPE)
         ) {
-            TextSelectable(
+            SelectableText(
                 value = notification.message,
                 color = colorArgs.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)

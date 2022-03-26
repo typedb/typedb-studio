@@ -251,10 +251,28 @@ object Form {
         )
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun TextURL(url: URL, text: String? = null) {
+    fun SelectableText(
+        value: String,
+        style: TextStyle = Theme.typography.body1,
+        color: Color = Theme.colors.onSurface,
+        modifier: Modifier = Modifier
+    ) {
+        BasicTextField(
+            modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            cursorBrush = SolidColor(Theme.colors.secondary),
+            textStyle = style.copy(color = color)
+        )
+    }
+
+    @Composable
+    fun URLText(url: URL, text: String? = null) {
         val uriHandler = LocalUriHandler.current
-        TextClickable(
+        ClickableText(
             text = text ?: url.toString(),
             onClick = { uriHandler.openUri(url.toString()) }
         )
@@ -262,13 +280,161 @@ object Form {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun TextClickable(text: String, onClick: (Int) -> Unit) {
+    fun ClickableText(text: String, onClick: (Int) -> Unit) {
         ClickableText(
             text = AnnotatedString(text),
             modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
             style = Theme.typography.body1.copy(color = Theme.colors.secondary),
             onClick = onClick
         )
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun TextInput(
+        value: String,
+        placeholder: String,
+        onValueChange: (String) -> Unit,
+        singleLine: Boolean = true,
+        readOnly: Boolean = false,
+        enabled: Boolean = true,
+        isPassword: Boolean = false,
+        modifier: Modifier = Modifier,
+        textStyle: TextStyle = Theme.typography.body1,
+        pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
+        shape: Shape? = ROUNDED_CORNER_SHAPE,
+        border: Border? = DEFAULT_BORDER,
+        trailingIcon: Icon.Code? = null,
+        leadingIcon: Icon.Code? = null
+    ) {
+        val mod = border?.let {
+            modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
+        } ?: modifier
+
+        BasicTextField(
+            modifier = mod.pointerHoverIcon(pointerHoverIcon)
+                .background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape),
+            value = value,
+            onValueChange = onValueChange,
+            readOnly = readOnly,
+            singleLine = singleLine,
+            enabled = enabled,
+            cursorBrush = SolidColor(Theme.colors.secondary),
+            textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            onTextLayout = onTextLayout,
+            decorationBox = { innerTextField ->
+                Row(
+                    Modifier.padding(horizontal = MULTILINE_INPUT_PADDING),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    leadingIcon?.let {
+                        Icon.Render(icon = it)
+                        Spacer(Modifier.width(ICON_SPACING))
+                    }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                        innerTextField()
+                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
+                    }
+                    trailingIcon?.let {
+                        Spacer(Modifier.width(ICON_SPACING))
+                        Icon.Render(icon = it)
+                    }
+                }
+            },
+        )
+    }
+
+    @Composable
+    private fun rememberMultilineTextInputState(): MultilineTextInputState {
+        val density = LocalDensity.current.density
+        return remember { MultilineTextInputState(density) }
+    }
+
+    class MultilineTextInputState(initDensity: Float) {
+
+        internal var value by mutableStateOf(TextFieldValue(""))
+        internal var layout: TextLayoutResult? by mutableStateOf(null)
+        internal var density by mutableStateOf(initDensity)
+        internal var boxWidth by mutableStateOf(0.dp)
+        internal var horScroller: ScrollState = ScrollState(0)
+        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+        fun reset() {
+            boxWidth = 0.dp
+        }
+
+        internal fun updateValue(newValue: TextFieldValue) {
+            val oldText = value.text
+            value = newValue
+            if (oldText == newValue.text) mayScrollHorizontally()
+            // else, text have changed and updateLayout() will be called
+        }
+
+        internal fun updateLayout(newLayout: TextLayoutResult, value: TextFieldValue) {
+            if (this.value != value) this.value = value
+            layout = newLayout
+            mayScrollHorizontally()
+        }
+
+        private fun mayScrollHorizontally() {
+            val cursorOffset = toDP(layout?.getCursorRect(value.selection.end)?.left ?: 0f, density)
+            val scrollOffset = toDP(horScroller.value, density)
+            val viewPadding = MULTILINE_INPUT_PADDING * 2
+            if (boxWidth + scrollOffset - viewPadding < cursorOffset) {
+                val scrollTo = (cursorOffset - boxWidth + viewPadding).value.toInt()
+                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+            } else if (scrollOffset + viewPadding > cursorOffset) {
+                val scrollTo = (cursorOffset - viewPadding).value.toInt()
+                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun MultilineTextInput(
+        state: MultilineTextInputState = rememberMultilineTextInputState(),
+        value: TextFieldValue,
+        modifier: Modifier,
+        icon: Icon.Code? = null,
+        focusReq: FocusRequester = FocusRequester(),
+        onValueChange: (TextFieldValue) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit
+    ) {
+        val density = LocalDensity.current.density
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = modifier.fillMaxWidth()
+                .background(Theme.colors.surface)
+                .onSizeChanged { state.density = density }
+                .pointerHoverIcon(PointerIconDefaults.Text)
+        ) {
+            icon?.let {
+                Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
+            } ?: Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+            Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
+                Box(
+                    modifier = Modifier.fillMaxHeight()
+                        .padding(vertical = MULTILINE_INPUT_PADDING)
+                        .horizontalScroll(state.horScroller)
+                ) {
+                    Row(Modifier.align(alignment = Alignment.CenterStart)) {
+                        BasicTextField(
+                            value = value,
+                            onValueChange = { state.updateValue(it); onValueChange(it) },
+                            onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
+                            cursorBrush = SolidColor(Theme.colors.secondary),
+                            textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
+                            modifier = Modifier.focusRequester(focusReq)
+                                .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
+                        )
+                        Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
+                    }
+                }
+            }
+        }
     }
 
     @Composable
@@ -523,172 +689,6 @@ object Form {
                 disabledColor = fadeable(Theme.colors.surface, !enabled)
             )
         )
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    fun TextSelectable(
-        value: String,
-        style: TextStyle = Theme.typography.body1,
-        color: Color = Theme.colors.onSurface,
-        modifier: Modifier = Modifier
-    ) {
-        BasicTextField(
-            modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            cursorBrush = SolidColor(Theme.colors.secondary),
-            textStyle = style.copy(color = color)
-        )
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    fun TextInput(
-        value: String,
-        placeholder: String,
-        onValueChange: (String) -> Unit,
-        singleLine: Boolean = true,
-        readOnly: Boolean = false,
-        enabled: Boolean = true,
-        isPassword: Boolean = false,
-        modifier: Modifier = Modifier,
-        textStyle: TextStyle = Theme.typography.body1,
-        pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
-        onTextLayout: (TextLayoutResult) -> Unit = {},
-        shape: Shape? = ROUNDED_CORNER_SHAPE,
-        border: Border? = DEFAULT_BORDER,
-        trailingIcon: Icon.Code? = null,
-        leadingIcon: Icon.Code? = null
-    ) {
-        val mod = border?.let {
-            modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
-        } ?: modifier
-
-        BasicTextField(
-            modifier = mod.pointerHoverIcon(pointerHoverIcon)
-                .background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape),
-            value = value,
-            onValueChange = onValueChange,
-            readOnly = readOnly,
-            singleLine = singleLine,
-            enabled = enabled,
-            cursorBrush = SolidColor(Theme.colors.secondary),
-            textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-            onTextLayout = onTextLayout,
-            decorationBox = { innerTextField ->
-                Row(
-                    Modifier.padding(horizontal = MULTILINE_INPUT_PADDING),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    leadingIcon?.let {
-                        Icon.Render(icon = it)
-                        Spacer(Modifier.width(ICON_SPACING))
-                    }
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                        innerTextField()
-                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
-                    }
-                    trailingIcon?.let {
-                        Spacer(Modifier.width(ICON_SPACING))
-                        Icon.Render(icon = it)
-                    }
-                }
-            },
-        )
-    }
-
-    @Composable
-    private fun rememberMultilineTextInputState(): MultilineTextInputState {
-        val density = LocalDensity.current.density
-        return remember { MultilineTextInputState(density) }
-    }
-
-    class MultilineTextInputState(initDensity: Float) {
-
-        internal var value by mutableStateOf(TextFieldValue(""))
-        internal var layout: TextLayoutResult? by mutableStateOf(null)
-        internal var density by mutableStateOf(initDensity)
-        internal var boxWidth by mutableStateOf(0.dp)
-        internal var horScroller: ScrollState = ScrollState(0)
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-        fun reset() {
-            boxWidth = 0.dp
-        }
-
-        internal fun updateValue(newValue: TextFieldValue) {
-            val oldText = value.text
-            value = newValue
-            if (oldText == newValue.text) mayScrollHorizontally()
-            // else, text have changed and updateLayout() will be called
-        }
-
-        internal fun updateLayout(newLayout: TextLayoutResult, value: TextFieldValue) {
-            if (this.value != value) this.value = value
-            layout = newLayout
-            mayScrollHorizontally()
-        }
-
-        private fun mayScrollHorizontally() {
-            val cursorOffset = toDP(layout?.getCursorRect(value.selection.end)?.left ?: 0f, density)
-            val scrollOffset = toDP(horScroller.value, density)
-            val viewPadding = MULTILINE_INPUT_PADDING * 2
-            if (boxWidth + scrollOffset - viewPadding < cursorOffset) {
-                val scrollTo = (cursorOffset - boxWidth + viewPadding).value.toInt()
-                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
-            } else if (scrollOffset + viewPadding > cursorOffset) {
-                val scrollTo = (cursorOffset - viewPadding).value.toInt()
-                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    fun MultilineTextInput(
-        state: MultilineTextInputState = rememberMultilineTextInputState(),
-        value: TextFieldValue,
-        modifier: Modifier,
-        icon: Icon.Code? = null,
-        focusReq: FocusRequester = FocusRequester(),
-        onValueChange: (TextFieldValue) -> Unit,
-        onTextLayout: (TextLayoutResult) -> Unit
-    ) {
-        val density = LocalDensity.current.density
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = modifier.fillMaxWidth()
-                .background(Theme.colors.surface)
-                .onSizeChanged { state.density = density }
-                .pointerHoverIcon(PointerIconDefaults.Text)
-        ) {
-            icon?.let {
-                Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
-            } ?: Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
-            Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
-                Box(
-                    modifier = Modifier.fillMaxHeight()
-                        .padding(vertical = MULTILINE_INPUT_PADDING)
-                        .horizontalScroll(state.horScroller)
-                ) {
-                    Row(Modifier.align(alignment = Alignment.CenterStart)) {
-                        BasicTextField(
-                            value = value,
-                            onValueChange = { state.updateValue(it); onValueChange(it) },
-                            onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
-                            cursorBrush = SolidColor(Theme.colors.secondary),
-                            textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
-                            modifier = Modifier.focusRequester(focusReq)
-                                .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
-                        )
-                        Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
-                    }
-                }
-            }
-        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

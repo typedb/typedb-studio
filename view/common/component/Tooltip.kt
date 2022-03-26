@@ -52,9 +52,9 @@ import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.BORDER_WIDTH
+import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
 import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Form.TextClickable
-import com.vaticle.typedb.studio.view.common.component.Form.TextURL
+import com.vaticle.typedb.studio.view.common.component.Form.URLText
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.MouseInfo
 import java.net.URL
@@ -173,7 +173,7 @@ object Tooltip {
                         Row(contentMod, Arrangement.SpaceBetween) {
                             Text(value = state.arg.title, softWrap = true)
                             if (!showAll && hasDetails) {
-                                TextClickable(Label.READ_MORE) {
+                                ClickableText(Label.READ_MORE) {
                                     state.keepShowingOnTooltipHover(true)
                                     showAll = true
                                 }
@@ -188,7 +188,7 @@ object Tooltip {
                             }
                             state.arg.url?.let {
                                 Spacer(Modifier.height(TOOLTIP_SPACE))
-                                TextURL(it, text = Label.LEARN_MORE)
+                                URLText(it, text = Label.LEARN_MORE)
                             }
                         }
                     }

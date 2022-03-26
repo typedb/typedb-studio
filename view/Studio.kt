@@ -67,9 +67,9 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.common.component.Form.SelectableText
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextSelectable
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -265,11 +265,11 @@ object Studio {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
-                        exception.message?.let { TextSelectable(value = it, color = contentColor) }
+                        exception.message?.let { SelectableText(value = it, color = contentColor) }
                     }
                     Row(Modifier.weight(1f)) {
                         Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
-                        TextSelectable(
+                        SelectableText(
                             value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
                         )
                     }
