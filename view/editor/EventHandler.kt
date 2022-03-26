@@ -217,11 +217,28 @@ internal class EventHandler constructor(
     }
 
     internal fun contextMenuFn(): List<List<ContextMenu.Item>> {
-        return listOf(
-            listOf(cutSelectionMenuItem(), copySelectionMenuItem(), pasteTextMenuItem()),
-            listOf(findTextMenuItem(), replaceMenuItem()),
-            listOf(runFileMenuItem(), runSelectionMenuItem())
-        )
+        val groupedMenuItems = listOf(
+            textEditingMenuItems(),
+            findAndReplaceMenuItems()
+        ).toMutableList()
+        if (processor.file != null) groupedMenuItems.add(runQueryMenuItems())
+        return groupedMenuItems
+    }
+
+    private fun textEditingMenuItems(): List<ContextMenu.Item> {
+        val menuItems = listOf(copySelectionMenuItem()).toMutableList()
+        if (processor.isWritable) menuItems.addAll(listOf(cutSelectionMenuItem(), pasteTextMenuItem()))
+        return menuItems
+    }
+
+    private fun findAndReplaceMenuItems(): List<ContextMenu.Item> {
+        val menuItems = listOf(findTextMenuItem()).toMutableList()
+        if (processor.isWritable) menuItems.add(replaceMenuItem())
+        return menuItems
+    }
+
+    private fun runQueryMenuItems(): List<ContextMenu.Item> {
+        return listOf(runFileMenuItem(), runSelectionMenuItem())
     }
 
     private fun cutSelectionMenuItem() = ContextMenu.Item(
