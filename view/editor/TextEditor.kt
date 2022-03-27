@@ -302,11 +302,11 @@ object TextEditor {
     private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp, lineGap: Dp, onScroll: () -> Unit) {
         val maxDigits = ceil(log10(state.lineCount + 1.0)).toInt()
         val minWidth = fontWidth * maxDigits + AREA_PADDING_HOR * 2 + 2.dp
-        val lazyColumnState: LazyColumn.State<Int> = LazyColumn.createState(
-            items = (0 until state.lineCount).map { it },
+        val lazyColumnState: LazyLines.State<Int> = LazyLines.createState(
+            lines = (0 until state.lineCount).map { it },
             scroller = state.target.verScroller
         )
-        LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, _ ->
+        LazyLines.Area(state = lazyColumnState, onScroll = onScroll) { index, _ ->
             LineNumber(state, index, font, minWidth, lineGap)
         }
     }
@@ -333,7 +333,7 @@ object TextEditor {
     private fun TextArea(
         state: State, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean, onScroll: () -> Unit
     ) {
-        val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
+        val lazyColumnState = LazyLines.createState(state.content, state.target.verScroller)
         Box(modifier = Modifier.onGloballyPositioned {
             state.updateAreaWidth(it.size.width)
             state.target.updateTextArea(it.boundsInWindow())
@@ -345,7 +345,7 @@ object TextEditor {
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
-                LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, text ->
+                LazyLines.Area(state = lazyColumnState, onScroll = onScroll) { index, text ->
                     TextLine(state, index, text, font, fontWidth, lineGap, showLine)
                 }
             }

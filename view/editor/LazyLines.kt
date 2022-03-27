@@ -47,31 +47,31 @@ import java.util.concurrent.LinkedBlockingDeque
 import kotlin.math.floor
 
 /**
- * A custom LazyColumn library -- a variant of Compose' native
+ * LazyLines is a custom variant of of Compose' native
  * [androidx.compose.foundation.lazy.LazyColumn]. This library is different from
  * that of Compose' in that it is much simpler and lightweight: every entry in
  * the column has the same, fixed height, and uses the same lambda to produced a
  * [androidx.compose.runtime.Composable]
  */
-internal object LazyColumn {
+internal object LazyLines {
 
     internal class ScrollState internal constructor(
-        private val itemHeightUnscaled: Dp, var bottomSpace: Dp, val itemCount: () -> Int
+        private val lineHeightUnscaled: Dp, var bottomSpace: Dp, val lineCount: () -> Int
     ) : ScrollbarAdapter {
         private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
         private var _offset: Dp by mutableStateOf(0.dp)
         private var _stickToBottom by mutableStateOf(false)
         internal var viewHeight: Dp by mutableStateOf(0.dp)
-        internal val itemHeight: Dp get() = itemHeightUnscaled * GlobalState.appearance.textEditorScale
-        private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
+        internal val lineHeight: Dp get() = lineHeightUnscaled * GlobalState.appearance.textEditorScale
+        private val contentHeight: Dp get() = lineHeight * lineCount() + bottomSpace
         private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
         internal val offset: Dp get() = if (!stickToBottom) _offset.coerceAtMost(maxOffset) else maxOffset
-        internal val firstVisibleIndex: Int get() = floor(offset.value / itemHeight.value).toInt()
-        internal val firstVisibleOffset: Dp get() = offset - itemHeight * firstVisibleIndex
+        internal val firstVisibleIndex: Int get() = floor(offset.value / lineHeight.value).toInt()
+        internal val firstVisibleOffset: Dp get() = offset - lineHeight * firstVisibleIndex
         internal val lastVisibleIndexPossible: Int
             get() {
-                val itemArea = viewHeight.value + firstVisibleOffset.value
-                return firstVisibleIndex + floor(itemArea / itemHeight.value).toInt()
+                val lineArea = viewHeight.value + firstVisibleOffset.value
+                return firstVisibleIndex + floor(lineArea / lineHeight.value).toInt()
             }
         internal var stickToBottom
             get() = _stickToBottom
@@ -109,7 +109,7 @@ internal object LazyColumn {
         @OptIn(ExperimentalComposeUiApi::class)
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
-            updateOffsetBy(itemHeight * (event.delta as MouseScrollUnit.Line).value)
+            updateOffsetBy(lineHeight * (event.delta as MouseScrollUnit.Line).value)
             return true
         }
 
@@ -120,20 +120,16 @@ internal object LazyColumn {
     }
 
     data class State<T : Any> internal constructor(
-        internal val items: List<T>,
+        internal val lines: List<T>,
         internal val scroller: ScrollState
     )
 
-    fun createScrollState(itemHeight: Dp, bottomSpace: Dp = 0.dp, itemCount: () -> Int): ScrollState {
-        return ScrollState(itemHeight, bottomSpace, itemCount)
+    fun createScrollState(lineHeight: Dp, bottomSpace: Dp = 0.dp, lineCount: () -> Int): ScrollState {
+        return ScrollState(lineHeight, bottomSpace, lineCount)
     }
 
-    fun <T : Any> createState(items: List<T>, itemHeight: Dp, bottomSpace: Dp = 0.dp): State<T> {
-        return State(items, createScrollState(itemHeight, bottomSpace) { items.size })
-    }
-
-    fun <T : Any> createState(items: List<T>, scroller: ScrollState): State<T> {
-        return State(items, scroller)
+    fun <T : Any> createState(lines: List<T>, scroller: ScrollState): State<T> {
+        return State(lines, scroller)
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -142,18 +138,18 @@ internal object LazyColumn {
         state: State<T>,
         onScroll: () -> Unit,
         modifier: Modifier = Modifier,
-        itemFn: @Composable (index: Int, item: T) -> Unit
+        lineFn: @Composable (index: Int, item: T) -> Unit
     ) {
         val density = LocalDensity.current.density
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
             .mouseScrollFilter { event, _ -> onScroll(); state.scroller.updateOffset(event) }
             .onSizeChanged { state.scroller.viewHeight = toDP(it.height, density) }) {
-            if (state.items.isNotEmpty()) {
-                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.itemCount() - 1)
+            if (state.lines.isNotEmpty()) {
+                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.lineCount() - 1)
                 (state.scroller.firstVisibleIndex..lastVisibleIndex).forEach { i ->
                     val indexInView = i - state.scroller.firstVisibleIndex
-                    val offset = state.scroller.itemHeight * indexInView - state.scroller.firstVisibleOffset
-                    Box(Modifier.offset(y = offset)) { itemFn(i, state.items[i]) }
+                    val offset = state.scroller.lineHeight * indexInView - state.scroller.firstVisibleOffset
+                    Box(Modifier.offset(y = offset)) { lineFn(i, state.lines[i]) }
                 }
             }
         }
