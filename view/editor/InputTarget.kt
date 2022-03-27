@@ -262,7 +262,7 @@ internal class InputTarget constructor(
         } ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
-        mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt())
+        mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
     }
 
     internal fun moveCursorPrevByChar(isSelecting: Boolean = false) {

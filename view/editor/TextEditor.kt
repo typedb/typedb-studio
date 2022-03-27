@@ -97,6 +97,7 @@ object TextEditor {
     private const val DISABLED_CURSOR_OPACITY = 0.6f
     private val LINE_GAP = 4.dp
     private val AREA_PADDING_HOR = 6.dp
+    private val RIGHT_PADDING = 32.dp
     private val DEFAULT_FONT_WIDTH = 7.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
@@ -381,13 +382,16 @@ object TextEditor {
                 val color = Theme.colors.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
                 Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
-            Column {
-                Spacer(Modifier.height(lineGap))
-                Text(
-                    text = text, style = font,
-                    modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
-                    onTextLayout = { state.rendering.set(index, it, state.processor.version) }
-                )
+            Row {
+                Column {
+                    Spacer(Modifier.height(lineGap))
+                    Text(
+                        text = text, style = font,
+                        modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
+                        onTextLayout = { state.rendering.set(index, it, state.processor.version) }
+                    )
+                }
+                Spacer(Modifier.width(RIGHT_PADDING))
             }
             if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth, lineGap)
         }
