@@ -22,7 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class AppearanceManager {
+class EditorScaler {
 
     companion object {
         const val TEXT_EDITOR_SCALE_MIN = 5 // over 10
@@ -30,20 +30,20 @@ class AppearanceManager {
         const val TEXT_EDITOR_SCALE_DEFAULT = 10 // over 10
     }
 
-    private var _textEditorScale: Int by mutableStateOf(TEXT_EDITOR_SCALE_DEFAULT)
-    val textEditorScale: Float get() = _textEditorScale / 10f
+    private var _scale: Int by mutableStateOf(TEXT_EDITOR_SCALE_DEFAULT)
+    val scale: Float get() = _scale / 10f
 
-    fun increaseTextEditorScale() {
-        if (_textEditorScale >= TEXT_EDITOR_SCALE_MAX) return
-        _textEditorScale += if (_textEditorScale < TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
+    fun increaseScale() {
+        if (_scale >= TEXT_EDITOR_SCALE_MAX) return
+        _scale += if (_scale < TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
-    fun decreaseTextEditorScale() {
-        if (_textEditorScale <= TEXT_EDITOR_SCALE_MIN) return
-        _textEditorScale -= if (_textEditorScale <= TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
+    fun decreaseScale() {
+        if (_scale <= TEXT_EDITOR_SCALE_MIN) return
+        _scale -= if (_scale <= TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
-    fun resetTextEditorScale() {
-        _textEditorScale = TEXT_EDITOR_SCALE_DEFAULT
+    fun resetScale() {
+        _scale = TEXT_EDITOR_SCALE_DEFAULT
     }
 }

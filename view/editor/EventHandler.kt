@@ -162,9 +162,9 @@ internal class EventHandler constructor(
             PASTE -> paste()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            TEXT_SIZE_INCREASE -> GlobalState.appearance.increaseTextEditorScale()
-            TEXT_SIZE_DECREASE -> GlobalState.appearance.decreaseTextEditorScale()
-            TEXT_SIZE_RESET -> GlobalState.appearance.resetTextEditorScale()
+            TEXT_SIZE_INCREASE -> GlobalState.editorScaler.increaseScale()
+            TEXT_SIZE_DECREASE -> GlobalState.editorScaler.decreaseScale()
+            TEXT_SIZE_RESET -> GlobalState.editorScaler.resetScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
