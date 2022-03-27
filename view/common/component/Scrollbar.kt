@@ -33,11 +33,17 @@ object Scrollbar {
 
     @Composable
     fun Vertical(adapter: ScrollbarAdapter, modifier: Modifier) {
-        VerticalScrollbar(adapter, modifier.fillMaxHeight().padding(SCROLLBAR_LONG_PADDING, SCROLLBAR_END_PADDING))
+        val maxOffset = adapter.maxScrollOffset(0)
+        if (maxOffset > 0 && maxOffset < Int.MAX_VALUE) {
+            VerticalScrollbar(adapter, modifier.fillMaxHeight().padding(SCROLLBAR_LONG_PADDING, SCROLLBAR_END_PADDING))
+        }
     }
 
     @Composable
     fun Horizontal(adapter: ScrollbarAdapter, modifier: Modifier) {
-        HorizontalScrollbar(adapter, modifier.fillMaxWidth().padding(SCROLLBAR_END_PADDING, SCROLLBAR_LONG_PADDING))
+        val maxOffset = adapter.maxScrollOffset(0)
+        if (maxOffset > 0 && maxOffset < Int.MAX_VALUE) {
+            HorizontalScrollbar(adapter, modifier.fillMaxWidth().padding(SCROLLBAR_END_PADDING, SCROLLBAR_LONG_PADDING))
+        }
     }
 }
