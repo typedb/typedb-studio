@@ -24,6 +24,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
@@ -82,6 +84,7 @@ import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.delay
@@ -92,9 +95,9 @@ object TextEditor {
 
     private const val LINE_HEIGHT = 1.56f
     private const val DISABLED_CURSOR_OPACITY = 0.6f
-    private val LINE_GAP = 2.dp
+    private val LINE_GAP = 4.dp
     private val AREA_PADDING_HOR = 6.dp
-    private val DEFAULT_FONT_WIDTH = 12.dp
+    private val DEFAULT_FONT_WIDTH = 7.dp
     private val CURSOR_LINE_PADDING = 0.dp
     private val BLINKING_FREQUENCY = Duration.milliseconds(500)
     private val END_OF_FILE_SPACE = 100.dp
@@ -255,14 +258,16 @@ object TextEditor {
     @Composable
     fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
+        val textScale = GlobalState.appearance.textEditorScale
         val density = LocalDensity.current.density
-        val fontHeight = with(LocalDensity.current) { (state.lineHeight - LINE_GAP).toSp() * density }
-        val fontColor = Theme.colors.onBackground
-        val fontStyle = state.font.copy(color = fontColor, lineHeight = fontHeight)
-        var fontWidth by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
+        val fontSize = ((state.font.fontSize.value * textScale * 100).roundToInt() / 100f).sp
+        val fontStyle = state.font.copy(color = Theme.colors.onBackground, fontSize = fontSize)
+        var fontWidthUnscaled by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
+        val fontWidth = fontWidthUnscaled * textScale
+        val lineGap = LINE_GAP * textScale
 
         Box { // We render a number to find out the default width of a digit for the given font
-            Text(text = "0", style = fontStyle, onTextLayout = { fontWidth = toDP(it.size.width, density) })
+            Text("0", style = state.font, onTextLayout = { fontWidthUnscaled = toDP(it.size.width, density) })
             Column {
                 if (state.showToolbar) {
                     TextToolbar.Area(state.toolbar, Modifier.onPreviewKeyEvent { state.handler.handleToolbarEvent(it) })
@@ -276,10 +281,10 @@ object TextEditor {
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
                     if (showLine) {
-                        LineNumberArea(state, fontStyle, fontWidth, onScroll)
+                        LineNumberArea(state, fontStyle, fontWidth, lineGap, onScroll)
                         Separator.Vertical()
                     }
-                    TextArea(state, fontStyle, fontWidth, showLine, onScroll)
+                    TextArea(state, fontStyle, fontWidth, lineGap, showLine, onScroll)
                 }
             }
         }
@@ -294,7 +299,7 @@ object TextEditor {
     }
 
     @Composable
-    private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp, onScroll: () -> Unit) {
+    private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp, lineGap: Dp, onScroll: () -> Unit) {
         val maxDigits = ceil(log10(state.lineCount + 1.0)).toInt()
         val minWidth = fontWidth * maxDigits + AREA_PADDING_HOR * 2 + 2.dp
         val lazyColumnState: LazyColumn.State<Int> = LazyColumn.createState(
@@ -302,28 +307,32 @@ object TextEditor {
             scroller = state.target.verScroller
         )
         LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, _ ->
-            LineNumber(state, index, font, minWidth)
+            LineNumber(state, index, font, minWidth, lineGap)
         }
     }
 
     @Composable
-    private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp) {
+    private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp, lineGap: Dp) {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
         val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background1
         val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
-        Box(
-            contentAlignment = Alignment.TopEnd,
+        Column(
             modifier = Modifier.background(bgColor)
                 .defaultMinSize(minWidth = minWidth)
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
-        ) { Text(text = (index + 1).toString(), style = font.copy(font.color.copy(alpha = fontAlpha))) }
+        ) {
+            Spacer(Modifier.height(lineGap))
+            Text(text = (index + 1).toString(), style = font.copy(font.color.copy(alpha = fontAlpha)))
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun TextArea(state: State, font: TextStyle, fontWidth: Dp, showLine: Boolean, onScroll: () -> Unit) {
+    private fun TextArea(
+        state: State, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean, onScroll: () -> Unit
+    ) {
         val lazyColumnState = LazyColumn.createState(state.content, state.target.verScroller)
         Box(modifier = Modifier.onGloballyPositioned {
             state.updateAreaWidth(it.size.width)
@@ -337,7 +346,7 @@ object TextEditor {
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
                 LazyColumn.Area(state = lazyColumnState, onScroll = onScroll) { index, text ->
-                    TextLine(state, index, text, font, fontWidth, showLine)
+                    TextLine(state, index, text, font, fontWidth, lineGap, showLine)
                 }
             }
             Scrollbar.Vertical(state.target.verScroller, Modifier.align(Alignment.CenterEnd))
@@ -347,7 +356,7 @@ object TextEditor {
 
     @Composable
     private fun TextLine(
-        state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp, showLine: Boolean
+        state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean
     ) {
         val cursor = state.target.cursor
         val selection = state.target.selection
@@ -372,12 +381,15 @@ object TextEditor {
                 val color = Theme.colors.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
                 Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
-            Text(
-                text = text, style = font,
-                modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
-                onTextLayout = { state.rendering.set(index, it, state.processor.version) }
-            )
-            if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth)
+            Column {
+                Spacer(Modifier.height(lineGap))
+                Text(
+                    text = text, style = font,
+                    modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
+                    onTextLayout = { state.rendering.set(index, it, state.processor.version) }
+                )
+            }
+            if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth, lineGap)
         }
     }
 
@@ -402,7 +414,7 @@ object TextEditor {
     @OptIn(ExperimentalTime::class)
     @Composable
     private fun Cursor(
-        state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp
+        state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp
     ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
@@ -416,14 +428,15 @@ object TextEditor {
             } ?: fontWidth
         }
         if (visible || !state.isFocused) {
-            Box(
+            Column(
                 modifier = Modifier.offset(x = offsetX, y = CURSOR_LINE_PADDING)
                     .width(width).height(state.lineHeight - CURSOR_LINE_PADDING * 2)
                     .background(fadeable(Theme.colors.secondary, !state.isFocused, DISABLED_CURSOR_OPACITY))
             ) {
+                Spacer(Modifier.height(lineGap))
                 Text(
-                    text.getOrNull(cursor.col)?.toString() ?: "",
-                    Modifier.offset(y = -CURSOR_LINE_PADDING),
+                    text = text.getOrNull(cursor.col)?.toString() ?: "",
+                    modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font.copy(Theme.colors.background0)
                 )
             }

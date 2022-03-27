@@ -43,7 +43,7 @@ internal class InputTarget constructor(
     private val content: SnapshotStateList<AnnotatedString>,
     private val rendering: TextRendering,
     private val horPadding: Dp,
-    internal val lineHeight: Dp,
+    lineHeightUnscaled: Dp,
     bottomSpace: Dp,
     initDensity: Float
 ) {
@@ -121,10 +121,11 @@ internal class InputTarget constructor(
     internal val cursor: Cursor get() = if (!stickToBottom) _cursor else end
     internal var selection: Selection? by mutableStateOf(null); private set
     internal var density: Float by mutableStateOf(initDensity)
-    internal val verScroller = LazyColumn.createScrollState(lineHeight, bottomSpace) { content.size }
+    internal val verScroller = LazyColumn.createScrollState(lineHeightUnscaled, bottomSpace) { content.size }
     internal var horScroller = ScrollState(0)
     internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
+    internal val lineHeight: Dp get() = verScroller.itemHeight
     internal var stickToBottom
         get() = verScroller.stickToBottom
         set(value) {

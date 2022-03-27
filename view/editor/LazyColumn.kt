@@ -36,9 +36,11 @@ import androidx.compose.ui.input.mouse.mouseScrollFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import java.lang.Integer.min
 import java.util.concurrent.LinkedBlockingDeque
@@ -54,15 +56,16 @@ import kotlin.math.floor
 internal object LazyColumn {
 
     internal class ScrollState internal constructor(
-        val itemHeight: Dp, var bottomSpace: Dp, val itemCount: () -> Int
+        private val itemHeightUnscaled: Dp, var bottomSpace: Dp, val itemCount: () -> Int
     ) : ScrollbarAdapter {
         private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
         private var _offset: Dp by mutableStateOf(0.dp)
         private var _stickToBottom by mutableStateOf(false)
         internal var viewHeight: Dp by mutableStateOf(0.dp)
+        internal val itemHeight: Dp get() = itemHeightUnscaled * GlobalState.appearance.textEditorScale
         private val contentHeight: Dp get() = itemHeight * itemCount() + bottomSpace
         private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
-        internal val offset: Dp get() = if (!stickToBottom) _offset else maxOffset
+        internal val offset: Dp get() = if (!stickToBottom) _offset.coerceAtMost(maxOffset) else maxOffset
         internal val firstVisibleIndex: Int get() = floor(offset.value / itemHeight.value).toInt()
         internal val firstVisibleOffset: Dp get() = offset - itemHeight * firstVisibleIndex
         internal val lastVisibleIndexPossible: Int

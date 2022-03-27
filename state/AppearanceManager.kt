@@ -25,22 +25,25 @@ import androidx.compose.runtime.setValue
 class AppearanceManager {
 
     companion object {
-        const val TEXT_EDITOR_SCALE_MIN = 0.5f
-        const val TEXT_EDITOR_SCALE_MAX = 3f
+        const val TEXT_EDITOR_SCALE_MIN = 5 // over 10
+        const val TEXT_EDITOR_SCALE_MAX = 30 // over 10
+        const val TEXT_EDITOR_SCALE_DEFAULT = 10 // over 10
     }
-    var textEditorScale: Float by mutableStateOf(1f)
+
+    private var _textEditorScale: Int by mutableStateOf(TEXT_EDITOR_SCALE_DEFAULT)
+    val textEditorScale: Float get() = _textEditorScale / 10f
 
     fun increaseTextEditorScale() {
-        if (textEditorScale >= TEXT_EDITOR_SCALE_MAX) return
-        textEditorScale += if (textEditorScale < 1) .1f else .2f
+        if (_textEditorScale >= TEXT_EDITOR_SCALE_MAX) return
+        _textEditorScale += if (_textEditorScale < TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
     fun decreaseTextEditorScale() {
-        if (textEditorScale <= TEXT_EDITOR_SCALE_MIN) return
-        textEditorScale -= if (textEditorScale <= 1) .1f else .2f
+        if (_textEditorScale <= TEXT_EDITOR_SCALE_MIN) return
+        _textEditorScale -= if (_textEditorScale <= TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
     fun resetTextEditorScale() {
-        textEditorScale = 1f
+        _textEditorScale = TEXT_EDITOR_SCALE_DEFAULT
     }
 }
