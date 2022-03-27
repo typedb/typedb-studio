@@ -228,6 +228,7 @@ internal class EventHandler constructor(
             findAndReplaceMenuItems()
         ).toMutableList()
         if (processor.file != null) groupedMenuItems.add(runQueryMenuItems())
+        groupedMenuItems.add(textResizerMenuItems())
         return groupedMenuItems
     }
 
@@ -245,6 +246,10 @@ internal class EventHandler constructor(
 
     private fun runQueryMenuItems(): List<ContextMenu.Item> {
         return listOf(runFileMenuItem(), runSelectionMenuItem())
+    }
+
+    private fun textResizerMenuItems(): List<ContextMenu.Item> {
+        return listOf(increaseTextSizeMenuItem(), decreaseTextSizeMenuItem(), resetTextSizeMenuItem())
     }
 
     private fun cutSelectionMenuItem() = ContextMenu.Item(
@@ -297,4 +302,25 @@ internal class EventHandler constructor(
         enabled = processor.file?.isRunnable == true && target.selection != null &&
                 GlobalState.connection.current?.isReadyToRunQuery == true
     ) { runSelectionOrFile(true) }
+
+    private fun increaseTextSizeMenuItem() = ContextMenu.Item(
+        label = Label.INCREASE_TEXT_SIZE,
+        icon = Icon.Code.ARROWS_MAXIMIZE,
+        info = "${KeyMapper.CURRENT.modKey} + =",
+        enabled = !GlobalState.editorScaler.isMaxScale
+    ) { GlobalState.editorScaler.increaseScale() }
+
+    private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
+        label = Label.DECREASE_TEXT_SIZE,
+        icon = Icon.Code.ARROWS_MINIMIZE,
+        info = "${KeyMapper.CURRENT.modKey} + -",
+        enabled = !GlobalState.editorScaler.isMinScale
+    ) { GlobalState.editorScaler.decreaseScale() }
+
+    private fun resetTextSizeMenuItem() = ContextMenu.Item(
+        label = Label.RESET_TEXT_SIZE,
+        icon = Icon.Code.EXPAND,
+        info = "${KeyMapper.CURRENT.modKey} + 0",
+        enabled = !GlobalState.editorScaler.isDefaultScale
+    ) { GlobalState.editorScaler.resetScale() }
 }

@@ -32,6 +32,9 @@ class EditorScaler {
 
     private var _scale: Int by mutableStateOf(TEXT_EDITOR_SCALE_DEFAULT)
     val scale: Float get() = _scale / 10f
+    val isMaxScale get() = _scale == TEXT_EDITOR_SCALE_MAX
+    val isMinScale get() = _scale == TEXT_EDITOR_SCALE_MIN
+    val isDefaultScale get() = _scale == TEXT_EDITOR_SCALE_DEFAULT
 
     fun increaseScale() {
         if (_scale >= TEXT_EDITOR_SCALE_MAX) return

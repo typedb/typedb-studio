@@ -68,6 +68,7 @@ object ContextMenu {
     private val ITEM_HEIGHT = 28.dp
     private val ITEM_WIDTH = 180.dp
     private val ITEM_PADDING = 6.dp
+    private val ITEM_SPACING = 20.dp
     private val POPUP_SHADOW = 12.dp
     private val LOGGER = KotlinLogging.logger {}
 
@@ -170,7 +171,7 @@ object ContextMenu {
             Text(value = item.label, enabled = item.enabled)
             item.info?.let {
                 Spacer(Modifier.weight(1f))
-                Spacer(Modifier.width(ITEM_PADDING))
+                Spacer(Modifier.width(ITEM_SPACING))
                 Text(value = it, enabled = false)
                 Spacer(Modifier.width(ITEM_PADDING))
             }
