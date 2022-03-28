@@ -41,7 +41,7 @@ object Sentence {
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =
         "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDONE " +
-                "Enter database name below in order to confirm this action."
+                "Enter the database name below in order to confirm its deletion."
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_DELETION =
