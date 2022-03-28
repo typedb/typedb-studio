@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -439,9 +440,12 @@ object TextEditor {
             ) {
                 Spacer(Modifier.height(lineGap))
                 Text(
-                    text = text.getOrNull(cursor.col)?.toString() ?: "",
+                    text = AnnotatedString.Builder(
+                        if (cursor.col >= text.length) AnnotatedString("")
+                        else text.subSequence(cursor.col, cursor.col + 1)
+                    ).also { it.addStyle(SpanStyle(Theme.colors.background0), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
-                    style = font.copy(Theme.colors.background0)
+                    style = font
                 )
             }
         }
