@@ -86,7 +86,8 @@ object Frame {
         internal val next: PaneState? get() = if (isLast) null else frame.panes[index + 1]
         private var start: Dp by mutableStateOf(0.dp)
         private var end: Dp by mutableStateOf(0.dp)
-        var isFrozen by mutableStateOf(initFreeze)
+        private var _isFrozen by mutableStateOf(initFreeze)
+        val isFrozen get() = _isFrozen || (next?.isLast == true && next?._isFrozen == true)
         var size: Dp by mutableStateOf(0.dp)
 
         private val maxResize: Dp get() = if (isFrozen) 0.dp else size - minSize
@@ -96,11 +97,11 @@ object Frame {
 
         fun freeze(newSize: Dp) {
             tryResizeSelfAndAdjacentBy(newSize - size, true)
-            isFrozen = true
+            _isFrozen = true
         }
 
         fun unfreeze(newSize: Dp) {
-            isFrozen = false
+            _isFrozen = false
             tryResizeSelfAndAdjacentBy(newSize - size)
         }
 
