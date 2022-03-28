@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.ConfirmationManager
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -52,9 +51,16 @@ object ConfirmationDialog {
     private val HEIGHT = 220.dp
     private val WIDTH = 500.dp
 
-    object State : Form.State {
+    internal class State : Form.State {
 
         var verificationInput by mutableStateOf("")
+        val hasReject get() = GlobalState.confirmation.hasReject
+        val rejectLabel get() = GlobalState.confirmation.rejectLabel
+        val confirmLabel get() = GlobalState.confirmation.confirmLabel
+
+        fun reject() {
+            GlobalState.confirmation.reject()
+        }
 
         override fun cancel() {
             GlobalState.confirmation.close()
@@ -73,18 +79,21 @@ object ConfirmationDialog {
     @Composable
     fun Layout() {
         val dialogState = GlobalState.confirmation
+        val formState = remember { State() }
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {
-            Column(Modifier.fillMaxSize()) {
-                dialogState.message?.let { Form.Text(value = it, softWrap = true) }
-                dialogState.verificationValue?.let {
-                    Spacer(Modifier.height(DIALOG_SPACING))
-                    VerificationInputForm(focusReq)
-                }
-                Spacer(Modifier.weight(1f))
-                Row(Modifier.defaultMinSize(minHeight = Form.FIELD_HEIGHT), verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    ConfirmationButtons(if (dialogState.verificationValue == null) focusReq else null, dialogState)
+            Form.Submission(formState, showButtons = false) {
+                Column(Modifier.fillMaxSize()) {
+                    dialogState.message?.let { Form.Text(value = it, softWrap = true) }
+                    dialogState.verificationValue?.let {
+                        Spacer(Modifier.height(DIALOG_SPACING))
+                        VerificationInputForm(formState, focusReq)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Row(Modifier.defaultMinSize(minHeight = Form.FIELD_HEIGHT), verticalAlignment = Alignment.Bottom) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        ConfirmationButtons(formState, if (dialogState.verificationValue == null) focusReq else null)
+                    }
                 }
             }
         }
@@ -92,32 +101,30 @@ object ConfirmationDialog {
     }
 
     @Composable
-    private fun VerificationInputForm(focusReq: FocusRequester) {
-        Form.Submission(State) {
-            Form.TextInput(
-                value = State.verificationInput,
-                placeholder = Label.DATABASE_NAME,
-                onValueChange = { State.verificationInput = it },
-                fontColor = Theme.colors.error,
-                modifier = Modifier.focusRequester(focusReq)
-                    .fillMaxWidth().height(Form.FIELD_HEIGHT)
-                    .border(1.dp, Theme.colors.error, Form.DEFAULT_BORDER.shape),
-            )
-        }
+    private fun VerificationInputForm(formState: State, focusReq: FocusRequester) {
+        Form.TextInput(
+            value = formState.verificationInput,
+            placeholder = Label.DATABASE_NAME,
+            onValueChange = { formState.verificationInput = it },
+            fontColor = Theme.colors.error,
+            modifier = Modifier.focusRequester(focusReq)
+                .fillMaxWidth().height(Form.FIELD_HEIGHT)
+                .border(1.dp, Theme.colors.error, Form.DEFAULT_BORDER.shape),
+        )
     }
 
     @Composable
-    private fun ConfirmationButtons(focusReq: FocusRequester?, dialogState: ConfirmationManager) {
-        TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { State.cancel() })
+    private fun ConfirmationButtons(formState: State, focusReq: FocusRequester?) {
+        TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { formState.cancel() })
         FormRowSpacer()
-        if (dialogState.hasReject) {
-            TextButton(text = dialogState.rejectLabel ?: "", onClick = { dialogState.reject() })
+        if (formState.hasReject) {
+            TextButton(text = formState.rejectLabel ?: "", onClick = { formState.reject() })
             FormRowSpacer()
         }
         TextButton(
-            text = dialogState.confirmLabel ?: Label.CONFIRM,
-            onClick = { State.trySubmitIfValid() },
-            enabled = State.isValid()
+            text = formState.confirmLabel ?: Label.CONFIRM,
+            onClick = { formState.trySubmitIfValid() },
+            enabled = formState.isValid()
         )
     }
 }

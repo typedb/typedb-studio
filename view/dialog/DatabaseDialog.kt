@@ -116,6 +116,7 @@ object DatabaseDialog {
                             title = Label.DELETE_DATABASE,
                             message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
                             verificationValue = databaseName,
+                            confirmLabel = Label.DELETE,
                             onConfirm = { GlobalState.connection.current!!.tryDeleteDatabase(databaseName) }
                         )
                     }

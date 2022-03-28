@@ -60,6 +60,9 @@ class ConfirmationManager : DialogManager() {
         isOpen = false
         title = null
         message = null
+        verificationValue = null
+        rejectLabel = null
+        confirmLabel = null
         onConfirm = null
         onReject = null
     }
