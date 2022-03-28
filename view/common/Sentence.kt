@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.view.common
 
 object Sentence {
 
-    private const val ACTION_CANNOT_BE_UNDON = "This action cannot be undone."
+    private const val ACTION_CANNOT_BE_UNDONE = "This action cannot be undone."
     private const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     private const val BUTTON_ENABLED_WHEN_SESSION_OPEN =
@@ -40,11 +40,12 @@ object Sentence {
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =
-        "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDON"
+        "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDONE " +
+                "Enter database name below in order to confirm this action."
     const val CONFIRM_DIRECTORY_DELETION =
-        "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDON"
+        "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_DELETION =
-        "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDON"
+        "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_QUITING_APPLICATION = "Are you sure you want to close TypeDB Studio? " +
             "Unsaved files will still be available when you reopen."
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =

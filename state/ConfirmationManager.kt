@@ -27,6 +27,7 @@ class ConfirmationManager : DialogManager() {
 
     var title: String? by mutableStateOf(null)
     var message: String? by mutableStateOf(null); private set
+    var verificationValue: String? by mutableStateOf(null)
     var rejectLabel: String? by mutableStateOf(null); private set
     var confirmLabel: String? by mutableStateOf(null); private set
     val hasReject get() = rejectLabel != null || onReject != null
@@ -37,6 +38,7 @@ class ConfirmationManager : DialogManager() {
     fun submit(
         title: String,
         message: String,
+        verificationValue: String? = null,
         rejectLabel: String? = null,
         confirmLabel: String? = null,
         cancelOnConfirm: Boolean = true,
@@ -45,6 +47,7 @@ class ConfirmationManager : DialogManager() {
     ) {
         this.title = title
         this.message = message
+        this.verificationValue = verificationValue
         this.rejectLabel = rejectLabel
         this.confirmLabel = confirmLabel
         this.cancelOnConfirm = cancelOnConfirm

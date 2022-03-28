@@ -172,7 +172,7 @@ object Form {
     @Composable
     fun Submission(
         state: State,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
         showButtons: Boolean = true,
         submitLabel: String = Label.SUBMIT,
         content: @Composable (ColumnScope.() -> Unit)

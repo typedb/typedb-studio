@@ -107,15 +107,16 @@ object DatabaseDialog {
             items = GlobalState.connection.current!!.databaseList,
             settingSide = ActionList.Side.RIGHT,
             modifier = mod1.border(1.dp, Theme.colors.border),
-            buttonFn = {
+            buttonFn = { databaseName ->
                 IconButtonArg(
                     icon = Icon.Code.TRASH_CAN,
                     color = { Theme.colors.error },
                     onClick = {
                         GlobalState.confirmation.submit(
                             title = Label.DELETE_DATABASE,
-                            message = Sentence.CONFIRM_DATABASE_DELETION.format(it),
-                            onConfirm = { GlobalState.connection.current!!.tryDeleteDatabase(it) }
+                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                            verificationValue = databaseName,
+                            onConfirm = { GlobalState.connection.current!!.tryDeleteDatabase(databaseName) }
                         )
                     }
                 )
