@@ -47,6 +47,16 @@ object Property {
         TYPEDB("TypeDB"),
         TYPEDB_CLUSTER("TypeDB Cluster");
 
+        companion object {
+            fun of(name: String): Server? {
+                return when (name) {
+                    TYPEDB.displayName -> TYPEDB
+                    TYPEDB_CLUSTER.displayName -> TYPEDB_CLUSTER
+                    else -> null
+                }
+            }
+        }
+
         override fun toString(): String {
             return displayName
         }

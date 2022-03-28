@@ -83,23 +83,18 @@ object ProjectDialog {
     private val NAMING_HEIGHT = 200.dp
     private val LOGGER = KotlinLogging.logger {}
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun ProjectDialogButtons(form: ProjectItemForm, submitLabel: String) {
-
-    }
-
     @Composable
     fun OpenProject() {
         val formState = ProjectItemForm(
-            initField = GlobalState.project.current?.directory?.path?.toString() ?: "",
+            initField = GlobalState.appData.project.path?.toString() ?: "",
             onCancel = { GlobalState.project.openProjectDialog.close() },
             onSubmit = {
                 val previous = GlobalState.project.current
                 if (GlobalState.project.tryOpenProject(Path(it))) {
                     if (previous != GlobalState.project.current) {
                         GlobalState.resource.closeAll()
-                        GlobalState.project.unsavedFiles().forEach { GlobalState.resource.open(it) }
+                        GlobalState.project.unsavedFiles().forEach { f -> GlobalState.resource.open(f) }
+                        GlobalState.appData.project.path = GlobalState.project.current!!.path
                     }
                 }
             }

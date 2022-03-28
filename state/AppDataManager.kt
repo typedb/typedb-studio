@@ -36,6 +36,7 @@ import java.lang.System.getProperty
 import java.lang.System.getenv
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import mu.KotlinLogging
@@ -56,9 +57,51 @@ class AppDataManager {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    private var isEnabled by mutableStateOf(false)
+    inner class Project {
+
+        private val PROJECT_PATH = "project.path"
+
+        var path: Path?
+            get() = properties?.getProperty(PROJECT_PATH)?.let { Path.of(it) }
+            set(value) = value?.let { setProperty(PROJECT_PATH, it.toString()) } ?: Unit
+    }
+
+    inner class Connection {
+
+        private val CONNECTION_SERVER = "connection.server"
+        private val CONNECTION_ADDRESS = "connection.address"
+        private val CONNECTION_USERNAME = "connection.username"
+        private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
+        private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
+
+        var server: Property.Server?
+            get() = properties?.getProperty(CONNECTION_SERVER)?.let { Property.Server.of(it) }
+            set(value) = value?.let { setProperty(CONNECTION_SERVER, it.displayName) } ?: Unit
+        var address: String?
+            get() = properties?.getProperty(CONNECTION_ADDRESS)
+            set(value) = value?.let { setProperty(CONNECTION_ADDRESS, it) } ?: Unit
+        var username: String?
+            get() = properties?.getProperty(CONNECTION_USERNAME)
+            set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit
+        var tlsEnabled: Boolean?
+            get() = properties?.getProperty(CONNECTION_TLS_ENABLED)?.toBooleanStrictOrNull()
+            set(value) = value?.let { setProperty(CONNECTION_TLS_ENABLED, it.toString()) } ?: Unit
+        var caCertificate: String?
+            get() = properties?.getProperty(CONNECTION_CA_CERTIFICATE)
+            set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
+    }
+
+    var properties: Properties? by mutableStateOf(null)
+    var project = Project()
+    var connection = Connection()
+
+    private fun setProperty(key: String, value: String) {
+        properties?.setProperty(key, value)
+        properties?.store(PROPERTIES_FILE.outputStream(), null)
+    }
 
     fun initialise() {
+        var isEnabled = false
         try {
             if (DATA_DIR.notExists()) Files.createDirectory(DATA_DIR)
             if (Files.isWritable(DATA_DIR)) {
@@ -72,13 +115,15 @@ class AppDataManager {
             LOGGER.error { "An exception occurred while setting up Application Data Directory" }
             LOGGER.error { e }
             isEnabled = false
+        } finally {
+            if (!isEnabled) LOGGER.error { "Application properties and logging may be disabled." }
         }
-        if (!isEnabled) LOGGER.error { "Application properties, history, and logger will be disabled." }
     }
 
     private fun initPropertiesFile() {
         if (!PROPERTIES_DIR.exists()) Files.createDirectories(PROPERTIES_DIR)
         if (!PROPERTIES_FILE.exists()) Files.createFile(PROPERTIES_FILE.toPath())
+        properties = Properties().also { it.load(PROPERTIES_FILE.inputStream()) }
     }
 
     private fun initLogFile() {

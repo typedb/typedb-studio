@@ -56,17 +56,15 @@ object ConnectionDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 340.dp
+    private val appData = GlobalState.appData.connection
 
-    private object ConnectServerForm : Form.State {
-        // We keep this static to maintain the values through application lifetime,
-        // and easily accessible to all functions in this object without being passed around
-
-        var server: Property.Server by mutableStateOf(TYPEDB)
-        var address: String by mutableStateOf("")
-        var username: String by mutableStateOf("")
+    private class ConnectServerForm : Form.State {
+        var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
+        var address: String by mutableStateOf(appData.address ?: "")
+        var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
-        var tlsEnabled: Boolean by mutableStateOf(false)
-        var caCertificate: String by mutableStateOf("")
+        var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
+        var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
         override fun cancel() {
             GlobalState.connection.connectServerDialog.close()
@@ -91,29 +89,35 @@ object ConnectionDialog {
                     )
                 }
             }
+            appData.server = server
+            appData.address = address
+            appData.username = username
+            appData.tlsEnabled = tlsEnabled
+            appData.caCertificate = caCertificate
         }
     }
 
     @Composable
     fun ConnectServer() {
+        val state = remember { ConnectServerForm() }
         Dialog.Layout(GlobalState.connection.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
-            Submission(state = ConnectServerForm, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                ServerFormField()
-                AddressFormField(GlobalState.connection.isDisconnected)
-                if (ConnectServerForm.server == TYPEDB_CLUSTER) {
-                    UsernameFormField()
-                    PasswordFormField()
-                    TLSEnabledFormField()
-                    if (ConnectServerForm.tlsEnabled) CACertificateFormField()
+            Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+                ServerFormField(state)
+                AddressFormField(state, GlobalState.connection.isDisconnected)
+                if (state.server == TYPEDB_CLUSTER) {
+                    UsernameFormField(state)
+                    PasswordFormField(state)
+                    TLSEnabledFormField(state)
+                    if (state.tlsEnabled) CACertificateFormField(state)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
                     when (GlobalState.connection.status) {
-                        DISCONNECTED -> DisconnectedFormButtons()
-                        CONNECTING -> ConnectingFormButtons()
-                        CONNECTED -> ConnectedFormButtons()
+                        DISCONNECTED -> DisconnectedFormButtons(state)
+                        CONNECTING -> ConnectingFormButtons(state)
+                        CONNECTED -> ConnectedFormButtons(state)
                     }
                 }
             }
@@ -121,12 +125,12 @@ object ConnectionDialog {
     }
 
     @Composable
-    private fun ServerFormField() {
+    private fun ServerFormField(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
             Dropdown(
                 values = Property.Server.values().toList(),
-                selected = ConnectServerForm.server,
-                onSelection = { ConnectServerForm.server = it },
+                selected = state.server,
+                onSelection = { state.server = it },
                 enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
@@ -135,15 +139,15 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun AddressFormField(shouldFocus: Boolean) {
+    private fun AddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
         val focusReq = if (shouldFocus) FocusRequester() else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
             TextInput(
-                value = ConnectServerForm.address,
+                value = state.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { ConnectServerForm.address = it },
+                onValueChange = { state.address = it },
                 enabled = GlobalState.connection.isDisconnected,
                 modifier = modifier
             )
@@ -153,12 +157,12 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun UsernameFormField() {
+    private fun UsernameFormField(state: ConnectServerForm) {
         Field(label = Label.USERNAME) {
             TextInput(
-                value = ConnectServerForm.username,
+                value = state.username,
                 placeholder = Label.USERNAME.lowercase(),
-                onValueChange = { ConnectServerForm.username = it },
+                onValueChange = { state.username = it },
                 enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
@@ -167,12 +171,12 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun PasswordFormField() {
+    private fun PasswordFormField(state: ConnectServerForm) {
         Field(label = Label.PASSWORD) {
             TextInput(
-                value = ConnectServerForm.password,
+                value = state.password,
                 placeholder = Label.PASSWORD.lowercase(),
-                onValueChange = { ConnectServerForm.password = it },
+                onValueChange = { state.password = it },
                 enabled = GlobalState.connection.isDisconnected,
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
@@ -181,11 +185,11 @@ object ConnectionDialog {
     }
 
     @Composable
-    private fun TLSEnabledFormField() {
+    private fun TLSEnabledFormField(state: ConnectServerForm) {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
-                value = ConnectServerForm.tlsEnabled,
-                onChange = { ConnectServerForm.tlsEnabled = it },
+                value = state.tlsEnabled,
+                onChange = { state.tlsEnabled = it },
                 enabled = GlobalState.connection.isDisconnected,
             )
         }
@@ -193,12 +197,12 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun CACertificateFormField() {
+    private fun CACertificateFormField(state: ConnectServerForm) {
         Field(label = Label.CA_CERTIFICATE) {
             TextInput(
-                value = ConnectServerForm.caCertificate,
+                value = state.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                onValueChange = { ConnectServerForm.caCertificate = it },
+                onValueChange = { state.caCertificate = it },
                 enabled = GlobalState.connection.isDisconnected,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -219,19 +223,19 @@ object ConnectionDialog {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun DisconnectedFormButtons() {
-        TextButton(text = Label.CANCEL, onClick = { ConnectServerForm.cancel() })
+    private fun DisconnectedFormButtons(state: ConnectServerForm) {
+        TextButton(text = Label.CANCEL, onClick = { state.cancel() })
         FormRowSpacer()
         TextButton(
             text = Label.CONNECT,
-            onClick = { ConnectServerForm.trySubmit() },
-            enabled = ConnectServerForm.isValid()
+            onClick = { state.trySubmit() },
+            enabled = state.isValid()
         )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ConnectedFormButtons() {
+    private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
         TextButton(
             text = Label.DISCONNECT,
@@ -239,13 +243,13 @@ object ConnectionDialog {
             textColor = Theme.colors.error2
         )
         FormRowSpacer()
-        TextButton(text = Label.CLOSE, focusReq = focusReq, onClick = { ConnectServerForm.cancel() })
+        TextButton(text = Label.CLOSE, focusReq = focusReq, onClick = { state.cancel() })
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ConnectingFormButtons() {
+    private fun ConnectingFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
         TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { GlobalState.connection.disconnect() })
         FormRowSpacer()
