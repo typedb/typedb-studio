@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.view.dialog
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.dialog.Dialog.DIALOG_SPACING
 
 object ConfirmationDialog {
@@ -96,7 +98,10 @@ object ConfirmationDialog {
                 value = State.verificationInput,
                 placeholder = Label.DATABASE_NAME,
                 onValueChange = { State.verificationInput = it },
-                modifier = Modifier.fillMaxWidth().height(Form.FIELD_HEIGHT).focusRequester(focusReq),
+                fontColor = Theme.colors.error,
+                modifier = Modifier.focusRequester(focusReq)
+                    .fillMaxWidth().height(Form.FIELD_HEIGHT)
+                    .border(1.dp, Theme.colors.error, Form.DEFAULT_BORDER.shape),
             )
         }
     }

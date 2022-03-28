@@ -114,7 +114,8 @@ import kotlinx.coroutines.launch
 object Form {
 
     val FIELD_HEIGHT = 28.dp
-    internal val BORDER_WIDTH = 1.dp
+    val BORDER_WIDTH = 1.dp
+    val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 3f
     private val INNER_SPACING = 10.dp
@@ -125,7 +126,6 @@ object Form {
     private val LOADING_SPINNER_SIZE = 14.dp
     private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
-    private val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
@@ -300,6 +300,7 @@ object Form {
         enabled: Boolean = true,
         isPassword: Boolean = false,
         modifier: Modifier = Modifier,
+        fontColor: Color = Theme.colors.onSurface,
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
@@ -321,7 +322,7 @@ object Form {
             singleLine = singleLine,
             enabled = enabled,
             cursorBrush = SolidColor(Theme.colors.secondary),
-            textStyle = textStyle.copy(color = fadeable(Theme.colors.onSurface, !enabled)),
+            textStyle = textStyle.copy(color = fadeable(fontColor, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             onTextLayout = onTextLayout,
             decorationBox = { innerTextField ->
@@ -335,7 +336,7 @@ object Form {
                     }
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
-                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(Theme.colors.onSurface, true))
+                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(fontColor, true))
                     }
                     trailingIcon?.let {
                         Spacer(Modifier.width(ICON_SPACING))
