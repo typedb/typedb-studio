@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -231,7 +232,7 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons() {
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         TextButton(
             text = Label.DISCONNECT,
             onClick = { GlobalState.connection.disconnect() },
@@ -245,7 +246,7 @@ object ConnectionDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectingFormButtons() {
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { GlobalState.connection.disconnect() })
         FormRowSpacer()
         TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)

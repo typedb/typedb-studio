@@ -399,7 +399,7 @@ object Form {
         value: TextFieldValue,
         modifier: Modifier,
         icon: Icon.Code? = null,
-        focusReq: FocusRequester = FocusRequester(),
+        focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
     ) {

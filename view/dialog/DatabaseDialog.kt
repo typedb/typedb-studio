@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,7 +125,7 @@ object DatabaseDialog {
 
     @Composable
     private fun CreateDatabaseForm() {
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         Submission(CreateDatabaseForm, modifier = Modifier.height(FIELD_HEIGHT), showButtons = false) {
             Row {
                 TextInput(
@@ -151,7 +152,7 @@ object DatabaseDialog {
     @Composable
     fun SelectDatabase() {
         val dialogState = GlobalState.connection.selectDatabaseDialog
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Field(label = Label.SELECT_DATABASE) { DatabaseDropdown(Modifier.fillMaxWidth(), focusReq) }

@@ -173,7 +173,7 @@ object PageArea {
     fun Layout() {
         val coroutineScope = rememberCoroutineScope()
         val state = remember { State(coroutineScope) }
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
             if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
         }

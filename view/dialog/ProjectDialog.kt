@@ -145,7 +145,7 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         Field(label = Label.DIRECTORY) {
             Row {
                 TextInput(
@@ -279,7 +279,7 @@ object ProjectDialog {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ProjectItemNamingField(text: String, onChange: (String) -> Unit) {
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         Field(label = Label.FILE_NAME) {
             TextInput(
                 value = text,

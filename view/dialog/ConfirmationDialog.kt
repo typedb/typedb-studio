@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -44,7 +45,7 @@ object ConfirmationDialog {
     @Composable
     fun Layout() {
         val dialogState = GlobalState.confirmation
-        val focusReq = FocusRequester()
+        val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 dialogState.message?.let { Form.Text(value = it, softWrap = true) }
