@@ -62,6 +62,7 @@ class DB(val client: DBClient, private val dbName: String) {
     private val explainables: ConcurrentHashMap<Int, ConceptMap.Explainable> = ConcurrentHashMap()
     private val explanationIterators: ConcurrentHashMap<Int, Iterator<Explanation>> = ConcurrentHashMap()
     private val currentExplanationID = AtomicInteger(0)
+    private val typeAttributeOwnershipMap: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
     private fun loadAnswerStream(answerStream: Stream<ConceptMap>) {
         val tasks: MutableList<CompletableFuture<Void>> = mutableListOf()
@@ -78,35 +79,11 @@ class DB(val client: DBClient, private val dbName: String) {
                 val vertexID: Int = vertexGenerator.things.computeIfAbsent(thing.iid) {
                     val thingVertex: VertexData = vertexGenerator.generateVertex(thing)
                     responseStream.putVertex(thingVertex)
-                    try {
-                        if (thing.isInferred) {
-                            explainables.computeIfAbsent(thingVertex.id) {
-                                when {
-                                    thing.isRelation -> conceptMap.explainables().relation(varName)
-                                    thing.isAttribute -> conceptMap.explainables().attribute(varName)
-                                    else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute!")
-                                }
-                            }
-                        }
-                    } catch (e: TypeDBClientException) {
-                        // TODO: Currently we need to catch this exception because not every Inferred concept is
-                        //       Explainable. Once that bug is fixed, remove this catch statement.
-                        println(e.message)
-                    }
 
-                    thing.type.let { type ->
-                        val typeNodeID = vertexGenerator.types[type.label.name()]
-                        if (typeNodeID != null) {
-                            responseStream.putEdge(EdgeData(id = vertexGenerator.nextID(), source = thingVertex.id,
-                                target = typeNodeID, encoding = ISA, label = "isa"))
-                        } else {
-                            incompleteTypeEdges.getOrPut(type.label.name()) { mutableListOf() }
-                                .add(IncompleteEdgeData(id = vertexGenerator.nextID(), vertexID = thingVertex.id,
-                                    direction = OUTGOING, encoding = ISA, label = "isa"))
-                        }
-                    }
+                    findExplainables(thing, thingVertex, conceptMap, varName)
+                    addIsaEdge(thing, thingVertex)
 
-                    tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges).supplyAsync()
+                    tasks += LoadOwnedAttributesTask(thing, tx!!, thingVertex, vertexGenerator, responseStream, incompleteThingEdges, typeAttributeOwnershipMap).supplyAsync()
                     if (thing.isRelation) {
                         tasks += LoadRoleplayersTask(thing.asRelation().asRemote(tx), thingVertex, vertexGenerator, responseStream).supplyAsync()
                     }
@@ -150,6 +127,36 @@ class DB(val client: DBClient, private val dbName: String) {
         return CompletableFuture.allOf(*tasks.toTypedArray())
     }
 
+    private fun findExplainables(thing: Thing, thingVertex: VertexData, conceptMap: ConceptMap, varName: String?) {
+        try {
+            if (thing.isInferred) {
+                explainables.computeIfAbsent(thingVertex.id) {
+                    when {
+                        thing.isRelation -> conceptMap.explainables().relation(varName)
+                        thing.isAttribute -> conceptMap.explainables().attribute(varName)
+                        else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute!")
+                    }
+                }
+            }
+        } catch (e: TypeDBClientException) {
+            // TODO: Currently we need to catch this exception because not every Inferred concept is
+            //       Explainable. Once that bug is fixed, remove this catch statement.
+            println(e.message)
+        }
+    }
+
+    private fun addIsaEdge(thing: Thing, thingVertex: VertexData) {
+        thing.type.let { type ->
+            val typeNodeID = vertexGenerator.types[type.label.name()]
+            if (typeNodeID != null) {
+                responseStream.putEdge(EdgeData(id = vertexGenerator.nextID(), source = thingVertex.id, target = typeNodeID, encoding = ISA, label = "isa"))
+            } else {
+                incompleteTypeEdges.getOrPut(type.label.name()) { mutableListOf() }
+                    .add(IncompleteEdgeData(id = vertexGenerator.nextID(), vertexID = thingVertex.id, direction = OUTGOING, encoding = ISA, label = "isa"))
+            }
+        }
+    }
+
     fun matchQuery(query: String, enableReasoning: Boolean): QueryResponseStream {
         responseStream.clear()
         responseStream.completed = false
@@ -158,6 +165,7 @@ class DB(val client: DBClient, private val dbName: String) {
         explainables.clear()
         explanationIterators.clear()
         currentExplanationID.set(0)
+        typeAttributeOwnershipMap.clear()
         try {
             session?.close()
             session = client.session(dbName, DATA)
@@ -167,7 +175,6 @@ class DB(val client: DBClient, private val dbName: String) {
             vertexGenerator = VertexGenerator()
             CompletableFuture.supplyAsync {
                 try {
-//                    TypeQL.parseQueries<TypeQLQuery>(query).collect(Collectors.toList())
                     loadAnswerStream(tx!!.query().match(query))
                     println("Completed query: $query")
                     responseStream.completed = true
@@ -274,7 +281,6 @@ class VertexGenerator(val things: ConcurrentHashMap<String, Int> = ConcurrentHas
 
 private abstract class LoadConnectedConceptsTask(protected val vertex: VertexData, protected val vertexGenerator: VertexGenerator,
                                                  protected val responseStream: QueryResponseStream) {
-
     abstract fun run()
 
     fun supplyAsync(): CompletableFuture<Unit> {
@@ -285,7 +291,6 @@ private abstract class LoadConnectedConceptsTask(protected val vertex: VertexDat
 private class LoadRoleplayersTask(private val relation: Relation.Remote, vertex: VertexData,
                                   vertexGenerator: VertexGenerator, responseStream: QueryResponseStream
 ) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
-
     override fun run() {
         for (rolePlayers in relation.playersByRoleType.entries) {
             for (player: Thing in rolePlayers.value) {
@@ -303,10 +308,14 @@ private class LoadRoleplayersTask(private val relation: Relation.Remote, vertex:
 
 private class LoadOwnedAttributesTask(private val thing: Thing, private val tx: TypeDBTransaction, vertex: VertexData,
                                       vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
-                                      private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
+                                      private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>,
+                                      private val typeAttributeOwnershipMap: ConcurrentHashMap<String, Boolean>
 ) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
-
     override fun run() {
+        val typeLabel = thing.type.label.name()
+        typeAttributeOwnershipMap.computeIfAbsent(typeLabel) { thing.type.asRemote(tx).owns.findAny().isPresent }
+        if (typeAttributeOwnershipMap[typeLabel] == false) return
+
         val (x, y) = Pair("x", "y")
         tx.query().match(match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(y)))).forEach { cm: ConceptMap ->
             // TODO: if the owned attribute is inferred, get its Explainable
@@ -329,7 +338,6 @@ private class LoadPlayableRolesTask(private val thingType: ThingType.Remote, ver
                                     vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
                                     private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
 ) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
-
     override fun run() {
         thingType.plays.parallel().forEach { roleType ->
             val relationTypeNodeID = vertexGenerator.types[roleType.label.scope().get()]
@@ -349,7 +357,6 @@ private class LoadOwnedAttributeTypesTask(private val thingType: ThingType.Remot
                                           vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
                                           private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
 ) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
-
     override fun run() {
         thingType.owns.parallel().forEach { attributeType ->
             val attributeTypeNodeID = vertexGenerator.types[attributeType.label.name()]
@@ -369,7 +376,6 @@ private class LoadSupertypeTask(private val thingType: ThingType.Remote, vertex:
                                 vertexGenerator: VertexGenerator, responseStream: QueryResponseStream,
                                 private val incompleteEdges: ConcurrentHashMap<String, MutableList<IncompleteEdgeData>>
 ) : LoadConnectedConceptsTask(vertex, vertexGenerator, responseStream) {
-
     override fun run() {
         thingType.supertype?.let { supertype ->
             val supertypeNodeID = vertexGenerator.types[supertype.label.name()]
