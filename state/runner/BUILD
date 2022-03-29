@@ -30,9 +30,11 @@ kt_jvm_library(
         "//state/notification:notification",
 
         # External Vaticle Dependencies
+        "@vaticle_typeql_lang_java//common:common",
         "@vaticle_typeql_lang_java//query:query",
         "@vaticle_typeql_lang_java//:typeql-lang",
-        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_client_java//api:api",
+        "@vaticle_typedb_client_java//common:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

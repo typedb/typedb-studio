@@ -25,11 +25,22 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.NumericGroup
+import com.vaticle.typedb.client.api.concept.Concept
+import com.vaticle.typedb.client.api.concept.thing.Attribute
+import com.vaticle.typedb.client.api.concept.thing.Relation
+import com.vaticle.typedb.client.api.concept.thing.Thing
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
 import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
 import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.IID
+import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.ISA
+import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.SUB
+import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.TYPE
+import com.vaticle.typeql.lang.common.util.Strings.indent
+import com.vaticle.typeql.lang.common.util.Strings.valueToString
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
 import com.vaticle.typeql.lang.query.TypeQLInsert
@@ -39,6 +50,7 @@ import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors.joining
 import java.util.stream.Stream
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.toList
@@ -248,15 +260,58 @@ class Runner(
         } else response.log.collect(SUCCESS, noResultMessage)
     }
 
-    private fun printConceptMap(conceptMap: ConceptMap): String {
-        return conceptMap.toString() // TODO
+    private fun printNumericGroup(group: NumericGroup): String {
+        return printConcept(group.owner()) + " => " + group.numeric().asNumber()
     }
 
     private fun printConceptMapGroup(group: ConceptMapGroup): String {
-        return group.toString() // TODO
+        val str = StringBuilder(printConcept(group.owner()) + " => {\n")
+        group.conceptMaps().forEach { str.append(indent(printConceptMap(it))) }
+        str.append("\n}")
+        return str.toString()
     }
 
-    private fun printNumericGroup(group: NumericGroup): String {
-        return group.toString() // TODO
+    private fun printConceptMap(conceptMap: ConceptMap): String {
+        val content = conceptMap.map().map {
+            "$" + it.key + " " + printConcept(it.value) + "; "
+        }.stream().collect(joining("\n"))
+
+        val str = StringBuilder("{")
+        if (content.lines().size > 1) str.append("\n").append(indent(content)).append("\n")
+        else str.append(" ").append(content).append(" ")
+        str.append("}")
+        return str.toString()
+    }
+
+    private fun printConcept(concept: Concept): String {
+        return when (concept) {
+            is Type -> printType(concept)
+            is Thing -> printThing(concept)
+            else -> throw IllegalStateException("Unrecognised TypeQL Concept")
+        }
+    }
+
+    private fun printType(type: Type): String {
+        var str = TYPE.toString() + " " + type.label
+        type.asRemote(transaction).supertype?.let { str = " " + SUB + " " + it.label.scopedName() }
+        return str
+    }
+
+    private fun printThing(thing: Thing): String {
+        val str = StringBuilder()
+        when (thing) {
+            is Attribute<*> -> str.append(valueToString(thing.value))
+            else -> str.append(IID.toString() + " " + thing.asThing().iid)
+        }
+        if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
+        str.append(" ").append(ISA).append(" ").append(thing.asThing().type.label.scopedName())
+        return str.toString()
+    }
+
+    private fun printRolePlayers(relation: Relation): String {
+        val rolePlayers = relation.asRemote(transaction).playersByRoleType.flatMap { (role, players) ->
+            players.map { player -> role.label.name() + ": " + IID + " " + player.iid }
+        }.stream().collect(joining(", "))
+        return "($rolePlayers)"
     }
 }
