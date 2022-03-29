@@ -184,21 +184,33 @@ class Runner constructor(
     }
 
     private fun runInsertQuery(query: TypeQLInsert) {
-        runStreamingQuery(INSERT_QUERY, INSERT_QUERY_SUCCESS, INSERT_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().insert(query).map { printConceptMap(it) }
-        }
+        runStreamingQuery(
+            name = INSERT_QUERY,
+            successMsg = INSERT_QUERY_SUCCESS,
+            noResultMsg = INSERT_QUERY_NO_RESULT,
+            queryStr = query.toString(),
+            printerFn = { printConceptMap(it) }
+        ) { transaction.query().insert(query) }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
-        runStreamingQuery(UPDATE_QUERY, UPDATE_QUERY_SUCCESS, UPDATE_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().update(query).map { printConceptMap(it) }
-        }
+        runStreamingQuery(
+            name = UPDATE_QUERY,
+            successMsg = UPDATE_QUERY_SUCCESS,
+            noResultMsg = UPDATE_QUERY_NO_RESULT,
+            queryStr = query.toString(),
+            printerFn = { printConceptMap(it) }
+        ) { transaction.query().update(query) }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {
-        runStreamingQuery(MATCH_QUERY, MATCH_QUERY_SUCCESS, MATCH_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().match(query).map { printConceptMap(it) }
-        }
+        runStreamingQuery(
+            name = MATCH_QUERY,
+            successMsg = MATCH_QUERY_SUCCESS,
+            noResultMsg = MATCH_QUERY_NO_RESULT,
+            queryStr = query.toString(),
+            printerFn = { printConceptMap(it) }
+        ) { transaction.query().match(query) }
     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
@@ -209,18 +221,23 @@ class Runner constructor(
     }
 
     private fun runMatchGroupQuery(query: TypeQLMatch.Group) {
-        runStreamingQuery(MATCH_GROUP_QUERY, MATCH_GROUP_QUERY_SUCCESS, MATCH_GROUP_QUERY_NO_RESULT, query.toString()) {
-            transaction.query().match(query).map { printConceptMapGroup(it) }
-        }
+        runStreamingQuery(
+            name = MATCH_GROUP_QUERY,
+            successMsg = MATCH_GROUP_QUERY_SUCCESS,
+            noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
+            queryStr = query.toString(),
+            printerFn = { printConceptMapGroup(it) }
+        ) { transaction.query().match(query) }
     }
 
     private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) {
         runStreamingQuery(
-            MATCH_GROUP_AGGREGATE_QUERY,
-            MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
-            MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
-            query.toString()
-        ) { transaction.query().match(query).map { printNumericGroup(it) } }
+            name = MATCH_GROUP_AGGREGATE_QUERY,
+            successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
+            noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
+            queryStr = query.toString(),
+            printerFn = { printNumericGroup(it) }
+        ) { transaction.query().match(query) }
     }
 
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
@@ -230,11 +247,17 @@ class Runner constructor(
         response.log.collect(SUCCESS, RESULT_ + successMsg)
     }
 
-    private fun runStreamingQuery(
-        name: String, successMsg: String, noResultMsg: String, queryStr: String, queryFn: () -> Stream<String>
+    private fun <T : Any> runStreamingQuery(
+        name: String,
+        successMsg: String,
+        noResultMsg: String,
+        queryStr: String,
+        printerFn: (T) -> String,
+        responseFn: ((T) -> Unit)? = null,
+        queryFn: () -> Stream<T>
     ) {
         printQueryStart(name, queryStr)
-        logResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg)
+        consumeResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg, printerFn, responseFn)
     }
 
     private fun printQueryStart(name: String, queryStr: String) {
@@ -243,16 +266,23 @@ class Runner constructor(
         response.log.collect(TYPEQL, queryStr)
     }
 
-    private fun logResultStream(results: Stream<String>, successMessage: String, noResultMessage: String) {
+    private fun <T : Any> consumeResultStream(
+        results: Stream<T>,
+        successMessage: String,
+        noResultMessage: String,
+        printerFn: (T) -> String,
+        responseFn: ((T) -> Unit)? = null
+    ) {
         var started = false
         response.log.emptyLine()
         results.peek {
             if (started) return@peek
             response.log.collect(SUCCESS, successMessage)
             started = true
-        }.forEach {
+        }.forEach { result ->
             if (hasStopSignal.get()) return@forEach
-            response.log.collect(TYPEQL, it)
+            response.log.collect(TYPEQL, printerFn(result))
+            responseFn?.let { fn -> fn(result) }
         }
         if (started) {
             response.log.emptyLine()
