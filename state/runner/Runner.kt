@@ -61,7 +61,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
-class Runner(
+class Runner constructor(
     private val transaction: TypeDBTransaction,
     private val queries: String,
     private val hasStopSignal: AtomicBoolean

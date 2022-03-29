@@ -27,6 +27,10 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 
 class TransactionConfig(private val connection: Connection) {
 
+    companion object {
+        private const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
+    }
+
     var sessionType: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); internal set
     var transactionType: TypeDBTransaction.Type by mutableStateOf(TypeDBTransaction.Type.READ); internal set
 
@@ -55,6 +59,9 @@ class TransactionConfig(private val connection: Connection) {
     }
 
     fun toTypeDBOptions(): TypeDBOptions? {
-        return TypeDBOptions.core().infer(inferSelected).explain(explainSelected)
+        return TypeDBOptions.core()
+            .infer(inferSelected)
+            .explain(explainSelected)
+            .transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
     }
 }
