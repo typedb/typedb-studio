@@ -184,32 +184,41 @@ class Runner constructor(
     }
 
     private fun runInsertQuery(query: TypeQLInsert) {
+        val graph = Response.Graph()
+        response.graphs.add(graph)
         runStreamingQuery(
             name = INSERT_QUERY,
             successMsg = INSERT_QUERY_SUCCESS,
             noResultMsg = INSERT_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            printerFn = { printConceptMap(it) }
+            printerFn = { printConceptMap(it) },
+            responseFn = { graph.collect(it) }
         ) { transaction.query().insert(query) }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
+        val graph = Response.Graph()
+        response.graphs.add(graph)
         runStreamingQuery(
             name = UPDATE_QUERY,
             successMsg = UPDATE_QUERY_SUCCESS,
             noResultMsg = UPDATE_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            printerFn = { printConceptMap(it) }
+            printerFn = { printConceptMap(it) },
+            responseFn = { graph.collect(it) }
         ) { transaction.query().update(query) }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {
+        val graph = Response.Graph()
+        response.graphs.add(graph)
         runStreamingQuery(
             name = MATCH_QUERY,
             successMsg = MATCH_QUERY_SUCCESS,
             noResultMsg = MATCH_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            printerFn = { printConceptMap(it) }
+            printerFn = { printConceptMap(it) },
+            responseFn = { graph.collect(it) }
         ) { transaction.query().match(query) }
     }
 

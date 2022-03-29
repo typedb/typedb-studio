@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.runner
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
+import com.vaticle.typedb.client.api.answer.ConceptMap
 import java.util.concurrent.atomic.AtomicLong
 
 sealed interface Response {
@@ -46,7 +47,9 @@ sealed interface Response {
     }
 
     class Graph : Response {
-        // TODO
+        fun collect(conceptMap: ConceptMap) {
+            // TODO
+        }
     }
 
     class Table : Response {
