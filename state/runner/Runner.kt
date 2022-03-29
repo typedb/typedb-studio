@@ -273,7 +273,7 @@ class Runner(
 
     private fun printConceptMap(conceptMap: ConceptMap): String {
         val content = conceptMap.map().map {
-            "$" + it.key + " " + printConcept(it.value) + "; "
+            "$" + it.key + " " + printConcept(it.value) + ";"
         }.stream().collect(joining("\n"))
 
         val str = StringBuilder("{")
