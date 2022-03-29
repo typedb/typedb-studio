@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -77,10 +78,11 @@ class Connection internal constructor(
     var isOpen = AtomicBooleanState(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     var session: TypeDBSession? by mutableStateOf(null); private set
-    var hasOpenTransaction: Boolean by mutableStateOf(false)
-    var hasRunningQueryAtomic = AtomicBooleanState(false)
-    var hasRunningCommandAtomic = AtomicBooleanState(false)
-    var runningClosingCommands = AtomicIntegerState(0)
+    val hasOpenTransaction: Boolean get() = hasOpenTransactionAtomic.state
+    private var hasOpenTransactionAtomic = AtomicBooleanState(false)
+    private var hasRunningQueryAtomic = AtomicBooleanState(false)
+    private var hasRunningCommandAtomic = AtomicBooleanState(false)
+    private var runningClosingCommands = AtomicIntegerState(0)
     private val hasStopSignal = AtomicBoolean(false)
     private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
@@ -189,10 +191,13 @@ class Connection internal constructor(
         if (hasOpenTransaction) return
         try {
             transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
-            hasOpenTransaction = true
+            transaction!!.onClose {
+                closeTransactionFn(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown")
+            }
+            hasOpenTransactionAtomic.set(true)
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION)
-            hasOpenTransaction = false
+            hasOpenTransactionAtomic.set(false)
         }
     }
 
@@ -221,10 +226,11 @@ class Connection internal constructor(
 
     fun commitTransaction() = runAsyncCommand {
         sendStopSignal()
-        transaction?.commit()
-        transaction = null
-        hasOpenTransaction = false
-        notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
+        if (hasOpenTransactionAtomic.compareAndSet(expected = true, new = false)) {
+            transaction?.commit()
+            transaction = null
+            notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
+        }
     }
 
     fun rollbackTransaction() = runAsyncCommand {
@@ -234,16 +240,17 @@ class Connection internal constructor(
     }
 
     fun closeTransaction(message: Message? = null, vararg params: Any) = runAsyncClosingCommand {
-        closeTransactionFn(message, params)
+        closeTransactionFn(message, *params)
     }
 
     private fun closeTransactionFn(message: Message? = null, vararg params: Any) {
         if (transaction == null) return
         sendStopSignal()
-        transaction?.close()
-        transaction = null
-        hasOpenTransaction = false
-        message?.let { notificationMgr.userError(LOGGER, message, params) }
+        if (hasOpenTransactionAtomic.compareAndSet(expected = true, new = false)) {
+            transaction?.close()
+            transaction = null
+            message?.let { notificationMgr.userError(LOGGER, message, *params) }
+        }
     }
 
     private fun closeSession() { // not async, always called from other async functions
