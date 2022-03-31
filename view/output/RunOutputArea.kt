@@ -37,8 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.Response
-import com.vaticle.typedb.studio.state.runner.ResponseManager
 import com.vaticle.typedb.studio.state.runner.Runner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -67,30 +65,22 @@ object RunOutputArea {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
         internal val runnerTabs = Tabs.State<Runner>(coroutineScope)
-        private val responseTabs: MutableMap<Runner, Tabs.State<Response>> = mutableMapOf()
-        private val output: MutableMap<Response, RunOutput.State> = mutableMapOf()
+        private val outputGroup: MutableMap<Runner, RunOutputGroup> = mutableMapOf()
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
-            resource.runner.onLaunch { runner ->
-                runner.response.log.formatter = { entry -> LogOutput.format(entry, colors) }
-                toggle(true)
-            }
-        }
-
-        internal fun outputTabs(runner: Runner): Tabs.State<Response> {
-            return responseTabs.getOrPut(runner) { Tabs.State(coroutineScope) }
+            resource.runner.onLaunch { toggle(true) }
         }
 
         @Composable
-        internal fun output(runner: Runner): RunOutput.State {
-            val response = runner.response.active
-            return output.getOrPut(response) {
-                when (response) {
-                    is Response.Log -> LogOutput.State(TextEditor.createState(response.lines, END_OF_OUTPUT_SPACE))
-                    is Response.Graph -> GraphOutput.State(response)
-                    is Response.Table -> TableOutput.State(response)
-                }
+        internal fun outputGroup(runner: Runner): RunOutputGroup {
+            return outputGroup.getOrPut(runner) {
+                RunOutputGroup(
+                    runner = runner,
+                    textEditorState = TextEditor.createState(END_OF_OUTPUT_SPACE),
+                    colors = Theme.colors,
+                    coroutineScope = coroutineScope
+                )
             }
         }
 
@@ -174,10 +164,11 @@ object RunOutputArea {
     @Composable
     private fun OutputGroup(state: State, modifier: Modifier) {
         state.resource.runner.activeRunner?.let { runner ->
+            val outputGroup = state.outputGroup(runner)
             Column(modifier) {
-                Output(state.output(runner), Modifier.fillMaxWidth().weight(1f))
+                Output(outputGroup.active, Modifier.fillMaxWidth().weight(1f))
                 Separator.Horizontal()
-                OutputTabs(runner.response, state.outputTabs(runner), Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+                OutputTabs(outputGroup, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
             }
         }
     }
@@ -194,20 +185,24 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun OutputTabs(responseMgr: ResponseManager, tabsState: Tabs.State<Response>, modifier: Modifier) {
-        fun outputIcon(output: Response): Icon.Code {
+    private fun OutputTabs(outputGroup: RunOutputGroup, modifier: Modifier) {
+        fun outputIcon(output: RunOutput.State): Icon.Code {
             return when (output) {
-                is Response.Log -> Icon.Code.ALIGN_LEFT
-                is Response.Graph -> Icon.Code.DIAGRAM_PROJECT
-                is Response.Table -> Icon.Code.TABLE_CELLS_LARGE
+                is LogOutput.State -> Icon.Code.ALIGN_LEFT
+                is GraphOutput.State -> Icon.Code.DIAGRAM_PROJECT
+                is TableOutput.State -> Icon.Code.TABLE_CELLS_LARGE
             }
         }
 
-        fun outputName(output: Response): String {
+        fun outputName(output: RunOutput.State): String {
             return when (output) {
-                is Response.Log -> Label.LOG
-                is Response.Graph -> Label.GRAPH + if (responseMgr.hasMultipleGraphs) " (${responseMgr.numberOf(output)})" else ""
-                is Response.Table -> Label.TABLE + if (responseMgr.hasMultipleTables) " (${responseMgr.numberOf(output)})" else ""
+                is LogOutput.State -> Label.LOG
+                is GraphOutput.State -> {
+                    Label.GRAPH + if (outputGroup.hasMultipleGraphs) " (${outputGroup.numberOf(output)})" else ""
+                }
+                is TableOutput.State -> {
+                    Label.TABLE + if (outputGroup.hasMultipleTables) " (${outputGroup.numberOf(output)})" else ""
+                }
             }
         }
 
@@ -217,13 +212,13 @@ object RunOutputArea {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
                 Tabs.Layout(
-                    state = tabsState,
-                    tabs = responseMgr.responses,
+                    state = outputGroup.tabsState,
+                    tabs = outputGroup.outputs,
                     position = Tabs.Position.BOTTOM,
                     iconFn = { Form.IconArg(outputIcon(it)) },
                     labelFn = { AnnotatedString(outputName(it)) },
-                    isActiveFn = { responseMgr.isActive(it) },
-                    onClick = { responseMgr.activate(it) },
+                    isActiveFn = { outputGroup.isActive(it) },
+                    onClick = { outputGroup.activate(it) },
                 )
             }
         }

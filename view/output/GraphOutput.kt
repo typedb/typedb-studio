@@ -21,12 +21,11 @@ package com.vaticle.typedb.studio.view.output
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.runner.Response
 import com.vaticle.typedb.studio.view.common.component.Form
 
 internal object GraphOutput : RunOutput() {
 
-    internal class State(response: Response.Graph) : RunOutput.State() {
+    internal class State() : RunOutput.State() {
 
     }
 

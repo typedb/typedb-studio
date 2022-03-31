@@ -30,10 +30,11 @@ import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
+import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.TYPEQL
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.IID
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.ISA
@@ -49,7 +50,9 @@ import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors.joining
 import java.util.stream.Stream
 import kotlin.coroutines.EmptyCoroutineContext
@@ -100,9 +103,17 @@ class Runner constructor(
         private val RUNNING_INDICATOR_DELAY = Duration.Companion.seconds(3)
     }
 
+    object Done
+
+    data class Response(val type: Type, val text: String) {
+        enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
+    }
+
     var isSaved by mutableStateOf(false)
-    val response = ResponseManager()
+    val responses = LinkedBlockingQueue<Either<Response, Done>>()
+    val conceptMapStreams = LinkedBlockingQueue<Either<LinkedBlockingQueue<Either<ConceptMap, Done>>, Done>>()
     private val isRunning = AtomicBoolean(false)
+    private val lastResponse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     private val onComplete = LinkedBlockingDeque<(Runner) -> Unit>()
 
@@ -120,14 +131,23 @@ class Runner constructor(
         coroutineScope.launch { runQueries() }
     }
 
+    private fun collectEmptyLine() {
+        collectResponse(INFO, "")
+    }
+
+    private fun collectResponse(type: Response.Type, string: String) {
+        responses.put(Either.first(Response(type, string)))
+        lastResponse.set(System.currentTimeMillis())
+    }
+
     private suspend fun runningQueryIndicator() {
         var duration = RUNNING_INDICATOR_DELAY
         while (isRunning.get()) {
             delay(duration)
             if (!isRunning.get()) break
-            val sinceLastResponse = System.currentTimeMillis() - response.log.lastResponse.get()
+            val sinceLastResponse = System.currentTimeMillis() - lastResponse.get()
             if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                response.log.collect(INFO, "...")
+                collectResponse(INFO, "...")
                 duration = RUNNING_INDICATOR_DELAY
             } else {
                 duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
@@ -138,9 +158,10 @@ class Runner constructor(
     private fun runQueries() {
         try {
             runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
+            responses.put(Either.second(Done))
         } catch (e: Exception) {
-            response.log.emptyLine()
-            response.log.collect(ERROR, ERROR_ + e.message)
+            collectEmptyLine()
+            collectResponse(ERROR, ERROR_ + e.message)
         } finally {
             isRunning.set(false)
             onComplete.forEach { it(this@Runner) }
@@ -184,49 +205,40 @@ class Runner constructor(
     }
 
     private fun runInsertQuery(query: TypeQLInsert) {
-        val graph = Response.Graph()
-        response.graphs.add(graph)
         runStreamingQuery(
             name = INSERT_QUERY,
             successMsg = INSERT_QUERY_SUCCESS,
             noResultMsg = INSERT_QUERY_NO_RESULT,
             queryStr = query.toString(),
             printerFn = { printConceptMap(it) },
-            responseFn = { graph.collect(it) }
         ) { transaction.query().insert(query) }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
-        val graph = Response.Graph()
-        response.graphs.add(graph)
         runStreamingQuery(
             name = UPDATE_QUERY,
             successMsg = UPDATE_QUERY_SUCCESS,
             noResultMsg = UPDATE_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            printerFn = { printConceptMap(it) },
-            responseFn = { graph.collect(it) }
+            printerFn = { printConceptMap(it) }
         ) { transaction.query().update(query) }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {
-        val graph = Response.Graph()
-        response.graphs.add(graph)
         runStreamingQuery(
             name = MATCH_QUERY,
             successMsg = MATCH_QUERY_SUCCESS,
             noResultMsg = MATCH_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            printerFn = { printConceptMap(it) },
-            responseFn = { graph.collect(it) }
+            printerFn = { printConceptMap(it) }
         ) { transaction.query().match(query) }
     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
         val result = transaction.query().match(query).get()
-        response.log.emptyLine()
-        response.log.collect(SUCCESS, RESULT_ + result)
+        collectEmptyLine()
+        collectResponse(SUCCESS, RESULT_ + result)
     }
 
     private fun runMatchGroupQuery(query: TypeQLMatch.Group) {
@@ -252,8 +264,8 @@ class Runner constructor(
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
         printQueryStart(name, queryStr)
         queryFn()
-        response.log.emptyLine()
-        response.log.collect(SUCCESS, RESULT_ + successMsg)
+        collectEmptyLine()
+        collectResponse(SUCCESS, RESULT_ + successMsg)
     }
 
     private fun <T : Any> runStreamingQuery(
@@ -262,41 +274,41 @@ class Runner constructor(
         noResultMsg: String,
         queryStr: String,
         printerFn: (T) -> String,
-        responseFn: ((T) -> Unit)? = null,
         queryFn: () -> Stream<T>
     ) {
         printQueryStart(name, queryStr)
-        consumeResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg, printerFn, responseFn)
+        consumeResultStream(queryFn(), RESULT_ + successMsg, RESULT_ + noResultMsg, printerFn)
     }
 
     private fun printQueryStart(name: String, queryStr: String) {
-        response.log.emptyLine()
-        response.log.collect(INFO, RUNNING_ + name)
-        response.log.collect(TYPEQL, queryStr)
+        collectEmptyLine()
+        collectResponse(INFO, RUNNING_ + name)
+        collectResponse(TYPEQL, queryStr)
     }
 
     private fun <T : Any> consumeResultStream(
         results: Stream<T>,
         successMessage: String,
-        noResultMessage: String,
-        printerFn: (T) -> String,
-        responseFn: ((T) -> Unit)? = null
+        noResultMessage: String, printerFn: (T) -> String
     ) {
         var started = false
-        response.log.emptyLine()
+        val conceptMapStream = LinkedBlockingQueue<Either<ConceptMap, Done>>()
+        collectEmptyLine()
         results.peek {
             if (started) return@peek
-            response.log.collect(SUCCESS, successMessage)
+            if (it is ConceptMap) conceptMapStreams.put(Either.first(conceptMapStream))
+            collectResponse(SUCCESS, successMessage)
             started = true
-        }.forEach { result ->
+        }.forEach {
             if (hasStopSignal.get()) return@forEach
-            response.log.collect(TYPEQL, printerFn(result))
-            responseFn?.let { fn -> fn(result) }
+            collectResponse(TYPEQL, printerFn(it))
+            if (it is ConceptMap) conceptMapStream.put(Either.first(it))
         }
         if (started) {
-            response.log.emptyLine()
-            response.log.collect(SUCCESS, COMPLETED)
-        } else response.log.collect(SUCCESS, noResultMessage)
+            collectEmptyLine()
+            collectResponse(SUCCESS, COMPLETED)
+            conceptMapStream.put(Either.second(Done))
+        } else collectResponse(SUCCESS, noResultMessage)
     }
 
     private fun printNumericGroup(group: NumericGroup): String {

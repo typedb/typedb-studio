@@ -26,11 +26,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.runner.Response
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.ERROR
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.INFO
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.SUCCESS
-import com.vaticle.typedb.studio.state.runner.Response.Log.Entry.Type.TYPEQL
+import com.vaticle.typedb.studio.state.runner.Runner
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
@@ -42,7 +42,8 @@ internal object LogOutput : RunOutput() {
 
     internal val END_OF_OUTPUT_SPACE = 20.dp
 
-    internal class State constructor(internal val editorState: TextEditor.State) : RunOutput.State() {
+    internal class State(internal val editorState: TextEditor.State, private val colors: Color.Theme) :
+        RunOutput.State() {
 
         init {
             editorState.onScrollToBottom { editorState.stickToBottom = true }
@@ -52,6 +53,10 @@ internal object LogOutput : RunOutput() {
         fun jumpToTop() {
             editorState.stickToBottom = false
             editorState.jumpToTop()
+        }
+
+        fun collect(response: Runner.Response) {
+            editorState.content.addAll(response.text.split("\n").map { format(response.type, it, colors) })
         }
     }
 
@@ -78,15 +83,15 @@ internal object LogOutput : RunOutput() {
         )
     }
 
-    internal fun format(entry: Response.Log.Entry, colors: Color.Theme): AnnotatedString {
-        return when (entry.type) {
-            INFO -> AnnotatedString(entry.text)
-            SUCCESS, ERROR -> highlightText(entry.type, entry.text, colors)
-            TYPEQL -> SyntaxHighlighter.highlight(entry.text, Property.FileType.TYPEQL)
+    internal fun format(type: Runner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
+        return when (type) {
+            INFO -> AnnotatedString(text)
+            SUCCESS, ERROR -> highlightText(type, text, colors)
+            TYPEQL -> SyntaxHighlighter.highlight(text, Property.FileType.TYPEQL)
         }
     }
 
-    private fun highlightText(type: Response.Log.Entry.Type, text: String, colors: Color.Theme): AnnotatedString {
+    private fun highlightText(type: Runner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
         val builder = AnnotatedString.Builder()
         val style = SpanStyle(
             color = when (type) {

@@ -138,8 +138,11 @@ object TextEditor {
     }
 
     @Composable
-    fun createState(content: SnapshotStateList<AnnotatedString>, bottomSpace: Dp): State {
-        return createState(content = content, bottomSpace = bottomSpace) { _, _, _, _ -> TextProcessor.ReadOnly() }
+    fun createState(bottomSpace: Dp): State {
+        return createState(
+            content = SnapshotStateList(),
+            bottomSpace = bottomSpace
+        ) { _, _, _, _ -> TextProcessor.ReadOnly() }
     }
 
     @Composable
@@ -200,7 +203,7 @@ object TextEditor {
     }
 
     class State internal constructor(
-        internal val content: SnapshotStateList<AnnotatedString>,
+        val content: SnapshotStateList<AnnotatedString>,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
