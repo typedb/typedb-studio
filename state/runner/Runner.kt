@@ -344,7 +344,7 @@ class Runner constructor(
 
     private fun printType(type: Type): String {
         var str = TYPE.toString() + " " + type.label
-        type.asRemote(transaction).supertype?.let { str = " " + SUB + " " + it.label.scopedName() }
+        type.asRemote(transaction).supertype?.let { str += " " + SUB + " " + it.label.scopedName() }
         return str
     }
 
