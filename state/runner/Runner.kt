@@ -158,11 +158,11 @@ class Runner constructor(
     private fun runQueries() {
         try {
             runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
-            responses.put(Either.second(Done))
         } catch (e: Exception) {
             collectEmptyLine()
             collectResponse(ERROR, ERROR_ + e.message)
         } finally {
+            responses.put(Either.second(Done))
             isRunning.set(false)
             onComplete.forEach { it(this@Runner) }
         }
@@ -231,7 +231,9 @@ class Runner constructor(
             noResultMsg = MATCH_QUERY_NO_RESULT,
             queryStr = query.toString(),
             printerFn = { printConceptMap(it) }
-        ) { transaction.query().match(query) }
+        ) {
+            transaction.query().match(query)
+        }
     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
