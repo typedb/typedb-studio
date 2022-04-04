@@ -179,8 +179,8 @@ interface KeyMapper {
                     Keys.F -> Command.FIND
                     Keys.R -> Command.REPLACE
                     Keys.S -> Command.SAVE
-                    Keys.T -> Command.NEW_PAGE
                     Keys.W -> Command.CLOSE
+                    Keys.N, Keys.T -> Command.NEW_PAGE
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
                     Keys.Equals -> Command.TEXT_SIZE_INCREASE
                     Keys.Minus -> Command.TEXT_SIZE_DECREASE
