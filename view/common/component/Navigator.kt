@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
@@ -122,7 +121,7 @@ object Navigator {
         open val isExpandable: Boolean = false
         val name get() = item.name
         val info get() = item.info
-        var focusReq: FocusRequester? = null
+        var focusReq = FocusRequester()
         var next: ItemState<T>? by mutableStateOf(null)
         var previous: ItemState<T>? by mutableStateOf(null)
         var index: Int by mutableStateOf(0)
@@ -286,7 +285,7 @@ object Navigator {
         private var itemWidth by mutableStateOf(0.dp); private set
         private var areaWidth by mutableStateOf(0.dp); private set
         internal val minWidth get() = max(itemWidth, areaWidth)
-        internal var viewState: LazyListState? by mutableStateOf(null)
+        internal var scrollState = LazyListState(0, 0)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
         val buttons: List<IconButtonArg> = listOf(
@@ -398,11 +397,11 @@ object Navigator {
 
         private fun mayScrollToAndFocusOnSelected() {
             var scrollTo = -1
-            val layout = viewState!!.layoutInfo
+            val layout = scrollState.layoutInfo
             if (layout.visibleItemsInfo.isNotEmpty()) {
                 val visible = max(layout.visibleItemsInfo.size - 1, 1)
                 val offset = min(SCROLL_ITEM_OFFSET, floor(visible / 2.0).toInt())
-                val firstInc = viewState!!.firstVisibleItemIndex
+                val firstInc = scrollState.firstVisibleItemIndex
                 val startInc = firstInc + offset
                 val lastExc = firstInc + visible
                 val endExc = lastExc - offset
@@ -414,10 +413,10 @@ object Navigator {
 
             if (scrollTo >= 0) {
                 coroutineScope.launch {
-                    if (scrollTo >= 0) viewState!!.animateScrollToItem(scrollTo)
-                    selected!!.focusReq?.requestFocus()
+                    if (scrollTo >= 0) scrollState.animateScrollToItem(scrollTo)
+                    selected!!.focusReq.requestFocus()
                 }
-            } else selected!!.focusReq?.requestFocus()
+            } else selected!!.focusReq.requestFocus()
         }
     }
 
@@ -440,20 +439,18 @@ object Navigator {
     ) {
         val density = LocalDensity.current.density
         val ctxMenuState = remember { ContextMenu.State() }
-        val lazyListState = rememberLazyListState()
         val horScrollState = rememberScrollState()
-        state.viewState = lazyListState
         Box(modifier = Modifier.fillMaxSize().onGloballyPositioned {
             state.density = density
             state.updateAreaWidth(it.size.width)
         }) {
             contextMenuFn?.let { ContextMenu.Popup(ctxMenuState) { it(state.selected!!) { state.reloadEntries() } } }
             LazyColumn(
-                state = lazyListState, modifier = Modifier.widthIn(min = state.minWidth)
+                state = state.scrollState, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
             ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArg, styleArgs) } } }
-            Scrollbar.Vertical(rememberScrollbarAdapter(lazyListState), Modifier.align(Alignment.CenterEnd))
+            Scrollbar.Vertical(rememberScrollbarAdapter(state.scrollState), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
         }
     }
@@ -464,7 +461,6 @@ object Navigator {
         state: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
         iconArg: (ItemState<T>) -> IconArg, styleArgs: ((ItemState<T>) -> List<Typography.Style>)
     ) {
-        item.focusReq = remember { FocusRequester() }
         val styles = styleArgs(item)
         val bgColor = when {
             state.selected == item -> Theme.colors.primary
@@ -480,10 +476,10 @@ object Navigator {
             modifier = Modifier.background(color = bgColor)
                 .alpha(if (styles.contains(Typography.Style.FADED)) FADED_OPACITY else 1f)
                 .widthIn(min = state.minWidth).height(ITEM_HEIGHT)
-                .focusRequester(item.focusReq!!).focusable()
+                .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(state, contextMenuState, item.focusReq!!, item) }
+                .pointerInput(item) { onPointerInput(state, contextMenuState, item.focusReq, item) }
                 .onPointerEvent(Release) { onDoublePrimaryReleased(it.awtEvent) }
                 .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
