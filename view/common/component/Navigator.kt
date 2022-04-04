@@ -440,7 +440,8 @@ object Navigator {
     ) {
         val density = LocalDensity.current.density
         val horScrollState = rememberScrollState()
-        Box(modifier = Modifier.fillMaxSize().onGloballyPositioned {
+        val root = state.entries.first()
+        Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }.onGloballyPositioned {
             state.density = density
             state.updateAreaWidth(it.size.width)
         }) {
@@ -479,7 +480,7 @@ object Navigator {
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(state, item.focusReq, item) }
+                .pointerInput(item) { onPointerInput(state, item) }
                 .onPointerEvent(Release) { onDoublePrimaryReleased(it.awtEvent) }
                 .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
@@ -534,11 +535,11 @@ object Navigator {
     }
 
     private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
-        state: NavigatorState<T>, focusReq: FocusRequester, item: ItemState<T>
+        state: NavigatorState<T>, item: ItemState<T>
     ) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryPressed = { state.select(item); focusReq.requestFocus() },
+            onSinglePrimaryPressed = { state.select(item); item.focusReq.requestFocus() },
             onSecondaryClick = { state.select(item) }
         )
     }
