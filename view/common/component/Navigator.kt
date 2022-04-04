@@ -285,9 +285,10 @@ object Navigator {
         private var itemWidth by mutableStateOf(0.dp); private set
         private var areaWidth by mutableStateOf(0.dp); private set
         internal val minWidth get() = max(itemWidth, areaWidth)
-        internal var scrollState = LazyListState(0, 0)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
+        internal var scroller = LazyListState(0, 0)
+        internal val contextMenu = ContextMenu.State()
         val buttons: List<IconButtonArg> = listOf(
             IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
             IconButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
@@ -397,11 +398,11 @@ object Navigator {
 
         private fun mayScrollToAndFocusOnSelected() {
             var scrollTo = -1
-            val layout = scrollState.layoutInfo
+            val layout = scroller.layoutInfo
             if (layout.visibleItemsInfo.isNotEmpty()) {
                 val visible = max(layout.visibleItemsInfo.size - 1, 1)
                 val offset = min(SCROLL_ITEM_OFFSET, floor(visible / 2.0).toInt())
-                val firstInc = scrollState.firstVisibleItemIndex
+                val firstInc = scroller.firstVisibleItemIndex
                 val startInc = firstInc + offset
                 val lastExc = firstInc + visible
                 val endExc = lastExc - offset
@@ -413,7 +414,7 @@ object Navigator {
 
             if (scrollTo >= 0) {
                 coroutineScope.launch {
-                    if (scrollTo >= 0) scrollState.animateScrollToItem(scrollTo)
+                    if (scrollTo >= 0) scroller.animateScrollToItem(scrollTo)
                     selected!!.focusReq.requestFocus()
                 }
             } else selected!!.focusReq.requestFocus()
@@ -438,19 +439,18 @@ object Navigator {
         contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
         val density = LocalDensity.current.density
-        val ctxMenuState = remember { ContextMenu.State() }
         val horScrollState = rememberScrollState()
         Box(modifier = Modifier.fillMaxSize().onGloballyPositioned {
             state.density = density
             state.updateAreaWidth(it.size.width)
         }) {
-            contextMenuFn?.let { ContextMenu.Popup(ctxMenuState) { it(state.selected!!) { state.reloadEntries() } } }
+            contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
             LazyColumn(
-                state = state.scrollState, modifier = Modifier.widthIn(min = state.minWidth)
+                state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
-            ) { state.entries.forEach { item { ItemLayout(state, ctxMenuState, it, it.depth, iconArg, styleArgs) } } }
-            Scrollbar.Vertical(rememberScrollbarAdapter(state.scrollState), Modifier.align(Alignment.CenterEnd))
+            ) { state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } } }
+            Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
         }
     }
@@ -458,8 +458,8 @@ object Navigator {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     private fun <T : Navigable.Item<T>> ItemLayout(
-        state: NavigatorState<T>, contextMenuState: ContextMenu.State, item: ItemState<T>, depth: Int,
-        iconArg: (ItemState<T>) -> IconArg, styleArgs: ((ItemState<T>) -> List<Typography.Style>)
+        state: NavigatorState<T>, item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg,
+        styleArgs: (ItemState<T>) -> List<Typography.Style>
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
@@ -479,7 +479,7 @@ object Navigator {
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .pointerInput(item) { onPointerInput(state, contextMenuState, item.focusReq, item) }
+                .pointerInput(item) { onPointerInput(state, item.focusReq, item) }
                 .onPointerEvent(Release) { onDoublePrimaryReleased(it.awtEvent) }
                 .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
@@ -487,7 +487,7 @@ object Navigator {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.onGloballyPositioned { state.mayIncreaseItemWidth(it.size.width) }
             ) {
-                if (depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * depth))
+                if (item.depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * item.depth))
                 ItemButton(item)
                 ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
@@ -534,10 +534,9 @@ object Navigator {
     }
 
     private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
-        state: NavigatorState<T>, contextMenuState: ContextMenu.State,
-        focusReq: FocusRequester, item: ItemState<T>
+        state: NavigatorState<T>, focusReq: FocusRequester, item: ItemState<T>
     ) {
-        contextMenuState.onPointerInput(
+        state.contextMenu.onPointerInput(
             pointerInputScope = this,
             onSinglePrimaryPressed = { state.select(item); focusReq.requestFocus() },
             onSecondaryClick = { state.select(item) }
