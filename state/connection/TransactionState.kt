@@ -87,7 +87,7 @@ class TransactionState constructor(
         stopSignal.set(true)
     }
 
-    private fun mayOpen() {
+    private fun tryOpen() {
         if (isOpen) return
         try {
             val options = TypeDBOptions.core().infer(infer.activated)
@@ -106,7 +106,7 @@ class TransactionState constructor(
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 stopSignal.set(false)
-                mayOpen()
+                tryOpen()
                 if (isOpen) resource.runner.launch(Runner(_transaction!!, content, stopSignal)) {
                     if (!snapshot.activated) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
@@ -140,7 +140,7 @@ class TransactionState constructor(
             sendStopSignal()
             _transaction?.close()
             _transaction = null
-            message?.let { notificationMgr.userError(LOGGER, message, *params) }
+            message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }
 }

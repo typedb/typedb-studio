@@ -26,6 +26,7 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -53,9 +54,7 @@ class SessionState(
         if (isOpen && database == database && this.type == type) return
         close()
         try {
-            _session = connection.client.session(database, type).apply {
-                // TODO: onClose { close(); notificationMgr.userError(LOGGER, SESSION_CLOSED_ON_SERVER) }
-            }
+            _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
             isOpenAtomic.set(true)
         } catch (exception: TypeDBClientException) {
@@ -68,11 +67,12 @@ class SessionState(
         return _session?.transaction(type, options)
     }
 
-    internal fun close() {
+    internal fun close(message: Message? = null, vararg params: Any) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             transaction.close()
             _session?.close()
             _session = null
+            message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }
 }
