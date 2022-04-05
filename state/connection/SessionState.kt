@@ -64,15 +64,15 @@ class SessionState(
         }
     }
 
+    internal fun transaction(type: TypeDBTransaction.Type, options: TypeDBOptions): TypeDBTransaction? {
+        return _session?.transaction(type, options)
+    }
+
     internal fun close() {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             transaction.close()
             _session?.close()
             _session = null
         }
-    }
-
-    internal fun transaction(type: TypeDBTransaction.Type, options: TypeDBOptions): TypeDBTransaction? {
-        return _session?.transaction(type, options)
     }
 }
