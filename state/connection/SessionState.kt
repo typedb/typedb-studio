@@ -51,7 +51,7 @@ class SessionState(
     private var _session: TypeDBSession? by mutableStateOf(null); private set
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
-        if (isOpen && database == database && this.type == type) return
+        if (isOpen && this.database == database && this.type == type) return
         close()
         try {
             _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }

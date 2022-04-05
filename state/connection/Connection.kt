@@ -116,7 +116,9 @@ class Connection internal constructor(
 
     fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
 
-    fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand { session.tryOpen(database, type) }
+    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand {
+        session.tryOpen(database, type)
+    }
 
     fun refreshDatabaseList() = runAsyncCommand { refreshDatabaseListFn() }
 
