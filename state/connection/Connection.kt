@@ -24,24 +24,15 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBClient
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.Runner
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -49,7 +40,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Connection internal constructor(
-    private val client: TypeDBClient,
+    internal val client: TypeDBClient,
     val address: String,
     val username: String?,
     private val notificationMgr: NotificationManager
@@ -62,36 +53,20 @@ class Connection internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val isSchemaSession: Boolean get() = config.sessionType == TypeDBSession.Type.SCHEMA
-    val isDataSession: Boolean get() = config.sessionType == TypeDBSession.Type.DATA
-    val isReadTransaction: Boolean get() = config.transactionType.isRead
-    val isWriteTransaction: Boolean get() = config.transactionType.isWrite
-    val hasOpenSession: Boolean get() = session != null && session!!.isOpen
-    val hasRunningQuery get() = hasRunningQueryAtomic.state
+    val hasRunningQuery get() = session.transaction.hasRunningQuery
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
-    val isReadyToRunQuery get() = hasOpenSession && !hasRunningQuery && !hasRunningCommand
-    val database: String? get() = if (isInteractiveMode) session?.database()?.name() else null
-    val config = TransactionConfig(this)
-    var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
+    val isReadyToRunQuery get() = session.isOpen == true && !hasRunningQuery && !hasRunningCommand
     var isOpen = AtomicBooleanState(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    var session: TypeDBSession? by mutableStateOf(null); private set
-    val hasOpenTransaction: Boolean get() = hasOpenTransactionAtomic.state
-    private var hasOpenTransactionAtomic = AtomicBooleanState(false)
-    private var hasRunningQueryAtomic = AtomicBooleanState(false)
+    val session = SessionState(this, notificationMgr)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var runningClosingCommands = AtomicIntegerState(0)
-    private val hasStopSignal = AtomicBoolean(false)
-    private var transaction: TypeDBTransaction? by mutableStateOf(null); private set
     private var databaseListRefreshedTime = System.currentTimeMillis()
     private val asyncDepth = AtomicInteger(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-    fun sendStopSignal() {
-        hasStopSignal.set(true)
-    }
 
     private fun runAsyncCommand(function: () -> Unit) {
         val depth = asyncDepth.incrementAndGet()
@@ -124,31 +99,24 @@ class Connection internal constructor(
         }
     }
 
+    fun sendStopSignal() {
+        session.transaction.sendStopSignal()
+    }
+
     fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = runAsyncCommand {
-        if (config.transactionType == type) return@runAsyncCommand
-        closeTransactionFn()
-        config.transactionType = type
+        if (session.transaction.type == type) return@runAsyncCommand
+        session.transaction.close()
+        session.transaction.type = type
     }
 
     fun tryUpdateSessionType(type: TypeDBSession.Type) {
-        if (config.sessionType == type) return
-        tryOpenSession(database!!, type)
+        if (session.type == type) return
+        tryOpenSession(session.database!!, type)
     }
 
-    fun tryOpenSession(database: String) {
-        tryOpenSession(database, config.sessionType)
-    }
+    fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
 
-    fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand {
-        if (hasOpenSession && session?.database()?.name() == database && session?.type() == type) return@runAsyncCommand
-        closeSession()
-        try {
-            session = client.session(database, type)
-            config.sessionType = type
-        } catch (exception: TypeDBClientException) {
-            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, database)
-        }
-    }
+    fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand { session.tryOpen(database, type) }
 
     fun refreshDatabaseList() = runAsyncCommand { refreshDatabaseListFn() }
 
@@ -170,35 +138,7 @@ class Connection internal constructor(
     }
 
     private fun runQuery(resource: Resource, content: String = resource.runContent) = runAsyncCommand {
-        if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
-            try {
-                hasStopSignal.set(false)
-                mayOpenTransaction()
-                resource.runner.launch(Runner(transaction!!, content, hasStopSignal)) {
-                    if (!config.snapshotSelected) closeTransactionFn()
-                    else if (transaction?.isOpen != true) closeTransactionFn(TRANSACTION_CLOSED_IN_QUERY)
-                    hasStopSignal.set(false)
-                    hasRunningQueryAtomic.set(false)
-                }
-            } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
-                hasRunningQueryAtomic.set(false)
-            }
-        }
-    }
-
-    private fun mayOpenTransaction() {
-        if (hasOpenTransaction) return
-        try {
-            transaction = session!!.transaction(config.transactionType, config.toTypeDBOptions())
-            transaction!!.onClose {
-                closeTransactionFn(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown")
-            }
-            hasOpenTransactionAtomic.set(true)
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION)
-            hasOpenTransactionAtomic.set(false)
-        }
+        session.transaction.runQuery(resource, content)
     }
 
     fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = runAsyncCommand {
@@ -216,7 +156,7 @@ class Connection internal constructor(
 
     fun tryDeleteDatabase(database: String) = runAsyncCommand {
         try {
-            if (this.database == database) closeSession()
+            if (session.database == database) session.close()
             client.databases().get(database).delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {
@@ -224,43 +164,17 @@ class Connection internal constructor(
         }
     }
 
-    fun commitTransaction() = runAsyncCommand {
-        sendStopSignal()
-        if (hasOpenTransactionAtomic.compareAndSet(expected = true, new = false)) {
-            transaction?.commit()
-            transaction = null
-            notificationMgr.info(LOGGER, Message.Connection.TRANSACTION_COMMIT)
-        }
-    }
+    fun commitTransaction() = runAsyncCommand { session.transaction.commit() }
 
-    fun rollbackTransaction() = runAsyncCommand {
-        sendStopSignal()
-        transaction?.rollback()
-        notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
-    }
+    fun rollbackTransaction() = runAsyncCommand { session.transaction.rollback() }
 
     fun closeTransaction(message: Message? = null, vararg params: Any) = runAsyncClosingCommand {
-        closeTransactionFn(message, *params)
-    }
-
-    private fun closeTransactionFn(message: Message? = null, vararg params: Any) {
-        if (transaction == null) return
-        sendStopSignal()
-        if (hasOpenTransactionAtomic.compareAndSet(expected = true, new = false)) {
-            transaction?.close()
-            transaction = null
-            message?.let { notificationMgr.userError(LOGGER, message, *params) }
-        }
-    }
-
-    private fun closeSession() { // not async, always called from other async functions
-        closeTransactionFn()
-        session?.let { it.close(); session = null }
+        session.transaction.close(message, *params)
     }
 
     fun close() = runAsyncClosingCommand {
         if (isOpen.compareAndSet(expected = true, new = false)) {
-            closeSession()
+            session.close()
             client.close()
         }
     }

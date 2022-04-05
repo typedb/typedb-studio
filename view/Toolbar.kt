@@ -61,18 +61,18 @@ object Toolbar {
     private val isConnected get() = GlobalState.connection.isConnected
     private val isScript get() = GlobalState.connection.current?.isScriptMode == true
     private val isInteractive get() = GlobalState.connection.current?.isInteractiveMode == true
-    private val hasOpenSession get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.hasOpenSession
-    private val hasOpenTx get() = GlobalState.connection.current?.hasOpenTransaction == true
-    private val isSchemaSession get() = GlobalState.connection.current?.isSchemaSession == true
-    private val isDataSession get() = GlobalState.connection.current?.isDataSession == true
-    private val isReadTransaction get() = GlobalState.connection.current?.isReadTransaction == true
-    private val isWriteTransaction get() = GlobalState.connection.current?.isWriteTransaction == true
-    private val isSnapshotSelected get() = GlobalState.connection.current?.config?.snapshotSelected == true
-    private val isSnapshotEnabled get() = GlobalState.connection.current?.config?.snapshotEnabled == true
-    private val isInferSelected get() = GlobalState.connection.current?.config?.inferSelected == true
-    private val isInferEnabled get() = GlobalState.connection.current?.config?.inferEnabled == true
-    private val isExplainSelected get() = GlobalState.connection.current?.config?.explainSelected == true
-    private val isExplainEnabled get() = GlobalState.connection.current?.config?.explainEnabled == true
+    private val hasOpenSession get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.session.isOpen
+    private val hasOpenTx get() = GlobalState.connection.current?.session?.transaction?.isOpen == true
+    private val isSchemaSession get() = GlobalState.connection.current?.session?.isSchema == true
+    private val isDataSession get() = GlobalState.connection.current?.session?.isData == true
+    private val isReadTransaction get() = GlobalState.connection.current?.session?.transaction?.isRead == true
+    private val isWriteTransaction get() = GlobalState.connection.current?.session?.transaction?.isWrite == true
+    private val isSnapshotActivated get() = GlobalState.connection.current?.session?.transaction?.snapshot?.activated == true
+    private val isSnapshotEnabled get() = GlobalState.connection.current?.session?.transaction?.snapshot?.enabled == true
+    private val isInferActivated get() = GlobalState.connection.current?.session?.transaction?.infer?.activated == true
+    private val isInferEnabled get() = GlobalState.connection.current?.session?.transaction?.infer?.enabled == true
+    private val isExplainActivated get() = GlobalState.connection.current?.session?.transaction?.explain?.activated == true
+    private val isExplainEnabled get() = GlobalState.connection.current?.session?.transaction?.explain?.enabled == true
     private val isReadyToRunQuery get() = GlobalState.connection.current?.isReadyToRunQuery == true
     private val hasRunnablePage get() = GlobalState.resource.active?.isRunnable == true
     private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery == true
@@ -303,8 +303,8 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
-                                onClick = { GlobalState.connection.current?.config?.toggleSnapshot() },
-                                color = { toggleButtonColor(isSnapshotSelected) },
+                                onClick = { GlobalState.connection.current?.session?.transaction?.snapshot?.toggle() },
+                                color = { toggleButtonColor(isSnapshotActivated) },
                                 enabled = enabled && isSnapshotEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_SNAPSHOT,
@@ -314,8 +314,8 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.INFER.lowercase(),
-                                onClick = { GlobalState.connection.current?.config?.toggleInfer() },
-                                color = { toggleButtonColor(isInferSelected) },
+                                onClick = { GlobalState.connection.current?.session?.transaction?.infer?.toggle() },
+                                color = { toggleButtonColor(isInferActivated) },
                                 enabled = enabled && isInferEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE,
@@ -325,8 +325,8 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
-                                onClick = { GlobalState.connection.current?.config?.toggleExplain() },
-                                color = { toggleButtonColor(isExplainSelected) },
+                                onClick = { GlobalState.connection.current?.session?.transaction?.explain?.toggle() },
+                                color = { toggleButtonColor(isExplainActivated) },
                                 enabled = enabled && isExplainEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE_EXPLANATION,
