@@ -54,7 +54,7 @@ class SessionState(
         close()
         try {
             _session = connection.client.session(database, type).apply {
-                onClose { close(); notificationMgr.userError(LOGGER, SESSION_CLOSED_ON_SERVER) }
+                // TODO: onClose { close(); notificationMgr.userError(LOGGER, SESSION_CLOSED_ON_SERVER) }
             }
             this.type = type
             isOpenAtomic.set(true)
