@@ -25,8 +25,10 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_COMMIT
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -90,12 +92,12 @@ class TransactionState constructor(
         try {
             val options = TypeDBOptions.core().infer(infer.activated)
                 .explain(infer.activated).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            _transaction = session.transaction(type, options)!!.also {
-                it.onClose { close(Message.Connection.TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown") }
+            _transaction = session.transaction(type, options)!!.apply {
+                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown") }
             }
             isOpenAtomic.set(true)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, Message.Connection.FAILED_TO_OPEN_TRANSACTION)
+            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: "Unknown")
             isOpenAtomic.set(false)
         }
     }
@@ -105,7 +107,7 @@ class TransactionState constructor(
             try {
                 stopSignal.set(false)
                 mayOpen()
-                resource.runner.launch(Runner(_transaction!!, content, stopSignal)) {
+                if (isOpen) resource.runner.launch(Runner(_transaction!!, content, stopSignal)) {
                     if (!snapshot.activated) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     stopSignal.set(false)
