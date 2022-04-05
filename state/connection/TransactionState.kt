@@ -99,6 +99,7 @@ class TransactionState constructor(
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: "Unknown")
             isOpenAtomic.set(false)
+            hasRunningQueryAtomic.set(false)
         }
     }
 
@@ -140,6 +141,7 @@ class TransactionState constructor(
             sendStopSignal()
             _transaction?.close()
             _transaction = null
+            hasRunningQueryAtomic.set(false)
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }
