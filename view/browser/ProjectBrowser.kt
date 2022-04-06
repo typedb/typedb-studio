@@ -176,7 +176,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                 ) {
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_DIRECTORY_DELETION,
-                        message = Sentence.CONFIRM_DIRECTORY_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                        message = Sentence.CONFIRM_DIRECTORY_DELETION,
                         onConfirm = { directory.delete(); onChangeEntries() }
                     )
                 }
@@ -214,7 +214,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                 ) {
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_FILE_DELETION,
-                        message = Sentence.CONFIRM_FILE_DELETION + " " + Sentence.CANNOT_BE_UNDONE,
+                        message = Sentence.CONFIRM_FILE_DELETION,
                         onConfirm = { file.delete(); onChangeEntries() }
                     )
                 }
