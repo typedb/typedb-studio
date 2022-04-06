@@ -40,9 +40,9 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class Connection internal constructor(
-    internal val client: TypeDBClient,
     val address: String,
     val username: String?,
+    internal val client: TypeDBClient,
     private val notificationMgr: NotificationManager
 ) {
 
@@ -58,7 +58,7 @@ class Connection internal constructor(
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val hasRunningQuery get() = session.transaction.hasRunningQuery
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
-    val isReadyToRunQuery get() = session.isOpen == true && !hasRunningQuery && !hasRunningCommand
+    val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var isOpen = AtomicBooleanState(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationMgr)

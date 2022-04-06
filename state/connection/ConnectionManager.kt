@@ -75,7 +75,7 @@ class ConnectionManager(private val notificationMgr: NotificationManager) {
             disconnect()
             status = Status.CONNECTING
             try {
-                current = Connection(clientConstructor(), newAddress, newUsername, notificationMgr)
+                current = Connection(newAddress, newUsername, clientConstructor(), notificationMgr)
                 status = Status.CONNECTED
             } catch (e: TypeDBClientException) {
                 status = Status.DISCONNECTED
