@@ -91,7 +91,7 @@ sealed class ProjectItem(
 
     override fun compareTo(other: Navigable.Item<ProjectItem>): Int {
         other as ProjectItem
-        return if (this.projectItemType == other.projectItemType) this.path.compareTo(other.path)
+        return if (this.projectItemType == other.projectItemType) this.path.toString().compareTo(other.path.toString(), ignoreCase = true)
         else this.projectItemType.index.compareTo(other.projectItemType.index)
     }
 
