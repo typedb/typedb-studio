@@ -30,20 +30,17 @@ object Navigable {
         val info: String?
         val isExpandable: Boolean get() = false
         val isBulkExpandable: Boolean get() = false
-
-        fun asExpandable(): ExpandableItem<T> {
-            throw TypeCastException(ILLEGAL_CAST.message(Item::class.simpleName, ExpandableItem::class.simpleName))
-        }
+        val asExpandable: ExpandableItem<T>
+            get() = throw TypeCastException(
+                ILLEGAL_CAST.message(Item::class.simpleName, ExpandableItem::class.simpleName)
+            )
     }
 
     interface ExpandableItem<T : Item<T>> : Item<T> {
 
         override val isExpandable: Boolean get() = true
         override val isBulkExpandable: Boolean
-        override fun asExpandable(): ExpandableItem<T> {
-            return this
-        }
-
+        override val asExpandable: ExpandableItem<T> get() = this
         val isContainer: Boolean get() = false
         val entries: List<T>
         fun reloadEntries()

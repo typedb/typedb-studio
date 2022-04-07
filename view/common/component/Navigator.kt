@@ -213,8 +213,8 @@ object Navigator {
             }
 
             internal fun reloadEntries() {
-                item.asExpandable().reloadEntries()
-                val new = item.asExpandable().entries.toSet()
+                item.asExpandable.reloadEntries()
+                val new = item.asExpandable.entries.toSet()
                 val old = entries.map { it.item }.toSet()
                 if (new != old) {
                     val deleted = old - new
@@ -229,8 +229,8 @@ object Navigator {
             internal fun checkForUpdate(recomputeNavigator: Boolean): Boolean {
                 var hasUpdate = false
                 if (!isExpanded) return hasUpdate
-                item.asExpandable().reloadEntries()
-                if (item.asExpandable().entries.toSet() != entries.map { it.item }.toSet()) {
+                item.asExpandable.reloadEntries()
+                if (item.asExpandable.entries.toSet() != entries.map { it.item }.toSet()) {
                     reloadEntries()
                     hasUpdate = true
                 }
@@ -243,7 +243,7 @@ object Navigator {
             }
 
             internal open fun itemStateOf(item: T): ItemState<T> {
-                return if (item.isExpandable) Expandable(item.asExpandable(), this, navState)
+                return if (item.isExpandable) Expandable(item.asExpandable, this, navState)
                 else ItemState(item, this)
             }
 
@@ -260,7 +260,7 @@ object Navigator {
                 }
 
                 override fun itemStateOf(item: T): ItemState<T> {
-                    return if (item.isExpandable) Expandable(item.asExpandable(), null, navState)
+                    return if (item.isExpandable) Expandable(item.asExpandable, null, navState)
                     else ItemState(item, this)
                 }
 
