@@ -52,7 +52,7 @@ class Directory internal constructor(
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) : Navigable.ExpandableItem<ProjectItem>,
+) : Navigable.Item<ProjectItem>,
     ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
 
     companion object {
@@ -64,6 +64,7 @@ class Directory internal constructor(
     override val isReadable: Boolean get() = path.isReadable()
     override val isWritable: Boolean get() = path.isWritable()
     override val isBulkExpandable: Boolean get() = !isProjectData
+    override val isExpandable: Boolean = true
 
     override fun close() {}
 

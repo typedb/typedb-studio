@@ -100,7 +100,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
 
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
         when (itemState.item) {
-            is Directory -> itemState.asExpandable().toggle()
+            is Directory -> itemState.toggle()
             is File -> GlobalState.resource.open(itemState.item.asFile())
         }
     }
@@ -109,7 +109,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
         return when (itemState.item) {
             is Directory -> when {
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
-                itemState.asExpandable().isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
+                itemState.isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
                 else -> IconArg(Icon.Code.FOLDER_BLANK)
             }
             is File -> when {
@@ -141,22 +141,21 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
     ): List<List<ContextMenu.Item>> {
         val createItemDialog = GlobalState.project.createItemDialog
         val directory = itemState.item.asDirectory()
-        val state = itemState.asExpandable()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { state.toggle() },
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.toggle() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_DIRECTORY,
                     icon = FOLDER_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, DIRECTORY) { state.expand() } },
+                ) { createItemDialog.open(directory, DIRECTORY) { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
                     icon = Icon.Code.FILE_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, FILE) { state.expand() } },
+                ) { createItemDialog.open(directory, FILE) { itemState.expand() } },
             ),
             listOf(
                 ContextMenu.Item(

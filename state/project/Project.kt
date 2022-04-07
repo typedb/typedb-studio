@@ -33,7 +33,7 @@ class Project internal constructor(
     val directory: Directory = Directory(path, null, settings, projectMgr, notificationMgr)
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
-    override val parent: Navigable.ExpandableItem<ProjectItem>? = null
+    override val parent: Navigable.Item<ProjectItem>? = null
     override val entries = listOf(directory)
     override val isBulkExpandable: Boolean = true
 

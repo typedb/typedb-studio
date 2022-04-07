@@ -134,8 +134,13 @@ class File internal constructor(
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
+    override val isExpandable: Boolean = false
+    override val isBulkExpandable: Boolean = false
+    override val entries: List<ProjectItem> = listOf()
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
+
+    override fun reloadEntries() {}
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)

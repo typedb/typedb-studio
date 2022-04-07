@@ -69,7 +69,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
@@ -80,8 +79,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable
-import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Expandable.Container
+import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Container
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
@@ -115,158 +113,117 @@ object Navigator {
     private val LOGGER = KotlinLogging.logger {}
 
     open class ItemState<T : Navigable.Item<T>> internal constructor(
-        open val item: T, val parent: Expandable<T>?
+        open val item: T, val parent: ItemState<T>?, private val navState: NavigatorState<T>
     ) : Comparable<ItemState<T>> {
 
-        open val isExpandable: Boolean = false
-        val name get() = item.name
-        val info get() = item.info
-        var focusReq = FocusRequester()
-        var next: ItemState<T>? by mutableStateOf(null)
-        var previous: ItemState<T>? by mutableStateOf(null)
-        var index: Int by mutableStateOf(0)
-        var depth: Int by mutableStateOf(0)
-
-        open fun asExpandable(): Expandable<T> {
-            throw TypeCastException(ILLEGAL_CAST.message(ItemState::class.simpleName, Expandable::class.simpleName))
-        }
+        var isExpanded: Boolean by mutableStateOf(false)
+        internal val isExpandable: Boolean get() = item.isExpandable
+        internal val name get() = item.name
+        internal val info get() = item.info
+        internal val isBulkExpandable: Boolean get() = item.isBulkExpandable
+        internal var entries: List<ItemState<T>> by mutableStateOf(emptyList())
+        internal var focusReq = FocusRequester()
+        internal var next: ItemState<T>? by mutableStateOf(null)
+        internal var previous: ItemState<T>? by mutableStateOf(null)
+        internal var index: Int by mutableStateOf(0)
+        internal var depth: Int by mutableStateOf(0)
+        private var buttonArea: Rect? by mutableStateOf(null)
 
         override fun compareTo(other: ItemState<T>): Int {
             return item.compareTo(other.item)
         }
 
-        internal open fun isHoverButton(x: Int, y: Int): Boolean {
-            return false
+        internal fun isHoverButton(x: Int, y: Int): Boolean {
+            return isExpandable && buttonArea?.contains(x, y) ?: false
         }
 
-        internal open fun navigables(depth: Int): List<ItemState<T>> {
-            return listOf(this)
+        internal fun navigables(depth: Int): List<ItemState<T>> {
+            val list: MutableList<ItemState<T>> = mutableListOf(this)
+            if (isExpanded) list.addAll(navigableChildren(depth + 1))
+            return list
+        }
+
+        protected fun navigableChildren(depth: Int): List<ItemState<T>> {
+            return entries.onEach { it.depth = depth }.map { it.navigables(depth) }.flatten()
+        }
+
+        fun toggle() {
+            if (isExpanded) collapse()
+            else expand()
+        }
+
+        fun collapse(recomputeNavigator: Boolean = true) {
+            isExpanded = false
+            if (recomputeNavigator) navState.recomputeList()
+        }
+
+        fun expand(recomputeNavigator: Boolean = true) {
+            expand(recomputeNavigator, 1)
+        }
+
+        internal fun expand(depth: Int) {
+            expand(true, depth)
+        }
+
+        internal fun expand(recomputeNavigator: Boolean, depth: Int) {
+            expand(1, depth)
+            if (recomputeNavigator) navState.recomputeList()
+        }
+
+        private fun expand(currentDepth: Int, maxDepth: Int) {
+            isExpanded = true
+            reloadEntries()
+            if (currentDepth < maxDepth) entries.forEach { it.expand(currentDepth + 1, maxDepth) }
+        }
+
+        internal fun updateButtonArea(rawRectangle: Rect) {
+            buttonArea = toRectDP(rawRectangle, navState.density)
+        }
+
+        internal fun reloadEntries() {
+            item.reloadEntries()
+            val new = item.entries.toSet()
+            val old = entries.map { it.item }.toSet()
+            if (new != old) {
+                val deleted = old - new
+                val added = new - old
+                val updatedEntries = entries.filter { !deleted.contains(it.item) } +
+                        added.map { ItemState(it, this, navState) }.toList()
+                entries = updatedEntries.sorted()
+            }
+            entries.filter { it.isExpanded }.forEach { it.reloadEntries() }
+        }
+
+        internal fun checkForUpdate(recomputeNavigator: Boolean): Boolean {
+            var hasUpdate = false
+            if (!isExpanded) return hasUpdate
+            item.reloadEntries()
+            if (item.entries.toSet() != entries.map { it.item }.toSet()) {
+                reloadEntries()
+                hasUpdate = true
+            }
+            entries.filter { it.isExpanded }.forEach {
+                if (it.checkForUpdate(false)) hasUpdate = true
+            }
+
+            if (hasUpdate && recomputeNavigator) navState.recomputeList()
+            return hasUpdate
         }
 
         override fun toString(): String {
             return "Navigable Item: $name"
         }
 
-        open class Expandable<T : Navigable.Item<T>> internal constructor(
-            expandable: Navigable.ExpandableItem<T>,
-            parent: Expandable<T>?,
-            private val navState: NavigatorState<T>
-        ) : ItemState<T>(expandable as T, parent) {
+        internal class Container<T : Navigable.Item<T>> internal constructor(
+            item: Navigable.Container<T>, navState: NavigatorState<T>
+        ) : ItemState<T>(item as T, null, navState) {
 
-            override val isExpandable: Boolean = true
-            internal var buttonArea: Rect? by mutableStateOf(null)
-            internal val isBulkExpandable: Boolean = expandable.isBulkExpandable
-            internal var entries: List<ItemState<T>> by mutableStateOf(emptyList())
-            var isExpanded: Boolean by mutableStateOf(false)
-
-            override fun asExpandable(): Expandable<T> {
-                return this
-            }
-
-            override fun navigables(depth: Int): List<ItemState<T>> {
-                val list: MutableList<ItemState<T>> = mutableListOf(this)
-                if (isExpanded) list.addAll(navigableChildren(depth + 1))
-                return list
-            }
-
-            protected fun navigableChildren(depth: Int): List<ItemState<T>> {
-                return entries.onEach { it.depth = depth }.map { it.navigables(depth) }.flatten()
-            }
-
-            fun toggle() {
-                if (isExpanded) collapse()
-                else expand()
-            }
-
-            fun collapse(recomputeNavigator: Boolean = true) {
-                isExpanded = false
-                if (recomputeNavigator) navState.recomputeList()
-            }
-
-            fun expand(recomputeNavigator: Boolean = true) {
-                expand(recomputeNavigator, 1)
-            }
-
-            internal fun expand(depth: Int) {
-                expand(true, depth)
-            }
-
-            internal fun expand(recomputeNavigator: Boolean, depth: Int) {
-                expand(1, depth)
-                if (recomputeNavigator) navState.recomputeList()
-            }
-
-            private fun expand(currentDepth: Int, maxDepth: Int) {
-                isExpanded = true
-                reloadEntries()
-                if (currentDepth < maxDepth) {
-                    entries.filterIsInstance<Expandable<T>>().forEach { it.expand(currentDepth + 1, maxDepth) }
-                }
-            }
-
-            override fun isHoverButton(x: Int, y: Int): Boolean {
-                return buttonArea?.contains(x, y) ?: false
-            }
-
-            internal fun updateButtonArea(rawRectangle: Rect) {
-                buttonArea = toRectDP(rawRectangle, navState.density)
-            }
-
-            internal fun reloadEntries() {
-                item.asExpandable.reloadEntries()
-                val new = item.asExpandable.entries.toSet()
-                val old = entries.map { it.item }.toSet()
-                if (new != old) {
-                    val deleted = old - new
-                    val added = new - old
-                    val updatedEntries = entries.filter { !deleted.contains(it.item) } +
-                            added.map { itemStateOf(it) }.toList()
-                    entries = updatedEntries.sorted()
-                }
-                entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach { it.reloadEntries() }
-            }
-
-            internal fun checkForUpdate(recomputeNavigator: Boolean): Boolean {
-                var hasUpdate = false
-                if (!isExpanded) return hasUpdate
-                item.asExpandable.reloadEntries()
-                if (item.asExpandable.entries.toSet() != entries.map { it.item }.toSet()) {
-                    reloadEntries()
-                    hasUpdate = true
-                }
-                entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded }.forEach {
-                    if (it.checkForUpdate(false)) hasUpdate = true
-                }
-
-                if (hasUpdate && recomputeNavigator) navState.recomputeList()
-                return hasUpdate
-            }
-
-            internal open fun itemStateOf(item: T): ItemState<T> {
-                return if (item.isExpandable) Expandable(item.asExpandable, this, navState)
-                else ItemState(item, this)
+            fun navigables(): List<ItemState<T>> {
+                return navigableChildren(0)
             }
 
             override fun toString(): String {
-                return "Navigable Expandable: $name"
-            }
-
-            internal class Container<T : Navigable.Item<T>> internal constructor(
-                expandable: Navigable.ExpandableItem<T>, val navState: NavigatorState<T>
-            ) : Expandable<T>(expandable, null, navState) {
-
-                fun navigables(): List<ItemState<T>> {
-                    return navigableChildren(0)
-                }
-
-                override fun itemStateOf(item: T): ItemState<T> {
-                    return if (item.isExpandable) Expandable(item.asExpandable, null, navState)
-                    else ItemState(item, this)
-                }
-
-                override fun toString(): String {
-                    return "Navigable Container: $name"
-                }
+                return "Navigable Container: $name"
             }
         }
     }
@@ -326,7 +283,7 @@ object Navigator {
 
         private fun expand() {
             var i = 0
-            fun filter(el: List<ItemState<T>>) = el.filterIsInstance<Expandable<T>>().filter { it.isBulkExpandable }
+            fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
             while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
                 val item = queue.pop()
@@ -341,11 +298,11 @@ object Navigator {
         }
 
         private fun collapse() {
-            val queue = LinkedList(container.entries.filterIsInstance<Expandable<T>>())
+            val queue = LinkedList(container.entries)
             while (queue.isNotEmpty()) {
                 val item = queue.pop()
                 item.collapse(false)
-                queue.addAll(item.entries.filterIsInstance<Expandable<T>>().filter { it.isExpanded })
+                queue.addAll(item.entries.filter { it.isExpanded })
             }
             recomputeList()
         }
@@ -503,10 +460,10 @@ object Navigator {
     @Composable
     private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
         if (item.isExpandable) RawIconButton(
-            icon = if (item.asExpandable().isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
-            onClick = { item.asExpandable().toggle() },
+            icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
+            onClick = { item.toggle() },
             modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {
-                item.asExpandable().updateButtonArea(it.boundsInWindow())
+                item.updateButtonArea(it.boundsInWindow())
             },
         ) else Spacer(Modifier.size(ITEM_HEIGHT))
     }
@@ -557,12 +514,12 @@ object Navigator {
                     true
                 }
                 Key.DirectionLeft -> {
-                    if (item.isExpandable && item.asExpandable().isExpanded) item.asExpandable().collapse()
+                    if (item.isExpanded) item.collapse()
                     else state.selectParent(item)
                     true
                 }
                 Key.DirectionRight -> {
-                    if (item.isExpandable && !item.asExpandable().isExpanded) item.asExpandable().expand()
+                    if (!item.isExpanded) item.expand()
                     else state.selectNext(item)
                     true
                 }

@@ -18,36 +18,22 @@
 
 package com.vaticle.typedb.studio.state.common
 
-import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
-
-
 object Navigable {
 
     interface Item<T : Item<T>> : Comparable<Item<T>> {
-
         val name: String
-        val parent: ExpandableItem<T>?
+        val parent: Item<T>?
         val info: String?
-        val isExpandable: Boolean get() = false
-        val isBulkExpandable: Boolean get() = false
-        val asExpandable: ExpandableItem<T>
-            get() = throw TypeCastException(
-                ILLEGAL_CAST.message(Item::class.simpleName, ExpandableItem::class.simpleName)
-            )
-    }
-
-    interface ExpandableItem<T : Item<T>> : Item<T> {
-
-        override val isExpandable: Boolean get() = true
-        override val isBulkExpandable: Boolean
-        override val asExpandable: ExpandableItem<T> get() = this
-        val isContainer: Boolean get() = false
+        val isExpandable: Boolean
+        val isBulkExpandable: Boolean
         val entries: List<T>
+        val isContainer: Boolean get() = false
         fun reloadEntries()
     }
 
-    interface Container<T : Item<T>> : ExpandableItem<T> {
+    interface Container<T : Item<T>> : Item<T> {
 
+        override val isExpandable: Boolean get() = true
         override val isContainer: Boolean get() = true
     }
 }
