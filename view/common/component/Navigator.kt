@@ -137,13 +137,13 @@ object Navigator {
             return isExpandable && buttonArea?.contains(x, y) ?: false
         }
 
-        internal fun navigables(depth: Int): List<ItemState<T>> {
+        private fun navigables(depth: Int): List<ItemState<T>> {
             val list: MutableList<ItemState<T>> = mutableListOf(this)
-            if (isExpanded) list.addAll(navigableChildren(depth + 1))
+            if (isExpanded) list.addAll(children(depth + 1))
             return list
         }
 
-        protected fun navigableChildren(depth: Int): List<ItemState<T>> {
+        protected fun children(depth: Int): List<ItemState<T>> {
             return entries.onEach { it.depth = depth }.map { it.navigables(depth) }.flatten()
         }
 
@@ -219,7 +219,7 @@ object Navigator {
         ) : ItemState<T>(item as T, null, navState) {
 
             fun navigables(): List<ItemState<T>> {
-                return navigableChildren(0)
+                return children(0)
             }
 
             override fun toString(): String {
