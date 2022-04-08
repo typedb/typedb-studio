@@ -38,8 +38,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
 
     var lastTickStartNanos: Long = 0
     var isStarted = false
-    private val edgeBandsByEndpoints: MutableMap<Pair<Int, Int>, MutableSet<Int>> = mutableMapOf()
-    private val edgeBandsByEdge: MutableMap<Int, Pair<Int, Int>> = mutableMapOf()
     private val nextHyperedgeNodeID = AtomicInteger(-1)
     private val vertexNodes: MutableCollection<Node> = mutableListOf()
     val hyperedgeNodes: MutableMap<Int, Node> = mutableMapOf()
@@ -90,8 +88,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
         isStarted = false
         data.clear()
         vertexNodes.clear()
-        edgeBandsByEndpoints.clear()
-        edgeBandsByEdge.clear()
         hyperedgeNodes.clear()
         nextHyperedgeNodeID.set(-1)
     }
@@ -128,11 +124,6 @@ class TypeDBForceSimulation(val data: GraphState = GraphState()) : ForceSimulati
     }
 
     private fun addEdgeBandMember(edge: EdgeState) {
-        // These operations are idempotent so we can safely repeatedly call this method on every edge band member
-        val (endpoint1, endpoint2) = listOf(min(edge.sourceID, edge.targetID), max(edge.sourceID, edge.targetID))
-        edgeBandsByEdge[edge.id] = Pair(endpoint1, endpoint2)
-        edgeBandsByEndpoints.getOrPut(Pair(endpoint1, endpoint2)) { mutableSetOf() } += edge.id
-
         if (edge.id !in hyperedgeNodes) {
             val edgeMidpoint = edgeMidpoint(edge)
             val nodeID = nextHyperedgeNodeID.getAndAdd(-1)
