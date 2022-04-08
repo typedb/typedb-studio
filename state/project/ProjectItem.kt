@@ -32,10 +32,10 @@ import kotlin.io.path.readSymbolicLink
 import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
-sealed class ProjectItem(
+sealed class ProjectItem constructor(
     val projectItemType: Type,
     val path: Path,
-    override val parent: Directory?,
+    final override val parent: Directory?,
     val settings: Settings,
     val projectMgr: ProjectManager,
     val notificationMgr: NotificationManager
@@ -53,12 +53,12 @@ sealed class ProjectItem(
     private val hash = Objects.hash(path)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null
-    val isRoot get() = parent == null
+    val isRoot = parent == null
 
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = projectItemType == Type.DIRECTORY
     val isFile: Boolean = projectItemType == Type.FILE
-    val isProjectData: Boolean get() = if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false
+    val isProjectData: Boolean by lazy { if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false }
 
     abstract val isReadable: Boolean
     abstract val isWritable: Boolean

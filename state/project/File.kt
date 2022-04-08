@@ -61,7 +61,7 @@ import mu.KotlinLogging
 
 class File internal constructor(
     path: Path,
-    override val parent: Directory,
+    parent: Directory,
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
@@ -178,7 +178,7 @@ class File internal constructor(
 
     internal fun tryRename(newName: String): File? {
         val newPath = path.resolveSibling(newName)
-        return if (parent.contains(newName)) {
+        return if (parent!!.contains(newName)) {
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
@@ -348,7 +348,7 @@ class File internal constructor(
         try {
             close()
             path.deleteExisting()
-            parent.remove(this)
+            parent!!.remove(this)
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
         }

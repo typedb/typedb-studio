@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.Message
@@ -47,6 +48,9 @@ class SessionState(
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
     var transaction = TransactionState(this, notificationMgr)
+    var rootSchemaType: SchemaThingType.Root? by mutableStateOf(null)
+    var onSessionChange: ((SchemaThingType.Root) -> Unit)? = null
+    var onSchemaWrite: (() -> Unit)? = null
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _session: TypeDBSession? by mutableStateOf(null); private set
 
@@ -56,6 +60,8 @@ class SessionState(
         try {
             _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
+            rootSchemaType = SchemaThingType.Root(transaction()!!.concepts().rootThingType, this)
+            onSessionChange?.let { it(rootSchemaType!!) }
             isOpenAtomic.set(true)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, database)
@@ -63,8 +69,8 @@ class SessionState(
         }
     }
 
-    internal fun transaction(type: TypeDBTransaction.Type, options: TypeDBOptions): TypeDBTransaction? {
-        return _session?.transaction(type, options)
+    internal fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
+        return if (options != null) _session?.transaction(type, options) else _session?.transaction(type)
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {

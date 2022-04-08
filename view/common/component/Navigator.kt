@@ -381,7 +381,7 @@ object Navigator {
     @Composable
     fun <T : Navigable.Item<T>> rememberNavigatorState(
         container: Navigable.Container<T>, title: String, initExpandDepth: Int,
-        liveUpdate: Boolean, openFn: (ItemState<T>) -> Unit
+        liveUpdate: Boolean = false, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
         val coroutineScope = rememberCoroutineScope()
         return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, openFn, coroutineScope) }

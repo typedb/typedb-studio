@@ -52,8 +52,7 @@ class Directory internal constructor(
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) : Navigable.Item<ProjectItem>,
-    ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
+) : Navigable.Item<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
 
     companion object {
         private const val UNTITLED = "Untitled"
