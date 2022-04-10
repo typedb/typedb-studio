@@ -49,29 +49,34 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     override val icon: Icon.Code = Icon.Code.SITEMAP
     override val isActive: Boolean get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
+
     @Composable
     override fun BrowserLayout() {
         val conMgr = GlobalState.connection
         if (!conMgr.isConnected) ConnectToServerHelper()
         else if (!conMgr.current!!.isInteractiveMode) NonInteractiveModeMessage()
         else if (!conMgr.current!!.session.isOpen || conMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
-        else {
-            val session = conMgr.current!!.session
-            val navState = Navigator.rememberNavigatorState(
-                container = session.rootSchemaType!!,
-                title = Label.TYPE_BROWSER,
-                initExpandDepth = 2,
-            ) { } // TODO
-            session.onSessionChange = { navState.replaceContainer(it) }
-            session.onSchemaWrite = { navState.reloadEntries() }
-            buttons = listOf(refreshButton(navState)) + navState.buttons
-            Navigator.Layout(
-                state = navState,
-                iconArg = { typeIcon(it) },
-                styleArgs = { listOf() },
-                contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
-            )
-        }
+        else Content()
+    }
+
+    @Composable
+    private fun Content() {
+        val conMgr = GlobalState.connection
+        val session = conMgr.current!!.session
+        val navState = Navigator.rememberNavigatorState(
+            container = session.rootSchemaType!!,
+            title = Label.TYPE_BROWSER,
+            initExpandDepth = 1,
+        ) { } // TODO
+        session.onSessionChange = { navState.replaceContainer(it) }
+        session.onSchemaWrite = { navState.reloadEntries() }
+        buttons = listOf(refreshButton(navState)) + navState.buttons
+        Navigator.Layout(
+            state = navState,
+            iconArg = { typeIcon(it) },
+            styleArgs = { listOf() },
+            contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
+        )
     }
 
     private fun refreshButton(navState: Navigator.NavigatorState<SchemaThingType>): IconButtonArg {

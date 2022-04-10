@@ -89,8 +89,7 @@ open class SchemaThingType(
 
     class Root constructor(
         concept: ThingType, session: SessionState
-    ) : SchemaThingType(concept, null, session, true),
-        Navigable.Container<SchemaThingType> {
+    ) : SchemaThingType(concept, null, session, true), Navigable.Container<SchemaThingType> {
         override var isExpandable: Boolean = true
     }
 }

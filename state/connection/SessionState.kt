@@ -60,7 +60,10 @@ class SessionState(
         try {
             _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
-            rootSchemaType = SchemaThingType.Root(transaction()!!.concepts().rootThingType, this)
+            transaction()?.let {
+                rootSchemaType = SchemaThingType.Root(it.concepts().rootThingType, this)
+                it.close()
+            }
             onSessionChange?.let { it(rootSchemaType!!) }
             isOpenAtomic.set(true)
         } catch (exception: TypeDBClientException) {
