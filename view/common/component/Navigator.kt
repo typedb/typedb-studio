@@ -96,6 +96,8 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -268,7 +270,7 @@ object Navigator {
 
         @OptIn(ExperimentalTime::class)
         private fun launchWatcher(root: Container<T>) {
-            coroutineScope.launch {
+            coroutineScope.launch(IO) {
                 try {
                     do {
                         delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -281,7 +283,7 @@ object Navigator {
             }
         }
 
-        private fun expand() = coroutineScope.launch {
+        private fun expand() = coroutineScope.launch(IO) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -297,7 +299,7 @@ object Navigator {
             }
         }
 
-        private fun collapse() = coroutineScope.launch {
+        private fun collapse() = coroutineScope.launch(IO) {
             val queue = LinkedList(container.entries)
             while (queue.isNotEmpty()) {
                 val item = queue.pop()
@@ -307,7 +309,7 @@ object Navigator {
             recomputeList()
         }
 
-        fun reloadEntries() = coroutineScope.launch {
+        fun reloadEntries() = coroutineScope.launch(IO) {
             container.reloadEntries()
             recomputeList()
         }
