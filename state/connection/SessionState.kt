@@ -31,8 +31,17 @@ import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.notification.NotificationManager
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
+@OptIn(ExperimentalTime::class)
 class SessionState(
     private val connection: Connection,
     private val notificationMgr: NotificationManager
@@ -40,6 +49,7 @@ class SessionState(
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+        private val SCHEMA_TYPE_TX_WAIT_TIME = Duration.seconds(100)
     }
 
     var type: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); internal set
@@ -48,11 +58,14 @@ class SessionState(
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
     var transaction = TransactionState(this, notificationMgr)
-    var rootSchemaType: SchemaThingType.Root? by mutableStateOf(null)
-    var onSessionChange: ((SchemaThingType.Root) -> Unit)? = null
+    var rootSchemaType: SchemaType.Root? by mutableStateOf(null)
+    var onSessionChange: ((SchemaType.Root) -> Unit)? = null
     var onSchemaWrite: (() -> Unit)? = null
+    private var schemaTypeTx: AtomicReference<TypeDBTransaction> = AtomicReference()
+    private val lastSchemaTypeTxTime = AtomicLong(0)
     private val isOpenAtomic = AtomicBooleanState(false)
-    private var _session: TypeDBSession? by mutableStateOf(null); private set
+    private var _session: TypeDBSession? by mutableStateOf(null)
+    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
         if (isOpen && this.database == database && this.type == type) return
@@ -61,7 +74,7 @@ class SessionState(
             _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
             transaction()?.let {
-                rootSchemaType = SchemaThingType.Root(it.concepts().rootThingType, this)
+                rootSchemaType = SchemaType.Root(it.concepts().rootThingType, this)
                 it.close()
             }
             onSessionChange?.let { it(rootSchemaType!!) }
@@ -74,6 +87,28 @@ class SessionState(
 
     internal fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
         return if (options != null) _session?.transaction(type, options) else _session?.transaction(type)
+    }
+
+    internal fun schemaTypeTx(): TypeDBTransaction {
+        lastSchemaTypeTxTime.set(System.currentTimeMillis())
+        if (schemaTypeTx.compareAndSet(null, transaction())) {
+            coroutineScope.launch {
+                var duration = SCHEMA_TYPE_TX_WAIT_TIME
+                while (true) {
+                    delay(duration)
+                    val sinceLastTx = System.currentTimeMillis() - lastSchemaTypeTxTime.get()
+                    if (sinceLastTx >= SCHEMA_TYPE_TX_WAIT_TIME.inWholeMilliseconds) {
+                        closeSchemaTypeTx()
+                        break
+                    } else duration = SCHEMA_TYPE_TX_WAIT_TIME - Duration.milliseconds(sinceLastTx)
+                }
+            }
+        }
+        return schemaTypeTx.get()
+    }
+
+    private fun closeSchemaTypeTx() {
+        schemaTypeTx.getAndSet(null).close()
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {

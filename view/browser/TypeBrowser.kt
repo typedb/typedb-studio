@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.connection.SchemaThingType
+import com.vaticle.typedb.studio.state.connection.SchemaType
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -79,11 +79,11 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<SchemaThingType>): IconButtonArg {
+    private fun refreshButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
         return IconButtonArg(Icon.Code.ROTATE) { navState.reloadEntries() }
     }
 
-    private fun typeIcon(itemState: Navigator.ItemState<SchemaThingType>): IconArg {
+    private fun typeIcon(itemState: Navigator.ItemState<SchemaType>): IconArg {
         return when {
             itemState.item.isEntityType -> IconArg(Icon.Code.RECTANGLE, color = { Theme.colors.tertiary })
             itemState.item.isRelationType -> IconArg(Icon.Code.RHOMBUS, color = { Theme.colors.quaternary })
@@ -93,7 +93,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<SchemaThingType>, onChangeEntries: () -> Unit
+        itemState: Navigator.ItemState<SchemaType>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return listOf() // TODO
     }

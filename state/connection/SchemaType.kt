@@ -26,12 +26,12 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.common.Navigable
 import kotlin.streams.toList
 
-open class SchemaThingType(
+open class SchemaType(
     private val concept: ThingType,
-    override val parent: SchemaThingType?,
+    override val parent: SchemaType?,
     private val session: SessionState,
     isExpandableInit: Boolean,
-) : Navigable.Item<SchemaThingType> {
+) : Navigable.Item<SchemaType> {
 
     val isEntityType get() = concept.isEntityType
     val isRelationType get() = concept.isRelationType
@@ -40,47 +40,34 @@ open class SchemaThingType(
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
-    override var entries: List<SchemaThingType> = emptyList()
+    override var entries: List<SchemaType> = emptyList()
 
     override fun reloadEntries() {
-        // TODO: find a more efficient way than opening a new transaction for each type
-        session.transaction()?.let {
-            reloadEntries(it)
-            it.close()
-        }
+        val tx = session.schemaTypeTx()
+        entries = concept.asRemote(tx).subtypesExplicit
+            .map { schemaTypeOf(it, tx) }
+            .sorted().toList()
+        isExpandable = entries.isNotEmpty()
     }
 
-    private fun reloadEntries(transaction: TypeDBTransaction) {
-        val new = concept.asRemote(transaction).subtypesExplicit.toList().toSet()
-        val old = entries.map { it.concept }.toSet()
-        if (new != old) {
-            val deleted = old - new
-            val added = new - old
-            val oldConcepts = entries.filter { !deleted.contains(it.concept) }
-            val newConcepts = added.map { schemaThingTypeOf(it, transaction) }
-            entries = (oldConcepts + newConcepts).sorted()
-            isExpandable = entries.isNotEmpty()
-        }
-    }
-
-    private fun schemaThingTypeOf(concept: ThingType, transaction: TypeDBTransaction): SchemaThingType {
+    private fun schemaTypeOf(concept: ThingType, transaction: TypeDBTransaction): SchemaType {
         val isExpandable = concept.asRemote(transaction).subtypesExplicit.findAny().isPresent
-        return SchemaThingType(concept, this, session, isExpandable)
+        return SchemaType(concept, this, session, isExpandable)
     }
 
-    override fun compareTo(other: Navigable.Item<SchemaThingType>): Int {
+    override fun compareTo(other: Navigable.Item<SchemaType>): Int {
         return this.name.compareTo(other.name, ignoreCase = true)
     }
 
     override fun toString(): String {
-        return "Schema ThingType: $concept"
+        return "SchemaType: $concept"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as SchemaThingType
-        return this.concept == other.concept
+        other as SchemaType
+        return this.concept == other.concept && this.isExpandable == other.isExpandable
     }
 
     override fun hashCode(): Int {
@@ -89,7 +76,7 @@ open class SchemaThingType(
 
     class Root constructor(
         concept: ThingType, session: SessionState
-    ) : SchemaThingType(concept, null, session, true), Navigable.Container<SchemaThingType> {
+    ) : SchemaType(concept, null, session, true), Navigable.Container<SchemaType> {
         override var isExpandable: Boolean = true
     }
 }
