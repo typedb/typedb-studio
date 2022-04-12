@@ -96,7 +96,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -241,8 +240,8 @@ object Navigator {
         private var container: Container<T> by mutableStateOf(Container(container, this))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
-        private var itemWidth by mutableStateOf(0.dp); private set
-        private var areaWidth by mutableStateOf(0.dp); private set
+        private var itemWidth by mutableStateOf(0.dp)
+        private var areaWidth by mutableStateOf(0.dp)
         internal val minWidth get() = max(itemWidth, areaWidth)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
