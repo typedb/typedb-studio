@@ -127,7 +127,10 @@ class TransactionState constructor(
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             _transaction?.commit()
             _transaction = null
-            if (session.type == TypeDBSession.Type.SCHEMA) session.mayReopenSchemaTypeTx()
+            if (session.type == TypeDBSession.Type.SCHEMA) {
+                session.mayReopenSchemaTypeTx()
+                session.onSchemaWrite?.let { it() }
+            }
             notificationMgr.info(LOGGER, TRANSACTION_COMMIT)
         }
     }
