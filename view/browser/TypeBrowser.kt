@@ -70,7 +70,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         ) { } // TODO
         session.onSessionChange = { navState.replaceContainer(it) }
         session.onSchemaWrite = { navState.reloadEntries() }
-        buttons = listOf(refreshButton(navState)) + navState.buttons
+        buttons = listOf(reloadButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             iconArg = { typeIcon(it) },
@@ -79,8 +79,11 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.ROTATE) { navState.reloadEntries() }
+    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(Icon.Code.ROTATE) {
+            GlobalState.connection.current?.session?.mayReopenSchemaTypeTx()
+            navState.reloadEntries()
+        }
     }
 
     private fun typeIcon(itemState: Navigator.ItemState<SchemaType>): IconArg {

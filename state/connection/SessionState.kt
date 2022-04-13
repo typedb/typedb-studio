@@ -110,7 +110,7 @@ class SessionState(
         }
     }
 
-    internal fun mayReopenSchemaTypeTx() {
+    fun mayReopenSchemaTypeTx() {
         synchronized(this) {
             if (schemaTypeTx.get() != null) {
                 closeSchemaTypeTx()
