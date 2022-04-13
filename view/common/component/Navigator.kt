@@ -248,7 +248,7 @@ object Navigator {
         internal var scroller = LazyListState(0, 0)
         internal val contextMenu = ContextMenu.State()
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
+            IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expandAll() },
             IconButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
         )
 
@@ -282,7 +282,7 @@ object Navigator {
             }
         }
 
-        private fun expand() = coroutineScope.launch(IO) {
+        private fun expandAll() = coroutineScope.launch(IO) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -305,6 +305,12 @@ object Navigator {
                 item.collapse(false)
                 queue.addAll(item.entries.filter { it.isExpanded })
             }
+            recomputeList()
+        }
+
+        fun reloadEntriesAndExpand(depth: Int) = coroutineScope.launch(IO) {
+            container.reloadEntries()
+            container.expand(false, 1 + depth)
             recomputeList()
         }
 

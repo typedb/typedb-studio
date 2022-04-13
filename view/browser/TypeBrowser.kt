@@ -69,7 +69,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             initExpandDepth = 1,
         ) { } // TODO
         session.onSessionChange = { navState.replaceContainer(it) }
-        session.onSchemaWrite = { navState.reloadEntries() }
+        session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
         buttons = listOf(reloadButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
