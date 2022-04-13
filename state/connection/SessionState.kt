@@ -77,6 +77,7 @@ class SessionState(
                 rootSchemaType = SchemaType.Root(it.concepts().rootThingType, this)
                 it.close()
             }
+            reopenSchemaTypeTx()
             onSessionChange?.let { it(rootSchemaType!!) }
             isOpenAtomic.set(true)
         } catch (exception: TypeDBClientException) {
@@ -109,8 +110,15 @@ class SessionState(
         }
     }
 
+    private fun reopenSchemaTypeTx() {
+        synchronized(this) {
+            closeSchemaTypeTx()
+            schemaTypeTx()
+        }
+    }
+
     private fun closeSchemaTypeTx() {
-        synchronized(this) { schemaTypeTx.getAndSet(null).close() }
+        synchronized(this) { schemaTypeTx.getAndSet(null)?.close() }
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {
