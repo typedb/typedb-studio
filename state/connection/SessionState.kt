@@ -90,25 +90,27 @@ class SessionState(
     }
 
     internal fun schemaTypeTx(): TypeDBTransaction {
-        lastSchemaTypeTxTime.set(System.currentTimeMillis())
-        if (schemaTypeTx.compareAndSet(null, transaction())) {
-            coroutineScope.launch {
-                var duration = SCHEMA_TYPE_TX_WAIT_TIME
-                while (true) {
-                    delay(duration)
-                    val sinceLastTx = System.currentTimeMillis() - lastSchemaTypeTxTime.get()
-                    if (sinceLastTx >= SCHEMA_TYPE_TX_WAIT_TIME.inWholeMilliseconds) {
-                        closeSchemaTypeTx()
-                        break
-                    } else duration = SCHEMA_TYPE_TX_WAIT_TIME - Duration.milliseconds(sinceLastTx)
+        synchronized(this) {
+            lastSchemaTypeTxTime.set(System.currentTimeMillis())
+            if (schemaTypeTx.compareAndSet(null, transaction())) {
+                coroutineScope.launch {
+                    var duration = SCHEMA_TYPE_TX_WAIT_TIME
+                    while (true) {
+                        delay(duration)
+                        val sinceLastTx = System.currentTimeMillis() - lastSchemaTypeTxTime.get()
+                        if (sinceLastTx >= SCHEMA_TYPE_TX_WAIT_TIME.inWholeMilliseconds) {
+                            closeSchemaTypeTx()
+                            break
+                        } else duration = SCHEMA_TYPE_TX_WAIT_TIME - Duration.milliseconds(sinceLastTx)
+                    }
                 }
             }
+            return schemaTypeTx.get()
         }
-        return schemaTypeTx.get()
     }
 
     private fun closeSchemaTypeTx() {
-        schemaTypeTx.getAndSet(null).close()
+        synchronized(this) { schemaTypeTx.getAndSet(null).close() }
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {
