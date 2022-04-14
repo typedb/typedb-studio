@@ -109,6 +109,7 @@ object Navigator {
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
+    private val BOTTOM_SPACE = 32.dp
     private const val MAX_ITEM_EXPANDED = 5000
     private const val SCROLL_ITEM_OFFSET = 3
     private val LOGGER = KotlinLogging.logger {}
@@ -415,7 +416,10 @@ object Navigator {
                     state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
                         .horizontalScroll(state = horScrollState)
                         .pointerMoveFilter(onExit = { state.hovered = null; false })
-                ) { state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } } }
+                ) {
+                    state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } }
+                    item { Spacer(Modifier.height(BOTTOM_SPACE)) }
+                }
                 Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
                 Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
             }
