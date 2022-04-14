@@ -28,7 +28,6 @@ import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 
 internal class RunOutputGroup(
@@ -51,7 +50,7 @@ internal class RunOutputGroup(
         consumeRunnerResponses()
     }
 
-    private fun consumeRunnerResponses() = coroutineScope.launch(IO) {
+    private fun consumeRunnerResponses() = coroutineScope.launch {
         var response: Either<Runner.Response, Runner.Done>? = null
         while ({ response = runner.responses.take(); response }()!!.isFirst) {
             log.collect(response!!.first())
