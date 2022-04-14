@@ -125,6 +125,7 @@ class SessionState(
 
     internal fun close(message: Message? = null, vararg params: Any) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
+            closeSchemaTypeTx()
             transaction.close()
             _session?.close()
             _session = null
