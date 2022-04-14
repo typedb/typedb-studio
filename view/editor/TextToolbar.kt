@@ -405,11 +405,13 @@ object TextToolbar {
 
     @Composable
     private fun FinderNextPreviousButtons(state: State) {
+        val findPreviousLabel = "${Label.PREVIOUS_OCCURRENCE} (${Label.ENTER} + ${Label.SHIFT})"
+        val findNextLabel = "${Label.NEXT_OCCURRENCE} (${Label.ENTER})"
         IconButtonRow(
             size = BUTTON_HEIGHT,
             buttons = listOf(
-                FinderButton(Icon.Code.CHEVRON_UP, Label.PREVIOUS_OCCURRENCE) { state.findPrevious() },
-                FinderButton(Icon.Code.CHEVRON_DOWN, Label.NEXT_OCCURRENCE) { state.findNext() }
+                FinderButton(Icon.Code.CHEVRON_UP, findPreviousLabel) { state.findPrevious() },
+                FinderButton(Icon.Code.CHEVRON_DOWN, findNextLabel) { state.findNext() }
             )
         )
     }
@@ -452,9 +454,10 @@ object TextToolbar {
 
     @Composable
     private fun ReplacerButtons(state: State) {
+        val replaceCurrentLabel = "${Label.REPLACE_NEXT_OCCURRENCE} (${Label.ENTER})"
         Row(Modifier.height(BUTTON_HEIGHT)) {
             Spacer(Modifier.width(BUTTON_SPACING))
-            ReplacerButton(Label.REPLACE, Label.REPLACE_NEXT_OCCURRENCE) { state.replaceCurrent() }
+            ReplacerButton(Label.REPLACE, replaceCurrentLabel) { state.replaceCurrent() }
             Spacer(Modifier.width(BUTTON_SPACING))
             ReplacerButton(Label.REPLACE_ALL, Label.REPLACE_ALL_OCCURRENCES) { state.replaceAll() }
         }

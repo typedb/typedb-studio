@@ -290,7 +290,7 @@ internal class EventHandler constructor(
         label = Label.RUN_FILE,
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
-        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && GlobalState.connection.current?.isReadyToRunQuery == true
     ) { runSelectionOrFile(false) }
 
@@ -298,7 +298,7 @@ internal class EventHandler constructor(
         label = Label.RUN_SELECTION,
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
-        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && target.selection != null &&
                 GlobalState.connection.current?.isReadyToRunQuery == true
     ) { runSelectionOrFile(true) }
