@@ -238,6 +238,10 @@ class File internal constructor(
         return content
     }
 
+    fun content(string: String) {
+        content(string.split("\n"))
+    }
+
     fun content(lines: List<String>) {
         content = lines
         if (settings.autosave) saveContent()

@@ -70,13 +70,24 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         ) { } // TODO
         session.onSessionChange = { navState.replaceContainer(it) }
         session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
-        buttons = listOf(reloadButton(navState)) + navState.buttons
+        buttons = listOf(reloadButton(navState), exportButton()) + navState.buttons
         Navigator.Layout(
             state = navState,
             iconArg = { typeIcon(it) },
             styleArgs = { listOf() },
             contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
         )
+    }
+
+    private fun exportButton(): IconButtonArg {
+        return IconButtonArg(Icon.Code.SQUARE_ARROW_UP_RIGHT, enabled = GlobalState.project.current != null) {
+            GlobalState.connection.current?.session?.schema?.let { schema ->
+                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                    file.content(schema)
+                    GlobalState.resource.open(file)
+                }
+            }
+        }
     }
 
     private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
