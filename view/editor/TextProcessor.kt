@@ -55,7 +55,7 @@ internal interface TextProcessor {
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
-    fun insertText(toString: String): Boolean
+    fun insertText(text: String): Boolean
     fun insertNewLine()
     fun deleteSelection()
     fun toggleComment()
@@ -69,7 +69,13 @@ internal interface TextProcessor {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        internal val TYPING_WINDOW_MILLIS = 400
+        private const val UNDO_LIMIT = 1_000
+        internal const val TYPING_WINDOW_MILLIS = 400
+        internal const val TAB_SIZE = 4
+
+        fun normaliseTabs(string: String): String {
+            return string.replace("\t", " ".repeat(TAB_SIZE))
+        }
     }
 
     class ReadOnly constructor(override var file: File? = null) : TextProcessor {
@@ -80,7 +86,7 @@ internal interface TextProcessor {
 
         override fun replaceCurrentFound(text: String) = mayDisplayWarning()
         override fun replaceAllFound(text: String) = mayDisplayWarning()
-        override fun insertText(toString: String): Boolean = displayWarningOnStartTyping()
+        override fun insertText(text: String): Boolean = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
         override fun toggleComment() = mayDisplayWarning()
@@ -115,11 +121,6 @@ internal interface TextProcessor {
         private var onChangeStart: () -> Unit,
         private var onChangeEnd: (List<String>) -> Unit,
     ) : TextProcessor {
-
-        companion object {
-            internal const val TAB_SIZE = 4
-            private const val UNDO_LIMIT = 1_000
-        }
 
         override var version by mutableStateOf(0)
         override val isWritable: Boolean = true
@@ -252,7 +253,7 @@ internal interface TextProcessor {
         }
 
         override fun insertText(text: String): Boolean {
-            insertText(asAnnotatedLines(text), newPosition = null)
+            insertText(text, recomputeFinder = true)
             return true
         }
 

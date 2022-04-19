@@ -80,7 +80,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.view.editor.TextProcessor.Writable.Companion.TAB_SIZE
+import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseTabs
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
@@ -110,7 +110,7 @@ object TextEditor {
     fun createState(file: File, bottomSpace: Dp = END_OF_FILE_SPACE): State {
         val editor = createState(
             content = SnapshotStateList<AnnotatedString>().apply {
-                val content = file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }
+                val content = file.readContent().map { normaliseTabs(it) }
                 addAll(highlight(content, file.fileType))
             },
             bottomSpace = bottomSpace,
@@ -169,7 +169,7 @@ object TextEditor {
 
     private fun onChangeFromDisk(file: File, editor: State) {
         fun reinitialiseContent(file: File) {
-            val newContent = file.readContent().map { it.replace("\t", " ".repeat(TAB_SIZE)) }
+            val newContent = file.readContent().map { normaliseTabs(it) }
             editor.content.clear()
             editor.content.addAll(highlight(newContent, file.fileType))
             editor.rendering.reinitialize(editor.content.size)

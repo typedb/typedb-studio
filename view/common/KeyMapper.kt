@@ -90,7 +90,7 @@ interface KeyMapper {
         ENTER_SHIFT,
         TAB,
         TAB_SHIFT,
-        MOD_SLASH,
+        TOGGLE_COMMENT,
         MOD_ENTER,
         MOD_ENTER_SHIFT,
         CTRL_TAB,
@@ -184,7 +184,7 @@ interface KeyMapper {
                     Keys.W -> Command.CLOSE
                     Keys.N, Keys.T -> Command.NEW_PAGE
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
-                    Keys.Slash -> Command.MOD_SLASH
+                    Keys.Slash -> Command.TOGGLE_COMMENT
                     Keys.Equals -> Command.TEXT_SIZE_INCREASE
                     Keys.Minus -> Command.TEXT_SIZE_DECREASE
                     Keys.Zero -> Command.TEXT_SIZE_RESET
