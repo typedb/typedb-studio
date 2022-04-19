@@ -58,6 +58,7 @@ internal interface TextProcessor {
     fun insertText(toString: String): Boolean
     fun insertNewLine()
     fun deleteSelection()
+    fun toggleComment()
     fun indentTab()
     fun outdentTab()
     fun undo()
@@ -82,6 +83,7 @@ internal interface TextProcessor {
         override fun insertText(toString: String): Boolean = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
+        override fun toggleComment() = mayDisplayWarning()
         override fun indentTab() = mayDisplayWarning()
         override fun outdentTab() = mayDisplayWarning()
         override fun undo() = mayDisplayWarning()
@@ -181,6 +183,33 @@ internal interface TextProcessor {
         override fun deleteSelection() {
             if (target.selection == null) return
             applyOriginal(TextChange(deletionOperation()))
+        }
+
+        override fun toggleComment() {
+            if (fileType == Property.FileType.UNKNOWN) return
+            val commentToken = fileType.commentToken
+            val oldSelection = target.selection
+            val oldCursor = target.cursor
+
+            target.updateSelection(target.expandSelection(oldSelection ?: oldCursor.toSelection()))
+            val oldLines = target.selectedTextLines()
+            val newLines: List<AnnotatedString>
+            val newPosition: Either<Cursor, Selection>
+            if (oldLines.all { it.text.trim().startsWith(commentToken) }) {
+                newLines = oldLines.map {
+                    val i = it.indexOf(commentToken)
+                    it.subSequence(0, i) + it.subSequence(i + commentToken.length, it.length)
+                }
+                newPosition = oldSelection?.let {
+                    Either.second(target.shiftSelection(oldSelection, -commentToken.length, -commentToken.length))
+                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col - commentToken.length))
+            } else {
+                newLines = oldLines.map { AnnotatedString(commentToken) + it }
+                newPosition = oldSelection?.let {
+                    Either.second(target.shiftSelection(oldSelection, commentToken.length, commentToken.length))
+                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + commentToken.length))
+            }
+            insertText(newLines, newPosition)
         }
 
         override fun outdentTab() {

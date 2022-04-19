@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_SLASH
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -153,6 +154,7 @@ internal class EventHandler constructor(
             DELETE_WORD_NEXT -> deleteSelectionOr { target.moveCursorNexBytWord(true); processor.deleteSelection() }
             DELETE_LINE_START -> deleteSelectionOr { target.moveCursorToStartOfLine(true); processor.deleteSelection() }
             DELETE_LINE_END -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
+            MOD_SLASH -> processor.toggleComment()
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT -> processor.insertNewLine()

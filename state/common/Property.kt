@@ -62,11 +62,9 @@ object Property {
         }
     }
 
-    enum class FileType(vararg extension: String) {
-        TYPEQL("tql", "typeql"),
+    enum class FileType constructor(val extensions: List<String> = emptyList(), val commentToken: String = "") {
+        TYPEQL(listOf("tql", "typeql"), "#"),
         UNKNOWN;
-
-        val extensions = extension.toList()
     }
 
 
