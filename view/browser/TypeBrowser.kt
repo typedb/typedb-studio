@@ -79,21 +79,21 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
+    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(Icon.Code.ROTATE) {
+            GlobalState.connection.current?.session?.resetSchemaReadTx()
+            navState.reloadEntries()
+        }
+    }
+
     private fun exportButton(): IconButtonArg {
         return IconButtonArg(Icon.Code.SQUARE_ARROW_UP_RIGHT, enabled = GlobalState.project.current != null) {
-            GlobalState.connection.current?.session?.schema?.let { schema ->
+            GlobalState.connection.current?.session?.typeSchema?.let { schema ->
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
                     GlobalState.resource.open(file)
                 }
             }
-        }
-    }
-
-    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.ROTATE) {
-            GlobalState.connection.current?.session?.resetSchemaReadTx()
-            navState.reloadEntries()
         }
     }
 

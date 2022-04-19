@@ -58,7 +58,8 @@ class SessionState(
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
-    val schema: String? get() = _session?.database()?.schema()
+    val typeSchema: String? get() = _session?.database()?.typeSchema()
+    val ruleSchema: String? get() = _session?.database()?.ruleSchema()
     var transaction = TransactionState(this, notificationMgr)
     var rootSchemaType: SchemaType.Root? by mutableStateOf(null)
     var onSessionChange: ((SchemaType.Root) -> Unit)? = null

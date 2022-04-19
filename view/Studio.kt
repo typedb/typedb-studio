@@ -135,7 +135,7 @@ object Studio {
     private fun addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
-                LOGGER.debug { Label.CLOSING_TYPEDB_STUDIO }
+                LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
                 GlobalState.connection.current?.close()
             }
         })
