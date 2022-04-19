@@ -78,7 +78,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val UNABLE_TO_CONNECT =
                 Connection(2, "Failed to connect to TypeDB server with the provided address and credentials.")
             val FAILED_TO_OPEN_SESSION =
-                Connection(3, "Failed to establish session to database '%s'.")
+                Connection(3, "Failed to establish '%s' session to database '%s'.")
             val FAILED_TO_OPEN_TRANSACTION =
                 Connection(4, "Failed to open transaction: %s")
             val FAILED_TO_RUN_QUERY =

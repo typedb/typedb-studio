@@ -81,7 +81,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
         return IconButtonArg(Icon.Code.ROTATE) {
-            GlobalState.connection.current?.session?.mayReopenSchemaTypeTx()
+            GlobalState.connection.current?.session?.resetSchemaReadTx()
             navState.reloadEntries()
         }
     }

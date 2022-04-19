@@ -43,7 +43,7 @@ open class SchemaType(
     override var entries: List<SchemaType> = emptyList()
 
     override fun reloadEntries() {
-        val tx = session.schemaTypeTx()
+        val tx = session.openOrGetSchemaReadTx()
         entries = concept.asRemote(tx).subtypesExplicit
             .map { schemaTypeOf(it, tx) }
             .sorted().toList()

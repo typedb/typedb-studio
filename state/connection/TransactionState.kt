@@ -44,7 +44,7 @@ class TransactionState constructor(
 ) {
 
     companion object {
-        private const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
+        internal const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -128,7 +128,7 @@ class TransactionState constructor(
             _transaction?.commit()
             _transaction = null
             if (session.type == TypeDBSession.Type.SCHEMA) {
-                session.mayReopenSchemaTypeTx()
+                session.resetSchemaReadTx()
                 session.onSchemaWrite?.let { it() }
             }
             notificationMgr.info(LOGGER, TRANSACTION_COMMIT)
