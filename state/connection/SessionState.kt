@@ -58,16 +58,16 @@ class SessionState(
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
-    val typeSchema: String? get() = _session?.database()?.typeSchema()
-    val ruleSchema: String? get() = _session?.database()?.ruleSchema()
     var transaction = TransactionState(this, notificationMgr)
     var rootSchemaType: SchemaType.Root? by mutableStateOf(null)
     var onSessionChange: ((SchemaType.Root) -> Unit)? = null
     var onSchemaWrite: (() -> Unit)? = null
+    private var _session: TypeDBSession? by mutableStateOf(null)
+    private val isOpenAtomic = AtomicBooleanState(false)
     private var schemaReadTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastSchemaReadTxTime = AtomicLong(0)
-    private val isOpenAtomic = AtomicBooleanState(false)
-    private var _session: TypeDBSession? by mutableStateOf(null)
+    private val typeSchema: String? get() = _session?.database()?.typeSchema()
+    private val ruleSchema: String? get() = _session?.database()?.ruleSchema()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
@@ -113,6 +113,10 @@ class SessionState(
             }
             return schemaReadTx.get()
         }
+    }
+
+    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
+        typeSchema?.let { onSuccess(it) }
     }
 
     fun resetSchemaReadTx() {

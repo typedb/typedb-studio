@@ -70,7 +70,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         ) { } // TODO
         session.onSessionChange = { navState.replaceContainer(it) }
         session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
-        buttons = listOf(reloadButton(navState), exportButton()) + navState.buttons
+        buttons = listOf(reloadButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             iconArg = { typeIcon(it) },
@@ -79,16 +79,19 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.ROTATE) {
-            GlobalState.connection.current?.session?.resetSchemaReadTx()
-            navState.reloadEntries()
-        }
+    private fun reload(navState: Navigator.NavigatorState<SchemaType>) {
+        GlobalState.connection.current?.session?.resetSchemaReadTx()
+        navState.reloadEntries()
     }
 
-    private fun exportButton(): IconButtonArg {
+    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(Icon.Code.ROTATE) { reload(navState) }
+    }
+
+    private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
         return IconButtonArg(Icon.Code.SQUARE_ARROW_UP_RIGHT, enabled = GlobalState.project.current != null) {
-            GlobalState.connection.current?.session?.typeSchema?.let { schema ->
+            reload(navState)
+            GlobalState.connection.current?.session?.exportTypeSchema { schema ->
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
                     GlobalState.resource.open(file)
