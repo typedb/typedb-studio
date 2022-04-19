@@ -196,10 +196,13 @@ internal interface TextProcessor {
             val oldLines = target.selectedTextLines()
             val newLines: List<AnnotatedString>
             val newPosition: Either<Cursor, Selection>
-            if (oldLines.all { it.text.trim().startsWith(commentToken) }) {
+            if (oldLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }) {
                 newLines = oldLines.map {
-                    val i = it.indexOf(commentToken)
-                    it.subSequence(0, i) + it.subSequence(i + commentToken.length, it.length)
+                    if (it.isEmpty()) it
+                    else {
+                        val i = it.indexOf(commentToken)
+                        it.subSequence(0, i) + it.subSequence(i + commentToken.length, it.length)
+                    }
                 }
                 newPosition = oldSelection?.let {
                     Either.second(target.shiftSelection(oldSelection, -commentToken.length, -commentToken.length))
