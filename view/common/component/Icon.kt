@@ -37,9 +37,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Icon {
 
-    private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
-    private val FONT_FILE = "resources/icons/fontawesome/font-awesome-solid-900.ttf"
+    private const val FONT_FILE = "resources/icons/fontawesome/font-awesome-6-pro-solid-900.otf"
     private val FONT_AWESOME = FontFamily(Font(FONT_FILE))
+    private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
 
     data class Offset(val x: Dp, val y: Dp)
     data class Scale(val x: Float, val y: Float)
@@ -55,6 +55,7 @@ object Icon {
         // The icon names in Font Awesome would be the kebab-case version of our names below
         ALIGN_LEFT(0xf036u),
         ARROW_DOWN_TO_LINE(0xf33du),
+        ARROW_UP_RIGHT_FROM_SQUARE(0xf08eu),
         ARROW_UP_TO_LINE(0xf341u),
         ARROWS_MAXIMIZE(0xf31du),
         ARROWS_MINIMIZE(0xe0a5u),
@@ -108,7 +109,6 @@ object Icon {
         RIGHT_LEFT(0xf362u),
         SERVER(0xf233u),
         SITEMAP(0xf0e8u),
-        SQUARE_ARROW_UP_RIGHT(0xf14cu),
         SQUARE_BOLT(0xe265u, 13.sp),
         STOP(0xf04du, 13.sp),
         TABLE_CELLS_LARGE(0xf009u),

@@ -22,7 +22,7 @@ package(default_visibility = ["//view/common:__pkg__"])
 filegroup(
     name = "icons",
     srcs = [
-        "font-awesome-solid-900.ttf",
+        "font-awesome-6-pro-solid-900.otf",
     ],
 )
 

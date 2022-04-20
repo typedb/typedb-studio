@@ -94,7 +94,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
         return IconButtonArg(
-            icon = Icon.Code.SQUARE_ARROW_UP_RIGHT,
+            icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
             enabled = GlobalState.project.current != null,
             tooltip = Tooltip.Arg(title = Label.EXPORT)
         ) {
