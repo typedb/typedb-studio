@@ -72,6 +72,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.contains
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.toRectDP
@@ -249,8 +250,8 @@ object Navigator {
         internal var scroller = LazyListState(0, 0)
         internal val contextMenu = ContextMenu.State()
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expandAll() },
-            IconButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
+            IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAll() },
+            IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
         )
 
         init {

@@ -105,7 +105,8 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
                 modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,
-                enabled = isActive && it.enabled
+                enabled = isActive && it.enabled,
+                tooltip = it.tooltip
             )
         }
     }

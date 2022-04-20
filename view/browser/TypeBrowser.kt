@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boolean = false) :
@@ -70,7 +71,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         ) { } // TODO
         session.onSessionChange = { navState.replaceContainer(it) }
         session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
-        buttons = listOf(reloadButton(navState), exportButton(navState)) + navState.buttons
+        buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             iconArg = { typeIcon(it) },
@@ -79,19 +80,26 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun reload(navState: Navigator.NavigatorState<SchemaType>) {
+    private fun refresh(navState: Navigator.NavigatorState<SchemaType>) {
         GlobalState.connection.current?.session?.resetSchemaReadTx()
         navState.reloadEntries()
     }
 
-    private fun reloadButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.ROTATE) { reload(navState) }
+    private fun refreshButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(
+            icon = Icon.Code.ROTATE,
+            tooltip = Tooltip.Arg(title = Label.REFRESH)
+        ) { refresh(navState) }
     }
 
     private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.SQUARE_ARROW_UP_RIGHT, enabled = GlobalState.project.current != null) {
+        return IconButtonArg(
+            icon = Icon.Code.SQUARE_ARROW_UP_RIGHT,
+            enabled = GlobalState.project.current != null,
+            tooltip = Tooltip.Arg(title = Label.EXPORT)
+        ) {
             GlobalState.connection.current?.session?.exportTypeSchema { schema ->
-                reload(navState)
+                refresh(navState)
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
                     GlobalState.resource.open(file)
