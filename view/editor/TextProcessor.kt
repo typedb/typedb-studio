@@ -68,13 +68,13 @@ internal interface TextProcessor {
     fun updateFile(file: File)
 
     companion object {
-        private val LOGGER = KotlinLogging.logger {}
-        private const val UNDO_LIMIT = 1_000
-        internal const val TYPING_WINDOW_MILLIS = 400
         internal const val TAB_SIZE = 4
+        internal const val TYPING_WINDOW_MILLIS = 400
+        private const val UNDO_LIMIT = 1_000
+        private val LOGGER = KotlinLogging.logger {}
 
-        fun normaliseTabs(string: String): String {
-            return string.replace("\t", " ".repeat(TAB_SIZE))
+        fun normaliseWhiteSpace(string: String): String {
+            return string.replace("\t", " ".repeat(TAB_SIZE)).replace("\u00a0"," ")
         }
     }
 

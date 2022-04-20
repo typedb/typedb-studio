@@ -89,7 +89,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseTabs
+import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
 
 internal class EventHandler constructor(
     private val target: InputTarget,
@@ -204,7 +204,7 @@ internal class EventHandler constructor(
     }
 
     private fun paste() {
-        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(normaliseTabs(it.text)) }
+        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(normaliseWhiteSpace(it.text)) }
     }
 
     private fun runSelectionOrFile() {

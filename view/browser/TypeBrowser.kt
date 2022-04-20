@@ -90,8 +90,8 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
         return IconButtonArg(Icon.Code.SQUARE_ARROW_UP_RIGHT, enabled = GlobalState.project.current != null) {
-            reload(navState)
             GlobalState.connection.current?.session?.exportTypeSchema { schema ->
+                reload(navState)
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
                     GlobalState.resource.open(file)
