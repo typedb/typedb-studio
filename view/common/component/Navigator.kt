@@ -72,6 +72,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.contains
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.toRectDP
@@ -96,6 +97,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -108,12 +110,13 @@ object Navigator {
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
+    private val BOTTOM_SPACE = 32.dp
     private const val MAX_ITEM_EXPANDED = 5000
     private const val SCROLL_ITEM_OFFSET = 3
     private val LOGGER = KotlinLogging.logger {}
 
     open class ItemState<T : Navigable.Item<T>> internal constructor(
-        open val item: T, val parent: ItemState<T>?, private val navState: NavigatorState<T>
+        val item: T, internal val parent: ItemState<T>?, private val navState: NavigatorState<T>
     ) : Comparable<ItemState<T>> {
 
         var isExpanded: Boolean by mutableStateOf(false)
@@ -157,12 +160,12 @@ object Navigator {
             if (recomputeNavigator) navState.recomputeList()
         }
 
-        fun expand(recomputeNavigator: Boolean = true) {
-            expand(recomputeNavigator, 1)
+        fun expand() {
+            expand(true)
         }
 
-        internal fun expand(depth: Int) {
-            expand(true, depth)
+        internal fun expand(recomputeNavigator: Boolean) {
+            expand(recomputeNavigator, 1)
         }
 
         internal fun expand(recomputeNavigator: Boolean, depth: Int) {
@@ -236,26 +239,26 @@ object Navigator {
         private val openFn: (ItemState<T>) -> Unit,
         private var coroutineScope: CoroutineScope
     ) {
-        private var container: Container<T> by mutableStateOf(Container(container, this)); private set
+        private var container: Container<T> by mutableStateOf(Container(container, this))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
-        private var itemWidth by mutableStateOf(0.dp); private set
-        private var areaWidth by mutableStateOf(0.dp); private set
+        private var itemWidth by mutableStateOf(0.dp)
+        private var areaWidth by mutableStateOf(0.dp)
         internal val minWidth get() = max(itemWidth, areaWidth)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
         internal var scroller = LazyListState(0, 0)
         internal val contextMenu = ContextMenu.State()
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(Icon.Code.CHEVRONS_DOWN) { expand() },
-            IconButtonArg(Icon.Code.CHEVRONS_UP) { collapse() }
+            IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAll() },
+            IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
         )
 
         init {
             initialiseContainer()
         }
 
-        private fun initialiseContainer() {
+        private fun initialiseContainer() = coroutineScope.launch {
             container.expand(false, 1 + initExpandDepth)
             if (liveUpdate) launchWatcher(container)
             recomputeList()
@@ -268,7 +271,7 @@ object Navigator {
 
         @OptIn(ExperimentalTime::class)
         private fun launchWatcher(root: Container<T>) {
-            coroutineScope.launch {
+            coroutineScope.launch(IO) {
                 try {
                     do {
                         delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -281,7 +284,7 @@ object Navigator {
             }
         }
 
-        private fun expand() {
+        private fun expandAll() = coroutineScope.launch(IO) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -297,7 +300,7 @@ object Navigator {
             }
         }
 
-        private fun collapse() {
+        private fun collapse() = coroutineScope.launch(IO) {
             val queue = LinkedList(container.entries)
             while (queue.isNotEmpty()) {
                 val item = queue.pop()
@@ -307,7 +310,13 @@ object Navigator {
             recomputeList()
         }
 
-        fun reloadEntries() {
+        fun reloadEntriesAndExpand(depth: Int) = coroutineScope.launch(IO) {
+            container.reloadEntries()
+            container.expand(false, 1 + depth)
+            recomputeList()
+        }
+
+        fun reloadEntries() = coroutineScope.launch(IO) {
             container.reloadEntries()
             recomputeList()
         }
@@ -397,19 +406,24 @@ object Navigator {
     ) {
         val density = LocalDensity.current.density
         val horScrollState = rememberScrollState()
-        val root = state.entries.first()
-        Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }.onGloballyPositioned {
-            state.density = density
-            state.updateAreaWidth(it.size.width)
-        }) {
-            contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
-            LazyColumn(
-                state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
-                    .horizontalScroll(state = horScrollState)
-                    .pointerMoveFilter(onExit = { state.hovered = null; false })
-            ) { state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } } }
-            Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
-            Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
+        if (state.entries.isNotEmpty()) {
+            val root = state.entries.first()
+            Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }.onGloballyPositioned {
+                state.density = density
+                state.updateAreaWidth(it.size.width)
+            }) {
+                contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
+                LazyColumn(
+                    state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
+                        .horizontalScroll(state = horScrollState)
+                        .pointerMoveFilter(onExit = { state.hovered = null; false })
+                ) {
+                    state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } }
+                    item { Spacer(Modifier.height(BOTTOM_SPACE)) }
+                }
+                Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
+                Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
+            }
         }
     }
 

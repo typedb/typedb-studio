@@ -27,7 +27,10 @@ import com.vaticle.typedb.studio.state.runner.Runner
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class RunOutputGroup(
@@ -50,11 +53,15 @@ internal class RunOutputGroup(
         consumeRunnerResponses()
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun consumeRunnerResponses() = coroutineScope.launch {
-        var response: Either<Runner.Response, Runner.Done>? = null
-        while ({ response = runner.responses.take(); response }()!!.isFirst) {
-            log.collect(response!!.first())
-        }
+        val responses: MutableList<Either<Runner.Response, Runner.Done>> = mutableListOf()
+        do {
+            delay(Duration.Companion.milliseconds(33)) // 30 FPS
+            responses.clear()
+            runner.responses.drainTo(responses)
+            if (responses.isNotEmpty()) log.collect(responses.filter { it.isFirst }.map { it.first() })
+        } while (responses.lastOrNull()?.isSecond != true)
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {

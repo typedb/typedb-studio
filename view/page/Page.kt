@@ -33,7 +33,6 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.output.RunOutputArea
 import kotlinx.coroutines.CoroutineScope
@@ -75,7 +74,7 @@ abstract class Page(var resource: Resource) {
     @Composable
     private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
         if (runOutputState == null) {
-            runOutputState = RunOutputArea.State(resource, paneState, Theme.colors, coroutineScope)
+            runOutputState = RunOutputArea.State(resource, paneState, coroutineScope)
         }
         return runOutputState!!
     }

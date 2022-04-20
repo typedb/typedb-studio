@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TOGGLE_COMMENT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -88,6 +89,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
 
 internal class EventHandler constructor(
     private val target: InputTarget,
@@ -153,6 +155,7 @@ internal class EventHandler constructor(
             DELETE_WORD_NEXT -> deleteSelectionOr { target.moveCursorNexBytWord(true); processor.deleteSelection() }
             DELETE_LINE_START -> deleteSelectionOr { target.moveCursorToStartOfLine(true); processor.deleteSelection() }
             DELETE_LINE_END -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
+            TOGGLE_COMMENT -> processor.toggleComment()
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT -> processor.insertNewLine()
@@ -201,7 +204,7 @@ internal class EventHandler constructor(
     }
 
     private fun paste() {
-        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(it.text) }
+        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(normaliseWhiteSpace(it.text)) }
     }
 
     private fun runSelectionOrFile() {
@@ -290,7 +293,7 @@ internal class EventHandler constructor(
         label = Label.RUN_FILE,
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
-        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && GlobalState.connection.current?.isReadyToRunQuery == true
     ) { runSelectionOrFile(false) }
 
@@ -298,7 +301,7 @@ internal class EventHandler constructor(
         label = Label.RUN_SELECTION,
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
-        info = "${KeyMapper.CURRENT.modKey} + Enter",
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && target.selection != null &&
                 GlobalState.connection.current?.isReadyToRunQuery == true
     ) { runSelectionOrFile(true) }

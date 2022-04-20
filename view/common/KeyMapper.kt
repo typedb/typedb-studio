@@ -79,21 +79,22 @@ interface KeyMapper {
         SELECT_HOME,
         SELECT_END,
 
-        ENTER,
-        ENTER_SHIFT,
-        TAB,
-        TAB_SHIFT,
-        MOD_ENTER,
-        MOD_ENTER_SHIFT,
-        CTRL_TAB,
-        CTRL_TAB_SHIFT,
-
         DELETE_CHAR_PREV,
         DELETE_CHAR_NEXT,
         DELETE_WORD_PREV,
         DELETE_WORD_NEXT,
         DELETE_LINE_START,
         DELETE_LINE_END,
+
+        ENTER,
+        ENTER_SHIFT,
+        TAB,
+        TAB_SHIFT,
+        TOGGLE_COMMENT,
+        MOD_ENTER,
+        MOD_ENTER_SHIFT,
+        CTRL_TAB,
+        CTRL_TAB_SHIFT,
 
         COPY,
         PASTE,
@@ -137,6 +138,7 @@ interface KeyMapper {
         val W: Key = Key(java.awt.event.KeyEvent.VK_W)
         val X: Key = Key(java.awt.event.KeyEvent.VK_X)
         val Z: Key = Key(java.awt.event.KeyEvent.VK_Z)
+        val Slash: Key = Key(java.awt.event.KeyEvent.VK_SLASH)
         val Backslash: Key = Key(java.awt.event.KeyEvent.VK_BACK_SLASH)
         val DirectionLeft: Key = Key(java.awt.event.KeyEvent.VK_LEFT)
         val DirectionRight: Key = Key(java.awt.event.KeyEvent.VK_RIGHT)
@@ -182,6 +184,7 @@ interface KeyMapper {
                     Keys.W -> Command.CLOSE
                     Keys.N, Keys.T -> Command.NEW_PAGE
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
+                    Keys.Slash -> Command.TOGGLE_COMMENT
                     Keys.Equals -> Command.TEXT_SIZE_INCREASE
                     Keys.Minus -> Command.TEXT_SIZE_DECREASE
                     Keys.Zero -> Command.TEXT_SIZE_RESET

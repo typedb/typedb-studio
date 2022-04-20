@@ -446,9 +446,9 @@ internal class InputTarget constructor(
         updateSelection(null)
     }
 
-    internal fun shiftSelection(selection: Selection, firstLine: Int, secondLine: Int) = Selection(
-        Cursor(selection.start.row, (selection.start.col + firstLine).coerceAtLeast(0)),
-        Cursor(selection.end.row, (selection.end.col + secondLine).coerceAtLeast(0))
+    internal fun shiftSelection(selection: Selection, startShift: Int, endShift: Int) = Selection(
+        Cursor(selection.start.row, (selection.start.col + startShift).coerceAtLeast(0)),
+        Cursor(selection.end.row, (selection.end.col + endShift).coerceAtLeast(0))
     )
 
     internal fun expandSelection(selection: Selection): Selection = Selection(

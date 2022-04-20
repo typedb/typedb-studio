@@ -55,8 +55,12 @@ internal object LogOutput : RunOutput() {
             editorState.jumpToTop()
         }
 
-        fun collect(response: Runner.Response) {
-            editorState.content.addAll(response.text.split("\n").map { format(response.type, it, colors) })
+        fun collect(responses: List<Runner.Response>) {
+            editorState.content.addAll(responses.flatMap { response ->
+                response.text.split("\n").map { line ->
+                    format(response.type, line, colors)
+                }
+            })
         }
     }
 

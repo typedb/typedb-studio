@@ -55,9 +55,10 @@ internal interface TextProcessor {
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
-    fun insertText(toString: String): Boolean
+    fun insertText(text: String): Boolean
     fun insertNewLine()
     fun deleteSelection()
+    fun toggleComment()
     fun indentTab()
     fun outdentTab()
     fun undo()
@@ -67,8 +68,14 @@ internal interface TextProcessor {
     fun updateFile(file: File)
 
     companion object {
+        internal const val TAB_SIZE = 4
+        internal const val TYPING_WINDOW_MILLIS = 400
+        private const val UNDO_LIMIT = 1_000
         private val LOGGER = KotlinLogging.logger {}
-        internal val TYPING_WINDOW_MILLIS = 400
+
+        fun normaliseWhiteSpace(string: String): String {
+            return string.replace("\t", " ".repeat(TAB_SIZE)).replace("\u00a0"," ")
+        }
     }
 
     class ReadOnly constructor(override var file: File? = null) : TextProcessor {
@@ -79,9 +86,10 @@ internal interface TextProcessor {
 
         override fun replaceCurrentFound(text: String) = mayDisplayWarning()
         override fun replaceAllFound(text: String) = mayDisplayWarning()
-        override fun insertText(toString: String): Boolean = displayWarningOnStartTyping()
+        override fun insertText(text: String): Boolean = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
+        override fun toggleComment() = mayDisplayWarning()
         override fun indentTab() = mayDisplayWarning()
         override fun outdentTab() = mayDisplayWarning()
         override fun undo() = mayDisplayWarning()
@@ -113,11 +121,6 @@ internal interface TextProcessor {
         private var onChangeStart: () -> Unit,
         private var onChangeEnd: (List<String>) -> Unit,
     ) : TextProcessor {
-
-        companion object {
-            internal const val TAB_SIZE = 4
-            private const val UNDO_LIMIT = 1_000
-        }
 
         override var version by mutableStateOf(0)
         override val isWritable: Boolean = true
@@ -183,6 +186,36 @@ internal interface TextProcessor {
             applyOriginal(TextChange(deletionOperation()))
         }
 
+        override fun toggleComment() {
+            if (fileType == Property.FileType.UNKNOWN) return
+            val commentToken = fileType.commentToken
+            val oldSelection = target.selection
+            val oldCursor = target.cursor
+
+            target.updateSelection(target.expandSelection(oldSelection ?: oldCursor.toSelection()))
+            val oldLines = target.selectedTextLines()
+            val newLines: List<AnnotatedString>
+            val newPosition: Either<Cursor, Selection>
+            if (oldLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }) {
+                newLines = oldLines.map {
+                    if (it.isEmpty()) it
+                    else {
+                        val i = it.indexOf(commentToken)
+                        it.subSequence(0, i) + it.subSequence(i + commentToken.length, it.length)
+                    }
+                }
+                newPosition = oldSelection?.let {
+                    Either.second(target.shiftSelection(oldSelection, -commentToken.length, -commentToken.length))
+                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col - commentToken.length))
+            } else {
+                newLines = oldLines.map { AnnotatedString(commentToken) + it }
+                newPosition = oldSelection?.let {
+                    Either.second(target.shiftSelection(oldSelection, commentToken.length, commentToken.length))
+                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + commentToken.length))
+            }
+            insertText(newLines, newPosition)
+        }
+
         override fun outdentTab() {
             val oldSelection = target.selection
             val oldCursor = target.cursor
@@ -223,7 +256,7 @@ internal interface TextProcessor {
         }
 
         override fun insertText(text: String): Boolean {
-            insertText(asAnnotatedLines(text), newPosition = null)
+            insertText(text, recomputeFinder = true)
             return true
         }
 

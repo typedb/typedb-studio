@@ -51,7 +51,7 @@ object Icon {
         val rotate: Float = 0f,
         val scale: Scale = Scale(1f, 1f)
     ) {
-        // These codes can be found at https://fontawesome.com/v6.0/icons
+        // These codes can be found at https://fontawesome.com/v6/icons
         // The icon names in Font Awesome would be the kebab-case version of our names below
         ALIGN_LEFT(0xf036u),
         ARROW_DOWN_TO_LINE(0xf33du),
@@ -108,6 +108,7 @@ object Icon {
         RIGHT_LEFT(0xf362u),
         SERVER(0xf233u),
         SITEMAP(0xf0e8u),
+        SQUARE_ARROW_UP_RIGHT(0xf14cu),
         SQUARE_BOLT(0xe265u, 13.sp),
         STOP(0xf04du, 13.sp),
         TABLE_CELLS_LARGE(0xf009u),

@@ -157,6 +157,7 @@ class ProjectManager constructor(private val settings: Settings, private val not
     }
 
     fun tryCreateUntitledFile(): File? {
+        if (current == null) return null
         val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
             val newFile = unsavedFilesDir!!.createFile(newFileName)

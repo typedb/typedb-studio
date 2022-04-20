@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.connection.SchemaThingType
+import com.vaticle.typedb.studio.state.connection.SchemaType
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boolean = false) :
@@ -49,36 +50,65 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     override val icon: Icon.Code = Icon.Code.SITEMAP
     override val isActive: Boolean get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
+
     @Composable
     override fun BrowserLayout() {
         val conMgr = GlobalState.connection
         if (!conMgr.isConnected) ConnectToServerHelper()
         else if (!conMgr.current!!.isInteractiveMode) NonInteractiveModeMessage()
         else if (!conMgr.current!!.session.isOpen || conMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
-        else {
-            val session = conMgr.current!!.session
-            val navState = Navigator.rememberNavigatorState(
-                container = session.rootSchemaType!!,
-                title = Label.TYPE_BROWSER,
-                initExpandDepth = 2,
-            ) { } // TODO
-            session.onSessionChange = { navState.replaceContainer(it) }
-            session.onSchemaWrite = { navState.reloadEntries() }
-            buttons = listOf(refreshButton(navState)) + navState.buttons
-            Navigator.Layout(
-                state = navState,
-                iconArg = { typeIcon(it) },
-                styleArgs = { listOf() },
-                contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
-            )
+        else Content()
+    }
+
+    @Composable
+    private fun Content() {
+        val conMgr = GlobalState.connection
+        val session = conMgr.current!!.session
+        val navState = Navigator.rememberNavigatorState(
+            container = session.rootSchemaType!!,
+            title = Label.TYPE_BROWSER,
+            initExpandDepth = 1,
+        ) { } // TODO
+        session.onSessionChange = { navState.replaceContainer(it) }
+        session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
+        buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
+        Navigator.Layout(
+            state = navState,
+            iconArg = { typeIcon(it) },
+            styleArgs = { listOf() },
+            contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
+        )
+    }
+
+    private fun refresh(navState: Navigator.NavigatorState<SchemaType>) {
+        GlobalState.connection.current?.session?.resetSchemaReadTx()
+        navState.reloadEntries()
+    }
+
+    private fun refreshButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(
+            icon = Icon.Code.ROTATE,
+            tooltip = Tooltip.Arg(title = Label.REFRESH)
+        ) { refresh(navState) }
+    }
+
+    private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+        return IconButtonArg(
+            icon = Icon.Code.SQUARE_ARROW_UP_RIGHT,
+            enabled = GlobalState.project.current != null,
+            tooltip = Tooltip.Arg(title = Label.EXPORT)
+        ) {
+            GlobalState.connection.current?.session?.exportTypeSchema { schema ->
+                refresh(navState)
+                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                    file.content(schema)
+                    GlobalState.resource.open(file)
+                }
+            }
         }
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<SchemaThingType>): IconButtonArg {
-        return IconButtonArg(Icon.Code.ROTATE) { navState.reloadEntries() }
-    }
-
-    private fun typeIcon(itemState: Navigator.ItemState<SchemaThingType>): IconArg {
+    private fun typeIcon(itemState: Navigator.ItemState<SchemaType>): IconArg {
         return when {
             itemState.item.isEntityType -> IconArg(Icon.Code.RECTANGLE, color = { Theme.colors.tertiary })
             itemState.item.isRelationType -> IconArg(Icon.Code.RHOMBUS, color = { Theme.colors.quaternary })
@@ -88,7 +118,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<SchemaThingType>, onChangeEntries: () -> Unit
+        itemState: Navigator.ItemState<SchemaType>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return listOf() // TODO
     }

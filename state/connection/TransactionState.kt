@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
+import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.Message
@@ -43,7 +44,7 @@ class TransactionState constructor(
 ) {
 
     companion object {
-        private const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
+        internal const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -126,6 +127,10 @@ class TransactionState constructor(
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             _transaction?.commit()
             _transaction = null
+            if (session.type == TypeDBSession.Type.SCHEMA) {
+                session.resetSchemaReadTx()
+                session.onSchemaWrite?.let { it() }
+            }
             notificationMgr.info(LOGGER, TRANSACTION_COMMIT)
         }
     }
