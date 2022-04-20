@@ -29,7 +29,6 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.state.common.Navigable
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Settings
 import com.vaticle.typedb.studio.state.notification.NotificationManager
@@ -52,7 +51,7 @@ class Directory internal constructor(
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) : Navigable.Item<ProjectItem>, ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
+) : ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
 
     companion object {
         private const val UNTITLED = "Untitled"

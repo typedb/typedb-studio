@@ -39,7 +39,7 @@ sealed class ProjectItem constructor(
     val settings: Settings,
     val projectMgr: ProjectManager,
     val notificationMgr: NotificationManager
-) : Navigable.Item<ProjectItem> {
+) : Navigable<ProjectItem> {
 
     enum class Type(val index: Int) {
         DIRECTORY(0),
@@ -89,7 +89,7 @@ sealed class ProjectItem constructor(
         return path.toString()
     }
 
-    override fun compareTo(other: Navigable.Item<ProjectItem>): Int {
+    override fun compareTo(other: Navigable<ProjectItem>): Int {
         other as ProjectItem
         return if (this.projectItemType == other.projectItemType) {
             this.path.toString().compareTo(other.path.toString(), ignoreCase = true)

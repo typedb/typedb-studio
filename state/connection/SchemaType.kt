@@ -21,17 +21,16 @@ package com.vaticle.typedb.studio.state.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.common.Navigable
 import kotlin.streams.toList
 
-open class SchemaType(
+open class SchemaType constructor(
     private val concept: ThingType,
     override val parent: SchemaType?,
     private val session: SessionState,
     isExpandableInit: Boolean,
-) : Navigable.Item<SchemaType> {
+) : Navigable<SchemaType> {
 
     val isEntityType get() = concept.isEntityType
     val isRelationType get() = concept.isRelationType
@@ -44,18 +43,20 @@ open class SchemaType(
 
     override fun reloadEntries() {
         val tx = session.openOrGetSchemaReadTx()
-        entries = concept.asRemote(tx).subtypesExplicit
-            .map { schemaTypeOf(it, tx) }
-            .sorted().toList()
+        val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
+        val old = entries.map { it.concept }.toSet()
+        if (new != old) {
+            val deleted = old - new
+            val added = new - old
+            val retainedEntries = entries.filter { !deleted.contains(it.concept) }
+            val newEntries = added.map { SchemaType(it, this, session, false) }
+            entries = (retainedEntries + newEntries).sorted()
+        }
+        entries.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
     }
 
-    private fun schemaTypeOf(concept: ThingType, transaction: TypeDBTransaction): SchemaType {
-        val isExpandable = concept.asRemote(transaction).subtypesExplicit.findAny().isPresent
-        return SchemaType(concept, this, session, isExpandable)
-    }
-
-    override fun compareTo(other: Navigable.Item<SchemaType>): Int {
+    override fun compareTo(other: Navigable<SchemaType>): Int {
         return this.name.compareTo(other.name, ignoreCase = true)
     }
 
@@ -67,16 +68,10 @@ open class SchemaType(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as SchemaType
-        return this.concept == other.concept && this.isExpandable == other.isExpandable
+        return this.concept == other.concept
     }
 
     override fun hashCode(): Int {
         return concept.hashCode()
-    }
-
-    class Root constructor(
-        concept: ThingType, session: SessionState
-    ) : SchemaType(concept, null, session, true), Navigable.Container<SchemaType> {
-        override var isExpandable: Boolean = true
     }
 }

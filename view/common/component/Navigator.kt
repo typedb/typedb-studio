@@ -80,7 +80,6 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Navigator.ItemState.Container
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
@@ -115,7 +114,7 @@ object Navigator {
     private const val SCROLL_ITEM_OFFSET = 3
     private val LOGGER = KotlinLogging.logger {}
 
-    open class ItemState<T : Navigable.Item<T>> internal constructor(
+    class ItemState<T : Navigable<T>> internal constructor(
         val item: T, internal val parent: ItemState<T>?, private val navState: NavigatorState<T>
     ) : Comparable<ItemState<T>> {
 
@@ -140,14 +139,14 @@ object Navigator {
             return isExpandable && buttonArea?.contains(x, y) ?: false
         }
 
-        private fun navigables(depth: Int): List<ItemState<T>> {
-            val list: MutableList<ItemState<T>> = mutableListOf(this)
-            if (isExpanded) list.addAll(children(depth + 1))
-            return list
+        internal fun navigables(): List<ItemState<T>> {
+            return children(0)
         }
 
-        protected fun children(depth: Int): List<ItemState<T>> {
-            return entries.onEach { it.depth = depth }.map { it.navigables(depth) }.flatten()
+        private fun children(depth: Int): List<ItemState<T>> {
+            return entries.onEach { it.depth = depth }.map {
+                listOf(it) + if (it.isExpanded) it.children(depth + 1) else emptyList()
+            }.flatten()
         }
 
         fun toggle() {
@@ -214,32 +213,19 @@ object Navigator {
         }
 
         override fun toString(): String {
-            return "Navigable Item: $name"
-        }
-
-        internal class Container<T : Navigable.Item<T>> internal constructor(
-            item: Navigable.Container<T>, navState: NavigatorState<T>
-        ) : ItemState<T>(item as T, null, navState) {
-
-            fun navigables(): List<ItemState<T>> {
-                return children(0)
-            }
-
-            override fun toString(): String {
-                return "Navigable Container: $name"
-            }
+            return "Navigator ItemState: $name"
         }
     }
 
-    class NavigatorState<T : Navigable.Item<T>> internal constructor(
-        container: Navigable.Container<T>,
+    class NavigatorState<T : Navigable<T>> internal constructor(
+        container: Navigable<T>,
         private val title: String,
         private val initExpandDepth: Int,
         private val liveUpdate: Boolean,
         private val openFn: (ItemState<T>) -> Unit,
         private var coroutineScope: CoroutineScope
     ) {
-        private var container: Container<T> by mutableStateOf(Container(container, this))
+        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
         private var itemWidth by mutableStateOf(0.dp)
@@ -264,13 +250,13 @@ object Navigator {
             recomputeList()
         }
 
-        fun replaceContainer(newContainer: Navigable.Container<T>) {
-            container = Container(newContainer, this)
+        fun replaceContainer(newContainer: Navigable<T>) {
+            container = ItemState(newContainer as T, null, this)
             initialiseContainer()
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun launchWatcher(root: Container<T>) {
+        private fun launchWatcher(root: ItemState<T>) {
             coroutineScope.launch(IO) {
                 try {
                     do {
@@ -388,8 +374,8 @@ object Navigator {
     }
 
     @Composable
-    fun <T : Navigable.Item<T>> rememberNavigatorState(
-        container: Navigable.Container<T>, title: String, initExpandDepth: Int,
+    fun <T : Navigable<T>> rememberNavigatorState(
+        container: Navigable<T>, title: String, initExpandDepth: Int,
         liveUpdate: Boolean = false, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
         val coroutineScope = rememberCoroutineScope()
@@ -398,7 +384,7 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun <T : Navigable.Item<T>> Layout(
+    fun <T : Navigable<T>> Layout(
         state: NavigatorState<T>,
         iconArg: (ItemState<T>) -> IconArg,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
@@ -408,7 +394,8 @@ object Navigator {
         val horScrollState = rememberScrollState()
         if (state.entries.isNotEmpty()) {
             val root = state.entries.first()
-            Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }.onGloballyPositioned {
+            Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }
+                .onGloballyPositioned {
                 state.density = density
                 state.updateAreaWidth(it.size.width)
             }) {
@@ -429,7 +416,7 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemLayout(
+    private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg,
         styleArgs: (ItemState<T>) -> List<Typography.Style>
     ) {
@@ -472,7 +459,7 @@ object Navigator {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun <T : Navigable.Item<T>> ItemButton(item: ItemState<T>) {
+    private fun <T : Navigable<T>> ItemButton(item: ItemState<T>) {
         if (item.isExpandable) RawIconButton(
             icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
             onClick = { item.toggle() },
@@ -483,14 +470,14 @@ object Navigator {
     }
 
     @Composable
-    private fun <T : Navigable.Item<T>> ItemIcon(item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg) {
+    private fun <T : Navigable<T>> ItemIcon(item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
             Icon.Render(icon = iconArg(item).code, color = iconArg(item).color())
         }
     }
 
     @Composable
-    private fun <T : Navigable.Item<T>> ItemText(item: ItemState<T>, styleArgs: List<Typography.Style>) {
+    private fun <T : Navigable<T>> ItemText(item: ItemState<T>, styleArgs: List<Typography.Style>) {
         Row(modifier = Modifier.height(ICON_WIDTH)) {
             Text(
                 value = item.name,
@@ -505,7 +492,7 @@ object Navigator {
         }
     }
 
-    private suspend fun <T : Navigable.Item<T>> PointerInputScope.onPointerInput(
+    private suspend fun <T : Navigable<T>> PointerInputScope.onPointerInput(
         state: NavigatorState<T>, item: ItemState<T>
     ) {
         state.contextMenu.onPointerInput(
@@ -516,7 +503,7 @@ object Navigator {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun <T : Navigable.Item<T>> onKeyEvent(
+    private fun <T : Navigable<T>> onKeyEvent(
         event: KeyEvent, state: NavigatorState<T>, item: ItemState<T>
     ): Boolean {
         return when (event.awtEvent.id) {

@@ -18,22 +18,12 @@
 
 package com.vaticle.typedb.studio.state.common
 
-object Navigable {
-
-    interface Item<T : Item<T>> : Comparable<Item<T>> {
-        val name: String
-        val parent: Item<T>?
-        val info: String?
-        val isExpandable: Boolean
-        val isBulkExpandable: Boolean
-        val entries: List<T>
-        val isContainer: Boolean get() = false
-        fun reloadEntries()
-    }
-
-    interface Container<T : Item<T>> : Item<T> {
-
-        override val isExpandable: Boolean get() = true
-        override val isContainer: Boolean get() = true
-    }
+interface Navigable<T : Navigable<T>> : Comparable<Navigable<T>> {
+    val name: String
+    val parent: Navigable<T>?
+    val info: String?
+    val isExpandable: Boolean
+    val isBulkExpandable: Boolean
+    val entries: List<T>
+    fun reloadEntries()
 }
