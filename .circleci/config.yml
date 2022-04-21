@@ -45,8 +45,8 @@ jobs:
       xcode: "12.5.1"
     working_directory: ~/typedb-studio
     steps:
-      - install-bazel-mac
       - checkout
+      - install-bazel-mac
       - run: |
           export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
           export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
@@ -79,8 +79,8 @@ jobs:
       image: ubuntu-2004:202101-01
     working_directory: ~/typedb-studio
     steps:
-      - install-bazel-linux
       - checkout
+      - install-bazel-linux
       - run: bazel build //:assemble
       - run: bazel build //:linux-java-binary
       - run: |
@@ -102,8 +102,8 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/dist
-      - install-bazel-linux
       - checkout
+      - install-bazel-linux
       - run:
           name: "Create GitHub release notes"
           command: |
@@ -126,8 +126,8 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/dist
-      - install-bazel-linux
       - checkout
+      - install-bazel-linux
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
           export DEPLOY_BREW_CHECKSUM=$(sha256sum ~/dist/typedb-studio-mac-$(cat VERSION).dmg | awk '{print $1}')
