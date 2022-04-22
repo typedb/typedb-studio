@@ -34,7 +34,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
          * function with every new nested class added into ErrorMessage.
          */
         fun loadClasses() {
-            System; View; Connection; Project
+            System; View; Connection; Project; Schema
         }
     }
 

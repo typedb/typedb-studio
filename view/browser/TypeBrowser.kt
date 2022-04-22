@@ -49,22 +49,21 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
-    override val isActive: Boolean get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.session.isOpen
+    override val isActive: Boolean get() = GlobalState.client.isConnected && GlobalState.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
     override fun BrowserLayout() {
-        val conMgr = GlobalState.connection
-        if (!conMgr.isConnected) ConnectToServerHelper()
-        else if (!conMgr.current!!.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!conMgr.current!!.session.isOpen || conMgr.selectDatabaseDialog.isOpen) SelectDBHelper()
+        val client = GlobalState.client
+        if (!client.isConnected) ConnectToServerHelper()
+        else if (!client.isInteractiveMode) NonInteractiveModeMessage()
+        else if (!client.session.isOpen || client.selectDatabaseDialog.isOpen) SelectDBHelper()
         else Content()
     }
 
     @Composable
     private fun Content() {
-        val conMgr = GlobalState.connection
-        val session = conMgr.current!!.session
+        val session = GlobalState.client.session
         val navState = rememberNavigatorState(
             container = session.rootSchemaType!!,
             title = Label.TYPE_BROWSER,
@@ -82,7 +81,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState>) {
-        GlobalState.connection.current?.session?.resetSchemaReadTx()
+        GlobalState.client.session.resetSchemaReadTx()
         navState.reloadEntries()
     }
 
@@ -99,7 +98,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             enabled = GlobalState.project.current != null,
             tooltip = Tooltip.Arg(title = Label.EXPORT)
         ) {
-            GlobalState.connection.current?.session?.exportTypeSchema { schema ->
+            GlobalState.client.session.exportTypeSchema { schema ->
                 refresh(navState)
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
@@ -129,7 +128,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                onClick = { GlobalState.connection.connectServerDialog.open() },
+                onClick = { GlobalState.client.connectServerDialog.open() },
                 leadingIcon = Icon.Code.SERVER
             )
         }
@@ -152,7 +151,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                onClick = { GlobalState.connection.selectDatabaseDialog.open() },
+                onClick = { GlobalState.client.selectDatabaseDialog.open() },
                 leadingIcon = Icon.Code.DATABASE
             )
         }

@@ -44,7 +44,7 @@ import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
 class SessionState constructor(
-    private val connection: Connection,
+    private val client: ClientState,
     internal val notificationMgr: NotificationManager
 ) {
 
@@ -74,7 +74,7 @@ class SessionState constructor(
         if (isOpen && this.database == database && this.type == type) return
         close()
         try {
-            _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
+            _session = client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
             transaction()?.let {
                 rootSchemaType = TypeState(it.concepts().rootThingType, null, this, true)

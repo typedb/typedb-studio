@@ -136,7 +136,7 @@ object Studio {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
                 LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                GlobalState.connection.current?.close()
+                GlobalState.client.close()
             }
         })
     }
@@ -224,9 +224,9 @@ object Studio {
                 }
                 if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
                 if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
-                if (GlobalState.connection.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
-                if (GlobalState.connection.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
-                if (GlobalState.connection.selectDatabaseDialog.isOpen) DatabaseDialog.SelectDatabase()
+                if (GlobalState.client.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
+                if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
+                if (GlobalState.client.selectDatabaseDialog.isOpen) DatabaseDialog.SelectDatabase()
                 if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
                 if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
                 if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()

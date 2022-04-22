@@ -33,10 +33,10 @@ import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.connection.Connection
-import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.ConnectionManager.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
@@ -58,25 +58,25 @@ import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 
-    private val isConnected get() = GlobalState.connection.isConnected
-    private val isScript get() = GlobalState.connection.current?.isScriptMode == true
-    private val isInteractive get() = GlobalState.connection.current?.isInteractiveMode == true
-    private val hasOpenSession get() = GlobalState.connection.isConnected && GlobalState.connection.current!!.session.isOpen
-    private val hasOpenTx get() = GlobalState.connection.current?.session?.transaction?.isOpen == true
-    private val isSchemaSession get() = GlobalState.connection.current?.session?.isSchema == true
-    private val isDataSession get() = GlobalState.connection.current?.session?.isData == true
-    private val isReadTransaction get() = GlobalState.connection.current?.session?.transaction?.isRead == true
-    private val isWriteTransaction get() = GlobalState.connection.current?.session?.transaction?.isWrite == true
-    private val isSnapshotActivated get() = GlobalState.connection.current?.session?.transaction?.snapshot?.activated == true
-    private val isSnapshotEnabled get() = GlobalState.connection.current?.session?.transaction?.snapshot?.enabled == true
-    private val isInferActivated get() = GlobalState.connection.current?.session?.transaction?.infer?.activated == true
-    private val isInferEnabled get() = GlobalState.connection.current?.session?.transaction?.infer?.enabled == true
-    private val isExplainActivated get() = GlobalState.connection.current?.session?.transaction?.explain?.activated == true
-    private val isExplainEnabled get() = GlobalState.connection.current?.session?.transaction?.explain?.enabled == true
-    private val isReadyToRunQuery get() = GlobalState.connection.current?.isReadyToRunQuery == true
+    private val isConnected get() = GlobalState.client.isConnected
+    private val isScript get() = GlobalState.client.isScriptMode
+    private val isInteractive get() = GlobalState.client.isInteractiveMode
+    private val hasOpenSession get() = GlobalState.client.isConnected && GlobalState.client.session.isOpen
+    private val hasOpenTx get() = GlobalState.client.session.transaction.isOpen
+    private val isSchemaSession get() = GlobalState.client.session.isSchema
+    private val isDataSession get() = GlobalState.client.session.isData
+    private val isReadTransaction get() = GlobalState.client.session.transaction.isRead
+    private val isWriteTransaction get() = GlobalState.client.session.transaction.isWrite
+    private val isSnapshotActivated get() = GlobalState.client.session.transaction.snapshot.activated
+    private val isSnapshotEnabled get() = GlobalState.client.session.transaction.snapshot.enabled
+    private val isInferActivated get() = GlobalState.client.session.transaction.infer.activated
+    private val isInferEnabled get() = GlobalState.client.session.transaction.infer.enabled
+    private val isExplainActivated get() = GlobalState.client.session.transaction.explain.activated
+    private val isExplainEnabled get() = GlobalState.client.session.transaction.explain.enabled
+    private val isReadyToRunQuery get() = GlobalState.client.isReadyToRunQuery
     private val hasRunnablePage get() = GlobalState.resource.active?.isRunnable == true
-    private val hasRunningQuery get() = GlobalState.connection.current?.hasRunningQuery == true
-    private val hasRunningCommand get() = GlobalState.connection.current?.hasRunningCommand == true
+    private val hasRunningQuery get() = GlobalState.client.hasRunningQuery
+    private val hasRunningCommand get() = GlobalState.client.hasRunningCommand
 
     @Composable
     fun Layout() {
@@ -194,8 +194,8 @@ object Toolbar {
                 ToolbarIconButton(
                     icon = Icon.Code.DATABASE,
                     onClick = {
-                        GlobalState.connection.current!!.refreshDatabaseList()
-                        GlobalState.connection.manageDatabasesDialog.open()
+                        GlobalState.client.refreshDatabaseList()
+                        GlobalState.client.manageDatabasesDialog.open()
                     },
                     enabled = enabled,
                     tooltip = Tooltip.Arg(
@@ -239,7 +239,7 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = schema.name.lowercase(),
-                                onClick = { GlobalState.connection.current?.tryUpdateSessionType(schema) },
+                                onClick = { GlobalState.client.tryUpdateSessionType(schema) },
                                 color = { toggleButtonColor(isSchemaSession) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
@@ -250,7 +250,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = data.name.lowercase(),
-                                onClick = { GlobalState.connection.current?.tryUpdateSessionType(data) },
+                                onClick = { GlobalState.client.tryUpdateSessionType(data) },
                                 color = { toggleButtonColor(isDataSession) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
@@ -272,7 +272,7 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = write.name.lowercase(),
-                                onClick = { GlobalState.connection.current?.tryUpdateTransactionType(write) },
+                                onClick = { GlobalState.client.tryUpdateTransactionType(write) },
                                 color = { toggleButtonColor(isWriteTransaction) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
@@ -283,7 +283,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = read.name.lowercase(),
-                                onClick = { GlobalState.connection.current?.tryUpdateTransactionType(read) },
+                                onClick = { GlobalState.client.tryUpdateTransactionType(read) },
                                 color = { toggleButtonColor(isReadTransaction) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
@@ -303,7 +303,7 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
-                                onClick = { GlobalState.connection.current?.session?.transaction?.snapshot?.toggle() },
+                                onClick = { GlobalState.client.session?.transaction?.snapshot?.toggle() },
                                 color = { toggleButtonColor(isSnapshotActivated) },
                                 enabled = enabled && isSnapshotEnabled,
                                 tooltip = Tooltip.Arg(
@@ -314,7 +314,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.INFER.lowercase(),
-                                onClick = { GlobalState.connection.current?.session?.transaction?.infer?.toggle() },
+                                onClick = { GlobalState.client.session?.transaction?.infer?.toggle() },
                                 color = { toggleButtonColor(isInferActivated) },
                                 enabled = enabled && isInferEnabled,
                                 tooltip = Tooltip.Arg(
@@ -325,7 +325,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
-                                onClick = { GlobalState.connection.current?.session?.transaction?.explain?.toggle() },
+                                onClick = { GlobalState.client.session?.transaction?.explain?.toggle() },
                                 color = { toggleButtonColor(isExplainActivated) },
                                 enabled = enabled && isExplainEnabled,
                                 tooltip = Tooltip.Arg(
@@ -376,7 +376,7 @@ object Toolbar {
                 private fun CloseButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.Code.XMARK,
-                        onClick = { GlobalState.connection.current?.closeTransaction() },
+                        onClick = { GlobalState.client.closeTransaction() },
                         color = Theme.colors.error,
                         enabled = enabled,
                         tooltip = Tooltip.Arg(
@@ -391,7 +391,7 @@ object Toolbar {
                 private fun RollbackButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.Code.ROTATE_LEFT,
-                        onClick = { GlobalState.connection.current?.rollbackTransaction() },
+                        onClick = { GlobalState.client.rollbackTransaction() },
                         color = Theme.colors.quaternary2,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
@@ -406,7 +406,7 @@ object Toolbar {
                 private fun CommitButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.Code.CHECK,
-                        onClick = { GlobalState.connection.current?.commitTransaction() },
+                        onClick = { GlobalState.client.commitTransaction() },
                         color = Theme.colors.secondary,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
@@ -437,7 +437,7 @@ object Toolbar {
                 color = Theme.colors.secondary,
                 onClick = {
                     GlobalState.resource.active?.let {
-                        if (it.isRunnable) GlobalState.connection.current?.mayRun(it.asRunnable())
+                        if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable())
                     }
                 },
                 enabled = isReadyToRunQuery && hasRunnablePage,
@@ -453,7 +453,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
-                onClick = { GlobalState.connection.current!!.sendStopSignal() },
+                onClick = { GlobalState.client.sendStopSignal() },
                 enabled = hasRunningQuery && !hasRunningCommand,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
@@ -463,8 +463,7 @@ object Toolbar {
     object Major {
 
         private val connectionName
-            get() = (GlobalState.connection.current!!.username?.let { "$it@" } ?: "") +
-                    GlobalState.connection.current!!.address
+            get() = (GlobalState.client.username?.let { "$it@" } ?: "") + GlobalState.client.address
 
         @Composable
         internal fun Buttons() {
@@ -476,14 +475,14 @@ object Toolbar {
 
         @Composable
         private fun ModeButtons() {
-            val interactive = Connection.Mode.INTERACTIVE
-            val script = Connection.Mode.SCRIPT
+            val interactive = ClientState.Mode.INTERACTIVE
+            val script = ClientState.Mode.SCRIPT
             TextButtonRow(
                 height = TOOLBAR_BUTTON_SIZE,
                 buttons = listOf(
                     TextButtonArg(
                         text = interactive.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.mode = interactive },
+                        onClick = { GlobalState.client.mode = interactive },
                         color = { toggleButtonColor(isActive = isConnected && isInteractive) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
@@ -494,7 +493,7 @@ object Toolbar {
                     ),
                     TextButtonArg(
                         text = script.name.lowercase(),
-                        onClick = { GlobalState.connection.current?.mode = script },
+                        onClick = { GlobalState.client.mode = script },
                         color = { toggleButtonColor(isActive = isConnected && isScript) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
@@ -509,7 +508,7 @@ object Toolbar {
 
         @Composable
         private fun ConnectionButton() {
-            when (GlobalState.connection.status) {
+            when (GlobalState.client.status) {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
                 CONNECTED -> ConnectionButton(connectionName)
@@ -520,7 +519,7 @@ object Toolbar {
         private fun ConnectionButton(text: String) {
             TextButton(
                 text = text,
-                onClick = { GlobalState.connection.connectServerDialog.open() },
+                onClick = { GlobalState.client.connectServerDialog.open() },
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
                 trailingIcon = Icon.Code.SERVER,
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)

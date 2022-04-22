@@ -66,7 +66,7 @@ object DatabaseDialog {
         var name: String by mutableStateOf("")
 
         override fun cancel() {
-            GlobalState.connection.manageDatabasesDialog.close()
+            GlobalState.client.manageDatabasesDialog.close()
         }
 
         override fun isValid(): Boolean {
@@ -75,14 +75,13 @@ object DatabaseDialog {
 
         override fun trySubmit() {
             assert(name.isNotBlank())
-            GlobalState.connection.current!!.tryCreateDatabase(name) { name = "" }
+            GlobalState.client.tryCreateDatabase(name) { name = "" }
         }
     }
 
     @Composable
     fun ManageDatabases() {
-        val dialogState = GlobalState.connection.manageDatabasesDialog
-        val connection = GlobalState.connection.current!!
+        val dialogState = GlobalState.client.manageDatabasesDialog
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
@@ -93,7 +92,7 @@ object DatabaseDialog {
                 Spacer(Modifier.height(DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.REFRESH, onClick = { connection.refreshDatabaseList() })
+                    TextButton(text = Label.REFRESH, onClick = { GlobalState.client.refreshDatabaseList() })
                     FormRowSpacer()
                     TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
                 }
@@ -104,7 +103,7 @@ object DatabaseDialog {
     @Composable
     private fun DeletableDatabaseList(mod1: Modifier) {
         ActionList.Layout(
-            items = GlobalState.connection.current!!.databaseList,
+            items = GlobalState.client.databaseList,
             settingSide = ActionList.Side.RIGHT,
             modifier = mod1.border(1.dp, Theme.colors.border),
             buttonFn = { databaseName ->
@@ -117,7 +116,7 @@ object DatabaseDialog {
                             message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
                             verificationValue = databaseName,
                             confirmLabel = Label.DELETE,
-                            onConfirm = { GlobalState.connection.current!!.tryDeleteDatabase(databaseName) }
+                            onConfirm = { GlobalState.client.tryDeleteDatabase(databaseName) }
                         )
                     }
                 )
@@ -153,7 +152,7 @@ object DatabaseDialog {
 
     @Composable
     fun SelectDatabase() {
-        val dialogState = GlobalState.connection.selectDatabaseDialog
+        val dialogState = GlobalState.client.selectDatabaseDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -171,10 +170,10 @@ object DatabaseDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
         Dropdown(
-            values = GlobalState.connection.current?.databaseList ?: emptyList(),
-            selected = GlobalState.connection.current?.session?.database,
-            onExpand = { GlobalState.connection.current?.refreshDatabaseList() },
-            onSelection = { GlobalState.connection.current?.tryOpenSession(it) },
+            values = GlobalState.client.databaseList,
+            selected = GlobalState.client.session.database,
+            onExpand = { GlobalState.client.refreshDatabaseList() },
+            onSelection = { GlobalState.client.tryOpenSession(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = enabled,
             modifier = modifier,

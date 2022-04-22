@@ -21,31 +21,38 @@ package com.vaticle.typedb.studio.state.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBClient
+import com.vaticle.typedb.client.api.TypeDBCredential
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.AtomicIntegerState
+import com.vaticle.typedb.studio.state.common.AtomicReferenceState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
+import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.state.resource.Resource
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class Connection internal constructor(
-    val address: String,
-    val username: String?,
-    internal val client: TypeDBClient,
-    private val notificationMgr: NotificationManager
-) {
+class ClientState constructor(private val notificationMgr: NotificationManager) {
 
+    enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
     enum class Mode { SCRIPT, INTERACTIVE }
 
     companion object {
@@ -53,20 +60,66 @@ class Connection internal constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    val connectServerDialog = DialogManager.Base()
+    val selectDatabaseDialog = DialogManager.Base()
+    val manageDatabasesDialog = DialogManager.Base()
+    val status: Status get() = statusAtomic.state
+    val isConnected: Boolean get() = status == CONNECTED
+    val isConnecting: Boolean get() = status == CONNECTING
+    val isDisconnected: Boolean get() = status == DISCONNECTED
+    var address: String? by mutableStateOf(null)
+    var username: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val hasRunningQuery get() = session.transaction.hasRunningQuery
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
-    var isOpen = AtomicBooleanState(true)
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationMgr)
+    private val statusAtomic = AtomicReferenceState<Status>(DISCONNECTED)
+    private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var runningClosingCommands = AtomicIntegerState(0)
     private var databaseListRefreshedTime = System.currentTimeMillis()
     private val asyncDepth = AtomicInteger(0)
+
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+    fun tryConnectToTypeDB(address: String) {
+        tryConnect(address, null) { TypeDB.coreClient(address) }
+    }
+
+    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, tlsEnabled: Boolean) {
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled))
+    }
+
+    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)))
+    }
+
+    private fun tryConnectToTypeDBCluster(address: String, username: String, credentials: TypeDBCredential) {
+        tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
+    }
+
+    private fun tryConnect(newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
+        coroutineScope.launch {
+            this@ClientState.close()
+            statusAtomic.set(CONNECTING)
+            try {
+                address = newAddress
+                username = newUsername
+                _client = clientConstructor()
+                statusAtomic.set(CONNECTED)
+            } catch (e: TypeDBClientException) {
+                statusAtomic.set(DISCONNECTED)
+                notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
+            } catch (e: java.lang.Exception) {
+                statusAtomic.set(DISCONNECTED)
+                notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
+            }
+        }
+    }
 
     private fun runAsyncCommand(function: () -> Unit) {
         val depth = asyncDepth.incrementAndGet()
@@ -124,7 +177,7 @@ class Connection internal constructor(
 
     private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
-        client.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
+        _client?.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
@@ -147,7 +200,7 @@ class Connection internal constructor(
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
             try {
-                client.databases().create(database)
+                _client?.databases()?.create(database)
                 refreshDatabaseListFn()
                 onSuccess()
             } catch (e: Exception) {
@@ -159,11 +212,15 @@ class Connection internal constructor(
     fun tryDeleteDatabase(database: String) = runAsyncCommand {
         try {
             if (session.database == database) session.close()
-            client.databases().get(database).delete()
+            _client?.databases()?.get(database)?.delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {
             notificationMgr.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
+    }
+
+    fun session(database: String, type: TypeDBSession.Type = DATA): TypeDBSession? {
+        return _client?.session(database, type)
     }
 
     fun commitTransaction() = runAsyncCommand { session.transaction.commit() }
@@ -175,9 +232,10 @@ class Connection internal constructor(
     }
 
     fun close() = runAsyncClosingCommand {
-        if (isOpen.compareAndSet(expected = true, new = false)) {
+        if (statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED)) {
             session.close()
-            client.close()
+            _client?.close()
+            _client = null
         }
     }
 }

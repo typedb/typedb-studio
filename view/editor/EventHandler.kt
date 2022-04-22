@@ -212,18 +212,14 @@ internal class EventHandler constructor(
     }
 
     private fun mayRunFile() {
-        val connection = GlobalState.connection.current
-        if (connection?.isReadyToRunQuery != true) return
-        processor.file?.let { if (it.isRunnable) connection.mayRun(it.asRunnable()) }
+        if (!GlobalState.client.isReadyToRunQuery) return
+        processor.file?.let { if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable()) }
     }
 
     private fun mayRunSelection() {
-        val connection = GlobalState.connection.current
-        if (connection?.isReadyToRunQuery != true) return
+        if (!GlobalState.client.isReadyToRunQuery) return
         processor.file?.let {
-            if (it.isRunnable) {
-                connection.mayRun(it.asRunnable(), target.selectedText().text)
-            }
+            if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable(), target.selectedText().text)
         }
     }
 
@@ -303,7 +299,7 @@ internal class EventHandler constructor(
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && GlobalState.connection.current?.isReadyToRunQuery == true
+        enabled = processor.file?.isRunnable == true && GlobalState.client.isReadyToRunQuery
     ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
@@ -311,8 +307,7 @@ internal class EventHandler constructor(
         icon = Icon.Code.PLAY,
         iconColor = { Theme.colors.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && target.selection != null &&
-                GlobalState.connection.current?.isReadyToRunQuery == true
+        enabled = processor.file?.isRunnable == true && target.selection != null && GlobalState.client.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
