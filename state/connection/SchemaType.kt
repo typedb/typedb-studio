@@ -22,15 +22,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.studio.state.common.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typeql.lang.common.TypeQLToken
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
+import mu.KotlinLogging
 
-open class SchemaType constructor(
+class SchemaType constructor(
     private val concept: ThingType,
     override val parent: SchemaType?,
     private val session: SessionState,
     isExpandableInit: Boolean,
-) : Navigable<SchemaType> {
+) : Navigable<SchemaType>, Resource {
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+    }
 
     val isEntityType get() = concept.isEntityType
     val isRelationType get() = concept.isRelationType
@@ -40,6 +50,39 @@ open class SchemaType constructor(
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
     override var entries: List<SchemaType> = emptyList()
+    override val fullName: String = computeFullName()
+    override val isOpen: Boolean get() = isOpenAtomic.get()
+    override val isWritable: Boolean = true
+    override val isEmpty: Boolean = false
+    override val isUnsavedResource: Boolean = false
+    override val hasUnsavedChanges: Boolean by mutableStateOf(false)
+
+    private val isOpenAtomic = AtomicBoolean(false)
+    private val onClose = LinkedBlockingDeque<(SchemaType) -> Unit>()
+
+    private fun computeFullName(): String {
+        val base = if (concept.isEntityType) TypeQLToken.Type.ENTITY
+        else if (concept.isRelationType) TypeQLToken.Type.RELATION
+        else if (concept.isAttributeType) TypeQLToken.Type.ATTRIBUTE
+        else if (concept.isRoleType) TypeQLToken.Type.ROLE
+        else if (concept.isThingType) TypeQLToken.Type.THING
+        else throw IllegalStateException("Unrecognised concept base type")
+        return "$base: $name"
+    }
+
+    override fun launchWatcher() {}
+    override fun stopWatcher() {}
+    override fun beforeRun(function: (Resource) -> Unit) {}
+    override fun beforeSave(function: (Resource) -> Unit) {}
+    override fun beforeClose(function: (Resource) -> Unit) {}
+    override fun execBeforeClose() {}
+    override fun save(onSuccess: ((Resource) -> Unit)?) {}
+    override fun move(onSuccess: ((Resource) -> Unit)?) {}
+
+    override fun tryOpen(): Boolean {
+        // TODO
+        return true
+    }
 
     override fun reloadEntries() {
         val tx = session.openOrGetSchemaReadTx()
@@ -54,6 +97,34 @@ open class SchemaType constructor(
         }
         entries.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
+    }
+
+    override fun rename(onSuccess: ((Resource) -> Unit)?) {
+        // TODO
+    }
+
+    override fun onClose(function: (Resource) -> Unit) {
+        onClose.push(function)
+    }
+
+    override fun onReopen(function: (Resource) -> Unit) {
+        // TODO
+    }
+
+    override fun close() {
+        if (isOpenAtomic.compareAndSet(true, false)) {
+            onClose.forEach { it(this) }
+            // TODO
+        }
+    }
+
+    override fun delete() {
+        try {
+            close()
+            // TODO
+        } catch (e: Exception) {
+            session.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
+        }
     }
 
     override fun compareTo(other: Navigable<SchemaType>): Int {

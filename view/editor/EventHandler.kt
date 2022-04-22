@@ -42,7 +42,6 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOD_ENTER
-import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TOGGLE_COMMENT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_CHAR_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_END
@@ -84,6 +83,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TAB_SHIFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_DECREASE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_INCREASE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_RESET
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TOGGLE_COMMENT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -159,7 +159,7 @@ internal class EventHandler constructor(
             TAB -> processor.indentTab()
             TAB_SHIFT -> processor.outdentTab()
             ENTER, ENTER_SHIFT -> processor.insertNewLine()
-            MOD_ENTER -> runSelectionOrFile()
+            MOD_ENTER -> mayRunSelectionOrFile()
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()
@@ -207,15 +207,24 @@ internal class EventHandler constructor(
         clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(normaliseWhiteSpace(it.text)) }
     }
 
-    private fun runSelectionOrFile() {
-        if (processor.file?.isRunnable != true || GlobalState.connection.current?.isReadyToRunQuery != true) return
-        runSelectionOrFile(target.selection != null)
+    private fun mayRunSelectionOrFile() {
+        if (target.selection != null) mayRunSelection() else mayRunFile()
     }
 
-    private fun runSelectionOrFile(hasSelection: Boolean) {
+    private fun mayRunFile() {
         val connection = GlobalState.connection.current
-        if (hasSelection) processor.file?.let { connection?.mayRun(it, target.selectedText().text) }
-        else processor.file?.let { connection?.mayRun(it) }
+        if (connection?.isReadyToRunQuery != true) return
+        processor.file?.let { if (it.isRunnable) connection.mayRun(it.asRunnable()) }
+    }
+
+    private fun mayRunSelection() {
+        val connection = GlobalState.connection.current
+        if (connection?.isReadyToRunQuery != true) return
+        processor.file?.let {
+            if (it.isRunnable) {
+                connection.mayRun(it.asRunnable(), target.selectedText().text)
+            }
+        }
     }
 
     private fun hideToolbar(): Boolean {
@@ -295,7 +304,7 @@ internal class EventHandler constructor(
         iconColor = { Theme.colors.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && GlobalState.connection.current?.isReadyToRunQuery == true
-    ) { runSelectionOrFile(false) }
+    ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
         label = Label.RUN_SELECTION,
@@ -304,7 +313,7 @@ internal class EventHandler constructor(
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && target.selection != null &&
                 GlobalState.connection.current?.isReadyToRunQuery == true
-    ) { runSelectionOrFile(true) }
+    ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,

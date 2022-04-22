@@ -104,7 +104,7 @@ class TransactionState constructor(
         }
     }
 
-    internal fun runQuery(resource: Resource, content: String) {
+    internal fun runQuery(resource: Resource.Runnable, content: String) {
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 stopSignal.set(false)

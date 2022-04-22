@@ -163,11 +163,7 @@ object Navigator {
             expand(true)
         }
 
-        internal fun expand(recomputeNavigator: Boolean) {
-            expand(recomputeNavigator, 1)
-        }
-
-        internal fun expand(recomputeNavigator: Boolean, depth: Int) {
+        internal fun expand(recomputeNavigator: Boolean, depth: Int = 1) {
             expand(1, depth)
             if (recomputeNavigator) navState.recomputeList()
         }

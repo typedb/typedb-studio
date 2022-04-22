@@ -67,14 +67,14 @@ abstract class Page(var resource: Resource) {
 
     fun updateResource(resource: Resource) {
         this.resource = resource
-        runOutputState?.let { it.resource = resource }
+        runOutputState?.let { it.resource = resource.asRunnable() }
         updateResourceInner(resource)
     }
 
     @Composable
     private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
         if (runOutputState == null) {
-            runOutputState = RunOutputArea.State(resource, paneState, coroutineScope)
+            runOutputState = RunOutputArea.State(resource.asRunnable(), paneState, coroutineScope)
         }
         return runOutputState!!
     }

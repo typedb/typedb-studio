@@ -65,7 +65,7 @@ class File internal constructor(
     settings: Settings,
     projectMgr: ProjectManager,
     notificationMgr: NotificationManager
-) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Resource {
+) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Resource.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {

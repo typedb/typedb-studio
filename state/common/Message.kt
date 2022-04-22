@@ -157,4 +157,19 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(23, "Permission of file %s on the filesystem has changed, and has been updated in Studio.")
         }
     }
+
+    class Schema(codeNumber: Int, messageBody: String) :
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
+
+        companion object {
+            private const val CODE_PREFIX = "SCH"
+            private const val MESSAGE_PREFIX = "TypeDB Studio Schema"
+
+            val UNEXPECTED_ERROR =
+                Schema(1, "Unexpected error occurred with the database schema.")
+            val FAILED_TO_DELETE_TYPE =
+                Schema(2, "Failed to delete type due to: %s")
+
+        }
+    }
 }

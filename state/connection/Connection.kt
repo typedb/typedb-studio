@@ -128,18 +128,18 @@ class Connection internal constructor(
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun mayRun(resource: Resource, content: String = resource.runContent) {
+    fun mayRun(resource: Resource.Runnable, content: String = resource.runContent) {
         if (!isReadyToRunQuery) return
         if (isScriptMode) runScript(resource, content)
         else if (isInteractiveMode) runQuery(resource, content)
         else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
-    private fun runScript(resource: Resource, content: String = resource.runContent) = runAsyncCommand {
+    private fun runScript(resource: Resource.Runnable, content: String = resource.runContent) = runAsyncCommand {
         // TODO
     }
 
-    private fun runQuery(resource: Resource, content: String = resource.runContent) = runAsyncCommand {
+    private fun runQuery(resource: Resource.Runnable, content: String = resource.runContent) = runAsyncCommand {
         session.transaction.runQuery(resource, content)
     }
 

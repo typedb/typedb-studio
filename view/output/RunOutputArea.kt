@@ -56,8 +56,8 @@ object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State(
-        var resource: Resource,
+    class State constructor(
+        var resource: Resource.Runnable,
         private val paneState: Frame.PaneState,
         private val coroutineScope: CoroutineScope
     ) {

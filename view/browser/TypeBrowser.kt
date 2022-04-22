@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
+import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -64,7 +65,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     private fun Content() {
         val conMgr = GlobalState.connection
         val session = conMgr.current!!.session
-        val navState = Navigator.rememberNavigatorState(
+        val navState = rememberNavigatorState(
             container = session.rootSchemaType!!,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,

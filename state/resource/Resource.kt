@@ -24,15 +24,17 @@ interface Resource {
 
     val name: String
     val fullName: String
-    val runContent: String
-    val runner: RunnerManager
     val isOpen: Boolean
-    val isRunnable: Boolean
     val isWritable: Boolean
     val isEmpty: Boolean
     val isUnsavedResource: Boolean
     val hasUnsavedChanges: Boolean
+    val isRunnable: Boolean get() = false
     val needSaving get() = hasUnsavedChanges || (isUnsavedResource && !isEmpty)
+
+    fun asRunnable(): Runnable {
+        throw ClassCastException("Illegal cast of resource into runnable")
+    }
 
     fun tryOpen(): Boolean
 
@@ -58,7 +60,18 @@ interface Resource {
 
     fun move(onSuccess: ((Resource) -> Unit)? = null)
 
+    fun close()
+
     fun delete()
 
-    fun close()
+    interface Runnable : Resource {
+
+        val runContent: String
+        val runner: RunnerManager
+        override val isRunnable: Boolean get() = true
+
+        override fun asRunnable(): Runnable {
+            return this
+        }
+    }
 }

@@ -43,9 +43,9 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SessionState(
+class SessionState constructor(
     private val connection: Connection,
-    private val notificationMgr: NotificationManager
+    internal val notificationMgr: NotificationManager
 ) {
 
     companion object {

@@ -91,15 +91,6 @@ object PageArea {
             }
         }
 
-        private fun runCurrentPage(): Boolean {
-            GlobalState.connection.current?.let { connection ->
-                if (connection.isReadyToRunQuery) GlobalState.resource.active?.let { resource ->
-                    if (resource.isRunnable) connection.mayRun(resource)
-                }
-            }
-            return true
-        }
-
         internal fun createAndOpenNewFile(): Boolean {
             GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.open(it) }
             return true
