@@ -21,7 +21,8 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.common.DialogManager
+import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
@@ -31,7 +32,6 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
 import com.vaticle.typedb.studio.state.common.Settings
-import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext

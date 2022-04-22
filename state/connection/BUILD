@@ -27,10 +27,9 @@ kt_jvm_library(
     name = "connection",
     srcs = glob(["*.kt"]),
     deps = [
+        "//state/app:app",
         "//state/common:common",
-        "//state/notification:notification",
         "//state/resource:resource",
-        "//state/runner:runner",
 
         # External Vaticle Dependencies
         "@vaticle_typeql_lang_java//common:common",

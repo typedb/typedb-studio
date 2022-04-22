@@ -16,14 +16,11 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.notification
+package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.Message
-import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
-import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
-import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -35,6 +32,11 @@ import mu.KLogger
 @OptIn(ExperimentalTime::class)
 class NotificationManager {
 
+    // not a data class, because each object has to be unique
+    class Notification internal constructor(val type: Type, val code: String, val message: String) {
+        enum class Type { INFO, WARNING, ERROR }
+    }
+
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
@@ -44,7 +46,7 @@ class NotificationManager {
 
     fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
-        val notification = Notification(INFO, message.code(), stringOf(message, *params))
+        val notification = Notification(Notification.Type.INFO, message.code(), stringOf(message, *params))
         queue += notification
         coroutineScope.launch {
             delay(HIDE_DELAY)
@@ -53,20 +55,20 @@ class NotificationManager {
     }
 
     fun userError(logger: KLogger, message: Message, vararg params: Any) {
-        userNotification(logger, ERROR, message.code(), stringOf(message, *params))
+        userNotification(logger, Notification.Type.ERROR, message.code(), stringOf(message, *params))
 
     }
 
     fun userWarning(logger: KLogger, message: Message, vararg params: Any) {
-        userNotification(logger, WARNING, message.code(), stringOf(message, *params))
+        userNotification(logger, Notification.Type.WARNING, message.code(), stringOf(message, *params))
     }
 
     fun systemWarning(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
-        systemNotification(logger, cause, WARNING, message.code(), stringOf(message, *params))
+        systemNotification(logger, cause, Notification.Type.WARNING, message.code(), stringOf(message, *params))
     }
 
     fun systemError(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
-        systemNotification(logger, cause, ERROR, message.code(), stringOf(message, *params))
+        systemNotification(logger, cause, Notification.Type.ERROR, message.code(), stringOf(message, *params))
     }
 
     fun dismiss(notification: Notification) {
@@ -79,9 +81,9 @@ class NotificationManager {
 
     private fun userNotification(logger: KLogger, type: Notification.Type, code: String, message: String) {
         when (type) {
-            INFO -> logger.info { message }
-            WARNING -> logger.warn { message }
-            ERROR -> logger.error { message }
+            Notification.Type.INFO -> logger.info { message }
+            Notification.Type.WARNING -> logger.warn { message }
+            Notification.Type.ERROR -> logger.error { message }
         }
         queue += Notification(type, code, message)
     }
@@ -90,9 +92,9 @@ class NotificationManager {
         logger: KLogger, cause: Throwable, type: Notification.Type, code: String, message: String
     ) {
         when (type) {
-            INFO -> logger.info { message }
-            WARNING -> logger.warn { message }
-            ERROR -> {
+            Notification.Type.INFO -> logger.info { message }
+            Notification.Type.WARNING -> logger.warn { message }
+            Notification.Type.ERROR -> {
                 logger.error { message }
                 logger.error { cause }
             }

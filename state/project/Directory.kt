@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
@@ -31,7 +32,6 @@ import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_T
 import com.vaticle.typedb.studio.state.common.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.Property
 import com.vaticle.typedb.studio.state.common.Settings
-import com.vaticle.typedb.studio.state.notification.NotificationManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile

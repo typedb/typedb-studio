@@ -16,13 +16,13 @@
  *
  */
 
-package com.vaticle.typedb.studio.state
+package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class EditorScaler {
+class EditorManager {
 
     companion object {
         const val TEXT_EDITOR_SCALE_MIN = 5 // over 10

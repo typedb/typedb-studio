@@ -34,10 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.notification.Notification
-import com.vaticle.typedb.studio.state.notification.Notification.Type.ERROR
-import com.vaticle.typedb.studio.state.notification.Notification.Type.INFO
-import com.vaticle.typedb.studio.state.notification.Notification.Type.WARNING
+import com.vaticle.typedb.studio.state.app.NotificationManager.Notification
+import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.ERROR
+import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.WARNING
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton

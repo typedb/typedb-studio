@@ -18,8 +18,6 @@
 
 package com.vaticle.typedb.studio.state.resource
 
-import com.vaticle.typedb.studio.state.runner.RunnerManager
-
 interface Resource {
 
     val name: String

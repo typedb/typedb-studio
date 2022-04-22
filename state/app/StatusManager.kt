@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.status
+package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf

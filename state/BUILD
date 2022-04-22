@@ -26,14 +26,11 @@ kt_jvm_library(
     deps = [
         "//state/common:common",
         "//state/connection:connection",
-        "//state/notification:notification",
+        "//state/app:app",
         "//state/project:project",
         "//state/resource:resource",
-        "//state/status:status",
 
         # External Maven Dependencies
-        "@maven//:ch_qos_logback_logback_classic",
-        "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_slf4j_slf4j_api",

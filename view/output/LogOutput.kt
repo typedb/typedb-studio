@@ -26,11 +26,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.Property
-import com.vaticle.typedb.studio.state.runner.Runner
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.ERROR
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.INFO
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.SUCCESS
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.TYPEQL
+import com.vaticle.typedb.studio.state.resource.Runner
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color

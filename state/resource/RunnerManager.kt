@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.runner
+package com.vaticle.typedb.studio.state.resource
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf

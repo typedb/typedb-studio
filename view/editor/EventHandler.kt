@@ -165,9 +165,9 @@ internal class EventHandler constructor(
             PASTE -> paste()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            TEXT_SIZE_INCREASE -> GlobalState.editorScaler.increaseScale()
-            TEXT_SIZE_DECREASE -> GlobalState.editorScaler.decreaseScale()
-            TEXT_SIZE_RESET -> GlobalState.editorScaler.resetScale()
+            TEXT_SIZE_INCREASE -> GlobalState.editor.increaseScale()
+            TEXT_SIZE_DECREASE -> GlobalState.editor.decreaseScale()
+            TEXT_SIZE_RESET -> GlobalState.editor.resetScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
@@ -319,20 +319,20 @@ internal class EventHandler constructor(
         label = Label.INCREASE_TEXT_SIZE,
         icon = Icon.Code.ARROWS_MAXIMIZE,
         info = "${KeyMapper.CURRENT.modKey} + =",
-        enabled = !GlobalState.editorScaler.isMaxScale
-    ) { GlobalState.editorScaler.increaseScale() }
+        enabled = !GlobalState.editor.isMaxScale
+    ) { GlobalState.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
         icon = Icon.Code.ARROWS_MINIMIZE,
         info = "${KeyMapper.CURRENT.modKey} + -",
-        enabled = !GlobalState.editorScaler.isMinScale
-    ) { GlobalState.editorScaler.decreaseScale() }
+        enabled = !GlobalState.editor.isMinScale
+    ) { GlobalState.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
         icon = Icon.Code.EXPAND,
         info = "${KeyMapper.CURRENT.modKey} + 0",
-        enabled = !GlobalState.editorScaler.isDefaultScale
-    ) { GlobalState.editorScaler.resetScale() }
+        enabled = !GlobalState.editor.isDefaultScale
+    ) { GlobalState.editor.resetScale() }
 }

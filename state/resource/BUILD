@@ -27,12 +27,20 @@ kt_jvm_library(
     name = "resource",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/notification:notification",
-        "//state/runner:runner",
+        "//state/app:app",
+
+        # External Vaticle Dependencies
+        "@vaticle_typeql_lang_java//common:common",
+        "@vaticle_typeql_lang_java//query:query",
+        "@vaticle_typeql_lang_java//:typeql-lang",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_client_java//common",
+        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-resource:{pom_version}"],

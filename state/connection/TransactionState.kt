@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
@@ -32,9 +33,8 @@ import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANS
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_COMMIT
 import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
-import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.Runner
+import com.vaticle.typedb.studio.state.resource.Runner
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 

@@ -37,7 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.Runner
+import com.vaticle.typedb.studio.state.resource.Runner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg

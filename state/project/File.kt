@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.Message
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FAILED_TO_RENAME_FILE
@@ -32,9 +33,8 @@ import com.vaticle.typedb.studio.state.common.Property.FileType
 import com.vaticle.typedb.studio.state.common.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.Property.FileType.UNKNOWN
 import com.vaticle.typedb.studio.state.common.Settings
-import com.vaticle.typedb.studio.state.notification.NotificationManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.runner.RunnerManager
+import com.vaticle.typedb.studio.state.resource.RunnerManager
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader

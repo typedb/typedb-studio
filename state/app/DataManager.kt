@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state
+package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +42,7 @@ import kotlin.io.path.notExists
 import mu.KotlinLogging
 import org.slf4j.LoggerFactory
 
-class AppDataManager {
+class DataManager {
 
     companion object {
         private val DATA_DIR: Path = when (Property.OS.Current) {

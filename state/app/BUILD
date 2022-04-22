@@ -24,15 +24,23 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "status",
+    name = "app",
     srcs = glob(["*.kt"]),
     deps = [
+        "//state/common:common",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
         # External Maven Dependencies
+        "@maven//:ch_qos_logback_logback_classic",
+        "@maven//:ch_qos_logback_logback_core",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-status:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-notification:{pom_version}"],
 )
 
 checkstyle_test(

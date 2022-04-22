@@ -62,7 +62,7 @@ internal object LazyLines {
         private var _offset: Dp by mutableStateOf(0.dp)
         private var _stickToBottom by mutableStateOf(false)
         internal var viewHeight: Dp by mutableStateOf(0.dp)
-        internal val lineHeight: Dp get() = lineHeightUnscaled * GlobalState.editorScaler.scale
+        internal val lineHeight: Dp get() = lineHeightUnscaled * GlobalState.editor.scale
         private val contentHeight: Dp get() = lineHeight * lineCount() + bottomSpace
         private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
         internal val offset: Dp get() = if (!stickToBottom) _offset.coerceAtMost(maxOffset) else maxOffset

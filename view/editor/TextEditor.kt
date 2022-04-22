@@ -263,7 +263,7 @@ object TextEditor {
     @Composable
     fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
-        val textScale = GlobalState.editorScaler.scale
+        val textScale = GlobalState.editor.scale
         val density = LocalDensity.current.density
         val fontSize = ((state.font.fontSize.value * textScale * 100).roundToInt() / 100f).sp
         val fontStyle = state.font.copy(color = Theme.colors.onBackground, fontSize = fontSize)

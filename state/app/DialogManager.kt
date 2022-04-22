@@ -16,9 +16,28 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.notification
+package com.vaticle.typedb.studio.state.app
 
-// not a data class, because each object has to be unique
-class Notification internal constructor(val type: Type, val code: String, val message: String) {
-    enum class Type { INFO, WARNING, ERROR }
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+abstract class DialogManager {
+
+    var isOpen by mutableStateOf(false)
+
+    fun toggle() {
+        isOpen = !isOpen
+    }
+
+    open fun close() {
+        isOpen = false
+    }
+
+    class Base : DialogManager() {
+
+        fun open() {
+            isOpen = true
+        }
+    }
 }

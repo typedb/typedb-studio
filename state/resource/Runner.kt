@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.runner
+package com.vaticle.typedb.studio.state.resource
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,10 +31,10 @@ import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.ERROR
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.INFO
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.SUCCESS
-import com.vaticle.typedb.studio.state.runner.Runner.Response.Type.TYPEQL
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.TYPEQL
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.IID
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.ISA
