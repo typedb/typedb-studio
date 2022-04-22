@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.connection.SchemaType
+import com.vaticle.typedb.studio.state.connection.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -81,19 +81,19 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun refresh(navState: Navigator.NavigatorState<SchemaType>) {
+    private fun refresh(navState: Navigator.NavigatorState<TypeState>) {
         GlobalState.connection.current?.session?.resetSchemaReadTx()
         navState.reloadEntries()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ROTATE,
             tooltip = Tooltip.Arg(title = Label.REFRESH)
         ) { refresh(navState) }
     }
 
-    private fun exportButton(navState: Navigator.NavigatorState<SchemaType>): IconButtonArg {
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
             enabled = GlobalState.project.current != null,
@@ -109,7 +109,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         }
     }
 
-    private fun typeIcon(itemState: Navigator.ItemState<SchemaType>): IconArg {
+    private fun typeIcon(itemState: Navigator.ItemState<TypeState>): IconArg {
         return when {
             itemState.item.isEntityType -> IconArg(Icon.Code.RECTANGLE, color = { Theme.colors.tertiary })
             itemState.item.isRelationType -> IconArg(Icon.Code.RHOMBUS, color = { Theme.colors.quaternary })
@@ -119,7 +119,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<SchemaType>, onChangeEntries: () -> Unit
+        itemState: Navigator.ItemState<TypeState>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return listOf() // TODO
     }

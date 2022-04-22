@@ -31,12 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
-class SchemaType constructor(
+class TypeState constructor(
     private val concept: ThingType,
-    override val parent: SchemaType?,
+    override val parent: TypeState?,
     private val session: SessionState,
     isExpandableInit: Boolean,
-) : Navigable<SchemaType>, Resource {
+) : Navigable<TypeState>, Resource {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -49,7 +49,7 @@ class SchemaType constructor(
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
-    override var entries: List<SchemaType> = emptyList()
+    override var entries: List<TypeState> = emptyList()
     override val fullName: String = computeFullName()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
@@ -58,7 +58,7 @@ class SchemaType constructor(
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
     private val isOpenAtomic = AtomicBoolean(false)
-    private val onClose = LinkedBlockingDeque<(SchemaType) -> Unit>()
+    private val onClose = LinkedBlockingDeque<(TypeState) -> Unit>()
 
     private fun computeFullName(): String {
         val base = if (concept.isEntityType) TypeQLToken.Type.ENTITY
@@ -92,7 +92,7 @@ class SchemaType constructor(
             val deleted = old - new
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.concept) }
-            val newEntries = added.map { SchemaType(it, this, session, false) }
+            val newEntries = added.map { TypeState(it, this, session, false) }
             entries = (retainedEntries + newEntries).sorted()
         }
         entries.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
@@ -127,7 +127,7 @@ class SchemaType constructor(
         }
     }
 
-    override fun compareTo(other: Navigable<SchemaType>): Int {
+    override fun compareTo(other: Navigable<TypeState>): Int {
         return this.name.compareTo(other.name, ignoreCase = true)
     }
 
@@ -138,7 +138,7 @@ class SchemaType constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as SchemaType
+        other as TypeState
         return this.concept == other.concept
     }
 

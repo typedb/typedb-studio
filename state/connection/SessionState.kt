@@ -59,8 +59,8 @@ class SessionState constructor(
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
     var transaction = TransactionState(this, notificationMgr)
-    var rootSchemaType: SchemaType? by mutableStateOf(null)
-    var onSessionChange: ((SchemaType) -> Unit)? = null
+    var rootSchemaType: TypeState? by mutableStateOf(null)
+    var onSessionChange: ((TypeState) -> Unit)? = null
     var onSchemaWrite: (() -> Unit)? = null
     private var _session: TypeDBSession? by mutableStateOf(null)
     private val isOpenAtomic = AtomicBooleanState(false)
@@ -77,7 +77,7 @@ class SessionState constructor(
             _session = connection.client.session(database, type).apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
             this.type = type
             transaction()?.let {
-                rootSchemaType = SchemaType(it.concepts().rootThingType, null, this, true)
+                rootSchemaType = TypeState(it.concepts().rootThingType, null, this, true)
                 it.close()
             }
             resetSchemaReadTx()
