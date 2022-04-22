@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.util.Message
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

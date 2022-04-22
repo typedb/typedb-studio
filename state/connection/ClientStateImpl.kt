@@ -30,18 +30,19 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.AtomicBooleanState
-import com.vaticle.typedb.studio.state.common.AtomicIntegerState
-import com.vaticle.typedb.studio.state.common.AtomicReferenceState
-import com.vaticle.typedb.studio.state.common.Message
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNABLE_TO_CONNECT
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.common.api.ClientState
+import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
+import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
+import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.DISCONNECTED
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
@@ -50,7 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class ClientState constructor(private val notificationMgr: NotificationManager) {
+class ClientStateImpl constructor(private val notificationMgr: NotificationManager) : ClientState {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
     enum class Mode { SCRIPT, INTERACTIVE }
@@ -76,7 +77,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    val session = SessionState(this, notificationMgr)
+    val session = SessionStateImpl(this, notificationMgr)
     private val statusAtomic = AtomicReferenceState<Status>(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
@@ -102,22 +103,22 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
     }
 
-    private fun tryConnect(newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient) {
-        coroutineScope.launch {
-            this@ClientState.close()
-            statusAtomic.set(CONNECTING)
-            try {
-                address = newAddress
-                username = newUsername
-                _client = clientConstructor()
-                statusAtomic.set(CONNECTED)
-            } catch (e: TypeDBClientException) {
-                statusAtomic.set(DISCONNECTED)
-                notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
-            } catch (e: java.lang.Exception) {
-                statusAtomic.set(DISCONNECTED)
-                notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
-            }
+    private fun tryConnect(
+        newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient
+    ) = coroutineScope.launch {
+        if (isConnecting || isConnected) return@launch
+        statusAtomic.set(CONNECTING)
+        try {
+            address = newAddress
+            username = newUsername
+            _client = clientConstructor()
+            statusAtomic.set(CONNECTED)
+        } catch (e: TypeDBClientException) {
+            statusAtomic.set(DISCONNECTED)
+            notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
+        } catch (e: java.lang.Exception) {
+            statusAtomic.set(DISCONNECTED)
+            notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
         }
     }
 

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.common.util
 
 object Property {
 

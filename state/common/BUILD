@@ -25,7 +25,7 @@ package(default_visibility = [
 
 kt_jvm_library(
     name = "common",
-    srcs = glob(["*.kt"]),
+    srcs = glob(["*.kt", "*/*.kt"]),
     deps = [
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

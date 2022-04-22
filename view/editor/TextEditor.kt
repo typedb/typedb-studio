@@ -70,8 +70,8 @@ import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.ContextMenu

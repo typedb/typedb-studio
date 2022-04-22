@@ -57,7 +57,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message
+import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.browser.BrowserArea
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.common.util
 
 import com.vaticle.typedb.common.exception.ErrorMessage
 

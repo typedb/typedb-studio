@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message.View.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.state.common.util.Message.View.Companion.UNEXPECTED_ERROR
 import mu.KotlinLogging
 
 /**

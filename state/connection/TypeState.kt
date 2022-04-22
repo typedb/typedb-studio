@@ -22,8 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.studio.state.common.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
-import com.vaticle.typedb.studio.state.common.Navigable
+import com.vaticle.typedb.studio.state.common.api.Navigable
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.LinkedBlockingDeque
@@ -34,7 +34,7 @@ import mu.KotlinLogging
 class TypeState constructor(
     private val concept: ThingType,
     override val parent: TypeState?,
-    private val session: SessionState,
+    private val session: SessionStateImpl,
     isExpandableInit: Boolean,
 ) : Navigable<TypeState>, Resource {
 

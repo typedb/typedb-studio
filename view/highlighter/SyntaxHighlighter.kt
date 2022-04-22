@@ -25,7 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer
 import com.vaticle.typedb.studio.view.highlighter.common.Lexer.Token
 import com.vaticle.typedb.studio.view.highlighter.common.Scheme

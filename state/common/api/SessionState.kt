@@ -16,30 +16,6 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.common.api
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicInteger
-
-class AtomicIntegerState(initValue: Int) {
-
-    var state by mutableStateOf(initValue); private set
-    val atomic = AtomicInteger(initValue)
-
-    fun set(value: Int) {
-        atomic.set(value)
-        state = value
-    }
-
-    fun incrementAndGet(): Int {
-        state = atomic.incrementAndGet()
-        return state
-    }
-
-    fun decrementAndGet(): Int {
-        state = atomic.decrementAndGet()
-        return state
-    }
-}
+interface SessionState

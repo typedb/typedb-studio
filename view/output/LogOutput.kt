@@ -25,7 +25,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.resource.Runner
 import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.ERROR
 import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.INFO

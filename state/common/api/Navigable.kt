@@ -16,27 +16,14 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.common.api
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicBoolean
-
-class AtomicBooleanState(initValue: Boolean) {
-
-    var state by mutableStateOf(initValue); private set
-    val atomic = AtomicBoolean(initValue)
-
-    fun set(value: Boolean) {
-        atomic.set(value)
-        state = value
-    }
-
-    fun compareAndSet(expected: Boolean, new: Boolean): Boolean {
-        return if (atomic.compareAndSet(expected, new)) {
-            state = new
-            true
-        } else false
-    }
+interface Navigable<T : Navigable<T>> : Comparable<Navigable<T>> {
+    val name: String
+    val parent: Navigable<T>?
+    val info: String?
+    val isExpandable: Boolean
+    val isBulkExpandable: Boolean
+    val entries: List<T>
+    fun reloadEntries()
 }

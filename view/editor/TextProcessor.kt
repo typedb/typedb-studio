@@ -25,8 +25,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.common.Message.Project.Companion.FILE_NOT_WRITABLE
-import com.vaticle.typedb.studio.state.common.Property
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
+import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor

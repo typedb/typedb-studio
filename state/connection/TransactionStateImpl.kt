@@ -25,23 +25,24 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.AtomicBooleanState
-import com.vaticle.typedb.studio.state.common.Message
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.FAILED_TO_RUN_QUERY
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_COMMIT
-import com.vaticle.typedb.studio.state.common.Message.Connection.Companion.TRANSACTION_ROLLBACK
+import com.vaticle.typedb.studio.state.common.api.TransactionState
+import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.Runner
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
-class TransactionState constructor(
-    private val session: SessionState,
+class TransactionStateImpl constructor(
+    private val session: SessionStateImpl,
     private val notificationMgr: NotificationManager
-) {
+) : TransactionState {
 
     companion object {
         internal const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000

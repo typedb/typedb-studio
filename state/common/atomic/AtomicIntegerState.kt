@@ -16,17 +16,30 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common
+package com.vaticle.typedb.studio.state.common.atomic
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.util.concurrent.atomic.AtomicInteger
 
-class Settings {
+class AtomicIntegerState(initValue: Int) {
 
-    companion object {
-        private const val AUTO_SAVE = true
+    var state by mutableStateOf(initValue); private set
+    val atomic = AtomicInteger(initValue)
+
+    fun set(value: Int) {
+        atomic.set(value)
+        state = value
     }
 
-    var autosave: Boolean by mutableStateOf(AUTO_SAVE)
+    fun incrementAndGet(): Int {
+        state = atomic.incrementAndGet()
+        return state
+    }
+
+    fun decrementAndGet(): Int {
+        state = atomic.decrementAndGet()
+        return state
+    }
 }
