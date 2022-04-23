@@ -37,9 +37,9 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB_CLUSTER
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Checkbox

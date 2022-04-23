@@ -27,12 +27,11 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.api.SessionState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.state.connection.TransactionStateImpl.Companion.ONE_HOUR_IN_MILLS
+import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
@@ -44,10 +43,10 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SessionStateImpl constructor(
-    private val client: ClientStateImpl,
+class SessionState constructor(
+    private val client: ClientState,
     internal val notificationMgr: NotificationManager
-) : SessionState {
+) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -59,7 +58,7 @@ class SessionStateImpl constructor(
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
     val database: String? get() = _session?.database()?.name()
-    var transaction = TransactionStateImpl(this, notificationMgr)
+    var transaction = TransactionState(this, notificationMgr)
     var rootSchemaType: TypeState? by mutableStateOf(null)
     var onSessionChange: ((TypeState) -> Unit)? = null
     var onSchemaWrite: (() -> Unit)? = null

@@ -30,7 +30,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.api.ClientState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
@@ -40,9 +39,9 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.ClientStateImpl.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
+import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
@@ -51,7 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class ClientStateImpl constructor(private val notificationMgr: NotificationManager) : ClientState {
+class ClientState constructor(private val notificationMgr: NotificationManager) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
     enum class Mode { SCRIPT, INTERACTIVE }
@@ -77,7 +76,7 @@ class ClientStateImpl constructor(private val notificationMgr: NotificationManag
     val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    val session = SessionStateImpl(this, notificationMgr)
+    val session = SessionState(this, notificationMgr)
     private val statusAtomic = AtomicReferenceState<Status>(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)

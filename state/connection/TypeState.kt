@@ -34,7 +34,7 @@ import mu.KotlinLogging
 class TypeState constructor(
     private val concept: ThingType,
     override val parent: TypeState?,
-    private val session: SessionStateImpl,
+    private val session: SessionState,
     isExpandableInit: Boolean,
 ) : Navigable<TypeState>, Resource {
 
