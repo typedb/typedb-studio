@@ -42,7 +42,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
-import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
@@ -181,19 +180,19 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun mayRun(resource: Resource.Runnable, content: String = resource.runContent) {
+    fun runner(content: String, onSuccess: (QueryRunner) -> Unit) {
         if (!isReadyToRunQuery) return
-        if (isScriptMode) runScript(resource, content)
-        else if (isInteractiveMode) runQuery(resource, content)
+        if (isScriptMode) scriptRunner(content, onSuccess)
+        else if (isInteractiveMode) queryRunner(content, onSuccess)
         else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
-    private fun runScript(resource: Resource.Runnable, content: String = resource.runContent) = runAsyncCommand {
+    private fun scriptRunner(content: String, onSuccess: (QueryRunner) -> Unit) = runAsyncCommand {
         // TODO
     }
 
-    private fun runQuery(resource: Resource.Runnable, content: String = resource.runContent) = runAsyncCommand {
-        session.transaction.runQuery(resource, content)
+    private fun queryRunner(content: String, onSuccess: (QueryRunner) -> Unit) = runAsyncCommand {
+        session.transaction.queryRunner(content)?.let { onSuccess(it) }
     }
 
     fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = runAsyncCommand {

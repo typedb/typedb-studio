@@ -26,11 +26,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.resource.Runner
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.ERROR
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.INFO
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.SUCCESS
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.TYPEQL
+import com.vaticle.typedb.studio.state.connection.QueryRunner
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
@@ -55,7 +55,7 @@ internal object LogOutput : RunOutput() {
             editorState.jumpToTop()
         }
 
-        fun collect(responses: List<Runner.Response>) {
+        fun collect(responses: List<QueryRunner.Response>) {
             editorState.content.addAll(responses.flatMap { response ->
                 response.text.split("\n").map { line ->
                     format(response.type, line, colors)
@@ -87,7 +87,7 @@ internal object LogOutput : RunOutput() {
         )
     }
 
-    internal fun format(type: Runner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
+    internal fun format(type: QueryRunner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
         return when (type) {
             INFO -> AnnotatedString(text)
             SUCCESS, ERROR -> highlightText(type, text, colors)
@@ -95,7 +95,7 @@ internal object LogOutput : RunOutput() {
         }
     }
 
-    private fun highlightText(type: Runner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
+    private fun highlightText(type: QueryRunner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
         val builder = AnnotatedString.Builder()
         val style = SpanStyle(
             color = when (type) {

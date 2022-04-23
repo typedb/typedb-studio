@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.resource
+package com.vaticle.typedb.studio.state.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,10 +31,10 @@ import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.ERROR
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.INFO
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.SUCCESS
-import com.vaticle.typedb.studio.state.resource.Runner.Response.Type.TYPEQL
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.ERROR
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.INFO
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.SUCCESS
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.TYPEQL
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.IID
 import com.vaticle.typeql.lang.common.TypeQLToken.Constraint.ISA
@@ -63,10 +63,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
-class Runner constructor(
+class QueryRunner constructor(
     private val transaction: TypeDBTransaction,
     private val queries: String,
-    private val hasStopSignal: AtomicBoolean
+    private val hasStopSignal: AtomicBoolean,
+    private val onComplete: () -> Unit
 ) {
 
     companion object {
@@ -114,17 +115,12 @@ class Runner constructor(
     private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    private val onComplete = LinkedBlockingQueue<(Runner) -> Unit>()
 
     fun save() {
         isSaved = true
     }
 
-    fun onComplete(function: (Runner) -> Unit) {
-        onComplete.put(function)
-    }
-
-    internal fun launch() {
+    fun launch() {
         isRunning.set(true)
         coroutineScope.launch { runningQueryIndicator() }
         coroutineScope.launch { runQueries() }
@@ -163,7 +159,7 @@ class Runner constructor(
         } finally {
             responses.put(Either.second(Done))
             isRunning.set(false)
-            onComplete.forEach { it(this@Runner) }
+            onComplete()
         }
     }
 

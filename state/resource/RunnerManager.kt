@@ -23,13 +23,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.vaticle.typedb.studio.state.connection.QueryRunner
 import java.util.concurrent.LinkedBlockingQueue
 
 class RunnerManager {
 
-    var activeRunner: Runner? by mutableStateOf(null)
-    val runners: SnapshotStateList<Runner> = mutableStateListOf()
-    private val onLaunch = LinkedBlockingQueue<(Runner) -> Unit>()
+    var activeRunner: QueryRunner? by mutableStateOf(null)
+    val runners: SnapshotStateList<QueryRunner> = mutableStateListOf()
+    private val onLaunch = LinkedBlockingQueue<(QueryRunner) -> Unit>()
 
     fun clone(): RunnerManager {
         val newRunnerMgr = RunnerManager()
@@ -39,32 +40,31 @@ class RunnerManager {
         return newRunnerMgr
     }
 
-    fun numberOf(runner: Runner): Int {
+    fun numberOf(runner: QueryRunner): Int {
         return runners.indexOf(runner) + 1
     }
 
-    fun onLaunch(function: (Runner) -> Unit) {
+    fun onLaunch(function: (QueryRunner) -> Unit) {
         this.onLaunch.put(function)
     }
 
-    fun isActive(runner: Runner): Boolean {
+    fun isActive(runner: QueryRunner): Boolean {
         return runner == activeRunner
     }
 
-    fun activate(runner: Runner) {
+    fun activate(runner: QueryRunner) {
         activeRunner = runner
     }
 
-    fun launch(runner: Runner, onComplete: () -> Unit) {
+    fun launch(runner: QueryRunner) {
         activeRunner = runner
         if (runners.isEmpty() || runners.all { it.isSaved }) runners.add(runner)
         else runners[runners.indexOf(runners.first { !it.isSaved })] = runner
         onLaunch.forEach { it(runner) }
-        runner.onComplete { onComplete() }
         runner.launch()
     }
 
-    fun delete(runner: Runner) {
+    fun delete(runner: QueryRunner) {
         if (activeRunner == runner) {
             val i = runners.indexOf(activeRunner)
             activeRunner = if (runners.size == 1) null

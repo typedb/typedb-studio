@@ -213,13 +213,13 @@ internal class EventHandler constructor(
 
     private fun mayRunFile() {
         if (!GlobalState.client.isReadyToRunQuery) return
-        processor.file?.let { if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable()) }
+        processor.file?.let { if (it.isRunnable) GlobalState.resource.mayRun(it.asRunnable()) }
     }
 
     private fun mayRunSelection() {
         if (!GlobalState.client.isReadyToRunQuery) return
         processor.file?.let {
-            if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable(), target.selectedText().text)
+            if (it.isRunnable) GlobalState.resource.mayRun(it.asRunnable(), target.selectedText().text)
         }
     }
 

@@ -437,7 +437,7 @@ object Toolbar {
                 color = Theme.colors.secondary,
                 onClick = {
                     GlobalState.resource.active?.let {
-                        if (it.isRunnable) GlobalState.client.mayRun(it.asRunnable())
+                        if (it.isRunnable) GlobalState.resource.mayRun(it.asRunnable())
                     }
                 },
                 enabled = isReadyToRunQuery && hasRunnablePage,

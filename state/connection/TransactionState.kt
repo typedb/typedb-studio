@@ -33,8 +33,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
-import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.resource.Runner
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
@@ -108,22 +106,23 @@ class TransactionState constructor(
         }
     }
 
-    internal fun runQuery(resource: Resource.Runnable, content: String) {
+    internal fun queryRunner(content: String): QueryRunner? {
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 stopSignal.set(false)
                 tryOpen()
-                if (isOpen) resource.runner.launch(Runner(_transaction!!, content, stopSignal)) {
+                return if (isOpen) QueryRunner(_transaction!!, content, stopSignal) {
                     if (!snapshot.activated) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     stopSignal.set(false)
                     hasRunningQueryAtomic.set(false)
-                }
+                } else null
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
                 hasRunningQueryAtomic.set(false)
             }
         }
+        return null
     }
 
     internal fun commit() {

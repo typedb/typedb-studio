@@ -23,9 +23,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.connection.ClientState
 import mu.KotlinLogging
 
-class ResourceManager(val notification: NotificationManager) {
+class ResourceManager(
+    private val client: ClientState,
+    private val notificationMgr: NotificationManager
+) {
 
     val opened: MutableList<Resource> = mutableStateListOf()
     var active: Resource? by mutableStateOf(null); private set
@@ -80,6 +84,10 @@ class ResourceManager(val notification: NotificationManager) {
         var previousIndex = opened.indexOf(active) - 1
         if (previousIndex < 0) previousIndex += opened.size
         activate(opened[previousIndex])
+    }
+
+    fun mayRun(resource: Resource.Runnable, content: String = resource.runContent) {
+        client.runner(content) { resource.runner.launch(it) }
     }
 
     fun close(resource: Resource) {

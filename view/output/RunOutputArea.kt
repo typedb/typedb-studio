@@ -36,8 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
+import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.resource.Runner
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
@@ -63,8 +63,8 @@ object RunOutputArea {
     ) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
-        internal val runnerTabs = Tabs.State<Runner>(coroutineScope)
-        private val outputGroup: MutableMap<Runner, RunOutputGroup> = mutableMapOf()
+        internal val runnerTabs = Tabs.State<QueryRunner>(coroutineScope)
+        private val outputGroup: MutableMap<QueryRunner, RunOutputGroup> = mutableMapOf()
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
@@ -72,7 +72,7 @@ object RunOutputArea {
         }
 
         @Composable
-        internal fun outputGroup(runner: Runner): RunOutputGroup {
+        internal fun outputGroup(runner: QueryRunner): RunOutputGroup {
             return outputGroup.getOrPut(runner) {
                 RunOutputGroup(
                     runner = runner,
@@ -131,7 +131,7 @@ object RunOutputArea {
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
         val runnerMgr = state.resource.runner
-        fun runnerName(runner: Runner): String {
+        fun runnerName(runner: QueryRunner): String {
             return "${state.resource.name} (${runnerMgr.numberOf(runner)})"
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {

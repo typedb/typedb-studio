@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.resource.Runner
+import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
@@ -34,7 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class RunOutputGroup(
-    private val runner: Runner,
+    private val runner: QueryRunner,
     textEditorState: TextEditor.State,
     colors: Color.Theme,
     private val coroutineScope: CoroutineScope
@@ -55,7 +55,7 @@ internal class RunOutputGroup(
 
     @OptIn(ExperimentalTime::class)
     private fun consumeRunnerResponses() = coroutineScope.launch {
-        val responses: MutableList<Either<Runner.Response, Runner.Done>> = mutableListOf()
+        val responses: MutableList<Either<QueryRunner.Response, QueryRunner.Done>> = mutableListOf()
         do {
             delay(Duration.Companion.milliseconds(33)) // 30 FPS
             responses.clear()

@@ -31,8 +31,6 @@ class SchemaManager(val session: SessionState, internal val notificationMgr: Not
 
     var root: TypeState? by mutableStateOf(null); private set
     var onRootChange: ((TypeState) -> Unit)? = null
-    private val typeSchema: String? get() = session.database?.typeSchema()
-    private val ruleSchema: String? get() = session.database?.ruleSchema()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     init {
@@ -51,6 +49,6 @@ class SchemaManager(val session: SessionState, internal val notificationMgr: Not
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
-        typeSchema?.let { onSuccess(it) }
+        session.database?.typeSchema()?.let { onSuccess(it) }
     }
 }
