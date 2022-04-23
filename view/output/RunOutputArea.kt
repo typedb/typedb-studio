@@ -149,11 +149,11 @@ object RunOutputArea {
                     trailingTabButtonFn = {
                         IconButtonArg(
                             icon = Icon.Code.THUMBTACK,
-                            color = { Theme.colors.icon.copy(if (it.isSaved) 1f else 0.3f) },
+                            color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
                             hoverColor = { Theme.colors.icon },
                             disabledColor = { Theme.colors.icon },
-                            enabled = !it.isSaved
-                        ) { if (!it.isSaved) it.save() }
+                            enabled = !runnerMgr.isSaved(it)
+                        ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
                     }
                 )
             }

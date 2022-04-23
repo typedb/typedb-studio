@@ -18,9 +18,6 @@
 
 package com.vaticle.typedb.studio.state.connection
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
@@ -109,16 +106,11 @@ class QueryRunner constructor(
         enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
     }
 
-    var isSaved by mutableStateOf(false)
     val responses = LinkedBlockingQueue<Either<Response, Done>>()
     val conceptMapStreams = LinkedBlockingQueue<Either<LinkedBlockingQueue<Either<ConceptMap, Done>>, Done>>()
     private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-    fun save() {
-        isSaved = true
-    }
 
     fun launch() {
         isRunning.set(true)

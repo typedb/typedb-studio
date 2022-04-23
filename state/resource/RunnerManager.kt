@@ -30,6 +30,7 @@ class RunnerManager {
 
     var activeRunner: QueryRunner? by mutableStateOf(null)
     val runners: SnapshotStateList<QueryRunner> = mutableStateListOf()
+    private val saved: SnapshotStateList<QueryRunner> = mutableStateListOf()
     private val onLaunch = LinkedBlockingQueue<(QueryRunner) -> Unit>()
 
     fun clone(): RunnerManager {
@@ -56,10 +57,18 @@ class RunnerManager {
         activeRunner = runner
     }
 
+    fun isSaved(runner: QueryRunner): Boolean {
+        return saved.contains(runner)
+    }
+
+    fun save(runner: QueryRunner) {
+        saved.add(runner)
+    }
+
     fun launch(runner: QueryRunner) {
         activeRunner = runner
-        if (runners.isEmpty() || runners.all { it.isSaved }) runners.add(runner)
-        else runners[runners.indexOf(runners.first { !it.isSaved })] = runner
+        if (runners.isEmpty() || runners.all { saved.contains(it) }) runners.add(runner)
+        else runners[runners.indexOf(runners.first { !saved.contains(it) })] = runner
         onLaunch.forEach { it(runner) }
         runner.launch()
     }
