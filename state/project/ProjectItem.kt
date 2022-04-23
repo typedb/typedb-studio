@@ -19,8 +19,8 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.api.Navigable
 import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.resource.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption

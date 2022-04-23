@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common.api
+package com.vaticle.typedb.studio.state.resource
 
 interface Navigable<T : Navigable<T>> : Comparable<Navigable<T>> {
     val name: String
