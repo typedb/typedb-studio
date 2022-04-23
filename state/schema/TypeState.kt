@@ -113,8 +113,8 @@ class TypeState(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
+            entries.forEach { it.close() }
             onClose.forEach { it(this) }
-            // TODO
         }
     }
 

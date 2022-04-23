@@ -67,9 +67,11 @@ class SessionState constructor(
     private var schemaReadTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastSchemaReadTxTime = AtomicLong(0)
     private val onOpen = LinkedBlockingQueue<() -> Unit>()
+    private val onClose = LinkedBlockingQueue<() -> Unit>()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun onOpen(function: () -> Unit) = onOpen.put(function)
+    fun onClose(function: () -> Unit) = onClose.put(function)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
         if (isOpen && this.databaseName == database && this.type == type) return
@@ -128,6 +130,7 @@ class SessionState constructor(
 
     internal fun close(message: Message? = null, vararg params: Any) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
+            onClose.forEach { it() }
             closeSchemaReadTx()
             transaction.close()
             _session?.close()

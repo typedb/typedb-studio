@@ -39,6 +39,10 @@ class SchemaManager(val session: SessionState, internal val notificationMgr: Not
             session.resetSchemaReadTx()
             mayUpdateRoot()
         }
+        session.onClose {
+            root?.close()
+            root = null
+        }
     }
 
     private fun mayUpdateRoot() {
