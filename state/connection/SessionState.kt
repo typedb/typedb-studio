@@ -25,6 +25,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
+import com.vaticle.typedb.client.api.database.Database
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -32,6 +33,7 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
@@ -57,43 +59,39 @@ class SessionState constructor(
     val isSchema: Boolean get() = type == TypeDBSession.Type.SCHEMA
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
-    val database: String? get() = _session?.database()?.name()
+    val database: Database? get() = _session?.database()
+    val databaseName: String? get() = database?.name()
     var transaction = TransactionState(this, notificationMgr)
-    var rootSchemaType: TypeState? by mutableStateOf(null)
-    var onSessionChange: ((TypeState) -> Unit)? = null
-    var onSchemaWrite: (() -> Unit)? = null
     private var _session: TypeDBSession? by mutableStateOf(null)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var schemaReadTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastSchemaReadTxTime = AtomicLong(0)
-    private val typeSchema: String? get() = _session?.database()?.typeSchema()
-    private val ruleSchema: String? get() = _session?.database()?.ruleSchema()
+    private val onOpen = LinkedBlockingQueue<() -> Unit>()
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
+    fun onOpen(function: () -> Unit) = onOpen.put(function)
+
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
-        if (isOpen && this.database == database && this.type == type) return
+        if (isOpen && this.databaseName == database && this.type == type) return
         close()
         try {
             _session = client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
-            this.type = type
-            transaction()?.let {
-                rootSchemaType = TypeState(it.concepts().rootThingType, null, this, true)
-                it.close()
-            }
-            resetSchemaReadTx()
-            onSessionChange?.let { it(rootSchemaType!!) }
-            isOpenAtomic.set(true)
+            if (_session?.isOpen == true) {
+                this.type = type
+                onOpen.forEach { it() }
+                isOpenAtomic.set(true)
+            } else isOpenAtomic.set(false)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
             isOpenAtomic.set(false)
         }
     }
 
-    internal fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
+    fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
         return if (options != null) _session?.transaction(type, options) else _session?.transaction(type)
     }
 
-    internal fun openOrGetSchemaReadTx(): TypeDBTransaction {
+    fun openOrGetSchemaReadTx(): TypeDBTransaction {
         synchronized(this) {
             lastSchemaReadTxTime.set(System.currentTimeMillis())
             val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
@@ -113,10 +111,6 @@ class SessionState constructor(
             }
             return schemaReadTx.get()
         }
-    }
-
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
-        typeSchema?.let { onSuccess(it) }
     }
 
     fun resetSchemaReadTx() {

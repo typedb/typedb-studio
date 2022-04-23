@@ -49,7 +49,6 @@ import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
-import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -115,14 +114,14 @@ class Runner constructor(
     private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    private val onComplete = LinkedBlockingDeque<(Runner) -> Unit>()
+    private val onComplete = LinkedBlockingQueue<(Runner) -> Unit>()
 
     fun save() {
         isSaved = true
     }
 
     fun onComplete(function: (Runner) -> Unit) {
-        onComplete.push(function)
+        onComplete.put(function)
     }
 
     internal fun launch() {

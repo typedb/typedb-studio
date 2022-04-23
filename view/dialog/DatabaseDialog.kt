@@ -171,7 +171,7 @@ object DatabaseDialog {
     fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
         Dropdown(
             values = GlobalState.client.databaseList,
-            selected = GlobalState.client.session.database,
+            selected = GlobalState.client.session.databaseName,
             onExpand = { GlobalState.client.refreshDatabaseList() },
             onSelection = { GlobalState.client.tryOpenSession(it) },
             placeholder = Label.SELECT_DATABASE,

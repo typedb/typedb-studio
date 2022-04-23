@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.connection
+package com.vaticle.typedb.studio.state.schema
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,15 +26,15 @@ import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAIL
 import com.vaticle.typedb.studio.state.resource.Navigable
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typeql.lang.common.TypeQLToken
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
-class TypeState constructor(
+class TypeState(
     private val concept: ThingType,
     override val parent: TypeState?,
-    private val session: SessionState,
+    private val schemaMgr: SchemaManager,
     isExpandableInit: Boolean,
 ) : Navigable<TypeState>, Resource {
 
@@ -58,7 +58,7 @@ class TypeState constructor(
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
     private val isOpenAtomic = AtomicBoolean(false)
-    private val onClose = LinkedBlockingDeque<(TypeState) -> Unit>()
+    private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
     private fun computeFullName(): String {
         val base = if (concept.isEntityType) TypeQLToken.Type.ENTITY
@@ -85,14 +85,14 @@ class TypeState constructor(
     }
 
     override fun reloadEntries() {
-        val tx = session.openOrGetSchemaReadTx()
+        val tx = schemaMgr.session.openOrGetSchemaReadTx()
         val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
         val old = entries.map { it.concept }.toSet()
         if (new != old) {
             val deleted = old - new
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.concept) }
-            val newEntries = added.map { TypeState(it, this, session, false) }
+            val newEntries = added.map { TypeState(it, this, schemaMgr, false) }
             entries = (retainedEntries + newEntries).sorted()
         }
         entries.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
@@ -104,7 +104,7 @@ class TypeState constructor(
     }
 
     override fun onClose(function: (Resource) -> Unit) {
-        onClose.push(function)
+        onClose.put(function)
     }
 
     override fun onReopen(function: (Resource) -> Unit) {
@@ -123,7 +123,7 @@ class TypeState constructor(
             close()
             // TODO
         } catch (e: Exception) {
-            session.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
+            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
         }
     }
 

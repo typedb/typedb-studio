@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.connection.TypeState
+import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
@@ -63,14 +63,12 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     @Composable
     private fun Content() {
-        val session = GlobalState.client.session
         val navState = rememberNavigatorState(
-            container = session.rootSchemaType!!,
+            container = GlobalState.schema.root!!,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,
         ) { } // TODO
-        session.onSessionChange = { navState.replaceContainer(it) }
-        session.onSchemaWrite = { navState.reloadEntriesAndExpand(1) }
+        GlobalState.schema.onRootChange = { navState.replaceContainer(it) }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
@@ -98,7 +96,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             enabled = GlobalState.project.current != null,
             tooltip = Tooltip.Arg(title = Label.EXPORT)
         ) {
-            GlobalState.client.session.exportTypeSchema { schema ->
+            GlobalState.schema.exportTypeSchema { schema ->
                 refresh(navState)
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)

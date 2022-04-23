@@ -23,13 +23,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 
 class RunnerManager {
 
     var activeRunner: Runner? by mutableStateOf(null)
     val runners: SnapshotStateList<Runner> = mutableStateListOf()
-    private val onLaunch = LinkedBlockingDeque<(Runner) -> Unit>()
+    private val onLaunch = LinkedBlockingQueue<(Runner) -> Unit>()
 
     fun clone(): RunnerManager {
         val newRunnerMgr = RunnerManager()
@@ -44,7 +44,7 @@ class RunnerManager {
     }
 
     fun onLaunch(function: (Runner) -> Unit) {
-        this.onLaunch.push(function)
+        this.onLaunch.put(function)
     }
 
     fun isActive(runner: Runner): Boolean {

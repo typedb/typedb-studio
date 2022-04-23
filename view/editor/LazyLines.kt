@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import java.lang.Integer.min
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.floor
 
 /**
@@ -58,7 +58,7 @@ internal object LazyLines {
     internal class ScrollState internal constructor(
         private val lineHeightUnscaled: Dp, var bottomSpace: Dp, val lineCount: () -> Int
     ) : ScrollbarAdapter {
-        private val onScrollToBottom = LinkedBlockingDeque<() -> Unit>()
+        private val onScrollToBottom = LinkedBlockingQueue<() -> Unit>()
         private var _offset: Dp by mutableStateOf(0.dp)
         private var _stickToBottom by mutableStateOf(false)
         internal var viewHeight: Dp by mutableStateOf(0.dp)
@@ -91,7 +91,7 @@ internal object LazyLines {
         }
 
         fun onScrollToBottom(function: () -> Unit) {
-            onScrollToBottom.push(function)
+            onScrollToBottom.put(function)
         }
 
         fun scrollToTop() {

@@ -22,7 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBSession.Type.SCHEMA
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.Runner
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
@@ -66,6 +67,7 @@ class TransactionState constructor(
     val isWrite get() = type.isWrite
     val isOpen get() = isOpenAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
+    private val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
     private val stopSignal = AtomicBoolean(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
@@ -83,6 +85,8 @@ class TransactionState constructor(
         activatedFn = { it && infer.activated && snapshot.activated },
         enabledFn = { session.isOpen && infer.activated && snapshot.activated }
     )
+
+    fun onSchemaWrite(function: () -> Unit) = onSchemaWrite.put(function)
 
     internal fun sendStopSignal() {
         stopSignal.set(true)
@@ -127,10 +131,7 @@ class TransactionState constructor(
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             _transaction?.commit()
             _transaction = null
-            if (session.type == TypeDBSession.Type.SCHEMA) {
-                session.resetSchemaReadTx()
-                session.onSchemaWrite?.let { it() }
-            }
+            if (session.type == SCHEMA) onSchemaWrite.forEach { it() }
             notificationMgr.info(LOGGER, TRANSACTION_COMMIT)
         }
     }

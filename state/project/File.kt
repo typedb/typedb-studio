@@ -40,7 +40,7 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.EmptyCoroutineContext
@@ -75,13 +75,13 @@ class File internal constructor(
 
     private class Callbacks {
 
-        val onDiskChangeContent = LinkedBlockingDeque<(File) -> Unit>()
-        val onDiskChangePermission = LinkedBlockingDeque<(File) -> Unit>()
-        val onReopen = LinkedBlockingDeque<(File) -> Unit>()
-        val beforeRun = LinkedBlockingDeque<(File) -> Unit>()
-        val beforeSave = LinkedBlockingDeque<(File) -> Unit>()
-        val beforeClose = LinkedBlockingDeque<(File) -> Unit>()
-        val onClose = LinkedBlockingDeque<(File) -> Unit>()
+        val onDiskChangeContent = LinkedBlockingQueue<(File) -> Unit>()
+        val onDiskChangePermission = LinkedBlockingQueue<(File) -> Unit>()
+        val onReopen = LinkedBlockingQueue<(File) -> Unit>()
+        val beforeRun = LinkedBlockingQueue<(File) -> Unit>()
+        val beforeSave = LinkedBlockingQueue<(File) -> Unit>()
+        val beforeClose = LinkedBlockingQueue<(File) -> Unit>()
+        val onClose = LinkedBlockingQueue<(File) -> Unit>()
 
         fun clone(): Callbacks {
             val newCallbacks = Callbacks()
@@ -284,31 +284,31 @@ class File internal constructor(
     }
 
     fun onDiskChangeContent(function: (File) -> Unit) {
-        callbacks.onDiskChangeContent.push(function)
+        callbacks.onDiskChangeContent.put(function)
     }
 
     fun onDiskChangePermission(function: (File) -> Unit) {
-        callbacks.onDiskChangePermission.push(function)
+        callbacks.onDiskChangePermission.put(function)
     }
 
     override fun beforeRun(function: (Resource) -> Unit) {
-        callbacks.beforeRun.push(function)
+        callbacks.beforeRun.put(function)
     }
 
     override fun beforeSave(function: (Resource) -> Unit) {
-        callbacks.beforeSave.push(function)
+        callbacks.beforeSave.put(function)
     }
 
     override fun beforeClose(function: (Resource) -> Unit) {
-        callbacks.beforeClose.push(function)
+        callbacks.beforeClose.put(function)
     }
 
     override fun onClose(function: (Resource) -> Unit) {
-        callbacks.onClose.push(function)
+        callbacks.onClose.put(function)
     }
 
     override fun onReopen(function: (Resource) -> Unit) {
-        callbacks.onReopen.push(function)
+        callbacks.onReopen.put(function)
     }
 
     override fun execBeforeClose() {
