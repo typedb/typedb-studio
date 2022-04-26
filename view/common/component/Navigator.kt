@@ -275,8 +275,8 @@ object Navigator {
                 item.expand(false)
                 i += 1 + item.entries.count { !it.isExpandable }
                 queue.addAll(filter(item.entries))
+                recomputeList()
             }
-            recomputeList()
             if (!queue.isEmpty()) {
                 GlobalState.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
