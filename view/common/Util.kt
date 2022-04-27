@@ -23,6 +23,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.MouseInfo
 import java.awt.Point
 import kotlin.math.roundToInt
@@ -50,5 +54,13 @@ object Util {
     fun isMouseHover(area: Rect, window: ComposeWindow, titleBarHeight: Dp): Boolean {
         val mouse = mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
+    }
+
+    // TODO: may move this method to a package about type visualisations once we implement graph visualiser
+    fun typeIcon(type: TypeState) = when {
+        type.isEntityType -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.colors.tertiary }
+        type.isRelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.colors.quaternary }
+        type.isAttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.colors.quinary }
+        else -> throw IllegalStateException("Unrecognised Schema Type: $type")
     }
 }

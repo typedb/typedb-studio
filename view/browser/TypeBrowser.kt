@@ -34,9 +34,9 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
@@ -72,7 +72,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
-            iconArg = { typeIcon(it) },
+            iconArg = { typeIcon(it.item) },
             styleArgs = { listOf() },
             contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
         )
@@ -103,15 +103,6 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
                     GlobalState.resource.open(file)
                 }
             }
-        }
-    }
-
-    private fun typeIcon(itemState: Navigator.ItemState<TypeState>): IconArg {
-        return when {
-            itemState.item.isEntityType -> IconArg(Icon.Code.RECTANGLE, color = { Theme.colors.tertiary })
-            itemState.item.isRelationType -> IconArg(Icon.Code.RHOMBUS, color = { Theme.colors.quaternary })
-            itemState.item.isAttributeType -> IconArg(Icon.Code.OVAL, color = { Theme.colors.quinary })
-            else -> throw IllegalStateException("Unrecognised Schema Type: " + itemState.item.toString())
         }
     }
 

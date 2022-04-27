@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
@@ -48,6 +49,7 @@ abstract class Page(var resource: Resource) {
         fun of(resource: Resource): Page {
             return when (resource) {
                 is File -> FilePage.create(resource)
+                is TypeState -> TypePage(resource)
                 else -> throw IllegalStateException("Unrecognised resource type")
             }
         }

@@ -28,7 +28,7 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 
-class FilePage private constructor(var file: File, private val editor: TextEditor.State) : Page(file) {
+class FilePage private constructor(private var file: File, private val editor: TextEditor.State) : Page(file) {
 
     override val name: String get() = file.name
     override val icon: Form.IconArg = when {

@@ -26,14 +26,15 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/app:app",
-        "//view/common:common",
-        "//view/editor:editor",
-        "//view/output:output",
         "//state/common:common",
         "//state/connection:connection",
         "//state/project:project",
         "//state/resource:resource",
+        "//state/schema:schema",
         "//state:state",
+        "//view/common:common",
+        "//view/editor:editor",
+        "//view/output:output",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

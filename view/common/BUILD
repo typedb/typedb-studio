@@ -28,6 +28,7 @@ kt_jvm_library(
         "//state/app:app",
         "//state/common:common",
         "//state/resource:resource",
+        "//state/schema:schema",
         "//state:state",
 
         # External Vaticle Dependencies
