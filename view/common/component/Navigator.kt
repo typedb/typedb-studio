@@ -91,6 +91,7 @@ import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.LinkedList
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -231,6 +232,8 @@ object Navigator {
         internal var hovered: ItemState<T>? by mutableStateOf(null)
         internal var scroller = LazyListState(0, 0)
         internal val contextMenu = ContextMenu.State()
+        private val isExpanding = AtomicBoolean(false)
+        private val isCollapsing = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
             IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAll() },
             IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
@@ -270,26 +273,32 @@ object Navigator {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
-            while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED) {
+            isCollapsing.set(false)
+            isExpanding.set(true)
+            while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED && isExpanding.get()) {
                 val item = queue.pop()
                 item.expand(false)
                 i += 1 + item.entries.count { !it.isExpandable }
                 queue.addAll(filter(item.entries))
                 recomputeList()
             }
-            if (!queue.isEmpty()) {
+            isExpanding.set(false)
+            if (!queue.isEmpty() && i == MAX_ITEM_EXPANDED) {
                 GlobalState.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
         }
 
         private fun collapse() = coroutineScope.launch(IO) {
             val queue = LinkedList(container.entries)
-            while (queue.isNotEmpty()) {
+            isExpanding.set(false)
+            isCollapsing.set(true)
+            while (queue.isNotEmpty() && isCollapsing.get()) {
                 val item = queue.pop()
                 item.collapse(false)
                 queue.addAll(item.entries.filter { it.isExpanded })
             }
             recomputeList()
+            isCollapsing.set(false)
         }
 
         fun reloadEntriesAndExpand(depth: Int) = coroutineScope.launch(IO) {
