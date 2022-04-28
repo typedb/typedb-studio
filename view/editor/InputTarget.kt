@@ -123,7 +123,7 @@ internal class InputTarget constructor(
     internal var density: Float by mutableStateOf(initDensity)
     internal val verScroller = LazyLines.createScrollState(lineHeightUnscaled, bottomSpace) { content.size }
     internal var horScroller = ScrollState(0)
-    internal val horScrollerAdapter: ScrollbarAdapter = ScrollbarAdapter(horScroller)
+    internal val horScrollerAdapter = ScrollbarAdapter(horScroller)
     internal var textWidth by mutableStateOf(0.dp)
     internal val lineHeight: Dp get() = verScroller.lineHeight
     internal var stickToBottom
