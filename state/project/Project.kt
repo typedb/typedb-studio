@@ -47,6 +47,10 @@ class Project internal constructor(
         else -1
     }
 
+    fun close() {
+        directory.close()
+    }
+
     override fun toString(): String {
         return name
     }

@@ -92,7 +92,7 @@ object ProjectDialog {
                 val previous = GlobalState.project.current
                 if (GlobalState.project.tryOpenProject(Path(it))) {
                     if (previous != GlobalState.project.current) {
-                        GlobalState.resource.closeAll()
+                        previous?.close()
                         GlobalState.project.unsavedFiles().forEach { f -> GlobalState.resource.open(f) }
                         GlobalState.appData.project.path = GlobalState.project.current!!.path
                     }

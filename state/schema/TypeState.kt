@@ -80,7 +80,7 @@ class TypeState(
     override fun move(onSuccess: ((Resource) -> Unit)?) {}
 
     override fun tryOpen(): Boolean {
-        // TODO
+        isOpenAtomic.set(true)
         return true
     }
 
@@ -111,13 +111,6 @@ class TypeState(
         // TODO
     }
 
-    override fun close() {
-        if (isOpenAtomic.compareAndSet(true, false)) {
-            entries.forEach { it.close() }
-            onClose.forEach { it(this) }
-        }
-    }
-
     override fun delete() {
         try {
             close()
@@ -127,12 +120,17 @@ class TypeState(
         }
     }
 
+    override fun close() {
+        if (isOpenAtomic.compareAndSet(true, false)) onClose.forEach { it(this) }
+        entries.forEach { it.close() }
+    }
+
     override fun compareTo(other: Navigable<TypeState>): Int {
         return this.name.compareTo(other.name, ignoreCase = true)
     }
 
     override fun toString(): String {
-        return "SchemaType: $concept"
+        return "TypeState: $concept"
     }
 
     override fun equals(other: Any?): Boolean {

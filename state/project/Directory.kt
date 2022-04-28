@@ -64,8 +64,6 @@ class Directory internal constructor(
     override val isBulkExpandable: Boolean get() = !isProjectData
     override val isExpandable: Boolean = true
 
-    override fun close() {}
-
     override fun asDirectory(): Directory {
         return this
     }
@@ -191,5 +189,9 @@ class Directory internal constructor(
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
         }
+    }
+
+    override fun close() {
+        entries.forEach { it.close() }
     }
 }

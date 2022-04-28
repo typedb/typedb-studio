@@ -67,7 +67,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             container = GlobalState.schema.root!!,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,
-        ) { } // TODO
+        ) { GlobalState.resource.open(it.item) }
         GlobalState.schema.onRootChange = { navState.replaceContainer(it) }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
