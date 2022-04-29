@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.awt.ComposeWindow
@@ -137,7 +136,6 @@ object ProjectDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
         val focusReq = remember { FocusRequester() }
@@ -271,7 +269,6 @@ object ProjectDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ProjectItemNamingField(text: String, onChange: (String) -> Unit) {
         val focusReq = remember { FocusRequester() }

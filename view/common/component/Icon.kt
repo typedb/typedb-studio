@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.view.common.component
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -121,7 +120,6 @@ object Icon {
         val unicode: String = Char(hexcode).toString()
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Render(
         icon: Code,

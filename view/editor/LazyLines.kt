@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.mouse.MouseScrollEvent
@@ -106,7 +105,6 @@ internal object LazyLines {
             updateOffset(offset + delta)
         }
 
-        @OptIn(ExperimentalComposeUiApi::class)
         internal fun updateOffset(event: MouseScrollEvent): Boolean {
             if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
             updateOffsetBy(lineHeight * (event.delta as MouseScrollUnit.Line).value)
@@ -132,7 +130,6 @@ internal object LazyLines {
         return State(lines, scroller)
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Any> Area(
         state: State<T>,

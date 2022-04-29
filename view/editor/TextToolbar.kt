@@ -32,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
@@ -344,7 +343,6 @@ object TextToolbar {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun FinderTextInput(state: State) {
         val focusManager = LocalFocusManager.current
@@ -360,7 +358,6 @@ object TextToolbar {
         )
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ReplacerTextInput(state: State) {
         val focusManager = LocalFocusManager.current

@@ -132,7 +132,6 @@ object ContextMenu {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Popup(state: State, itemListsFn: () -> List<List<Item>>) {
         if (state.isOpen) {

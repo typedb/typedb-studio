@@ -506,7 +506,6 @@ object Form {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun TextButton(
         text: String,

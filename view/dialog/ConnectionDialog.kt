@@ -28,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -137,7 +136,6 @@ object ConnectionDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun AddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
@@ -155,7 +153,6 @@ object ConnectionDialog {
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun UsernameFormField(state: ConnectServerForm) {
         Field(label = Label.USERNAME) {
@@ -169,7 +166,6 @@ object ConnectionDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun PasswordFormField(state: ConnectServerForm) {
         Field(label = Label.PASSWORD) {
@@ -195,7 +191,6 @@ object ConnectionDialog {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun CACertificateFormField(state: ConnectServerForm) {
         Field(label = Label.CA_CERTIFICATE) {

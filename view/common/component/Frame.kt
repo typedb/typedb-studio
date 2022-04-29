@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -290,7 +289,6 @@ object Frame {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun RowPaneResizer(pane: PaneState, separatorWidth: Dp?) {
         if (!pane.isFrozen) {
@@ -312,7 +310,6 @@ object Frame {
         } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ColumnPaneResizer(pane: PaneState, separatorHeight: Dp?) {
         if (!pane.isFrozen) {

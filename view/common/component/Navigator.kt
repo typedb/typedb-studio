@@ -462,7 +462,6 @@ object Navigator {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Navigable<T>> ItemButton(item: ItemState<T>) {
         if (item.isExpandable) RawIconButton(
