@@ -74,7 +74,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             state = navState,
             iconArg = { typeIcon(it.item) },
             styleArgs = { listOf() },
-            contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
+            // TODO: contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
         )
     }
 

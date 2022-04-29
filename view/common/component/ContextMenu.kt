@@ -147,7 +147,9 @@ object ContextMenu {
                         .border(Form.BORDER_WIDTH, Theme.colors.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
-                    itemListsFn().forEach { list ->
+                    val itemsLists = itemListsFn()
+                    assert(itemsLists.isNotEmpty()) { "You should not pass an empty list in to a context menu" }
+                    itemsLists.forEach { list ->
                         list.forEach { item -> Item(item, state) }
                         Separator.Horizontal()
                     }
