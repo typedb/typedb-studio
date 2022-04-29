@@ -33,7 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal class RunOutputGroup(
+internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
     textEditorState: TextEditor.State,
     colors: Color.Theme,

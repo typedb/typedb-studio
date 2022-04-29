@@ -218,9 +218,7 @@ class QueryRunner constructor(
             noResultMsg = MATCH_QUERY_NO_RESULT,
             queryStr = query.toString(),
             printerFn = { printConceptMap(it) }
-        ) {
-            transaction.query().match(query)
-        }
+        ) { transaction.query().match(query) }
     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {

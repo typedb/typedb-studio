@@ -58,6 +58,7 @@ class ResourceManager(
     }
 
     fun open(resource: Resource) {
+        if (resource in opened) return
         openAndActivate(resource, opened.size)
         resource.onClose { close(it) }
     }
@@ -86,7 +87,8 @@ class ResourceManager(
         activate(opened[previousIndex])
     }
 
-    fun mayRun(resource: Resource.Runnable, content: String = resource.runContent) {
+    fun openAndMayRun(resource: Resource.Runnable, content: String = resource.runContent) {
+        open(resource)
         client.runner(content) { resource.runner.launch(it) }
     }
 
@@ -101,10 +103,5 @@ class ResourceManager(
             else -> closingIndex
         }.coerceIn(0, (opened.size - 1).coerceAtLeast(0))
         active = if (opened.isNotEmpty()) opened[replacementIndex] else null
-    }
-
-    fun closeAll() {
-        opened.toList().forEach { it.close() }
-        active = null
     }
 }

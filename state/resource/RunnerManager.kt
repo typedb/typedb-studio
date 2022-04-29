@@ -65,7 +65,7 @@ class RunnerManager {
         saved.add(runner)
     }
 
-    fun launch(runner: QueryRunner) {
+    internal fun launch(runner: QueryRunner) {
         activeRunner = runner
         if (runners.isEmpty() || runners.all { saved.contains(it) }) runners.add(runner)
         else runners[runners.indexOf(runners.first { !saved.contains(it) })] = runner

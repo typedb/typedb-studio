@@ -303,7 +303,7 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
-                                onClick = { GlobalState.client.session?.transaction?.snapshot?.toggle() },
+                                onClick = { GlobalState.client.session.transaction.snapshot.toggle() },
                                 color = { toggleButtonColor(isSnapshotActivated) },
                                 enabled = enabled && isSnapshotEnabled,
                                 tooltip = Tooltip.Arg(
@@ -314,7 +314,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.INFER.lowercase(),
-                                onClick = { GlobalState.client.session?.transaction?.infer?.toggle() },
+                                onClick = { GlobalState.client.session.transaction.infer.toggle() },
                                 color = { toggleButtonColor(isInferActivated) },
                                 enabled = enabled && isInferEnabled,
                                 tooltip = Tooltip.Arg(
@@ -325,7 +325,7 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
-                                onClick = { GlobalState.client.session?.transaction?.explain?.toggle() },
+                                onClick = { GlobalState.client.session.transaction.explain.toggle() },
                                 color = { toggleButtonColor(isExplainActivated) },
                                 enabled = enabled && isExplainEnabled,
                                 tooltip = Tooltip.Arg(
@@ -437,7 +437,7 @@ object Toolbar {
                 color = Theme.colors.secondary,
                 onClick = {
                     GlobalState.resource.active?.let {
-                        if (it.isRunnable) GlobalState.resource.mayRun(it.asRunnable())
+                        if (it.isRunnable) GlobalState.resource.openAndMayRun(it.asRunnable())
                     }
                 },
                 enabled = isReadyToRunQuery && hasRunnablePage,
