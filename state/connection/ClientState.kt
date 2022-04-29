@@ -231,7 +231,10 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     }
 
     fun close() = runAsyncClosingCommand {
-        if (statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED)) {
+        if (
+            statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED) ||
+            statusAtomic.compareAndSet(expected = CONNECTING, new = DISCONNECTED)
+        ) {
             session.close()
             _client?.close()
             _client = null

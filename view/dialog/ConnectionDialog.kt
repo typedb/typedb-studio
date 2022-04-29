@@ -116,7 +116,7 @@ object ConnectionDialog {
                     Spacer(modifier = Modifier.weight(1f))
                     when (GlobalState.client.status) {
                         DISCONNECTED -> DisconnectedFormButtons(state)
-                        CONNECTING -> ConnectingFormButtons(state)
+                        CONNECTING -> ConnectingFormButtons()
                         CONNECTED -> ConnectedFormButtons(state)
                     }
                 }
@@ -221,7 +221,6 @@ object ConnectionDialog {
         )
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun DisconnectedFormButtons(state: ConnectServerForm) {
         TextButton(text = Label.CANCEL, onClick = { state.cancel() })
@@ -233,7 +232,6 @@ object ConnectionDialog {
         )
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
@@ -247,9 +245,8 @@ object ConnectionDialog {
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun ConnectingFormButtons(state: ConnectServerForm) {
+    private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
         TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { GlobalState.client.close() })
         FormRowSpacer()
