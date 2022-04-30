@@ -21,12 +21,17 @@ package com.vaticle.typedb.studio.view.output
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.studio.view.common.component.Form
 
 internal object GraphOutput : RunOutput() {
 
-    internal class State() : RunOutput.State() {
+    internal class State(val transaction: TypeDBTransaction) : RunOutput.State() {
 
+        internal fun output(conceptMap: ConceptMap) {
+            // TODO
+        }
     }
 
     @Composable

@@ -25,24 +25,41 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.client.api.answer.ConceptMap
+import com.vaticle.typedb.client.api.answer.ConceptMapGroup
+import com.vaticle.typedb.client.api.answer.Numeric
+import com.vaticle.typedb.client.api.answer.NumericGroup
+import com.vaticle.typedb.client.api.concept.Concept
+import com.vaticle.typedb.client.api.concept.thing.Attribute
+import com.vaticle.typedb.client.api.concept.thing.Relation
+import com.vaticle.typedb.client.api.concept.thing.Thing
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.connection.QueryRunner
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.ERROR
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.INFO
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.SUCCESS
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Type.TYPEQL
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
+import com.vaticle.typeql.lang.common.TypeQLToken
+import com.vaticle.typeql.lang.common.util.Strings
+import java.util.stream.Collectors
 
 internal object LogOutput : RunOutput() {
 
     internal val END_OF_OUTPUT_SPACE = 20.dp
 
-    internal class State(internal val editorState: TextEditor.State, private val colors: Color.Theme) :
+    internal class State(
+        internal val editorState: TextEditor.State,
+        private val colors: Color.Theme,
+        val transaction: TypeDBTransaction
+    ) :
         RunOutput.State() {
 
         init {
@@ -50,17 +67,112 @@ internal object LogOutput : RunOutput() {
             editorState.stickToBottom = true
         }
 
-        fun jumpToTop() {
+        internal fun jumpToTop() {
             editorState.stickToBottom = false
             editorState.jumpToTop()
         }
 
-        fun collect(responses: List<QueryRunner.Response>) {
-            editorState.content.addAll(responses.flatMap { response ->
-                response.text.split("\n").map { line ->
-                    format(response.type, line, colors)
+        internal fun output(message: Response.Message) {
+            editorState.content.addAll(message.text.split("\n").map {
+                when (message.type) {
+                    INFO -> AnnotatedString(it)
+                    SUCCESS, ERROR -> highlightText(message.type, it, colors)
+                    TYPEQL -> highlightTypeQL(it)
                 }
             })
+        }
+
+        internal fun output(numeric: Numeric) {
+            outputTypeQL(numeric.toString())
+        }
+
+        internal fun output(conceptMap: ConceptMap) {
+            outputTypeQL(printConceptMap(conceptMap))
+        }
+
+        internal fun output(conceptMapGroup: ConceptMapGroup) {
+            outputTypeQL(printConceptMapGroup(conceptMapGroup))
+        }
+
+        internal fun output(numericGroup: NumericGroup) {
+            outputTypeQL(printNumericGroup(numericGroup))
+        }
+
+        private fun outputTypeQL(text: String) {
+            editorState.content.addAll(text.split("\n").map { highlightTypeQL(it) })
+        }
+
+        private fun highlightTypeQL(text: String) = SyntaxHighlighter.highlight(text, Property.FileType.TYPEQL)
+
+        private fun highlightText(type: Response.Message.Type, text: String, colors: Color.Theme): AnnotatedString {
+            val builder = AnnotatedString.Builder()
+            val style = SpanStyle(
+                color = when (type) {
+                    SUCCESS -> colors.secondary
+                    ERROR -> colors.error2
+                    else -> throw IllegalArgumentException()
+                }
+            )
+            builder.pushStyle(style)
+            builder.append(text)
+            builder.pop()
+            return builder.toAnnotatedString()
+        }
+
+        private fun printNumericGroup(group: NumericGroup): String {
+            return printConcept(group.owner()) + " => " + group.numeric().asNumber()
+        }
+
+        private fun printConceptMapGroup(group: ConceptMapGroup): String {
+            val str = StringBuilder(printConcept(group.owner()) + " => {\n")
+            group.conceptMaps().forEach { str.append(Strings.indent(printConceptMap(it))) }
+            str.append("\n}")
+            return str.toString()
+        }
+
+        private fun printConceptMap(conceptMap: ConceptMap): String {
+            val content = conceptMap.map().map {
+                "$" + it.key + " " + printConcept(it.value) + ";"
+            }.stream().collect(Collectors.joining("\n"))
+
+            val str = StringBuilder("{")
+            if (content.lines().size > 1) str.append("\n").append(Strings.indent(content)).append("\n")
+            else str.append(" ").append(content).append(" ")
+            str.append("}")
+            return str.toString()
+        }
+
+        private fun printConcept(concept: Concept): String {
+            return when (concept) {
+                is Type -> printType(concept)
+                is Thing -> printThing(concept)
+                else -> throw IllegalStateException("Unrecognised TypeQL Concept")
+            }
+        }
+
+        private fun printType(type: Type): String {
+            var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
+            type.asRemote(transaction).supertype?.let { str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName() }
+            return str
+        }
+
+        private fun printThing(thing: Thing): String {
+            val str = StringBuilder()
+            when (thing) {
+                is Attribute<*> -> str.append(Strings.valueToString(thing.value))
+                else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
+            }
+            if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
+            str.append(" ").append(TypeQLToken.Constraint.ISA).append(" ")
+                .append(thing.asThing().type.label.scopedName())
+            return str.toString()
+        }
+
+        private fun printRolePlayers(relation: Relation): String {
+            val rolePlayers = relation.asRemote(transaction).playersByRoleType.flatMap { (role, players) ->
+                players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
+            }.stream().collect(Collectors.joining(", "))
+            return "($rolePlayers)"
         }
     }
 
@@ -85,28 +197,5 @@ internal object LogOutput : RunOutput() {
                 color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon }
             ) { state.editorState.stickToBottom = true }
         )
-    }
-
-    internal fun format(type: QueryRunner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
-        return when (type) {
-            INFO -> AnnotatedString(text)
-            SUCCESS, ERROR -> highlightText(type, text, colors)
-            TYPEQL -> SyntaxHighlighter.highlight(text, Property.FileType.TYPEQL)
-        }
-    }
-
-    private fun highlightText(type: QueryRunner.Response.Type, text: String, colors: Color.Theme): AnnotatedString {
-        val builder = AnnotatedString.Builder()
-        val style = SpanStyle(
-            color = when (type) {
-                SUCCESS -> colors.secondary
-                ERROR -> colors.error2
-                else -> throw IllegalArgumentException()
-            }
-        )
-        builder.pushStyle(style)
-        builder.append(text)
-        builder.pop()
-        return builder.toAnnotatedString()
     }
 }

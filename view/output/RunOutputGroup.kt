@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.connection.QueryRunner
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
@@ -40,7 +41,7 @@ internal class RunOutputGroup constructor(
     private val coroutineScope: CoroutineScope
 ) {
 
-    internal val log = LogOutput.State(textEditorState, colors)
+    internal val log = LogOutput.State(textEditorState, colors, runner.transaction)
     internal val graphs: MutableList<GraphOutput.State> = mutableStateListOf()
     internal val tables: MutableList<TableOutput.State> = mutableStateListOf()
     internal val hasMultipleGraphs get() = graphs.size > 1
@@ -49,19 +50,12 @@ internal class RunOutputGroup constructor(
     internal val outputs: List<RunOutput.State> get() = listOf(log, *graphs.toTypedArray(), *tables.toTypedArray())
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
 
-    init {
-        consumeRunnerResponses()
+    companion object {
+        private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun consumeRunnerResponses() = coroutineScope.launch {
-        val responses: MutableList<Either<QueryRunner.Response, QueryRunner.Done>> = mutableListOf()
-        do {
-            delay(Duration.Companion.milliseconds(33)) // 30 FPS
-            responses.clear()
-            runner.responses.drainTo(responses)
-            if (responses.isNotEmpty()) log.collect(responses.filter { it.isFirst }.map { it.first() })
-        } while (responses.lastOrNull()?.isSecond != true)
+    init {
+        consumeResponses()
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {
@@ -78,5 +72,49 @@ internal class RunOutputGroup constructor(
 
     internal fun numberOf(table: TableOutput.State): Int {
         return tables.indexOf(table) + 1
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun consumeResponses() = coroutineScope.launch {
+        val responses: MutableList<Response> = mutableListOf()
+        do {
+            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            responses.clear()
+            runner.responses.drainTo(responses)
+            if (responses.isNotEmpty()) responses.forEach { output(it) }
+        } while (responses.lastOrNull() != Response.Done)
+        runner.isConsumed()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun <T> consumeStream(stream: Response.Stream<T>, output: (T) -> Unit) {
+        val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+        do {
+            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            responses.clear()
+            stream.queue.drainTo(responses)
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
+        } while (responses.lastOrNull()?.isSecond != true)
+    }
+
+    private suspend fun output(response: Response) {
+        when (response) {
+            is Response.Message -> log.output(response)
+            is Response.Numeric -> log.output(response.value)
+            is Response.Stream<*> -> when (response) {
+                is Response.Stream.NumericGroups -> consumeStream(response) { log.output(it) }
+                is Response.Stream.ConceptMapGroups -> consumeStream(response) { log.output(it) }
+                is Response.Stream.ConceptMaps -> {
+                    val graph = GraphOutput.State(runner.transaction).also { graphs.add(it) }
+                    val table = TableOutput.State(runner.transaction).also { tables.add(it) }
+                    consumeStream(response) {
+                        log.output(it)
+                        graph.output(it)
+                        table.collect(it)
+                    }
+                }
+            }
+            is Response.Done -> {}
+        }
     }
 }

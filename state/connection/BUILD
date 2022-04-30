@@ -35,7 +35,6 @@ kt_jvm_library(
         "@vaticle_typedb_client_java//api:api",
         "@vaticle_typedb_client_java//common:common",
         "@vaticle_typedb_common//:common",
-        "@vaticle_typeql_lang_java//common:common",
         "@vaticle_typeql_lang_java//query:query",
         "@vaticle_typeql_lang_java//:typeql-lang",
 
