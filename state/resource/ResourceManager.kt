@@ -58,9 +58,10 @@ class ResourceManager(
     }
 
     fun open(resource: Resource) {
-        if (resource in opened) return
-        openAndActivate(resource, opened.size)
-        resource.onClose { close(it) }
+        if (resource !in opened) {
+            openAndActivate(resource, opened.size)
+            resource.onClose { close(it) }
+        } else activate(resource)
     }
 
     private fun openAndActivate(resource: Resource, index: Int) {
