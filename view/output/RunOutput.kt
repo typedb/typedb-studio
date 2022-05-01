@@ -36,7 +36,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 internal sealed class RunOutput {
 
-    sealed class State
+    sealed class State {
+        abstract val name: String
+    }
 
     @Composable
     internal fun Layout(buttons: List<Form.IconButtonArg>, content: @Composable (Modifier) -> Unit) {

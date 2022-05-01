@@ -23,11 +23,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 
 internal object GraphOutput : RunOutput() {
 
-    internal class State(val transaction: TypeDBTransaction) : RunOutput.State() {
+    internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
+
+        override val name: String = Label.GRAPH + " ($number)"
 
         internal fun output(conceptMap: ConceptMap) {
             // TODO

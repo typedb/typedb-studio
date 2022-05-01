@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
@@ -41,13 +42,11 @@ internal class RunOutputGroup constructor(
     private val coroutineScope: CoroutineScope
 ) {
 
-    internal val log = LogOutput.State(textEditorState, colors, runner.transaction)
-    internal val graphs: MutableList<GraphOutput.State> = mutableStateListOf()
-    internal val tables: MutableList<TableOutput.State> = mutableStateListOf()
-    internal val hasMultipleGraphs get() = graphs.size > 1
-    internal val hasMultipleTables get() = tables.size > 1
+    private val graphCount = AtomicInteger(0)
+    private val tableCount = AtomicInteger(0)
+    private val log = LogOutput.State(textEditorState, colors, runner.transaction)
+    internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(log)
     internal var active: RunOutput.State by mutableStateOf(log)
-    internal val outputs: List<RunOutput.State> get() = listOf(log, *graphs.toTypedArray(), *tables.toTypedArray())
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
 
     companion object {
@@ -64,14 +63,6 @@ internal class RunOutputGroup constructor(
 
     internal fun activate(runOutput: RunOutput.State) {
         active = runOutput
-    }
-
-    internal fun numberOf(graph: GraphOutput.State): Int {
-        return graphs.indexOf(graph) + 1
-    }
-
-    internal fun numberOf(table: TableOutput.State): Int {
-        return tables.indexOf(table) + 1
     }
 
     @OptIn(ExperimentalTime::class)
@@ -105,12 +96,16 @@ internal class RunOutputGroup constructor(
                 is Response.Stream.NumericGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMapGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMaps -> {
-                    val graph = GraphOutput.State(runner.transaction).also { graphs.add(it) }
-                    val table = TableOutput.State(runner.transaction).also { tables.add(it) }
+                    val table = TableOutput.State(
+                        transaction = runner.transaction, number = tableCount.incrementAndGet()
+                    ).also { outputs.add(it) }
+                    val graph = GraphOutput.State(
+                        transaction = runner.transaction, number = graphCount.incrementAndGet()
+                    ).also { outputs.add(it) }
                     consumeStream(response) {
                         log.output(it)
-                        graph.output(it)
                         table.collect(it)
+                        graph.output(it)
                     }
                 }
             }

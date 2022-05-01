@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Color
@@ -59,8 +60,9 @@ internal object LogOutput : RunOutput() {
         internal val editorState: TextEditor.State,
         private val colors: Color.Theme,
         val transaction: TypeDBTransaction
-    ) :
-        RunOutput.State() {
+    ) : RunOutput.State() {
+
+        override val name: String = Label.LOG
 
         init {
             editorState.onScrollToBottom { editorState.stickToBottom = true }

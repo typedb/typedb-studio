@@ -193,18 +193,6 @@ object RunOutputArea {
             }
         }
 
-        fun outputName(output: RunOutput.State): String {
-            return when (output) {
-                is LogOutput.State -> Label.LOG
-                is GraphOutput.State -> {
-                    Label.GRAPH + if (outputGroup.hasMultipleGraphs) " (${outputGroup.numberOf(output)})" else ""
-                }
-                is TableOutput.State -> {
-                    Label.TABLE + if (outputGroup.hasMultipleTables) " (${outputGroup.numberOf(output)})" else ""
-                }
-            }
-        }
-
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Form.Text(value = Label.OUTPUT + ":")
@@ -215,7 +203,7 @@ object RunOutputArea {
                     tabs = outputGroup.outputs,
                     position = Tabs.Position.BOTTOM,
                     iconFn = { Form.IconArg(outputIcon(it)) },
-                    labelFn = { AnnotatedString(outputName(it)) },
+                    labelFn = { AnnotatedString(it.name) },
                     isActiveFn = { outputGroup.isActive(it) },
                     onClick = { outputGroup.activate(it) },
                 )
