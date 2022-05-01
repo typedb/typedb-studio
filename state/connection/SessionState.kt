@@ -32,19 +32,9 @@ import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
 class SessionState constructor(
     private val client: ClientState,
     internal val notificationMgr: NotificationManager
@@ -52,7 +42,6 @@ class SessionState constructor(
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        private val SCHEMA_TYPE_TX_WAIT_TIME = Duration.seconds(16)
     }
 
     var type: TypeDBSession.Type by mutableStateOf(TypeDBSession.Type.DATA); internal set
@@ -64,11 +53,8 @@ class SessionState constructor(
     var transaction = TransactionState(this, notificationMgr)
     private var _session: TypeDBSession? by mutableStateOf(null)
     private val isOpenAtomic = AtomicBooleanState(false)
-    private var schemaReadTx: AtomicReference<TypeDBTransaction> = AtomicReference()
-    private val lastSchemaReadTxTime = AtomicLong(0)
     private val onOpen = LinkedBlockingQueue<() -> Unit>()
     private val onClose = LinkedBlockingQueue<() -> Unit>()
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun onOpen(function: () -> Unit) = onOpen.put(function)
     fun onClose(function: () -> Unit) = onClose.put(function)
@@ -93,45 +79,9 @@ class SessionState constructor(
         return if (options != null) _session?.transaction(type, options) else _session?.transaction(type)
     }
 
-    fun openOrGetSchemaReadTx(): TypeDBTransaction {
-        synchronized(this) {
-            lastSchemaReadTxTime.set(System.currentTimeMillis())
-            val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            if (schemaReadTx.compareAndSet(null, transaction(options = options))) {
-                schemaReadTx.get().onClose { closeSchemaReadTx() }
-                coroutineScope.launch {
-                    var duration = SCHEMA_TYPE_TX_WAIT_TIME
-                    while (true) {
-                        delay(duration)
-                        val sinceLastTx = System.currentTimeMillis() - lastSchemaReadTxTime.get()
-                        if (sinceLastTx >= SCHEMA_TYPE_TX_WAIT_TIME.inWholeMilliseconds) {
-                            closeSchemaReadTx()
-                            break
-                        } else duration = SCHEMA_TYPE_TX_WAIT_TIME - Duration.milliseconds(sinceLastTx)
-                    }
-                }
-            }
-            return schemaReadTx.get()
-        }
-    }
-
-    fun resetSchemaReadTx() {
-        synchronized(this) {
-            if (schemaReadTx.get() != null) {
-                closeSchemaReadTx()
-                openOrGetSchemaReadTx()
-            }
-        }
-    }
-
-    private fun closeSchemaReadTx() {
-        synchronized(this) { schemaReadTx.getAndSet(null)?.close() }
-    }
-
     internal fun close(message: Message? = null, vararg params: Any) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             onClose.forEach { it() }
-            closeSchemaReadTx()
             transaction.close()
             _session?.close()
             _session = null

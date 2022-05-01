@@ -79,7 +79,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState>) {
-        GlobalState.client.session.resetSchemaReadTx()
+        GlobalState.schema.resetTx()
         navState.reloadEntries()
     }
 

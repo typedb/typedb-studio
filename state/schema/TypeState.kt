@@ -85,7 +85,7 @@ class TypeState(
     }
 
     override fun reloadEntries() {
-        val tx = schemaMgr.session.openOrGetSchemaReadTx()
+        val tx = schemaMgr.openOrGetTx()
         val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
         val old = entries.map { it.concept }.toSet()
         if (new != old) {

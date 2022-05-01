@@ -42,7 +42,7 @@ class TransactionState constructor(
 ) {
 
     companion object {
-        internal const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
+        const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
         private val LOGGER = KotlinLogging.logger {}
     }
 

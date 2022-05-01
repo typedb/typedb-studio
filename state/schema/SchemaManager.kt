@@ -21,27 +21,43 @@ package com.vaticle.typedb.studio.state.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.TypeDBOptions
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.connection.SessionState
+import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SchemaManager(val session: SessionState, internal val notificationMgr: NotificationManager) {
+@OptIn(ExperimentalTime::class)
+class SchemaManager(private val session: SessionState, internal val notificationMgr: NotificationManager) {
 
     var root: TypeState? by mutableStateOf(null); private set
     var onRootChange: ((TypeState) -> Unit)? = null
+    private var transaction: AtomicReference<TypeDBTransaction> = AtomicReference()
+    private val lastTransactionUse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+
+    companion object {
+        private val TX_IDLE_TIME = Duration.seconds(16)
+    }
 
     init {
         session.onOpen { mayUpdateRoot() }
         session.transaction.onSchemaWrite {
-            session.resetSchemaReadTx()
+            resetTx()
             mayUpdateRoot()
         }
         session.onClose {
             root?.close()
             root = null
+            closeTx()
         }
     }
 
@@ -54,5 +70,40 @@ class SchemaManager(val session: SessionState, internal val notificationMgr: Not
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
         session.database?.typeSchema()?.let { onSuccess(it) }
+    }
+
+    internal fun openOrGetTx(): TypeDBTransaction {
+        synchronized(this) {
+            lastTransactionUse.set(System.currentTimeMillis())
+            val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
+            if (transaction.compareAndSet(null, session.transaction(options = options))) {
+                transaction.get().onClose { closeTx() }
+                coroutineScope.launch {
+                    var duration = TX_IDLE_TIME
+                    while (true) {
+                        delay(duration)
+                        val sinceLastTx = System.currentTimeMillis() - lastTransactionUse.get()
+                        if (sinceLastTx >= TX_IDLE_TIME.inWholeMilliseconds) {
+                            closeTx()
+                            break
+                        } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastTx)
+                    }
+                }
+            }
+            return transaction.get()
+        }
+    }
+
+    fun resetTx() {
+        synchronized(this) {
+            if (transaction.get() != null) {
+                closeTx()
+                openOrGetTx()
+            }
+        }
+    }
+
+    private fun closeTx() {
+        synchronized(this) { transaction.getAndSet(null)?.close() }
     }
 }
