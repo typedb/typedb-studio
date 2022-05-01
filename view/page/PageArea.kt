@@ -115,14 +115,20 @@ object PageArea {
             return GlobalState.resource.active?.let { close(it) } ?: false
         }
 
-        internal fun close(resource: Resource): Boolean {
+        internal fun close(resource: Resource, stopRunner: Boolean = false): Boolean {
             resource.execBeforeClose()
             fun closeFn() {
                 openedPages.remove(resource)
                 GlobalState.resource.close(resource)
                 if (resource.isUnsavedResource) resource.delete()
             }
-            if (resource.needSaving) {
+            if (resource.isRunnable && resource.asRunnable().runner.isRunning && !stopRunner) {
+                GlobalState.confirmation.submit(
+                    title = Label.QUERY_IS_RUNNING,
+                    message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
+                    cancelLabel = Label.OK,
+                )
+            } else if (resource.needSaving) {
                 GlobalState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
@@ -130,7 +136,7 @@ object PageArea {
                     rejectLabel = Label.DELETE,
                     cancelOnConfirm = false,
                     onReject = { closeFn() },
-                    onConfirm = { resource.save { it.close(); GlobalState.confirmation.close() } }
+                    onConfirm = { resource.save { GlobalState.confirmation.close(); it.close() } }
                 )
             } else closeFn()
             return true

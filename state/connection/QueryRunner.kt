@@ -107,11 +107,11 @@ class QueryRunner constructor(
         const val MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT =
             "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
-        private val RUNNING_INDICATOR_DELAY = Duration.Companion.seconds(3)
+        private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
     }
 
     val responses = LinkedBlockingQueue<Response>()
-    private val isRunning = AtomicBoolean(false)
+    val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -158,8 +158,8 @@ class QueryRunner constructor(
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
             responses.put(Response.Done)
-            isRunning.set(false)
             consumerLatch.await()
+            isRunning.set(false)
             onComplete()
         }
     }

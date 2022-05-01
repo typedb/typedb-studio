@@ -55,6 +55,8 @@ object ConfirmationDialog {
 
         var verificationInput by mutableStateOf("")
         val hasReject get() = GlobalState.confirmation.hasReject
+        val hasConfirm get() = GlobalState.confirmation.hasConfirm
+        val cancelLabel get() = GlobalState.confirmation.cancelLabel
         val rejectLabel get() = GlobalState.confirmation.rejectLabel
         val confirmLabel get() = GlobalState.confirmation.confirmLabel
 
@@ -115,13 +117,13 @@ object ConfirmationDialog {
 
     @Composable
     private fun ConfirmationButtons(formState: State, focusReq: FocusRequester?) {
-        TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { formState.cancel() })
+        TextButton(text = formState.cancelLabel ?: Label.CANCEL, focusReq = focusReq, onClick = { formState.cancel() })
         FormRowSpacer()
         if (formState.hasReject) {
             TextButton(text = formState.rejectLabel ?: "", onClick = { formState.reject() })
             FormRowSpacer()
         }
-        TextButton(
+        if (formState.hasConfirm) TextButton(
             text = formState.confirmLabel ?: Label.CONFIRM,
             onClick = { formState.trySubmitIfValid() },
             enabled = formState.isValid()

@@ -77,6 +77,7 @@ object Toolbar {
     private val hasRunnablePage get() = GlobalState.resource.active?.isRunnable == true
     private val hasRunningQuery get() = GlobalState.client.hasRunningQuery
     private val hasRunningCommand get() = GlobalState.client.hasRunningCommand
+    private val hasStopSignal get() = GlobalState.client.session.transaction.hasStopSignal
 
     @Composable
     fun Layout() {
@@ -454,7 +455,7 @@ object Toolbar {
                 icon = Icon.Code.BOLT,
                 color = Theme.colors.error,
                 onClick = { GlobalState.client.sendStopSignal() },
-                enabled = hasRunningQuery && !hasRunningCommand,
+                enabled = hasRunningQuery && !hasStopSignal,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
         }

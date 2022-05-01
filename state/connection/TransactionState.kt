@@ -34,7 +34,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 class TransactionState constructor(
@@ -64,9 +63,10 @@ class TransactionState constructor(
     val isRead get() = type.isRead
     val isWrite get() = type.isWrite
     val isOpen get() = isOpenAtomic.state
+    val hasStopSignal get() = hasStopSignalAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
     private val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
-    private val stopSignal = AtomicBoolean(false)
+    private val hasStopSignalAtomic = AtomicBooleanState(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _transaction: TypeDBTransaction? by mutableStateOf(null)
@@ -87,7 +87,7 @@ class TransactionState constructor(
     fun onSchemaWrite(function: () -> Unit) = onSchemaWrite.put(function)
 
     internal fun sendStopSignal() {
-        stopSignal.set(true)
+        hasStopSignalAtomic.set(true)
     }
 
     private fun tryOpen() {
@@ -109,12 +109,12 @@ class TransactionState constructor(
     internal fun queryRunner(content: String): QueryRunner? {
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
-                stopSignal.set(false)
+                hasStopSignalAtomic.set(false)
                 tryOpen()
-                return if (isOpen) QueryRunner(_transaction!!, content, stopSignal) {
+                return if (isOpen) QueryRunner(_transaction!!, content, hasStopSignalAtomic.atomic) {
                     if (!snapshot.activated) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
-                    stopSignal.set(false)
+                    hasStopSignalAtomic.set(false)
                     hasRunningQueryAtomic.set(false)
                 } else null
             } catch (e: Exception) {

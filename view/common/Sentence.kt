@@ -111,6 +111,8 @@ object Sentence {
         "A stop signal allows you to stop the currently running query when the next server response is received. " +
                 "To stop the query immediately without waiting for any server response, close the transaction instead. " +
                 BUTTON_ENABLED_WHEN_RUNNING
+    const val STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION =
+        "The running query associated to this page should be stopped before closing this page."
     const val TRANSACTION_CLOSE_DESCRIPTION =
         "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
                 "The next transaction will be opened at a newer and latest snapshot. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
