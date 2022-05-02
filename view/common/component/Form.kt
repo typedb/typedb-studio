@@ -524,8 +524,8 @@ object Form {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
         BoxButton(
-            onClick = onClick, bgColor = bgColor, focusReq = focusReq,
-            roundedCorners = roundedCorners, enabled = enabled, tooltip = tooltip
+            bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
+            enabled = enabled, tooltip = tooltip, onClick = onClick
         ) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -607,16 +607,12 @@ object Form {
     ) {
         var isHover by remember { mutableStateOf(false) }
         BoxButton(
-            onClick = onClick,
-            bgColor = bgColor,
             modifier = modifier.size(FIELD_HEIGHT).pointerMoveFilter(
                 onEnter = { isHover = true; false },
                 onExit = { isHover = false; false }
             ),
-            focusReq = focusReq,
-            roundedCorners = roundedCorners,
-            enabled = enabled,
-            tooltip = tooltip,
+            bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
+            enabled = enabled, tooltip = tooltip, onClick = onClick,
         ) {
             Icon.Render(
                 icon = if (hoverIcon != null && isHover) hoverIcon else icon,
@@ -629,14 +625,14 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun BoxButton(
-        onClick: () -> Unit,
         bgColor: Color = Theme.colors.primary,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
-        content: @Composable BoxScope.() -> Unit
+        onClick: () -> Unit,
+        content: @Composable (BoxScope.() -> Unit)
     ) {
         val density = LocalDensity.current.density
         val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
