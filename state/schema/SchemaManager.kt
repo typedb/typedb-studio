@@ -40,7 +40,8 @@ class SchemaManager(private val session: SessionState, internal val notification
 
     var root: TypeState? by mutableStateOf(null); private set
     var onRootChange: ((TypeState) -> Unit)? = null
-    private var transaction: AtomicReference<TypeDBTransaction> = AtomicReference()
+    val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
+    private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
@@ -51,13 +52,13 @@ class SchemaManager(private val session: SessionState, internal val notification
     init {
         session.onOpen { mayUpdateRoot() }
         session.transaction.onSchemaWrite {
-            resetTx()
+            resetReadTx()
             mayUpdateRoot()
         }
         session.onClose {
             root?.close()
             root = null
-            closeTx()
+            closeReadTx()
         }
     }
 
@@ -72,38 +73,38 @@ class SchemaManager(private val session: SessionState, internal val notification
         session.database?.typeSchema()?.let { onSuccess(it) }
     }
 
-    internal fun openOrGetTx(): TypeDBTransaction {
+    internal fun openOrGetReadTx(): TypeDBTransaction {
         synchronized(this) {
             lastTransactionUse.set(System.currentTimeMillis())
             val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            if (transaction.compareAndSet(null, session.transaction(options = options))) {
-                transaction.get().onClose { closeTx() }
+            if (readTx.compareAndSet(null, session.transaction(options = options))) {
+                readTx.get().onClose { closeReadTx() }
                 coroutineScope.launch {
                     var duration = TX_IDLE_TIME
                     while (true) {
                         delay(duration)
                         val sinceLastTx = System.currentTimeMillis() - lastTransactionUse.get()
                         if (sinceLastTx >= TX_IDLE_TIME.inWholeMilliseconds) {
-                            closeTx()
+                            closeReadTx()
                             break
                         } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastTx)
                     }
                 }
             }
-            return transaction.get()
+            return readTx.get()
         }
     }
 
-    fun resetTx() {
+    fun resetReadTx() {
         synchronized(this) {
-            if (transaction.get() != null) {
-                closeTx()
-                openOrGetTx()
+            if (readTx.get() != null) {
+                closeReadTx()
+                openOrGetReadTx()
             }
         }
     }
 
-    private fun closeTx() {
-        synchronized(this) { transaction.getAndSet(null)?.close() }
+    private fun closeReadTx() {
+        synchronized(this) { readTx.getAndSet(null)?.close() }
     }
 }

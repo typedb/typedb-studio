@@ -24,7 +24,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -41,10 +44,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 class TypePage constructor(private var type: TypeState) : Page(type) {
@@ -55,12 +61,14 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
+    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot
 
     companion object {
         private val MIN_WIDTH = 600.dp
         private val MAX_WIDTH = 900.dp
-        private val VERTICAL_SPACE = 30.dp
-        private val FIELD_SPACING = 18.dp
+        private val VERTICAL_SPACE = 40.dp
+        private val HORIZONTAL_SPACING = 6.dp
+        private val VERTICAL_SPACING = 18.dp
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -75,8 +83,8 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
                 Column(
                     modifier = Modifier.width(width.coerceIn(MIN_WIDTH, MAX_WIDTH)).padding(vertical = VERTICAL_SPACE),
-                    verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-                ) { TypeFields() }
+                    verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING),
+                ) { TypeSections() }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(verScroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
@@ -84,26 +92,27 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun TypeFields() {
+    private fun TypeSections() {
         TitleSection()
         SupertypeSection()
         AbstractSection()
         when {
-            type.isEntityType -> EntityTypeFields()
-            type.isRelationType -> RelationTypeFields()
-            type.isAttributeType -> AttributeTypeFields()
+            type.isEntityType -> EntityTypeSections()
+            type.isRelationType -> RelationTypeSections()
+            type.isAttributeType -> AttributeTypeSections()
         }
+        DeleteButton()
     }
 
     @Composable
-    private fun EntityTypeFields() {
+    private fun EntityTypeSections() {
         OwnedAttributesSection()
         PlayedRolesSection()
         SubtypesSection()
     }
 
     @Composable
-    private fun RelationTypeFields() {
+    private fun RelationTypeSections() {
         RelatedRolesSection()
         OwnedAttributesSection()
         SubtypesSection()
@@ -113,8 +122,8 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun AttributeTypeFields() {
-        OwningAttributesSection()
+    private fun AttributeTypeSections() {
+        AttributeOwnersSection()
         SubtypesSection()
         AdvanceSections {
             PlayedRolesSection()
@@ -128,7 +137,13 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun TitleSection() {
-
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            Form.TextBox(value = type.name)
+            Spacer(modifier = Modifier.weight(1f))
+            Form.IconButton(Icon.Code.PEN, tooltip = Tooltip.Arg(Label.RENAME), enabled = isEditable) { }
+            Form.IconButton(Icon.Code.ROTATE, tooltip = Tooltip.Arg(Label.REFRESH)) { }
+            Form.IconButton(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE, tooltip = Tooltip.Arg(Label.EXPORT)) { }
+        }
     }
 
     @Composable
@@ -147,7 +162,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun OwningAttributesSection() {
+    private fun AttributeOwnersSection() {
 
     }
 
@@ -163,6 +178,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun SubtypesSection() {
+
+    }
+
+    @Composable
+    private fun DeleteButton() {
 
     }
 }

@@ -289,6 +289,25 @@ object Form {
         )
     }
 
+    @Composable
+    fun TextBox(
+        value: String,
+        modifier: Modifier = Modifier,
+        textColor: Color = Theme.colors.onPrimary,
+        bgColor: Color = Theme.colors.primary,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL
+    ) {
+        val density = LocalDensity.current.density
+        Row(
+            modifier = modifier.height(FIELD_HEIGHT).background(bgColor, roundedCorners.shape(density)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+            Text(value, textStyle = Theme.typography.body1, color = textColor)
+            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+        }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun TextInput(

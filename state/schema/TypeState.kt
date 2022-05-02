@@ -34,7 +34,7 @@ import mu.KotlinLogging
 class TypeState(
     private val concept: ThingType,
     override val parent: TypeState?,
-    private val schemaMgr: SchemaManager,
+    val schemaMgr: SchemaManager,
     isExpandableInit: Boolean,
 ) : Navigable<TypeState>, Resource {
 
@@ -45,6 +45,7 @@ class TypeState(
     val isEntityType get() = concept.isEntityType
     val isRelationType get() = concept.isRelationType
     val isAttributeType get() = concept.isAttributeType
+    val isRoot get() = concept.isRoot
     override val name: String get() = concept.label.name()
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
@@ -85,7 +86,7 @@ class TypeState(
     }
 
     override fun reloadEntries() {
-        val tx = schemaMgr.openOrGetTx()
+        val tx = schemaMgr.openOrGetReadTx()
         val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
         val old = entries.map { it.concept }.toSet()
         if (new != old) {
