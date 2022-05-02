@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import mu.KotlinLogging
 
 class SessionState constructor(
@@ -48,10 +49,10 @@ class SessionState constructor(
     val isSchema: Boolean get() = type == TypeDBSession.Type.SCHEMA
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
-    val database: Database? get() = _session?.database()
+    val database: Database? get() = _session.get()?.database()
     val databaseName: String? get() = database?.name()
-    var transaction = TransactionState(this, notificationMgr)
-    private var _session: TypeDBSession? by mutableStateOf(null)
+    val transaction = TransactionState(this, notificationMgr)
+    private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
     private val onOpen = LinkedBlockingQueue<() -> Unit>()
     private val onClose = LinkedBlockingQueue<() -> Unit>()
@@ -63,8 +64,8 @@ class SessionState constructor(
         if (isOpen && this.databaseName == database && this.type == type) return
         close()
         try {
-            _session = client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } }
-            if (_session?.isOpen == true) {
+            _session.set(client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
+            if (_session.get()?.isOpen == true) {
                 this.type = type
                 onOpen.forEach { it() }
                 isOpenAtomic.set(true)
@@ -76,15 +77,15 @@ class SessionState constructor(
     }
 
     fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
-        return if (options != null) _session?.transaction(type, options) else _session?.transaction(type)
+        return if (options != null) _session.get()?.transaction(type, options) else _session.get()?.transaction(type)
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
             onClose.forEach { it() }
             transaction.close()
-            _session?.close()
-            _session = null
+            _session.get()?.close()
+            _session.set(null)
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }

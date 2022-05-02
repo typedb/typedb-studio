@@ -231,6 +231,10 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     }
 
     fun close() = runAsyncClosingCommand {
+        closeBlocking()
+    }
+
+    fun closeBlocking() {
         if (
             statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED) ||
             statusAtomic.compareAndSet(expected = CONNECTING, new = DISCONNECTED)
