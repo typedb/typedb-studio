@@ -212,24 +212,22 @@ object Tabs {
     private fun <T : Any> PreviousTabsButton(state: State<T>) {
         Form.IconButton(
             icon = Icon.Code.CARET_LEFT,
-            onClick = { state.scrollTabsBy(-TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             roundedCorners = Theme.RoundedCorners.NONE,
             enabled = state.scroller.value > 0
-        )
+        ) { state.scrollTabsBy(-TAB_SCROLL_DELTA) }
     }
 
     @Composable
     private fun <T : Any> NextTabsButton(state: State<T>) {
         Form.IconButton(
             icon = Icon.Code.CARET_RIGHT,
-            onClick = { state.scrollTabsBy(TAB_SCROLL_DELTA) },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             roundedCorners = Theme.RoundedCorners.NONE,
             enabled = state.scroller.value < state.scroller.maxValue
-        )
+        ) { state.scrollTabsBy(TAB_SCROLL_DELTA) }
     }
 
     @Composable
@@ -237,14 +235,14 @@ object Tabs {
         Form.IconButton(
             icon = buttonArg.icon,
             hoverIcon = buttonArg.hoverIcon,
+            modifier = Modifier.size(PANEL_BAR_HEIGHT),
             iconColor = buttonArg.color(),
             iconHoverColor = buttonArg.hoverColor?.invoke(),
             disabledColor = buttonArg.disabledColor?.invoke(),
-            onClick = buttonArg.onClick,
-            enabled = buttonArg.enabled,
-            modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             roundedCorners = Theme.RoundedCorners.NONE,
+            enabled = buttonArg.enabled,
+            onClick = buttonArg.onClick,
         )
     }
 }

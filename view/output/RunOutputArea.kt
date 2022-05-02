@@ -121,11 +121,10 @@ object RunOutputArea {
     private fun ToggleButton(state: State) {
         Form.IconButton(
             icon = if (state.isOpen) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_UP,
-            onClick = { state.toggle() },
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             roundedCorners = Theme.RoundedCorners.NONE,
-        )
+        ) { state.toggle() }
     }
 
     @Composable

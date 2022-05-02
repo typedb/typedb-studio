@@ -120,11 +120,11 @@ object Toolbar {
     ) {
         IconButton(
             icon = icon,
-            onClick = onClick,
             modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
             iconColor = if (enabled) color else Theme.colors.icon,
             enabled = enabled,
-            tooltip = tooltip
+            tooltip = tooltip,
+            onClick = onClick
         )
     }
 

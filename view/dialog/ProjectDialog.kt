@@ -150,9 +150,8 @@ object ProjectDialog {
                 FormRowSpacer()
                 Form.IconButton(
                     icon = Icon.Code.FOLDER_OPEN,
-                    onClick = { launchDirectorySelector(state, window, title) },
                     tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
-                )
+                ) { launchDirectorySelector(state, window, title) }
             }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

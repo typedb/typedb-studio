@@ -96,15 +96,15 @@ sealed class Browser(private val areaState: BrowserArea.State, internal val orde
             Form.IconButton(
                 icon = it.icon,
                 hoverIcon = it.hoverIcon,
+                modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 iconColor = it.color(),
                 iconHoverColor = it.hoverColor?.invoke(),
                 disabledColor = it.disabledColor?.invoke(),
-                onClick = { it.onClick() },
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,
                 enabled = isActive && it.enabled,
-                tooltip = it.tooltip
+                tooltip = it.tooltip,
+                onClick = it.onClick,
             )
         }
     }

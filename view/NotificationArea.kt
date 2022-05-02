@@ -97,11 +97,10 @@ object NotificationArea {
             )
             IconButton(
                 icon = Icon.Code.XMARK,
-                onClick = { GlobalState.notification.dismiss(notification) },
                 modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
                 iconColor = colorArgs.foreground,
                 bgColor = Color.Transparent
-            )
+            ) { GlobalState.notification.dismiss(notification) }
         }
     }
 

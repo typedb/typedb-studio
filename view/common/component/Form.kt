@@ -483,15 +483,15 @@ object Form {
             IconButton(
                 icon = button.icon,
                 hoverIcon = button.hoverIcon,
-                onClick = button.onClick,
                 modifier = Modifier.size(size),
-                bgColor = bgColor,
                 iconColor = button.color(),
                 iconHoverColor = button.hoverColor?.invoke(),
                 disabledColor = button.disabledColor?.invoke(),
+                bgColor = bgColor,
                 roundedCorners = roundedCorners,
                 enabled = true,
                 tooltip = button.tooltip,
+                onClick = button.onClick,
             )
         }
 
@@ -594,7 +594,6 @@ object Form {
     fun IconButton(
         icon: Icon.Code,
         hoverIcon: Icon.Code? = null,
-        onClick: () -> Unit,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         iconColor: Color = Theme.colors.icon,
@@ -604,6 +603,7 @@ object Form {
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
+        onClick: () -> Unit,
     ) {
         var isHover by remember { mutableStateOf(false) }
         BoxButton(

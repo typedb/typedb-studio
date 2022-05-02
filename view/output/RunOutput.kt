@@ -57,12 +57,12 @@ internal sealed class RunOutput {
                 IconButton(
                     icon = it.icon,
                     hoverIcon = it.hoverIcon,
+                    modifier = Modifier.size(Theme.TOOLBAR_BUTTON_SIZE),
                     iconColor = it.color(),
                     iconHoverColor = it.hoverColor?.invoke(),
                     disabledColor = it.disabledColor?.invoke(),
-                    onClick = it.onClick,
                     enabled = it.enabled,
-                    modifier = Modifier.size(Theme.TOOLBAR_BUTTON_SIZE)
+                    onClick = it.onClick
                 )
             }
         }

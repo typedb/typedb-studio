@@ -132,10 +132,10 @@ object ActionList {
                     IconButton(
                         icon = button.icon,
                         hoverIcon = button.hoverIcon,
+                        modifier = Modifier.size(BUTTON_SIZE),
                         iconColor = button.color(),
                         iconHoverColor = button.hoverColor?.invoke(),
                         disabledColor = button.disabledColor?.invoke(),
-                        modifier = Modifier.size(BUTTON_SIZE),
                         tooltip = button.tooltip,
                         onClick = button.onClick
                     )
