@@ -63,10 +63,8 @@ class SchemaManager(private val session: SessionState, internal val notification
     }
 
     private fun mayUpdateRoot() {
-        session.transaction()?.let { tx ->
-            root = TypeState(tx.concepts().rootThingType, null, this, true)
-            onRootChange?.let { it(root!!) }
-        }
+        root = TypeState(openOrGetReadTx().concepts().rootThingType, null, this, true)
+        onRootChange?.let { it(root!!) }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
