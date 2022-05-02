@@ -74,7 +74,7 @@ internal interface TextProcessor {
         private val LOGGER = KotlinLogging.logger {}
 
         fun normaliseWhiteSpace(string: String): String {
-            return string.replace("\t", " ".repeat(TAB_SIZE)).replace("\u00a0"," ")
+            return string.replace("\t", " ".repeat(TAB_SIZE)).replace("\u00a0", " ")
         }
     }
 
