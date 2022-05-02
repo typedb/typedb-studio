@@ -464,13 +464,13 @@ object Navigator {
 
     @Composable
     private fun <T : Navigable<T>> ItemButton(item: ItemState<T>) {
-        if (item.isExpandable) RawIconButton(
+        if (!item.isExpandable) Spacer(Modifier.size(ITEM_HEIGHT))
+        else RawIconButton(
             icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
-            onClick = { item.toggle() },
             modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {
                 item.updateButtonArea(it.boundsInWindow())
             },
-        ) else Spacer(Modifier.size(ITEM_HEIGHT))
+        ) { item.toggle() }
     }
 
     @Composable

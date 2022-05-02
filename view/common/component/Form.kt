@@ -551,11 +551,11 @@ object Form {
     @Composable
     fun RawIconButton(
         icon: Icon.Code,
-        onClick: (() -> Unit)? = null,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.colors.icon,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
+        onClick: (() -> Unit)? = null,
     ) {
         val density = LocalDensity.current.density
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
