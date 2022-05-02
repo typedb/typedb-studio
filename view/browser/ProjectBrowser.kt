@@ -92,9 +92,8 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                onClick = { GlobalState.project.openProjectDialog.open() },
                 leadingIcon = Icon.Code.FOLDER_OPEN
-            )
+            ) { GlobalState.project.openProjectDialog.open() }
         }
     }
 

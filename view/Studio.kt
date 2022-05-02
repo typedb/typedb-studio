@@ -275,9 +275,9 @@ object Studio {
                     }
                     Row {
                         Spacer(Modifier.weight(1f))
-                        TextButton(text = Label.COPY, onClick = { clipboard.setText(AnnotatedString(exceptionText())) })
+                        TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
                         FormRowSpacer()
-                        TextButton(text = Label.QUIT, onClick = { quit = true; onClose() })
+                        TextButton(text = Label.QUIT) { quit = true; onClose() }
                         FormRowSpacer()
                         TextButton(text = Label.REOPEN, onClick = onClose)
                     }

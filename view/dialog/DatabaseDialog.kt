@@ -92,9 +92,9 @@ object DatabaseDialog {
                 Spacer(Modifier.height(DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.REFRESH, onClick = { GlobalState.client.refreshDatabaseList() })
+                    TextButton(text = Label.REFRESH) { GlobalState.client.refreshDatabaseList() }
                     FormRowSpacer()
-                    TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
+                    TextButton(text = Label.CLOSE) { dialogState.close() }
                 }
             }
         }
@@ -138,13 +138,12 @@ object DatabaseDialog {
                 FormRowSpacer()
                 TextButton(
                     text = Label.CREATE,
-                    onClick = { CreateDatabaseForm.trySubmit() },
                     enabled = CreateDatabaseForm.isValid(),
                     tooltip = Tooltip.Arg(
                         title = Label.CREATE_DATABASE,
                         description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
                     )
-                )
+                ) { CreateDatabaseForm.trySubmit() }
             }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -160,7 +159,7 @@ object DatabaseDialog {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.CLOSE, onClick = { dialogState.close() })
+                    TextButton(text = Label.CLOSE) { dialogState.close() }
                 }
             }
         }

@@ -218,34 +218,26 @@ object ConnectionDialog {
 
     @Composable
     private fun DisconnectedFormButtons(state: ConnectServerForm) {
-        TextButton(text = Label.CANCEL, onClick = { state.cancel() })
+        TextButton(text = Label.CANCEL) { state.cancel() }
         FormRowSpacer()
-        TextButton(
-            text = Label.CONNECT,
-            onClick = { state.trySubmit() },
-            enabled = state.isValid()
-        )
+        TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.trySubmit() }
     }
 
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
-        TextButton(
-            text = Label.DISCONNECT,
-            onClick = { GlobalState.client.close() },
-            textColor = Theme.colors.error2
-        )
+        TextButton(text = Label.DISCONNECT, textColor = Theme.colors.error2) { GlobalState.client.close() }
         FormRowSpacer()
-        TextButton(text = Label.CLOSE, focusReq = focusReq, onClick = { state.cancel() })
+        TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.CANCEL, focusReq = focusReq, onClick = { GlobalState.client.close() })
+        TextButton(text = Label.CANCEL, focusReq = focusReq) { GlobalState.client.close() }
         FormRowSpacer()
-        TextButton(text = Label.CONNECTING, onClick = {}, enabled = false)
+        TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 }

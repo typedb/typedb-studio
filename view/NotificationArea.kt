@@ -73,12 +73,11 @@ object NotificationArea {
             Spacer(Modifier.weight(1f))
             Form.TextButton(
                 text = Label.DISMISS_ALL,
-                onClick = { GlobalState.notification.dismissAll() },
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
                 trailingIcon = Icon.Code.XMARK,
                 iconColor = colorArgs.foreground,
-            )
+            ) { GlobalState.notification.dismissAll() }
         }
     }
 

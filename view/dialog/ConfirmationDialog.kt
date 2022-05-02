@@ -117,16 +117,15 @@ object ConfirmationDialog {
 
     @Composable
     private fun ConfirmationButtons(formState: State, focusReq: FocusRequester?) {
-        TextButton(text = formState.cancelLabel ?: Label.CANCEL, focusReq = focusReq, onClick = { formState.cancel() })
+        TextButton(text = formState.cancelLabel ?: Label.CANCEL, focusReq = focusReq) { formState.cancel() }
         FormRowSpacer()
         if (formState.hasReject) {
-            TextButton(text = formState.rejectLabel ?: "", onClick = { formState.reject() })
+            TextButton(text = formState.rejectLabel ?: "") { formState.reject() }
             FormRowSpacer()
         }
         if (formState.hasConfirm) TextButton(
             text = formState.confirmLabel ?: Label.CONFIRM,
-            onClick = { formState.trySubmitIfValid() },
             enabled = formState.isValid()
-        )
+        ) { formState.trySubmitIfValid() }
     }
 }

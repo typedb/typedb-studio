@@ -464,9 +464,9 @@ object TextToolbar {
     private fun ReplacerButton(text: String, title: String, onClick: () -> Unit) {
         Form.TextButton(
             text = text,
-            onClick = onClick,
             modifier = Modifier.height(BUTTON_HEIGHT),
-            tooltip = Tooltip.Arg(title)
+            tooltip = Tooltip.Arg(title),
+            onClick = onClick
         )
     }
 }

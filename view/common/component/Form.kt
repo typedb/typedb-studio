@@ -188,9 +188,9 @@ object Form {
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.CANCEL, onClick = { state.cancel() })
+                    TextButton(text = Label.CANCEL) { state.cancel() }
                     FormRowSpacer()
-                    TextButton(text = submitLabel, onClick = { state.trySubmit() }, enabled = state.isValid())
+                    TextButton(text = submitLabel, enabled = state.isValid()) { state.trySubmit() }
                 }
             }
         }
@@ -455,13 +455,13 @@ object Form {
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
             TextButton(
                 text = button.text,
-                onClick = button.onClick,
                 modifier = Modifier.height(height),
-                bgColor = bgColor,
                 textColor = button.color(),
+                bgColor = bgColor,
                 roundedCorners = roundedCorners,
-                tooltip = button.tooltip,
                 enabled = button.enabled,
+                tooltip = button.tooltip,
+                onClick = button.onClick,
             )
         }
 
@@ -509,7 +509,6 @@ object Form {
     @Composable
     fun TextButton(
         text: String,
-        onClick: () -> Unit,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
@@ -520,6 +519,7 @@ object Form {
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
+        onClick: () -> Unit,
     ) {
         @Composable
         fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
@@ -735,17 +735,16 @@ object Form {
         Box {
             TextButton(
                 text = selected?.let { displayFn(it).ifBlank { placeholder } } ?: placeholder,
-                onClick = { state.toggle() },
-                textColor = Theme.colors.onPrimary,
-                trailingIcon = CARET_DOWN,
-                focusReq = focusReq,
-                enabled = enabled,
-                tooltip = tooltip,
                 modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }.pointerMoveFilter(
                     onEnter = { state.isButtonHover = true; false },
                     onExit = { state.isButtonHover = false; false }
                 ),
-            )
+                textColor = Theme.colors.onPrimary,
+                focusReq = focusReq,
+                trailingIcon = CARET_DOWN,
+                enabled = enabled,
+                tooltip = tooltip,
+            ) { state.toggle() }
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
