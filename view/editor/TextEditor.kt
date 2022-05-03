@@ -257,6 +257,11 @@ object TextEditor {
         fun onScrollToBottom(function: () -> Unit) {
             target.verScroller.onScrollToBottom(function)
         }
+
+        fun copyContentToClipboard() {
+            target.selectAll()
+            handler.copy()
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

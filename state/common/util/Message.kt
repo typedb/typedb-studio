@@ -63,6 +63,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                     2, "%s navigator reached the recommended limit of expanded items (%s). " +
                             "Automated expansion beyond the limit is disabled to improve performance."
                 )
+            val TEXT_COPIED_TO_CLIPBOARD =
+                View(3, "Selected text has been successfully copied to the OS clipboard.")
         }
     }
 

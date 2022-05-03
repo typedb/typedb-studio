@@ -62,6 +62,7 @@ internal sealed class RunOutput {
                     iconHoverColor = it.hoverColor?.invoke(),
                     disabledColor = it.disabledColor?.invoke(),
                     enabled = it.enabled,
+                    tooltip = it.tooltip,
                     onClick = it.onClick
                 )
             }

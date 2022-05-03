@@ -35,6 +35,8 @@ import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
@@ -44,6 +46,7 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
@@ -51,18 +54,23 @@ import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.stream.Collectors
+import mu.KotlinLogging
 
 internal object LogOutput : RunOutput() {
 
     internal val END_OF_OUTPUT_SPACE = 20.dp
 
-    internal class State(
+    internal class State constructor(
         internal val editorState: TextEditor.State,
         private val colors: Color.Theme,
         val transaction: TypeDBTransaction
     ) : RunOutput.State() {
 
         override val name: String = Label.LOG
+
+        companion object {
+            private val LOGGER = KotlinLogging.logger {}
+        }
 
         init {
             editorState.onScrollToBottom { editorState.stickToBottom = true }
@@ -72,6 +80,11 @@ internal object LogOutput : RunOutput() {
         internal fun jumpToTop() {
             editorState.stickToBottom = false
             editorState.jumpToTop()
+        }
+
+        internal fun copyToClipboard() {
+            editorState.copyContentToClipboard()
+            GlobalState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
         }
 
         internal fun output(message: Response.Message) {
@@ -193,10 +206,12 @@ internal object LogOutput : RunOutput() {
 
     private fun buttons(state: State): List<IconButtonArg> {
         return listOf(
-            IconButtonArg(Icon.Code.ARROW_UP_TO_LINE) { state.jumpToTop() },
+            IconButtonArg(Icon.Code.COPY, tooltip = Tooltip.Arg(Label.COPY_All)) { state.copyToClipboard() },
+            IconButtonArg(Icon.Code.ARROW_UP_TO_LINE, tooltip = Tooltip.Arg(Label.JUMP_TO_TOP)) { state.jumpToTop() },
             IconButtonArg(
                 icon = Icon.Code.ARROW_DOWN_TO_LINE,
-                color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon }
+                color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon },
+                tooltip = Tooltip.Arg(Label.JUMP_AND_STICK_TO_BOTTOM)
             ) { state.editorState.stickToBottom = true }
         )
     }

@@ -198,7 +198,7 @@ internal class EventHandler constructor(
         processor.deleteSelection()
     }
 
-    private fun copy() {
+    internal fun copy() {
         if (target.selection == null) return
         clipboard.setText(target.selectedText())
     }
