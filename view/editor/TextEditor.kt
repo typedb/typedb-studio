@@ -249,6 +249,15 @@ object TextEditor {
             processor.updateFile(file)
         }
 
+        fun toggleFinder() {
+            if (toolbar.showFinder) toolbar.hide() else toolbar.showFinder()
+        }
+
+        fun copyContentToClipboard() {
+            target.selectAll()
+            handler.copy()
+        }
+
         fun jumpToTop() {
             target.verScroller.scrollToTop()
             target.moveCursorToStart(isSelecting = false, mayScroll = false)
@@ -256,11 +265,6 @@ object TextEditor {
 
         fun onScrollToBottom(function: () -> Unit) {
             target.verScroller.onScrollToBottom(function)
-        }
-
-        fun copyContentToClipboard() {
-            target.selectAll()
-            handler.copy()
         }
     }
 

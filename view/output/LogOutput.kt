@@ -82,6 +82,10 @@ internal object LogOutput : RunOutput() {
             editorState.jumpToTop()
         }
 
+        internal fun toggleFinder() {
+            editorState.toggleFinder()
+        }
+
         internal fun copyToClipboard() {
             editorState.copyContentToClipboard()
             GlobalState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
@@ -207,6 +211,7 @@ internal object LogOutput : RunOutput() {
     private fun buttons(state: State): List<IconButtonArg> {
         return listOf(
             IconButtonArg(Icon.Code.COPY, tooltip = Tooltip.Arg(Label.COPY_All)) { state.copyToClipboard() },
+            IconButtonArg(Icon.Code.MAGNIFYING_GLASS, tooltip = Tooltip.Arg(Label.FIND)) { state.toggleFinder() },
             IconButtonArg(Icon.Code.ARROW_UP_TO_LINE, tooltip = Tooltip.Arg(Label.JUMP_TO_TOP)) { state.jumpToTop() },
             IconButtonArg(
                 icon = Icon.Code.ARROW_DOWN_TO_LINE,
