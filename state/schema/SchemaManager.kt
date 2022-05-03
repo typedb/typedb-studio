@@ -52,7 +52,7 @@ class SchemaManager(private val session: SessionState, internal val notification
     init {
         session.onOpen { mayUpdateRoot() }
         session.transaction.onSchemaWrite {
-            resetReadTx()
+            refreshReadTx()
             mayUpdateRoot()
         }
         session.onClose {
@@ -71,34 +71,35 @@ class SchemaManager(private val session: SessionState, internal val notification
         session.database?.typeSchema()?.let { onSuccess(it) }
     }
 
-    internal fun openOrGetReadTx(): TypeDBTransaction {
-        synchronized(this) {
-            lastTransactionUse.set(System.currentTimeMillis())
-            val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            if (readTx.compareAndSet(null, session.transaction(options = options))) {
-                readTx.get().onClose { closeReadTx() }
-                coroutineScope.launch {
-                    var duration = TX_IDLE_TIME
-                    while (true) {
-                        delay(duration)
-                        val sinceLastTx = System.currentTimeMillis() - lastTransactionUse.get()
-                        if (sinceLastTx >= TX_IDLE_TIME.inWholeMilliseconds) {
-                            closeReadTx()
-                            break
-                        } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastTx)
-                    }
-                }
-            }
-            return readTx.get()
-        }
-    }
-
-    fun resetReadTx() {
+    fun refreshReadTx() {
         synchronized(this) {
             if (readTx.get() != null) {
                 closeReadTx()
                 openOrGetReadTx()
             }
+        }
+    }
+
+    internal fun openOrGetReadTx(): TypeDBTransaction {
+        synchronized(this) {
+            lastTransactionUse.set(System.currentTimeMillis())
+            if (readTx.get() != null) return readTx.get()
+            val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
+            readTx.set(session.transaction(options = options).also { it?.onClose { closeReadTx() } })
+            scheduleCloseReadTx()
+            return readTx.get()
+        }
+    }
+
+    private fun scheduleCloseReadTx() = coroutineScope.launch {
+        var duration = TX_IDLE_TIME
+        while (true) {
+            delay(duration)
+            val sinceLastUse = System.currentTimeMillis() - lastTransactionUse.get()
+            if (sinceLastUse >= TX_IDLE_TIME.inWholeMilliseconds) {
+                closeReadTx()
+                break
+            } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastUse)
         }
     }
 
