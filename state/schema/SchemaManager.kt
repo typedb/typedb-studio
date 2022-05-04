@@ -70,7 +70,7 @@ class SchemaManager(private val session: SessionState, internal val notification
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
-        session.database?.typeSchema()?.let { onSuccess(it) }
+        session.typeSchema()?.let { onSuccess(it) }
     }
 
     fun refreshReadTx() {

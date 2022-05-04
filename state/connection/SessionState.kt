@@ -25,7 +25,6 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
-import com.vaticle.typedb.client.api.database.Database
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -49,8 +48,7 @@ class SessionState constructor(
     val isSchema: Boolean get() = type == TypeDBSession.Type.SCHEMA
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
-    val database: Database? get() = _session.get()?.database()
-    val databaseName: String? get() = database?.name()
+    var database: String? by mutableStateOf(null)
     val transaction = TransactionState(this, notificationMgr)
     private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
@@ -61,12 +59,13 @@ class SessionState constructor(
     fun onClose(function: (willReopenDB: Boolean) -> Unit) = onClose.put(function)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
-        if (isOpen && this.databaseName == database && this.type == type) return
-        val isNewDB = this.databaseName != database
+        if (isOpen && this.database == database && this.type == type) return
+        val isNewDB = this.database != database
         close(willReopenSameDB = !isNewDB)
         try {
             _session.set(client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
             if (_session.get()?.isOpen == true) {
+                this.database = database
                 this.type = type
                 isOpenAtomic.set(true)
                 onOpen.forEach { it(isNewDB) }
@@ -76,6 +75,8 @@ class SessionState constructor(
             isOpenAtomic.set(false)
         }
     }
+
+    fun typeSchema(): String? = _session.get()?.database()?.typeSchema()
 
     fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
         return if (options != null) _session.get()?.transaction(type, options) else _session.get()?.transaction(type)
