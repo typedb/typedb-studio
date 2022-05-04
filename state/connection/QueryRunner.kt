@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.connection
 
+import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
@@ -207,7 +208,7 @@ class QueryRunner constructor(
             noResultMsg = INSERT_QUERY_NO_RESULT,
             queryStr = query.toString(),
             stream = Response.Stream.ConceptMaps()
-        ) { transaction.query().insert(query) }
+        ) { transaction.query().insert(query, TypeDBOptions.core().prefetch(true)) }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
@@ -217,7 +218,7 @@ class QueryRunner constructor(
             noResultMsg = UPDATE_QUERY_NO_RESULT,
             queryStr = query.toString(),
             stream = Response.Stream.ConceptMaps()
-        ) { transaction.query().update(query) }
+        ) { transaction.query().update(query, TypeDBOptions.core().prefetch(true)) }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {

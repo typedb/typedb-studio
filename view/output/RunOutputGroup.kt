@@ -103,8 +103,8 @@ internal class RunOutputGroup constructor(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it) }
                     consumeStream(response) {
-                        log.output(it)
-                        table.collect(it)
+//                        log.output(it) // TODO: investigate freezing on a large query
+                        table.output(it)
                         graph.output(it)
                     }
                 }
