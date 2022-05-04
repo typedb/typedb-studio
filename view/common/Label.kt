@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.common
 
 object Label {
+    const val ABSTRACT = "Abstract"
     const val ADDRESS = "Address"
     const val CA_CERTIFICATE = "CA Certificate"
     const val CANCEL = "Cancel"
@@ -80,6 +81,7 @@ object Label {
     const val MOVE = "Move"
     const val MOVE_DIRECTORY = "Move Directory"
     const val NEXT_OCCURRENCE = "Next Occurrence"
+    const val NO = "No"
     const val NONE = "None"
     const val OK = "OK"
     const val OPEN = "Open"
@@ -148,4 +150,5 @@ object Label {
     const val USERNAME = "Username"
     const val USERS = "Users"
     const val WRITE_TRANSACTION = "Write Transaction"
+    const val YES = "Yes"
 }

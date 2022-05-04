@@ -54,6 +54,7 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.toggleButtonColor
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -68,7 +69,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
-    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot
+    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -158,7 +159,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.IconButton(
                 icon = Icon.Code.ROTATE,
                 tooltip = Tooltip.Arg(Label.REFRESH)
-            ) { } // TODO
+            ) { type.reloadProperties() }
             Form.IconButton(
                 icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
                 tooltip = Tooltip.Arg(Label.EXPORT)
@@ -185,7 +186,26 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun AbstractSection() {
-
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            Form.Text(value = Label.ABSTRACT)
+            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Form.TextButtonRow(
+                buttons = listOf(
+                    Form.TextButtonArg(
+                        text = Label.YES,
+                        onClick = { }, // TODO
+                        color = { toggleButtonColor(isActive = type.isAbstract) },
+                        enabled = isEditable,
+                    ),
+                    Form.TextButtonArg(
+                        text = Label.NO,
+                        onClick = { }, // TODO
+                        color = { toggleButtonColor(isActive = !type.isAbstract) },
+                        enabled = isEditable,
+                    )
+                )
+            )
+        }
     }
 
     @Composable

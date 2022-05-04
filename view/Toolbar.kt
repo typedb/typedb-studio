@@ -46,6 +46,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextButtonArg
 import com.vaticle.typedb.studio.view.common.component.Form.TextButtonRow
+import com.vaticle.typedb.studio.view.common.component.Form.toggleButtonColor
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
@@ -126,11 +127,6 @@ object Toolbar {
             tooltip = tooltip,
             onClick = onClick
         )
-    }
-
-    @Composable
-    private fun toggleButtonColor(isActive: Boolean): Color {
-        return if (isActive) Theme.colors.secondary else Theme.colors.onPrimary
     }
 
     object Project {

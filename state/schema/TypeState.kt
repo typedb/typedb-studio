@@ -29,13 +29,14 @@ import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class TypeState constructor(
     private val concept: ThingType,
-    initSupertype: TypeState?,
-    val schemaMgr: SchemaManager,
+    supertypeInit: TypeState?,
     isExpandableInit: Boolean,
+    val schemaMgr: SchemaManager,
 ) : Navigable<TypeState>, Resource {
 
     companion object {
@@ -59,7 +60,8 @@ class TypeState constructor(
     val isRelationType get() = concept.isRelationType
     val isAttributeType get() = concept.isAttributeType
     val isRoot get() = concept.isRoot
-    var supertype: TypeState? by mutableStateOf(initSupertype)
+    var supertype: TypeState? by mutableStateOf(supertypeInit)
+    var isAbstract: Boolean by mutableStateOf(false)
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
@@ -83,22 +85,38 @@ class TypeState constructor(
     override fun move(onSuccess: ((Resource) -> Unit)?) {}
 
     override fun tryOpen(): Boolean {
+        reloadProperties()
         isOpenAtomic.set(true)
         return true
+    }
+
+    fun reloadProperties() = schemaMgr.coroutineScope.launch {
+        loadSupertype()
+        loadAbstract()
+    }
+
+    private fun loadSupertype() {
+        supertype = concept.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.getTypeState(it) }
+    }
+
+    private fun loadAbstract() {
+        isAbstract = concept.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
     }
 
     override fun reloadEntries() {
         val tx = schemaMgr.openOrGetReadTx()
         val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
         val old = entries.map { it.concept }.toSet()
+        val refresh: List<TypeState>
         if (new != old) {
             val deleted = old - new
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.concept) }
-            val newEntries = added.map { TypeState(it, this, schemaMgr, false) }
+            val newEntries = added.map { schemaMgr.getTypeState(it) }
             entries = (retainedEntries + newEntries).sorted()
-        }
-        entries.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
+            refresh = retainedEntries
+        } else refresh = entries
+        refresh.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
     }
 

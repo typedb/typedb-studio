@@ -469,7 +469,12 @@ object Form {
     }
 
     @Composable
-    fun TextButtonRow(height: Dp, bgColor: Color = Theme.colors.primary, buttons: List<TextButtonArg>) {
+    fun toggleButtonColor(isActive: Boolean): Color {
+        return if (isActive) Theme.colors.secondary else Theme.colors.onPrimary
+    }
+
+    @Composable
+    fun TextButtonRow(buttons: List<TextButtonArg>, height: Dp = FIELD_HEIGHT, bgColor: Color = Theme.colors.primary) {
         @Composable
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
             TextButton(
