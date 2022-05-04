@@ -61,6 +61,6 @@ object Util {
         type.isEntityType -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.colors.tertiary }
         type.isRelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.colors.quaternary }
         type.isAttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.colors.quinary }
-        else -> throw IllegalStateException("Unrecognised Schema Type: $type")
+        else -> Form.IconArg(Icon.Code.HEXAGON) {Theme.colors.secondary}
     }
 }

@@ -31,9 +31,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
-class TypeState(
+class TypeState constructor(
     private val concept: ThingType,
-    override val parent: TypeState?,
+    initSupertype: TypeState?,
     val schemaMgr: SchemaManager,
     isExpandableInit: Boolean,
 ) : Navigable<TypeState>, Resource {
@@ -42,11 +42,8 @@ class TypeState(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    val isEntityType get() = concept.isEntityType
-    val isRelationType get() = concept.isRelationType
-    val isAttributeType get() = concept.isAttributeType
-    val isRoot get() = concept.isRoot
-    override val name: String get() = concept.label.name()
+    override val name: String by mutableStateOf(concept.label.name())
+    override val parent: TypeState? get() = supertype
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
@@ -57,6 +54,12 @@ class TypeState(
     override val isEmpty: Boolean = false
     override val isUnsavedResource: Boolean = false
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
+
+    val isEntityType get() = concept.isEntityType
+    val isRelationType get() = concept.isRelationType
+    val isAttributeType get() = concept.isAttributeType
+    val isRoot get() = concept.isRoot
+    var supertype: TypeState? by mutableStateOf(initSupertype)
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
@@ -70,7 +73,6 @@ class TypeState(
         else throw IllegalStateException("Unrecognised concept base type")
         return "$base: $name"
     }
-
     override fun launchWatcher() {}
     override fun stopWatcher() {}
     override fun beforeRun(function: (Resource) -> Unit) {}
