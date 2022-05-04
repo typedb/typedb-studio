@@ -50,19 +50,21 @@ class SchemaManager(private val session: SessionState, internal val notification
     }
 
     init {
-        session.onOpen { mayUpdateRoot() }
+        session.onOpen { isNewDB -> if (isNewDB) updateRoot() }
         session.transaction.onSchemaWrite {
             refreshReadTx()
-            mayUpdateRoot()
+            updateRoot()
         }
-        session.onClose {
-            root?.close()
-            root = null
+        session.onClose { willReopenSameDB ->
+            if (!willReopenSameDB) {
+                root?.close()
+                root = null
+            }
             closeReadTx()
         }
     }
 
-    private fun mayUpdateRoot() {
+    private fun updateRoot() {
         root = TypeState(openOrGetReadTx().concepts().rootThingType, null, this, true)
         onRootChange?.let { it(root!!) }
     }

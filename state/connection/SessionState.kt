@@ -54,21 +54,22 @@ class SessionState constructor(
     val transaction = TransactionState(this, notificationMgr)
     private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
-    private val onOpen = LinkedBlockingQueue<() -> Unit>()
-    private val onClose = LinkedBlockingQueue<() -> Unit>()
+    private val onOpen = LinkedBlockingQueue<(Boolean) -> Unit>()
+    private val onClose = LinkedBlockingQueue<(Boolean) -> Unit>()
 
-    fun onOpen(function: () -> Unit) = onOpen.put(function)
-    fun onClose(function: () -> Unit) = onClose.put(function)
+    fun onOpen(function: (isNewDB: Boolean) -> Unit) = onOpen.put(function)
+    fun onClose(function: (willReopenDB: Boolean) -> Unit) = onClose.put(function)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
         if (isOpen && this.databaseName == database && this.type == type) return
-        close()
+        val isNewDB = this.databaseName != database
+        close(willReopenSameDB = !isNewDB)
         try {
             _session.set(client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
             if (_session.get()?.isOpen == true) {
                 this.type = type
-                onOpen.forEach { it() }
                 isOpenAtomic.set(true)
+                onOpen.forEach { it(isNewDB) }
             } else isOpenAtomic.set(false)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
@@ -80,9 +81,9 @@ class SessionState constructor(
         return if (options != null) _session.get()?.transaction(type, options) else _session.get()?.transaction(type)
     }
 
-    internal fun close(message: Message? = null, vararg params: Any) {
+    internal fun close(message: Message? = null, vararg params: Any, willReopenSameDB: Boolean = false) {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            onClose.forEach { it() }
+            onClose.forEach { it(willReopenSameDB) }
             transaction.close()
             _session.get()?.close()
             _session.set(null)
