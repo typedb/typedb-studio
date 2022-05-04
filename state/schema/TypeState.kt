@@ -125,7 +125,11 @@ class TypeState constructor(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) onClose.forEach { it(this) }
-        entries.forEach { it.close() }
+    }
+
+    override fun closeRecursive() {
+        close()
+        entries.forEach { it.closeRecursive() }
     }
 
     override fun compareTo(other: Navigable<TypeState>): Int {

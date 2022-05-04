@@ -48,7 +48,7 @@ class Project internal constructor(
     }
 
     fun close() {
-        directory.close()
+        directory.closeRecursive()
     }
 
     override fun toString(): String {

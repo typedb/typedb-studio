@@ -57,7 +57,7 @@ class SchemaManager(private val session: SessionState, internal val notification
         }
         session.onClose { willReopenSameDB ->
             if (!willReopenSameDB) {
-                root?.close()
+                root?.closeRecursive()
                 root = null
             }
             closeReadTx()

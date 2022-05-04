@@ -348,6 +348,10 @@ class File internal constructor(
         }
     }
 
+    override fun closeRecursive() {
+        close()
+    }
+
     override fun delete() {
         try {
             close()

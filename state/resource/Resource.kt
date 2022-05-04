@@ -60,6 +60,8 @@ interface Resource {
 
     fun close()
 
+    fun closeRecursive()
+
     fun delete()
 
     interface Runnable : Resource {

@@ -65,6 +65,7 @@ sealed class ProjectItem constructor(
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
     abstract fun close()
+    abstract fun closeRecursive()
     abstract fun delete()
 
     internal fun movePathTo(newPath: Path, overwrite: Boolean = false) {
