@@ -148,7 +148,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun TitleSection() {
         Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING)) {
-            Form.TextBox(value = type.name)
+            Form.TextBox(value = type.name, leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
             Form.IconButton(
                 icon = Icon.Code.PEN,
@@ -173,6 +173,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextButton(
                 text = type.supertype?.name ?: "(${Label.NONE.lowercase()})",
+                leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = type.supertype != null,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
             Form.IconButton(

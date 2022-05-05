@@ -202,6 +202,9 @@ object Form {
     }
 
     @Composable
+    private fun ButtonSpacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+
+    @Composable
     fun Text(
         value: String,
         textStyle: TextStyle = Theme.typography.body1,
@@ -295,6 +298,8 @@ object Form {
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
+        trailingIcon: IconArg? = null,
+        leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
     ) {
         val density = LocalDensity.current.density
@@ -302,9 +307,17 @@ object Form {
             modifier = modifier.height(FIELD_HEIGHT).background(bgColor, roundedCorners.shape(density)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+            leadingIcon?.let {
+                ButtonSpacer()
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+            }
+            ButtonSpacer()
             Text(value, textStyle = Theme.typography.body1, color = textColor)
-            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+            ButtonSpacer()
+            trailingIcon?.let {
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                ButtonSpacer()
+            }
         }
     }
 
@@ -544,26 +557,24 @@ object Form {
         tooltip: Tooltip.Arg? = null,
         onClick: () -> Unit,
     ) {
-        @Composable
-        fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
         BoxButton(
             bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
             enabled = enabled, tooltip = tooltip, onClick = onClick
         ) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer()
                     leadingIcon?.let {
+                        ButtonSpacer()
                         Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
-                        Spacer()
                     }
+                    ButtonSpacer()
                     Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
-                    Spacer()
+                    ButtonSpacer()
                 }
                 trailingIcon?.let {
                     Row {
                         Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
-                        Spacer()
+                        ButtonSpacer()
                     }
                 }
             }
