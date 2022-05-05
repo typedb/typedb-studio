@@ -83,6 +83,7 @@ object Label {
     const val NEXT_OCCURRENCE = "Next Occurrence"
     const val NO = "No"
     const val NONE = "None"
+    const val NOT = "Not"
     const val OK = "OK"
     const val OPEN = "Open"
     const val OPEN_PROJECT = "Open Project"

@@ -54,7 +54,6 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.toggleButtonColor
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -189,22 +188,12 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
             Form.Text(value = Label.ABSTRACT)
             Separator.Horizontal(modifier = Modifier.weight(1f))
-            Form.TextButtonRow(
-                buttons = listOf(
-                    Form.TextButtonArg(
-                        text = Label.YES,
-                        onClick = { }, // TODO
-                        color = { toggleButtonColor(isActive = type.isAbstract) },
-                        enabled = isEditable,
-                    ),
-                    Form.TextButtonArg(
-                        text = Label.NO,
-                        onClick = { }, // TODO
-                        color = { toggleButtonColor(isActive = !type.isAbstract) },
-                        enabled = isEditable,
-                    )
-                )
-            )
+            Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
+            Form.IconButton(
+                icon = Icon.Code.PEN,
+                enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.EDIT)
+            ) { } // TODO
         }
     }
 
