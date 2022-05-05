@@ -163,7 +163,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     fun tryUpdateSessionType(type: TypeDBSession.Type) {
         if (session.type == type) return
-        tryOpenSession(session.databaseName!!, type)
+        tryOpenSession(session.database!!, type)
     }
 
     fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
@@ -210,7 +210,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     fun tryDeleteDatabase(database: String) = runAsyncCommand {
         try {
-            if (session.databaseName == database) session.close()
+            if (session.database == database) session.close()
             _client?.databases()?.get(database)?.delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {

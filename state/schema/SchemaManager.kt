@@ -23,9 +23,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.connection.SessionState
 import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
@@ -43,32 +45,50 @@ class SchemaManager(private val session: SessionState, internal val notification
     val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
     private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val types = ConcurrentHashMap<ThingType, TypeState>()
+    internal val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     companion object {
         private val TX_IDLE_TIME = Duration.seconds(16)
     }
 
     init {
-        session.onOpen { mayUpdateRoot() }
+        session.onOpen { isNewDB -> if (isNewDB) updateRoot() }
         session.transaction.onSchemaWrite {
             refreshReadTx()
-            mayUpdateRoot()
+            updateRoot()
         }
-        session.onClose {
-            root?.close()
-            root = null
+        session.onClose { willReopenSameDB ->
+            if (!willReopenSameDB) {
+                root?.closeRecursive()
+                root = null
+            }
             closeReadTx()
         }
     }
 
-    private fun mayUpdateRoot() {
-        root = TypeState(openOrGetReadTx().concepts().rootThingType, null, this, true)
+    internal fun getTypeState(concept: ThingType): TypeState {
+        val remote = concept.asRemote(openOrGetReadTx())
+        val supertype = remote.supertype?.let { types[it] ?: getTypeState(it) }
+        return types.computeIfAbsent(concept) {
+            TypeState(
+                concept = concept,
+                supertypeInit = supertype,
+                isExpandableInit = remote.subtypesExplicit.findAny().isPresent,
+                schemaMgr = this
+            )
+        }
+    }
+
+    private fun updateRoot() {
+        val concept = openOrGetReadTx().concepts().rootThingType
+        root = TypeState(concept, null, true, this)
+        types[concept] = root!!
         onRootChange?.let { it(root!!) }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
-        session.database?.typeSchema()?.let { onSuccess(it) }
+        session.typeSchema()?.let { onSuccess(it) }
     }
 
     fun refreshReadTx() {

@@ -78,7 +78,7 @@ class Directory internal constructor(
         if (new != old) {
             val deleted = old - new
             val added = new - old
-            entries.filter { deleted.contains(it.path) }.forEach { it.close() }
+            entries.filter { deleted.contains(it.path) }.forEach { it.closeRecursive() }
             entries = (entries.filter { !deleted.contains(it.path) } + added.map { projectItemOf(it) }).sorted()
         }
     }
@@ -144,7 +144,7 @@ class Directory internal constructor(
             notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
-            close()
+            closeRecursive()
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
@@ -165,7 +165,7 @@ class Directory internal constructor(
             notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
             null
         } else try {
-            close()
+            closeRecursive()
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
@@ -191,7 +191,9 @@ class Directory internal constructor(
         }
     }
 
-    override fun close() {
-        entries.forEach { it.close() }
+    override fun close() {}
+
+    override fun closeRecursive() {
+        entries.forEach { it.closeRecursive() }
     }
 }

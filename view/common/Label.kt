@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.common
 
 object Label {
+    const val ABSTRACT = "Abstract"
     const val ADDRESS = "Address"
     const val CA_CERTIFICATE = "CA Certificate"
     const val CANCEL = "Cancel"
@@ -54,6 +55,7 @@ object Label {
     const val DIRECTORY_NAME = "Directory Name"
     const val DISCONNECT = "Disconnect"
     const val DISMISS_ALL = "Dismiss All"
+    const val EDIT = "Edit"
     const val ENABLE_INFERENCE = "Enable Inference"
     const val ENABLE_INFERENCE_EXPLANATION = "Enable Inference Explanation"
     const val ENABLE_SNAPSHOT = "Enable Snapshot"
@@ -79,7 +81,9 @@ object Label {
     const val MOVE = "Move"
     const val MOVE_DIRECTORY = "Move Directory"
     const val NEXT_OCCURRENCE = "Next Occurrence"
+    const val NO = "No"
     const val NONE = "None"
+    const val NOT = "Not"
     const val OK = "OK"
     const val OPEN = "Open"
     const val OPEN_PROJECT = "Open Project"
@@ -133,6 +137,7 @@ object Label {
     const val STATUS = "Status"
     const val STOP_SIGNAL = "Stop Signal"
     const val SUBMIT = "Submit"
+    const val SUPERTYPE = "Supertype"
     const val TABLE = "Table"
     const val TITLE = "Title"
     const val TRACE = "Trace"
@@ -146,4 +151,5 @@ object Label {
     const val USERNAME = "Username"
     const val USERS = "Users"
     const val WRITE_TRANSACTION = "Write Transaction"
+    const val YES = "Yes"
 }

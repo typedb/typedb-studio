@@ -55,9 +55,10 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     @Composable
     override fun BrowserLayout() {
         val client = GlobalState.client
+        val schema = GlobalState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!client.session.isOpen || client.selectDatabaseDialog.isOpen) SelectDBHelper()
+        else if (!client.session.isOpen || schema.root == null || client.selectDatabaseDialog.isOpen) SelectDBHelper()
         else Content()
     }
 

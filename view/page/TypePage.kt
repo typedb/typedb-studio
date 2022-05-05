@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,15 +34,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
@@ -50,6 +56,7 @@ import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
+import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -61,12 +68,12 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
-    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot
+    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
 
     companion object {
         private val MIN_WIDTH = 600.dp
         private val MAX_WIDTH = 900.dp
-        private val VERTICAL_SPACE = 40.dp
+        private val PAGE_PADDING = 40.dp
         private val HORIZONTAL_SPACING = 6.dp
         private val VERTICAL_SPACING = 18.dp
     }
@@ -77,18 +84,21 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     override fun Content() {
+        val focusReq = remember { FocusRequester() }
         val density = LocalDensity.current.density
         val bgColor = Theme.colors.background0
-        Box(Modifier.background(bgColor).onGloballyPositioned { width = toDP(it.size.width, density) }) {
+        Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
+            .onGloballyPositioned { width = toDP(it.size.width, density) }) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
                 Column(
-                    modifier = Modifier.width(width.coerceIn(MIN_WIDTH, MAX_WIDTH)).padding(vertical = VERTICAL_SPACE),
+                    modifier = Modifier.width(width.coerceIn(MIN_WIDTH, MAX_WIDTH)).padding(PAGE_PADDING),
                     verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING),
                 ) { TypeSections() }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(verScroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
         }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
@@ -137,23 +147,54 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun TitleSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING)) {
             Form.TextBox(value = type.name)
             Spacer(modifier = Modifier.weight(1f))
-            Form.IconButton(Icon.Code.PEN, tooltip = Tooltip.Arg(Label.RENAME), enabled = isEditable) { }
-            Form.IconButton(Icon.Code.ROTATE, tooltip = Tooltip.Arg(Label.REFRESH)) { }
-            Form.IconButton(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE, tooltip = Tooltip.Arg(Label.EXPORT)) { }
+            Form.IconButton(
+                icon = Icon.Code.PEN,
+                enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.RENAME)
+            ) { } // TODO
+            Form.IconButton(
+                icon = Icon.Code.ROTATE,
+                tooltip = Tooltip.Arg(Label.REFRESH)
+            ) { type.reloadProperties() }
+            Form.IconButton(
+                icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
+                tooltip = Tooltip.Arg(Label.EXPORT)
+            ) { } // TODO
         }
     }
 
     @Composable
     private fun SupertypeSection() {
-
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            Form.Text(value = Label.SUPERTYPE)
+            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Form.TextButton(
+                text = type.supertype?.name ?: "(${Label.NONE.lowercase()})",
+                enabled = type.supertype != null,
+            ) { type.supertype?.let { GlobalState.resource.open(it) } }
+            Form.IconButton(
+                icon = Icon.Code.PEN,
+                enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.EDIT)
+            ) { } // TODO
+        }
     }
 
     @Composable
     private fun AbstractSection() {
-
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            Form.Text(value = Label.ABSTRACT)
+            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
+            Form.IconButton(
+                icon = Icon.Code.PEN,
+                enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.EDIT)
+            ) { } // TODO
+        }
     }
 
     @Composable

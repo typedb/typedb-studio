@@ -438,12 +438,11 @@ object TextEditor {
         val offsetX = textLayout?.let {
             toDP(it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
         } ?: (fontWidth * cursor.col)
-        val width = when {
-            cursor.col >= text.length -> fontWidth
-            else -> textLayout?.let {
-                toDP(it.getBoundingBox(cursor.col).width, state.density)
-            } ?: fontWidth
-        }
+        val width = textLayout?.let {
+            if (cursor.col >= it.multiParagraph.intrinsics.annotatedString.length) fontWidth
+            else toDP(it.getBoundingBox(cursor.col).width, state.density)
+        } ?: fontWidth
+
         if (visible || !state.isFocused) {
             Column(
                 modifier = Modifier.offset(x = offsetX, y = CURSOR_LINE_PADDING)
