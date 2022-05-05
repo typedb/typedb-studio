@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.MouseInfo
 import java.awt.Point
@@ -58,9 +59,9 @@ object Util {
 
     // TODO: may move this method to a package about type visualisations once we implement graph visualiser
     fun typeIcon(type: TypeState) = when {
-        type.isEntityType -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.colors.tertiary }
-        type.isRelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.colors.quaternary }
-        type.isAttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.colors.quinary }
+        type.isEntityType -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
+        type.isRelationType -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
+        type.isAttributeType -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
         else -> Form.IconArg(Icon.Code.HEXAGON) {Theme.colors.secondary}
     }
 }

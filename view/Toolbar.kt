@@ -389,7 +389,7 @@ object Toolbar {
                     ToolbarIconButton(
                         icon = Icon.Code.ROTATE_LEFT,
                         onClick = { GlobalState.client.rollbackTransaction() },
-                        color = Theme.colors.quaternary2,
+                        color = Theme.colors.warning2,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
                             title = Label.ROLLBACK_TRANSACTION,

@@ -47,7 +47,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object Theme {
+object Theme { // TODO: maybe create Theme.App and Theme.Graph when merging this PR
 
     val DIALOG_PADDING = 16.dp
     val PANEL_BAR_HEIGHT = 28.dp

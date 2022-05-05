@@ -24,14 +24,11 @@ import androidx.compose.ui.graphics.Color
 
 object Color {
 
-    data class Theme(
+    data class Theme( // TODO: rename to AppTheme when merging this PR - or Theme.App (and Theme.Graph)?
         val primary: Color,
         val secondary: Color,
         val tertiary: Color,
         val tertiary2: Color,
-        val quaternary: Color,
-        val quaternary2: Color,
-        val quinary: Color,
         val background0: Color,
         val background1: Color,
         val background2: Color,
@@ -40,6 +37,8 @@ object Color {
         val border: Color,
         val scrollbar: Color,
         val icon: Color,
+        val warning: Color,
+        val warning2: Color,
         val error: Color,
         val error2: Color,
         val onPrimary: Color,
@@ -51,13 +50,37 @@ object Color {
         val isLight: Boolean,
     )
 
+    data class GraphTheme(
+        val background: Color,
+        val vertex: Vertex,
+        val vertexLabel: Color,
+        val edge: Color,
+        val edgeLabel: Color,
+        val inferred: Color,
+        val explanation: Color,
+    ) {
+        data class Vertex(
+            val thingType: Color,
+            val entityType: Color,
+            val relationType: Color,
+            val attributeType: Color,
+            val entity: Color,
+            val relation: Color,
+            val attribute: Color,
+        )
+    }
+
     private object DarkPalette {
-        val Blue = Color(0xFF5ca8ff)
+        val Black = Color(0xFF09022F)
+        val Blue1 = Color(0xFF5CA8FF)
+        val Blue2 = Color(0xFF92E4FC)
         val Green = Color(0xFF02DAC9)
         val Orange1 = Color(0xFFd68e11)
         val Orange2 = Color(0xFFF6C94C)
+        val Orange3 = Color(0xFFEBC53D)
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
+        val Pink3 = Color(0xFFE69CFF)
         val Purple0 = Color(0xFF080226)
         val Purple1 = Color(0xFF0E053F)
         val Purple2 = Color(0xFF180F49)
@@ -79,9 +102,6 @@ object Color {
             secondary = DarkPalette.Green,
             tertiary = DarkPalette.Pink1,
             tertiary2 = DarkPalette.Pink2,
-            quaternary = DarkPalette.Orange1,
-            quaternary2 = DarkPalette.Orange2,
-            quinary = DarkPalette.Blue,
             background0 = DarkPalette.Purple0,
             background1 = DarkPalette.Purple1,
             background2 = DarkPalette.Purple2,
@@ -90,6 +110,8 @@ object Color {
             border = DarkPalette.Purple6,
             scrollbar = DarkPalette.Purple8,
             icon = DarkPalette.Purple8,
+            warning = DarkPalette.Orange1,
+            warning2 = DarkPalette.Orange2,
             error = DarkPalette.Red1,
             error2 = DarkPalette.Red2,
             onPrimary = DarkPalette.White2,
@@ -99,6 +121,23 @@ object Color {
             onError = DarkPalette.White,
             indicationBase = DarkPalette.White,
             isLight = false
+        )
+        val GRAPH_DARK = GraphTheme(
+            background = DarkPalette.Purple0,
+            vertex = GraphTheme.Vertex(
+                thingType = DarkPalette.Pink1,
+                entityType = DarkPalette.Pink1,
+                relationType = DarkPalette.Orange1,
+                attributeType = DarkPalette.Blue1,
+                entity = DarkPalette.Pink3,
+                relation = DarkPalette.Orange3,
+                attribute = DarkPalette.Blue2,
+            ),
+            vertexLabel = DarkPalette.Black,
+            edge = DarkPalette.Blue1,
+            edgeLabel = DarkPalette.Blue1,
+            inferred = DarkPalette.Green,
+            explanation = DarkPalette.Red1,
         )
     }
 
