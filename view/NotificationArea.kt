@@ -75,8 +75,7 @@ object NotificationArea {
                 text = Label.DISMISS_ALL,
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
-                trailingIcon = Icon.Code.XMARK,
-                iconColor = colorArgs.foreground,
+                trailingIcon = Form.IconArg(Icon.Code.XMARK) { colorArgs.foreground },
             ) { GlobalState.notification.dismissAll() }
         }
     }

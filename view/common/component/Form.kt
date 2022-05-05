@@ -537,9 +537,8 @@ object Form {
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
         focusReq: FocusRequester? = null,
-        leadingIcon: Icon.Code? = null,
-        trailingIcon: Icon.Code? = null,
-        iconColor: Color = Theme.colors.icon,
+        leadingIcon: IconArg? = null,
+        trailingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
@@ -555,7 +554,7 @@ object Form {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
                     leadingIcon?.let {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
                         Spacer()
                     }
                     Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
@@ -563,7 +562,7 @@ object Form {
                 }
                 trailingIcon?.let {
                     Row {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
                         Spacer()
                     }
                 }
@@ -761,7 +760,7 @@ object Form {
                 ),
                 textColor = Theme.colors.onPrimary,
                 focusReq = focusReq,
-                trailingIcon = CARET_DOWN,
+                trailingIcon = IconArg(CARET_DOWN),
                 enabled = enabled,
                 tooltip = tooltip,
             ) { state.toggle() }

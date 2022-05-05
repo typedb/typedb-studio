@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
+import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.component.Form.LoadingIndicator
 import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
@@ -517,7 +518,7 @@ object Toolbar {
             TextButton(
                 text = text,
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
-                trailingIcon = Icon.Code.SERVER,
+                trailingIcon = Form.IconArg(Icon.Code.SERVER),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             ) { GlobalState.client.connectServerDialog.open() }
         }
