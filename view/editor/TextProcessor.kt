@@ -339,9 +339,10 @@ internal interface TextProcessor {
         }
 
         private fun applyInsertion(insertion: Insertion) {
+            // TODO: investigate how it is possible for subSequence() to throw IndexOutOfBounds without coercion
             val cursor = insertion.cursor
             val prefix = content[cursor.row].let { it.subSequence(0, cursor.col.coerceAtMost(it.length)) }
-            val suffix = content[cursor.row].let { it.subSequence(cursor.col, it.length) }
+            val suffix = content[cursor.row].let { it.subSequence(cursor.col.coerceAtMost(it.length), it.length) }
             val texts = insertion.text.toMutableList()
             texts[0] = prefix + texts[0]
             texts[texts.size - 1] = texts[texts.size - 1] + suffix
