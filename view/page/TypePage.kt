@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -146,8 +147,15 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
+    private fun SectionLine(content: @Composable RowScope.() -> Unit) {
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            content()
+        }
+    }
+
+    @Composable
     private fun TitleSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING)) {
+        SectionLine {
             Form.TextBox(value = type.name, leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
             Form.IconButton(
@@ -168,7 +176,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun SupertypeSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+        SectionLine {
             Form.Text(value = Label.SUPERTYPE)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextButton(
@@ -186,7 +194,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun AbstractSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+        SectionLine {
             Form.Text(value = Label.ABSTRACT)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
@@ -200,7 +208,10 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributesSection() {
-
+        SectionLine {
+            Form.Text(value = Label.OWNED_ATTRIBUTES)
+            Separator.Horizontal(modifier = Modifier.weight(1f))
+        }
     }
 
     @Composable

@@ -90,6 +90,7 @@ object Label {
     const val OPEN_PROJECT_DIRECTORY = "Open Project Directory"
     const val OPTIONAL = "Optional"
     const val OUTPUT = "Output"
+    const val OWNED_ATTRIBUTES = "Owned Attributes"
     const val PASSWORD = "Password"
     const val PASTE = "Paste"
     const val PATH_TO_CA_CERTIFICATE = "/path/to/ca/certificate"

@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
-import com.vaticle.typedb.studio.view.common.component.ActionList
+import com.vaticle.typedb.studio.view.common.component.ActionableList
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.FIELD_HEIGHT
@@ -101,11 +101,11 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun DeletableDatabaseList(mod1: Modifier) {
-        ActionList.Layout(
+    private fun DeletableDatabaseList(modifier: Modifier) {
+        ActionableList.Layout(
             items = GlobalState.client.databaseList,
-            settingSide = ActionList.Side.RIGHT,
-            modifier = mod1.border(1.dp, Theme.colors.border),
+            modifier = modifier.border(1.dp, Theme.colors.border),
+            buttonSide = ActionableList.Side.RIGHT,
             buttonFn = { databaseName ->
                 IconButtonArg(
                     icon = Icon.Code.TRASH_CAN,
