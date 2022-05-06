@@ -21,12 +21,17 @@ package com.vaticle.typedb.studio.view.output
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -37,7 +42,16 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.vaticle.force.graph.api.Simulation
+import com.vaticle.force.graph.force.CenterForce
+import com.vaticle.force.graph.force.CollideForce
+import com.vaticle.force.graph.force.ManyBodyForce
+import com.vaticle.force.graph.force.XForce
+import com.vaticle.force.graph.force.YForce
+import com.vaticle.force.graph.impl.BasicSimulation
+import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
@@ -45,13 +59,18 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
+import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Companion.emptyGraph
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
@@ -59,23 +78,31 @@ import kotlin.math.sqrt
 
 internal object GraphOutput : RunOutput() {
 
+    val LOGGER = KotlinLogging.logger {}
+
     internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
 
         override val name: String = "${Label.GRAPH} ($number)"
         val graph: Graph = emptyGraph()
+        val forceSimulation = ForceSimulation(graph)
+        val simulationRunner = SimulationRunner(this)
         var density: Float by mutableStateOf(1f)
         var frameID by mutableStateOf(0)
         var theme: Color.GraphTheme? = null
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
         internal fun output(conceptMap: ConceptMap) {
             conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
                 when {
                     concept.isThing -> concept.asThing().let { thing ->
-                        graph.thingVertices.computeIfAbsent(thing.iid) { Vertex.Thing.of(thing) }
+                        graph.thingVertices.computeIfAbsent(thing.iid) { _ ->
+                            Vertex.Thing.of(thing).also { forceSimulation.placeVertex(it) }
+                        }
                     }
                     concept.isThingType -> concept.asThingType().let { thingType ->
-                        graph.typeVertices.computeIfAbsent(thingType.label.name()) { Vertex.Type.of(thingType) }
+                        graph.typeVertices.computeIfAbsent(thingType.label.name()) { _ ->
+                            Vertex.Type.of(thingType).also { forceSimulation.placeVertex(it) }
+                        }
                     }
                     concept.isRoleType -> { /* do nothing */ }
                     else -> throw IllegalStateException("[$concept]'s encoding is not supported by GraphOutput")
@@ -83,8 +110,15 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        fun vertexRenderer(vertex: Vertex, drawScope: DrawScope) = VertexRenderer(vertex, drawScope, density, theme!!)
-        fun edgeRenderer(edge: Edge, drawScope: DrawScope) = EdgeRenderer(this, edge, drawScope)
+        private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, density, theme!!)
+
+        fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
+            return VertexBackgroundRenderer.of(vertex, rendererContext(drawScope))
+        }
+
+        fun edgeRenderer(edge: Edge, drawScope: DrawScope): EdgeRenderer {
+            return EdgeRenderer(edge, rendererContext(drawScope))
+        }
 
         internal class Graph private constructor() {
 
@@ -93,6 +127,9 @@ internal object GraphOutput : RunOutput() {
             val vertices: List<Vertex> get() = thingVertices.values + typeVertices.values
             val edges: MutableList<Edge> = mutableListOf()
             // val explanations: MutableList<Explanation> = mutableListOf()
+
+            fun isEmpty() = vertices.isEmpty()
+            fun isNotEmpty() = vertices.isNotEmpty()
 
             companion object {
                 internal fun emptyGraph() = Graph()
@@ -182,15 +219,27 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            data class Geometry(var position: Offset, val size: Size) {
+            class Geometry(val size: Size) : BasicVertex(0.0, 0.0) {
 
-                var isFrozen = false
-                private var velocity = Offset.Zero
+                var position: Offset
+                    get() { return Offset(x.toFloat(), y.toFloat()) }
+                    set(value) {
+                        x = value.x.toDouble()
+                        y = value.y.toDouble()
+                    }
+
                 val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
 
+                var isFrozen: Boolean
+                    get() { return isXFixed }
+                    set(value) {
+                        isXFixed = value
+                        isYFixed = value
+                    }
+
                 companion object {
-                    fun concept() = Geometry(Offset.Zero, Size(100f, 35f))
-                    fun relation() = Geometry(Offset.Zero, Size(110f, 55f))
+                    fun concept() = Geometry(Size(100f, 35f))
+                    fun relation() = Geometry(Size(110f, 55f))
                 }
             }
         }
@@ -203,16 +252,19 @@ internal object GraphOutput : RunOutput() {
             // TODO
         }
 
-        internal class VertexRenderer(
-            private val vertex: Vertex, private val drawScope: DrawScope, private val density: Float,
-            private val theme: Color.GraphTheme
-        ) {
+        internal sealed class VertexBackgroundRenderer(private val vertex: Vertex, protected val ctx: RendererContext) {
 
             companion object {
                 private const val CORNER_RADIUS = 5f
+
+                fun of(vertex: Vertex, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
+                    is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, ctx)
+                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, ctx)
+                    is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, ctx)
+                }
             }
 
-            private val baseColor = theme.vertex.let { colors ->
+            private val baseColor = ctx.theme.vertex.let { colors ->
                 when (vertex) {
                     is Vertex.Thing.Attribute -> colors.attribute
                     is Vertex.Thing.Entity -> colors.entity
@@ -223,41 +275,124 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Type.Thing -> colors.thingType
                 }
             }
-            private val color = baseColor
-            private val rect = Rect(vertex.geometry.position * density, vertex.geometry.size * density)
-            private val cornerRadius get() = CornerRadius(CORNER_RADIUS * density)
+            protected val color = baseColor
+            private val density = ctx.density
+            protected val rect = vertex.geometry.let {
+                Rect(
+                    it.position * density - Offset(it.size.width * density / 2, it.size.height * density / 2),
+                    it.size * density
+                )
+            }
+            protected val cornerRadius get() = CornerRadius(CORNER_RADIUS * density)
 
-            fun render() {
-                when (vertex) {
-                    is Vertex.Type.Entity, is Vertex.Thing.Entity -> renderEntity()
-                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> renderRelation()
-                    else -> renderEntity() // TODO
+            abstract fun draw()
+
+            internal class Entity(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+                override fun draw() {
+                    ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
                 }
             }
 
-            private fun renderEntity() {
-                drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
+            internal class Relation(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+                override fun draw() {
+                    // We start with a square of width n and transform it into a rhombus
+                    val n = (rect.height / sqrt(2.0)).toFloat()
+                    val baseShape = Rect(offset = rect.center - Offset(n / 2, n / 2), size = Size(n, n))
+                    with(ctx.drawScope) {
+                        withTransform({
+                            scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
+                            rotate(degrees = 45f, pivot = rect.center)
+                        }) {
+                            drawRoundRect(color, baseShape.topLeft, baseShape.size, cornerRadius)
+                        }
+                    }
+                }
             }
 
-            private fun renderRelation() {
-                // We start with a square of width n and transform it into a rhombus
-                val n = (rect.height / sqrt(2.0)).toFloat()
-                val baseShape = Rect(offset = rect.center - Offset(n / 2, n / 2), size = Size(n, n))
-                drawScope.run {
-                    withTransform({
-                        scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
-                        rotate(degrees = 45f, pivot = rect.center)
-                    }) {
-                        drawRoundRect(color, baseShape.topLeft, baseShape.size, cornerRadius)
-                    }
+            internal class Attribute(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+                override fun draw() {
+                    ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
                 }
             }
         }
 
-        internal class EdgeRenderer(private val state: State, private val edge: Edge, private val drawScope: DrawScope) {
+        internal class EdgeRenderer(private val edge: Edge, private val ctx: RendererContext) {
 
-            private val density get() = state.density
+            private val density = ctx.density
 
+        }
+
+        internal data class RendererContext(
+            val drawScope: DrawScope, val density: Float, val theme: Color.GraphTheme
+        )
+
+        internal class ForceSimulation(private val graph: Graph): BasicSimulation() {
+            val forces = Forces(graph, this)
+
+            fun placeVertex(vertex: Vertex) {
+                placeVertex(vertex.geometry)
+            }
+
+            override fun tick() {
+                forces.rebuild()
+                super.tick()
+            }
+
+            class Forces(private val graph: Graph, private val simulation: Simulation) {
+                internal fun rebuild() {
+                    simulation.forces.clear()
+                    simulation.localForces.clear()
+
+                    // TODO: track changes to vertices + edges, rebuild forces only if there are changes
+                    val vertices = graph.vertices.map { it.geometry }
+                    val edges = graph.edges
+                    simulation.forces.add(CenterForce(vertices, 0.0, 0.0))
+                    simulation.forces.add(CollideForce(vertices, 80.0))
+                    simulation.forces.add(
+                        ManyBodyForce(vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1)))
+                    )
+//                    simulation.forces.add(LinkForce(vertexList, ))
+                    simulation.forces.add(XForce(vertices, 0.0, 0.1))
+                    simulation.forces.add(YForce(vertices, 0.0, 0.1))
+                }
+            }
+        }
+
+        internal class SimulationRunner(private val state: State) {
+
+            private var isTickRunning = false
+            private var lastFrameTime = System.currentTimeMillis()
+
+            suspend fun run() {
+                while (true) {
+                    withFrameMillis {
+                        if (isReadyToTick()) {
+                            lastFrameTime = System.currentTimeMillis()
+                            isTickRunning = true
+                            tickAsync().invokeOnCompletion { isTickRunning = false }
+                        }
+                    }
+                }
+            }
+
+            private fun isReadyToTick(): Boolean {
+                return System.currentTimeMillis() - lastFrameTime > 16
+                        && !isTickRunning
+                        && state.graph.isNotEmpty()
+                        && state.forceSimulation.alpha > state.forceSimulation.alphaMin
+            }
+
+            private fun tickAsync(): Job {
+                return state.coroutineScope.launch {
+                    try {
+                        state.forceSimulation.tick()
+                        state.frameID++
+                    } catch (e: Exception) {
+                        GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
+                        state.forceSimulation.alpha = 0.0
+                    }
+                }
+            }
         }
     }
 
@@ -276,22 +411,31 @@ internal object GraphOutput : RunOutput() {
     private fun Content(state: State, modifier: Modifier) {
         val density = LocalDensity.current.density
         state.theme = GraphTheme.colors
+        val vertices = state.graph.vertices
         key(state.frameID) {
             Box(modifier
                 .onGloballyPositioned { state.density = density }
-                .graphicsLayer(/*translationX = state.frameID.toFloat()*/)) {
-                Canvas(modifier.fillMaxSize()) { state.graph.vertices.forEach { drawVertex(state, it) } }
+                .graphicsLayer(clip = true/*translationX = state.frameID.toFloat()*/)
+            ) {
+                Canvas(modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(state, it) } }
+
+                if (vertices.size <= 1000) vertices.forEach { VertexLabel(it) }
             }
         }
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(33)
-                state.frameID++
-            }
-        }
+        LaunchedEffect(state) { state.simulationRunner.run() }
     }
 
-    private fun DrawScope.drawVertex(state: State, vertex: State.Vertex) {
-        state.vertexRenderer(vertex, this).render()
+    private fun DrawScope.drawVertexBackground(state: State, vertex: State.Vertex) {
+        state.vertexBackgroundRenderer(vertex, this).draw()
+    }
+
+    @Composable
+    private fun VertexLabel(vertex: State.Vertex) {
+        val r = vertex.geometry.rect
+        val color = GraphTheme.colors.vertexLabel
+
+        Box(Modifier.offset(r.left.dp, r.top.dp).width(r.width.dp).height(r.height.dp), Alignment.Center) {
+            Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
+        }
     }
 }

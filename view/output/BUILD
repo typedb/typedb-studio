@@ -35,6 +35,7 @@ kt_jvm_library(
         "//view/highlighter:highlighter",
 
         # External Vaticle Dependencies
+        "@vaticle_force_graph//:force_graph",
         "@vaticle_typedb_common//:common",
         "@vaticle_typedb_client_java//api:api",
         "@vaticle_typedb_client_java//common:common",
