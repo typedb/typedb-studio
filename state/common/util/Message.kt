@@ -93,14 +93,16 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(8, "Transaction was closed due to an error in the query.")
             val TRANSACTION_ROLLBACK =
                 Connection(9, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
-            val TRANSACTION_COMMIT =
-                Connection(10, "Transaction has been committed and closed -- all writes have been persisted.")
+            val TRANSACTION_COMMIT_SUCCESSFULLY =
+                Connection(10, "Transaction has been successfully committed and closed -- all writes have been persisted.")
+            val TRANSACTION_COMMIT_FAILED =
+                Connection(11, "Transaction failed to commit: %s")
             val FAILED_TO_DELETE_DATABASE =
-                Connection(11, "Failed to delete database '%s' due to: %s.")
+                Connection(12, "Failed to delete database '%s' due to: %s.")
             val FAILED_TO_CREATE_DATABASE =
-                Connection(12, "Failed to create database '%s' due to: %s.")
+                Connection(13, "Failed to create database '%s' due to: %s.")
             val FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE =
-                Connection(13, "Failed to create database '%s' due to duplicate.")
+                Connection(14, "Failed to create database '%s' due to duplicate.")
         }
     }
 
