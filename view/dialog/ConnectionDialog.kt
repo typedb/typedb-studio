@@ -185,9 +185,8 @@ object ConnectionDialog {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
                 value = state.tlsEnabled,
-                onChange = { state.tlsEnabled = it },
                 enabled = GlobalState.client.isDisconnected,
-            )
+            ) { state.tlsEnabled = it }
         }
     }
 

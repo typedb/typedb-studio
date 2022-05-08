@@ -67,9 +67,9 @@ class SchemaManager(private val session: SessionState, internal val notification
         }
     }
 
-    internal fun getTypeState(concept: ThingType): TypeState {
+    internal fun createState(concept: ThingType): TypeState {
         val remote = concept.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let { types[it] ?: getTypeState(it) }
+        val supertype = remote.supertype?.let { types[it] ?: createState(it) }
         return types.computeIfAbsent(concept) {
             TypeState(
                 concept = concept,

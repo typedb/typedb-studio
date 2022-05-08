@@ -30,7 +30,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -48,6 +50,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
@@ -58,6 +61,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -77,6 +81,8 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val PAGE_PADDING = 40.dp
         private val HORIZONTAL_SPACING = 6.dp
         private val VERTICAL_SPACING = 18.dp
+        private val ICON_COL_WIDTH = 96.dp
+        private val BUTTON_HEIGHT = 24.dp
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -212,6 +218,46 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.OWNED_ATTRIBUTES)
             Separator.Horizontal(modifier = Modifier.weight(1f))
         }
+        val smallColWidth = Either.first<Dp, Float>(ICON_COL_WIDTH)
+        val textColWeight = Either.second<Dp, Float>(1f)
+
+        @Composable
+        fun RemoveOwnedAttributButton(attType: TypeState) {
+            Form.IconButton(
+                icon = Icon.Code.MINUS,
+                modifier = Modifier.size(BUTTON_HEIGHT),
+                iconColor = Theme.colors.error,
+                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
+                onClick = { type.removeOwnedAttribute(attType) }
+            )
+        }
+
+        Table.Layout(
+            items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
+            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * type.ownedAttributes.size),
+            columns = listOf(
+                Table.Column(
+                    header = Label.ATTRIBUTES,
+                    alignment = Alignment.CenterStart,
+                ) { Form.Text(value = it.attributeType.name) },
+                Table.Column(
+                    header = Label.OVERRIDES,
+                    alignment = Alignment.CenterStart,
+                ) { it.overridden?.name?.let { o -> Form.Text(o) } },
+                Table.Column(
+                    header = Label.KEY,
+                    size = smallColWidth
+                ) { Form.Checkbox(it.isKey) },
+                Table.Column(
+                    header = Label.INHERITED,
+                    size = smallColWidth
+                ) { Form.Checkbox(it.isInherited)},
+                Table.Column(
+                    header = null,
+                    size = smallColWidth
+                ) { RemoveOwnedAttributButton(it.attributeType) },
+            )
+        )
     }
 
     @Composable

@@ -96,6 +96,7 @@ object Icon {
         LETTER_W(0x57u),
         LINK_SIMPLE(0xe1cdu),
         MAGNIFYING_GLASS(0xf002u, rotate = 90f),
+        MINUS(0xf068u),
         OVAL(0xf111u, scale = Scale(1f, 0.618f)), // base icon is a Circle
         PASTE(0xf0eau),
         PEN(0xf304u),

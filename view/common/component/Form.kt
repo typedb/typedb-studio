@@ -180,7 +180,7 @@ object Form {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = modifier.onKeyEvent {
-                onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() })
+                onKeyEventHandler(event = it, onEnter = { state.trySubmitIfValid() })
             }
         ) {
             content()
@@ -701,17 +701,23 @@ object Form {
     @Composable
     fun Checkbox(
         value: Boolean,
-        onChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier,
-        enabled: Boolean = true
+        size: Dp = FIELD_HEIGHT,
+        enabled: Boolean = true,
+        onChange: ((Boolean) -> Unit)? = null
     ) {
+        fun Modifier.mayRegisterOnKeyEvent(): Modifier {
+            onChange?.let { fn -> this.onKeyEvent { onKeyEventHandler(event = it, onSpace = { fn(!value) }) } }
+            return this
+        }
+
         Checkbox(
             checked = value,
             onCheckedChange = onChange,
-            modifier = modifier.size(FIELD_HEIGHT)
+            modifier = modifier.size(size)
                 .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_CORNER_SHAPE)
                 .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_CORNER_SHAPE)
-                .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
+                .mayRegisterOnKeyEvent(),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = fadeable(Theme.colors.icon, !enabled),
@@ -812,7 +818,7 @@ object Form {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(
+    private fun onKeyEventHandler(
         event: KeyEvent,
         enabled: Boolean = true,
         onEnter: (() -> Unit)? = null,
