@@ -220,6 +220,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         @Composable
+        fun MayTick(boolean: Boolean) {
+            if (boolean) Icon.Render(icon = Icon.Code.CHECK, color = Theme.colors.secondary)
+        }
+
+        @Composable
         fun MayRemoveOwnedAttributButton(attTypeProp: TypeState.AttributeTypeProperties) {
             if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
@@ -245,11 +250,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Table.Column(
                     header = Label.KEY,
                     size = Either.first(ICON_COL_WIDTH)
-                ) { Form.Checkbox(it.isKey) },
+                ) { MayTick(it.isKey) },
                 Table.Column(
                     header = Label.INHERITED,
                     size = Either.first(ICON_COL_WIDTH)
-                ) { Form.Checkbox(it.isInherited)},
+                ) { MayTick(it.isInherited) },
                 Table.Column(
                     header = null,
                     size = Either.first(ICON_COL_WIDTH)
