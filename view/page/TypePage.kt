@@ -218,17 +218,15 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.OWNED_ATTRIBUTES)
             Separator.Horizontal(modifier = Modifier.weight(1f))
         }
-        val smallColWidth = Either.first<Dp, Float>(ICON_COL_WIDTH)
-        val textColWeight = Either.second<Dp, Float>(1f)
 
         @Composable
-        fun RemoveOwnedAttributButton(attType: TypeState) {
-            Form.IconButton(
+        fun MayRemoveOwnedAttributButton(attTypeProp: TypeState.AttributeTypeProperties) {
+            if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
                 modifier = Modifier.size(BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
                 tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
-                onClick = { type.removeOwnedAttribute(attType) }
+                onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
             )
         }
 
@@ -246,16 +244,16 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 ) { it.overridden?.name?.let { o -> Form.Text(o) } },
                 Table.Column(
                     header = Label.KEY,
-                    size = smallColWidth
+                    size = Either.first(ICON_COL_WIDTH)
                 ) { Form.Checkbox(it.isKey) },
                 Table.Column(
                     header = Label.INHERITED,
-                    size = smallColWidth
+                    size = Either.first(ICON_COL_WIDTH)
                 ) { Form.Checkbox(it.isInherited)},
                 Table.Column(
                     header = null,
-                    size = smallColWidth
-                ) { RemoveOwnedAttributButton(it.attributeType) },
+                    size = Either.first(ICON_COL_WIDTH)
+                ) { MayRemoveOwnedAttributButton(it) },
             )
         )
     }
