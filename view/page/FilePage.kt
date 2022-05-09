@@ -33,7 +33,6 @@ class FilePage private constructor(
     private val editor: TextEditor.State
 ) : Page(file) {
 
-    override val name: String get() = file.name
     override val icon: Form.IconArg = when {
         file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
         else -> Form.IconArg(Icon.Code.FILE_LINES)

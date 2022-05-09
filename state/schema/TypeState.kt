@@ -41,7 +41,7 @@ class TypeState constructor(
 ) : Navigable<TypeState>, Resource {
 
     data class AttributeTypeProperties(
-        val attributeType: TypeState, val overridden: TypeState?, val isKey: Boolean, val isInherited: Boolean
+        val attributeType: TypeState, val overriddenType: TypeState?, val isKey: Boolean, val isInherited: Boolean
     )
 
     companion object {
@@ -50,11 +50,11 @@ class TypeState constructor(
 
     override val name: String by mutableStateOf(type.label.name())
     override val parent: TypeState? get() = supertype
-    override val info: String? get() = typeInfo()
+    override val info: String? get() = computeInfo()
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
     override var entries: List<TypeState> = emptyList()
-    override val windowTitle: String get() = typeWindowTitle()
+    override val windowTitle: String get() = computeWindowTitle()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
     override val isEmpty: Boolean = false
@@ -74,7 +74,12 @@ class TypeState constructor(
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
-    private fun typeWindowTitle(): String {
+    private fun computeInfo(): String? = when {
+        type.isAttributeType && !type.isRoot -> valueType
+        else -> null
+    }
+
+    private fun computeWindowTitle(): String {
         val props = mutableListOf(
             when {
                 type.isEntityType -> TypeQLToken.Type.ENTITY
@@ -84,18 +89,13 @@ class TypeState constructor(
                 else -> throw IllegalStateException("Unrecognised concept base type")
             }.name.lowercase()
         )
-        typeInfo()?.let { props.add(it) }
+        computeInfo()?.let { props.add(it) }
         return "$name (" + props.joinToString(", ") + ") @ " + schemaMgr.database
     }
 
     private fun computeValueType(): String? {
         return if (type.isAttributeType && !type.isRoot) type.asAttributeType().valueType.name.lowercase()
         else null
-    }
-
-    private fun typeInfo(): String? = when {
-        type.isAttributeType && !type.isRoot -> valueType
-        else -> null
     }
 
     override fun launchWatcher() {}
@@ -134,7 +134,7 @@ class TypeState constructor(
         fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
             map[attributeType] = AttributeTypeProperties(
                 attributeType = schemaMgr.createState(attributeType),
-                overridden = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createState(it) },
+                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createState(it) },
                 isKey = isKey,
                 isInherited = isInherited
             )

@@ -48,6 +48,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
@@ -63,11 +67,11 @@ import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
+import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 class TypePage constructor(private var type: TypeState) : Page(type) {
 
-    override val name: String = type.name
     override val icon: Form.IconArg = typeIcon(type)
 
     private val horScroller = ScrollState(0)
@@ -83,6 +87,18 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val VERTICAL_SPACING = 18.dp
         private val ICON_COL_WIDTH = 80.dp
         private val BUTTON_HEIGHT = 24.dp
+
+        @Composable
+        private fun fullName(type: TypeState): AnnotatedString {
+            val color = Theme.colors.onPrimary
+            return buildAnnotatedString {
+                withStyle(SpanStyle(color)) { append(type.name) }
+                if (type.isAttributeType && !type.isRoot) {
+                    append(" ")
+                    withStyle(SpanStyle(color.copy(Color.FADED_OPACITY))) { append("(${type.valueType})") }
+                }
+            }
+        }
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -162,7 +178,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun TitleSection() {
         SectionLine {
-            Form.TextBox(value = type.name, leadingIcon = typeIcon(type))
+            Form.TextBox(text = fullName(type), leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
             Form.IconButton(
                 icon = Icon.Code.PEN,
@@ -186,7 +202,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.SUPERTYPE)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.name ?: "(${Label.NONE.lowercase()})",
+                text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = type.supertype != null,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
@@ -240,11 +256,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Table.Column(
                     header = Label.ATTRIBUTES,
                     contentAlignment = Alignment.CenterStart,
-                ) { Form.Text(value = it.attributeType.name) },
+                ) { Form.Text(value = fullName(it.attributeType)) },
                 Table.Column(
                     header = Label.OVERRIDES,
                     contentAlignment = Alignment.CenterStart,
-                ) { it.overridden?.name?.let { o -> Form.Text(o) } },
+                ) { it.overriddenType?.let { type -> Form.Text(fullName(type)) } },
                 Table.Column(
                     header = Label.KEY,
                     size = Either.first(ICON_COL_WIDTH)
