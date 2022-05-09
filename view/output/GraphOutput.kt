@@ -94,19 +94,10 @@ internal object GraphOutput : RunOutput() {
     internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
 
         override val name: String = "${Label.GRAPH} ($number)"
+        val viewport = Viewport(this)
         val graph: Graph = emptyGraph()
         val forceSimulation = ForceSimulation(graph)
         val simulationRunner = SimulationRunner(this)
-        var density: Float by mutableStateOf(1f)
-        var frameID by mutableStateOf(0L)
-        var viewportSize by mutableStateOf(Size.Zero)
-        /** The world coordinates of the top-left corner of the viewport. */
-        var viewportPosition by mutableStateOf(Offset.Zero)
-        private var _scale by mutableStateOf(1f)
-        var scale: Float
-            get() = _scale
-            set(value) { _scale = value.coerceIn(0.001f..10f) }
-        var isViewportPositionInitialised = AtomicBoolean(false)
         var pointerPosition: Offset? by mutableStateOf(null)
         var hoveredVertex: Vertex? by mutableStateOf(null)
         val hoveredVertexPoller = HoveredVertexPoller(this)
@@ -142,33 +133,49 @@ internal object GraphOutput : RunOutput() {
             return EdgeRenderer(edge, this, rendererContext(drawScope))
         }
 
-        fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
-            val worldPoint = physicalPointToWorldPoint(physicalPoint)
-            val nearestVertices = nearestVertices(worldPoint)
-            return nearestVertices.find { it.geometry.intersects(worldPoint) }
-        }
+        class Viewport(private val state: State) {
+            var density: Float by mutableStateOf(1f)
+            var size by mutableStateOf(Size.Zero)
+            /** The world coordinates at the top-left corner of the viewport. */
+            var position by mutableStateOf(Offset.Zero)
+            /** The world coordinates at the center of the viewport. */
+            val center get() = position + Offset(size.width / 2, size.height / 2) / scale
+            private var _scale by mutableStateOf(1f)
+            var scale: Float
+                get() = _scale
+                set(value) { _scale = value.coerceIn(0.001f..10f) }
+            var isLayoutInitialised = AtomicBoolean(false)
 
-        private fun physicalPointToWorldPoint(point: Offset): Offset {
-            val viewportTransformOrigin = (Offset(viewportSize.width, viewportSize.height) / 2f) * density
-            val scaledPoint = point / density
+            fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
+                val worldPoint = physicalPointToWorldPoint(physicalPoint)
+                val nearestVertices = nearestVertices(worldPoint)
+                return nearestVertices.find { it.geometry.intersects(worldPoint) }
+            }
 
-            // Let 'viewport' be the position of a vertex in the viewport, 'vpOrigin' be the transform origin of the
-            // viewport, 'world' be the position of a vertex in the world (ie vertex.position), 'viewportPosition' be
-            // the world offset rendered in the top left corner of the viewport. Then:
-            // viewport = vpOrigin + scale * (world - viewportPosition - vpOrigin)
-            // Rearranging this equation gives the result below:
-            return (((scaledPoint - viewportTransformOrigin) / scale) + viewportTransformOrigin) + viewportPosition
-        }
+            private fun physicalPointToWorldPoint(physicalPoint: Offset): Offset {
+                val transformOrigin = (Offset(size.width, size.height) / 2f) * density
+                val scaledPhysicalPoint = physicalPoint / density
 
-        private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
-            // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
-            val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
-            graph.vertices.associateWithTo(vertexDistances) { (worldPoint - it.geometry.position).getDistanceSquared() }
-            return sequence {
-                while (vertexDistances.isNotEmpty()) {
-                    yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
+                // Let 'physical' be the physical position of a point in the viewport, 'origin' be the transform origin
+                // of the viewport, 'world' be the position of 'physical' in the world, 'viewportPosition' be the world
+                // offset at the top left corner of the viewport. Then:
+                // physical = origin + scale * (world - viewportPosition - origin)
+                // Rearranging this equation gives the result below:
+                return (((scaledPhysicalPoint - transformOrigin) / scale) + transformOrigin) + position
+            }
+
+            private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
+                // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
+                val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
+                state.graph.vertices.associateWithTo(vertexDistances) {
+                    (worldPoint - it.geometry.position).getDistanceSquared()
                 }
-            }.take(10)
+                return sequence {
+                    while (vertexDistances.isNotEmpty()) {
+                        yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
+                    }
+                }.take(10)
+            }
         }
 
         class Graph private constructor() {
@@ -378,10 +385,10 @@ internal object GraphOutput : RunOutput() {
                 else -> null
             }
             protected val color = if (alpha != null) baseColor.copy(alpha) else baseColor
-            private val density = state.density
+            private val density = state.viewport.density
             protected val rect = vertex.geometry.let {
                 Rect(
-                    (it.position - state.viewportPosition) * density
+                    (it.position - state.viewport.position) * density
                             - Offset(it.size.width * density / 2, it.size.height * density / 2),
                     it.size * density
                 )
@@ -427,12 +434,13 @@ internal object GraphOutput : RunOutput() {
 
         class EdgeRenderer(private val edge: Edge, private val state: State, private val ctx: RendererContext) {
 
-            private val density = state.density
+            private val density = state.viewport.density
         }
 
         data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme)
 
         class ForceSimulation(private val graph: Graph): BasicSimulation() {
+            var frameID by mutableStateOf(0L)
             val physics = Physics(this)
             val isStable get() = alpha < alphaMin
 
@@ -444,6 +452,7 @@ internal object GraphOutput : RunOutput() {
                 if (isStable) return
                 physics.rebuild()
                 super.tick()
+                frameID++
             }
 
             class Physics(private val simulation: ForceSimulation) {
@@ -499,7 +508,6 @@ internal object GraphOutput : RunOutput() {
                 return state.coroutineScope.launch {
                     try {
                         state.forceSimulation.tick()
-                        state.frameID++
                     } catch (e: Exception) {
                         GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
                         state.forceSimulation.alpha = 0.0
@@ -525,7 +533,7 @@ internal object GraphOutput : RunOutput() {
             private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
 
             private fun scan(pointerPosition: Offset) {
-                state.hoveredVertex = state.findVertexAtPhysicalPoint(pointerPosition)
+                state.hoveredVertex = state.viewport.findVertexAtPhysicalPoint(pointerPosition)
                 lastScanDoneTime = System.currentTimeMillis()
             }
         }
@@ -549,41 +557,56 @@ internal object GraphOutput : RunOutput() {
         val vertices = state.graph.vertices
 
         Box(modifier.graphicsLayer(clip = true).onGloballyPositioned {
-            state.density = density
-            if (state.isViewportPositionInitialised.compareAndSet(false, true)) {
-                state.viewportSize = it.size.toSize()
-                state.viewportPosition = -state.viewportSize.center / density
+            state.viewport.density = density
+            if (state.viewport.isLayoutInitialised.compareAndSet(false, true)) {
+                state.viewport.size = it.size.toSize()
+                state.viewport.position = -state.viewport.size.center / density
             }
         }) {
-            key(state.frameID) {
-                Box(Modifier.graphicsLayer(scaleX = state.scale, scaleY = state.scale)) {
+            key(state.forceSimulation.frameID) {
+                Box(Modifier.graphicsLayer(scaleX = state.viewport.scale, scaleY = state.viewport.scale)) {
                     Canvas(modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it, state) } }
 
                     if (vertices.size <= 1000) vertices.forEach { VertexLabel(it, state) }
                 }
             }
-            PointerInputHandlers(state, Modifier.fillMaxSize().zIndex(100f))
+            PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
         }
 
         LaunchedEffect(Unit) { state.simulationRunner.run() }
         LaunchedEffect(Unit) { state.hoveredVertexPoller.poll() }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun PointerInputHandlers(state: State, modifier: Modifier) {
-        Box(modifier
-            .pointerInput(state.density, state.scale) {
-                detectDragGestures { _, dragAmount ->
-                    state.viewportPosition -= dragAmount / (state.scale * state.density)
-                }
+    private object PointerInput {
+        @Composable
+        fun Handler(state: State, modifier: Modifier) {
+            DragAndScroll(state, modifier) {
+                // Nested elements are required for drag and tap events to not conflict with each other
+                TapAndHover(state, modifier)
             }
-            .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
-                state.scale *= 1 + (delta * 0.0006f / state.density)
-                delta
-            })
-        ) {
-            // Nested Boxes are required for drag and tap events to not conflict with each other
+        }
+
+        @Composable
+        fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
+            val viewport = state.viewport
+            Box(modifier
+                .pointerInput(viewport.density, viewport.scale) {
+                    detectDragGestures { _, dragAmount ->
+                        viewport.position -= dragAmount / (viewport.scale * viewport.density)
+                    }
+                }
+                .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                    viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
+                    delta
+                })
+            ) {
+                content()
+            }
+        }
+
+        @OptIn(ExperimentalComposeUiApi::class)
+        @Composable
+        fun TapAndHover(state: State, modifier: Modifier) {
             Box(modifier
                 .pointerMoveFilter(
                     onMove = { state.pointerPosition = it; false },
@@ -600,8 +623,8 @@ internal object GraphOutput : RunOutput() {
     @Composable
     private fun VertexLabel(vertex: State.Vertex, state: State) {
         val r = vertex.geometry.rect
-        val x = (r.left - state.viewportPosition.x).dp
-        val y = (r.top - state.viewportPosition.y).dp
+        val x = (r.left - state.viewport.position.x).dp
+        val y = (r.top - state.viewport.position.y).dp
         val color = GraphTheme.colors.vertexLabel
 
         Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
