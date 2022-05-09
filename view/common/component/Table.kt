@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,14 +30,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Table {
@@ -75,29 +85,39 @@ object Table {
         cellPaddingVertical: Dp = CELL_PADDING_VERTICAL,
         columns: List<Column<T>>
     ) {
-        LazyColumn(modifier.border(1.dp, Theme.colors.border)) {
-            item {
-                Row(Modifier.fillMaxWidth().height(rowHeight)) {
-                    columns.forEach { col ->
-                        Box(
-                            contentAlignment = col.headerAlignment,
-                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
-                                .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
-                        ) { col.header?.let { Form.Text(it) } }
-                    }
+        val density = LocalDensity.current.density
+        val scroller = rememberLazyListState()
+        var height by remember { mutableStateOf(0.dp) }
+        Column(modifier.border(1.dp, Theme.colors.border).onSizeChanged { height = toDP(it.height, density) }) {
+            Row(Modifier.fillMaxWidth().height(rowHeight)) {
+                columns.forEach { col ->
+                    Box(
+                        contentAlignment = col.headerAlignment,
+                        modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                            .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
+                    ) { col.header?.let { Form.Text(it) } }
                 }
             }
-            items(items.count()) { rowID ->
-                Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
-                    columns.forEach { col ->
-                        Box(
-                            contentAlignment = col.contentAlignment,
-                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
-                                .fillMaxHeight().background(bgColor(rowID))
-                                .padding(cellPaddingHorizontal, cellPaddingVertical)
-                        ) { col.content(items[rowID]) }
+            Box(Modifier.fillMaxWidth().height(height - rowHeight)) {
+                LazyColumn(Modifier, state = scroller) {
+                    items(items.count()) { rowID ->
+                        Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
+                            columns.forEach { col ->
+                                Box(
+                                    contentAlignment = col.contentAlignment,
+                                    modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                                        .fillMaxHeight().background(bgColor(rowID))
+                                        .padding(cellPaddingHorizontal, cellPaddingVertical)
+                                ) { col.content(items[rowID]) }
+                            }
+                        }
                     }
                 }
+                Scrollbar.Vertical(
+                    adapter = rememberScrollbarAdapter(scroller),
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    containerSize = height - rowHeight
+                )
             }
         }
     }
