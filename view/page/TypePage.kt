@@ -79,9 +79,9 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val MIN_WIDTH = 600.dp
         private val MAX_WIDTH = 900.dp
         private val PAGE_PADDING = 40.dp
-        private val HORIZONTAL_SPACING = 6.dp
+        private val HORIZONTAL_SPACING = 8.dp
         private val VERTICAL_SPACING = 18.dp
-        private val ICON_COL_WIDTH = 96.dp
+        private val ICON_COL_WIDTH = 80.dp
         private val BUTTON_HEIGHT = 24.dp
     }
 
@@ -214,10 +214,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributesSection() {
-        SectionLine {
-            Form.Text(value = Label.OWNED_ATTRIBUTES)
-            Separator.Horizontal(modifier = Modifier.weight(1f))
-        }
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
 
         @Composable
         fun MayTick(boolean: Boolean) {
