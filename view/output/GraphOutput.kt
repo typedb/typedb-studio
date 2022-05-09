@@ -19,11 +19,14 @@
 package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,14 +40,17 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vaticle.force.graph.api.Simulation
+import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.zIndex
 import com.vaticle.force.graph.force.CenterForce
 import com.vaticle.force.graph.force.CollideForce
 import com.vaticle.force.graph.force.ManyBodyForce
@@ -73,6 +79,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.sqrt
 
@@ -87,7 +94,14 @@ internal object GraphOutput : RunOutput() {
         val forceSimulation = ForceSimulation(graph)
         val simulationRunner = SimulationRunner(this)
         var density: Float by mutableStateOf(1f)
-        var frameID by mutableStateOf(0)
+        var frameID by mutableStateOf(0L)
+        /** The world coordinates of the top-left corner of the viewport. */
+        var viewportPosition by mutableStateOf(Offset.Zero)
+        private var _scale by mutableStateOf(1f)
+        var scale: Float
+            get() = _scale
+            set(value) { _scale = value.coerceIn(0.001f..10f) }
+        var isViewportPositionInitialised = AtomicBoolean(false)
         var theme: Color.GraphTheme? = null
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
@@ -110,7 +124,7 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, density, theme!!)
+        private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, viewportPosition, density, theme!!)
 
         fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
             return VertexBackgroundRenderer.of(vertex, rendererContext(drawScope))
@@ -279,7 +293,8 @@ internal object GraphOutput : RunOutput() {
             private val density = ctx.density
             protected val rect = vertex.geometry.let {
                 Rect(
-                    it.position * density - Offset(it.size.width * density / 2, it.size.height * density / 2),
+                    (it.position - ctx.viewportPosition) * density
+                            - Offset(it.size.width * density / 2, it.size.height * density / 2),
                     it.size * density
                 )
             }
@@ -323,37 +338,44 @@ internal object GraphOutput : RunOutput() {
         }
 
         internal data class RendererContext(
-            val drawScope: DrawScope, val density: Float, val theme: Color.GraphTheme
+            val drawScope: DrawScope, val viewportPosition: Offset, val density: Float, val theme: Color.GraphTheme
         )
 
         internal class ForceSimulation(private val graph: Graph): BasicSimulation() {
-            val forces = Forces(graph, this)
+            val physics = Physics(this)
+            val isStable get() = alpha < alphaMin
 
             fun placeVertex(vertex: Vertex) {
                 placeVertex(vertex.geometry)
             }
 
             override fun tick() {
-                forces.rebuild()
+                if (isStable) return
+                physics.rebuild()
                 super.tick()
             }
 
-            class Forces(private val graph: Graph, private val simulation: Simulation) {
-                internal fun rebuild() {
-                    simulation.forces.clear()
-                    simulation.localForces.clear()
+            class Physics(private val simulation: ForceSimulation) {
 
-                    // TODO: track changes to vertices + edges, rebuild forces only if there are changes
-                    val vertices = graph.vertices.map { it.geometry }
-                    val edges = graph.edges
-                    simulation.forces.add(CenterForce(vertices, 0.0, 0.0))
-                    simulation.forces.add(CollideForce(vertices, 80.0))
-                    simulation.forces.add(
-                        ManyBodyForce(vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1)))
-                    )
-//                    simulation.forces.add(LinkForce(vertexList, ))
-                    simulation.forces.add(XForce(vertices, 0.0, 0.1))
-                    simulation.forces.add(YForce(vertices, 0.0, 0.1))
+                internal fun rebuild() {
+                    simulation.apply {
+                        forces.clear()
+                        localForces.clear()
+
+                        // TODO: track changes to vertices + edges, rebuild forces only if there are changes
+                        val vertices = graph.vertices.map { it.geometry }
+                        val edges = graph.edges
+                        forces.add(CenterForce(vertices, 0.0, 0.0))
+                        forces.add(CollideForce(vertices, 80.0))
+                        forces.add(
+                            ManyBodyForce(
+                                vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
+                            )
+                        )
+//                        forces.add(LinkForce(vertexList, ))
+                        forces.add(XForce(vertices, 0.0, 0.1))
+                        forces.add(YForce(vertices, 0.0, 0.1))
+                    }
                 }
             }
         }
@@ -379,7 +401,7 @@ internal object GraphOutput : RunOutput() {
                 return System.currentTimeMillis() - lastFrameTime > 16
                         && !isTickRunning
                         && state.graph.isNotEmpty()
-                        && state.forceSimulation.alpha > state.forceSimulation.alphaMin
+                        && !state.forceSimulation.isStable
             }
 
             private fun tickAsync(): Job {
@@ -412,29 +434,53 @@ internal object GraphOutput : RunOutput() {
         val density = LocalDensity.current.density
         state.theme = GraphTheme.colors
         val vertices = state.graph.vertices
-        key(state.frameID) {
-            Box(modifier
-                .onGloballyPositioned { state.density = density }
-                .graphicsLayer(clip = true/*translationX = state.frameID.toFloat()*/)
-            ) {
-                Canvas(modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(state, it) } }
 
-                if (vertices.size <= 1000) vertices.forEach { VertexLabel(it) }
+        Box(modifier.graphicsLayer(clip = true).onGloballyPositioned {
+            state.density = density
+            if (state.isViewportPositionInitialised.compareAndSet(false, true)) {
+                state.viewportPosition = -it.size.toSize().center / density
             }
+        }) {
+            key(state.frameID) {
+                Box(Modifier.graphicsLayer(scaleX = state.scale, scaleY = state.scale)) {
+                    Canvas(modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it, state) } }
+
+                    if (vertices.size <= 1000) vertices.forEach { VertexLabel(it, state) }
+                }
+            }
+            PointerInputHandlers(state, Modifier.zIndex(100f))
         }
+
         LaunchedEffect(state) { state.simulationRunner.run() }
     }
 
-    private fun DrawScope.drawVertexBackground(state: State, vertex: State.Vertex) {
+    @Composable
+    private fun PointerInputHandlers(state: State, modifier: Modifier) {
+        Box(modifier.fillMaxSize()
+            .pointerInput(state.density, state.scale) {
+                detectDragGestures { _, dragAmount ->
+                    state.viewportPosition -= dragAmount / (state.scale * state.density)
+                }
+            }
+            .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                state.scale *= 1 + (delta * 0.0006f / state.density)
+                delta
+            })
+        )
+    }
+
+    private fun DrawScope.drawVertexBackground(vertex: State.Vertex, state: State) {
         state.vertexBackgroundRenderer(vertex, this).draw()
     }
 
     @Composable
-    private fun VertexLabel(vertex: State.Vertex) {
+    private fun VertexLabel(vertex: State.Vertex, state: State) {
         val r = vertex.geometry.rect
+        val x = (r.left - state.viewportPosition.x).dp
+        val y = (r.top - state.viewportPosition.y).dp
         val color = GraphTheme.colors.vertexLabel
 
-        Box(Modifier.offset(r.left.dp, r.top.dp).width(r.width.dp).height(r.height.dp), Alignment.Center) {
+        Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
             Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
         }
     }
