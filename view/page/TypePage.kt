@@ -228,6 +228,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 modifier = Modifier.size(BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
                 tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
+                enabled = isEditable,
                 onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
             )
         }
