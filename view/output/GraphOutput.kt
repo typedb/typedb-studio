@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
@@ -77,10 +79,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 internal object GraphOutput : RunOutput() {
@@ -95,6 +99,7 @@ internal object GraphOutput : RunOutput() {
         val simulationRunner = SimulationRunner(this)
         var density: Float by mutableStateOf(1f)
         var frameID by mutableStateOf(0L)
+        var viewportSize by mutableStateOf(Size.Zero)
         /** The world coordinates of the top-left corner of the viewport. */
         var viewportPosition by mutableStateOf(Offset.Zero)
         private var _scale by mutableStateOf(1f)
@@ -102,10 +107,13 @@ internal object GraphOutput : RunOutput() {
             get() = _scale
             set(value) { _scale = value.coerceIn(0.001f..10f) }
         var isViewportPositionInitialised = AtomicBoolean(false)
+        var pointerPosition: Offset? by mutableStateOf(null)
+        var hoveredVertex: Vertex? by mutableStateOf(null)
+        val hoveredVertexPoller = HoveredVertexPoller(this)
         var theme: Color.GraphTheme? = null
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-        internal fun output(conceptMap: ConceptMap) {
+        fun output(conceptMap: ConceptMap) {
             conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
                 when {
                     concept.isThing -> concept.asThing().let { thing ->
@@ -124,17 +132,46 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, viewportPosition, density, theme!!)
+        private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
 
         fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
-            return VertexBackgroundRenderer.of(vertex, rendererContext(drawScope))
+            return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
         }
 
         fun edgeRenderer(edge: Edge, drawScope: DrawScope): EdgeRenderer {
-            return EdgeRenderer(edge, rendererContext(drawScope))
+            return EdgeRenderer(edge, this, rendererContext(drawScope))
         }
 
-        internal class Graph private constructor() {
+        fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
+            val worldPoint = physicalPointToWorldPoint(physicalPoint)
+            val nearestVertices = nearestVertices(worldPoint)
+            return nearestVertices.find { it.geometry.intersects(worldPoint) }
+        }
+
+        private fun physicalPointToWorldPoint(point: Offset): Offset {
+            val viewportTransformOrigin = (Offset(viewportSize.width, viewportSize.height) / 2f) * density
+            val scaledPoint = point / density
+
+            // Let 'viewport' be the position of a vertex in the viewport, 'vpOrigin' be the transform origin of the
+            // viewport, 'world' be the position of a vertex in the world (ie vertex.position), 'viewportPosition' be
+            // the world offset rendered in the top left corner of the viewport. Then:
+            // viewport = vpOrigin + scale * (world - viewportPosition - vpOrigin)
+            // Rearranging this equation gives the result below:
+            return (((scaledPoint - viewportTransformOrigin) / scale) + viewportTransformOrigin) + viewportPosition
+        }
+
+        private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
+            // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
+            val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
+            graph.vertices.associateWithTo(vertexDistances) { (worldPoint - it.geometry.position).getDistanceSquared() }
+            return sequence {
+                while (vertexDistances.isNotEmpty()) {
+                    yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
+                }
+            }.take(10)
+        }
+
+        class Graph private constructor() {
 
             val thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
             val typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
@@ -150,12 +187,12 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        internal sealed class Vertex {
+        sealed class Vertex {
 
             abstract val label: Label
-            open val geometry = Geometry.concept()
+            abstract val geometry: Geometry
 
-            internal sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing) : Vertex() {
+            sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing) : Vertex() {
 
                 override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
 
@@ -170,16 +207,18 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
 
-                internal class Entity(val entity: com.vaticle.typedb.client.api.concept.thing.Entity) : Thing(entity)
+                class Entity(val entity: com.vaticle.typedb.client.api.concept.thing.Entity) : Thing(entity) {
+                    override val geometry = Geometry.entity()
+                }
 
-                internal class Relation(val relation: com.vaticle.typedb.client.api.concept.thing.Relation)
+                class Relation(val relation: com.vaticle.typedb.client.api.concept.thing.Relation)
                     : Thing(relation) {
 
                     override val label = Label(relation.type.label.name(), Label.LengthLimits.RELATION)
                     override val geometry = Geometry.relation()
                 }
 
-                internal class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>)
+                class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>)
                     : Thing(attribute) {
 
                     private val valueString = when {
@@ -192,10 +231,11 @@ internal object GraphOutput : RunOutput() {
                     override val label = Label(
                         "${attribute.type.label.name()}: $valueString", Label.LengthLimits.CONCEPT
                     )
+                    override val geometry = Geometry.attribute()
                 }
             }
 
-            internal sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type) : Vertex() {
+            sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type) : Vertex() {
 
                 override val label = Label(type.label.name(), Label.LengthLimits.CONCEPT)
 
@@ -211,19 +251,25 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
 
-                internal class Thing(val thingType: ThingType) : Type(thingType)
+                class Thing(val thingType: ThingType) : Type(thingType) {
+                    override val geometry = Geometry.entity()
+                }
 
-                internal class Entity(val entityType: EntityType) : Type(entityType)
+                class Entity(val entityType: EntityType) : Type(entityType) {
+                    override val geometry = Geometry.entity()
+                }
 
-                internal class Relation(val relationType: RelationType) : Type(relationType) {
+                class Relation(val relationType: RelationType) : Type(relationType) {
                     override val label = Label(relationType.label.name(), Label.LengthLimits.RELATION)
                     override val geometry = Geometry.relation()
                 }
 
-                internal class Attribute(val attributeType: AttributeType) : Type(attributeType)
+                class Attribute(val attributeType: AttributeType) : Type(attributeType) {
+                    override val geometry = Geometry.attribute()
+                }
             }
 
-            internal class Label(val fullText: String, truncatedLength: Int) {
+            class Label(val fullText: String, truncatedLength: Int) {
 
                 val text = fullText.substring(0, truncatedLength.coerceAtMost(fullText.length))
 
@@ -233,7 +279,7 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            class Geometry(val size: Size) : BasicVertex(0.0, 0.0) {
+            sealed class Geometry(val size: Size) : BasicVertex(0.0, 0.0) {
 
                 var position: Offset
                     get() { return Offset(x.toFloat(), y.toFloat()) }
@@ -251,30 +297,67 @@ internal object GraphOutput : RunOutput() {
                         isYFixed = value
                     }
 
+                /** Returns `true` if the given `Offset` intersects the given vertex, else, `false` */
+                abstract fun intersects(point: Offset): Boolean
+
                 companion object {
-                    fun concept() = Geometry(Size(100f, 35f))
-                    fun relation() = Geometry(Size(110f, 55f))
+                    private const val ENTITY_WIDTH = 100f
+                    private const val ENTITY_HEIGHT = 35f
+                    private const val RELATION_WIDTH = 110f
+                    private const val RELATION_HEIGHT = 55f
+                    private const val ATTRIBUTE_WIDTH = 100f
+                    private const val ATTRIBUTE_HEIGHT = 35f
+
+                    fun entity() = Entity(Size(ENTITY_WIDTH, ENTITY_HEIGHT))
+                    fun relation() = Relation(Size(RELATION_WIDTH, RELATION_HEIGHT))
+                    fun attribute() = Attribute(Size(ATTRIBUTE_WIDTH, ATTRIBUTE_HEIGHT))
+                }
+
+                class Entity(size: Size) : Geometry(size) {
+                    override fun intersects(point: Offset) = rect.contains(point)
+                }
+
+                class Relation(size: Size) : Geometry(size) {
+
+                    override fun intersects(point: Offset): Boolean {
+                        val r = rect
+                        return Polygon(
+                            intArrayOf(r.left.toInt(), r.center.x.toInt(), r.right.toInt(), r.center.x.toInt()),
+                            intArrayOf(r.center.y.toInt(), r.top.toInt(), r.center.y.toInt(), r.bottom.toInt()),
+                            4
+                        ).contains(point.x.toDouble(), point.y.toDouble())
+                    }
+                }
+
+                class Attribute(size: Size) : Geometry(size) {
+
+                    override fun intersects(point: Offset): Boolean {
+                        val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
+                        val yi = (point.y - position.y).pow(2) / (size.height).pow(2)
+                        return xi + yi < 1f
+                    }
                 }
             }
         }
 
-        internal class EdgeCandidate {
+        class EdgeCandidate {
             // TODO
         }
 
-        internal class Edge(val source: Vertex, val target: Vertex) {
+        class Edge(val source: Vertex, val target: Vertex) {
             // TODO
         }
 
-        internal sealed class VertexBackgroundRenderer(private val vertex: Vertex, protected val ctx: RendererContext) {
-
+        sealed class VertexBackgroundRenderer(
+            private val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
+        ) {
             companion object {
                 private const val CORNER_RADIUS = 5f
 
-                fun of(vertex: Vertex, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
-                    is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, ctx)
-                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, ctx)
-                    is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, ctx)
+                fun of(vertex: Vertex, state: State, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
+                    is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, state, ctx)
+                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, state, ctx)
+                    is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, state, ctx)
                 }
             }
 
@@ -289,11 +372,16 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Type.Thing -> colors.thingType
                 }
             }
-            protected val color = baseColor
-            private val density = ctx.density
+            private val isFocused = vertex == state.hoveredVertex
+            private val alpha = when {
+                isFocused -> .675f
+                else -> null
+            }
+            protected val color = if (alpha != null) baseColor.copy(alpha) else baseColor
+            private val density = state.density
             protected val rect = vertex.geometry.let {
                 Rect(
-                    (it.position - ctx.viewportPosition) * density
+                    (it.position - state.viewportPosition) * density
                             - Offset(it.size.width * density / 2, it.size.height * density / 2),
                     it.size * density
                 )
@@ -302,13 +390,17 @@ internal object GraphOutput : RunOutput() {
 
             abstract fun draw()
 
-            internal class Entity(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+            class Entity(vertex: Vertex, state: State, ctx: RendererContext)
+                : VertexBackgroundRenderer(vertex, state, ctx) {
+
                 override fun draw() {
                     ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
                 }
             }
 
-            internal class Relation(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+            class Relation(vertex: Vertex, state: State, ctx: RendererContext)
+                : VertexBackgroundRenderer(vertex, state, ctx) {
+
                 override fun draw() {
                     // We start with a square of width n and transform it into a rhombus
                     val n = (rect.height / sqrt(2.0)).toFloat()
@@ -324,24 +416,23 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            internal class Attribute(vertex: Vertex, ctx: RendererContext) : VertexBackgroundRenderer(vertex, ctx) {
+            class Attribute(vertex: Vertex, state: State, ctx: RendererContext)
+                : VertexBackgroundRenderer(vertex, state, ctx) {
+
                 override fun draw() {
                     ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
                 }
             }
         }
 
-        internal class EdgeRenderer(private val edge: Edge, private val ctx: RendererContext) {
+        class EdgeRenderer(private val edge: Edge, private val state: State, private val ctx: RendererContext) {
 
-            private val density = ctx.density
-
+            private val density = state.density
         }
 
-        internal data class RendererContext(
-            val drawScope: DrawScope, val viewportPosition: Offset, val density: Float, val theme: Color.GraphTheme
-        )
+        data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme)
 
-        internal class ForceSimulation(private val graph: Graph): BasicSimulation() {
+        class ForceSimulation(private val graph: Graph): BasicSimulation() {
             val physics = Physics(this)
             val isStable get() = alpha < alphaMin
 
@@ -357,7 +448,7 @@ internal object GraphOutput : RunOutput() {
 
             class Physics(private val simulation: ForceSimulation) {
 
-                internal fun rebuild() {
+                fun rebuild() {
                     simulation.apply {
                         forces.clear()
                         localForces.clear()
@@ -380,7 +471,7 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        internal class SimulationRunner(private val state: State) {
+        class SimulationRunner(private val state: State) {
 
             private var isTickRunning = false
             private var lastFrameTime = System.currentTimeMillis()
@@ -416,6 +507,28 @@ internal object GraphOutput : RunOutput() {
                 }
             }
         }
+
+        class HoveredVertexPoller(private val state: State) {
+
+            private var lastScanDoneTime = System.currentTimeMillis()
+
+            suspend fun poll() {
+                while (true) {
+                    withFrameMillis {
+                        state.pointerPosition?.let {
+                            if (isReadyToScan()) scan(it)
+                        }
+                    }
+                }
+            }
+
+            private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
+
+            private fun scan(pointerPosition: Offset) {
+                state.hoveredVertex = state.findVertexAtPhysicalPoint(pointerPosition)
+                lastScanDoneTime = System.currentTimeMillis()
+            }
+        }
     }
 
     @Composable
@@ -438,7 +551,8 @@ internal object GraphOutput : RunOutput() {
         Box(modifier.graphicsLayer(clip = true).onGloballyPositioned {
             state.density = density
             if (state.isViewportPositionInitialised.compareAndSet(false, true)) {
-                state.viewportPosition = -it.size.toSize().center / density
+                state.viewportSize = it.size.toSize()
+                state.viewportPosition = -state.viewportSize.center / density
             }
         }) {
             key(state.frameID) {
@@ -448,15 +562,17 @@ internal object GraphOutput : RunOutput() {
                     if (vertices.size <= 1000) vertices.forEach { VertexLabel(it, state) }
                 }
             }
-            PointerInputHandlers(state, Modifier.zIndex(100f))
+            PointerInputHandlers(state, Modifier.fillMaxSize().zIndex(100f))
         }
 
-        LaunchedEffect(state) { state.simulationRunner.run() }
+        LaunchedEffect(Unit) { state.simulationRunner.run() }
+        LaunchedEffect(Unit) { state.hoveredVertexPoller.poll() }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun PointerInputHandlers(state: State, modifier: Modifier) {
-        Box(modifier.fillMaxSize()
+        Box(modifier
             .pointerInput(state.density, state.scale) {
                 detectDragGestures { _, dragAmount ->
                     state.viewportPosition -= dragAmount / (state.scale * state.density)
@@ -466,7 +582,15 @@ internal object GraphOutput : RunOutput() {
                 state.scale *= 1 + (delta * 0.0006f / state.density)
                 delta
             })
-        )
+        ) {
+            // Nested Boxes are required for drag and tap events to not conflict with each other
+            Box(modifier
+                .pointerMoveFilter(
+                    onMove = { state.pointerPosition = it; false },
+                    onExit = { state.pointerPosition = null; false }
+                )
+            )
+        }
     }
 
     private fun DrawScope.drawVertexBackground(vertex: State.Vertex, state: State) {
