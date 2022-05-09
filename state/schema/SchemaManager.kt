@@ -46,6 +46,7 @@ class SchemaManager(private val session: SessionState, internal val notification
     private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val types = ConcurrentHashMap<ThingType, TypeState>()
+    internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     companion object {
@@ -67,12 +68,12 @@ class SchemaManager(private val session: SessionState, internal val notification
         }
     }
 
-    internal fun getTypeState(concept: ThingType): TypeState {
-        val remote = concept.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let { types[it] ?: getTypeState(it) }
-        return types.computeIfAbsent(concept) {
+    internal fun createState(type: ThingType): TypeState {
+        val remote = type.asRemote(openOrGetReadTx())
+        val supertype = remote.supertype?.let { types[it] ?: createState(it) }
+        return types.computeIfAbsent(type) {
             TypeState(
-                concept = concept,
+                type = type,
                 supertypeInit = supertype,
                 isExpandableInit = remote.subtypesExplicit.findAny().isPresent,
                 schemaMgr = this

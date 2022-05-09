@@ -118,7 +118,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                leadingIcon = Icon.Code.SERVER
+                leadingIcon = Form.IconArg(Icon.Code.SERVER)
             ) { GlobalState.client.connectServerDialog.open() }
         }
     }
@@ -140,7 +140,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                leadingIcon = Icon.Code.DATABASE
+                leadingIcon = Form.IconArg(Icon.Code.DATABASE)
             ) { GlobalState.client.selectDatabaseDialog.open() }
         }
     }

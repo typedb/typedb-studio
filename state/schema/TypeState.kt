@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.resource.Navigable
@@ -33,48 +34,70 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class TypeState constructor(
-    private val concept: ThingType,
+    private val type: ThingType,
     supertypeInit: TypeState?,
     isExpandableInit: Boolean,
     val schemaMgr: SchemaManager,
 ) : Navigable<TypeState>, Resource {
 
+    data class AttributeTypeProperties(
+        val attributeType: TypeState, val overridden: TypeState?, val isKey: Boolean, val isInherited: Boolean
+    )
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    override val name: String by mutableStateOf(concept.label.name())
+    override val name: String by mutableStateOf(type.label.name())
     override val parent: TypeState? get() = supertype
-    override val info: String? = null
+    override val info: String? get() = typeInfo()
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
     override var entries: List<TypeState> = emptyList()
-    override val fullName: String = computeFullName()
+    override val fullName: String get() = typeFullName()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
     override val isEmpty: Boolean = false
     override val isUnsavedResource: Boolean = false
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
-    val isEntityType get() = concept.isEntityType
-    val isRelationType get() = concept.isRelationType
-    val isAttributeType get() = concept.isAttributeType
-    val isRoot get() = concept.isRoot
+    val isEntityType get() = type.isEntityType
+    val isRelationType get() = type.isRelationType
+    val isAttributeType get() = type.isAttributeType
+    val isRoot get() = type.isRoot
+    val valueType: String? = computeValueType()
+
     var supertype: TypeState? by mutableStateOf(supertypeInit)
     var isAbstract: Boolean by mutableStateOf(false)
+    var ownedAttributes: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
-    private fun computeFullName(): String {
-        val base = if (concept.isEntityType) TypeQLToken.Type.ENTITY
-        else if (concept.isRelationType) TypeQLToken.Type.RELATION
-        else if (concept.isAttributeType) TypeQLToken.Type.ATTRIBUTE
-        else if (concept.isRoleType) TypeQLToken.Type.ROLE
-        else if (concept.isThingType) TypeQLToken.Type.THING
-        else throw IllegalStateException("Unrecognised concept base type")
-        return "$base: $name"
+    private fun typeFullName(): String {
+        val props = mutableListOf(
+            when {
+                type.isEntityType -> TypeQLToken.Type.ENTITY
+                type.isRelationType -> TypeQLToken.Type.RELATION
+                type.isAttributeType -> TypeQLToken.Type.ATTRIBUTE
+                type.isThingType -> TypeQLToken.Type.THING
+                else -> throw IllegalStateException("Unrecognised concept base type")
+            }.name.lowercase()
+        )
+        typeInfo()?.let { props.add(it) }
+        return "$name (" + props.joinToString(", ") + ") @ " + schemaMgr.database
     }
+
+    private fun computeValueType(): String? {
+        return if (type.isAttributeType && !type.isRoot) type.asAttributeType().valueType.name.lowercase()
+        else null
+    }
+
+    private fun typeInfo(): String? = when {
+        type.isAttributeType && !type.isRoot -> valueType
+        else -> null
+    }
+
     override fun launchWatcher() {}
     override fun stopWatcher() {}
     override fun beforeRun(function: (Resource) -> Unit) {}
@@ -93,30 +116,63 @@ class TypeState constructor(
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
         loadSupertype()
         loadAbstract()
+        loadOwnedAttributes()
     }
 
     private fun loadSupertype() {
-        supertype = concept.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.getTypeState(it) }
+        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createState(it) }
     }
 
     private fun loadAbstract() {
-        isAbstract = concept.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
+        isAbstract = type.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
+    }
+
+    private fun loadOwnedAttributes() {
+        val map = mutableMapOf<AttributeType, AttributeTypeProperties>()
+        val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
+
+        fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
+            map[attributeType] = AttributeTypeProperties(
+                attributeType = schemaMgr.createState(attributeType),
+                overridden = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createState(it) },
+                isKey = isKey,
+                isInherited = isInherited
+            )
+        }
+
+        conceptTx.getOwnsExplicit(true).forEach {
+            properties(it, isKey = true, isInherited = false)
+        }
+        conceptTx.getOwnsExplicit(false).filter { !map.contains(it) }.forEach {
+            properties(it, isKey = false, isInherited = false)
+        }
+        conceptTx.getOwns(true).filter { !map.contains(it) }.forEach {
+            properties(it, isKey = true, isInherited = true)
+        }
+        conceptTx.getOwns(false).filter { !map.contains(it) }.forEach {
+            properties(it, isKey = false, isInherited = true)
+        }
+        ownedAttributes = map
+    }
+
+    fun removeOwnedAttribute(attType: TypeState) {
+        // TODO
     }
 
     override fun reloadEntries() {
         val tx = schemaMgr.openOrGetReadTx()
-        val new = concept.asRemote(tx).subtypesExplicit.toList().toSet()
-        val old = entries.map { it.concept }.toSet()
+        val new = type.asRemote(tx).subtypesExplicit.toList().toSet()
+        val old = entries.map { it.type }.toSet()
         val refresh: List<TypeState>
         if (new != old) {
             val deleted = old - new
             val added = new - old
-            val retainedEntries = entries.filter { !deleted.contains(it.concept) }
-            val newEntries = added.map { schemaMgr.getTypeState(it) }
+            val retainedEntries = entries.filter { !deleted.contains(it.type) }
+            val newEntries = added.map { schemaMgr.createState(it) }
             entries = (retainedEntries + newEntries).sorted()
             refresh = retainedEntries
         } else refresh = entries
-        refresh.onEach { it.isExpandable = it.concept.asRemote(tx).subtypesExplicit.findAny().isPresent }
+        refresh.onEach { it.isExpandable = it.type.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
     }
 
@@ -155,17 +211,17 @@ class TypeState constructor(
     }
 
     override fun toString(): String {
-        return "TypeState: $concept"
+        return "TypeState: $type"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as TypeState
-        return this.concept == other.concept
+        return this.type == other.type
     }
 
     override fun hashCode(): Int {
-        return concept.hashCode()
+        return type.hashCode()
     }
 }

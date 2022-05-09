@@ -31,7 +31,8 @@ import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_FAILED
+import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_SUCCESSFULLY
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import java.util.concurrent.LinkedBlockingQueue
 import mu.KotlinLogging
@@ -128,10 +129,14 @@ class TransactionState constructor(
     internal fun commit() {
         sendStopSignal()
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            _transaction?.commit()
-            _transaction = null
-            if (session.type == SCHEMA) onSchemaWrite.forEach { it() }
-            notificationMgr.info(LOGGER, TRANSACTION_COMMIT)
+            try {
+                _transaction?.commit()
+                _transaction = null
+                if (session.type == SCHEMA) onSchemaWrite.forEach { it() }
+                notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
+            } catch (e: Exception) {
+                notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
+            }
         }
     }
 

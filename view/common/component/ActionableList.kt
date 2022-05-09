@@ -47,7 +47,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.IconButton
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object ActionList {
+object ActionableList {
 
     private val ITEM_HEIGHT = 34.dp
     private val BUTTON_SIZE = 24.dp
@@ -57,9 +57,9 @@ object ActionList {
     @Composable
     fun <T : Any> Layout(
         items: List<T>,
-        settingSide: Side,
-        modifier: Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
+        modifier: Modifier,
+        buttonSide: Side,
         buttonFn: (T) -> Form.IconButtonArg
     ) {
         val scrollState = rememberScrollState()
@@ -71,14 +71,14 @@ object ActionList {
 
         Box(modifier) {
             Row(Modifier.verticalScroll(scrollState)) {
-                if (settingSide == Side.LEFT) {
-                    SettingColumn(items, itemHeight, buttonFn)
+                if (buttonSide == Side.LEFT) {
+                    ActionColumn(items, itemHeight, buttonFn)
                     Separator()
                 }
-                NameColumn(Modifier.weight(1f), items, itemHeight)
-                if (settingSide == Side.RIGHT) {
+                ItemColumn(Modifier.weight(1f), items, itemHeight)
+                if (buttonSide == Side.RIGHT) {
                     Separator()
-                    SettingColumn(items, itemHeight, buttonFn, scrollState)
+                    ActionColumn(items, itemHeight, buttonFn, scrollState)
                 }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(scrollState), Modifier.align(Alignment.CenterEnd))
@@ -89,7 +89,7 @@ object ActionList {
     private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.colors.background2 else Theme.colors.background1
 
     @Composable
-    private fun <T : Any> NameColumn(modifier: Modifier, items: List<T>, itemHeight: Dp) {
+    private fun <T : Any> ItemColumn(modifier: Modifier, items: List<T>, itemHeight: Dp) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(
@@ -113,7 +113,7 @@ object ActionList {
     }
 
     @Composable
-    private fun <T : Any> SettingColumn(
+    private fun <T : Any> ActionColumn(
         items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg, scrollState: ScrollState? = null
     ) {
         val density = LocalDensity.current.density

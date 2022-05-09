@@ -26,10 +26,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +50,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
@@ -57,6 +61,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -74,8 +79,10 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val MIN_WIDTH = 600.dp
         private val MAX_WIDTH = 900.dp
         private val PAGE_PADDING = 40.dp
-        private val HORIZONTAL_SPACING = 6.dp
+        private val HORIZONTAL_SPACING = 8.dp
         private val VERTICAL_SPACING = 18.dp
+        private val ICON_COL_WIDTH = 80.dp
+        private val BUTTON_HEIGHT = 24.dp
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -146,9 +153,16 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
+    private fun SectionLine(content: @Composable RowScope.() -> Unit) {
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+            content()
+        }
+    }
+
+    @Composable
     private fun TitleSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING)) {
-            Form.TextBox(value = type.name)
+        SectionLine {
+            Form.TextBox(value = type.name, leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
             Form.IconButton(
                 icon = Icon.Code.PEN,
@@ -168,11 +182,12 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun SupertypeSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+        SectionLine {
             Form.Text(value = Label.SUPERTYPE)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextButton(
                 text = type.supertype?.name ?: "(${Label.NONE.lowercase()})",
+                leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = type.supertype != null,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
             Form.IconButton(
@@ -185,7 +200,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun AbstractSection() {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
+        SectionLine {
             Form.Text(value = Label.ABSTRACT)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
@@ -199,7 +214,50 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributesSection() {
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
 
+        @Composable
+        fun MayTick(boolean: Boolean) {
+            if (boolean) Icon.Render(icon = Icon.Code.CHECK, color = Theme.colors.secondary)
+        }
+
+        @Composable
+        fun MayRemoveOwnedAttributButton(attTypeProp: TypeState.AttributeTypeProperties) {
+            if (!attTypeProp.isInherited) Form.IconButton(
+                icon = Icon.Code.MINUS,
+                modifier = Modifier.size(BUTTON_HEIGHT),
+                iconColor = Theme.colors.error,
+                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
+                onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
+            )
+        }
+
+        Table.Layout(
+            items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
+            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * type.ownedAttributes.size),
+            columns = listOf(
+                Table.Column(
+                    header = Label.ATTRIBUTES,
+                    contentAlignment = Alignment.CenterStart,
+                ) { Form.Text(value = it.attributeType.name) },
+                Table.Column(
+                    header = Label.OVERRIDES,
+                    contentAlignment = Alignment.CenterStart,
+                ) { it.overridden?.name?.let { o -> Form.Text(o) } },
+                Table.Column(
+                    header = Label.KEY,
+                    size = Either.first(ICON_COL_WIDTH)
+                ) { MayTick(it.isKey) },
+                Table.Column(
+                    header = Label.INHERITED,
+                    size = Either.first(ICON_COL_WIDTH)
+                ) { MayTick(it.isInherited) },
+                Table.Column(
+                    header = null,
+                    size = Either.first(ICON_COL_WIDTH)
+                ) { MayRemoveOwnedAttributButton(it) },
+            )
+        )
     }
 
     @Composable

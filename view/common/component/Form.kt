@@ -180,7 +180,7 @@ object Form {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = modifier.onKeyEvent {
-                onKeyEvent(event = it, onEnter = { state.trySubmitIfValid() })
+                onKeyEventHandler(event = it, onEnter = { state.trySubmitIfValid() })
             }
         ) {
             content()
@@ -200,6 +200,9 @@ object Form {
     fun FormRowSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
     }
+
+    @Composable
+    private fun ButtonSpacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
 
     @Composable
     fun Text(
@@ -295,6 +298,8 @@ object Form {
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
+        trailingIcon: IconArg? = null,
+        leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
     ) {
         val density = LocalDensity.current.density
@@ -302,9 +307,17 @@ object Form {
             modifier = modifier.height(FIELD_HEIGHT).background(bgColor, roundedCorners.shape(density)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+            leadingIcon?.let {
+                ButtonSpacer()
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+            }
+            ButtonSpacer()
             Text(value, textStyle = Theme.typography.body1, color = textColor)
-            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+            ButtonSpacer()
+            trailingIcon?.let {
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                ButtonSpacer()
+            }
         }
     }
 
@@ -537,34 +550,31 @@ object Form {
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
         focusReq: FocusRequester? = null,
-        leadingIcon: Icon.Code? = null,
-        trailingIcon: Icon.Code? = null,
-        iconColor: Color = Theme.colors.icon,
+        leadingIcon: IconArg? = null,
+        trailingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
         onClick: () -> Unit,
     ) {
-        @Composable
-        fun Spacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
         BoxButton(
             bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
             enabled = enabled, tooltip = tooltip, onClick = onClick
         ) {
             Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer()
                     leadingIcon?.let {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
-                        Spacer()
+                        ButtonSpacer()
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
                     }
+                    ButtonSpacer()
                     Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
-                    Spacer()
+                    ButtonSpacer()
                 }
                 trailingIcon?.let {
                     Row {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it, iconColor) }
-                        Spacer()
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                        ButtonSpacer()
                     }
                 }
             }
@@ -691,17 +701,23 @@ object Form {
     @Composable
     fun Checkbox(
         value: Boolean,
-        onChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier,
-        enabled: Boolean = true
+        size: Dp = FIELD_HEIGHT,
+        enabled: Boolean = true,
+        onChange: ((Boolean) -> Unit)? = null
     ) {
+        fun Modifier.mayRegisterOnKeyEvent(): Modifier {
+            onChange?.let { fn -> this.onKeyEvent { onKeyEventHandler(event = it, onSpace = { fn(!value) }) } }
+            return this
+        }
+
         Checkbox(
             checked = value,
             onCheckedChange = onChange,
-            modifier = modifier.size(FIELD_HEIGHT)
+            modifier = modifier.size(size)
                 .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_CORNER_SHAPE)
                 .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_CORNER_SHAPE)
-                .onKeyEvent { onKeyEvent(event = it, onSpace = { onChange(!value) }) },
+                .mayRegisterOnKeyEvent(),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = fadeable(Theme.colors.icon, !enabled),
@@ -761,7 +777,7 @@ object Form {
                 ),
                 textColor = Theme.colors.onPrimary,
                 focusReq = focusReq,
-                trailingIcon = CARET_DOWN,
+                trailingIcon = IconArg(CARET_DOWN),
                 enabled = enabled,
                 tooltip = tooltip,
             ) { state.toggle() }
@@ -802,7 +818,7 @@ object Form {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun onKeyEvent(
+    private fun onKeyEventHandler(
         event: KeyEvent,
         enabled: Boolean = true,
         onEnter: (() -> Unit)? = null,
