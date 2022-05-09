@@ -88,6 +88,7 @@ class SessionState constructor(
             transaction.close()
             _session.get()?.close()
             _session.set(null)
+            database = null
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }
