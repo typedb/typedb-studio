@@ -43,21 +43,24 @@ object Table {
 
     data class Column<T>(
         val header: AnnotatedString?,
-        val alignment: Alignment = Alignment.Center,
+        val contentAlignment: Alignment = Alignment.Center,
+        val headerAlignment: Alignment = Alignment.Center,
         val size: Either<Dp, Float> = Either.second(1f),
         val content: @Composable (T) -> Unit
     ) {
         constructor(
             header: String,
-            alignment: Alignment = Alignment.Center,
+            contentAlignment: Alignment = Alignment.Center,
+            headerAlignment: Alignment = Alignment.Center,
             size: Either<Dp, Float> = Either.second(1f),
             function: @Composable (T) -> Unit
-        ) : this(AnnotatedString(header), alignment, size, function)
+        ) : this(AnnotatedString(header), contentAlignment, headerAlignment, size, function)
     }
 
-    val ROW_HEIGHT = 34.dp
+    val ROW_HEIGHT = 36.dp
     private val COLUMN_BORDER_SIZE = 2.dp
-    private val COLUMN_HORIZONTAL_PADDING = 8.dp
+    private val CELL_PADDING_HORIZONTAL = 8.dp
+    private val CELL_PADDING_VERTICAL = 4.dp
 
     @Composable
     private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.colors.background2 else Theme.colors.background1
@@ -67,6 +70,9 @@ object Table {
         items: List<T>,
         modifier: Modifier = Modifier,
         rowHeight: Dp = ROW_HEIGHT,
+        columnBorderSize: Dp = COLUMN_BORDER_SIZE,
+        cellPaddingHorizontal: Dp = CELL_PADDING_HORIZONTAL,
+        cellPaddingVertical: Dp = CELL_PADDING_VERTICAL,
         columns: List<Column<T>>
     ) {
         LazyColumn(modifier.border(1.dp, Theme.colors.border)) {
@@ -74,20 +80,21 @@ object Table {
                 Row(Modifier.fillMaxWidth().height(rowHeight)) {
                     columns.forEach { col ->
                         Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) }).fillMaxHeight()
+                            contentAlignment = col.headerAlignment,
+                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                                .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
                         ) { col.header?.let { Form.Text(it) } }
                     }
                 }
             }
             items(items.count()) { rowID ->
-                Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(COLUMN_BORDER_SIZE)) {
+                Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
                     columns.forEach { col ->
                         Box(
-                            contentAlignment = col.alignment,
+                            contentAlignment = col.contentAlignment,
                             modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
                                 .fillMaxHeight().background(bgColor(rowID))
-                                .padding(horizontal = COLUMN_HORIZONTAL_PADDING)
+                                .padding(cellPaddingHorizontal, cellPaddingVertical)
                         ) { col.content(items[rowID]) }
                     }
                 }

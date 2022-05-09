@@ -238,11 +238,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             columns = listOf(
                 Table.Column(
                     header = Label.ATTRIBUTES,
-                    alignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.CenterStart,
                 ) { Form.Text(value = it.attributeType.name) },
                 Table.Column(
                     header = Label.OVERRIDES,
-                    alignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.CenterStart,
                 ) { it.overridden?.name?.let { o -> Form.Text(o) } },
                 Table.Column(
                     header = Label.KEY,
