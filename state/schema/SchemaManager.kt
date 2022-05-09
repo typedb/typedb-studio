@@ -46,6 +46,7 @@ class SchemaManager(private val session: SessionState, internal val notification
     private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val types = ConcurrentHashMap<ThingType, TypeState>()
+    internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     companion object {

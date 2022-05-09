@@ -50,11 +50,11 @@ class TypeState constructor(
 
     override val name: String by mutableStateOf(concept.label.name())
     override val parent: TypeState? get() = supertype
-    override val info: String? = null
+    override val info: String? get() = typeInfo()
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
     override var entries: List<TypeState> = emptyList()
-    override val fullName: String = computeFullName()
+    override val fullName: String get() = typeFullName()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
     override val isEmpty: Boolean = false
@@ -65,6 +65,8 @@ class TypeState constructor(
     val isRelationType get() = concept.isRelationType
     val isAttributeType get() = concept.isAttributeType
     val isRoot get() = concept.isRoot
+    val valueType: String? = computeValueType()
+
     var supertype: TypeState? by mutableStateOf(supertypeInit)
     var isAbstract: Boolean by mutableStateOf(false)
     var ownedAttributes: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
@@ -72,15 +74,30 @@ class TypeState constructor(
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
-    private fun computeFullName(): String {
-        val base = if (concept.isEntityType) TypeQLToken.Type.ENTITY
-        else if (concept.isRelationType) TypeQLToken.Type.RELATION
-        else if (concept.isAttributeType) TypeQLToken.Type.ATTRIBUTE
-        else if (concept.isRoleType) TypeQLToken.Type.ROLE
-        else if (concept.isThingType) TypeQLToken.Type.THING
-        else throw IllegalStateException("Unrecognised concept base type")
-        return "$base: $name"
+    private fun typeFullName(): String {
+        val props = mutableListOf(
+            when {
+                concept.isEntityType -> TypeQLToken.Type.ENTITY
+                concept.isRelationType -> TypeQLToken.Type.RELATION
+                concept.isAttributeType -> TypeQLToken.Type.ATTRIBUTE
+                concept.isThingType -> TypeQLToken.Type.THING
+                else -> throw IllegalStateException("Unrecognised concept base type")
+            }.name.lowercase()
+        )
+        typeInfo()?.let { props.add(it) }
+        return "$name (" + props.joinToString(", ") + ") @ " + schemaMgr.database
     }
+
+    private fun computeValueType(): String? {
+        return if (concept.isAttributeType && !concept.isRoot) concept.asAttributeType().valueType.name.lowercase()
+        else null
+    }
+
+    private fun typeInfo(): String? = when {
+        concept.isAttributeType && !concept.isRoot -> valueType
+        else -> null
+    }
+
     override fun launchWatcher() {}
     override fun stopWatcher() {}
     override fun beforeRun(function: (Resource) -> Unit) {}
@@ -139,7 +156,7 @@ class TypeState constructor(
     }
 
     fun removeOwnedAttribute(attType: TypeState) {
-
+        // TODO
     }
 
     override fun reloadEntries() {
