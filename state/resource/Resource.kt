@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.state.resource
 interface Resource {
 
     val name: String
-    val fullName: String
+    val windowTitle: String
     val isOpen: Boolean
     val isWritable: Boolean
     val isEmpty: Boolean

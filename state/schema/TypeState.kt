@@ -54,7 +54,7 @@ class TypeState constructor(
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
     override var entries: List<TypeState> = emptyList()
-    override val fullName: String get() = typeFullName()
+    override val windowTitle: String get() = typeWindowTitle()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
     override val isEmpty: Boolean = false
@@ -74,7 +74,7 @@ class TypeState constructor(
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
-    private fun typeFullName(): String {
+    private fun typeWindowTitle(): String {
         val props = mutableListOf(
             when {
                 type.isEntityType -> TypeQLToken.Type.ENTITY

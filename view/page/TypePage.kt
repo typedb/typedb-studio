@@ -222,7 +222,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         @Composable
-        fun MayRemoveOwnedAttributButton(attTypeProp: TypeState.AttributeTypeProperties) {
+        fun MayRemoveOwnedAttributeButton(attTypeProp: TypeState.AttributeTypeProperties) {
             if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
                 modifier = Modifier.size(BUTTON_HEIGHT),
@@ -256,7 +256,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Table.Column(
                     header = null,
                     size = Either.first(ICON_COL_WIDTH)
-                ) { MayRemoveOwnedAttributButton(it) },
+                ) { MayRemoveOwnedAttributeButton(it) },
             )
         )
     }
