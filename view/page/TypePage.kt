@@ -59,6 +59,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -87,18 +88,6 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val VERTICAL_SPACING = 18.dp
         private val ICON_COL_WIDTH = 80.dp
         private val BUTTON_HEIGHT = 24.dp
-
-        @Composable
-        private fun fullName(type: TypeState): AnnotatedString {
-            val color = Theme.colors.onPrimary
-            return buildAnnotatedString {
-                withStyle(SpanStyle(color)) { append(type.name) }
-                if (type.isAttributeType && !type.isRoot) {
-                    append(" ")
-                    withStyle(SpanStyle(color.copy(Color.FADED_OPACITY))) { append("(${type.valueType})") }
-                }
-            }
-        }
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -180,11 +169,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         SectionLine {
             Form.TextBox(text = fullName(type), leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.RENAME)
-            ) { } // TODO
+            EditButton { } // TODO
             Form.IconButton(
                 icon = Icon.Code.ROTATE,
                 tooltip = Tooltip.Arg(Label.REFRESH)
@@ -206,11 +191,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = type.supertype != null,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.EDIT)
-            ) { } // TODO
+            EditButton { } // TODO
         }
     }
 
@@ -220,11 +201,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.ABSTRACT)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.EDIT)
-            ) { } // TODO
+            EditButton { } // TODO
         }
     }
 
@@ -243,8 +220,8 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 icon = Icon.Code.MINUS,
                 modifier = Modifier.size(BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
-                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
                 enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
             )
         }
@@ -300,5 +277,27 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun DeleteButton() {
 
+    }
+
+    @Composable
+    private fun fullName(type: TypeState): AnnotatedString {
+        val color = Theme.colors.onPrimary
+        return buildAnnotatedString {
+            withStyle(SpanStyle(color)) { append(type.name) }
+            if (type.isAttributeType && !type.isRoot) {
+                append(" ")
+                withStyle(SpanStyle(color.copy(Color.FADED_OPACITY))) { append("(${type.valueType})") }
+            }
+        }
+    }
+
+    @Composable
+    private fun EditButton(onClick: () -> Unit) {
+        Form.IconButton(
+            icon = Icon.Code.PEN,
+            enabled = isEditable,
+            tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+            onClick = onClick
+        )
     }
 }
