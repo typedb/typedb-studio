@@ -78,7 +78,7 @@ internal class RunOutputGroup constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun <T> consumeStream(stream: Response.Stream<T>, output: (T) -> Unit) {
+    private suspend fun <T> consumeStream(stream: Response.Stream<T>, output: suspend (T) -> Unit) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
