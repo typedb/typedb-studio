@@ -120,7 +120,7 @@ class TypeState constructor(
     }
 
     private fun loadSupertype() {
-        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createState(it) }
+        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createTypeState(it) }
     }
 
     private fun loadAbstract() {
@@ -133,8 +133,8 @@ class TypeState constructor(
 
         fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
             map[attributeType] = AttributeTypeProperties(
-                attributeType = schemaMgr.createState(attributeType),
-                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createState(it) },
+                attributeType = schemaMgr.createTypeState(attributeType),
+                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
                 isKey = isKey,
                 isInherited = isInherited
             )
@@ -168,7 +168,7 @@ class TypeState constructor(
             val deleted = old - new
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.type) }
-            val newEntries = added.map { schemaMgr.createState(it) }
+            val newEntries = added.map { schemaMgr.createTypeState(it) }
             entries = (retainedEntries + newEntries).sorted()
             refresh = retainedEntries
         } else refresh = entries

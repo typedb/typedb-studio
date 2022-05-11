@@ -58,14 +58,14 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         val schema = GlobalState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!client.session.isOpen || schema.root == null || client.selectDatabaseDialog.isOpen) SelectDBHelper()
+        else if (!client.session.isOpen || schema.rootThingType == null || client.selectDBDialog.isOpen) SelectDBHelper()
         else Content()
     }
 
     @Composable
     private fun Content() {
         val navState = rememberNavigatorState(
-            container = GlobalState.schema.root!!,
+            container = GlobalState.schema.rootThingType!!,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,
         ) { GlobalState.resource.open(it.item) }
@@ -141,7 +141,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
                 leadingIcon = Form.IconArg(Icon.Code.DATABASE)
-            ) { GlobalState.client.selectDatabaseDialog.open() }
+            ) { GlobalState.client.selectDBDialog.open() }
         }
     }
 }

@@ -40,7 +40,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalTime::class)
 class SchemaManager(private val session: SessionState, internal val notificationMgr: NotificationManager) {
 
-    var root: TypeState? by mutableStateOf(null); private set
+    var rootThingType: TypeState? by mutableStateOf(null); private set
+    var rootEntityType: TypeState? by mutableStateOf(null); private set
+    var rootRelationType: TypeState? by mutableStateOf(null); private set
+    var rootAttributeType: TypeState? by mutableStateOf(null); private set
     var onRootChange: ((TypeState) -> Unit)? = null
     val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
     private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
@@ -54,23 +57,23 @@ class SchemaManager(private val session: SessionState, internal val notification
     }
 
     init {
-        session.onOpen { isNewDB -> if (isNewDB) updateRoot() }
+        session.onOpen { isNewDB -> if (isNewDB) updateRoots() }
         session.transaction.onSchemaWrite {
             refreshReadTx()
-            updateRoot()
+            updateRoots()
         }
         session.onClose { willReopenSameDB ->
             if (!willReopenSameDB) {
-                root?.closeRecursive()
-                root = null
+                rootThingType?.closeRecursive()
+                rootThingType = null
             }
             closeReadTx()
         }
     }
 
-    internal fun createState(type: ThingType): TypeState {
+    internal fun createTypeState(type: ThingType): TypeState {
         val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let { types[it] ?: createState(it) }
+        val supertype = remote.supertype?.let { types[it] ?: createTypeState(it) }
         return types.computeIfAbsent(type) {
             TypeState(
                 type = type,
@@ -81,11 +84,18 @@ class SchemaManager(private val session: SessionState, internal val notification
         }
     }
 
-    private fun updateRoot() {
-        val concept = openOrGetReadTx().concepts().rootThingType
-        root = TypeState(concept, null, true, this)
-        types[concept] = root!!
-        onRootChange?.let { it(root!!) }
+    private fun updateRoots() {
+        val conceptMgr = openOrGetReadTx().concepts()
+        fun createRootState(concept: ThingType, superRootState: TypeState?): TypeState {
+            val state = TypeState(concept, superRootState, true, this)
+            types[concept] = state
+            return state
+        }
+        rootThingType = createRootState(conceptMgr.rootThingType, null)
+        rootEntityType = createRootState(conceptMgr.rootEntityType, rootThingType)
+        rootRelationType = createRootState(conceptMgr.rootRelationType, rootThingType)
+        rootAttributeType = createRootState(conceptMgr.rootAttributeType, rootThingType)
+        onRootChange?.let { it(rootThingType!!) }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
