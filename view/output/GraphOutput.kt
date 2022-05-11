@@ -56,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
-import com.vaticle.force.graph.api.Vertex
 import com.vaticle.force.graph.force.CenterForce
 import com.vaticle.force.graph.force.CollideForce
 import com.vaticle.force.graph.force.LinkForce
@@ -80,7 +79,10 @@ import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Companion.emptyGraph
+import com.vaticle.typeql.lang.TypeQL.`var`
+import com.vaticle.typeql.lang.TypeQL.match
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -89,6 +91,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -112,6 +115,10 @@ internal object GraphOutput : RunOutput() {
 
         suspend fun output(conceptMap: ConceptMap) {
             ConceptMapLoader(conceptMap, answerLoaderContext).load()
+        }
+
+        fun onQueryCompleted() {
+            graph.completeAllEdges()
         }
 
         private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
@@ -187,7 +194,7 @@ internal object GraphOutput : RunOutput() {
                 internal fun emptyGraph() = Graph()
             }
 
-            fun putThingVertex(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
+            fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 var added = false
                 val vertex = _thingVertices.computeIfAbsent(iid) { added = true; vertexFn() }
                 if (added) {
@@ -197,7 +204,7 @@ internal object GraphOutput : RunOutput() {
                 return added
             }
 
-            fun putTypeVertex(label: String, vertexFn: () -> Vertex.Type): Boolean {
+            fun putTypeVertexIfAbsent(label: String, vertexFn: () -> Vertex.Type): Boolean {
                 var added = false
                 val vertex = _typeVertices.computeIfAbsent(label) { added = true; vertexFn() }
                 if (added) {
@@ -212,13 +219,14 @@ internal object GraphOutput : RunOutput() {
             }
 
             fun addEdgeCandidate(edge: EdgeCandidate) {
-                when (edge) {
-                    is EdgeCandidate.Isa -> edgeCandidates.putIfAbsent(edge.targetLabel, mutableListOf(edge))
-                    is EdgeCandidate.Has -> edgeCandidates.getOrPut(edge.targetLabel) { mutableListOf() }.add(edge)
-                    is EdgeCandidate.Owns -> edgeCandidates.getOrPut(edge.targetLabel) { mutableListOf() }.add(edge)
-                    is EdgeCandidate.Plays -> edgeCandidates.getOrPut(edge.sourceLabel) { mutableListOf() }.add(edge)
-                    is EdgeCandidate.Sub -> edgeCandidates.putIfAbsent(edge.targetLabel, mutableListOf(edge))
+                val key = when (edge) {
+                    is EdgeCandidate.Has -> edge.targetIID
+                    is EdgeCandidate.Isa -> edge.targetLabel
+                    is EdgeCandidate.Owns -> edge.targetLabel
+                    is EdgeCandidate.Plays -> edge.sourceLabel
+                    is EdgeCandidate.Sub -> edge.targetLabel
                 }
+                edgeCandidates.getOrPut(key) { mutableListOf() }.add(edge)
             }
 
             private fun completeEdges(missingVertex: Vertex) {
@@ -231,11 +239,15 @@ internal object GraphOutput : RunOutput() {
                         is EdgeCandidate.Isa -> it.toEdge(missingVertex as Vertex.Type)
                         is EdgeCandidate.Has -> it.toEdge(missingVertex as Vertex.Thing.Attribute)
                         is EdgeCandidate.Owns -> it.toEdge(missingVertex as Vertex.Type.Attribute)
-                        is EdgeCandidate.Plays -> it.toEdge(missingVertex as Vertex.Type)
+                        is EdgeCandidate.Plays -> it.toEdge(missingVertex as Vertex.Type.Relation)
                         is EdgeCandidate.Sub -> it.toEdge(missingVertex as Vertex.Type)
                     }
                     addEdge(completedEdge)
                 }
+            }
+
+            fun completeAllEdges() {
+                vertices.forEach { completeEdges(it) }
             }
 
             fun isEmpty() = vertices.isEmpty()
@@ -270,15 +282,16 @@ internal object GraphOutput : RunOutput() {
                         val vertices = graph.vertices.map { it.geometry }
                         val edges = graph.edges.map { it.physics }
                         forces.add(CenterForce(vertices, 0.0, 0.0))
-                        forces.add(CollideForce(vertices, 80.0))
+                        forces.add(CollideForce(vertices, 65.0))
                         forces.add(
                             ManyBodyForce(
                                 vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
                             )
                         )
                         forces.add(LinkForce(vertices, edges, 90.0, 0.5))
-                        forces.add(XForce(vertices, 0.0, 0.1))
-                        forces.add(YForce(vertices, 0.0, 0.1))
+                        val gravityStrength = 0.02 * log10(vertices.size + 100.0)
+                        forces.add(XForce(vertices, 0.0, gravityStrength))
+                        forces.add(YForce(vertices, 0.0, gravityStrength))
                     }
                 }
             }
@@ -455,6 +468,10 @@ internal object GraphOutput : RunOutput() {
             val physics = Physics(this)
             abstract val label: String
 
+            interface Inferrable {
+                val isInferred: Boolean
+            }
+
             // Type edges
             class Sub(source: Vertex.Type, target: Vertex.Type) : Edge(source, target) {
                 override val label = Labels.SUB
@@ -464,17 +481,21 @@ internal object GraphOutput : RunOutput() {
                 override val label = Labels.OWNS
             }
 
-            class Plays(source: Vertex.Type, target: Vertex.Type.Relation, val role: String) : Edge(source, target) {
+            class Plays(source: Vertex.Type.Relation, target: Vertex.Type, val role: String) : Edge(source, target) {
                 override val label = role
             }
 
             // Thing edges
-            class Has(source: Vertex.Thing, target: Vertex.Thing.Attribute) : Edge(source, target) {
+            class Has(source: Vertex.Thing, target: Vertex.Thing.Attribute, override val isInferred: Boolean = false)
+                : Edge(source, target), Inferrable {
+
                 override val label = Labels.HAS
             }
 
-            class Roleplayer(source: Vertex.Thing, target: Vertex.Thing.Relation, val role: String)
-                : Edge(source, target) {
+            class Roleplayer(
+                source: Vertex.Thing.Relation, target: Vertex.Thing, val role: String,
+                override val isInferred: Boolean = false
+            ) : Edge(source, target), Inferrable {
 
                 override val label = role
             }
@@ -497,22 +518,30 @@ internal object GraphOutput : RunOutput() {
 
         sealed class EdgeCandidate {
 
+            interface Inferrable {
+                val isInferred: Boolean
+            }
+
             // Type edges
             class Sub(val source: Vertex.Type, val targetLabel: String) : EdgeCandidate() {
-                fun toEdge(target: Vertex.Type) = Edge.Sub(source, target)
+                fun toEdge(target: Vertex.Type) = Edge.Sub(source, target).also { /*println("promoted SUB edge candidate: [${source.label.fullText} -> ${target.label.fullText}]")*/}
             }
 
             class Owns(val source: Vertex.Type, val targetLabel: String) : EdgeCandidate() {
                 fun toEdge(target: Vertex.Type.Attribute) = Edge.Owns(source, target)
             }
 
-            class Plays(val sourceLabel: String, val target: Vertex.Type.Relation, val role: String) : EdgeCandidate() {
-                fun toEdge(source: Vertex.Type) = Edge.Plays(source, target, role)
+            class Plays(val sourceLabel: String, val target: Vertex.Type, val role: String) : EdgeCandidate() {
+
+                fun toEdge(source: Vertex.Type.Relation) = Edge.Plays(source, target, role)
             }
 
             // Thing edges
-            class Has(val source: Vertex.Thing, val targetLabel: String) : EdgeCandidate() {
-                fun toEdge(target: Vertex.Thing.Attribute) = Edge.Has(source, target)
+            class Has(
+                val source: Vertex.Thing, val targetIID: String, override val isInferred: Boolean = false
+            ) : EdgeCandidate(), Inferrable {
+
+                fun toEdge(target: Vertex.Thing.Attribute) = Edge.Has(source, target, isInferred)
             }
 
             // Thing-to-type edges
@@ -547,11 +576,11 @@ internal object GraphOutput : RunOutput() {
             private fun putVertexIfAbsent(concept: Concept): PutVertexResult {
                 when {
                     concept.isThing -> concept.asThing().let { thing ->
-                        val added = ctx.graph.putThingVertex(thing.iid) { Vertex.Thing.of(thing) }
+                        val added = ctx.graph.putThingVertexIfAbsent(thing.iid) { Vertex.Thing.of(thing) }
                         return PutVertexResult(added, ctx.graph.thingVertices[thing.iid]!!)
                     }
                     concept.isThingType -> concept.asThingType().let { type ->
-                        val added = ctx.graph.putTypeVertex(type.label.name()) { Vertex.Type.of(type) }
+                        val added = ctx.graph.putTypeVertexIfAbsent(type.label.name()) { Vertex.Type.of(type) }
                         return PutVertexResult(added, ctx.graph.typeVertices[type.label.name()]!!)
                     }
                     else -> throw ctx.unsupportedEncodingException(concept)
@@ -570,7 +599,7 @@ internal object GraphOutput : RunOutput() {
             abstract suspend fun load()
 
             protected suspend fun runAsync(fn: () -> Unit) {
-                ctx.coroutineScope.launch {
+                ctx.coroutineScope.launch(Dispatchers.IO) {
                     try {
                         fn()
                     } catch (e: Exception) {
@@ -593,45 +622,119 @@ internal object GraphOutput : RunOutput() {
                 val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
                 val thingVertex: Vertex.Thing, ctx: AnswerLoaderContext
             ) : ConnectedConceptLoader(ctx) {
+                private val remoteThing = thing.asRemote(ctx.transaction)
 
                 override suspend fun load() {
-                    addIsaEdge()
+                    loadIsaEdge()
+                    loadHasEdges()
+                    if (thing.isRelation) loadRoleplayerEdgesAndVertices()
                 }
 
-                private fun addIsaEdge() {
+                private fun loadIsaEdge() {
                     thing.type.let { type ->
                         val typeVertex = ctx.graph.typeVertices[type.label.name()]
                         if (typeVertex != null) ctx.graph.addEdge(Edge.Isa(thingVertex, typeVertex))
                         else ctx.graph.addEdgeCandidate(EdgeCandidate.Isa(thingVertex, type.label.name()))
                     }
                 }
+
+                private fun loadHasEdges() {
+                    // construct TypeQL query so that reasoning can run
+                    // test for ability to own attributes, to ensure query will not throw during type inference
+                    if (!canOwnAttributes()) return
+                    val (x, attr) = Pair("x", "attr")
+                    ctx.transaction.query().match(match(`var`(x).iid(thing.iid).has(`var`(attr)))).forEach { answer ->
+                        val attribute = answer.get(attr).asAttribute()
+                        // TODO: test logic (was 'attr in explainables().attributes().keys', not 'attribute.isInferred')
+                        val isEdgeInferred = attribute.isInferred || ownershipIsExplainable(attr, answer)
+                        val attributeVertex = ctx.graph.thingVertices[attribute.iid] as? Vertex.Thing.Attribute
+                        if (attributeVertex != null) {
+                            ctx.graph.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
+                        } else {
+                            ctx.graph.addEdgeCandidate(EdgeCandidate.Has(thingVertex, attribute.iid, isEdgeInferred))
+                        }
+                    }
+                }
+
+                private fun canOwnAttributes(): Boolean {
+                    val typeLabel = thing.type.label.name()
+                    return ctx.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
+                        // non-atomic update as Concept API call is idempotent and cheaper than locking the map
+                        thing.type.asRemote(ctx.transaction).owns.findAny().isPresent
+                    }
+                }
+
+                private fun ownershipIsExplainable(attributeVarName: String, conceptMap: ConceptMap): Boolean {
+                    return attributeVarName in conceptMap.explainables().ownerships().keys.map { it.second() }
+                }
+
+                private fun loadRoleplayerEdgesAndVertices() {
+                    remoteThing.asRelation().playersByRoleType.entries.forEach { (roleType, roleplayers) ->
+                        roleplayers.forEach { roleplayer ->
+                            ctx.graph.putThingVertexIfAbsent(roleplayer.iid) { Vertex.Thing.of(roleplayer) }
+                            val roleplayerVertex = ctx.graph.thingVertices[roleplayer.iid]!!
+                            ctx.graph.addEdge(Edge.Roleplayer(
+                                thingVertex as Vertex.Thing.Relation, roleplayerVertex,
+                                roleType.label.name(), thing.isInferred
+                            ))
+                        }
+                    }
+                }
             }
 
             class ThingType(
-                val thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
-                val typeVertex: Vertex.Type, ctx: AnswerLoaderContext
+                thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
+                private val typeVertex: Vertex.Type, ctx: AnswerLoaderContext
             ) : ConnectedConceptLoader(ctx) {
+                private val remoteThingType = thingType.asRemote(ctx.transaction)
 
-                override suspend fun load() {
-                    loadSupertype()
+                override suspend fun load() = runAsync {
+                    loadSubEdge()
+                    loadOwnsEdges()
+                    loadPlaysEdges()
                 }
 
-                private suspend fun loadSupertype() = runAsync {
-                    thingType.asRemote(ctx.transaction).supertype?.let { supertype ->
+                private fun loadSubEdge() {
+                    remoteThingType.supertype?.let { supertype ->
                         val supertypeVertex = ctx.graph.typeVertices[supertype.label.name()]
-                        if (supertypeVertex != null) ctx.graph.addEdge(Edge.Sub(typeVertex, supertypeVertex))
-                        else ctx.graph.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name()))
+                        if (supertypeVertex != null) ctx.graph.addEdge(Edge.Sub(typeVertex, supertypeVertex)).also { /*println("added SUB edge [${typeVertex.label.fullText} -> ${supertypeVertex.label.fullText}]")*/ }
+                        else ctx.graph.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name())).also { /*println("added SUB edge candidate: [${typeVertex.label.fullText} -> LABEL[${supertype.label.name()}]]")*/ }
+                    }
+                }
+
+                private fun loadOwnsEdges() {
+                    remoteThingType.owns.forEach { attributeType ->
+                        val attributeTypeLabel = attributeType.label.name()
+                        val attributeTypeVertex = ctx.graph.typeVertices[attributeTypeLabel] as? Vertex.Type.Attribute
+                        if (attributeTypeVertex != null) ctx.graph.addEdge(Edge.Owns(typeVertex, attributeTypeVertex))
+                        else ctx.graph.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attributeTypeLabel))
+                    }
+                }
+
+                private fun loadPlaysEdges() {
+                    remoteThingType.plays.forEach { roleType ->
+                        val relationTypeLabel = roleType.label.scope().get()
+                        val roleLabel = roleType.label.name()
+                        val relationTypeVertex = ctx.graph.typeVertices[relationTypeLabel] as? Vertex.Type.Relation
+                        if (relationTypeVertex != null) {
+                            ctx.graph.addEdge(Edge.Plays(relationTypeVertex, typeVertex, roleLabel))
+                        } else {
+                            ctx.graph.addEdgeCandidate(EdgeCandidate.Plays(relationTypeLabel, typeVertex, roleLabel))
+                        }
                     }
                 }
             }
         }
 
         class AnswerLoaderContext(
-            val graph: Graph, val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope
+            val graph: Graph, val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope,
+            val schema: Schema = Schema()
         ) {
             fun unsupportedEncodingException(concept: Concept): IllegalStateException {
                 return IllegalStateException("[$concept]'s encoding is not supported by ConceptMapLoader")
             }
+
+            class Schema(val typeAttributeOwnershipMap: MutableMap<String, Boolean> = mutableMapOf())
         }
 
         sealed class VertexBackgroundRenderer(

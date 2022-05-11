@@ -78,7 +78,9 @@ internal class RunOutputGroup constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun <T> consumeStream(stream: Response.Stream<T>, output: suspend (T) -> Unit) {
+    private suspend fun <T> consumeStream(
+        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: suspend (T) -> Unit
+    ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
@@ -86,6 +88,7 @@ internal class RunOutputGroup constructor(
             stream.queue.drainTo(responses)
             if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
         } while (responses.lastOrNull()?.isSecond != true)
+        onCompleted?.let { it() }
     }
 
     private suspend fun output(response: Response) {
@@ -101,8 +104,8 @@ internal class RunOutputGroup constructor(
                     ).also { outputs.add(it) }
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
-                    ).also { outputs.add(it) }
-                    consumeStream(response) {
+                    ).also { outputs.add(it); activate(it) }
+                    consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
 //                        log.output(it) // TODO: investigate freezing on a large query
                         table.output(it)
                         graph.output(it)
