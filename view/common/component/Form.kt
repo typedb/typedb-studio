@@ -276,18 +276,36 @@ object Form {
     fun URLText(url: URL, text: String? = null) {
         val uriHandler = LocalUriHandler.current
         ClickableText(
-            text = text ?: url.toString(),
+            value = text ?: url.toString(),
+            color = Theme.colors.secondary,
             onClick = { uriHandler.openUri(url.toString()) }
         )
     }
 
+    @Composable
+    fun ClickableText(
+        value: String,
+        color: Color = Theme.colors.onPrimary,
+        hoverColor: Color = Theme.colors.secondary,
+        onClick: (Int) -> Unit
+    ) { ClickableText(AnnotatedString(value), color, hoverColor, onClick) }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun ClickableText(text: String, onClick: (Int) -> Unit) {
+    fun ClickableText(
+        value: AnnotatedString,
+        color: Color = Theme.colors.onPrimary,
+        hoverColor: Color = Theme.colors.secondary,
+        onClick: (Int) -> Unit
+    ) {
+        var isHover by remember { mutableStateOf(false) }
         ClickableText(
-            text = AnnotatedString(text),
-            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
-            style = Theme.typography.body1.copy(color = Theme.colors.secondary),
+            text = value,
+            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand).pointerMoveFilter(
+                onEnter = { isHover = true; false },
+                onExit = { isHover = false; false }
+            ),
+            style = Theme.typography.body1.copy(if (isHover) hoverColor else color),
             onClick = onClick
         )
     }

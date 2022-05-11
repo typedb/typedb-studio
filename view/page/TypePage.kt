@@ -69,6 +69,7 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color
+import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 class TypePage constructor(private var type: TypeState) : Page(type) {
@@ -234,11 +235,19 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Table.Column(
                     header = Label.ATTRIBUTES,
                     contentAlignment = Alignment.CenterStart,
-                ) { Form.Text(value = fullName(it.attributeType)) },
+                ) { attTypeProps ->
+                    Form.ClickableText(fullName(attTypeProps.attributeType)) {
+                        GlobalState.resource.open(attTypeProps.attributeType)
+                    }
+                },
                 Table.Column(
                     header = Label.OVERRIDES,
                     contentAlignment = Alignment.CenterStart,
-                ) { it.overriddenType?.let { type -> Form.Text(fullName(type)) } },
+                ) { attTypeProps ->
+                    attTypeProps.overriddenType?.let { overriddenType ->
+                        Form.ClickableText(fullName(overriddenType)) { GlobalState.resource.open(overriddenType) }
+                    }
+                },
                 Table.Column(
                     header = Label.KEY,
                     size = Either.first(ICON_COL_WIDTH)
@@ -282,12 +291,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun fullName(type: TypeState): AnnotatedString {
-        val color = Theme.colors.onPrimary
         return buildAnnotatedString {
-            withStyle(SpanStyle(color)) { append(type.name) }
+            append(type.name)
             if (type.isAttributeType && !type.isRoot) {
                 append(" ")
-                withStyle(SpanStyle(color.copy(Color.FADED_OPACITY))) { append("(${type.valueType})") }
+                withStyle(SpanStyle(Theme.colors.onPrimary.copy(FADED_OPACITY))) { append("(${type.valueType})") }
             }
         }
     }

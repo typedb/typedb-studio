@@ -53,8 +53,8 @@ object Table {
 
     data class Column<T>(
         val header: AnnotatedString?,
-        val contentAlignment: Alignment = Alignment.Center,
         val headerAlignment: Alignment = Alignment.Center,
+        val contentAlignment: Alignment = Alignment.Center,
         val size: Either<Dp, Float> = Either.second(1f),
         val content: @Composable (T) -> Unit
     ) {
@@ -64,7 +64,7 @@ object Table {
             headerAlignment: Alignment = Alignment.Center,
             size: Either<Dp, Float> = Either.second(1f),
             function: @Composable (T) -> Unit
-        ) : this(AnnotatedString(header), contentAlignment, headerAlignment, size, function)
+        ) : this(AnnotatedString(header), headerAlignment, contentAlignment, size, function)
     }
 
     val ROW_HEIGHT = 36.dp
