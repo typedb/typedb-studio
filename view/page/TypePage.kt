@@ -40,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,12 +62,12 @@ import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
-import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
@@ -208,7 +207,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributesSection() {
-        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
+        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
 
         @Composable
         fun MayTick(boolean: Boolean) {
@@ -227,39 +226,20 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             )
         }
 
-        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
         Table.Layout(
             items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
-                Table.Column(
-                    header = Label.ATTRIBUTES,
-                    contentAlignment = Alignment.CenterStart,
-                ) { attTypeProps ->
-                    Form.ClickableText(fullName(attTypeProps.attributeType)) {
-                        GlobalState.resource.open(attTypeProps.attributeType)
-                    }
+                Table.Column(header = Label.ATTRIBUTES, contentAlignment = Alignment.CenterStart) { props ->
+                    ClickableText(fullName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
                 },
-                Table.Column(
-                    header = Label.OVERRIDES,
-                    contentAlignment = Alignment.CenterStart,
-                ) { attTypeProps ->
-                    attTypeProps.overriddenType?.let { overriddenType ->
-                        Form.ClickableText(fullName(overriddenType)) { GlobalState.resource.open(overriddenType) }
-                    }
+                Table.Column(header = Label.OVERRIDES, contentAlignment = Alignment.CenterStart) { props ->
+                    props.overriddenType?.let { ot -> ClickableText(fullName(ot)) { GlobalState.resource.open(ot) } }
                 },
-                Table.Column(
-                    header = Label.KEY,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayTick(it.isKey) },
-                Table.Column(
-                    header = Label.INHERITED,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayTick(it.isInherited) },
-                Table.Column(
-                    header = null,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayRemoveOwnedAttributeButton(it) },
+                Table.Column(header = Label.KEY, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isKey) },
+                Table.Column(header = Label.INHERITED, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isInherited) },
+                Table.Column(header = null, size = Either.first(ICON_COL_WIDTH)) { MayRemoveOwnedAttributeButton(it) },
             )
         )
     }
