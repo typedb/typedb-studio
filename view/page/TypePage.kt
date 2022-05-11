@@ -76,6 +76,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     override val icon: Form.IconArg = typeIcon(type)
 
+    private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
@@ -97,7 +98,6 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     override fun Content() {
-        val focusReq = remember { FocusRequester() }
         val density = LocalDensity.current.density
         val bgColor = Theme.colors.background0
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()

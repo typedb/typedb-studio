@@ -134,10 +134,7 @@ object Table {
     @Composable
     private fun EmptyRow() {
         Box(Modifier.fillMaxSize().background(Theme.colors.background1), Alignment.Center) {
-            Form.Text(
-                value = "(" + Label.NONE.lowercase() + ")",
-                color = Theme.colors.onBackground.copy(alpha = FADED_OPACITY)
-            )
+            Form.Text(value = "(" + Label.NONE.lowercase() + ")", alpha = FADED_OPACITY)
         }
     }
 
