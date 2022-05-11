@@ -227,7 +227,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             )
         }
 
-        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size)
+        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
         Table.Layout(
             items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),

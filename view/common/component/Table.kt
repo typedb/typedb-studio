@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,7 +47,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Table {
@@ -118,12 +121,23 @@ object Table {
         val scroller = rememberLazyListState()
         var height by remember { mutableStateOf(0.dp) }
         Box(Modifier.fillMaxWidth().onSizeChanged { height = toDP(it.height, density) }) {
-            LazyColumn(Modifier, state = scroller) {
+            if (items.isEmpty()) EmptyRow()
+            else LazyColumn(Modifier, state = scroller) {
                 items(items.count()) {
                     Row(items[it], it, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
                 }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(scroller), Modifier.align(Alignment.CenterEnd), height)
+        }
+    }
+
+    @Composable
+    private fun EmptyRow() {
+        Box(Modifier.fillMaxSize().background(Theme.colors.background1), Alignment.Center) {
+            Form.Text(
+                value = "(" + Label.NONE.lowercase() + ")",
+                color = Theme.colors.onBackground.copy(alpha = FADED_OPACITY)
+            )
         }
     }
 
