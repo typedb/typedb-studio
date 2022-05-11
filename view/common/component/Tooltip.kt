@@ -173,7 +173,7 @@ object Tooltip {
                         Row(contentMod, Arrangement.SpaceBetween) {
                             Text(value = state.arg.title, softWrap = true)
                             if (!showAll && hasDetails) {
-                                ClickableText(Label.READ_MORE) {
+                                ClickableText(Label.READ_MORE, Theme.colors.secondary) {
                                     state.keepShowingOnTooltipHover(true)
                                     showAll = true
                                 }

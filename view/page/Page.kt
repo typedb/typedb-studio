@@ -59,7 +59,6 @@ abstract class Page(var resource: Resource) {
     private var frameState: Frame.FrameState? by mutableStateOf(null)
     internal var tabSize by mutableStateOf(0.dp)
 
-    internal abstract val name: String
     internal abstract val icon: IconArg
 
     internal abstract fun updateResourceInner(resource: Resource)

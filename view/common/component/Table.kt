@@ -22,29 +22,42 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Table {
 
     data class Column<T>(
         val header: AnnotatedString?,
-        val contentAlignment: Alignment = Alignment.Center,
         val headerAlignment: Alignment = Alignment.Center,
+        val contentAlignment: Alignment = Alignment.Center,
         val size: Either<Dp, Float> = Either.second(1f),
         val content: @Composable (T) -> Unit
     ) {
@@ -54,7 +67,7 @@ object Table {
             headerAlignment: Alignment = Alignment.Center,
             size: Either<Dp, Float> = Either.second(1f),
             function: @Composable (T) -> Unit
-        ) : this(AnnotatedString(header), contentAlignment, headerAlignment, size, function)
+        ) : this(AnnotatedString(header), headerAlignment, contentAlignment, size, function)
     }
 
     val ROW_HEIGHT = 36.dp
@@ -71,33 +84,73 @@ object Table {
         modifier: Modifier = Modifier,
         rowHeight: Dp = ROW_HEIGHT,
         columnBorderSize: Dp = COLUMN_BORDER_SIZE,
-        cellPaddingHorizontal: Dp = CELL_PADDING_HORIZONTAL,
-        cellPaddingVertical: Dp = CELL_PADDING_VERTICAL,
+        horCellPadding: Dp = CELL_PADDING_HORIZONTAL,
+        verCellPadding: Dp = CELL_PADDING_VERTICAL,
         columns: List<Column<T>>
     ) {
-        LazyColumn(modifier.border(1.dp, Theme.colors.border)) {
-            item {
-                Row(Modifier.fillMaxWidth().height(rowHeight)) {
-                    columns.forEach { col ->
-                        Box(
-                            contentAlignment = col.headerAlignment,
-                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
-                                .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
-                        ) { col.header?.let { Form.Text(it) } }
-                    }
+        Column(modifier.border(1.dp, Theme.colors.border)) {
+            Header(rowHeight, horCellPadding, verCellPadding, columns)
+            Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+        }
+    }
+
+    @Composable
+    private fun <T> Header(
+        rowHeight: Dp,
+        cellPaddingHorizontal: Dp,
+        cellPaddingVertical: Dp,
+        columns: List<Column<T>>
+    ) {
+        Row(Modifier.fillMaxWidth().height(rowHeight)) {
+            columns.forEach { col ->
+                Box(
+                    contentAlignment = col.headerAlignment,
+                    modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                        .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
+                ) { col.header?.let { Form.Text(it) } }
+            }
+        }
+    }
+
+    @Composable
+    private fun <T> Body(
+        items: List<T>, rowHeight: Dp, columnBorderSize: Dp,
+        horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>,
+    ) {
+        val density = LocalDensity.current.density
+        val scroller = rememberLazyListState()
+        var height by remember { mutableStateOf(0.dp) }
+        Box(Modifier.fillMaxWidth().onSizeChanged { height = toDP(it.height, density) }) {
+            if (items.isEmpty()) EmptyRow()
+            else LazyColumn(Modifier, state = scroller) {
+                items(items.count()) {
+                    Row(items[it], it, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
                 }
             }
-            items(items.count()) { rowID ->
-                Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
-                    columns.forEach { col ->
-                        Box(
-                            contentAlignment = col.contentAlignment,
-                            modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
-                                .fillMaxHeight().background(bgColor(rowID))
-                                .padding(cellPaddingHorizontal, cellPaddingVertical)
-                        ) { col.content(items[rowID]) }
-                    }
-                }
+            Scrollbar.Vertical(rememberScrollbarAdapter(scroller), Modifier.align(Alignment.CenterEnd), height)
+        }
+    }
+
+    @Composable
+    private fun EmptyRow() {
+        Box(Modifier.fillMaxSize().background(Theme.colors.background1), Alignment.Center) {
+            Form.Text(value = "(" + Label.NONE.lowercase() + ")", alpha = FADED_OPACITY)
+        }
+    }
+
+    @Composable
+    private fun <T> Row(
+        item: T, rowID: Int, rowHeight: Dp, columnBorderSize: Dp,
+        horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
+    ) {
+        Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
+            columns.forEach { col ->
+                Box(
+                    contentAlignment = col.contentAlignment,
+                    modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                        .fillMaxHeight().background(bgColor(rowID))
+                        .padding(horCellPadding, verCellPadding)
+                ) { col.content(item) }
             }
         }
     }

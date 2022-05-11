@@ -40,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +47,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
@@ -55,21 +58,24 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
+import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 class TypePage constructor(private var type: TypeState) : Page(type) {
 
-    override val name: String = type.name
     override val icon: Form.IconArg = typeIcon(type)
 
+    private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
@@ -91,7 +97,6 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     override fun Content() {
-        val focusReq = remember { FocusRequester() }
         val density = LocalDensity.current.density
         val bgColor = Theme.colors.background0
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
@@ -162,13 +167,9 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun TitleSection() {
         SectionLine {
-            Form.TextBox(value = type.name, leadingIcon = typeIcon(type))
+            Form.TextBox(text = fullName(type), leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.RENAME)
-            ) { } // TODO
+            EditButton { } // TODO
             Form.IconButton(
                 icon = Icon.Code.ROTATE,
                 tooltip = Tooltip.Arg(Label.REFRESH)
@@ -186,15 +187,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.SUPERTYPE)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.name ?: "(${Label.NONE.lowercase()})",
+                text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = type.supertype != null,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.EDIT)
-            ) { } // TODO
+            EditButton { } // TODO
         }
     }
 
@@ -204,17 +201,13 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.Text(value = Label.ABSTRACT)
             Separator.Horizontal(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            Form.IconButton(
-                icon = Icon.Code.PEN,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(Label.EDIT)
-            ) { } // TODO
+            EditButton { } // TODO
         }
     }
 
     @Composable
     private fun OwnedAttributesSection() {
-        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
+        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
 
         @Composable
         fun MayTick(boolean: Boolean) {
@@ -222,40 +215,31 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         @Composable
-        fun MayRemoveOwnedAttributButton(attTypeProp: TypeState.AttributeTypeProperties) {
+        fun MayRemoveOwnedAttributeButton(attTypeProp: TypeState.AttributeTypeProperties) {
             if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
                 modifier = Modifier.size(BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
-                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE),
+                enabled = isEditable,
+                tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
             )
         }
 
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
         Table.Layout(
             items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
-            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * type.ownedAttributes.size),
+            modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
-                Table.Column(
-                    header = Label.ATTRIBUTES,
-                    contentAlignment = Alignment.CenterStart,
-                ) { Form.Text(value = it.attributeType.name) },
-                Table.Column(
-                    header = Label.OVERRIDES,
-                    contentAlignment = Alignment.CenterStart,
-                ) { it.overridden?.name?.let { o -> Form.Text(o) } },
-                Table.Column(
-                    header = Label.KEY,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayTick(it.isKey) },
-                Table.Column(
-                    header = Label.INHERITED,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayTick(it.isInherited) },
-                Table.Column(
-                    header = null,
-                    size = Either.first(ICON_COL_WIDTH)
-                ) { MayRemoveOwnedAttributButton(it) },
+                Table.Column(header = Label.ATTRIBUTES, contentAlignment = Alignment.CenterStart) { props ->
+                    ClickableText(fullName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
+                },
+                Table.Column(header = Label.OVERRIDES, contentAlignment = Alignment.CenterStart) { props ->
+                    props.overriddenType?.let { ot -> ClickableText(fullName(ot)) { GlobalState.resource.open(ot) } }
+                },
+                Table.Column(header = Label.KEY, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isKey) },
+                Table.Column(header = Label.INHERITED, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isInherited) },
+                Table.Column(header = null, size = Either.first(ICON_COL_WIDTH)) { MayRemoveOwnedAttributeButton(it) },
             )
         )
     }
@@ -283,5 +267,26 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun DeleteButton() {
 
+    }
+
+    @Composable
+    private fun fullName(type: TypeState): AnnotatedString {
+        return buildAnnotatedString {
+            append(type.name)
+            if (type.isAttributeType && !type.isRoot) {
+                append(" ")
+                withStyle(SpanStyle(Theme.colors.onPrimary.copy(FADED_OPACITY))) { append("(${type.valueType})") }
+            }
+        }
+    }
+
+    @Composable
+    private fun EditButton(onClick: () -> Unit) {
+        Form.IconButton(
+            icon = Icon.Code.PEN,
+            enabled = isEditable,
+            tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+            onClick = onClick
+        )
     }
 }

@@ -107,7 +107,7 @@ object Studio {
 
     private fun getMainWindowTitle(): String {
         val projectName = GlobalState.project.current?.directory?.name
-        val pageName = GlobalState.resource.active?.fullName
+        val pageName = GlobalState.resource.active?.windowTitle
         return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
     }
 

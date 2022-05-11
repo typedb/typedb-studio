@@ -276,25 +276,54 @@ object Form {
     fun URLText(url: URL, text: String? = null) {
         val uriHandler = LocalUriHandler.current
         ClickableText(
-            text = text ?: url.toString(),
+            value = text ?: url.toString(),
+            color = Theme.colors.secondary,
             onClick = { uriHandler.openUri(url.toString()) }
         )
     }
 
+    @Composable
+    fun ClickableText(
+        value: String,
+        color: Color = Theme.colors.onPrimary,
+        hoverColor: Color = Theme.colors.secondary,
+        onClick: (Int) -> Unit
+    ) { ClickableText(AnnotatedString(value), color, hoverColor, onClick) }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun ClickableText(text: String, onClick: (Int) -> Unit) {
+    fun ClickableText(
+        value: AnnotatedString,
+        color: Color = Theme.colors.onPrimary,
+        hoverColor: Color = Theme.colors.secondary,
+        onClick: (Int) -> Unit
+    ) {
+        var isHover by remember { mutableStateOf(false) }
         ClickableText(
-            text = AnnotatedString(text),
-            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
-            style = Theme.typography.body1.copy(color = Theme.colors.secondary),
+            text = value,
+            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand).pointerMoveFilter(
+                onEnter = { isHover = true; false },
+                onExit = { isHover = false; false }
+            ),
+            style = Theme.typography.body1.copy(if (isHover) hoverColor else color),
             onClick = onClick
         )
     }
 
     @Composable
     fun TextBox(
-        value: String,
+        text: String,
+        modifier: Modifier = Modifier,
+        textColor: Color = Theme.colors.onPrimary,
+        bgColor: Color = Theme.colors.primary,
+        trailingIcon: IconArg? = null,
+        leadingIcon: IconArg? = null,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL
+    ) { TextBox(AnnotatedString(text), modifier, textColor, bgColor, trailingIcon, leadingIcon, roundedCorners) }
+
+    @Composable
+    fun TextBox(
+        text: AnnotatedString,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,
@@ -312,7 +341,7 @@ object Form {
                 Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
             }
             ButtonSpacer()
-            Text(value, textStyle = Theme.typography.body1, color = textColor)
+            Text(text, textStyle = Theme.typography.body1, color = textColor)
             ButtonSpacer()
             trailingIcon?.let {
                 Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
@@ -546,6 +575,26 @@ object Form {
     @Composable
     fun TextButton(
         text: String,
+        modifier: Modifier = Modifier,
+        textColor: Color = Theme.colors.onPrimary,
+        bgColor: Color = Theme.colors.primary,
+        focusReq: FocusRequester? = null,
+        leadingIcon: IconArg? = null,
+        trailingIcon: IconArg? = null,
+        roundedCorners: RoundedCorners = RoundedCorners.ALL,
+        enabled: Boolean = true,
+        tooltip: Tooltip.Arg? = null,
+        onClick: () -> Unit,
+    ) {
+        TextButton(
+            AnnotatedString(text), modifier, textColor, bgColor, focusReq, leadingIcon, trailingIcon,
+            roundedCorners, enabled, tooltip, onClick
+        )
+    }
+
+    @Composable
+    fun TextButton(
+        text: AnnotatedString,
         modifier: Modifier = Modifier,
         textColor: Color = Theme.colors.onPrimary,
         bgColor: Color = Theme.colors.primary,

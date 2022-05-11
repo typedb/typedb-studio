@@ -491,7 +491,7 @@ object Navigator {
             )
             item.info?.let {
                 Spacer(Modifier.width(TEXT_SPACING))
-                Text(value = "( $it )", alpha = 0.4f)
+                Text(value = "( $it )", alpha = FADED_OPACITY)
             }
         }
     }

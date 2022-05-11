@@ -121,7 +121,7 @@ class File internal constructor(
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-    override val fullName: String = computeFullName(path, projectMgr)
+    override val windowTitle: String = computeWindowTitle(path, projectMgr)
     override val runContent: String get() {
         callbacks.beforeRun.forEach { it(this) }
         return content.joinToString("\n")
@@ -147,7 +147,7 @@ class File internal constructor(
         return type != null && type.startsWith("text")
     }
 
-    private fun computeFullName(path: Path, projectMgr: ProjectManager): String {
+    private fun computeWindowTitle(path: Path, projectMgr: ProjectManager): String {
         return if (isUnsavedResource) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
