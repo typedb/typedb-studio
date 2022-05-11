@@ -181,7 +181,7 @@ internal object LogOutput : RunOutput() {
                 is Attribute<*> -> str.append(Strings.valueToString(thing.value))
                 else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
             }
-            if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
+//            if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
             str.append(" ").append(TypeQLToken.Constraint.ISA).append(" ")
                 .append(thing.asThing().type.label.scopedName())
             return str.toString()

@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
@@ -99,17 +100,20 @@ internal class RunOutputGroup constructor(
                 is Response.Stream.NumericGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMapGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMaps -> {
-                    val table = TableOutput.State(
-                        transaction = runner.transaction, number = tableCount.incrementAndGet()
-                    ).also { outputs.add(it) }
+//                    val table = TableOutput.State(
+//                        transaction = runner.transaction, number = tableCount.incrementAndGet()
+//                    ).also { outputs.add(it) }
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
-                    consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
-//                        log.output(it) // TODO: investigate freezing on a large query
-                        table.output(it)
+//                    val conceptMaps: MutableList<ConceptMap> = mutableListOf()
+                    consumeStream(response, onCompleted = { /*graph.onQueryCompleted()*/ }) {
+//                        conceptMaps += it
+                        log.output(it) // TODO: investigate freezing on a large query
+//                        table.output(it)
                         graph.output(it)
                     }
+//                    log.output(conceptMaps)
                 }
             }
             is Response.Done -> {}

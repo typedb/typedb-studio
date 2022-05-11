@@ -88,6 +88,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
@@ -183,7 +184,7 @@ internal object GraphOutput : RunOutput() {
             val thingVertices: Map<String, Vertex.Thing> get() = _thingVertices
             val typeVertices: Map<String, Vertex.Type> get() = _typeVertices
             val vertices: Collection<Vertex> get() = thingVertices.values + typeVertices.values
-            private val _edges: MutableList<Edge> = mutableListOf()
+            private val _edges: MutableList<Edge> = Collections.synchronizedList(mutableListOf())
             val edges: Collection<Edge> get() = _edges
             private val edgeCandidates: MutableMap<String, MutableList<EdgeCandidate>> = mutableMapOf()
 
@@ -195,18 +196,18 @@ internal object GraphOutput : RunOutput() {
             }
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
-                var added = false
-                val vertex = _thingVertices.computeIfAbsent(iid) { added = true; vertexFn() }
-                if (added) {
-                    physics.placeVertex(vertex.geometry)
-                    completeEdges(missingVertex = vertex)
-                }
-                return added
+                return putVertexIfAbsent(iid, _thingVertices, vertexFn)
             }
 
             fun putTypeVertexIfAbsent(label: String, vertexFn: () -> Vertex.Type): Boolean {
+                return putVertexIfAbsent(label, _typeVertices, vertexFn)
+            }
+
+            private fun <VERTEX: Vertex> putVertexIfAbsent(
+                key: String, vertexMap: MutableMap<String, VERTEX>, vertexFn: () -> VERTEX
+            ): Boolean {
                 var added = false
-                val vertex = _typeVertices.computeIfAbsent(label) { added = true; vertexFn() }
+                val vertex = vertexMap.computeIfAbsent(key) { added = true; vertexFn() }
                 if (added) {
                     physics.placeVertex(vertex.geometry)
                     completeEdges(missingVertex = vertex)
@@ -267,6 +268,7 @@ internal object GraphOutput : RunOutput() {
 
                 fun placeVertex(vertex: com.vaticle.force.graph.api.Vertex) {
                     simulation.placeVertex(vertex)
+                    simulation.alpha = simulation.alpha.coerceAtLeast(0.2)
                 }
 
                 fun terminate() {
@@ -280,7 +282,9 @@ internal object GraphOutput : RunOutput() {
 
                         // TODO: track changes to vertices + edges, rebuild forces only if there are changes
                         val vertices = graph.vertices.map { it.geometry }
-                        val edges = graph.edges.map { it.physics }
+                        val edges = synchronized(graph.edges) {
+                            graph.edges.map { it.physics }
+                        }
                         forces.add(CenterForce(vertices, 0.0, 0.0))
                         forces.add(CollideForce(vertices, 65.0))
                         forces.add(
@@ -565,7 +569,7 @@ internal object GraphOutput : RunOutput() {
                         val (added, vertex) = putVertexIfAbsent(concept)
                         if (added) {
                             if (concept.isThing && concept.asThing().isInferred) initExplainables(concept, varName)
-                            ConnectedConceptLoader.of(concept, vertex, ctx).load()
+                            EdgeLoader.of(concept, vertex, ctx).load()
                         }
                     }
                     concept.isRoleType -> { /* do nothing */ }
@@ -594,7 +598,7 @@ internal object GraphOutput : RunOutput() {
             data class PutVertexResult(val added: Boolean, val vertex: Vertex)
         }
 
-        sealed class ConnectedConceptLoader(val ctx: AnswerLoaderContext) {
+        sealed class EdgeLoader(val ctx: AnswerLoaderContext) {
 
             abstract suspend fun load()
 
@@ -609,7 +613,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             companion object {
-                fun of(concept: Concept, vertex: Vertex, ctx: AnswerLoaderContext): ConnectedConceptLoader {
+                fun of(concept: Concept, vertex: Vertex, ctx: AnswerLoaderContext): EdgeLoader {
                     return when {
                         concept.isThing -> Thing(concept.asThing(), vertex as Vertex.Thing, ctx)
                         concept.isThingType -> ThingType(concept.asThingType(), vertex as Vertex.Type, ctx)
@@ -621,10 +625,10 @@ internal object GraphOutput : RunOutput() {
             class Thing(
                 val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
                 val thingVertex: Vertex.Thing, ctx: AnswerLoaderContext
-            ) : ConnectedConceptLoader(ctx) {
+            ) : EdgeLoader(ctx) {
                 private val remoteThing = thing.asRemote(ctx.transaction)
 
-                override suspend fun load() {
+                override suspend fun load() = runAsync {
                     loadIsaEdge()
                     loadHasEdges()
                     if (thing.isRelation) loadRoleplayerEdgesAndVertices()
@@ -685,7 +689,7 @@ internal object GraphOutput : RunOutput() {
             class ThingType(
                 thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
                 private val typeVertex: Vertex.Type, ctx: AnswerLoaderContext
-            ) : ConnectedConceptLoader(ctx) {
+            ) : EdgeLoader(ctx) {
                 private val remoteThingType = thingType.asRemote(ctx.transaction)
 
                 override suspend fun load() = runAsync {
@@ -826,12 +830,14 @@ internal object GraphOutput : RunOutput() {
             }
 
             private fun edgeCoordinates(edges: Iterable<Edge>): List<Offset> {
-                return sequence {
-                    edges.forEach {
-                        yield((it.source.geometry.position - state.viewport.position) * density)
-                        yield((it.target.geometry.position - state.viewport.position) * density)
-                    }
-                }.toList()
+                synchronized(edges) {
+                    return sequence {
+                        edges.forEach {
+                            yield((it.source.geometry.position - state.viewport.position) * density)
+                            yield((it.target.geometry.position - state.viewport.position) * density)
+                        }
+                    }.toList()
+                }
             }
         }
 
@@ -839,7 +845,7 @@ internal object GraphOutput : RunOutput() {
 
         class SimulationRunner(private val state: State) {
 
-            private var isTickRunning = false
+            private var isStepRunning = false
             private var lastFrameTime = System.currentTimeMillis()
 
             suspend fun run() {
@@ -847,8 +853,8 @@ internal object GraphOutput : RunOutput() {
                     withFrameMillis {
                         if (isReadyToTick()) {
                             lastFrameTime = System.currentTimeMillis()
-                            isTickRunning = true
-                            tickAsync().invokeOnCompletion { isTickRunning = false }
+                            isStepRunning = true
+                            stepAsync().invokeOnCompletion { isStepRunning = false }
                         }
                     }
                 }
@@ -856,12 +862,12 @@ internal object GraphOutput : RunOutput() {
 
             private fun isReadyToTick(): Boolean {
                 return System.currentTimeMillis() - lastFrameTime > 16
-                        && !isTickRunning
+                        && !isStepRunning
                         && state.graph.isNotEmpty()
                         && !state.graph.physics.isStable
             }
 
-            private fun tickAsync(): Job {
+            private fun stepAsync(): Job {
                 return state.coroutineScope.launch {
                     try {
                         state.graph.physics.step()
@@ -947,7 +953,7 @@ internal object GraphOutput : RunOutput() {
     private fun VertexLayer(state: State) {
         val vertices = state.graph.vertices
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it, state) } }
-        if (vertices.size <= 1000) vertices.forEach { VertexLabel(it, state) }
+        if (vertices.size <= 500) vertices.forEach { VertexLabel(it, state) }
     }
 
     private fun DrawScope.drawVertexBackground(vertex: State.Vertex, state: State) {

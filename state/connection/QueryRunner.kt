@@ -81,7 +81,7 @@ class QueryRunner constructor(
         const val RESULT_ = "## Result> "
         const val ERROR_ = "## Error> "
         const val RUNNING_ = "## Running> "
-        const val COMPLETED = "## Completed"
+        const val COMPLETED = "## Completed in %dms"
         const val DEFINE_QUERY = "Define query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY = "Undefine query:"
@@ -290,6 +290,7 @@ class QueryRunner constructor(
         noResultMsg: String,
         stream: Response.Stream<T>
     ) {
+        val startTime = System.currentTimeMillis()
         var started = false
         collectEmptyLine()
         results.peek {
@@ -304,7 +305,7 @@ class QueryRunner constructor(
         if (started) {
             stream.queue.put(Either.second(Response.Done))
             collectEmptyLine()
-            collectMessage(INFO, COMPLETED)
+            collectMessage(INFO, COMPLETED.format(System.currentTimeMillis() - startTime))
         } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
     }
 }
