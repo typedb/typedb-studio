@@ -225,7 +225,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributeTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
+        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributeTypeProperties.size + 1).coerceAtLeast(2)
 
         @Composable
         fun MayTick(boolean: Boolean) {
@@ -245,7 +245,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         Table.Layout(
-            items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
+            items = type.ownedAttributeTypeProperties.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.ATTRIBUTES, contentAlignment = Alignment.CenterStart) { props ->
@@ -266,26 +266,33 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributeTypeAddition() {
-        val attributeTypes = GlobalState.schema.rootAttributeType?.subtypes ?: listOf()
         val baseFontColor = Theme.colors.onPrimary
         var attributeType: TypeState? by remember { mutableStateOf(null) }
+        val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes?.filter {
+            !type.ownedAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
+        }?.sortedBy { it.name } ?: listOf()
+
         var overriddenType: TypeState? by remember { mutableStateOf(null) }
-        var isKey: Boolean by remember { mutableStateOf(false) }
+        val overridableTypeList: List<TypeState> = attributeType?.supertypes
+            ?.intersect(type.supertype!!.ownedAttributeTypes)
+            ?.sortedBy { it.name } ?: listOf()
+
         val isOwnable = isEditable && attributeType != null
-        val isOverridable = isEditable && attributeType != null
+        val isOverridable = isEditable && overridableTypeList.isNotEmpty()
         val isKeyable = isEditable && attributeType?.isKeyable == true
+        var isKey: Boolean by remember { mutableStateOf(false) }
 
         SectionLine {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                    values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
                     onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
-                    onSelection = { attributeType = it },
+                    onSelection = { attributeType = it; it.reloadProperties() },
                     displayFn = { fullName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
+                    values = attributeTypeList
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
@@ -293,12 +300,11 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Form.Dropdown(
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
-                    values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
-                    onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
                     onSelection = { overriddenType = it },
                     displayFn = { fullName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isOverridable
+                    enabled = isOverridable,
+                    values = overridableTypeList
                 )
             }
             Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)

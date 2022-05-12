@@ -617,7 +617,9 @@ object Form {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     leadingIcon?.let {
                         ButtonSpacer()
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
+                            Icon.Render(it.code, fadeable(it.color(), !enabled))
+                        }
                     }
                     ButtonSpacer()
                     Text(text, textStyle = Theme.typography.body1, color = fadeable(textColor, !enabled))
@@ -625,7 +627,9 @@ object Form {
                 }
                 trailingIcon?.let {
                     Row {
-                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                        Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
+                            Icon.Render(it.code, fadeable(it.color(), !enabled))
+                        }
                         ButtonSpacer()
                     }
                 }
