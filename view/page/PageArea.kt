@@ -122,7 +122,7 @@ object PageArea {
                 GlobalState.resource.close(resource)
                 if (resource.isUnsavedResource) resource.delete()
             }
-            if (resource.isRunnable && resource.asRunnable().runner.isRunning && !stopRunner) {
+            if (resource.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
                 GlobalState.confirmation.submit(
                     title = Label.QUERY_IS_RUNNING,
                     message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
