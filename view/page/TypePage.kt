@@ -89,7 +89,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val MAX_WIDTH = 900.dp
         private val PAGE_PADDING = 40.dp
         private val HORIZONTAL_SPACING = 8.dp
-        private val VERTICAL_SPACING = 18.dp
+        private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
         private val BUTTON_HEIGHT = 24.dp
     }
@@ -117,15 +117,24 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
+    private fun Separator() {
+        Separator.Horizontal(color = Theme.colors.border.copy(alpha = FADED_OPACITY), modifier = Modifier.fillMaxWidth())
+    }
+
+    @Composable
     private fun TypeSections() {
         TitleSection()
+        Separator()
         SupertypeSection()
+        Separator()
         AbstractSection()
+        Separator()
         when {
             type.isEntityType -> EntityTypeSections()
             type.isRelationType -> RelationTypeSections()
             type.isAttributeType -> AttributeTypeSections()
         }
+        Separator()
         DeleteButton()
     }
 
@@ -188,7 +197,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private fun SupertypeSection() {
         SectionLine {
             Form.Text(value = Label.SUPERTYPE)
-            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
             Form.TextButton(
                 text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
@@ -202,7 +211,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private fun AbstractSection() {
         SectionLine {
             Form.Text(value = Label.ABSTRACT)
-            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
             EditButton { } // TODO
         }

@@ -71,8 +71,10 @@ class TypeState constructor(
     var isAbstract: Boolean by mutableStateOf(false)
     var ownedAttributes: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
     val subtypes: List<TypeState> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
+
     private fun computeInfo(): String? = when {
         type.isAttributeType && !type.isRoot -> valueType
         else -> null
