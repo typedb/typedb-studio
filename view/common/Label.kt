@@ -135,6 +135,7 @@ object Label {
     const val SAVE_OR_DELETE = "Save or Delete"
     const val SCHEMA_SESSION = "Schema Session"
     const val SCRIPT_MODE = "Script Mode"
+    const val SELECT_ATTRIBUTE_TYPE = "Select Attribute Type"
     const val SELECT_DATABASE = "Select Database"
     const val SERVER = "Server"
     const val SESSION_TYPE = "Session Type"

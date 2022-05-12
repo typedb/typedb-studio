@@ -30,7 +30,6 @@ class RunnerManager {
 
     var activeRunner: QueryRunner? by mutableStateOf(null)
     val runners: SnapshotStateList<QueryRunner> = mutableStateListOf()
-    val isRunning: Boolean get() = activeRunner?.isRunning?.get() ?: false
     private val saved: SnapshotStateList<QueryRunner> = mutableStateListOf()
     private val onLaunch = LinkedBlockingQueue<(QueryRunner) -> Unit>()
 

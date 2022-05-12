@@ -40,11 +40,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -63,6 +65,7 @@ import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
+import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -86,7 +89,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val MAX_WIDTH = 900.dp
         private val PAGE_PADDING = 40.dp
         private val HORIZONTAL_SPACING = 8.dp
-        private val VERTICAL_SPACING = 18.dp
+        private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
         private val BUTTON_HEIGHT = 24.dp
     }
@@ -114,15 +117,24 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
+    private fun Separator() {
+        Separator.Horizontal(color = Theme.colors.border.copy(alpha = FADED_OPACITY), modifier = Modifier.fillMaxWidth())
+    }
+
+    @Composable
     private fun TypeSections() {
         TitleSection()
+        Separator()
         SupertypeSection()
+        Separator()
         AbstractSection()
+        Separator()
         when {
             type.isEntityType -> EntityTypeSections()
             type.isRelationType -> RelationTypeSections()
             type.isAttributeType -> AttributeTypeSections()
         }
+        Separator()
         DeleteButton()
     }
 
@@ -185,7 +197,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private fun SupertypeSection() {
         SectionLine {
             Form.Text(value = Label.SUPERTYPE)
-            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
             Form.TextButton(
                 text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
@@ -199,7 +211,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private fun AbstractSection() {
         SectionLine {
             Form.Text(value = Label.ABSTRACT)
-            Separator.Horizontal(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
             EditButton { } // TODO
         }
@@ -207,6 +219,13 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun OwnedAttributesSection() {
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
+        OwnedAttributesTable()
+        OwnedAttributesAddition()
+    }
+
+    @Composable
+    private fun OwnedAttributesTable() {
         val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
 
         @Composable
@@ -226,7 +245,6 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             )
         }
 
-        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
         Table.Layout(
             items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
@@ -242,6 +260,24 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 Table.Column(header = null, size = Either.first(ICON_COL_WIDTH)) { MayRemoveOwnedAttributeButton(it) },
             )
         )
+    }
+
+    @Composable
+    private fun OwnedAttributesAddition() {
+        val attributeTypes = GlobalState.schema.rootAttributeType?.subtypes ?: listOf()
+        val baseFontColor = Theme.colors.onPrimary
+        var selected: TypeState? by remember { mutableStateOf(null) }
+
+        SectionLine {
+            Dropdown(
+                selected = selected,
+                placeholder = Label.SELECT_ATTRIBUTE_TYPE,
+                values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
+                onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
+                onSelection = { selected = it },
+                displayFn = { fullName(it, baseFontColor) },
+            )
+        }
     }
 
     @Composable
@@ -270,12 +306,14 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun fullName(type: TypeState): AnnotatedString {
+    private fun fullName(type: TypeState): AnnotatedString = fullName(type, Theme.colors.onPrimary)
+
+    private fun fullName(type: TypeState, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
             append(type.name)
             if (type.isAttributeType && !type.isRoot) {
                 append(" ")
-                withStyle(SpanStyle(Theme.colors.onPrimary.copy(FADED_OPACITY))) { append("(${type.valueType})") }
+                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${type.valueType})") }
             }
         }
     }

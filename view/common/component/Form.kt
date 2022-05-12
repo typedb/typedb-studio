@@ -781,7 +781,7 @@ object Form {
     fun <T : Any> Dropdown(
         values: List<T>,
         selected: T?,
-        displayFn: (T) -> String = { it.toString() },
+        displayFn: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
         onExpand: (() -> Unit)? = null,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
@@ -817,9 +817,10 @@ object Form {
 
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
+        val placeholderAnnStr = AnnotatedString(placeholder)
         Box {
             TextButton(
-                text = selected?.let { displayFn(it).ifBlank { placeholder } } ?: placeholder,
+                text = selected?.let { displayFn(it).ifBlank { placeholderAnnStr } } ?: placeholderAnnStr,
                 modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }.pointerMoveFilter(
                     onEnter = { state.isButtonHover = true; false },
                     onExit = { state.isButtonHover = false; false }

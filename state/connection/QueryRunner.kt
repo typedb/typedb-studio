@@ -112,7 +112,7 @@ class QueryRunner constructor(
     }
 
     val responses = LinkedBlockingQueue<Response>()
-    val isRunning = AtomicBoolean(false)
+    private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -140,13 +140,15 @@ class QueryRunner constructor(
         var duration = RUNNING_INDICATOR_DELAY
         while (isRunning.get()) {
             delay(duration)
-            if (!isRunning.get()) break
-            val sinceLastResponse = System.currentTimeMillis() - lastResponse.get()
-            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                collectMessage(INFO, "...")
-                duration = RUNNING_INDICATOR_DELAY
-            } else {
-                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+            synchronized(this) {
+                if (!isRunning.get()) return
+                val sinceLastResponse = System.currentTimeMillis() - lastResponse.get()
+                if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+                    collectMessage(INFO, "...")
+                    duration = RUNNING_INDICATOR_DELAY
+                } else {
+                    duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+                }
             }
         }
     }
@@ -158,9 +160,11 @@ class QueryRunner constructor(
             collectEmptyLine()
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
-            responses.put(Response.Done).also { println("runQueries: responses.put(Response.Done)")}
+            synchronized(this) {
+                isRunning.set(false)
+                responses.put(Response.Done)
+            }
             consumerLatch.await()
-            isRunning.set(false)
             onComplete()
         }
     }

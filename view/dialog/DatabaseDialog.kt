@@ -151,7 +151,7 @@ object DatabaseDialog {
 
     @Composable
     fun SelectDatabase() {
-        val dialogState = GlobalState.client.selectDatabaseDialog
+        val dialogState = GlobalState.client.selectDBDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {

@@ -226,7 +226,7 @@ object Studio {
                 if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
                 if (GlobalState.client.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
                 if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
-                if (GlobalState.client.selectDatabaseDialog.isOpen) DatabaseDialog.SelectDatabase()
+                if (GlobalState.client.selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
                 if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
                 if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
                 if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()

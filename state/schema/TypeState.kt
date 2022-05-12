@@ -70,6 +70,7 @@ class TypeState constructor(
     var supertype: TypeState? by mutableStateOf(supertypeInit)
     var isAbstract: Boolean by mutableStateOf(false)
     var ownedAttributes: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
+    val subtypes: List<TypeState> get() = entries.map { listOf(it) + it.subtypes }.flatten()
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
@@ -120,7 +121,7 @@ class TypeState constructor(
     }
 
     private fun loadSupertype() {
-        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createState(it) }
+        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createTypeState(it) }
     }
 
     private fun loadAbstract() {
@@ -133,8 +134,8 @@ class TypeState constructor(
 
         fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
             map[attributeType] = AttributeTypeProperties(
-                attributeType = schemaMgr.createState(attributeType),
-                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createState(it) },
+                attributeType = schemaMgr.createTypeState(attributeType),
+                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
                 isKey = isKey,
                 isInherited = isInherited
             )
@@ -159,6 +160,15 @@ class TypeState constructor(
         // TODO
     }
 
+    fun reloadEntriesRecursively() = schemaMgr.coroutineScope.launch {
+        reloadEntriesRecursivelyBlocking()
+    }
+
+    private fun reloadEntriesRecursivelyBlocking() {
+        reloadEntries()
+        entries.forEach { it.reloadEntriesRecursivelyBlocking() }
+    }
+
     override fun reloadEntries() {
         val tx = schemaMgr.openOrGetReadTx()
         val new = type.asRemote(tx).subtypesExplicit.toList().toSet()
@@ -168,7 +178,7 @@ class TypeState constructor(
             val deleted = old - new
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.type) }
-            val newEntries = added.map { schemaMgr.createState(it) }
+            val newEntries = added.map { schemaMgr.createTypeState(it) }
             entries = (retainedEntries + newEntries).sorted()
             refresh = retainedEntries
         } else refresh = entries
