@@ -156,6 +156,10 @@ class TypeState constructor(
         ownedAttributes = map
     }
 
+    fun addOwnedAttributes(attributeType: TypeState, overriddenType: TypeState?, key: Boolean) {
+        // TODO
+    }
+
     fun removeOwnedAttribute(attType: TypeState) {
         // TODO
     }

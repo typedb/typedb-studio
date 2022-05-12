@@ -34,6 +34,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -50,7 +51,7 @@ class SchemaManager(private val session: SessionState, internal val notification
     private val lastTransactionUse = AtomicLong(0)
     private val types = ConcurrentHashMap<ThingType, TypeState>()
     internal val database: String? get() = session.database
-    internal val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    internal val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     companion object {
         private val TX_IDLE_TIME = Duration.seconds(16)
