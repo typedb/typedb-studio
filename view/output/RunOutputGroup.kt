@@ -77,7 +77,6 @@ internal class RunOutputGroup constructor(
             responses.clear()
             runner.responses.drainTo(responses)
             if (responses.isNotEmpty()) responses.forEach { output(it) }
-            println("repsonses.lastOrNull() = ${responses.lastOrNull()}")
         } while (responses.lastOrNull() != Response.Done)
         runner.isConsumed()
     }
@@ -86,20 +85,14 @@ internal class RunOutputGroup constructor(
     private suspend fun <T> consumeStream(
         stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: suspend (T) -> Unit
     ) {
-        withContext(Dispatchers.Default) {
-            var i = 0
-            while (i < 1e9) { i++; if ((i % 1e8).toInt() == 0) println(i) }
-//            val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
-//            do {
-//                delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
-//                responses.clear()
-//                stream.queue.drainTo(responses)
-//                if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach {
-//                    coroutineScope.launch { output(it.first()) }
-//                }
-//            } while (responses.lastOrNull()?.isSecond != true)
-//            onCompleted?.let { it() }
-        }
+        val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+        do {
+            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            responses.clear()
+            stream.queue.drainTo(responses)
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
+        } while (responses.lastOrNull()?.isSecond != true)
+        onCompleted?.let { it() }
     }
 
     private suspend fun output(response: Response) {
