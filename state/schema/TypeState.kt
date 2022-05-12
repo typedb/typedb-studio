@@ -66,6 +66,7 @@ class TypeState constructor(
     val isAttributeType get() = type.isAttributeType
     val isRoot get() = type.isRoot
     val valueType: String? = computeValueType()
+    val isKeyable: Boolean get() = type.isAttributeType && type.asAttributeType().valueType.isKeyable
 
     var supertype: TypeState? by mutableStateOf(supertypeInit)
     var isAbstract: Boolean by mutableStateOf(false)

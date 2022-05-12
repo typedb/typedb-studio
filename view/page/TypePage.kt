@@ -271,6 +271,9 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         var attributeType: TypeState? by remember { mutableStateOf(null) }
         var overriddenType: TypeState? by remember { mutableStateOf(null) }
         var isKey: Boolean by remember { mutableStateOf(false) }
+        val isOwnable = isEditable && attributeType != null
+        val isOverridable = isEditable && attributeType != null
+        val isKeyable = isEditable && attributeType?.isKeyable == true
 
         SectionLine {
             Box(Modifier.weight(1f)) {
@@ -285,7 +288,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                     enabled = isEditable,
                 )
             }
-            Form.Text(value = Label.AS.lowercase())
+            Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = overriddenType,
@@ -295,18 +298,18 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                     onSelection = { overriddenType = it },
                     displayFn = { fullName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isEditable && attributeType != null
+                    enabled = isOverridable
                 )
             }
-            Form.Text(value = Label.KEY.lowercase())
+            Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)
             Form.Checkbox(
                 value = isKey,
-                enabled = isEditable && attributeType != null
+                enabled = isKeyable
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWN,
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
-                enabled = isEditable && attributeType != null,
+                enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.ADD_OWNED_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.addOwnedAttributes(attributeType!!, overriddenType, isKey) }
             )

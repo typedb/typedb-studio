@@ -89,24 +89,22 @@ object Table {
         columns: List<Column<T>>
     ) {
         Column(modifier.border(1.dp, Theme.colors.border)) {
-            Header(rowHeight, horCellPadding, verCellPadding, columns)
+            Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
             Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
         }
     }
 
     @Composable
     private fun <T> Header(
-        rowHeight: Dp,
-        cellPaddingHorizontal: Dp,
-        cellPaddingVertical: Dp,
-        columns: List<Column<T>>
+        rowHeight: Dp, columnBorderSize: Dp,
+        horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
     ) {
-        Row(Modifier.fillMaxWidth().height(rowHeight)) {
+        Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
             columns.forEach { col ->
                 Box(
                     contentAlignment = col.headerAlignment,
                     modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
-                        .fillMaxHeight().padding(cellPaddingHorizontal, cellPaddingVertical)
+                        .fillMaxHeight().padding(horCellPadding, verCellPadding)
                 ) { col.header?.let { Form.Text(it) } }
             }
         }
