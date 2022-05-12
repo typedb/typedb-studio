@@ -90,7 +90,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val HORIZONTAL_SPACING = 8.dp
         private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
-        private val BUTTON_HEIGHT = 24.dp
+        private val TABLE_BUTTON_HEIGHT = 24.dp
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -236,7 +236,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         fun MayRemoveOwnedAttributeTypeButton(attTypeProp: TypeState.AttributeTypeProperties) {
             if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
-                modifier = Modifier.size(BUTTON_HEIGHT),
+                modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
                 enabled = isEditable,
                 tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -273,37 +273,39 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         var isKey: Boolean by remember { mutableStateOf(false) }
 
         SectionLine {
-            Form.Dropdown(
-                selected = attributeType,
-                placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
-                onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
-                onSelection = { attributeType = it },
-                displayFn = { fullName(it, baseFontColor) },
-                modifier = Modifier.weight(1f),
-                enabled = isEditable,
-            )
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = attributeType,
+                    placeholder = Label.SELECT_ATTRIBUTE_TYPE,
+                    values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
+                    onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
+                    onSelection = { attributeType = it },
+                    displayFn = { fullName(it, baseFontColor) },
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = isEditable,
+                )
+            }
             Form.Text(value = Label.AS.lowercase())
-            Form.Dropdown(
-                selected = overriddenType,
-                placeholder = Label.SELECT_OVERRIDDEN_TYPE,
-                values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
-                onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
-                onSelection = { overriddenType = it },
-                displayFn = { fullName(it, baseFontColor) },
-                modifier = Modifier.weight(1f),
-                enabled = isEditable && attributeType != null
-            )
-            Form.Text(value = Label.KEY)
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = overriddenType,
+                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
+                    onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
+                    onSelection = { overriddenType = it },
+                    displayFn = { fullName(it, baseFontColor) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isEditable && attributeType != null
+                )
+            }
+            Form.Text(value = Label.KEY.lowercase())
             Form.Checkbox(
                 value = isKey,
-                size = BUTTON_HEIGHT,
                 enabled = isEditable && attributeType != null
             ) { isKey = it }
-            Form.IconButton(
-                icon = Icon.Code.PLUS,
-                modifier = Modifier.size(BUTTON_HEIGHT),
-                iconColor = Theme.colors.secondary,
+            Form.TextButton(
+                text = Label.OWN,
+                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
                 enabled = isEditable && attributeType != null,
                 tooltip = Tooltip.Arg(Label.ADD_OWNED_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.addOwnedAttributes(attributeType!!, overriddenType, isKey) }
