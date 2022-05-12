@@ -84,6 +84,7 @@ import com.vaticle.typeql.lang.TypeQL.match
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.awt.Polygon
@@ -114,7 +115,7 @@ internal object GraphOutput : RunOutput() {
 
         private val answerLoaderContext = AnswerLoaderContext(graph, transaction, coroutineScope)
 
-        suspend fun output(conceptMap: ConceptMap) {
+        fun output(conceptMap: ConceptMap) {
             ConceptMapLoader(conceptMap, answerLoaderContext).load()
         }
 
@@ -557,13 +558,13 @@ internal object GraphOutput : RunOutput() {
         class Explanation(val vertices: Set<Vertex>)
 
         class ConceptMapLoader(private val conceptMap: ConceptMap, private val ctx: AnswerLoaderContext) {
-            suspend fun load() {
+            fun load() {
                 conceptMap.map().entries.map { (varName: String, concept: Concept) ->
                     loadEntry(varName, concept)
                 }
             }
 
-            private suspend fun loadEntry(varName: String, concept: Concept) {
+            private fun loadEntry(varName: String, concept: Concept) {
                 when {
                     concept.isThing || concept.isThingType -> {
                         val (added, vertex) = putVertexIfAbsent(concept)
@@ -600,16 +601,16 @@ internal object GraphOutput : RunOutput() {
 
         sealed class EdgeLoader(val ctx: AnswerLoaderContext) {
 
-            abstract suspend fun load()
+            abstract fun load()
 
-            protected suspend fun runAsync(fn: () -> Unit) {
-                ctx.coroutineScope.launch(Dispatchers.IO) {
+            protected fun runAsync(fn: () -> Unit): Job {
+                return ctx.coroutineScope.launch {
                     try {
                         fn()
                     } catch (e: Exception) {
                         GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
                     }
-                }.join()
+                }
             }
 
             companion object {
@@ -628,7 +629,7 @@ internal object GraphOutput : RunOutput() {
             ) : EdgeLoader(ctx) {
                 private val remoteThing = thing.asRemote(ctx.transaction)
 
-                override suspend fun load() = runAsync {
+                override fun load() {
                     loadIsaEdge()
                     loadHasEdges()
                     if (thing.isRelation) loadRoleplayerEdgesAndVertices()
@@ -692,7 +693,7 @@ internal object GraphOutput : RunOutput() {
             ) : EdgeLoader(ctx) {
                 private val remoteThingType = thingType.asRemote(ctx.transaction)
 
-                override suspend fun load() = runAsync {
+                override fun load() {
                     loadSubEdge()
                     loadOwnsEdges()
                     loadPlaysEdges()

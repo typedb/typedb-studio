@@ -33,8 +33,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -74,22 +77,29 @@ internal class RunOutputGroup constructor(
             responses.clear()
             runner.responses.drainTo(responses)
             if (responses.isNotEmpty()) responses.forEach { output(it) }
+            println("repsonses.lastOrNull() = ${responses.lastOrNull()}")
         } while (responses.lastOrNull() != Response.Done)
         runner.isConsumed()
     }
 
-    @OptIn(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
     private suspend fun <T> consumeStream(
         stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: suspend (T) -> Unit
     ) {
-        val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
-        do {
-            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
-            responses.clear()
-            stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
-        } while (responses.lastOrNull()?.isSecond != true)
-        onCompleted?.let { it() }
+        withContext(Dispatchers.Default) {
+            var i = 0
+            while (i < 1e9) { i++; if ((i % 1e8).toInt() == 0) println(i) }
+//            val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+//            do {
+//                delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+//                responses.clear()
+//                stream.queue.drainTo(responses)
+//                if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach {
+//                    coroutineScope.launch { output(it.first()) }
+//                }
+//            } while (responses.lastOrNull()?.isSecond != true)
+//            onCompleted?.let { it() }
+        }
     }
 
     private suspend fun output(response: Response) {
@@ -107,7 +117,7 @@ internal class RunOutputGroup constructor(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
 //                    val conceptMaps: MutableList<ConceptMap> = mutableListOf()
-                    consumeStream(response, onCompleted = { /*graph.onQueryCompleted()*/ }) {
+                    consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
 //                        conceptMaps += it
                         log.output(it) // TODO: investigate freezing on a large query
 //                        table.output(it)

@@ -158,7 +158,7 @@ class QueryRunner constructor(
             collectEmptyLine()
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
-            responses.put(Response.Done)
+            responses.put(Response.Done).also { println("runQueries: responses.put(Response.Done)")}
             consumerLatch.await()
             isRunning.set(false)
             onComplete()
@@ -303,7 +303,7 @@ class QueryRunner constructor(
             stream.queue.put(Either.first(it))
         }
         if (started) {
-            stream.queue.put(Either.second(Response.Done))
+            stream.queue.put(Either.second(Response.Done)).also { println("collectResponseStream: stream.queue.put(Response.Done)")}
             collectEmptyLine()
             collectMessage(INFO, COMPLETED.format(System.currentTimeMillis() - startTime))
         } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
