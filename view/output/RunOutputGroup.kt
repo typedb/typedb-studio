@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
@@ -38,6 +37,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CompletableFuture
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -69,33 +69,35 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    @OptIn(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
     private fun consumeResponses() = coroutineScope.launch {
         val responses: MutableList<Response> = mutableListOf()
         do {
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
             responses.clear()
             runner.responses.drainTo(responses)
-            if (responses.isNotEmpty()) responses.forEach { output(it) }
+            if (responses.isNotEmpty()) withContext(Dispatchers.Default) { responses.forEach { output(it) } }
         } while (responses.lastOrNull() != Response.Done)
         runner.isConsumed()
     }
 
     @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
-    private suspend fun <T> consumeStream(
-        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: suspend (T) -> Unit
+    private fun <T> consumeStream(
+        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+        val tasks: MutableList<CompletableFuture<*>> = mutableListOf()
         do {
-            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            Thread.sleep(CONSUMER_PERIOD_MS.toLong())
             responses.clear()
             stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { tasks += CompletableFuture.supplyAsync { output(it.first()) } }
         } while (responses.lastOrNull()?.isSecond != true)
+        CompletableFuture.allOf(*tasks.toTypedArray()).join()
         onCompleted?.let { it() }
     }
 
-    private suspend fun output(response: Response) {
+    private fun output(response: Response) {
         when (response) {
             is Response.Message -> log.output(response)
             is Response.Numeric -> log.output(response.value)
@@ -103,20 +105,17 @@ internal class RunOutputGroup constructor(
                 is Response.Stream.NumericGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMapGroups -> consumeStream(response) { log.output(it) }
                 is Response.Stream.ConceptMaps -> {
-//                    val table = TableOutput.State(
-//                        transaction = runner.transaction, number = tableCount.incrementAndGet()
-//                    ).also { outputs.add(it) }
+                    val table = TableOutput.State(
+                        transaction = runner.transaction, number = tableCount.incrementAndGet()
+                    ).also { outputs.add(it) }
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
-//                    val conceptMaps: MutableList<ConceptMap> = mutableListOf()
                     consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
-//                        conceptMaps += it
                         log.output(it) // TODO: investigate freezing on a large query
-//                        table.output(it)
+                        table.output(it)
                         graph.output(it)
                     }
-//                    log.output(conceptMaps)
                 }
             }
             is Response.Done -> {}
