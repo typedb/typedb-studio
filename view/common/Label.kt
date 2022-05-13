@@ -20,7 +20,9 @@ package com.vaticle.typedb.studio.view.common
 
 object Label {
     const val ABSTRACT = "Abstract"
+    const val ADD_OWNED_ATTRIBUTE_TYPE = "Add Owned Attribute Type"
     const val ADDRESS = "Address"
+    const val AS = "As"
     const val ATTRIBUTES = "Attributes"
     const val CA_CERTIFICATE = "CA Certificate"
     const val CANCEL = "Cancel"
@@ -93,7 +95,8 @@ object Label {
     const val OPEN_PROJECT_DIRECTORY = "Open Project Directory"
     const val OPTIONAL = "Optional"
     const val OUTPUT = "Output"
-    const val OWNED_ATTRIBUTES = "Owned Attributes"
+    const val OWN = "Own"
+    const val OWNED_ATTRIBUTE_TYPES = "Owned Attributes"
     const val OVERRIDES = "Overrides"
     const val PASSWORD = "Password"
     const val PASTE = "Paste"
@@ -136,6 +139,7 @@ object Label {
     const val SCHEMA_SESSION = "Schema Session"
     const val SCRIPT_MODE = "Script Mode"
     const val SELECT_ATTRIBUTE_TYPE = "Select Attribute Type"
+    const val SELECT_OVERRIDDEN_TYPE_OPTIONAL = "Select Overridden Type (Optional)"
     const val SELECT_DATABASE = "Select Database"
     const val SERVER = "Server"
     const val SESSION_TYPE = "Session Type"

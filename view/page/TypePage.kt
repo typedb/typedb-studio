@@ -65,7 +65,6 @@ import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
-import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
@@ -91,7 +90,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val HORIZONTAL_SPACING = 8.dp
         private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
-        private val BUTTON_HEIGHT = 24.dp
+        private val TABLE_BUTTON_HEIGHT = 24.dp
     }
 
     override fun updateResourceInner(resource: Resource) {
@@ -140,7 +139,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
 
     @Composable
     private fun EntityTypeSections() {
-        OwnedAttributesSection()
+        OwnedAttributeTypesSection()
         PlayedRolesSection()
         SubtypesSection()
     }
@@ -148,7 +147,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun RelationTypeSections() {
         RelatedRolesSection()
-        OwnedAttributesSection()
+        OwnedAttributeTypesSection()
         SubtypesSection()
         AdvanceSections {
             PlayedRolesSection()
@@ -218,15 +217,15 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun OwnedAttributesSection() {
-        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTES) }
-        OwnedAttributesTable()
-        OwnedAttributesAddition()
+    private fun OwnedAttributeTypesSection() {
+        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTE_TYPES) }
+        OwnedAttributeTypesTable()
+        OwnedAttributeTypeAddition()
     }
 
     @Composable
-    private fun OwnedAttributesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributes.size + 1).coerceAtLeast(2)
+    private fun OwnedAttributeTypesTable() {
+        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributeTypeProperties.size + 1).coerceAtLeast(2)
 
         @Composable
         fun MayTick(boolean: Boolean) {
@@ -234,10 +233,10 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         @Composable
-        fun MayRemoveOwnedAttributeButton(attTypeProp: TypeState.AttributeTypeProperties) {
+        fun MayRemoveOwnedAttributeTypeButton(attTypeProp: TypeState.AttributeTypeProperties) {
             if (!attTypeProp.isInherited) Form.IconButton(
                 icon = Icon.Code.MINUS,
-                modifier = Modifier.size(BUTTON_HEIGHT),
+                modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
                 iconColor = Theme.colors.error,
                 enabled = isEditable,
                 tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -246,7 +245,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         }
 
         Table.Layout(
-            items = type.ownedAttributes.values.sortedBy { it.attributeType.name },
+            items = type.ownedAttributeTypeProperties.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.ATTRIBUTES, contentAlignment = Alignment.CenterStart) { props ->
@@ -257,25 +256,68 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 },
                 Table.Column(header = Label.KEY, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isKey) },
                 Table.Column(header = Label.INHERITED, size = Either.first(ICON_COL_WIDTH)) { MayTick(it.isInherited) },
-                Table.Column(header = null, size = Either.first(ICON_COL_WIDTH)) { MayRemoveOwnedAttributeButton(it) },
+                Table.Column(
+                    header = null,
+                    size = Either.first(ICON_COL_WIDTH)
+                ) { MayRemoveOwnedAttributeTypeButton(it) },
             )
         )
     }
 
     @Composable
-    private fun OwnedAttributesAddition() {
-        val attributeTypes = GlobalState.schema.rootAttributeType?.subtypes ?: listOf()
+    private fun OwnedAttributeTypeAddition() {
         val baseFontColor = Theme.colors.onPrimary
-        var selected: TypeState? by remember { mutableStateOf(null) }
+        var attributeType: TypeState? by remember { mutableStateOf(null) }
+        val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes?.filter {
+            !type.ownedAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
+        }?.sortedBy { it.name } ?: listOf()
+
+        var overriddenType: TypeState? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<TypeState> = attributeType?.supertypes
+            ?.intersect(type.supertype!!.ownedAttributeTypes)
+            ?.sortedBy { it.name } ?: listOf()
+
+        val isOwnable = isEditable && attributeType != null
+        val isOverridable = isEditable && overridableTypeList.isNotEmpty()
+        val isKeyable = isEditable && attributeType?.isKeyable == true
+        var isKey: Boolean by remember { mutableStateOf(false) }
 
         SectionLine {
-            Dropdown(
-                selected = selected,
-                placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                values = attributeTypes.filter { !type.ownedAttributes.values.map { it.attributeType }.contains(it) },
-                onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
-                onSelection = { selected = it },
-                displayFn = { fullName(it, baseFontColor) },
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = attributeType,
+                    placeholder = Label.SELECT_ATTRIBUTE_TYPE,
+                    onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
+                    onSelection = { attributeType = it; it.reloadProperties() },
+                    displayFn = { fullName(it, baseFontColor) },
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = isEditable,
+                    values = attributeTypeList
+                )
+            }
+            Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = overriddenType,
+                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    onSelection = { overriddenType = it },
+                    displayFn = { fullName(it, baseFontColor) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isOverridable,
+                    values = overridableTypeList
+                )
+            }
+            Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)
+            Form.Checkbox(
+                value = isKey,
+                enabled = isKeyable
+            ) { isKey = it }
+            Form.TextButton(
+                text = Label.OWN,
+                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
+                enabled = isOwnable,
+                tooltip = Tooltip.Arg(Label.ADD_OWNED_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+                onClick = { type.addOwnedAttributes(attributeType!!, overriddenType, isKey) }
             )
         }
     }

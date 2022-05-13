@@ -219,7 +219,7 @@ object TextEditor {
                 target.stickToBottom = value
             }
         internal val contextMenu = ContextMenu.State()
-        internal var areaWidth by mutableStateOf(0.dp)
+        internal var textAreaWidth by mutableStateOf(0.dp)
         internal var isFocused by mutableStateOf(true)
         internal var processor by mutableStateOf(initProcessor)
         internal val lineCount get() = content.size
@@ -232,10 +232,6 @@ object TextEditor {
             set(value) {
                 target.density = value
             }
-
-        internal fun updateAreaWidth(newWidth: Int) {
-            areaWidth = toDP(newWidth, density)
-        }
 
         internal fun updateStatus() {
             target.updateStatus()
@@ -315,26 +311,25 @@ object TextEditor {
     @Composable
     private fun LineNumberArea(state: State, font: TextStyle, fontWidth: Dp, lineGap: Dp, onScroll: () -> Unit) {
         val maxDigits = ceil(log10(state.lineCount + 1.0)).toInt()
-        val minWidth = fontWidth * maxDigits + AREA_PADDING_HOR * 2 + 2.dp
+        val width = fontWidth * maxDigits + AREA_PADDING_HOR * 2 + 2.dp
         val lazyColumnState: LazyLines.State<Int> = LazyLines.createState(
             lines = (0 until state.lineCount).map { it },
             scroller = state.target.verScroller
         )
-        LazyLines.Area(state = lazyColumnState, onScroll = onScroll) { index, _ ->
-            LineNumber(state, index, font, minWidth, lineGap)
+        LazyLines.Area(lazyColumnState, onScroll, Modifier.width(width)) { index, _ ->
+            LineNumber(state, index, font, width, lineGap)
         }
     }
 
     @Composable
-    private fun LineNumber(state: State, index: Int, font: TextStyle, minWidth: Dp, lineGap: Dp) {
+    private fun LineNumber(state: State, index: Int, font: TextStyle, width: Dp, lineGap: Dp) {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
         val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background1
         val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
         Column(
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = minWidth)
-                .height(state.lineHeight)
+                .width(width).height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
             Spacer(Modifier.height(lineGap))
@@ -349,7 +344,7 @@ object TextEditor {
     ) {
         val lazyColumnState = LazyLines.createState(state.content, state.target.verScroller)
         Box(modifier = Modifier.onGloballyPositioned {
-            state.updateAreaWidth(it.size.width)
+            state.textAreaWidth = toDP(it.size.width, state.density)
             state.target.updateTextArea(it.boundsInWindow())
         }) {
             Box(
@@ -359,7 +354,7 @@ object TextEditor {
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
-                LazyLines.Area(state = lazyColumnState, onScroll = onScroll) { index, text ->
+                LazyLines.Area(lazyColumnState, onScroll, Modifier.width(state.textAreaWidth)) { index, text ->
                     TextLine(state, index, text, font, fontWidth, lineGap, showLine)
                 }
             }
@@ -381,7 +376,7 @@ object TextEditor {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = state.target.textWidth.coerceIn(state.areaWidth, MAX_LINE_MIN_WIDTH))
+                .defaultMinSize(minWidth = state.target.textWidth.coerceIn(state.textAreaWidth, MAX_LINE_MIN_WIDTH))
                 .height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {

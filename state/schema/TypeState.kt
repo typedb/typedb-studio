@@ -66,10 +66,13 @@ class TypeState constructor(
     val isAttributeType get() = type.isAttributeType
     val isRoot get() = type.isRoot
     val valueType: String? = computeValueType()
+    val isKeyable: Boolean get() = type.isAttributeType && type.asAttributeType().valueType.isKeyable
 
     var supertype: TypeState? by mutableStateOf(supertypeInit)
+    var supertypes: List<TypeState> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
     var isAbstract: Boolean by mutableStateOf(false)
-    var ownedAttributes: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
+    var ownedAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
+    val ownedAttributeTypes: List<TypeState> get() = ownedAttributeTypeProperties.values.map { it.attributeType }
     val subtypes: List<TypeState> get() = entries.map { listOf(it) + it.subtypes }.flatten()
 
     private val isOpenAtomic = AtomicBoolean(false)
@@ -115,13 +118,15 @@ class TypeState constructor(
     }
 
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
-        loadSupertype()
+        loadSupertypes()
         loadAbstract()
         loadOwnedAttributes()
     }
 
-    private fun loadSupertype() {
-        supertype = type.asRemote(schemaMgr.openOrGetReadTx()).supertype?.let { schemaMgr.createTypeState(it) }
+    private fun loadSupertypes() {
+        val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+        supertype = remoteType.supertype?.let { schemaMgr.createTypeState(it) }?.also { it.reloadProperties() }
+        supertypes = remoteType.supertypes.map { schemaMgr.createTypeState(it) }.filter { it != this }.toList()
     }
 
     private fun loadAbstract() {
@@ -129,11 +134,11 @@ class TypeState constructor(
     }
 
     private fun loadOwnedAttributes() {
-        val map = mutableMapOf<AttributeType, AttributeTypeProperties>()
+        val props = mutableMapOf<AttributeType, AttributeTypeProperties>()
         val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
 
         fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
-            map[attributeType] = AttributeTypeProperties(
+            props[attributeType] = AttributeTypeProperties(
                 attributeType = schemaMgr.createTypeState(attributeType),
                 overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
                 isKey = isKey,
@@ -144,16 +149,20 @@ class TypeState constructor(
         conceptTx.getOwnsExplicit(true).forEach {
             properties(it, isKey = true, isInherited = false)
         }
-        conceptTx.getOwnsExplicit(false).filter { !map.contains(it) }.forEach {
+        conceptTx.getOwnsExplicit(false).filter { !props.contains(it) }.forEach {
             properties(it, isKey = false, isInherited = false)
         }
-        conceptTx.getOwns(true).filter { !map.contains(it) }.forEach {
+        conceptTx.getOwns(true).filter { !props.contains(it) }.forEach {
             properties(it, isKey = true, isInherited = true)
         }
-        conceptTx.getOwns(false).filter { !map.contains(it) }.forEach {
+        conceptTx.getOwns(false).filter { !props.contains(it) }.forEach {
             properties(it, isKey = false, isInherited = true)
         }
-        ownedAttributes = map
+        ownedAttributeTypeProperties = props
+    }
+
+    fun addOwnedAttributes(attributeType: TypeState, overriddenType: TypeState?, key: Boolean) {
+        // TODO
     }
 
     fun removeOwnedAttribute(attType: TypeState) {
