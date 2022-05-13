@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.PointMode
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -53,6 +54,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
@@ -75,6 +77,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -89,12 +92,12 @@ import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -114,13 +117,14 @@ internal object GraphOutput : RunOutput() {
         var hoveredVertex: Vertex? by mutableStateOf(null)
         val hoveredVertexChecker = HoveredVertexChecker(this)
         var theme: Color.GraphTheme? = null
+        val visualiser = Visualiser(this)
 
         fun output(conceptMap: ConceptMap) {
             graphBuilder.add(conceptMap)
         }
 
         fun onQueryCompleted() {
-            graphBuilder.completeAllEdges()
+            graphBuilder.completeAllEdges(graph)
         }
 
         private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
@@ -224,7 +228,10 @@ internal object GraphOutput : RunOutput() {
             fun isNotEmpty() = vertices.isNotEmpty()
 
             class Physics(private val graph: Graph) {
-                private val simulation = BasicSimulation()
+                private val simulation = BasicSimulation().apply {
+                    alphaMin = 0.01
+                    alphaDecay = 1 - alphaMin.pow(1.0 / 100)
+                }
                 var iteration by mutableStateOf(0L)
                 val isStable get() = simulation.alpha < simulation.alphaMin
                 val isStepRunning = AtomicBoolean(false)
@@ -270,7 +277,7 @@ internal object GraphOutput : RunOutput() {
                             )
                         )
                         forces.add(LinkForce(vertices, edges, 90.0, 0.5))
-                        val gravityStrength = 0.02 * log10(vertices.size + 100.0)
+                        val gravityStrength = 0.1
                         forces.add(XForce(vertices, 0.0, gravityStrength))
                         forces.add(YForce(vertices, 0.0, gravityStrength))
                     }
@@ -436,7 +443,7 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        sealed class Edge(val source: Vertex, val target: Vertex) {
+        sealed class Edge(open val source: Vertex, open val target: Vertex) {
 
             object Labels {
                 const val HAS = "has"
@@ -445,7 +452,7 @@ internal object GraphOutput : RunOutput() {
                 const val SUB = "sub"
             }
 
-            val geometry = Geometry()
+            val geometry = Geometry(this)
             val physics = Physics(this)
             abstract val label: String
 
@@ -454,41 +461,51 @@ internal object GraphOutput : RunOutput() {
             }
 
             // Type edges
-            class Sub(source: Vertex.Type, target: Vertex.Type) : Edge(source, target) {
+            class Sub(override val source: Vertex.Type, override val target: Vertex.Type) : Edge(source, target) {
                 override val label = Labels.SUB
+                fun copy(source: Vertex.Type, target: Vertex.Type) = Sub(source, target)
             }
 
-            class Owns(source: Vertex.Type, target: Vertex.Type.Attribute) : Edge(source, target) {
+            class Owns(override val source: Vertex.Type, override val target: Vertex.Type.Attribute) : Edge(source, target) {
                 override val label = Labels.OWNS
+                fun copy(source: Vertex.Type, target: Vertex.Type.Attribute) = Owns(source, target)
             }
 
-            class Plays(source: Vertex.Type.Relation, target: Vertex.Type, val role: String) : Edge(source, target) {
+            class Plays(override val source: Vertex.Type.Relation, override val target: Vertex.Type, val role: String) : Edge(source, target) {
                 override val label = role
+                fun copy(source: Vertex.Type.Relation, target: Vertex.Type) = Plays(source, target, role)
             }
 
             // Thing edges
-            class Has(source: Vertex.Thing, target: Vertex.Thing.Attribute, override val isInferred: Boolean = false)
-                : Edge(source, target), Inferrable {
+            class Has(
+                override val source: Vertex.Thing, override val target: Vertex.Thing.Attribute,
+                override val isInferred: Boolean = false
+            ) : Edge(source, target), Inferrable {
 
                 override val label = Labels.HAS
+                fun copy(source: Vertex.Thing, target: Vertex.Thing.Attribute) = Has(source, target, isInferred)
             }
 
             class Roleplayer(
-                source: Vertex.Thing.Relation, target: Vertex.Thing, val role: String,
+                override val source: Vertex.Thing.Relation, override val target: Vertex.Thing, val role: String,
                 override val isInferred: Boolean = false
             ) : Edge(source, target), Inferrable {
 
                 override val label = role
+                fun copy(source: Vertex.Thing.Relation, target: Vertex.Thing) =
+                    Roleplayer(source, target, role, isInferred)
             }
 
             // Thing-to-type edges
-            class Isa(source: Vertex.Thing, target: Vertex.Type) : Edge(source, target) {
+            class Isa(override val source: Vertex.Thing, override val target: Vertex.Type) : Edge(source, target) {
                 override val label = Labels.ISA
+                fun copy(source: Vertex.Thing, target: Vertex.Type) = Isa(source, target)
             }
 
-            class Geometry {
-                var curveMidpoint: Offset? = null
+            class Geometry(private val edge: Edge) {
+                private var curveMidpoint: Offset? = null
                 val isCurved get() = curveMidpoint != null
+                val midpoint get() = curveMidpoint ?: midpoint(edge.source.geometry.position, edge.target.geometry.position)
             }
 
             class Physics(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
@@ -504,8 +521,8 @@ internal object GraphOutput : RunOutput() {
         ) {
             private val thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
             private val typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
-            private val edges: MutableList<Edge> = Collections.synchronizedList(mutableListOf())
-            private val edgeCandidates: MutableMap<String, MutableList<EdgeCandidate>> = ConcurrentHashMap()
+            private val edges: ConcurrentLinkedQueue<Edge> = ConcurrentLinkedQueue()
+            private val edgeCandidates: MutableMap<String, Collection<EdgeCandidate>> = ConcurrentHashMap()
             private val lock = ReentrantReadWriteLock(true)
 
             fun add(conceptMap: ConceptMap) {
@@ -531,21 +548,13 @@ internal object GraphOutput : RunOutput() {
             private fun putVertexIfAbsent(concept: Concept): PutVertexResult {
                 return when {
                     concept.isThing -> concept.asThing().let { thing ->
-                        putThingVertexIfAbsent(thing.iid) { Vertex.Thing.of(thing) }
+                        putVertexIfAbsent(thing.iid, thingVertices) { Vertex.Thing.of(thing) }
                     }
                     concept.isThingType -> concept.asThingType().let { type ->
-                        putTypeVertexIfAbsent(type.label.name()) { Vertex.Type.of(type) }
+                        putVertexIfAbsent(type.label.name(), typeVertices) { Vertex.Type.of(type) }
                     }
                     else -> throw unsupportedEncodingException(concept)
                 }
-            }
-
-            private fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): PutVertexResult {
-                return putVertexIfAbsent(iid, thingVertices, vertexFn)
-            }
-
-            private fun putTypeVertexIfAbsent(label: String, vertexFn: () -> Vertex.Type): PutVertexResult {
-                return putVertexIfAbsent(label, typeVertices, vertexFn)
             }
 
             private fun <VERTEX: Vertex> putVertexIfAbsent(
@@ -563,7 +572,7 @@ internal object GraphOutput : RunOutput() {
             data class PutVertexResult(val added: Boolean, val vertex: Vertex)
 
             fun addEdge(edge: Edge) {
-                edges += edge
+                lock.readLock().withLock { edges += edge }
             }
 
             fun addEdgeCandidate(edge: EdgeCandidate) {
@@ -574,7 +583,7 @@ internal object GraphOutput : RunOutput() {
                     is EdgeCandidate.Plays -> edge.sourceLabel
                     is EdgeCandidate.Sub -> edge.targetLabel
                 }
-                edgeCandidates.getOrPut(key) { mutableListOf() }.add(edge)
+                edgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edge) else existing + edge }
             }
 
             private fun completeEdges(missingVertex: Vertex) {
@@ -583,13 +592,15 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Thing -> missingVertex.thing.iid
                 }
                 edgeCandidates.remove(key)?.let { candidates ->
-                    candidates.forEach { edges += it.toEdge(missingVertex) }
+                    candidates.forEach { edges += reassociateEdge(it.toEdge(missingVertex)) }
                 }
             }
 
-            fun completeAllEdges() {
+            fun completeAllEdges(graph: Graph) {
+                // Since there's no protection against an edge candidate, and the vertex that completes it, being added
+                // concurrently, we do a final sanity check once all vertices + edges have been loaded.
                 lock.readLock().withLock {
-                    (thingVertices + typeVertices).values.forEach { completeEdges(it) }
+                    (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) }
                 }
             }
 
@@ -601,11 +612,39 @@ internal object GraphOutput : RunOutput() {
                 lock.writeLock().withLock {
                     thingVertices.forEach { (iid, vertex) -> graph.putThingVertexIfAbsent(iid) { vertex } }
                     typeVertices.forEach { (label, vertex) -> graph.putTypeVertexIfAbsent(label) { vertex } }
-                    edges.forEach { graph.addEdge(it) }
-
+                    edges.forEach { graph.addEdge(reassociateEdge(it)) }
                     thingVertices.clear()
                     typeVertices.clear()
                     edges.clear()
+                }
+            }
+
+            private fun reassociateEdge(edge: Edge): Edge {
+                // 'source' and 'vertex' may be stale if they represent vertices previously added to the graph.
+                // Here we rebind them to the current graph state.
+                return when (edge) {
+                    is Edge.Has -> edge.copy(
+                        thingVertices[edge.source.thing.iid]!!,
+                        thingVertices[edge.target.thing.iid] as Vertex.Thing.Attribute
+                    )
+                    is Edge.Isa -> edge.copy(
+                        thingVertices[edge.source.thing.iid]!!, typeVertices[edge.target.type.label.name()]!!
+                    )
+                    is Edge.Owns -> edge.copy(
+                        typeVertices[edge.source.type.label.name()]!!,
+                        typeVertices[edge.target.type.label.name()] as Vertex.Type.Attribute
+                    )
+                    is Edge.Plays -> edge.copy(
+                        typeVertices[edge.source.type.label.name()]!! as Vertex.Type.Relation,
+                        typeVertices[edge.target.type.label.name()]!!
+                    )
+                    is Edge.Roleplayer -> edge.copy(
+                        thingVertices[(edge.source as Vertex.Thing).thing.iid]!! as Vertex.Thing.Relation,
+                        thingVertices[edge.target.thing.iid]!!
+                    )
+                    is Edge.Sub -> edge.copy(
+                        typeVertices[edge.source.type.label.name()]!!, typeVertices[edge.target.type.label.name()]!!
+                    )
                 }
             }
 
@@ -717,7 +756,9 @@ internal object GraphOutput : RunOutput() {
                     private fun loadRoleplayerEdgesAndVertices() {
                         remoteThing.asRelation().playersByRoleType.entries.forEach { (roleType, roleplayers) ->
                             roleplayers.forEach { roleplayer ->
-                                graphBuilder.putThingVertexIfAbsent(roleplayer.iid) { Vertex.Thing.of(roleplayer) }
+                                graphBuilder.putVertexIfAbsent(roleplayer.iid, graphBuilder.thingVertices) {
+                                    Vertex.Thing.of(roleplayer)
+                                }
                                 val roleplayerVertex = graphBuilder.thingVertices[roleplayer.iid]!!
                                 graphBuilder.addEdge(Edge.Roleplayer(
                                     thingVertex as Vertex.Thing.Relation, roleplayerVertex,
@@ -859,9 +900,9 @@ internal object GraphOutput : RunOutput() {
 
             private val density = state.viewport.density
 
-            fun draw() {
+            fun draw(edges: Iterable<Edge>, detailed: Boolean) {
                 ctx.drawScope.drawPoints(
-                    points = edgeCoordinates(state.graph.edges), pointMode = PointMode.Lines,
+                    points = edgeCoordinates(edges), pointMode = PointMode.Lines,
                     color = ctx.theme.edge, strokeWidth = 1f
                 )
             }
@@ -873,7 +914,7 @@ internal object GraphOutput : RunOutput() {
                             yield((it.source.geometry.position - state.viewport.position) * density)
                             yield((it.target.geometry.position - state.viewport.position) * density)
                         }
-                    }.toList()
+                    }.toList().also { /*println(edges.map { "${it.source.geometry.position}, ${it.target.geometry.position}" })*/ }
                 }
             }
         }
@@ -906,7 +947,6 @@ internal object GraphOutput : RunOutput() {
         }
 
         class HoveredVertexChecker(private val state: State) {
-
             private var lastScanDoneTime = System.currentTimeMillis()
 
             suspend fun poll() {
@@ -924,112 +964,141 @@ internal object GraphOutput : RunOutput() {
         }
     }
 
+    class Visualiser(private val state: State) {
+
+        private val edgeLabelSizes: MutableMap<String, Size> = mutableMapOf()
+
+        @Composable
+        fun Layout(modifier: Modifier) {
+            val density = LocalDensity.current.density
+            state.theme = GraphTheme.colors
+
+            Box(
+                modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
+                    .onGloballyPositioned { initialiseViewport(density, it) }
+            ) {
+                key(state.graph.physics.iteration) {
+                    Box(Modifier.fillMaxSize().graphicsLayer(
+                        scaleX = state.viewport.scale, scaleY = state.viewport.scale,
+                        transformOrigin = TransformOrigin.Center
+                    )) {
+                        EdgeLayer()
+                        VertexLayer()
+                    }
+                }
+                PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
+            }
+
+            LaunchedEffect(Unit) { state.physicsEngine.run() }
+            LaunchedEffect(Unit) { state.hoveredVertexChecker.poll() }
+        }
+
+        private fun initialiseViewport(density: Float, layout: LayoutCoordinates) {
+            state.viewport.density = density
+            if (state.viewport.isLayoutInitialised.compareAndSet(false, true)) {
+                state.viewport.size = layout.size.toSize()
+                state.viewport.position = -state.viewport.size.center / density
+            }
+        }
+
+        @Composable
+        private fun EdgeLayer() {
+            synchronized(state.graph.edges) {
+                // TODO: change this conditional operator to a || after implementing out-of-viewport detection
+                val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
+                Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
+                if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
+            }
+        }
+
+        @Composable
+        private fun EdgeLabel(edge: State.Edge) {
+            val position = edge.geometry.midpoint - state.viewport.position
+            val size = edgeLabelSizes[edge.label] ?: Size.Zero
+            val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
+            val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
+                else GraphTheme.colors.edgeLabel
+            val color = baseColor
+            Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
+                Form.Text(
+                    value = edge.label,
+                    textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
+                    overflow = TextOverflow.Visible
+                )
+            }
+        }
+
+        @Composable
+        private fun VertexLayer() {
+            val vertices = state.graph.vertices
+            Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
+            if (vertices.size <= 200) vertices.forEach { VertexLabel(it) }
+        }
+
+        private fun DrawScope.drawVertexBackground(vertex: State.Vertex) {
+            state.vertexBackgroundRenderer(vertex, this).draw()
+        }
+
+        @Composable
+        private fun VertexLabel(vertex: State.Vertex) {
+            val r = vertex.geometry.rect
+            val x = (r.left - state.viewport.position.x).dp
+            val y = (r.top - state.viewport.position.y).dp
+            val color = GraphTheme.colors.vertexLabel
+
+            Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
+                Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
+            }
+        }
+
+        private object PointerInput {
+            @Composable
+            fun Handler(state: State, modifier: Modifier) {
+                DragAndScroll(state, modifier) {
+                    // Nested elements are required for drag and tap events to not conflict with each other
+                    TapAndHover(state, modifier)
+                }
+            }
+
+            @Composable
+            fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
+                val viewport = state.viewport
+                Box(modifier
+                    .pointerInput(viewport.density, viewport.scale) {
+                        detectDragGestures { _, dragAmount ->
+                            viewport.position -= dragAmount / (viewport.scale * viewport.density)
+                        }
+                    }
+                    .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                        viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
+                        delta
+                    })
+                ) {
+                    content()
+                }
+            }
+
+            @OptIn(ExperimentalComposeUiApi::class)
+            @Composable
+            fun TapAndHover(state: State, modifier: Modifier) {
+                Box(modifier
+                    .pointerMoveFilter(
+                        onMove = { state.pointerPosition = it; false },
+                        onExit = { state.pointerPosition = null; false }
+                    )
+                )
+            }
+        }
+    }
+
     @Composable
     internal fun Layout(state: State) {
         super.Layout(toolbarButtons(state)) { modifier ->
-            Content(state, modifier)
+            state.visualiser.Layout(modifier)
         }
     }
 
     private fun toolbarButtons(state: State): List<Form.IconButtonArg> {
         return listOf()
-    }
-
-    @Composable
-    private fun Content(state: State, modifier: Modifier) {
-        val density = LocalDensity.current.density
-        state.theme = GraphTheme.colors
-
-        Box(
-            modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
-            .onGloballyPositioned { updateViewportState(state, density, it) }
-        ) {
-            // TODO: refactor into Graph.Visualiser
-            key(state.graph.physics.iteration) {
-                Box(Modifier.fillMaxSize().graphicsLayer(scaleX = state.viewport.scale, scaleY = state.viewport.scale)) {
-                    EdgeLayer(state)
-                    VertexLayer(state)
-                }
-            }
-            PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
-        }
-
-        LaunchedEffect(Unit) { state.physicsEngine.run() }
-        LaunchedEffect(Unit) { state.hoveredVertexChecker.poll() }
-    }
-
-    private fun updateViewportState(state: State, density: Float, layout: LayoutCoordinates) {
-        state.viewport.density = density
-        if (state.viewport.isLayoutInitialised.compareAndSet(false, true)) {
-            state.viewport.size = layout.size.toSize()
-            state.viewport.position = -state.viewport.size.center / density
-        }
-    }
-
-    @Composable
-    private fun EdgeLayer(state: State) {
-        Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw() }
-    }
-
-    @Composable
-    private fun VertexLayer(state: State) {
-        val vertices = state.graph.vertices
-        Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it, state) } }
-        if (vertices.size <= 500) vertices.forEach { VertexLabel(it, state) }
-    }
-
-    private fun DrawScope.drawVertexBackground(vertex: State.Vertex, state: State) {
-        state.vertexBackgroundRenderer(vertex, this).draw()
-    }
-
-    @Composable
-    private fun VertexLabel(vertex: State.Vertex, state: State) {
-        val r = vertex.geometry.rect
-        val x = (r.left - state.viewport.position.x).dp
-        val y = (r.top - state.viewport.position.y).dp
-        val color = GraphTheme.colors.vertexLabel
-
-        Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
-            Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
-        }
-    }
-
-    private object PointerInput {
-        @Composable
-        fun Handler(state: State, modifier: Modifier) {
-            DragAndScroll(state, modifier) {
-                // Nested elements are required for drag and tap events to not conflict with each other
-                TapAndHover(state, modifier)
-            }
-        }
-
-        @Composable
-        fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
-            val viewport = state.viewport
-            Box(modifier
-                .pointerInput(viewport.density, viewport.scale) {
-                    detectDragGestures { _, dragAmount ->
-                        viewport.position -= dragAmount / (viewport.scale * viewport.density)
-                    }
-                }
-                .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
-                    viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
-                    delta
-                })
-            ) {
-                content()
-            }
-        }
-
-        @OptIn(ExperimentalComposeUiApi::class)
-        @Composable
-        fun TapAndHover(state: State, modifier: Modifier) {
-            Box(modifier
-                .pointerMoveFilter(
-                    onMove = { state.pointerPosition = it; false },
-                    onExit = { state.pointerPosition = null; false }
-                )
-            )
-        }
     }
 }

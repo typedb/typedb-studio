@@ -16,13 +16,13 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
 
 package(default_visibility = ["//view:__subpackages__"])
 
 kt_jvm_library(
     name = "common",
-    srcs = glob(["*.kt", "*/*.kt"]),
+    srcs = glob(["*.kt", "*/*.kt"], exclude = ["*/*Test.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/app:app",
@@ -57,6 +57,21 @@ kt_jvm_library(
         "//resources/icons/fontawesome:icons",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-common:{pom_version}"],
+)
+
+kt_jvm_test(
+    name = "test-geometry",
+    srcs = [
+        "geometry/GeometryTest.kt",
+    ],
+    deps = [
+        ":common",
+
+        "@maven//:junit_junit",
+        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
+    ],
+    test_class = "com.vaticle.typedb.studio.view.common.geometry.GeometryTest",
 )
 
 checkstyle_test(

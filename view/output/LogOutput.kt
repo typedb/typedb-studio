@@ -55,6 +55,7 @@ import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.stream.Collectors
 import mu.KotlinLogging
+import java.util.concurrent.CompletableFuture
 
 internal object LogOutput : RunOutput() {
 
@@ -105,8 +106,8 @@ internal object LogOutput : RunOutput() {
             outputTypeQL(numeric.toString())
         }
 
-        internal fun output(conceptMap: ConceptMap) {
-            outputTypeQL(printConceptMap(conceptMap))
+        internal fun output(conceptMap: ConceptMap): CompletableFuture<Unit> {
+            return CompletableFuture.supplyAsync { outputTypeQL(printConceptMap(conceptMap)) }
         }
 
         internal fun output(conceptMapGroup: ConceptMapGroup) {
@@ -181,7 +182,7 @@ internal object LogOutput : RunOutput() {
                 is Attribute<*> -> str.append(Strings.valueToString(thing.value))
                 else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
             }
-//            if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
+            if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
             str.append(" ").append(TypeQLToken.Constraint.ISA).append(" ")
                 .append(thing.asThing().type.label.scopedName())
             return str.toString()
