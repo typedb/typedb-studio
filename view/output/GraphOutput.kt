@@ -52,9 +52,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
@@ -77,7 +77,11 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -403,6 +407,9 @@ internal object GraphOutput : RunOutput() {
                 /** Returns `true` if the given `Offset` intersects the given vertex, else, `false` */
                 abstract fun intersects(point: Offset): Boolean
 
+                /** Find the endpoint of an edge drawn from `source` position to this vertex */
+                abstract fun edgeEndpoint(source: Offset): Offset?
+
                 companion object {
                     private const val ENTITY_WIDTH = 100f
                     private const val ENTITY_HEIGHT = 35f
@@ -417,7 +424,14 @@ internal object GraphOutput : RunOutput() {
                 }
 
                 class Entity(size: Size) : Geometry(size) {
+
                     override fun intersects(point: Offset) = rect.contains(point)
+
+                    override fun edgeEndpoint(source: Offset): Offset? {
+                        val r = rect
+                        val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
+                        return rectIncomingLineIntersect(source, targetRect)
+                    }
                 }
 
                 class Relation(size: Size) : Geometry(size) {
@@ -430,6 +444,12 @@ internal object GraphOutput : RunOutput() {
                             4
                         ).contains(point.x.toDouble(), point.y.toDouble())
                     }
+
+                    override fun edgeEndpoint(source: Offset): Offset? {
+                        val r = rect
+                        val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
+                        return diamondIncomingLineIntersect(source, targetRect)
+                    }
                 }
 
                 class Attribute(size: Size) : Geometry(size) {
@@ -438,6 +458,11 @@ internal object GraphOutput : RunOutput() {
                         val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
                         val yi = (point.y - position.y).pow(2) / (size.height).pow(2)
                         return xi + yi < 1f
+                    }
+
+                    override fun edgeEndpoint(source: Offset): Offset? {
+                        val ellipse = Ellipse(position.x, position.y, size.width / 2 + 2, size.height / 2 + 2)
+                        return ellipseIncomingLineIntersect(source, ellipse)
                     }
                 }
             }
@@ -592,7 +617,7 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Thing -> missingVertex.thing.iid
                 }
                 edgeCandidates.remove(key)?.let { candidates ->
-                    candidates.forEach { edges += reassociateEdge(it.toEdge(missingVertex)) }
+                    candidates.forEach { edges += it.toEdge(missingVertex) }
                 }
             }
 
@@ -612,39 +637,42 @@ internal object GraphOutput : RunOutput() {
                 lock.writeLock().withLock {
                     thingVertices.forEach { (iid, vertex) -> graph.putThingVertexIfAbsent(iid) { vertex } }
                     typeVertices.forEach { (label, vertex) -> graph.putTypeVertexIfAbsent(label) { vertex } }
-                    edges.forEach { graph.addEdge(reassociateEdge(it)) }
+                    edges.forEach { dumpEdgeTo(it, graph) }
                     thingVertices.clear()
                     typeVertices.clear()
                     edges.clear()
                 }
             }
 
-            private fun reassociateEdge(edge: Edge): Edge {
+            private fun dumpEdgeTo(edge: Edge, graph: Graph) {
                 // 'source' and 'vertex' may be stale if they represent vertices previously added to the graph.
                 // Here we rebind them to the current graph state.
-                return when (edge) {
-                    is Edge.Has -> edge.copy(
-                        thingVertices[edge.source.thing.iid]!!,
-                        thingVertices[edge.target.thing.iid] as Vertex.Thing.Attribute
-                    )
-                    is Edge.Isa -> edge.copy(
-                        thingVertices[edge.source.thing.iid]!!, typeVertices[edge.target.type.label.name()]!!
-                    )
-                    is Edge.Owns -> edge.copy(
-                        typeVertices[edge.source.type.label.name()]!!,
-                        typeVertices[edge.target.type.label.name()] as Vertex.Type.Attribute
-                    )
-                    is Edge.Plays -> edge.copy(
-                        typeVertices[edge.source.type.label.name()]!! as Vertex.Type.Relation,
-                        typeVertices[edge.target.type.label.name()]!!
-                    )
-                    is Edge.Roleplayer -> edge.copy(
-                        thingVertices[(edge.source as Vertex.Thing).thing.iid]!! as Vertex.Thing.Relation,
-                        thingVertices[edge.target.thing.iid]!!
-                    )
-                    is Edge.Sub -> edge.copy(
-                        typeVertices[edge.source.type.label.name()]!!, typeVertices[edge.target.type.label.name()]!!
-                    )
+                graph.apply {
+                    val syncedEdge = when (edge) {
+                        is Edge.Has -> edge.copy(
+                            thingVertices[edge.source.thing.iid]!!,
+                            thingVertices[edge.target.thing.iid] as Vertex.Thing.Attribute
+                        )
+                        is Edge.Isa -> edge.copy(
+                            thingVertices[edge.source.thing.iid]!!, typeVertices[edge.target.type.label.name()]!!
+                        )
+                        is Edge.Owns -> edge.copy(
+                            typeVertices[edge.source.type.label.name()]!!,
+                            typeVertices[edge.target.type.label.name()] as Vertex.Type.Attribute
+                        )
+                        is Edge.Plays -> edge.copy(
+                            typeVertices[edge.source.type.label.name()]!! as Vertex.Type.Relation,
+                            typeVertices[edge.target.type.label.name()]!!
+                        )
+                        is Edge.Roleplayer -> edge.copy(
+                            thingVertices[(edge.source as Vertex.Thing).thing.iid]!! as Vertex.Thing.Relation,
+                            thingVertices[edge.target.thing.iid]!!
+                        )
+                        is Edge.Sub -> edge.copy(
+                            typeVertices[edge.source.type.label.name()]!!, typeVertices[edge.target.type.label.name()]!!
+                        )
+                    }
+                    graph.addEdge(syncedEdge)
                 }
             }
 
@@ -902,20 +930,45 @@ internal object GraphOutput : RunOutput() {
 
             fun draw(edges: Iterable<Edge>, detailed: Boolean) {
                 ctx.drawScope.drawPoints(
-                    points = edgeCoordinates(edges), pointMode = PointMode.Lines,
-                    color = ctx.theme.edge, strokeWidth = 1f
+                    points = edgeCoordinates(edges, detailed), pointMode = PointMode.Lines,
+                    color = ctx.theme.edge, strokeWidth = 2f
                 )
             }
 
-            private fun edgeCoordinates(edges: Iterable<Edge>): List<Offset> {
+            private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
                 synchronized(edges) {
                     return sequence {
-                        edges.forEach {
-                            yield((it.source.geometry.position - state.viewport.position) * density)
-                            yield((it.target.geometry.position - state.viewport.position) * density)
-                        }
-                    }.toList().also { /*println(edges.map { "${it.source.geometry.position}, ${it.target.geometry.position}" })*/ }
+                        if (detailed) edges.forEach { yieldPrettyEdgeCoordinates(it) }
+                        else edges.forEach { yieldEdgeCoordinates(it) }
+                    }.toList()
                 }
+            }
+
+            private suspend fun SequenceScope<Offset>.yieldEdgeCoordinates(edge: Edge) {
+                yield((edge.source.geometry.position - state.viewport.position) * density)
+                yield((edge.target.geometry.position - state.viewport.position) * density)
+            }
+
+            private suspend fun SequenceScope<Offset>.yieldPrettyEdgeCoordinates(edge: Edge) {
+                val source = edge.source.geometry
+                val target = edge.target.geometry
+                val lineSource = source.edgeEndpoint(target.position) ?: return
+                val lineTarget = target.edgeEndpoint(source.position) ?: return
+                val (labelWidth, labelHeight) = state.visualiser.edgeLabelSizes[edge.label]?.div(density) ?: return
+                val m = midpoint(source.position, target.position)
+                val labelRect = Rect(
+                    Offset(m.x - labelWidth / 2 - 2, m.y - labelHeight / 2 - 2),
+                    Size(labelWidth + 4, labelHeight + 4)
+                )
+                yieldLineSegment(lineSource, labelRect)
+                yieldLineSegment(lineTarget, labelRect)
+                // TODO: yield arrowhead
+            }
+
+            private suspend fun SequenceScope<Offset>.yieldLineSegment(lineSource: Offset, labelRect: Rect) {
+                val lineSegmentTarget = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect) ?: return
+                yield((lineSource - state.viewport.position) * density)
+                yield((lineSegmentTarget - state.viewport.position) * density)
             }
         }
 
@@ -966,7 +1019,7 @@ internal object GraphOutput : RunOutput() {
 
     class Visualiser(private val state: State) {
 
-        private val edgeLabelSizes: MutableMap<String, Size> = mutableMapOf()
+        val edgeLabelSizes: MutableMap<String, Size> = ConcurrentHashMap()
 
         @Composable
         fun Layout(modifier: Modifier) {
@@ -1014,18 +1067,33 @@ internal object GraphOutput : RunOutput() {
         @Composable
         private fun EdgeLabel(edge: State.Edge) {
             val position = edge.geometry.midpoint - state.viewport.position
-            val size = edgeLabelSizes[edge.label] ?: Size.Zero
-            val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
+            val size = edgeLabelSizes[edge.label]
             val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
             val color = baseColor
-            Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
-                Form.Text(
-                    value = edge.label,
-                    textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
-                    overflow = TextOverflow.Visible
-                )
+
+            when (size) {
+                null -> EdgeLabelMeasurer(edge)
+                else -> {
+                    val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
+                    Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
+                        Form.Text(
+                            value = edge.label,
+                            textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
+                            color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
+                        )
+                    }
+                }
             }
+        }
+
+        @Composable
+        private fun EdgeLabelMeasurer(edge: State.Edge) {
+            Form.Text(
+                value = edge.label, textStyle = Theme.typography.code1,
+                modifier = Modifier.graphicsLayer(alpha = 0f)
+                    .onSizeChanged { edgeLabelSizes[edge.label] = it.toSize() }
+            )
         }
 
         @Composable
