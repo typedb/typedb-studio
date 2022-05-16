@@ -58,18 +58,18 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         val schema = GlobalState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!client.session.isOpen || schema.rootThingType == null || client.selectDBDialog.isOpen) SelectDBHelper()
+        else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
         else Content()
     }
 
     @Composable
     private fun Content() {
         val navState = rememberNavigatorState(
-            container = GlobalState.schema.rootThingType!!,
+            container = GlobalState.schema,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,
         ) { GlobalState.resource.open(it.item) }
-        GlobalState.schema.onRootChange = { navState.replaceContainer(it) }
+        GlobalState.schema.onRootsUpdated = { navState.reloadEntries() }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,

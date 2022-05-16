@@ -97,6 +97,7 @@ class NotificationManager {
             Notification.Type.ERROR -> {
                 logger.error { message }
                 logger.error { cause }
+                cause.printStackTrace()
             }
         }
         queue += Notification(type, code, message)

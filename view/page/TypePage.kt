@@ -129,9 +129,9 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         AbstractSection()
         Separator()
         when {
-            type.isEntityType -> EntityTypeSections()
-            type.isRelationType -> RelationTypeSections()
-            type.isAttributeType -> AttributeTypeSections()
+            type is TypeState.Entity -> EntityTypeSections()
+            type is TypeState.Relation -> RelationTypeSections()
+            type is TypeState.Attribute -> AttributeTypeSections()
         }
         Separator()
         DeleteButton()
@@ -200,7 +200,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             Form.TextButton(
                 text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
-                enabled = type.supertype != null,
+                enabled = !type.isRoot,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
             EditButton { } // TODO
         }
@@ -240,7 +240,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 iconColor = Theme.colors.error,
                 enabled = isEditable,
                 tooltip = Tooltip.Arg(Label.REMOVE_OWNED_ATTRIBUTE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.removeOwnedAttribute(attTypeProp.attributeType) }
+                onClick = { type.removeOwnedAttributeType(attTypeProp.attributeType) }
             )
         }
 
@@ -267,13 +267,13 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     @Composable
     private fun OwnedAttributeTypeAddition() {
         val baseFontColor = Theme.colors.onPrimary
-        var attributeType: TypeState? by remember { mutableStateOf(null) }
+        var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes?.filter {
             !type.ownedAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
         }?.sortedBy { it.name } ?: listOf()
 
-        var overriddenType: TypeState? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<TypeState> = attributeType?.supertypes
+        var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
             ?.intersect(type.supertype!!.ownedAttributeTypes)
             ?.sortedBy { it.name } ?: listOf()
 
@@ -317,7 +317,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.ADD_OWNED_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.addOwnedAttributes(attributeType!!, overriddenType, isKey) }
+                onClick = { type.addOwnedAttributeTypes(attributeType!!, overriddenType, isKey) }
             )
         }
     }
@@ -353,9 +353,9 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     private fun fullName(type: TypeState, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
             append(type.name)
-            if (type.isAttributeType && !type.isRoot) {
+            if (type is TypeState.Attribute) type.valueType?.let { valueType ->
                 append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${type.valueType})") }
+                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${valueType})") }
             }
         }
     }

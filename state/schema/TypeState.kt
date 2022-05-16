@@ -22,6 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.AttributeType
+import com.vaticle.typedb.client.api.concept.type.EntityType
+import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.resource.Navigable
@@ -33,27 +35,28 @@ import kotlin.streams.toList
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class TypeState constructor(
-    private val type: ThingType,
-    supertypeInit: TypeState?,
+sealed class TypeState private constructor(
+    nameInit: String,
     isExpandableInit: Boolean,
     val schemaMgr: SchemaManager,
 ) : Navigable<TypeState>, Resource {
 
     data class AttributeTypeProperties(
-        val attributeType: TypeState, val overriddenType: TypeState?, val isKey: Boolean, val isInherited: Boolean
+        val attributeType: Attribute,
+        val overriddenType: Attribute?,
+        val isKey: Boolean,
+        val isInherited: Boolean
     )
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    override val name: String by mutableStateOf(type.label.name())
-    override val parent: TypeState? get() = supertype
-    override val info: String? get() = computeInfo()
+    override val name: String by mutableStateOf(nameInit)
+    override val info: String? = null
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
-    override var entries: List<TypeState> = emptyList()
+
     override val windowTitle: String get() = computeWindowTitle()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isWritable: Boolean = true
@@ -61,45 +64,23 @@ class TypeState constructor(
     override val isUnsavedResource: Boolean = false
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
-    val isEntityType get() = type.isEntityType
-    val isRelationType get() = type.isRelationType
-    val isAttributeType get() = type.isAttributeType
-    val isRoot get() = type.isRoot
-    val valueType: String? = computeValueType()
-    val isKeyable: Boolean get() = type.isAttributeType && type.asAttributeType().valueType.isKeyable
+    abstract val type: ThingType
+    abstract val baseType: TypeQLToken.Type
+    abstract val supertype: TypeState?
+    abstract val supertypes: List<TypeState>
+    abstract val subtypes: List<TypeState>
 
-    var supertype: TypeState? by mutableStateOf(supertypeInit)
-    var supertypes: List<TypeState> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+    val isRoot get() = type.isRoot
     var isAbstract: Boolean by mutableStateOf(false)
     var ownedAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
-    val ownedAttributeTypes: List<TypeState> get() = ownedAttributeTypeProperties.values.map { it.attributeType }
-    val subtypes: List<TypeState> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+    val ownedAttributeTypes: List<Attribute> get() = ownedAttributeTypeProperties.values.map { it.attributeType }
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
 
-    private fun computeInfo(): String? = when {
-        type.isAttributeType && !type.isRoot -> valueType
-        else -> null
-    }
-
     private fun computeWindowTitle(): String {
-        val props = mutableListOf(
-            when {
-                type.isEntityType -> TypeQLToken.Type.ENTITY
-                type.isRelationType -> TypeQLToken.Type.RELATION
-                type.isAttributeType -> TypeQLToken.Type.ATTRIBUTE
-                type.isThingType -> TypeQLToken.Type.THING
-                else -> throw IllegalStateException("Unrecognised concept base type")
-            }.name.lowercase()
-        )
-        computeInfo()?.let { props.add(it) }
+        val props = listOf(baseType.name.lowercase()) + info?.let { listOf(it) }
         return "$name (" + props.joinToString(", ") + ") @ " + schemaMgr.database
-    }
-
-    private fun computeValueType(): String? {
-        return if (type.isAttributeType && !type.isRoot) type.asAttributeType().valueType.name.lowercase()
-        else null
     }
 
     override fun launchWatcher() {}
@@ -111,6 +92,10 @@ class TypeState constructor(
     override fun save(onSuccess: ((Resource) -> Unit)?) {}
     override fun move(onSuccess: ((Resource) -> Unit)?) {}
 
+    abstract fun updateEntries(newEntries: List<TypeState>)
+    abstract fun loadSupertypes()
+    abstract fun loadOtherProperties()
+
     override fun tryOpen(): Boolean {
         reloadProperties()
         isOpenAtomic.set(true)
@@ -120,20 +105,15 @@ class TypeState constructor(
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
         loadSupertypes()
         loadAbstract()
-        loadOwnedAttributes()
-    }
-
-    private fun loadSupertypes() {
-        val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
-        supertype = remoteType.supertype?.let { schemaMgr.createTypeState(it) }?.also { it.reloadProperties() }
-        supertypes = remoteType.supertypes.map { schemaMgr.createTypeState(it) }.filter { it != this }.toList()
+        loadOwnedAttributeTypes()
+        loadOtherProperties()
     }
 
     private fun loadAbstract() {
         isAbstract = type.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
     }
 
-    private fun loadOwnedAttributes() {
+    private fun loadOwnedAttributeTypes() {
         val props = mutableMapOf<AttributeType, AttributeTypeProperties>()
         val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
 
@@ -161,11 +141,11 @@ class TypeState constructor(
         ownedAttributeTypeProperties = props
     }
 
-    fun addOwnedAttributes(attributeType: TypeState, overriddenType: TypeState?, key: Boolean) {
+    fun addOwnedAttributeTypes(attributeType: TypeState.Attribute, overriddenType: TypeState.Attribute?, key: Boolean) {
         // TODO
     }
 
-    fun removeOwnedAttribute(attType: TypeState) {
+    fun removeOwnedAttributeType(attType: TypeState.Attribute) {
         // TODO
     }
 
@@ -188,7 +168,7 @@ class TypeState constructor(
             val added = new - old
             val retainedEntries = entries.filter { !deleted.contains(it.type) }
             val newEntries = added.map { schemaMgr.createTypeState(it) }
-            entries = (retainedEntries + newEntries).sorted()
+            updateEntries((retainedEntries + newEntries).sorted())
             refresh = retainedEntries
         } else refresh = entries
         refresh.onEach { it.isExpandable = it.type.asRemote(tx).subtypesExplicit.findAny().isPresent }
@@ -242,5 +222,108 @@ class TypeState constructor(
 
     override fun hashCode(): Int {
         return type.hashCode()
+    }
+
+    class Entity internal constructor(
+        override val type: EntityType,
+        supertypeInit: Entity?,
+        isExpandable: Boolean,
+        schemaMgr: SchemaManager
+    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+
+        override val parent: Entity? get() = supertype
+        override var entries: List<Entity> = emptyList()
+        override val baseType = TypeQLToken.Type.ENTITY
+        override var supertype: Entity? by mutableStateOf(supertypeInit)
+        override var supertypes: List<Entity> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+        override val subtypes: List<Entity> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+
+        override fun updateEntries(newEntries: List<TypeState>) {
+            entries = newEntries.map { it as Entity }
+        }
+
+        override fun loadSupertypes() {
+            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            supertype = remoteType.supertype
+                ?.let { if (it.isEntityType) schemaMgr.createTypeState(it.asEntityType()) else null }
+                ?.also { it.reloadProperties() }
+            supertypes = remoteType.supertypes
+                .filter { it.isEntityType && it != remoteType }
+                .map { schemaMgr.createTypeState(it.asEntityType()) }.toList()
+        }
+
+        override fun loadOtherProperties() {}
+    }
+
+    class Relation internal constructor(
+        override val type: RelationType,
+        supertypeInit: Relation?,
+        isExpandable: Boolean,
+        schemaMgr: SchemaManager
+    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+
+        override val parent: Relation? get() = supertype
+        override var entries: List<Relation> = emptyList()
+        override val baseType = TypeQLToken.Type.RELATION
+        override var supertype: Relation? by mutableStateOf(supertypeInit)
+        override var supertypes: List<Relation> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+        override val subtypes: List<Relation> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+
+        override fun updateEntries(newEntries: List<TypeState>) {
+            entries = newEntries.map { it as Relation }
+        }
+
+        override fun loadSupertypes() {
+            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            supertype = remoteType.supertype
+                ?.let { if (it.isRelationType) schemaMgr.createTypeState(it.asRelationType()) else null }
+                ?.also { it.reloadProperties() }
+            supertypes = remoteType.supertypes
+                .filter { it.isRelationType && it != remoteType }
+                .map { schemaMgr.createTypeState(it.asRelationType()) }.toList()
+        }
+
+        override fun loadOtherProperties() {}
+    }
+
+    class Attribute internal constructor(
+        override val type: AttributeType,
+        supertypeInit: Attribute?,
+        isExpandable: Boolean,
+        schemaMgr: SchemaManager
+    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+
+        override val info get() = valueType
+        override val parent: Attribute? get() = supertype
+        override var entries: List<Attribute> = emptyList()
+        override val baseType = TypeQLToken.Type.ATTRIBUTE
+        override var supertype: Attribute? by mutableStateOf(supertypeInit)
+        override var supertypes: List<Attribute> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+        override val subtypes: List<Attribute> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+
+        val valueType: String? = if (!type.isRoot) type.valueType.name.lowercase() else null
+        val isKeyable: Boolean get() = type.valueType.isKeyable
+
+        override fun updateEntries(newEntries: List<TypeState>) {
+            entries = newEntries.map { it as Attribute }
+        }
+
+        override fun loadSupertypes() {
+            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            supertype = remoteType.supertype
+                ?.let { if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null }
+                ?.also { it.reloadProperties() }
+            supertypes = remoteType.supertypes
+                .filter { it.isAttributeType && it != remoteType }
+                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList()
+        }
+
+        override fun loadOtherProperties() {
+            loadAttributeTypeOwners()
+        }
+
+        private fun loadAttributeTypeOwners() {
+
+        }
     }
 }
