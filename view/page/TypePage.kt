@@ -73,9 +73,10 @@ import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-class TypePage constructor(private var type: TypeState) : Page(type) {
+sealed class TypePage(type: TypeState) : Page(type) {
 
     override val icon: Form.IconArg = typeIcon(type)
+    internal abstract val type: TypeState
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -91,11 +92,16 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
+
+        fun create(type: TypeState): TypePage = when (type) {
+            is TypeState.Entity -> Entity(type)
+            is TypeState.Relation -> Relation(type)
+            is TypeState.Attribute -> Attribute(type)
+        }
     }
 
-    override fun updateResourceInner(resource: Resource) {
-        type = resource as TypeState
-    }
+    @Composable
+    abstract fun MainSections()
 
     @Composable
     override fun Content() {
@@ -128,43 +134,13 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
         Separator()
         AbstractSection()
         Separator()
-        when {
-            type is TypeState.Entity -> EntityTypeSections()
-            type is TypeState.Relation -> RelationTypeSections()
-            type is TypeState.Attribute -> AttributeTypeSections()
-        }
+        MainSections()
         Separator()
         DeleteButton()
     }
 
     @Composable
-    private fun EntityTypeSections() {
-        OwnedAttributeTypesSection()
-        PlayedRolesSection()
-        SubtypesSection()
-    }
-
-    @Composable
-    private fun RelationTypeSections() {
-        RelatedRolesSection()
-        OwnedAttributeTypesSection()
-        SubtypesSection()
-        AdvanceSections {
-            PlayedRolesSection()
-        }
-    }
-
-    @Composable
-    private fun AttributeTypeSections() {
-        AttributeOwnersSection()
-        SubtypesSection()
-        AdvanceSections {
-            PlayedRolesSection()
-        }
-    }
-
-    @Composable
-    private fun AdvanceSections(sections: @Composable () -> Unit) {
+    protected fun AdvanceSections(sections: @Composable () -> Unit) {
 
     }
 
@@ -217,7 +193,7 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun OwnedAttributeTypesSection() {
+    protected fun OwnedAttributeTypesSection() {
         SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTE_TYPES) }
         OwnedAttributeTypesTable()
         OwnedAttributeTypeAddition()
@@ -323,22 +299,12 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun AttributeOwnersSection() {
+    protected fun PlayedRolesSection() {
 
     }
 
     @Composable
-    private fun PlayedRolesSection() {
-
-    }
-
-    @Composable
-    private fun RelatedRolesSection() {
-
-    }
-
-    @Composable
-    private fun SubtypesSection() {
+    protected fun SubtypesSection() {
 
     }
 
@@ -368,5 +334,62 @@ class TypePage constructor(private var type: TypeState) : Page(type) {
             tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
         )
+    }
+
+    class Entity(override var type: TypeState.Entity) : TypePage(type) {
+
+        override fun updateResourceInner(resource: Resource) {
+            type = resource as TypeState.Entity
+        }
+
+        @Composable
+        override fun MainSections() {
+            OwnedAttributeTypesSection()
+            PlayedRolesSection()
+            SubtypesSection()
+        }
+    }
+
+    class Relation(override var type: TypeState.Relation) : TypePage(type) {
+
+        override fun updateResourceInner(resource: Resource) {
+            type = resource as TypeState.Relation
+        }
+
+        @Composable
+        override fun MainSections() {
+            RelatedRolesSection()
+            OwnedAttributeTypesSection()
+            SubtypesSection()
+            AdvanceSections {
+                PlayedRolesSection()
+            }
+        }
+
+        @Composable
+        private fun RelatedRolesSection() {
+
+        }
+    }
+
+    class Attribute(override var type: TypeState.Attribute) : TypePage(type) {
+
+        override fun updateResourceInner(resource: Resource) {
+            type = resource as TypeState.Attribute
+        }
+
+        @Composable
+        override fun MainSections() {
+            AttributeOwnersSection()
+            SubtypesSection()
+            AdvanceSections {
+                PlayedRolesSection()
+            }
+        }
+
+        @Composable
+        private fun AttributeOwnersSection() {
+
+        }
     }
 }
