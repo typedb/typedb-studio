@@ -171,8 +171,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
             val UNEXPECTED_ERROR =
                 Schema(1, "Unexpected error occurred with the database schema.")
+            val FAILED_TO_LOAD_TYPE =
+                Schema(2, "Failed to load type properties due to: %s.")
             val FAILED_TO_DELETE_TYPE =
-                Schema(2, "Failed to delete type due to: %s")
+                Schema(3, "Failed to delete type due to: %s.")
 
         }
     }

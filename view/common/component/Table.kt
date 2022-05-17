@@ -58,14 +58,14 @@ object Table {
         val header: AnnotatedString?,
         val headerAlignment: Alignment = Alignment.Center,
         val contentAlignment: Alignment = Alignment.Center,
-        val size: Either<Dp, Float> = Either.second(1f),
+        val size: Either<Float, Dp> = Either.first(1f),
         val content: @Composable (T) -> Unit
     ) {
         constructor(
             header: String,
             contentAlignment: Alignment = Alignment.Center,
             headerAlignment: Alignment = Alignment.Center,
-            size: Either<Dp, Float> = Either.second(1f),
+            size: Either<Float, Dp> = Either.first(1f),
             function: @Composable (T) -> Unit
         ) : this(AnnotatedString(header), headerAlignment, contentAlignment, size, function)
     }
@@ -103,7 +103,7 @@ object Table {
             columns.forEach { col ->
                 Box(
                     contentAlignment = col.headerAlignment,
-                    modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                    modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
                         .fillMaxHeight().padding(horCellPadding, verCellPadding)
                 ) { col.header?.let { Form.Text(it) } }
             }
@@ -145,7 +145,7 @@ object Table {
             columns.forEach { col ->
                 Box(
                     contentAlignment = col.contentAlignment,
-                    modifier = col.size.apply({ Modifier.width(it) }, { Modifier.weight(it) })
+                    modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
                         .fillMaxHeight().background(bgColor(rowID))
                         .padding(horCellPadding, verCellPadding)
                 ) { col.content(item) }

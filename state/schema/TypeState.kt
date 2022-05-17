@@ -25,7 +25,9 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
 import com.vaticle.typedb.studio.state.resource.Navigable
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typeql.lang.common.TypeQLToken
@@ -103,10 +105,14 @@ sealed class TypeState private constructor(
     }
 
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
-        loadSupertypes()
-        loadAbstract()
-        loadOwnedAttributeTypes()
-        loadOtherProperties()
+        try {
+            loadSupertypes()
+            loadAbstract()
+            loadOwnedAttributeTypes()
+            loadOtherProperties()
+        } catch (e: TypeDBClientException) {
+            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
+        }
     }
 
     private fun loadAbstract() {
@@ -117,7 +123,7 @@ sealed class TypeState private constructor(
         val props = mutableMapOf<AttributeType, AttributeTypeProperties>()
         val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
 
-        fun properties(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
+        fun load(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
             props[attributeType] = AttributeTypeProperties(
                 attributeType = schemaMgr.createTypeState(attributeType),
                 overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
@@ -127,25 +133,25 @@ sealed class TypeState private constructor(
         }
 
         conceptTx.getOwnsExplicit(true).forEach {
-            properties(it, isKey = true, isInherited = false)
+            load(it, isKey = true, isInherited = false)
         }
         conceptTx.getOwnsExplicit(false).filter { !props.contains(it) }.forEach {
-            properties(it, isKey = false, isInherited = false)
+            load(it, isKey = false, isInherited = false)
         }
         conceptTx.getOwns(true).filter { !props.contains(it) }.forEach {
-            properties(it, isKey = true, isInherited = true)
+            load(it, isKey = true, isInherited = true)
         }
         conceptTx.getOwns(false).filter { !props.contains(it) }.forEach {
-            properties(it, isKey = false, isInherited = true)
+            load(it, isKey = false, isInherited = true)
         }
         ownedAttributeTypeProperties = props
     }
 
-    fun addOwnedAttributeTypes(attributeType: TypeState.Attribute, overriddenType: TypeState.Attribute?, key: Boolean) {
+    fun addOwnedAttributeTypes(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
         // TODO
     }
 
-    fun removeOwnedAttributeType(attType: TypeState.Attribute) {
+    fun removeOwnedAttributeType(attType: Attribute) {
         // TODO
     }
 
@@ -293,6 +299,8 @@ sealed class TypeState private constructor(
         schemaMgr: SchemaManager
     ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
 
+        data class OwnerTypeProperties(val ownerType: TypeState, val isKey: Boolean, val isInherited: Boolean)
+
         override val info get() = valueType
         override val parent: Attribute? get() = supertype
         override var entries: List<Attribute> = emptyList()
@@ -303,6 +311,8 @@ sealed class TypeState private constructor(
 
         val valueType: String? = if (!type.isRoot) type.valueType.name.lowercase() else null
         val isKeyable: Boolean get() = type.valueType.isKeyable
+        var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
+        val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
 
         override fun updateEntries(newEntries: List<TypeState>) {
             entries = newEntries.map { it as Attribute }
@@ -319,11 +329,30 @@ sealed class TypeState private constructor(
         }
 
         override fun loadOtherProperties() {
-            loadAttributeTypeOwners()
+            loadOwnerTypes()
         }
 
-        private fun loadAttributeTypeOwners() {
+        private fun loadOwnerTypes() {
+            val props = mutableMapOf<ThingType, OwnerTypeProperties>()
+            val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
 
+            fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
+                props[ownerType] = OwnerTypeProperties(schemaMgr.createTypeState(ownerType), isKey, isInherited)
+            }
+
+            conceptTx.getOwnersExplicit(true).forEach {
+                load(it, isKey = true, isInherited = false)
+            }
+            conceptTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
+                load(it, isKey = false, isInherited = false)
+            }
+            conceptTx.getOwners(true).filter { !props.contains(it) }.forEach {
+                load(it, isKey = true, isInherited = true)
+            }
+            conceptTx.getOwners(false).filter { !props.contains(it) }.forEach {
+                load(it, isKey = false, isInherited = true)
+            }
+            ownerTypeProperties = props
         }
     }
 }
