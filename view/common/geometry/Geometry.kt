@@ -380,7 +380,7 @@ object Geometry {
         return Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = sweepAngle(t1, t3, direction))
     }
 
-    fun arrowhead(from: Offset, to: Offset, arrowLength: Float, arrowWidth: Float): Path? {
+    fun arrowhead(from: Offset, to: Offset, arrowLength: Float, arrowWidth: Float): Pair<Line, Line>? {
         // first compute normalised vector for the line
         val d = to - from
         val len = sqrt(d.x*d.x + d.y*d.y)
@@ -391,11 +391,9 @@ object Geometry {
         val s = Offset(from.x + n.x * (len - arrowLength), from.y + n.y * (len - arrowLength)) // wingtip offsets from line
         val top = Offset(-n.y, n.x) // orthogonal vector to the line vector
 
-        return Path().apply {
-            moveTo(to.x, to.y)
-            lineTo(s.x + top.x * arrowWidth, s.y + top.y * arrowWidth)
-            lineTo(s.x - top.x * arrowWidth, s.y - top.y * arrowWidth)
-            close()
-        }
+        return Pair(
+            Line(from = Offset(s.x + top.x * arrowWidth, s.y + top.y * arrowWidth), to = to),
+            Line(from = Offset(s.x - top.x * arrowWidth, s.y - top.y * arrowWidth), to = to)
+        )
     }
 }

@@ -55,6 +55,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
@@ -76,8 +77,12 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.Line
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint
@@ -926,49 +931,91 @@ internal object GraphOutput : RunOutput() {
 
         class EdgeRenderer(private val state: State, private val ctx: RendererContext) {
 
-            private val density = state.viewport.density
+            val density = state.viewport.density
+            val edgeLabelSizes = state.visualiser.edgeLabelSizes
 
             fun draw(edges: Iterable<Edge>, detailed: Boolean) {
                 ctx.drawScope.drawPoints(
                     points = edgeCoordinates(edges, detailed), pointMode = PointMode.Lines,
-                    color = ctx.theme.edge, strokeWidth = 2f
+                    color = ctx.theme.edge, strokeWidth = density
                 )
             }
 
             private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
-                synchronized(edges) {
-                    return sequence {
-                        if (detailed) edges.forEach { yieldPrettyEdgeCoordinates(it) }
-                        else edges.forEach { yieldEdgeCoordinates(it) }
-                    }.toList()
+                return synchronized(edges) {
+                    if (detailed) edges.flatMap { prettyEdgeCoordinates(it) }
+                    else edges.flatMap { simpleEdgeCoordinates(it) }
                 }
             }
 
-            private suspend fun SequenceScope<Offset>.yieldEdgeCoordinates(edge: Edge) {
-                yield((edge.source.geometry.position - state.viewport.position) * density)
-                yield((edge.target.geometry.position - state.viewport.position) * density)
+            private fun simpleEdgeCoordinates(edge: Edge): Iterable<Offset> {
+                return line(edge.source.geometry.position, edge.target.geometry.position)
             }
 
-            private suspend fun SequenceScope<Offset>.yieldPrettyEdgeCoordinates(edge: Edge) {
-                val source = edge.source.geometry
-                val target = edge.target.geometry
-                val lineSource = source.edgeEndpoint(target.position) ?: return
-                val lineTarget = target.edgeEndpoint(source.position) ?: return
-                val (labelWidth, labelHeight) = state.visualiser.edgeLabelSizes[edge.label]?.div(density) ?: return
-                val m = midpoint(source.position, target.position)
-                val labelRect = Rect(
-                    Offset(m.x - labelWidth / 2 - 2, m.y - labelHeight / 2 - 2),
-                    Size(labelWidth + 4, labelHeight + 4)
-                )
-                yieldLineSegment(lineSource, labelRect)
-                yieldLineSegment(lineTarget, labelRect)
-                // TODO: yield arrowhead
+            private fun prettyEdgeCoordinates(edge: Edge): Iterable<Offset> {
+                return PrettyEdgeCoordinates(edge, this).get()
             }
 
-            private suspend fun SequenceScope<Offset>.yieldLineSegment(lineSource: Offset, labelRect: Rect) {
-                val lineSegmentTarget = rectIncomingLineIntersect(sourcePoint = lineSource, rect = labelRect) ?: return
-                yield((lineSource - state.viewport.position) * density)
-                yield((lineSegmentTarget - state.viewport.position) * density)
+            fun Offset.toViewport(): Offset {
+                return (this - state.viewport.position) * density
+            }
+
+            fun line(source: Offset, target: Offset): Iterable<Offset> {
+                return listOf(source.toViewport(), target.toViewport())
+            }
+
+            private class PrettyEdgeCoordinates(edge: Edge, private val renderer: EdgeRenderer) {
+
+                private val linePart1Source: Offset?
+                private val linePart1Target: Offset?
+                private val linePart2Source: Offset?
+                private val linePart2Target: Offset?
+                private val labelRect: Rect?
+
+                init {
+                    val source = edge.source.geometry
+                    val target = edge.target.geometry
+
+                    val labelSize = renderer.edgeLabelSizes[edge.label]
+                    labelRect = labelSize?.let {
+                        val m = midpoint(source.position, target.position)
+                        Rect(
+                            Offset(m.x - it.width.value / 2 - 2, m.y - it.height.value / 2 - 2),
+                            Size(it.width.value + 4, it.height.value + 4)
+                        )
+                    }
+
+                    linePart1Source = source.edgeEndpoint(target.position)
+                    linePart2Target = target.edgeEndpoint(source.position)
+                    linePart1Target = if (linePart1Source != null && labelRect != null) {
+                        rectIncomingLineIntersect(linePart1Source, labelRect)
+                    } else null
+                    linePart2Source = if (linePart2Target != null && labelRect != null) {
+                        rectIncomingLineIntersect(linePart2Target, labelRect)
+                    } else null
+                }
+
+                fun get(): Iterable<Offset> {
+                    return listOfNotNull(linePart1(), linePart2(), arrowhead()).flatten()
+                }
+
+                private fun linePart1(): Iterable<Offset>? {
+                    return if (linePart1Source == null || linePart1Target == null) null
+                    else renderer.line(linePart1Source, linePart1Target)
+                }
+
+                private fun linePart2(): Iterable<Offset>? {
+                    return if (linePart2Source == null || linePart2Target == null) null
+                    else renderer.line(linePart2Source, linePart2Target)
+                }
+
+                private fun arrowhead(): Iterable<Offset>? {
+                    if (linePart2Source == null || linePart2Target == null) return null
+                    return with(renderer) {
+                        val lines = arrowhead(linePart2Source, linePart2Target, arrowLength = 6f, arrowWidth = 3f)
+                        lines?.toList()?.flatMap { listOf(it.from.toViewport(), it.to.toViewport()) }
+                    }
+                }
             }
         }
 
@@ -1019,7 +1066,7 @@ internal object GraphOutput : RunOutput() {
 
     class Visualiser(private val state: State) {
 
-        val edgeLabelSizes: MutableMap<String, Size> = ConcurrentHashMap()
+        val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
 
         @Composable
         fun Layout(modifier: Modifier) {
@@ -1030,7 +1077,7 @@ internal object GraphOutput : RunOutput() {
                 modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
                     .onGloballyPositioned { initialiseViewport(density, it) }
             ) {
-                key(state.graph.physics.iteration) {
+                key(state.graph.physics.iteration, state.viewport.density, state.viewport.scale) {
                     Box(Modifier.fillMaxSize().graphicsLayer(
                         scaleX = state.viewport.scale, scaleY = state.viewport.scale,
                         transformOrigin = TransformOrigin.Center
@@ -1066,8 +1113,9 @@ internal object GraphOutput : RunOutput() {
 
         @Composable
         private fun EdgeLabel(edge: State.Edge) {
+            val density = LocalDensity.current.density
             val position = edge.geometry.midpoint - state.viewport.position
-            val size = edgeLabelSizes[edge.label]
+            val size = edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
             val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
             val color = baseColor
@@ -1089,11 +1137,14 @@ internal object GraphOutput : RunOutput() {
 
         @Composable
         private fun EdgeLabelMeasurer(edge: State.Edge) {
-            Form.Text(
-                value = edge.label, textStyle = Theme.typography.code1,
-                modifier = Modifier.graphicsLayer(alpha = 0f)
-                    .onSizeChanged { edgeLabelSizes[edge.label] = it.toSize() }
-            )
+            with(LocalDensity.current) {
+                Form.Text(
+                    value = edge.label, textStyle = Theme.typography.code1,
+                    modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged {
+                        edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
+                    }
+                )
+            }
         }
 
         @Composable
