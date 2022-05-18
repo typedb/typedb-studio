@@ -87,6 +87,7 @@ import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Companion.emptyGraph
+import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typeql.lang.TypeQL.`var`
 import com.vaticle.typeql.lang.TypeQL.match
 import kotlinx.coroutines.CoroutineScope
@@ -185,22 +186,28 @@ internal object GraphOutput : RunOutput() {
             fun isEmpty() = vertices.isEmpty()
             fun isNotEmpty() = vertices.isNotEmpty()
 
-            class Physics(private val graph: Graph) {
+            class Physics(val graph: Graph) {
+
+                private object Constants {
+                    const val COLLIDE_RADIUS = 65.0
+                }
+
                 private val simulation = BasicSimulation().apply {
                     alphaMin = 0.01
                     alphaDecay = 1 - alphaMin.pow(1.0 / 100)
                 }
                 var iteration by mutableStateOf(0L)
-                val isStable get() = simulation.alpha < simulation.alphaMin
+                private val isStable get() = simulation.alpha < simulation.alphaMin
                 val isStepRunning = AtomicBoolean(false)
                 var alpha: Double
                     get() = simulation.alpha
                     set(value) { simulation.alpha = value }
+                val drag = Drag(this)
 
                 fun step() {
                     if (isStable || graph.isEmpty()) return
                     if (isStepRunning.compareAndSet(false, true)) {
-                        setupForces()
+                        initialiseForces()
                         simulation.tick()
                         iteration++
                         isStepRunning.set(false)
@@ -219,7 +226,7 @@ internal object GraphOutput : RunOutput() {
                     simulation.alpha = 0.0
                 }
 
-                private fun setupForces() {
+                private fun initialiseForces() {
                     simulation.apply {
                         forces.clear()
                         localForces.clear()
@@ -228,7 +235,7 @@ internal object GraphOutput : RunOutput() {
                         val vertices = graph.vertices.map { it.geometry }
                         val edges = graph.edges.map { it.physics }
                         forces.add(CenterForce(vertices, 0.0, 0.0))
-                        forces.add(CollideForce(vertices, 65.0))
+                        forces.add(CollideForce(vertices, COLLIDE_RADIUS))
                         forces.add(
                             ManyBodyForce(
                                 vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
@@ -238,6 +245,42 @@ internal object GraphOutput : RunOutput() {
                         val gravityStrength = 0.1
                         forces.add(XForce(vertices, 0.0, gravityStrength))
                         forces.add(YForce(vertices, 0.0, gravityStrength))
+                    }
+                }
+
+                class Drag(private val physics: Physics) {
+
+                    private val graph = physics.graph
+                    private val simulation = physics.simulation
+                    // TODO: why did we do this again?
+                    private var temporarilyFrozenVertices: Collection<Vertex.Geometry> by mutableStateOf(listOf())
+
+                    fun onDragStart(vertex: Vertex.Geometry) {
+                        freezePermanently(vertex)
+                        initialiseMidDragForces()
+                        // TODO
+                    }
+
+                    fun initialiseMidDragForces() {
+                        simulation.apply {
+                            alpha = 0.25
+                            alphaDecay = 0.0
+
+                            forces.clear()
+                            localForces.clear()
+
+                            val vertices = graph.vertices.map { it.geometry }
+                            forces.add(CollideForce(vertices, COLLIDE_RADIUS))
+                            // TODO
+                        }
+                    }
+
+                    private fun freezePermanently(vertex: Vertex.Geometry) {
+                        vertex.isFrozen = true
+                    }
+
+                    private fun freezeUntilDragEnd(vertices: Collection<Vertex.Geometry>) {
+                        temporarilyFrozenVertices = vertices
                     }
                 }
             }
@@ -1048,9 +1091,10 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class Pointer(private val state: State) {
+        class Pointer(state: State) {
             var position: Offset? by mutableStateOf(null)
             var hoveredVertex: Vertex? by mutableStateOf(null)
+            var draggedVertex: Vertex? by mutableStateOf(null)
             val hoveredVertexChecker = HoveredVertexChecker(state)
 
             class HoveredVertexChecker(private val state: State) {
@@ -1195,7 +1239,11 @@ internal object GraphOutput : RunOutput() {
                 val viewport = state.viewport
                 Box(modifier
                     .pointerInput(viewport.density, viewport.scale) {
-                        detectDragGestures { _, dragAmount ->
+                        detectDragGestures(
+                            onDragStart = { _ ->
+                                state.pointer.draggedVertex?.let { state.graph.physics.onDragStart(it) }
+                            }
+                        ) /* onDrag = */ { _, dragAmount ->
                             viewport.worldCoordinates -= dragAmount / (viewport.scale * viewport.density)
                         }
                     }
