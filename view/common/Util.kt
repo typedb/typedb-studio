@@ -21,7 +21,9 @@ package com.vaticle.typedb.studio.view.common
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.component.Form
@@ -45,6 +47,10 @@ object Util {
 
     fun toDP(pixel: Number, density: Float): Dp {
         return (pixel.toDouble() / density).roundToInt().dp
+    }
+
+    fun toDP(size: Size, density: Float): DpSize {
+        return DpSize(size.width.dp / density, size.height.dp / density)
     }
 
     fun mousePoint(window: ComposeWindow, titleBarHeight: Dp): Point {

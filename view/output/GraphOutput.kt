@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -74,6 +75,7 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
@@ -115,10 +117,8 @@ internal object GraphOutput : RunOutput() {
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
         val graphBuilder = GraphBuilder(transaction, coroutineScope)
         val viewport = Viewport(this)
+        val pointer = Pointer(this)
         val physicsEngine = PhysicsEngine(this)
-        var pointerPosition: Offset? by mutableStateOf(null)
-        var hoveredVertex: Vertex? by mutableStateOf(null)
-        val hoveredVertexChecker = HoveredVertexChecker(this)
         var theme: Color.GraphTheme? = null
         val visualiser = Visualiser(this)
 
@@ -138,59 +138,6 @@ internal object GraphOutput : RunOutput() {
 
         fun edgeRenderer(drawScope: DrawScope): EdgeRenderer {
             return EdgeRenderer(this, rendererContext(drawScope))
-        }
-
-        class Viewport(private val state: State) {
-            var density: Float by mutableStateOf(1f); private set
-            var physicalSize by mutableStateOf(Size.Zero); private set
-            /** The world coordinates at the top-left corner of the viewport. */
-            var worldCoordinates by mutableStateOf(Offset.Zero)
-            private val physicalCenter get() = Offset(physicalSize.width / 2, physicalSize.height / 2)
-            private var _scale by mutableStateOf(1f)
-            var scale: Float
-                get() = _scale
-                set(value) { _scale = value.coerceIn(0.001f..10f) }
-            var areInitialWorldCoordinatesSet = AtomicBoolean(false)
-
-            fun updatePhysicalDimensions(size: Size, density: Float) {
-                this.density = density
-                physicalSize = size
-            }
-
-            fun alignWorldCenterWithPhysicalCenter() {
-                worldCoordinates = -physicalCenter * density / scale
-            }
-
-            fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
-                val worldPoint = physicalPointToWorldPoint(physicalPoint)
-                val nearestVertices = nearestVertices(worldPoint)
-                return nearestVertices.find { it.geometry.intersects(worldPoint) }
-            }
-
-            private fun physicalPointToWorldPoint(physicalPoint: Offset): Offset {
-                val transformOrigin = (Offset(physicalSize.width, physicalSize.height) / 2f) / density
-                val scaledPhysicalPoint = physicalPoint / density
-
-                // Let 'physical' be the physical position of a point in the viewport, 'origin' be the transform origin
-                // of the viewport, 'world' be the position of 'physical' in the world, 'viewportPosition' be the world
-                // offset at the top left corner of the viewport. Then:
-                // physical = origin + scale * (world - viewportPosition - origin)
-                // Rearranging this equation gives the result below:
-                return (((scaledPhysicalPoint - transformOrigin) / scale) + transformOrigin) + worldCoordinates
-            }
-
-            private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
-                // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
-                val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
-                state.graph.vertices.associateWithTo(vertexDistances) {
-                    (worldPoint - it.geometry.position).getDistanceSquared()
-                }
-                return sequence {
-                    while (vertexDistances.isNotEmpty()) {
-                        yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
-                    }
-                }.take(10)
-            }
         }
 
         class Graph private constructor() {
@@ -854,6 +801,59 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
+        class Viewport(private val state: State) {
+            var density: Float by mutableStateOf(1f); private set
+            var physicalSize by mutableStateOf(DpSize.Zero); private set
+            /** The world coordinates at the top-left corner of the viewport. */
+            var worldCoordinates by mutableStateOf(Offset.Zero)
+            private val physicalCenter get() = DpOffset(physicalSize.width / 2, physicalSize.height / 2)
+            private var _scale by mutableStateOf(1f)
+            var scale: Float
+                get() = _scale
+                set(value) { _scale = value.coerceIn(0.001f..10f) }
+            var areInitialWorldCoordinatesSet = AtomicBoolean(false)
+
+            fun updatePhysicalDimensions(size: Size, density: Float) {
+                this.density = density
+                physicalSize = toDP(size, density)
+            }
+
+            fun alignWorldCenterWithPhysicalCenter() {
+                worldCoordinates = Offset(-physicalCenter.x.value, -physicalCenter.y.value) / scale
+            }
+
+            fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
+                val worldPoint = physicalPointToWorldPoint(physicalPoint)
+                val nearestVertices = nearestVertices(worldPoint)
+                return nearestVertices.find { it.geometry.intersects(worldPoint) }
+            }
+
+            private fun physicalPointToWorldPoint(physicalPoint: Offset): Offset {
+                val transformOrigin = Offset(physicalSize.width.value, physicalSize.height.value) / 2f
+                val scaledPhysicalPoint = physicalPoint / density
+
+                // Let 'physical' be the physical position of a point in the viewport, 'origin' be the transform origin
+                // of the viewport, 'world' be the position of 'physical' in the world, 'viewportPosition' be the world
+                // offset at the top left corner of the viewport. Then:
+                // physical = origin + scale * (world - viewportPosition - origin)
+                // Rearranging this equation gives the result below:
+                return (((scaledPhysicalPoint - transformOrigin) / scale) + transformOrigin) + worldCoordinates
+            }
+
+            private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
+                // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
+                val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
+                state.graph.vertices.associateWithTo(vertexDistances) {
+                    (worldPoint - it.geometry.position).getDistanceSquared()
+                }
+                return sequence {
+                    while (vertexDistances.isNotEmpty()) {
+                        yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
+                    }
+                }.take(10)
+            }
+        }
+
         sealed class VertexBackgroundRenderer(
             private val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
         ) {
@@ -878,7 +878,7 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Type.Thing -> colors.thingType
                 }
             }
-            private val isFocused = vertex == state.hoveredVertex
+            private val isFocused = vertex == state.pointer.hoveredVertex
             private val alpha = when {
                 isFocused -> .675f
                 else -> null
@@ -1048,20 +1048,27 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class HoveredVertexChecker(private val state: State) {
-            private var lastScanDoneTime = System.currentTimeMillis()
+        class Pointer(private val state: State) {
+            var position: Offset? by mutableStateOf(null)
+            var hoveredVertex: Vertex? by mutableStateOf(null)
+            val hoveredVertexChecker = HoveredVertexChecker(state)
 
-            suspend fun poll() {
-                while (true) {
-                    withFrameMillis { state.pointerPosition?.let { if (isReadyToScan()) scan(it) } }
+            class HoveredVertexChecker(private val state: State) {
+
+                private var lastScanDoneTime = System.currentTimeMillis()
+
+                suspend fun poll() {
+                    while (true) {
+                        withFrameMillis { state.pointer.position?.let { if (isReadyToScan()) scan(it) } }
+                    }
                 }
-            }
 
-            private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
+                private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
 
-            private fun scan(pointerPosition: Offset) {
-                state.hoveredVertex = state.viewport.findVertexAtPhysicalPoint(pointerPosition)
-                lastScanDoneTime = System.currentTimeMillis()
+                private fun scan(pointerPosition: Offset) {
+                    state.pointer.hoveredVertex = state.viewport.findVertexAtPhysicalPoint(pointerPosition)
+                    lastScanDoneTime = System.currentTimeMillis()
+                }
             }
         }
     }
@@ -1083,14 +1090,14 @@ internal object GraphOutput : RunOutput() {
             }
 
             LaunchedEffect(Unit) { state.physicsEngine.run() }
-            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.hoveredVertexChecker.poll() }
+            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.pointer.hoveredVertexChecker.poll() }
         }
 
         @Composable
         @Suppress("UNUSED_PARAMETER")
-        // TODO: we tried using Composables.key here, but it performs drastically worse than this explicit Composable
-        //       with unused parameters - investigate why
-        fun Graphics(physicsIteration: Long, density: Float, size: Size, scale: Float) {
+        // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
+        //       this explicit Composable with unused parameters - investigate why
+        fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
             Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
                 EdgeLayer()
                 VertexLayer()
@@ -1206,8 +1213,8 @@ internal object GraphOutput : RunOutput() {
             fun TapAndHover(state: State, modifier: Modifier) {
                 Box(modifier
                     .pointerMoveFilter(
-                        onMove = { state.pointerPosition = it; false },
-                        onExit = { state.pointerPosition = null; false }
+                        onMove = { state.pointer.position = it; false },
+                        onExit = { state.pointer.position = null; false }
                     )
                 )
             }
