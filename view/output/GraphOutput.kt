@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
@@ -42,9 +41,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.PointMode
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -77,11 +74,8 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
-import com.vaticle.typedb.studio.view.common.geometry.Geometry.Line
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
@@ -147,17 +141,25 @@ internal object GraphOutput : RunOutput() {
         }
 
         class Viewport(private val state: State) {
-            var density: Float by mutableStateOf(1f)
-            var size by mutableStateOf(Size.Zero)
+            var density: Float by mutableStateOf(1f); private set
+            var physicalSize by mutableStateOf(Size.Zero); private set
             /** The world coordinates at the top-left corner of the viewport. */
-            var position by mutableStateOf(Offset.Zero)
-            /** The world coordinates at the center of the viewport. */
-            val center get() = position + Offset(size.width / 2, size.height / 2) / scale
+            var worldCoordinates by mutableStateOf(Offset.Zero)
+            private val physicalCenter get() = Offset(physicalSize.width / 2, physicalSize.height / 2)
             private var _scale by mutableStateOf(1f)
             var scale: Float
                 get() = _scale
                 set(value) { _scale = value.coerceIn(0.001f..10f) }
-            var isLayoutInitialised = AtomicBoolean(false)
+            var areInitialWorldCoordinatesSet = AtomicBoolean(false)
+
+            fun updatePhysicalDimensions(size: Size, density: Float) {
+                this.density = density
+                physicalSize = size
+            }
+
+            fun alignWorldCenterWithPhysicalCenter() {
+                worldCoordinates = -physicalCenter * density / scale
+            }
 
             fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
                 val worldPoint = physicalPointToWorldPoint(physicalPoint)
@@ -166,7 +168,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             private fun physicalPointToWorldPoint(physicalPoint: Offset): Offset {
-                val transformOrigin = (Offset(size.width, size.height) / 2f) * density
+                val transformOrigin = (Offset(physicalSize.width, physicalSize.height) / 2f) / density
                 val scaledPhysicalPoint = physicalPoint / density
 
                 // Let 'physical' be the physical position of a point in the viewport, 'origin' be the transform origin
@@ -174,7 +176,7 @@ internal object GraphOutput : RunOutput() {
                 // offset at the top left corner of the viewport. Then:
                 // physical = origin + scale * (world - viewportPosition - origin)
                 // Rearranging this equation gives the result below:
-                return (((scaledPhysicalPoint - transformOrigin) / scale) + transformOrigin) + position
+                return (((scaledPhysicalPoint - transformOrigin) / scale) + transformOrigin) + worldCoordinates
             }
 
             private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
@@ -885,7 +887,7 @@ internal object GraphOutput : RunOutput() {
             private val density = state.viewport.density
             protected val rect = vertex.geometry.let {
                 Rect(
-                    (it.position - state.viewport.position) * density
+                    (it.position - state.viewport.worldCoordinates) * density
                             - Offset(it.size.width * density / 2, it.size.height * density / 2),
                     it.size * density
                 )
@@ -957,7 +959,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             fun Offset.toViewport(): Offset {
-                return (this - state.viewport.position) * density
+                return (this - state.viewport.worldCoordinates) * density
             }
 
             fun line(source: Offset, target: Offset): Iterable<Offset> {
@@ -1075,29 +1077,31 @@ internal object GraphOutput : RunOutput() {
 
             Box(
                 modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
-                    .onGloballyPositioned { initialiseViewport(density, it) }
+                    .onGloballyPositioned { onLayout(density, it) }
             ) {
-                key(state.graph.physics.iteration, state.viewport.density, state.viewport.scale) {
-                    Box(Modifier.fillMaxSize().graphicsLayer(
-                        scaleX = state.viewport.scale, scaleY = state.viewport.scale,
-                        transformOrigin = TransformOrigin.Center
-                    )) {
-                        EdgeLayer()
-                        VertexLayer()
-                    }
-                }
-                PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
+                Graphics(state.graph.physics.iteration, state.viewport.density, state.viewport.physicalSize, state.viewport.scale)
             }
 
             LaunchedEffect(Unit) { state.physicsEngine.run() }
-            LaunchedEffect(Unit) { state.hoveredVertexChecker.poll() }
+            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.hoveredVertexChecker.poll() }
         }
 
-        private fun initialiseViewport(density: Float, layout: LayoutCoordinates) {
-            state.viewport.density = density
-            if (state.viewport.isLayoutInitialised.compareAndSet(false, true)) {
-                state.viewport.size = layout.size.toSize()
-                state.viewport.position = -state.viewport.size.center / density
+        @Composable
+        @Suppress("UNUSED_PARAMETER")
+        // TODO: we tried using Composables.key here, but it performs drastically worse than this explicit Composable
+        //       with unused parameters - investigate why
+        fun Graphics(physicsIteration: Long, density: Float, size: Size, scale: Float) {
+            Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
+                EdgeLayer()
+                VertexLayer()
+            }
+            PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
+        }
+
+        private fun onLayout(density: Float, layout: LayoutCoordinates) {
+            state.viewport.updatePhysicalDimensions(layout.size.toSize(), density)
+            if (state.viewport.areInitialWorldCoordinatesSet.compareAndSet(false, true)) {
+                state.viewport.alignWorldCenterWithPhysicalCenter()
             }
         }
 
@@ -1114,7 +1118,7 @@ internal object GraphOutput : RunOutput() {
         @Composable
         private fun EdgeLabel(edge: State.Edge) {
             val density = LocalDensity.current.density
-            val position = edge.geometry.midpoint - state.viewport.position
+            val position = edge.geometry.midpoint - state.viewport.worldCoordinates
             val size = edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
             val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
@@ -1161,8 +1165,8 @@ internal object GraphOutput : RunOutput() {
         @Composable
         private fun VertexLabel(vertex: State.Vertex) {
             val r = vertex.geometry.rect
-            val x = (r.left - state.viewport.position.x).dp
-            val y = (r.top - state.viewport.position.y).dp
+            val x = (r.left - state.viewport.worldCoordinates.x).dp
+            val y = (r.top - state.viewport.worldCoordinates.y).dp
             val color = GraphTheme.colors.vertexLabel
 
             Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
@@ -1185,7 +1189,7 @@ internal object GraphOutput : RunOutput() {
                 Box(modifier
                     .pointerInput(viewport.density, viewport.scale) {
                         detectDragGestures { _, dragAmount ->
-                            viewport.position -= dragAmount / (viewport.scale * viewport.density)
+                            viewport.worldCoordinates -= dragAmount / (viewport.scale * viewport.density)
                         }
                     }
                     .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
