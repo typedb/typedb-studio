@@ -122,8 +122,11 @@ sealed class TypePage(type: TypeState) : Page(type) {
     }
 
     @Composable
-    private fun Separator() {
-        Separator.Horizontal(color = Theme.colors.border.copy(alpha = FADED_OPACITY), modifier = Modifier.fillMaxWidth())
+    protected fun Separator() {
+        Separator.Horizontal(
+            color = Theme.colors.border.copy(alpha = FADED_OPACITY),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 
     @Composable
@@ -193,65 +196,49 @@ sealed class TypePage(type: TypeState) : Page(type) {
     }
 
     @Composable
-    protected fun OwnedAttributeTypesSection() {
-        SectionLine { Form.Text(value = Label.OWNED_ATTRIBUTE_TYPES) }
-        OwnedAttributeTypesTable()
-        OwnedAttributeTypeAddition()
+    protected fun OwnsAttributeTypesSection() {
+        SectionLine { Form.Text(value = Label.OWNS_ATTRIBUTE_TYPES) }
+        OwnsAttributeTypesTable()
+        OwnsAttributeTypeAddition()
     }
 
     @Composable
-    private fun OwnedAttributeTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.ownedAttributeTypes.size + 1).coerceAtLeast(2)
-
-        @Composable
-        fun MayRemoveOwnedAttributeTypeButton(attTypeProp: TypeState.AttributeTypeProperties) {
-            if (!attTypeProp.isInherited) Form.IconButton(
-                icon = Icon.Code.MINUS,
-                modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
-                iconColor = Theme.colors.error,
-                enabled = isEditable,
-                tooltip = Tooltip.Arg(
-                    Label.REMOVE_OWNED_ATTRIBUTE_TYPE,
-                    Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
-                ),
-                onClick = { type.removeOwnedAttributeType(attTypeProp.attributeType) }
-            )
-        }
-
+    private fun OwnsAttributeTypesTable() {
+        val tableHeight = Table.ROW_HEIGHT * (type.ownsAttributeTypes.size + 1).coerceAtLeast(2)
         Table.Layout(
-            items = type.ownedAttributeTypeProperties.values.sortedBy { it.attributeType.name },
+            items = type.ownsAttributeTypeProperties.values.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
-                Table.Column(header = Label.OWNED, contentAlignment = Alignment.CenterStart) { props ->
+                Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
                     ClickableText(fullName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
                 },
                 Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                     props.overriddenType?.let { ot -> ClickableText(fullName(ot)) { GlobalState.resource.open(ot) } }
                 },
                 Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
-                Table.Column(
-                    header = Label.INHERITED,
-                    size = Either.second(ICON_COL_WIDTH)
-                ) { MayTickIcon(it.isInherited) },
-                Table.Column(
-                    header = null,
-                    size = Either.second(ICON_COL_WIDTH)
-                ) { MayRemoveOwnedAttributeTypeButton(it) },
+                Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
+                    MayTickIcon(it.isInherited)
+                },
+                Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
+                    MayRemoveButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
+                        type.removeOwnsAttributeType(it.attributeType)
+                    }
+                },
             )
         )
     }
 
     @Composable
-    private fun OwnedAttributeTypeAddition() {
+    private fun OwnsAttributeTypeAddition() {
         val baseFontColor = Theme.colors.onPrimary
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes?.filter {
-            !type.ownedAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
+            !type.ownsAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
         }?.sortedBy { it.name } ?: listOf()
 
         var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
-            ?.intersect(type.supertype!!.ownedAttributeTypes.toSet())
+            ?.intersect(type.supertype!!.ownsAttributeTypes.toSet())
             ?.sortedBy { it.name } ?: listOf()
 
         val isOwnable = isEditable && attributeType != null
@@ -290,18 +277,46 @@ sealed class TypePage(type: TypeState) : Page(type) {
                 enabled = isKeyable
             ) { isKey = it }
             Form.TextButton(
-                text = Label.OWN,
+                text = Label.OWNS,
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
                 enabled = isOwnable,
-                tooltip = Tooltip.Arg(Label.ADD_OWNED_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.addOwnedAttributeTypes(attributeType!!, overriddenType, isKey) }
+                tooltip = Tooltip.Arg(Label.ADD_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+                onClick = { type.addOwnsAttributeTypes(attributeType!!, overriddenType, isKey) }
             )
         }
     }
 
     @Composable
-    protected fun PlayedRolesSection() {
+    protected fun PlaysRoleTypesSection() {
+        SectionLine { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
+        PlaysRoleTypesTable()
+    }
 
+    @Composable
+    private fun PlaysRoleTypesTable() {
+        val tableHeight = Table.ROW_HEIGHT * (type.playsRoleTypes.size + 1).coerceAtLeast(2)
+        Table.Layout(
+            items = type.playsRoleTypeProperties.values.sortedBy { it.roleType.scopedName },
+            modifier = Modifier.fillMaxWidth().height(tableHeight),
+            columns = listOf(
+                Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
+                    ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
+                },
+                Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
+                    props.overriddenType?.let { ot ->
+                        ClickableText(ot.scopedName) { GlobalState.resource.open(ot.relationType) }
+                    }
+                },
+                Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
+                    MayTickIcon(it.isInherited)
+                },
+                Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
+                    MayRemoveButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
+                        type.removePlaysRoleType(it.roleType)
+                    }
+                },
+            )
+        )
     }
 
     @Composable
@@ -328,6 +343,18 @@ sealed class TypePage(type: TypeState) : Page(type) {
     }
 
     @Composable
+    protected fun MayRemoveButton(tooltip: String, isVisible: Boolean, onClick: () -> Unit) {
+        if (!isVisible) Form.IconButton(
+            icon = Icon.Code.MINUS,
+            modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
+            iconColor = Theme.colors.error,
+            enabled = isEditable,
+            tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+            onClick = onClick
+        )
+    }
+
+    @Composable
     protected fun MayTickIcon(boolean: Boolean) {
         if (boolean) Icon.Render(icon = Icon.Code.CHECK, color = Theme.colors.secondary)
     }
@@ -350,8 +377,10 @@ sealed class TypePage(type: TypeState) : Page(type) {
 
         @Composable
         override fun MainSections() {
-            OwnedAttributeTypesSection()
-            PlayedRolesSection()
+            OwnsAttributeTypesSection()
+            Separator()
+            PlaysRoleTypesSection()
+            Separator()
             SubtypesSection()
         }
     }
@@ -365,10 +394,11 @@ sealed class TypePage(type: TypeState) : Page(type) {
         @Composable
         override fun MainSections() {
             RelatedRolesSection()
-            OwnedAttributeTypesSection()
+            OwnsAttributeTypesSection()
+            Separator()
             SubtypesSection()
             AdvanceSections {
-                PlayedRolesSection()
+                PlaysRoleTypesSection()
             }
         }
 
@@ -387,23 +417,19 @@ sealed class TypePage(type: TypeState) : Page(type) {
         @Composable
         override fun MainSections() {
             OwnersSection()
+            Separator()
             SubtypesSection()
             AdvanceSections {
-                OwnedAttributeTypesSection()
-                PlayedRolesSection()
+                OwnsAttributeTypesSection()
+                Separator()
+                PlaysRoleTypesSection()
             }
         }
 
         @Composable
         private fun OwnersSection() {
             SectionLine { Form.Text(value = Label.OWNER_TYPES) }
-            OwnersTable()
-        }
-
-        @Composable
-        private fun OwnersTable() {
             val tableHeight = Table.ROW_HEIGHT * (type.ownerTypes.size + 1).coerceAtLeast(2)
-
             Table.Layout(
                 items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
                 modifier = Modifier.fillMaxWidth().height(tableHeight),

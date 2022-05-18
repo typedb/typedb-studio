@@ -86,7 +86,9 @@ class SchemaManager(
     }
 
     override fun reloadEntries() {
-        entries.forEach { it.isExpandable = it.type.asRemote(openOrGetReadTx()).subtypesExplicit.findAny().isPresent }
+        entries.forEach {
+            it.isExpandable = it.conceptType.asRemote(openOrGetReadTx()).subtypesExplicit.findAny().isPresent
+        }
     }
 
     override fun compareTo(other: Navigable<TypeState>): Int {
@@ -135,13 +137,13 @@ class SchemaManager(
     private fun loadTypesAndOpen() {
         val conceptMgr = openOrGetReadTx().concepts()
         rootEntityType = TypeState.Entity(
-            type = conceptMgr.rootEntityType, supertypeInit = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootEntityType, supertypeInit = null, isExpandable = true, schemaMgr = this
         ).also { entityTypes[conceptMgr.rootEntityType] = it }
         rootRelationType = TypeState.Relation(
-            type = conceptMgr.rootRelationType, supertypeInit = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootRelationType, supertype = null, isExpandable = true, schemaMgr = this
         ).also { relationTypes[conceptMgr.rootRelationType] = it }
         rootAttributeType = TypeState.Attribute(
-            type = conceptMgr.rootAttributeType, supertypeInit = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootAttributeType, supertype = null, isExpandable = true, schemaMgr = this
         ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
         onRootsUpdated?.let { it() }
         isOpenAtomic.set(true)

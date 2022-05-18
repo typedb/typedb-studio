@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
+import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
@@ -38,8 +39,8 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 sealed class TypeState private constructor(
-    nameInit: String,
-    isExpandableInit: Boolean,
+    name: String,
+    isExpandable: Boolean,
     val schemaMgr: SchemaManager,
 ) : Navigable<TypeState>, Resource {
 
@@ -50,14 +51,20 @@ sealed class TypeState private constructor(
         val isInherited: Boolean
     )
 
+    data class PlaysRoleTypeProperties(
+        val roleType: Relation.RoleTypeState,
+        val overriddenType: Relation.RoleTypeState?,
+        val isInherited: Boolean
+    )
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    override val name: String by mutableStateOf(nameInit)
+    override val name: String by mutableStateOf(name)
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
-    override var isExpandable: Boolean by mutableStateOf(isExpandableInit)
+    override var isExpandable: Boolean by mutableStateOf(isExpandable)
 
     override val windowTitle: String get() = computeWindowTitle()
     override val isOpen: Boolean get() = isOpenAtomic.get()
@@ -66,16 +73,18 @@ sealed class TypeState private constructor(
     override val isUnsavedResource: Boolean = false
     override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
-    abstract val type: ThingType
-    abstract val baseType: TypeQLToken.Type
+    internal abstract val conceptType: ThingType
+    internal abstract val baseType: TypeQLToken.Type
     abstract val supertype: TypeState?
     abstract val supertypes: List<TypeState>
     abstract val subtypes: List<TypeState>
 
-    val isRoot get() = type.isRoot
+    val isRoot get() = conceptType.isRoot
     var isAbstract: Boolean by mutableStateOf(false)
-    var ownedAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
-    val ownedAttributeTypes: List<Attribute> get() = ownedAttributeTypeProperties.values.map { it.attributeType }
+    var ownsAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
+    val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.values.map { it.attributeType }
+    var playsRoleTypeProperties: Map<RoleType, PlaysRoleTypeProperties> by mutableStateOf(mapOf())
+    val playsRoleTypes: List<Relation.RoleTypeState> get() = playsRoleTypeProperties.values.map { it.roleType }
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
@@ -108,7 +117,8 @@ sealed class TypeState private constructor(
         try {
             loadSupertypes()
             loadAbstract()
-            loadOwnedAttributeTypes()
+            loadOwnsAttributeTypes()
+            loadPlaysRoleTypes()
             loadOtherProperties()
         } catch (e: TypeDBClientException) {
             schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
@@ -116,42 +126,64 @@ sealed class TypeState private constructor(
     }
 
     private fun loadAbstract() {
-        isAbstract = type.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
+        isAbstract = conceptType.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
     }
 
-    private fun loadOwnedAttributeTypes() {
+    private fun loadOwnsAttributeTypes() {
         val props = mutableMapOf<AttributeType, AttributeTypeProperties>()
-        val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
+        val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
 
         fun load(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
             props[attributeType] = AttributeTypeProperties(
                 attributeType = schemaMgr.createTypeState(attributeType),
-                overriddenType = conceptTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
+                overriddenType = typeTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
                 isKey = isKey,
                 isInherited = isInherited
             )
         }
 
-        conceptTx.getOwnsExplicit(true).forEach {
-            load(it, isKey = true, isInherited = false)
+        typeTx.getOwnsExplicit(true).forEach {
+            load(attributeType = it, isKey = true, isInherited = false)
         }
-        conceptTx.getOwnsExplicit(false).filter { !props.contains(it) }.forEach {
-            load(it, isKey = false, isInherited = false)
+        typeTx.getOwnsExplicit(false).filter { !props.contains(it) }.forEach {
+            load(attributeType = it, isKey = false, isInherited = false)
         }
-        conceptTx.getOwns(true).filter { !props.contains(it) }.forEach {
-            load(it, isKey = true, isInherited = true)
+        typeTx.getOwns(true).filter { !props.contains(it) }.forEach {
+            load(attributeType = it, isKey = true, isInherited = true)
         }
-        conceptTx.getOwns(false).filter { !props.contains(it) }.forEach {
-            load(it, isKey = false, isInherited = true)
+        typeTx.getOwns(false).filter { !props.contains(it) }.forEach {
+            load(attributeType = it, isKey = false, isInherited = true)
         }
-        ownedAttributeTypeProperties = props
+        ownsAttributeTypeProperties = props
     }
 
-    fun addOwnedAttributeTypes(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
+    fun addOwnsAttributeTypes(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
         // TODO
     }
 
-    fun removeOwnedAttributeType(attType: Attribute) {
+    fun removeOwnsAttributeType(attType: Attribute) {
+        // TODO
+    }
+
+    private fun loadPlaysRoleTypes() {
+        val props = mutableMapOf<RoleType, PlaysRoleTypeProperties>()
+        val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
+
+        fun load(roleType: RoleType, isInherited: Boolean) {
+            val relationType = schemaMgr.createTypeState(roleType.asRemote(schemaMgr.openOrGetReadTx()).relationType)
+            props[roleType] = PlaysRoleTypeProperties(
+                roleType = Relation.RoleTypeState(relationType, roleType),
+                overriddenType = typeTx.getPlaysOverridden(roleType)?.let { Relation.RoleTypeState(relationType, it) },
+                isInherited = isInherited
+            )
+        }
+
+        typeTx.playsExplicit.forEach { load(roleType = it, isInherited = false) }
+        typeTx.plays.filter { !props.contains(it) }.forEach { load(roleType = it, isInherited = true) }
+        playsRoleTypeProperties = props
+    }
+
+    fun removePlaysRoleType(roleType: Relation.RoleTypeState) {
         // TODO
     }
 
@@ -166,18 +198,18 @@ sealed class TypeState private constructor(
 
     override fun reloadEntries() {
         val tx = schemaMgr.openOrGetReadTx()
-        val new = type.asRemote(tx).subtypesExplicit.toList().toSet()
-        val old = entries.map { it.type }.toSet()
+        val new = conceptType.asRemote(tx).subtypesExplicit.toList().toSet()
+        val old = entries.map { it.conceptType }.toSet()
         val refresh: List<TypeState>
         if (new != old) {
             val deleted = old - new
             val added = new - old
-            val retainedEntries = entries.filter { !deleted.contains(it.type) }
+            val retainedEntries = entries.filter { !deleted.contains(it.conceptType) }
             val newEntries = added.map { schemaMgr.createTypeState(it) }
             updateEntries((retainedEntries + newEntries).sorted())
             refresh = retainedEntries
         } else refresh = entries
-        refresh.onEach { it.isExpandable = it.type.asRemote(tx).subtypesExplicit.findAny().isPresent }
+        refresh.onEach { it.isExpandable = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
     }
 
@@ -216,26 +248,26 @@ sealed class TypeState private constructor(
     }
 
     override fun toString(): String {
-        return "TypeState: $type"
+        return "TypeState: $conceptType"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as TypeState
-        return this.type == other.type
+        return this.conceptType == other.conceptType
     }
 
     override fun hashCode(): Int {
-        return type.hashCode()
+        return conceptType.hashCode()
     }
 
     class Entity internal constructor(
-        override val type: EntityType,
+        override val conceptType: EntityType,
         supertypeInit: Entity?,
         isExpandable: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+    ) : TypeState(conceptType.label.name(), isExpandable, schemaMgr) {
 
         override val parent: Entity? get() = supertype
         override var entries: List<Entity> = emptyList()
@@ -249,7 +281,7 @@ sealed class TypeState private constructor(
         }
 
         override fun loadSupertypes() {
-            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isEntityType) schemaMgr.createTypeState(it.asEntityType()) else null }
                 ?.also { it.reloadProperties() }
@@ -262,17 +294,22 @@ sealed class TypeState private constructor(
     }
 
     class Relation internal constructor(
-        override val type: RelationType,
-        supertypeInit: Relation?,
+        override val conceptType: RelationType,
+        supertype: Relation?,
         isExpandable: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+    ) : TypeState(conceptType.label.name(), isExpandable, schemaMgr) {
+
+        class RoleTypeState(val relationType: Relation, internal val conceptType: RoleType) {
+            val name by mutableStateOf(conceptType.label.name())
+            val scopedName get() = relationType.name + ":" + name
+        }
 
         override val parent: Relation? get() = supertype
         override var entries: List<Relation> = emptyList()
         override val baseType = TypeQLToken.Type.RELATION
-        override var supertype: Relation? by mutableStateOf(supertypeInit)
-        override var supertypes: List<Relation> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+        override var supertype: Relation? by mutableStateOf(supertype)
+        override var supertypes: List<Relation> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override val subtypes: List<Relation> get() = entries.map { listOf(it) + it.subtypes }.flatten()
 
         override fun updateEntries(newEntries: List<TypeState>) {
@@ -280,7 +317,7 @@ sealed class TypeState private constructor(
         }
 
         override fun loadSupertypes() {
-            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isRelationType) schemaMgr.createTypeState(it.asRelationType()) else null }
                 ?.also { it.reloadProperties() }
@@ -293,11 +330,11 @@ sealed class TypeState private constructor(
     }
 
     class Attribute internal constructor(
-        override val type: AttributeType,
-        supertypeInit: Attribute?,
+        override val conceptType: AttributeType,
+        supertype: Attribute?,
         isExpandable: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(type.label.name(), isExpandable, schemaMgr) {
+    ) : TypeState(conceptType.label.name(), isExpandable, schemaMgr) {
 
         data class OwnerTypeProperties(val ownerType: TypeState, val isKey: Boolean, val isInherited: Boolean)
 
@@ -305,12 +342,12 @@ sealed class TypeState private constructor(
         override val parent: Attribute? get() = supertype
         override var entries: List<Attribute> = emptyList()
         override val baseType = TypeQLToken.Type.ATTRIBUTE
-        override var supertype: Attribute? by mutableStateOf(supertypeInit)
-        override var supertypes: List<Attribute> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
+        override var supertype: Attribute? by mutableStateOf(supertype)
+        override var supertypes: List<Attribute> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override val subtypes: List<Attribute> get() = entries.map { listOf(it) + it.subtypes }.flatten()
 
-        val valueType: String? = if (!type.isRoot) type.valueType.name.lowercase() else null
-        val isKeyable: Boolean get() = type.valueType.isKeyable
+        val valueType: String? = if (!conceptType.isRoot) conceptType.valueType.name.lowercase() else null
+        val isKeyable: Boolean get() = conceptType.valueType.isKeyable
         var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
         val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
 
@@ -319,7 +356,7 @@ sealed class TypeState private constructor(
         }
 
         override fun loadSupertypes() {
-            val remoteType = type.asRemote(schemaMgr.openOrGetReadTx())
+            val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null }
                 ?.also { it.reloadProperties() }
@@ -334,22 +371,22 @@ sealed class TypeState private constructor(
 
         private fun loadOwnerTypes() {
             val props = mutableMapOf<ThingType, OwnerTypeProperties>()
-            val conceptTx = type.asRemote(schemaMgr.openOrGetReadTx())
+            val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
                 props[ownerType] = OwnerTypeProperties(schemaMgr.createTypeState(ownerType), isKey, isInherited)
             }
 
-            conceptTx.getOwnersExplicit(true).forEach {
+            typeTx.getOwnersExplicit(true).forEach {
                 load(it, isKey = true, isInherited = false)
             }
-            conceptTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
+            typeTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
                 load(it, isKey = false, isInherited = false)
             }
-            conceptTx.getOwners(true).filter { !props.contains(it) }.forEach {
+            typeTx.getOwners(true).filter { !props.contains(it) }.forEach {
                 load(it, isKey = true, isInherited = true)
             }
-            conceptTx.getOwners(false).filter { !props.contains(it) }.forEach {
+            typeTx.getOwners(false).filter { !props.contains(it) }.forEach {
                 load(it, isKey = false, isInherited = true)
             }
             ownerTypeProperties = props
