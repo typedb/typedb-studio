@@ -36,9 +36,9 @@ interface Resource {
 
     fun tryOpen(): Boolean
 
-    fun launchWatcher()
+    fun activate()
 
-    fun stopWatcher()
+    fun deactivate()
 
     fun beforeRun(function: (Resource) -> Unit)
 

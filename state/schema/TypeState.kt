@@ -94,8 +94,7 @@ sealed class TypeState private constructor(
         return "$name (" + props.joinToString(", ") + ") @ " + schemaMgr.database
     }
 
-    override fun launchWatcher() {}
-    override fun stopWatcher() {}
+    override fun deactivate() {}
     override fun beforeRun(function: (Resource) -> Unit) {}
     override fun beforeSave(function: (Resource) -> Unit) {}
     override fun beforeClose(function: (Resource) -> Unit) {}
@@ -108,9 +107,12 @@ sealed class TypeState private constructor(
     abstract fun loadOtherProperties()
 
     override fun tryOpen(): Boolean {
-        reloadProperties()
         isOpenAtomic.set(true)
         return true
+    }
+
+    override fun activate() {
+        reloadProperties()
     }
 
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
