@@ -22,6 +22,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import com.vaticle.force.graph.api.Simulation
 import com.vaticle.force.graph.force.CenterForce
 import com.vaticle.force.graph.force.CollideForce
 import com.vaticle.force.graph.force.LinkForce
@@ -86,7 +88,6 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineI
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Companion.emptyGraph
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typeql.lang.TypeQL.`var`
 import com.vaticle.typeql.lang.TypeQL.match
@@ -114,11 +115,11 @@ internal object GraphOutput : RunOutput() {
     internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
 
         override val name: String = "${Label.GRAPH} ($number)"
-        val graph: Graph = emptyGraph()
-        val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-        val graphBuilder = GraphBuilder(transaction, coroutineScope)
-        val viewport = Viewport(this)
         val pointer = Pointer(this)
+        val graph = Graph(this)
+        val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        val graphBuilder = GraphBuilder(graph, transaction, coroutineScope)
+        val viewport = Viewport(this)
         val physicsEngine = PhysicsEngine(this)
         var theme: Color.GraphTheme? = null
         val visualiser = Visualiser(this)
@@ -141,7 +142,7 @@ internal object GraphOutput : RunOutput() {
             return EdgeRenderer(this, rendererContext(drawScope))
         }
 
-        class Graph private constructor() {
+        class Graph(private val state: State) {
 
             private val _thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
             private val _typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
@@ -152,11 +153,7 @@ internal object GraphOutput : RunOutput() {
             val edges: Collection<Edge> get() = _edges
 
             // val explanations: MutableList<Explanation> = mutableListOf()
-            val physics = Physics(this)
-
-            companion object {
-                internal fun emptyGraph() = Graph()
-            }
+            val physics = Physics(this, state.pointer)
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 return putVertexIfAbsent(iid, _thingVertices, vertexFn)
@@ -186,7 +183,7 @@ internal object GraphOutput : RunOutput() {
             fun isEmpty() = vertices.isEmpty()
             fun isNotEmpty() = vertices.isNotEmpty()
 
-            class Physics(val graph: Graph) {
+            class Physics(val graph: Graph, val pointer: Pointer) {
 
                 private object Constants {
                     const val COLLIDE_RADIUS = 65.0
@@ -194,7 +191,7 @@ internal object GraphOutput : RunOutput() {
 
                 private val simulation = BasicSimulation().apply {
                     alphaMin = 0.01
-                    alphaDecay = 1 - alphaMin.pow(1.0 / 100)
+                    alphaDecay = standardAlphaDecay()
                 }
                 var iteration by mutableStateOf(0L)
                 private val isStable get() = simulation.alpha < simulation.alphaMin
@@ -203,11 +200,15 @@ internal object GraphOutput : RunOutput() {
                     get() = simulation.alpha
                     set(value) { simulation.alpha = value }
                 val drag = Drag(this)
+                var forceSource = ForceSource.Query
 
                 fun step() {
                     if (isStable || graph.isEmpty()) return
                     if (isStepRunning.compareAndSet(false, true)) {
-                        initialiseForces()
+                        when (forceSource) {
+                            ForceSource.Query -> initialiseForces()
+                            ForceSource.Drag -> drag.initialiseForces(pointer.draggedVertex)
+                        }
                         simulation.tick()
                         iteration++
                         isStepRunning.set(false)
@@ -226,6 +227,10 @@ internal object GraphOutput : RunOutput() {
                     simulation.alpha = 0.0
                 }
 
+                fun Simulation.standardAlphaDecay(): Double {
+                    return 1 - alphaMin.pow(1.0 / 200)
+                }
+
                 private fun initialiseForces() {
                     simulation.apply {
                         forces.clear()
@@ -233,7 +238,7 @@ internal object GraphOutput : RunOutput() {
 
                         // TODO: track changes to vertices + edges, rebuild forces only if there are changes
                         val vertices = graph.vertices.map { it.geometry }
-                        val edges = graph.edges.map { it.physics }
+                        val edges = graph.edges.map { it.geometry }
                         forces.add(CenterForce(vertices, 0.0, 0.0))
                         forces.add(CollideForce(vertices, COLLIDE_RADIUS))
                         forces.add(
@@ -248,78 +253,130 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
 
+                enum class ForceSource {
+                    Query,
+                    Drag
+                }
+
                 class Drag(private val physics: Physics) {
 
                     private val graph = physics.graph
                     private val simulation = physics.simulation
-                    // TODO: why did we do this again?
-                    private var temporarilyFrozenVertices: Collection<Vertex.Geometry> by mutableStateOf(listOf())
+                    private var verticesFrozenWhileDragging: Collection<Vertex> by mutableStateOf(listOf())
 
-                    fun onDragStart(vertex: Vertex.Geometry) {
+                    fun onDragStart(vertex: Vertex) {
                         freezePermanently(vertex)
-                        initialiseMidDragForces()
-                        // TODO
-                    }
-
-                    fun initialiseMidDragForces() {
+                        physics.forceSource = ForceSource.Drag
                         simulation.apply {
                             alpha = 0.25
                             alphaDecay = 0.0
+                        }
+                    }
 
+                    fun onDragMove(vertex: Vertex, dragDistance: Offset) {
+                        vertex.geometry.position += dragDistance
+                    }
+
+                    fun onDragEnd() {
+                        with(physics) { simulation.alphaDecay = simulation.standardAlphaDecay() }
+                        releaseFrozenVertices()
+                    }
+
+                    fun initialiseForces(draggedVertex: Vertex?) {
+                        simulation.apply {
                             forces.clear()
                             localForces.clear()
 
                             val vertices = graph.vertices.map { it.geometry }
                             forces.add(CollideForce(vertices, COLLIDE_RADIUS))
-                            // TODO
+                            if (draggedVertex is Vertex.Thing && draggedVertex.isRoleplayer()) {
+                                pullLinkedRelations(draggedVertex)
+                            }
                         }
                     }
 
-                    private fun freezePermanently(vertex: Vertex.Geometry) {
-                        vertex.isFrozen = true
+                    private fun Simulation.pullLinkedRelations(vertex: Vertex.Thing) {
+                        val attributeEdges = vertex.ownedAttributeEdges()
+                        val attributeVertices = attributeEdges.map { it.target }
+                        val relationVertices = vertex.playingRoleEdges().map { it.source }
+                        val roleplayerEdges = relationVertices.flatMap { it.roleplayerEdges() }
+                        val roleplayerVertices = roleplayerEdges.map { it.target }
+                        val vertices = (attributeVertices + relationVertices + roleplayerVertices).toSet()
+                        val edges = attributeEdges + roleplayerEdges
+
+                        freezeUntilDragEnd(roleplayerVertices.filter { it != vertex && !it.geometry.isFrozen })
+                        forces.add(LinkForce(vertices.map { it.geometry }, edges.map { it.geometry }, 90.0, 0.25))
                     }
 
-                    private fun freezeUntilDragEnd(vertices: Collection<Vertex.Geometry>) {
-                        temporarilyFrozenVertices = vertices
+                    private fun freezePermanently(vertex: Vertex) {
+                        vertex.geometry.isFrozen = true
+                    }
+
+                    private fun freezeUntilDragEnd(vertices: Collection<Vertex>) {
+                        vertices.forEach { it.geometry.isFrozen = true }
+                        verticesFrozenWhileDragging = vertices
+                    }
+
+                    private fun releaseFrozenVertices() {
+                        verticesFrozenWhileDragging.forEach { it.geometry.isFrozen = false }
+                        verticesFrozenWhileDragging = listOf()
                     }
                 }
             }
         }
 
-        sealed class Vertex {
+        sealed class Vertex(protected val graph: Graph) {
 
             abstract val label: Label
             abstract val geometry: Geometry
 
-            sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing) : Vertex() {
+            sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph) : Vertex(graph) {
 
                 override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
 
                 companion object {
-                    fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing): Thing {
+                    fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph): Thing {
                         return when {
-                            thing.isEntity -> Entity(thing.asEntity())
-                            thing.isRelation -> Relation(thing.asRelation())
-                            thing.isAttribute -> Attribute(thing.asAttribute())
+                            thing.isEntity -> Entity(thing.asEntity(), graph)
+                            thing.isRelation -> Relation(thing.asRelation(), graph)
+                            thing.isAttribute -> Attribute(thing.asAttribute(), graph)
                             else -> throw IllegalStateException("[$thing]'s encoding is not supported by Vertex.Thing")
                         }
                     }
                 }
 
-                class Entity(val entity: com.vaticle.typedb.client.api.concept.thing.Entity) : Thing(entity) {
+                fun ownedAttributeEdges(): Collection<Edge.Has> {
+                    return graph.edges.filterIsInstance<Edge.Has>().filter { it.source == this }
+                }
+
+                fun isRoleplayer(): Boolean {
+                    return graph.edges.any { it is Edge.Roleplayer && it.target == this }
+                }
+
+                fun playingRoleEdges(): Collection<Edge.Roleplayer> {
+                    return graph.edges.filterIsInstance<Edge.Roleplayer>().filter { it.target == this }
+                }
+
+                class Entity(val entity: com.vaticle.typedb.client.api.concept.thing.Entity, graph: Graph)
+                    : Thing(entity, graph) {
                     override val geometry = Geometry.entity()
                 }
 
-                class Relation(val relation: com.vaticle.typedb.client.api.concept.thing.Relation) : Thing(relation) {
+                class Relation(val relation: com.vaticle.typedb.client.api.concept.thing.Relation, graph: Graph)
+                    : Thing(relation, graph) {
 
                     override val label = Label(relation.type.label.name(), Label.LengthLimits.RELATION)
                     override val geometry = Geometry.relation()
                     var explanationMgr: ExplanationManager? = null
                     val isExplainable get() = explanationMgr != null
+
+                    fun roleplayerEdges(): Collection<Edge.Roleplayer> {
+                        return graph.edges.filterIsInstance<Edge.Roleplayer>().filter { it.source == this }
+                    }
                 }
 
-                class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>)
-                    : Thing(attribute) {
+                class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>, graph: Graph)
+                    : Thing(attribute, graph) {
 
                     private val valueString = when {
                         attribute.isDateTime -> {
@@ -339,36 +396,36 @@ internal object GraphOutput : RunOutput() {
                 class ExplanationManager
             }
 
-            sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type) : Vertex() {
+            sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph) : Vertex(graph) {
 
                 override val label = Label(type.label.name(), Label.LengthLimits.CONCEPT)
 
                 companion object {
-                    fun of(type: com.vaticle.typedb.client.api.concept.type.Type): Type {
+                    fun of(type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph): Type {
                         return when {
-                            type.isEntityType -> Entity(type.asEntityType())
-                            type.isRelationType -> Relation(type.asRelationType())
-                            type.isAttributeType -> Attribute(type.asAttributeType())
-                            type.isThingType -> Thing(type.asThingType())
+                            type.isEntityType -> Entity(type.asEntityType(), graph)
+                            type.isRelationType -> Relation(type.asRelationType(), graph)
+                            type.isAttributeType -> Attribute(type.asAttributeType(), graph)
+                            type.isThingType -> Thing(type.asThingType(), graph)
                             else -> throw IllegalStateException("[$type]'s encoding is not supported by Vertex.Type")
                         }
                     }
                 }
 
-                class Thing(val thingType: ThingType) : Type(thingType) {
+                class Thing(val thingType: ThingType, graph: Graph) : Type(thingType, graph) {
                     override val geometry = Geometry.entity()
                 }
 
-                class Entity(val entityType: EntityType) : Type(entityType) {
+                class Entity(val entityType: EntityType, graph: Graph) : Type(entityType, graph) {
                     override val geometry = Geometry.entity()
                 }
 
-                class Relation(val relationType: RelationType) : Type(relationType) {
+                class Relation(val relationType: RelationType, graph: Graph) : Type(relationType, graph) {
                     override val label = Label(relationType.label.name(), Label.LengthLimits.RELATION)
                     override val geometry = Geometry.relation()
                 }
 
-                class Attribute(val attributeType: AttributeType) : Type(attributeType) {
+                class Attribute(val attributeType: AttributeType, graph: Graph) : Type(attributeType, graph) {
                     override val geometry = Geometry.attribute()
                 }
             }
@@ -475,7 +532,6 @@ internal object GraphOutput : RunOutput() {
             }
 
             val geometry = Geometry(this)
-            val physics = Physics(this)
             abstract val label: String
 
             interface Inferrable {
@@ -524,13 +580,11 @@ internal object GraphOutput : RunOutput() {
                 fun copy(source: Vertex.Thing, target: Vertex.Type) = Isa(source, target)
             }
 
-            class Geometry(private val edge: Edge) {
+            class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
                 private var curveMidpoint: Offset? = null
                 val isCurved get() = curveMidpoint != null
                 val midpoint get() = curveMidpoint ?: midpoint(edge.source.geometry.position, edge.target.geometry.position)
-            }
 
-            class Physics(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
                 override fun source() = edge.source.geometry
                 override fun target() = edge.target.geometry
             }
@@ -539,7 +593,8 @@ internal object GraphOutput : RunOutput() {
         class Explanation(val vertices: Set<Vertex>)
 
         class GraphBuilder(
-            val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope, val schema: Schema = Schema()
+            val graph: Graph, val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope,
+            val schema: Schema = Schema()
         ) {
             private val thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
             private val typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
@@ -570,10 +625,10 @@ internal object GraphOutput : RunOutput() {
             private fun putVertexIfAbsent(concept: Concept): PutVertexResult {
                 return when {
                     concept.isThing -> concept.asThing().let { thing ->
-                        putVertexIfAbsent(thing.iid, thingVertices) { Vertex.Thing.of(thing) }
+                        putVertexIfAbsent(thing.iid, thingVertices) { Vertex.Thing.of(thing, graph) }
                     }
                     concept.isThingType -> concept.asThingType().let { type ->
-                        putVertexIfAbsent(type.label.name(), typeVertices) { Vertex.Type.of(type) }
+                        putVertexIfAbsent(type.label.name(), typeVertices) { Vertex.Type.of(type, graph) }
                     }
                     else -> throw unsupportedEncodingException(concept)
                 }
@@ -779,16 +834,20 @@ internal object GraphOutput : RunOutput() {
                     }
 
                     private fun loadRoleplayerEdgesAndVertices() {
-                        remoteThing.asRelation().playersByRoleType.entries.forEach { (roleType, roleplayers) ->
-                            roleplayers.forEach { roleplayer ->
-                                graphBuilder.putVertexIfAbsent(roleplayer.iid, graphBuilder.thingVertices) {
-                                    Vertex.Thing.of(roleplayer)
+                        graphBuilder.apply {
+                            remoteThing.asRelation().playersByRoleType.entries.forEach { (roleType, roleplayers) ->
+                                roleplayers.forEach { roleplayer ->
+                                    putVertexIfAbsent(roleplayer.iid, thingVertices) {
+                                        Vertex.Thing.of(roleplayer, graph)
+                                    }
+                                    val roleplayerVertex = thingVertices[roleplayer.iid]!!
+                                    addEdge(
+                                        Edge.Roleplayer(
+                                            thingVertex as Vertex.Thing.Relation, roleplayerVertex,
+                                            roleType.label.name(), thing.isInferred
+                                        )
+                                    )
                                 }
-                                val roleplayerVertex = graphBuilder.thingVertices[roleplayer.iid]!!
-                                graphBuilder.addEdge(Edge.Roleplayer(
-                                    thingVertex as Vertex.Thing.Relation, roleplayerVertex,
-                                    roleType.label.name(), thing.isInferred
-                                ))
                             }
                         }
                     }
@@ -921,7 +980,9 @@ internal object GraphOutput : RunOutput() {
                     is Vertex.Type.Thing -> colors.thingType
                 }
             }
-            private val isFocused = vertex == state.pointer.hoveredVertex
+            // Logically, if the vertex is dragged, it should also be hovered; however, this is not always true
+            // because the vertex takes some time to "catch up" to the pointer. So check both conditions.
+            private val isFocused = vertex == state.pointer.hoveredVertex || vertex == state.pointer.draggedVertex
             private val alpha = when {
                 isFocused -> .675f
                 else -> null
@@ -1142,9 +1203,13 @@ internal object GraphOutput : RunOutput() {
         // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
         //       this explicit Composable with unused parameters - investigate why
         fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-            Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
-                EdgeLayer()
-                VertexLayer()
+            // Keep EdgeLayer and VertexLayer synchronized on the same object. Otherwise, the renderer may block waiting
+            // to acquire a lock, and the vertex and edge drawing may go out of sync.
+            synchronized(state.graph.edges) {
+                Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
+                    EdgeLayer()
+                    VertexLayer()
+                }
             }
             PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
         }
@@ -1158,12 +1223,10 @@ internal object GraphOutput : RunOutput() {
 
         @Composable
         private fun EdgeLayer() {
-            synchronized(state.graph.edges) {
-                // TODO: change this conditional operator to a || after implementing out-of-viewport detection
-                val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
-                Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
-                if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
-            }
+            // TODO: change this conditional operator to a || after implementing out-of-viewport detection
+            val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
+            Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
+            if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
         }
 
         @Composable
@@ -1206,7 +1269,7 @@ internal object GraphOutput : RunOutput() {
         private fun VertexLayer() {
             val vertices = state.graph.vertices
             Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-            if (vertices.size <= 200) vertices.forEach { VertexLabel(it) }
+            if (vertices.size <= 200) vertices.forEach { VertexLabel(it, it.geometry.position) }
         }
 
         private fun DrawScope.drawVertexBackground(vertex: State.Vertex) {
@@ -1214,7 +1277,10 @@ internal object GraphOutput : RunOutput() {
         }
 
         @Composable
-        private fun VertexLabel(vertex: State.Vertex) {
+        @Suppress("UNUSED_PARAMETER")
+        // TODO: I'm not really sure why we need 'position' here. Without it, the vertex label intermittently desyncs
+        //       from the vertex's position, but it should be updating when physicsIteration does
+        private fun VertexLabel(vertex: State.Vertex, position: Offset) {
             val r = vertex.geometry.rect
             val x = (r.left - state.viewport.worldCoordinates.x).dp
             val y = (r.top - state.viewport.worldCoordinates.y).dp
@@ -1226,6 +1292,7 @@ internal object GraphOutput : RunOutput() {
         }
 
         private object PointerInput {
+
             @Composable
             fun Handler(state: State, modifier: Modifier) {
                 DragAndScroll(state, modifier) {
@@ -1241,10 +1308,24 @@ internal object GraphOutput : RunOutput() {
                     .pointerInput(viewport.density, viewport.scale) {
                         detectDragGestures(
                             onDragStart = { _ ->
-                                state.pointer.draggedVertex?.let { state.graph.physics.onDragStart(it) }
+                                state.pointer.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
+                            },
+                            onDragEnd = {
+                                state.graph.physics.drag.onDragEnd()
+                                state.pointer.draggedVertex = null
+                            },
+                            onDragCancel = {
+                                state.graph.physics.drag.onDragEnd()
+                                state.pointer.draggedVertex = null
                             }
                         ) /* onDrag = */ { _, dragAmount ->
-                            viewport.worldCoordinates -= dragAmount / (viewport.scale * viewport.density)
+                            val worldDragDistance = dragAmount / (viewport.scale * viewport.density)
+                            val draggedVertex = state.pointer.draggedVertex
+                            if (draggedVertex != null) {
+                                state.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
+                            } else {
+                                viewport.worldCoordinates -= worldDragDistance
+                            }
                         }
                     }
                     .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
@@ -1264,6 +1345,14 @@ internal object GraphOutput : RunOutput() {
                         onMove = { state.pointer.position = it; false },
                         onExit = { state.pointer.position = null; false }
                     )
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = { physicalPoint ->
+                                state.pointer.draggedVertex = state.viewport.findVertexAtPhysicalPoint(physicalPoint)
+                                if (tryAwaitRelease()) state.pointer.draggedVertex = null
+                            }
+                        )
+                    }
                 )
             }
         }
