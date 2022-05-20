@@ -115,7 +115,7 @@ internal object GraphOutput : RunOutput() {
     internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
 
         override val name: String = "${Label.GRAPH} ($number)"
-        val pointer = Pointer(this)
+        val interactions = Interactions(this)
         val graph = Graph(this)
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
         val graphBuilder = GraphBuilder(graph, transaction, coroutineScope)
@@ -153,7 +153,7 @@ internal object GraphOutput : RunOutput() {
             val edges: Collection<Edge> get() = _edges
 
             // val explanations: MutableList<Explanation> = mutableListOf()
-            val physics = Physics(this, state.pointer)
+            val physics = Physics(this, state.interactions)
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 return putVertexIfAbsent(iid, _thingVertices, vertexFn)
@@ -170,20 +170,25 @@ internal object GraphOutput : RunOutput() {
                 val vertex = vertexMap.computeIfAbsent(key) { added = true; vertexFn() }
                 if (added) {
                     physics.placeVertex(vertex.geometry)
-                    physics.addEnergy()
+                    onChange()
                 }
                 return added
             }
 
             fun addEdge(edge: Edge) {
                 _edges += edge
+                onChange()
+            }
+
+            private fun onChange() {
                 physics.addEnergy()
+                state.interactions.rebuildFocusedVertexNetwork()
             }
 
             fun isEmpty() = vertices.isEmpty()
             fun isNotEmpty() = vertices.isNotEmpty()
 
-            class Physics(val graph: Graph, val pointer: Pointer) {
+            class Physics(val graph: Graph, val interactions: Interactions) {
 
                 private object Constants {
                     const val COLLIDE_RADIUS = 65.0
@@ -207,7 +212,7 @@ internal object GraphOutput : RunOutput() {
                     if (isStepRunning.compareAndSet(false, true)) {
                         when (forceSource) {
                             ForceSource.Query -> initialiseForces()
-                            ForceSource.Drag -> drag.initialiseForces(pointer.draggedVertex)
+                            ForceSource.Drag -> drag.initialiseForces(interactions.draggedVertex)
                         }
                         simulation.tick()
                         iteration++
@@ -330,9 +335,13 @@ internal object GraphOutput : RunOutput() {
             abstract val label: Label
             abstract val geometry: Geometry
 
+            open val isHighlighted = false
+
             sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph) : Vertex(graph) {
 
                 override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
+
+                override val isHighlighted = thing.isInferred
 
                 companion object {
                     fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph): Thing {
@@ -924,7 +933,7 @@ internal object GraphOutput : RunOutput() {
                 worldCoordinates = Offset(-physicalCenter.x.value, -physicalCenter.y.value) / scale
             }
 
-            fun findVertexAtPhysicalPoint(physicalPoint: Offset): Vertex? {
+            fun findVertexAt(physicalPoint: Offset): Vertex? {
                 val worldPoint = physicalPointToWorldPoint(physicalPoint)
                 val nearestVertices = nearestVertices(worldPoint)
                 return nearestVertices.find { it.geometry.intersects(worldPoint) }
@@ -957,10 +966,13 @@ internal object GraphOutput : RunOutput() {
         }
 
         sealed class VertexBackgroundRenderer(
-            private val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
+            protected val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
         ) {
             companion object {
                 private const val CORNER_RADIUS = 5f
+                private const val HOVERED_ALPHA = .675f
+                private const val BACKGROUND_ALPHA = .25f
+                private const val HOVERED_BACKGROUND_ALPHA = .175f
 
                 fun of(vertex: Vertex, state: State, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
                     is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, state, ctx)
@@ -982,12 +994,15 @@ internal object GraphOutput : RunOutput() {
             }
             // Logically, if the vertex is dragged, it should also be hovered; however, this is not always true
             // because the vertex takes some time to "catch up" to the pointer. So check both conditions.
-            private val isFocused = vertex == state.pointer.hoveredVertex || vertex == state.pointer.draggedVertex
-            private val alpha = when {
-                isFocused -> .675f
-                else -> null
+            private val alpha = with(state.interactions) {
+                when {
+                    vertex.isHovered && vertex.isBackground -> HOVERED_BACKGROUND_ALPHA
+                    vertex.isBackground -> BACKGROUND_ALPHA
+                    vertex.isHovered -> HOVERED_ALPHA
+                    else -> 1f
+                }
             }
-            protected val color = if (alpha != null) baseColor.copy(alpha) else baseColor
+            protected val color = baseColor.copy(alpha = alpha)
             private val density = state.viewport.density
             protected val rect = vertex.geometry.let {
                 Rect(
@@ -996,7 +1011,14 @@ internal object GraphOutput : RunOutput() {
                     it.size * density
                 )
             }
+            protected open val highlightRect get() = Rect(
+                rect.topLeft - Offset(highlightWidth, highlightWidth),
+                Size(rect.size.width + highlightWidth * 2, rect.size.height + highlightWidth * 2)
+            )
             protected val cornerRadius get() = CornerRadius(CORNER_RADIUS * density)
+
+            protected val highlightColor get() = ctx.theme.inferred.copy(alpha = alpha)
+            protected val highlightWidth get() = density
 
             abstract fun draw()
 
@@ -1004,6 +1026,11 @@ internal object GraphOutput : RunOutput() {
                 : VertexBackgroundRenderer(vertex, state, ctx) {
 
                 override fun draw() {
+                    if (vertex.isHighlighted) {
+                        ctx.drawScope.drawRoundRect(
+                            highlightColor, highlightRect.topLeft, highlightRect.size, cornerRadius
+                        )
+                    }
                     ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
                 }
             }
@@ -1011,15 +1038,24 @@ internal object GraphOutput : RunOutput() {
             class Relation(vertex: Vertex, state: State, ctx: RendererContext)
                 : VertexBackgroundRenderer(vertex, state, ctx) {
 
+                // We start with a square of width n and transform it into a rhombus
+                private val n = (rect.height / sqrt(2.0)).toFloat()
+                private val baseShape = Rect(offset = rect.center - Offset(n / 2, n / 2), size = Size(n, n))
+
+                override val highlightRect get() = Rect(
+                    baseShape.topLeft - Offset(highlightWidth, highlightWidth),
+                    Size(baseShape.size.width + highlightWidth * 2, baseShape.size.height + highlightWidth * 2)
+                )
+
                 override fun draw() {
-                    // We start with a square of width n and transform it into a rhombus
-                    val n = (rect.height / sqrt(2.0)).toFloat()
-                    val baseShape = Rect(offset = rect.center - Offset(n / 2, n / 2), size = Size(n, n))
                     with(ctx.drawScope) {
                         withTransform({
                             scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
                             rotate(degrees = 45f, pivot = rect.center)
                         }) {
+                            if (vertex.isHighlighted) {
+                                drawRoundRect(highlightColor, highlightRect.topLeft, highlightRect.size, cornerRadius)
+                            }
                             drawRoundRect(color, baseShape.topLeft, baseShape.size, cornerRadius)
                         }
                     }
@@ -1030,6 +1066,7 @@ internal object GraphOutput : RunOutput() {
                 : VertexBackgroundRenderer(vertex, state, ctx) {
 
                 override fun draw() {
+                    if (vertex.isHighlighted) ctx.drawScope.drawOval(color, highlightRect.topLeft, highlightRect.size)
                     ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
                 }
             }
@@ -1037,14 +1074,20 @@ internal object GraphOutput : RunOutput() {
 
         class EdgeRenderer(private val state: State, private val ctx: RendererContext) {
 
+            companion object {
+                private const val BACKGROUND_ALPHA = .25f
+            }
+
             val density = state.viewport.density
             val edgeLabelSizes = state.visualiser.edgeLabelSizes
 
             fun draw(edges: Iterable<Edge>, detailed: Boolean) {
-                ctx.drawScope.drawPoints(
-                    points = edgeCoordinates(edges, detailed), pointMode = PointMode.Lines,
-                    color = ctx.theme.edge, strokeWidth = density
-                )
+                for ((colorCode, edgeList) in EdgesByColorCode(edges, state)) {
+                    ctx.drawScope.drawPoints(
+                        points = edgeCoordinates(edgeList, detailed), pointMode = PointMode.Lines,
+                        color = colorCode.toColor(ctx.theme), strokeWidth = density
+                    )
+                }
             }
 
             private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
@@ -1068,6 +1111,49 @@ internal object GraphOutput : RunOutput() {
 
             fun line(source: Offset, target: Offset): Iterable<Offset> {
                 return listOf(source.toViewport(), target.toViewport())
+            }
+
+            private enum class EdgeColorCode {
+                Regular,
+                Background,
+                Inferred,
+                InferredBackground;
+
+                companion object {
+                    fun of(edge: Edge, state: State): EdgeColorCode {
+                        val isInferred = edge is Edge.Inferrable && edge.isInferred
+                        val isBackground = with(state.interactions) { edge.isBackground }
+                        return when {
+                            isInferred && isBackground -> InferredBackground
+                            isBackground -> Background
+                            isInferred -> Inferred
+                            else -> Regular
+                        }
+                    }
+                }
+
+                fun toColor(theme: Color.GraphTheme) = when (this) {
+                    Regular -> theme.edge
+                    Background -> theme.edge.copy(alpha = BACKGROUND_ALPHA)
+                    Inferred -> theme.inferred
+                    InferredBackground -> theme.inferred.copy(alpha = BACKGROUND_ALPHA)
+                }
+            }
+
+            private class EdgesByColorCode(
+                edges: Iterable<Edge>, state: State
+            ): Iterable<Map.Entry<EdgeColorCode, List<Edge>>> {
+
+                private val _map = EdgeColorCode.values().associateWith { mutableListOf<Edge>() }
+                val map: Map<EdgeColorCode, List<Edge>> get() = _map
+
+                init {
+                    synchronized(edges) { edges.forEach { _map[EdgeColorCode.of(it, state)]!! += it } }
+                }
+
+                override fun iterator(): Iterator<Map.Entry<EdgeColorCode, List<Edge>>> {
+                    return map.iterator()
+                }
             }
 
             private class PrettyEdgeCoordinates(edge: Edge, private val renderer: EdgeRenderer) {
@@ -1152,11 +1238,42 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class Pointer(state: State) {
-            var position: Offset? by mutableStateOf(null)
+        class Interactions(private val state: State) {
+
+            var pointerPosition: Offset? by mutableStateOf(null)
+            private var _focusedVertex: Vertex? by mutableStateOf(null)
+            var focusedVertex: Vertex?
+                get() = _focusedVertex
+                set(value) {
+                    rebuildFocusedVertexNetwork(value)
+                    _focusedVertex = value
+                }
+            private var focusedVertexNetwork: MutableSet<Vertex> = mutableSetOf()
             var hoveredVertex: Vertex? by mutableStateOf(null)
             var draggedVertex: Vertex? by mutableStateOf(null)
             val hoveredVertexChecker = HoveredVertexChecker(state)
+
+            // Logically, if the vertex is dragged, it should also be hovered; however, this is not always true
+            // because the vertex takes some time to "catch up" to the pointer. So check both conditions.
+            val Vertex.isHovered get() = this == hoveredVertex || this == draggedVertex
+
+            val Vertex.isBackground get() = focusedVertex != null && this !in focusedVertexNetwork
+
+            val Edge.isBackground get() = focusedVertex != null && source != focusedVertex && target != focusedVertex
+
+            fun rebuildFocusedVertexNetwork(focusedVertex: Vertex? = _focusedVertex) {
+                focusedVertexNetwork.clear()
+                if (focusedVertex != null) {
+                    focusedVertexNetwork += focusedVertex
+                    state.graph.edges.forEach { edge ->
+                        when (focusedVertex) {
+                            edge.source -> focusedVertexNetwork += edge.target
+                            edge.target -> focusedVertexNetwork += edge.source
+                            else -> {}
+                        }
+                    }
+                }
+            }
 
             class HoveredVertexChecker(private val state: State) {
 
@@ -1164,14 +1281,14 @@ internal object GraphOutput : RunOutput() {
 
                 suspend fun poll() {
                     while (true) {
-                        withFrameMillis { state.pointer.position?.let { if (isReadyToScan()) scan(it) } }
+                        withFrameMillis { state.interactions.pointerPosition?.let { if (isReadyToScan()) scan(it) } }
                     }
                 }
 
                 private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
 
                 private fun scan(pointerPosition: Offset) {
-                    state.pointer.hoveredVertex = state.viewport.findVertexAtPhysicalPoint(pointerPosition)
+                    state.interactions.hoveredVertex = state.viewport.findVertexAt(pointerPosition)
                     lastScanDoneTime = System.currentTimeMillis()
                 }
             }
@@ -1181,6 +1298,11 @@ internal object GraphOutput : RunOutput() {
     class Visualiser(private val state: State) {
 
         val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+
+        companion object {
+            // TODO: this is duplicated in 3 places
+            private const val BACKGROUND_ALPHA = .25f
+        }
 
         @Composable
         fun Layout(modifier: Modifier) {
@@ -1195,7 +1317,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             LaunchedEffect(Unit) { state.physicsEngine.run() }
-            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.pointer.hoveredVertexChecker.poll() }
+            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
         }
 
         @Composable
@@ -1236,7 +1358,8 @@ internal object GraphOutput : RunOutput() {
             val size = edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
             val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
-            val color = baseColor
+            val alpha = with(state.interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
+            val color = baseColor.copy(alpha)
 
             when (size) {
                 null -> EdgeLabelMeasurer(edge)
@@ -1308,19 +1431,19 @@ internal object GraphOutput : RunOutput() {
                     .pointerInput(viewport.density, viewport.scale) {
                         detectDragGestures(
                             onDragStart = { _ ->
-                                state.pointer.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
+                                state.interactions.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
                             },
                             onDragEnd = {
                                 state.graph.physics.drag.onDragEnd()
-                                state.pointer.draggedVertex = null
+                                state.interactions.draggedVertex = null
                             },
                             onDragCancel = {
                                 state.graph.physics.drag.onDragEnd()
-                                state.pointer.draggedVertex = null
+                                state.interactions.draggedVertex = null
                             }
                         ) /* onDrag = */ { _, dragAmount ->
                             val worldDragDistance = dragAmount / (viewport.scale * viewport.density)
-                            val draggedVertex = state.pointer.draggedVertex
+                            val draggedVertex = state.interactions.draggedVertex
                             if (draggedVertex != null) {
                                 state.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
                             } else {
@@ -1342,16 +1465,24 @@ internal object GraphOutput : RunOutput() {
             fun TapAndHover(state: State, modifier: Modifier) {
                 Box(modifier
                     .pointerMoveFilter(
-                        onMove = { state.pointer.position = it; false },
-                        onExit = { state.pointer.position = null; false }
+                        onMove = { state.interactions.pointerPosition = it; false },
+                        onExit = { state.interactions.pointerPosition = null; false }
                     )
                     .pointerInput(Unit) {
                         detectTapGestures(
-                            onPress = { physicalPoint ->
-                                state.pointer.draggedVertex = state.viewport.findVertexAtPhysicalPoint(physicalPoint)
-                                if (tryAwaitRelease()) state.pointer.draggedVertex = null
+                            onPress = { point ->
+                                state.interactions.draggedVertex = state.viewport.findVertexAt(point)
+                                if (tryAwaitRelease()) state.interactions.draggedVertex = null
+                            },
+                            onDoubleTap = { point ->
+                                state.viewport.findVertexAt(point)?.let {
+                                    // TODO
+                                    if (it is State.Vertex.Thing && it.thing.isInferred) println("explaining ${it.thing}")
+                                }
                             }
-                        )
+                        ) /* onTap = */ { point ->
+                            state.interactions.focusedVertex = state.viewport.findVertexAt(point)
+                        }
                     }
                 )
             }
