@@ -71,6 +71,7 @@ sealed class TypeState private constructor(
     override val info: String? = null
     override val isBulkExpandable: Boolean = true
     override var isExpandable: Boolean by mutableStateOf(isExpandable)
+    override val entries: List<TypeState> get() = subtypesExplicit
 
     override val windowTitle: String get() = computeWindowTitle()
     override val isOpen: Boolean get() = isOpenAtomic.get()
@@ -83,6 +84,7 @@ sealed class TypeState private constructor(
     internal abstract val baseType: TypeQLToken.Type
     abstract val supertype: TypeState?
     abstract val supertypes: List<TypeState>
+    abstract val subtypesExplicit: List<TypeState>
     abstract val subtypes: List<TypeState>
 
     val isRoot get() = conceptType.isRoot
@@ -108,7 +110,7 @@ sealed class TypeState private constructor(
     override fun save(onSuccess: ((Resource) -> Unit)?) {}
     override fun move(onSuccess: ((Resource) -> Unit)?) {}
 
-    abstract fun updateEntries(newEntries: List<TypeState>)
+    abstract fun updateSubtypes(newSubtypes: List<TypeState>)
     abstract fun loadSupertypes()
     abstract fun loadOtherProperties()
 
@@ -119,6 +121,10 @@ sealed class TypeState private constructor(
 
     override fun activate() {
         reloadProperties()
+    }
+
+    override fun reloadEntries() {
+        reloadSubtypesExplicit()
     }
 
     fun reloadProperties() = schemaMgr.coroutineScope.launch {
@@ -199,29 +205,27 @@ sealed class TypeState private constructor(
         // TODO
     }
 
-    fun reloadEntriesRecursively() = schemaMgr.coroutineScope.launch {
-        reloadEntriesRecursivelyBlocking()
+    fun reloadSubtypesRecursively() = schemaMgr.coroutineScope.launch {
+        reloadSubtypesRecursivelyBlocking()
     }
 
-    private fun reloadEntriesRecursivelyBlocking() {
-        reloadEntries()
-        entries.forEach { it.reloadEntriesRecursivelyBlocking() }
+    private fun reloadSubtypesRecursivelyBlocking() {
+        reloadSubtypesExplicit()
+        subtypes.forEach { it.reloadSubtypesRecursivelyBlocking() }
     }
 
-    override fun reloadEntries() {
+    private fun reloadSubtypesExplicit() {
         val tx = schemaMgr.openOrGetReadTx()
         val new = conceptType.asRemote(tx).subtypesExplicit.toList().toSet()
-        val old = entries.map { it.conceptType }.toSet()
-        val refresh: List<TypeState>
+        val old = subtypes.map { it.conceptType }.toSet()
+        val retained: List<TypeState>
         if (new != old) {
             val deleted = old - new
             val added = new - old
-            val retainedEntries = entries.filter { !deleted.contains(it.conceptType) }
-            val newEntries = added.map { schemaMgr.createTypeState(it) }
-            updateEntries((retainedEntries + newEntries).sorted())
-            refresh = retainedEntries
-        } else refresh = entries
-        refresh.onEach { it.isExpandable = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
+            retained = subtypes.filter { !deleted.contains(it.conceptType) }
+            updateSubtypes((retained + added.map { schemaMgr.createTypeState(it) }).sorted())
+        } else retained = subtypes
+        retained.onEach { it.isExpandable = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
         isExpandable = entries.isNotEmpty()
     }
 
@@ -282,14 +286,14 @@ sealed class TypeState private constructor(
     ) : TypeState(conceptType.label.name(), isExpandable, schemaMgr) {
 
         override val parent: Entity? get() = supertype
-        override var entries: List<Entity> = emptyList()
         override val baseType = TypeQLToken.Type.ENTITY
         override var supertype: Entity? by mutableStateOf(supertypeInit)
         override var supertypes: List<Entity> by mutableStateOf(supertypeInit?.let { listOf(it) } ?: listOf())
-        override val subtypes: List<Entity> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+        override var subtypesExplicit: List<Entity> = emptyList()
+        override val subtypes: List<Entity> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
 
-        override fun updateEntries(newEntries: List<TypeState>) {
-            entries = newEntries.map { it as Entity }
+        override fun updateSubtypes(newSubtypes: List<TypeState>) {
+            subtypesExplicit = newSubtypes.map { it as Entity }
         }
 
         override fun loadSupertypes() {
@@ -319,16 +323,16 @@ sealed class TypeState private constructor(
         }
 
         override val parent: Relation? get() = supertype
-        override var entries: List<Relation> = emptyList()
         override val baseType = TypeQLToken.Type.RELATION
         override var supertype: Relation? by mutableStateOf(supertype)
         override var supertypes: List<Relation> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
-        override val subtypes: List<Relation> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+        override var subtypesExplicit: List<Relation> = emptyList()
+        override val subtypes: List<Relation> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
         var relatesRoleTypeProperties: Map<RoleType, RelatesRoleTypeProperties> by mutableStateOf(mapOf())
         val relatesRoleTypes: List<Role> get() = relatesRoleTypeProperties.values.map { it.roleType }
 
-        override fun updateEntries(newEntries: List<TypeState>) {
-            entries = newEntries.map { it as Relation }
+        override fun updateSubtypes(newSubtypes: List<TypeState>) {
+            subtypesExplicit = newSubtypes.map { it as Relation }
         }
 
         override fun loadSupertypes() {
@@ -351,7 +355,7 @@ sealed class TypeState private constructor(
 
         private fun loadRelatesRoleTypeRecursivelyBlocking() {
             loadRelatesRoleType()
-            entries.forEach { it.loadRelatesRoleTypeRecursivelyBlocking() }
+            subtypesExplicit.forEach { it.loadRelatesRoleTypeRecursivelyBlocking() }
         }
 
         private fun loadRelatesRoleType() {
@@ -385,19 +389,19 @@ sealed class TypeState private constructor(
 
         override val info get() = valueType
         override val parent: Attribute? get() = supertype
-        override var entries: List<Attribute> = emptyList()
         override val baseType = TypeQLToken.Type.ATTRIBUTE
         override var supertype: Attribute? by mutableStateOf(supertype)
         override var supertypes: List<Attribute> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
-        override val subtypes: List<Attribute> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+        override var subtypesExplicit: List<Attribute> = emptyList()
+        override val subtypes: List<Attribute> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
 
         val valueType: String? = if (!conceptType.isRoot) conceptType.valueType.name.lowercase() else null
         val isKeyable: Boolean get() = conceptType.valueType.isKeyable
         var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
         val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
 
-        override fun updateEntries(newEntries: List<TypeState>) {
-            entries = newEntries.map { it as Attribute }
+        override fun updateSubtypes(newSubtypes: List<TypeState>) {
+            subtypesExplicit = newSubtypes.map { it as Attribute }
         }
 
         override fun loadSupertypes() {

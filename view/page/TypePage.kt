@@ -252,7 +252,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                    onExpand = { GlobalState.schema.rootAttributeType?.reloadEntriesRecursively() },
+                    onExpand = { GlobalState.schema.rootAttributeType?.reloadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.reloadProperties() },
                     displayFn = { fullName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
