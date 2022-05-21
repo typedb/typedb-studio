@@ -220,8 +220,8 @@ sealed class TypePage(type: TypeState) : Page(type) {
                     MayTickIcon(it.isInherited)
                 },
                 Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
-                        type.removeOwnsAttributeType(it.attributeType)
+                    MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
+                        type.undefineOwnsAttributeType(it.attributeType)
                     }
                 },
             )
@@ -232,9 +232,10 @@ sealed class TypePage(type: TypeState) : Page(type) {
     private fun OwnsAttributeTypeAddition() {
         val baseFontColor = Theme.colors.onPrimary
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
-        val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes?.filter {
-            !type.ownsAttributeTypeProperties.values.map { p -> p.attributeType }.contains(it)
-        }?.sortedBy { it.name } ?: listOf()
+        val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes
+            ?.filter { !type.ownsAttributeTypes.contains(it) }
+            ?.sortedBy { it.name }
+            ?: listOf()
 
         var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
@@ -280,8 +281,8 @@ sealed class TypePage(type: TypeState) : Page(type) {
                 text = Label.OWNS,
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
                 enabled = isOwnable,
-                tooltip = Tooltip.Arg(Label.ADD_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.addOwnsAttributeTypes(attributeType!!, overriddenType, isKey) }
+                tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+                onClick = { type.defineOwnsAttributeTypes(attributeType!!, overriddenType, isKey) }
             )
         }
     }
@@ -290,6 +291,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
     protected fun PlaysRoleTypesSection() {
         SectionLine { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
         PlaysRoleTypesTable()
+        PlaysRoleTypeAddition()
     }
 
     @Composable
@@ -311,12 +313,65 @@ sealed class TypePage(type: TypeState) : Page(type) {
                     MayTickIcon(it.isInherited)
                 },
                 Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
-                        type.removePlaysRoleType(it.roleType)
+                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) {
+                        type.undefinePlaysRoleType(it.roleType)
                     }
                 },
             )
         )
+    }
+
+    @Composable
+    private fun PlaysRoleTypeAddition() {
+        var roleType: TypeState.Relation.Role? by remember { mutableStateOf(null) }
+        val roleTypeList = GlobalState.schema.rootRelationType?.subtypes
+            ?.flatMap { it.relatesRoleTypes }
+            ?.filter { !type.playsRoleTypes.contains(it) }
+            ?.sortedBy { it.name }
+            ?: listOf()
+
+        var overriddenType: TypeState.Relation.Role? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<TypeState.Relation.Role> = listOf()
+//        val overridableTypeList: List<TypeState.Relation.Role> = roleType?.supertypes
+//            ?.intersect(type.supertype!!.playsRoleTypes.toSet())
+//            ?.sortedBy { it.scopedName } ?: listOf()
+
+        val isPlayable = isEditable && roleType != null
+        val isOverridable = isEditable && overridableTypeList.isNotEmpty()
+
+        SectionLine {
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = roleType,
+                    placeholder = Label.SELECT_ROLE_TYPE,
+                    onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
+                    onSelection = { roleType = it; /*it.reloadProperties()*/ },
+                    displayFn = { AnnotatedString(it.scopedName) },
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = isEditable,
+                    values = roleTypeList
+                )
+            }
+            Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
+            Box(Modifier.weight(1f)) {
+                Form.Dropdown(
+                    selected = overriddenType,
+                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    onSelection = { overriddenType = it },
+                    displayFn = { AnnotatedString(it.scopedName) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isOverridable,
+                    values = overridableTypeList
+                )
+            }
+            Form.TextButton(
+                text = Label.PLAYS,
+                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
+                enabled = isPlayable,
+                tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+                onClick = { type.definePlaysRoleType(roleType!!, overriddenType) }
+            )
+        }
     }
 
     @Composable

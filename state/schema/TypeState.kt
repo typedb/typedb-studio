@@ -52,8 +52,14 @@ sealed class TypeState private constructor(
     )
 
     data class PlaysRoleTypeProperties(
-        val roleType: Relation.RoleTypeState,
-        val overriddenType: Relation.RoleTypeState?,
+        val roleType: Relation.Role,
+        val overriddenType: Relation.Role?,
+        val isInherited: Boolean
+    )
+
+    data class RelatesRoleTypeProperties(
+        val roleType: Relation.Role,
+        val overriddenType: Relation.Role?,
         val isInherited: Boolean
     )
 
@@ -84,7 +90,7 @@ sealed class TypeState private constructor(
     var ownsAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.values.map { it.attributeType }
     var playsRoleTypeProperties: Map<RoleType, PlaysRoleTypeProperties> by mutableStateOf(mapOf())
-    val playsRoleTypes: List<Relation.RoleTypeState> get() = playsRoleTypeProperties.values.map { it.roleType }
+    val playsRoleTypes: List<Relation.Role> get() = playsRoleTypeProperties.values.map { it.roleType }
 
     private val isOpenAtomic = AtomicBoolean(false)
     private val onClose = LinkedBlockingQueue<(TypeState) -> Unit>()
@@ -159,11 +165,11 @@ sealed class TypeState private constructor(
         ownsAttributeTypeProperties = props
     }
 
-    fun addOwnsAttributeTypes(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
+    fun defineOwnsAttributeTypes(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
         // TODO
     }
 
-    fun removeOwnsAttributeType(attType: Attribute) {
+    fun undefineOwnsAttributeType(attType: Attribute) {
         // TODO
     }
 
@@ -174,8 +180,8 @@ sealed class TypeState private constructor(
         fun load(roleType: RoleType, isInherited: Boolean) {
             val relationType = schemaMgr.createTypeState(roleType.asRemote(schemaMgr.openOrGetReadTx()).relationType)
             props[roleType] = PlaysRoleTypeProperties(
-                roleType = Relation.RoleTypeState(relationType, roleType),
-                overriddenType = typeTx.getPlaysOverridden(roleType)?.let { Relation.RoleTypeState(relationType, it) },
+                roleType = relationType.Role(roleType),
+                overriddenType = typeTx.getPlaysOverridden(roleType)?.let { relationType.Role(it) },
                 isInherited = isInherited
             )
         }
@@ -185,7 +191,11 @@ sealed class TypeState private constructor(
         playsRoleTypeProperties = props
     }
 
-    fun removePlaysRoleType(roleType: Relation.RoleTypeState) {
+    fun definePlaysRoleType(roleType: Relation.Role, overriddenType: Relation.Role?) {
+        // TODO
+    }
+
+    fun undefinePlaysRoleType(roleType: Relation.Role) {
         // TODO
     }
 
@@ -302,7 +312,8 @@ sealed class TypeState private constructor(
         schemaMgr: SchemaManager
     ) : TypeState(conceptType.label.name(), isExpandable, schemaMgr) {
 
-        class RoleTypeState(val relationType: Relation, internal val conceptType: RoleType) {
+        inner class Role constructor(internal val conceptType: RoleType) {
+            val relationType get() = this@Relation
             val name by mutableStateOf(conceptType.label.name())
             val scopedName get() = relationType.name + ":" + name
         }
@@ -313,6 +324,8 @@ sealed class TypeState private constructor(
         override var supertype: Relation? by mutableStateOf(supertype)
         override var supertypes: List<Relation> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override val subtypes: List<Relation> get() = entries.map { listOf(it) + it.subtypes }.flatten()
+        var relatesRoleTypeProperties: Map<RoleType, RelatesRoleTypeProperties> by mutableStateOf(mapOf())
+        val relatesRoleTypes: List<Role> get() = relatesRoleTypeProperties.values.map { it.roleType }
 
         override fun updateEntries(newEntries: List<TypeState>) {
             entries = newEntries.map { it as Relation }
@@ -328,7 +341,37 @@ sealed class TypeState private constructor(
                 .map { schemaMgr.createTypeState(it.asRelationType()) }.toList()
         }
 
-        override fun loadOtherProperties() {}
+        override fun loadOtherProperties() {
+            loadRelatesRoleType()
+        }
+
+        fun loadRelatesRoleTypeRecursively() = schemaMgr.coroutineScope.launch {
+            loadRelatesRoleTypeRecursivelyBlocking()
+        }
+
+        private fun loadRelatesRoleTypeRecursivelyBlocking() {
+            loadRelatesRoleType()
+            entries.forEach { it.loadRelatesRoleTypeRecursivelyBlocking() }
+        }
+
+        private fun loadRelatesRoleType() {
+            val props = mutableMapOf<RoleType, RelatesRoleTypeProperties>()
+            val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
+
+            fun load(roleType: RoleType, isInherited: Boolean) {
+                val relationType =
+                    schemaMgr.createTypeState(roleType.asRemote(schemaMgr.openOrGetReadTx()).relationType)
+                props[roleType] = RelatesRoleTypeProperties(
+                    roleType = relationType.Role(roleType),
+                    overriddenType = typeTx.getRelatesOverridden(roleType.label.name())?.let { relationType.Role(it) },
+                    isInherited = isInherited
+                )
+            }
+
+            typeTx.relatesExplicit.forEach { load(roleType = it, isInherited = false) }
+            typeTx.relates.filter { !props.contains(it) }.forEach { load(roleType = it, isInherited = true) }
+            relatesRoleTypeProperties = props
+        }
     }
 
     class Attribute internal constructor(
