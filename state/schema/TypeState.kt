@@ -325,6 +325,72 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         }
     }
 
+    class Attribute internal constructor(
+        override val conceptType: AttributeType,
+        supertype: Attribute?,
+        isExpandable: Boolean,
+        schemaMgr: SchemaManager
+    ) : Thing(conceptType.label.name(), isExpandable, schemaMgr) {
+
+        override val info get() = valueType
+        override val parent: Attribute? get() = supertype
+        override val baseType = TypeQLToken.Type.ATTRIBUTE
+        override var supertype: Attribute? by mutableStateOf(supertype)
+        override var supertypes: List<Attribute> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
+        override var subtypesExplicit: List<Attribute> by mutableStateOf(listOf())
+        override val subtypes: List<Attribute> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
+
+        val valueType: String? = if (!conceptType.isRoot) conceptType.valueType.name.lowercase() else null
+        val isKeyable: Boolean get() = conceptType.valueType.isKeyable
+        var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
+        val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
+
+        override fun updateSubtypes(newSubtypes: List<TypeState>) {
+            subtypesExplicit = newSubtypes.map { it as Attribute }
+        }
+
+        override fun loadSupertypes() {
+            val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
+            supertype = remoteType.supertype
+                ?.let { if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null }
+                ?.also { it.reloadProperties() }
+            supertypes = remoteType.supertypes
+                .filter { it.isAttributeType && it != remoteType }
+                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList()
+        }
+
+        override fun loadOtherProperties() {
+            loadOwnerTypes()
+        }
+
+        private fun loadOwnerTypes() {
+            val props = mutableMapOf<ThingType, OwnerTypeProperties>()
+            val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
+
+            fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
+                props[ownerType] = OwnerTypeProperties(schemaMgr.createTypeState(ownerType), isKey, isInherited)
+            }
+
+            typeTx.getOwnersExplicit(true).forEach {
+                load(it, isKey = true, isInherited = false)
+            }
+            typeTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
+                load(it, isKey = false, isInherited = false)
+            }
+            typeTx.getOwners(true).filter { !props.contains(it) }.forEach {
+                load(it, isKey = true, isInherited = true)
+            }
+            typeTx.getOwners(false).filter { !props.contains(it) }.forEach {
+                load(it, isKey = false, isInherited = true)
+            }
+            ownerTypeProperties = props
+        }
+
+        override fun toString(): String {
+            return "TypeState.Attribute: $conceptType"
+        }
+    }
+
     class Relation internal constructor(
         override val conceptType: RelationType,
         supertype: Relation?,
@@ -399,72 +465,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
         override fun toString(): String {
             return "TypeState.Relation: $conceptType"
-        }
-    }
-
-    class Attribute internal constructor(
-        override val conceptType: AttributeType,
-        supertype: Attribute?,
-        isExpandable: Boolean,
-        schemaMgr: SchemaManager
-    ) : Thing(conceptType.label.name(), isExpandable, schemaMgr) {
-
-        override val info get() = valueType
-        override val parent: Attribute? get() = supertype
-        override val baseType = TypeQLToken.Type.ATTRIBUTE
-        override var supertype: Attribute? by mutableStateOf(supertype)
-        override var supertypes: List<Attribute> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
-        override var subtypesExplicit: List<Attribute> by mutableStateOf(listOf())
-        override val subtypes: List<Attribute> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
-
-        val valueType: String? = if (!conceptType.isRoot) conceptType.valueType.name.lowercase() else null
-        val isKeyable: Boolean get() = conceptType.valueType.isKeyable
-        var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
-        val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
-
-        override fun updateSubtypes(newSubtypes: List<TypeState>) {
-            subtypesExplicit = newSubtypes.map { it as Attribute }
-        }
-
-        override fun loadSupertypes() {
-            val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
-            supertype = remoteType.supertype
-                ?.let { if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null }
-                ?.also { it.reloadProperties() }
-            supertypes = remoteType.supertypes
-                .filter { it.isAttributeType && it != remoteType }
-                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList()
-        }
-
-        override fun loadOtherProperties() {
-            loadOwnerTypes()
-        }
-
-        private fun loadOwnerTypes() {
-            val props = mutableMapOf<ThingType, OwnerTypeProperties>()
-            val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
-
-            fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
-                props[ownerType] = OwnerTypeProperties(schemaMgr.createTypeState(ownerType), isKey, isInherited)
-            }
-
-            typeTx.getOwnersExplicit(true).forEach {
-                load(it, isKey = true, isInherited = false)
-            }
-            typeTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = false)
-            }
-            typeTx.getOwners(true).filter { !props.contains(it) }.forEach {
-                load(it, isKey = true, isInherited = true)
-            }
-            typeTx.getOwners(false).filter { !props.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = true)
-            }
-            ownerTypeProperties = props
-        }
-
-        override fun toString(): String {
-            return "TypeState.Attribute: $conceptType"
         }
     }
 }
