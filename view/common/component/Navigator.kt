@@ -25,7 +25,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -214,13 +213,13 @@ object Navigator {
         }
     }
 
-    class NavigatorState<T : Navigable<T>> internal constructor(
+    class NavigatorState<T : Navigable<T>> constructor(
         container: Navigable<T>,
         private val title: String,
-        private val initExpandDepth: Int,
-        private val liveUpdate: Boolean,
-        private val openFn: (ItemState<T>) -> Unit,
-        private var coroutineScope: CoroutineScope
+        private val initExpandDepth: Int = 0,
+        private val liveUpdate: Boolean = false,
+        private var coroutineScope: CoroutineScope,
+        private val openFn: (ItemState<T>) -> Unit
     ) {
         private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
@@ -380,42 +379,38 @@ object Navigator {
 
     @Composable
     fun <T : Navigable<T>> rememberNavigatorState(
-        container: Navigable<T>, title: String, initExpandDepth: Int,
+        container: Navigable<T>, title: String, initExpandDepth: Int = 0,
         liveUpdate: Boolean = false, openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
         val coroutineScope = rememberCoroutineScope()
-        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, openFn, coroutineScope) }
+        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, coroutineScope, openFn) }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Navigable<T>> Layout(
         state: NavigatorState<T>,
+        modifier: Modifier = Modifier,
         iconArg: (ItemState<T>) -> IconArg,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
         contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
         val density = LocalDensity.current.density
         val horScrollState = rememberScrollState()
-        if (state.entries.isNotEmpty()) {
-            val root = state.entries.first()
-            Box(modifier = Modifier.fillMaxSize().pointerInput(root) { onPointerInput(state, root) }
-                .onGloballyPositioned {
-                state.density = density
-                state.updateAreaWidth(it.size.width)
-            }) {
-                contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
-                LazyColumn(
-                    state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
-                        .horizontalScroll(state = horScrollState)
-                        .pointerMoveFilter(onExit = { state.hovered = null; false })
-                ) {
-                    state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } }
-                    item { Spacer(Modifier.height(BOTTOM_SPACE)) }
-                }
-                Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
-                Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
+        val root: ItemState<T>? = state.entries.firstOrNull()
+        Box(modifier = modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
+            .onGloballyPositioned { state.density = density; state.updateAreaWidth(it.size.width) }) {
+            contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
+            LazyColumn(
+                state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
+                    .horizontalScroll(state = horScrollState)
+                    .pointerMoveFilter(onExit = { state.hovered = null; false })
+            ) {
+                state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } }
+                item { Spacer(Modifier.height(BOTTOM_SPACE)) }
             }
+            Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
+            Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
         }
     }
 

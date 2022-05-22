@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,14 +68,16 @@ import com.vaticle.typedb.studio.view.common.Util.typeIcon
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
 import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.common.component.Navigator
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import kotlinx.coroutines.CoroutineScope
 
-sealed class TypePage(type: TypeState.Thing) : Page(type) {
+sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : Page(type) {
 
     override val icon: Form.IconArg = typeIcon(type)
     protected abstract val type: TypeState.Thing
@@ -83,6 +87,11 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
     private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
+    private val subtypesNavState = Navigator.NavigatorState(
+        container = type,
+        title = Label.SUBTYPES_OF + " " + type.name,
+        coroutineScope = coroutineScope
+    ) { GlobalState.resource.open(it.item) }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -93,10 +102,14 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
 
-        fun create(type: TypeState.Thing): TypePage = when (type) {
-            is TypeState.Entity -> Entity(type)
-            is TypeState.Relation -> Relation(type)
-            is TypeState.Attribute -> Attribute(type)
+        @Composable
+        fun create(type: TypeState.Thing): TypePage {
+            val coroutineScope = rememberCoroutineScope()
+            return when (type) {
+                is TypeState.Entity -> Entity(type, coroutineScope)
+                is TypeState.Relation -> Relation(type, coroutineScope)
+                is TypeState.Attribute -> Attribute(type, coroutineScope)
+            }
         }
     }
 
@@ -376,7 +389,12 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
 
     @Composable
     protected fun SubtypesSection() {
-
+        SectionLine { Form.Text(value = Label.SUBTYPES) }
+        Navigator.Layout(
+            state = subtypesNavState,
+            modifier = Modifier.fillMaxWidth().height(200.dp).border(1.dp, Theme.colors.border),
+            iconArg = { typeIcon(it.item) }
+        )
     }
 
     @Composable
@@ -427,7 +445,9 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
         )
     }
 
-    class Entity(override var type: TypeState.Entity) : TypePage(type) {
+    class Entity(
+        override var type: TypeState.Entity, coroutineScope: CoroutineScope
+    ) : TypePage(type, coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Entity
@@ -443,7 +463,9 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
         }
     }
 
-    class Relation(override var type: TypeState.Relation) : TypePage(type) {
+    class Relation(
+        override var type: TypeState.Relation, coroutineScope: CoroutineScope
+    ) : TypePage(type, coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Relation
@@ -466,7 +488,9 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
         }
     }
 
-    class Attribute(override var type: TypeState.Attribute) : TypePage(type) {
+    class Attribute(
+        override var type: TypeState.Attribute, coroutineScope: CoroutineScope
+    ) : TypePage(type, coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Attribute

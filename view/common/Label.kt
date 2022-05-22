@@ -153,6 +153,8 @@ object Label {
     const val STATUS = "Status"
     const val STOP_SIGNAL = "Stop Signal"
     const val SUBMIT = "Submit"
+    const val SUBTYPES = "Subtypes"
+    const val SUBTYPES_OF = "Subtypes of"
     const val SUPERTYPE = "Supertype"
     const val TABLE = "Table"
     const val TITLE = "Title"

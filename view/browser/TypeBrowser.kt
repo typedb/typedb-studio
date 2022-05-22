@@ -73,8 +73,8 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
+            modifier = Modifier.fillMaxSize(),
             iconArg = { typeIcon(it.item) },
-            styleArgs = { listOf() },
             // TODO: contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
         )
     }

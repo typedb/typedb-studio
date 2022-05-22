@@ -77,6 +77,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
             buttons = navState.buttons
             Navigator.Layout(
                 state = navState,
+                modifier = Modifier.fillMaxSize(),
                 iconArg = { projectItemIcon(it) },
                 styleArgs = { projectItemStyles(it) },
                 contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }

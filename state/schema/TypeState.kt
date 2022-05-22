@@ -90,15 +90,13 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     abstract fun loadOtherProperties()
     abstract override fun toString(): String
 
-    fun reloadProperties() {
-        schemaMgr.coroutineScope.launch {
-            try {
-                loadSupertypes()
-                loadAbstract()
-                loadOtherProperties()
-            } catch (e: TypeDBClientException) {
-                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
-            }
+    fun reloadProperties() = schemaMgr.coroutineScope.launch {
+        try {
+            loadSupertypes()
+            loadAbstract()
+            loadOtherProperties()
+        } catch (e: TypeDBClientException) {
+            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
         }
     }
 
@@ -192,8 +190,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun execBeforeClose() {}
         override fun save(onSuccess: ((Resource) -> Unit)?) {}
         override fun move(onSuccess: ((Resource) -> Unit)?) {}
-
-        override fun activate() = reloadProperties()
         override fun reloadEntries() = reloadSubtypesExplicit()
         override fun rename(onSuccess: ((Resource) -> Unit)?) = Unit // TODO
         override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
@@ -204,6 +200,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
             return true
+        }
+
+        override fun activate() {
+            reloadProperties()
         }
 
         override fun close() {
