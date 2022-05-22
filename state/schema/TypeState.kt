@@ -39,9 +39,16 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: SchemaManager) {
+
     data class AttributeTypeProperties(
         val attributeType: Attribute,
         val overriddenType: Attribute?,
+        val isKey: Boolean,
+        val isInherited: Boolean
+    )
+
+    data class OwnerTypeProperties(
+        val ownerType: Thing,
         val isKey: Boolean,
         val isInherited: Boolean
     )
@@ -80,16 +87,19 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     abstract fun updateSubtypes(newSubtypes: List<TypeState>)
     abstract fun loadSupertypes()
     abstract fun loadOtherProperties()
+    abstract override fun toString(): String
 
-    fun reloadProperties() = schemaMgr.coroutineScope.launch {
-        try {
-            loadSupertypes()
-            loadAbstract()
-            loadOwnsAttributeTypes()
-            loadPlaysRoleTypes()
-            loadOtherProperties()
-        } catch (e: TypeDBClientException) {
-            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
+    fun reloadProperties() {
+        schemaMgr.coroutineScope.launch {
+            try {
+                loadSupertypes()
+                loadAbstract()
+                loadOwnsAttributeTypes()
+                loadPlaysRoleTypes()
+                loadOtherProperties()
+            } catch (e: TypeDBClientException) {
+                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
+            }
         }
     }
 
@@ -183,10 +193,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         hasSubtypes = subtypesExplicit.isNotEmpty()
     }
 
-    override fun toString(): String {
-        return "TypeState: $conceptType"
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -203,6 +209,17 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         hasSubtypes: Boolean,
         schemaMgr: SchemaManager
     ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Resource {
+
+        private class Callbacks {
+
+            val onReopen = LinkedBlockingQueue<(Thing) -> Unit>()
+            val onClose = LinkedBlockingQueue<(Thing) -> Unit>()
+
+            fun clear() {
+                onReopen.clear()
+                onClose.clear()
+            }
+        }
 
         override val supertype: Thing? = null
         override val supertypes: List<Thing> = emptyList()
@@ -223,7 +240,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
         private val isOpenAtomic = AtomicBoolean(false)
-        private val onClose = LinkedBlockingQueue<(Thing) -> Unit>()
+        private val callbacks = Callbacks()
 
         private fun computeWindowTitle(): String {
             val props = listOf(baseType.name.lowercase()) + info?.let { listOf(it) }
@@ -238,33 +255,29 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun save(onSuccess: ((Resource) -> Unit)?) {}
         override fun move(onSuccess: ((Resource) -> Unit)?) {}
 
+        override fun activate() = reloadProperties()
+        override fun reloadEntries() = reloadSubtypesExplicit()
+        override fun rename(onSuccess: ((Resource) -> Unit)?) = Unit // TODO
+        override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
+        override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
+        override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)
+
         override fun tryOpen(): Boolean {
             isOpenAtomic.set(true)
+            callbacks.onReopen.forEach { it(this) }
             return true
         }
 
-        override fun activate() {
-            reloadProperties()
+        override fun close() {
+            if (isOpenAtomic.compareAndSet(true, false)) {
+                callbacks.onClose.forEach { it(this) }
+                callbacks.clear()
+            }
         }
 
-        override fun reloadEntries() {
-            reloadSubtypesExplicit()
-        }
-
-        override fun rename(onSuccess: ((Resource) -> Unit)?) {
-            // TODO
-        }
-
-        override fun onClose(function: (Resource) -> Unit) {
-            onClose.put(function)
-        }
-
-        override fun onReopen(function: (Resource) -> Unit) {
-            // TODO
-        }
-
-        override fun compareTo(other: Navigable<Thing>): Int {
-            return name.compareTo(other.name)
+        override fun closeRecursive() {
+            close()
+            entries.forEach { it.closeRecursive() }
         }
 
         override fun delete() {
@@ -274,15 +287,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             } catch (e: Exception) {
                 schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
             }
-        }
-
-        override fun close() {
-            if (isOpenAtomic.compareAndSet(true, false)) onClose.forEach { it(this) }
-        }
-
-        override fun closeRecursive() {
-            close()
-            entries.forEach { it.closeRecursive() }
         }
     }
 
@@ -315,6 +319,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         }
 
         override fun loadOtherProperties() {}
+
+        override fun toString(): String {
+            return "TypeState.Entity: $conceptType"
+        }
     }
 
     class Relation internal constructor(
@@ -388,6 +396,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             typeTx.relates.filter { !props.contains(it) }.forEach { load(roleType = it, isInherited = true) }
             relatesRoleTypeProperties = props
         }
+
+        override fun toString(): String {
+            return "TypeState.Relation: $conceptType"
+        }
     }
 
     class Attribute internal constructor(
@@ -396,8 +408,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         isExpandable: Boolean,
         schemaMgr: SchemaManager
     ) : Thing(conceptType.label.name(), isExpandable, schemaMgr) {
-
-        data class OwnerTypeProperties(val ownerType: Thing, val isKey: Boolean, val isInherited: Boolean)
 
         override val info get() = valueType
         override val parent: Attribute? get() = supertype
@@ -451,6 +461,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 load(it, isKey = false, isInherited = true)
             }
             ownerTypeProperties = props
+        }
+
+        override fun toString(): String {
+            return "TypeState.Attribute: $conceptType"
         }
     }
 }
