@@ -79,19 +79,19 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         )
     }
 
-    private fun refresh(navState: Navigator.NavigatorState<TypeState>) {
+    private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
         GlobalState.schema.refreshReadTx()
         navState.reloadEntries()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ROTATE,
             tooltip = Tooltip.Arg(title = Label.REFRESH)
         ) { refresh(navState) }
     }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
             enabled = GlobalState.project.current != null,
@@ -108,7 +108,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<TypeState>, onChangeEntries: () -> Unit
+        itemState: Navigator.ItemState<TypeState.Thing>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return listOf() // TODO
     }

@@ -73,10 +73,10 @@ import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-sealed class TypePage(type: TypeState) : Page(type) {
+sealed class TypePage(type: TypeState.Thing) : Page(type) {
 
     override val icon: Form.IconArg = typeIcon(type)
-    protected abstract val type: TypeState
+    protected abstract val type: TypeState.Thing
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -157,7 +157,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
     @Composable
     private fun TitleSection() {
         SectionLine {
-            Form.TextBox(text = fullName(type), leadingIcon = typeIcon(type))
+            Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
             Spacer(modifier = Modifier.weight(1f))
             EditButton { } // TODO
             Form.IconButton(
@@ -177,7 +177,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
             Form.Text(value = Label.SUPERTYPE)
             Spacer(modifier = Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.let { fullName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
+                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = !type.isRoot,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
@@ -210,10 +210,10 @@ sealed class TypePage(type: TypeState) : Page(type) {
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
-                    ClickableText(fullName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
+                    ClickableText(displayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
                 },
                 Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
-                    props.overriddenType?.let { ot -> ClickableText(fullName(ot)) { GlobalState.resource.open(ot) } }
+                    props.overriddenType?.let { ot -> ClickableText(displayName(ot)) { GlobalState.resource.open(ot) } }
                 },
                 Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
                 Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
@@ -254,7 +254,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
                     onExpand = { GlobalState.schema.rootAttributeType?.reloadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.reloadProperties() },
-                    displayFn = { fullName(it, baseFontColor) },
+                    displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = attributeTypeList
@@ -266,7 +266,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { fullName(it, baseFontColor) },
+                    displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -385,9 +385,9 @@ sealed class TypePage(type: TypeState) : Page(type) {
     }
 
     @Composable
-    protected fun fullName(type: TypeState): AnnotatedString = fullName(type, Theme.colors.onPrimary)
+    protected fun displayName(type: TypeState.Thing): AnnotatedString = displayName(type, Theme.colors.onPrimary)
 
-    private fun fullName(type: TypeState, baseFontColor: Color): AnnotatedString {
+    private fun displayName(type: TypeState.Thing, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
             append(type.name)
             if (type is TypeState.Attribute) type.valueType?.let { valueType ->
@@ -490,7 +490,7 @@ sealed class TypePage(type: TypeState) : Page(type) {
                 modifier = Modifier.fillMaxWidth().height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.OWNER, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(fullName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
+                        ClickableText(displayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isKey)

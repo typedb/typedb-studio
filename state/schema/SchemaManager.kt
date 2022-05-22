@@ -47,14 +47,14 @@ import kotlinx.coroutines.launch
 class SchemaManager(
     private val session: SessionState,
     internal val notificationMgr: NotificationManager
-) : Navigable<TypeState> {
+) : Navigable<TypeState.Thing> {
 
     override val name: String = TypeQLToken.Type.THING.name.lowercase()
-    override val parent: TypeState? = null
+    override val parent: TypeState.Thing? = null
     override val info: String? = null
     override val isExpandable: Boolean = true
     override val isBulkExpandable: Boolean = true
-    override val entries: List<TypeState>
+    override val entries: List<TypeState.Thing>
         get() = rootEntityType?.let { listOf(it, rootRelationType!!, rootAttributeType!!) } ?: listOf()
 
     val isOpen: Boolean get() = isOpenAtomic.state
@@ -87,15 +87,15 @@ class SchemaManager(
 
     override fun reloadEntries() {
         entries.forEach {
-            it.isExpandable = it.conceptType.asRemote(openOrGetReadTx()).subtypesExplicit.findAny().isPresent
+            it.hasSubtypes = it.conceptType.asRemote(openOrGetReadTx()).subtypesExplicit.findAny().isPresent
         }
     }
 
-    override fun compareTo(other: Navigable<TypeState>): Int {
+    override fun compareTo(other: Navigable<TypeState.Thing>): Int {
         return if (other is SchemaManager) 0 else -1
     }
 
-    internal fun createTypeState(type: ThingType): TypeState {
+    internal fun createTypeState(type: ThingType): TypeState.Thing {
         return when (type) {
             is EntityType -> createTypeState(type)
             is RelationType -> createTypeState(type)
@@ -137,7 +137,7 @@ class SchemaManager(
     private fun loadTypesAndOpen() {
         val conceptMgr = openOrGetReadTx().concepts()
         rootEntityType = TypeState.Entity(
-            conceptType = conceptMgr.rootEntityType, supertypeInit = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootEntityType, supertype = null, isExpandable = true, schemaMgr = this
         ).also { entityTypes[conceptMgr.rootEntityType] = it }
         rootRelationType = TypeState.Relation(
             conceptType = conceptMgr.rootRelationType, supertype = null, isExpandable = true, schemaMgr = this
