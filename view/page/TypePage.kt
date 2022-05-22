@@ -93,7 +93,7 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
 
-        fun create(type: TypeState): TypePage = when (type) {
+        fun create(type: TypeState.Thing): TypePage = when (type) {
             is TypeState.Entity -> Entity(type)
             is TypeState.Relation -> Relation(type)
             is TypeState.Attribute -> Attribute(type)
@@ -282,7 +282,7 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.defineOwnsAttributeTypes(attributeType!!, overriddenType, isKey) }
+                onClick = { type.defineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
             )
         }
     }
@@ -323,18 +323,18 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
 
     @Composable
     private fun PlaysRoleTypeAddition() {
-        var roleType: TypeState.Relation.Role? by remember { mutableStateOf(null) }
+        val baseFontColor = Theme.colors.onPrimary
+        var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val roleTypeList = GlobalState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
             ?.filter { !type.playsRoleTypes.contains(it) }
-            ?.sortedBy { it.name }
+            ?.sortedBy { it.scopedName }
             ?: listOf()
 
-        var overriddenType: TypeState.Relation.Role? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<TypeState.Relation.Role> = listOf()
-//        val overridableTypeList: List<TypeState.Relation.Role> = roleType?.supertypes
-//            ?.intersect(type.supertype!!.playsRoleTypes.toSet())
-//            ?.sortedBy { it.scopedName } ?: listOf()
+        var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<TypeState.Role> = roleType?.supertypes
+            ?.intersect(type.supertype!!.playsRoleTypes.toSet())
+            ?.sortedBy { it.scopedName } ?: listOf()
 
         val isPlayable = isEditable && roleType != null
         val isOverridable = isEditable && overridableTypeList.isNotEmpty()
@@ -345,8 +345,8 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
                     selected = roleType,
                     placeholder = Label.SELECT_ROLE_TYPE,
                     onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
-                    onSelection = { roleType = it; /*it.reloadProperties()*/ },
-                    displayFn = { AnnotatedString(it.scopedName) },
+                    onSelection = { roleType = it; it.reloadProperties() },
+                    displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = roleTypeList
@@ -358,7 +358,7 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { AnnotatedString(it.scopedName) },
+                    displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -385,11 +385,14 @@ sealed class TypePage(type: TypeState.Thing) : Page(type) {
     }
 
     @Composable
-    protected fun displayName(type: TypeState.Thing): AnnotatedString = displayName(type, Theme.colors.onPrimary)
+    protected fun displayName(type: TypeState): AnnotatedString = displayName(type, Theme.colors.onPrimary)
 
-    private fun displayName(type: TypeState.Thing, baseFontColor: Color): AnnotatedString {
+    private fun displayName(type: TypeState, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
-            append(type.name)
+            when (type) {
+                is TypeState.Role -> append(type.scopedName)
+                is TypeState.Thing -> append(type.name)
+            }
             if (type is TypeState.Attribute) type.valueType?.let { valueType ->
                 append(" ")
                 withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${valueType})") }

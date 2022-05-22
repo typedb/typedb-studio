@@ -60,7 +60,7 @@ object Util {
     }
 
     // TODO: may move this method to a package about type visualisations once we implement graph visualiser
-    fun typeIcon(type: TypeState) = when (type) {
+    fun typeIcon(type: TypeState.Thing) = when (type) {
         is Entity -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.colors.tertiary }
         is Relation -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.colors.quaternary }
         is Attribute -> Form.IconArg(Icon.Code.OVAL) { Theme.colors.quinary }

@@ -26,7 +26,9 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
+import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.connection.SessionState
@@ -66,8 +68,9 @@ class SchemaManager(
     private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val entityTypes = ConcurrentHashMap<EntityType, TypeState.Entity>()
-    private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val attributeTypes = ConcurrentHashMap<AttributeType, TypeState.Attribute>()
+    private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
+    private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
     internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(Dispatchers.Default)
@@ -95,13 +98,16 @@ class SchemaManager(
         return if (other is SchemaManager) 0 else -1
     }
 
-    internal fun createTypeState(type: ThingType): TypeState.Thing {
-        return when (type) {
-            is EntityType -> createTypeState(type)
-            is RelationType -> createTypeState(type)
-            is AttributeType -> createTypeState(type)
-            else -> throw IllegalStateException("Unrecognised ThingType object")
-        }
+    internal fun createTypeState(type: Type): TypeState = when (type) {
+        is RoleType -> createTypeState(type)
+        else -> createTypeState(type as ThingType)
+    }
+
+    internal fun createTypeState(type: ThingType): TypeState.Thing = when (type) {
+        is EntityType -> createTypeState(type)
+        is RelationType -> createTypeState(type)
+        is AttributeType -> createTypeState(type)
+        else -> throw IllegalStateException("Unrecognised ThingType object")
     }
 
     internal fun createTypeState(type: EntityType): TypeState.Entity {
@@ -111,16 +117,6 @@ class SchemaManager(
         }
         return entityTypes.computeIfAbsent(type) {
             TypeState.Entity(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
-        }
-    }
-
-    internal fun createTypeState(type: RelationType): TypeState.Relation {
-        val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let {
-            if (it.isRelationType) relationTypes[it] ?: createTypeState(it.asRelationType()) else null
-        }
-        return relationTypes.computeIfAbsent(type) {
-            TypeState.Relation(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
         }
     }
 
@@ -134,16 +130,37 @@ class SchemaManager(
         }
     }
 
+    internal fun createTypeState(type: RelationType): TypeState.Relation {
+        val remote = type.asRemote(openOrGetReadTx())
+        val supertype = remote.supertype?.let {
+            if (it.isRelationType) relationTypes[it] ?: createTypeState(it.asRelationType()) else null
+        }
+        return relationTypes.computeIfAbsent(type) {
+            TypeState.Relation(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+        }
+    }
+
+    internal fun createTypeState(type: RoleType): TypeState.Role {
+        val remote = type.asRemote(openOrGetReadTx())
+        val supertype = remote.supertype?.let {
+            if (it.isRoleType) roleTypes[it] ?: createTypeState(it.asRoleType()) else null
+        }
+        return roleTypes.computeIfAbsent(type) {
+            val relationType = createTypeState(remote.relationType)
+            TypeState.Role(type, relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+        }
+    }
+
     private fun loadTypesAndOpen() {
         val conceptMgr = openOrGetReadTx().concepts()
         rootEntityType = TypeState.Entity(
-            conceptType = conceptMgr.rootEntityType, supertype = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootEntityType, supertype = null, hasSubtypes = true, schemaMgr = this
         ).also { entityTypes[conceptMgr.rootEntityType] = it }
         rootRelationType = TypeState.Relation(
-            conceptType = conceptMgr.rootRelationType, supertype = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootRelationType, supertype = null, hasSubtypes = true, schemaMgr = this
         ).also { relationTypes[conceptMgr.rootRelationType] = it }
         rootAttributeType = TypeState.Attribute(
-            conceptType = conceptMgr.rootAttributeType, supertype = null, isExpandable = true, schemaMgr = this
+            conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
         ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
         onRootsUpdated?.let { it() }
         isOpenAtomic.set(true)
