@@ -422,8 +422,16 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         Form.TextButton(
             text = Label.EXPORT,
             leadingIcon = Form.IconArg(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE),
-            tooltip = Tooltip.Arg(Label.EXPORT)
-        ) { } // TODO
+            enabled = GlobalState.project.current != null,
+            tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
+        ) {
+            type.exportSyntax { syntax ->
+                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                    file.content(syntax)
+                    GlobalState.resource.open(file)
+                }
+            }
+        }
     }
 
     @Composable

@@ -293,6 +293,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         fun undefinePlaysRoleType(roleType: Role) {
             // TODO
         }
+
+        fun exportSyntax(onSuccess: (syntax: String) -> Unit) = schemaMgr.coroutineScope.launch {
+            conceptType.asRemote(schemaMgr.openOrGetReadTx()).syntax?.let { onSuccess(it) }
+        }
     }
 
     class Entity internal constructor(

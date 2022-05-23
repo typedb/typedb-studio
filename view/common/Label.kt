@@ -70,6 +70,7 @@ object Label {
     const val EXPAND_COLLAPSE = "Expand/Collapse"
     const val EXPLAIN = "Explain"
     const val EXPORT = "Export"
+    const val EXPORT_SYNTAX = "Export Syntax"
     const val FILE_NAME = "File Name"
     const val FIND = "Find"
     const val FOUND = "Found"
