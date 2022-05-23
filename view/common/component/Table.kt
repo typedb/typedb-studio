@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Table {
@@ -132,7 +131,7 @@ object Table {
     @Composable
     private fun EmptyRow() {
         Box(Modifier.fillMaxSize().background(Theme.colors.background1), Alignment.Center) {
-            Form.Text(value = "(" + Label.NONE.lowercase() + ")", alpha = FADED_OPACITY)
+            Form.Text(value = "(" + Label.NONE.lowercase() + ")")
         }
     }
 

@@ -392,19 +392,16 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun SubtypesSection() {
         SectionLine { Form.Text(value = Label.SUBTYPES) }
-        val modifier = Modifier.fillMaxWidth()
-            .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
-            .border(1.dp, Theme.colors.border)
-            .background(Theme.colors.background1)
-        if (type.hasSubtypes) Navigator.Layout(
+        Navigator.Layout(
             state = subtypesNavState,
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth()
+                .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
+                .border(1.dp, Theme.colors.border)
+                .background(Theme.colors.background1),
             itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
             bottomSpace = 0.dp,
             iconArg = { typeIcon(it.item) }
-        ) else Box(modifier, Alignment.Center) {
-            Form.Text(value = "(" + Label.NONE.lowercase() + ")", alpha = FADED_OPACITY)
-        }
+        )
     }
 
     @Composable

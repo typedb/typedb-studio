@@ -405,7 +405,7 @@ object Navigator {
         val verScrollAdapter = rememberScrollbarAdapter(state.scroller)
         val horScrollAdapter = rememberScrollbarAdapter(horScrollState)
         val root: ItemState<T>? = state.entries.firstOrNull()
-        Box(modifier = modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
+        if (state.entries.isNotEmpty()) Box(modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
             .onGloballyPositioned { state.density = density; state.updateAreaSize(it.size) }) {
             contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
             LazyColumn(
@@ -418,6 +418,8 @@ object Navigator {
             }
             Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
             Scrollbar.Horizontal(horScrollAdapter, Modifier.align(Alignment.BottomCenter), state.areaWidth)
+        } else Box(modifier, Alignment.Center) {
+            Text(value = "(" + Label.NONE.lowercase() + ")")
         }
     }
 
