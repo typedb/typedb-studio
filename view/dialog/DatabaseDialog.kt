@@ -92,7 +92,10 @@ object DatabaseDialog {
                 Spacer(Modifier.height(DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(text = Label.REFRESH) { GlobalState.client.refreshDatabaseList() }
+                    TextButton(
+                        text = Label.REFRESH,
+                        leadingIcon = Form.IconArg(Icon.Code.ROTATE)
+                    ) { GlobalState.client.refreshDatabaseList() }
                     FormRowSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
                 }

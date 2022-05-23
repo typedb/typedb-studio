@@ -154,7 +154,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         Separator()
         MainSections()
         Separator()
-        DeleteButton()
+        ButtonsSection()
     }
 
     @Composable
@@ -173,16 +173,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private fun TitleSection() {
         SectionLine {
             Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
-            Spacer(modifier = Modifier.weight(1f))
             EditButton { } // TODO
-            Form.IconButton(
-                icon = Icon.Code.ROTATE,
-                tooltip = Tooltip.Arg(Label.REFRESH)
-            ) { type.loadProperties() }
-            Form.IconButton(
-                icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
-                tooltip = Tooltip.Arg(Label.EXPORT)
-            ) { } // TODO
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 
@@ -405,8 +397,42 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     }
 
     @Composable
-    private fun DeleteButton() {
+    private fun ButtonsSection() {
+        SectionLine {
+            Spacer(Modifier.weight(1f))
+            DeleteButton()
+            ExportButton()
+            RefreshButton()
+        }
+    }
 
+    @Composable
+    private fun DeleteButton() {
+        Form.TextButton(
+            text = Label.DELETE,
+            textColor = Theme.colors.error,
+            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.colors.error },
+            enabled = isEditable,
+            tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
+        ) { } // TODO
+    }
+
+    @Composable
+    private fun ExportButton() {
+        Form.TextButton(
+            text = Label.EXPORT,
+            leadingIcon = Form.IconArg(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE),
+            tooltip = Tooltip.Arg(Label.EXPORT)
+        ) { } // TODO
+    }
+
+    @Composable
+    private fun RefreshButton() {
+        Form.TextButton(
+            text = Label.REFRESH,
+            leadingIcon = Form.IconArg(Icon.Code.ROTATE),
+            tooltip = Tooltip.Arg(Label.REFRESH)
+        ) { type.loadProperties() }
     }
 
     @Composable
