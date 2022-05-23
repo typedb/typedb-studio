@@ -20,25 +20,37 @@ package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -47,16 +59,25 @@ import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.vaticle.force.graph.api.Simulation
@@ -75,14 +96,20 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.Util
+import com.vaticle.typedb.studio.view.common.Util.schemaString
 import com.vaticle.typedb.studio.view.common.Util.toDP
+import com.vaticle.typedb.studio.view.common.Util.valueString
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Frame
+import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
+import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
@@ -129,6 +156,7 @@ internal object GraphOutput : RunOutput() {
         val visualiser = Visualiser(this)
         // TODO: this needs a better home
         val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+        var browserAreaState: Visualiser.BrowserArea.State? by mutableStateOf(null)
 
         fun output(conceptMap: ConceptMap) {
             graphBuilder.add(conceptMap)
@@ -336,14 +364,15 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        sealed class Vertex(protected val graph: Graph) {
+        sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             abstract val label: Label
             abstract val geometry: Geometry
 
             open val isHighlighted = false
 
-            sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph) : Vertex(graph) {
+            sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph)
+                : Vertex(thing, graph) {
 
                 override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
 
@@ -411,7 +440,8 @@ internal object GraphOutput : RunOutput() {
                 class ExplanationManager
             }
 
-            sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph) : Vertex(graph) {
+            sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph)
+                : Vertex(type, graph) {
 
                 override val label = Label(type.label.name(), Label.LengthLimits.CONCEPT)
 
@@ -1254,7 +1284,7 @@ internal object GraphOutput : RunOutput() {
                     rebuildFocusedVertexNetwork(value)
                     _focusedVertex = value
                 }
-            private var focusedVertexNetwork: MutableSet<Vertex> = mutableSetOf()
+            var focusedVertexNetwork: Set<Vertex> by mutableStateOf(emptySet())
             var hoveredVertex: Vertex? by mutableStateOf(null)
             var draggedVertex: Vertex? by mutableStateOf(null)
             val hoveredVertexChecker = HoveredVertexChecker(state)
@@ -1268,17 +1298,16 @@ internal object GraphOutput : RunOutput() {
             val Edge.isBackground get() = focusedVertex != null && source != focusedVertex && target != focusedVertex
 
             fun rebuildFocusedVertexNetwork(focusedVertex: Vertex? = _focusedVertex) {
-                focusedVertexNetwork.clear()
                 if (focusedVertex != null) {
-                    focusedVertexNetwork += focusedVertex
-                    state.graph.edges.forEach { edge ->
+                    val linkedVertices = state.graph.edges.mapNotNull { edge ->
                         when (focusedVertex) {
-                            edge.source -> focusedVertexNetwork += edge.target
-                            edge.target -> focusedVertexNetwork += edge.source
-                            else -> {}
+                            edge.source -> edge.target
+                            edge.target -> edge.source
+                            else -> null
                         }
                     }
-                }
+                    focusedVertexNetwork = setOf(focusedVertex) + linkedVertices
+                } else focusedVertexNetwork = emptySet()
             }
 
             class HoveredVertexChecker(private val state: State) {
@@ -1304,7 +1333,6 @@ internal object GraphOutput : RunOutput() {
     class Visualiser(private val state: State) {
 
         private val graphArea = GraphArea(state)
-        private val sidebarArea = SidebarArea(state)
 
         @Composable
         fun Layout(modifier: Modifier) {
@@ -1317,9 +1345,14 @@ internal object GraphOutput : RunOutput() {
                     initSize = Either.second(1f)
                 ) { graphArea.Layout() },
                 Frame.Pane(
-                    id = SidebarArea::class.java.name,
-                    initSize = Either.second(0f)
-                ) { sidebarArea.Layout() }
+                    id = PreviewBrowser::class.java.name,
+                    minSize = BrowserArea.MIN_WIDTH,
+                    initSize = Either.first(
+                        state.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
+                            ?: BrowserArea.SIDE_TAB_WIDTH
+                    ),
+                    initFreeze = state.browserAreaState?.browser?.isOpen != true
+                ) { BrowserArea.Layout(state, it) }
             )
         }
 
@@ -1340,7 +1373,10 @@ internal object GraphOutput : RunOutput() {
                     Modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
                         .onGloballyPositioned { onLayout(density, it) }
                 ) {
-                    Graphics(state.graph.physics.iteration, state.viewport.density, state.viewport.physicalSize, state.viewport.scale)
+                    Graphics(
+                        state.graph.physics.iteration, state.viewport.density, state.viewport.physicalSize,
+                        state.viewport.scale
+                    )
                 }
 
                 LaunchedEffect(Unit) { state.physicsEngine.run() }
@@ -1376,10 +1412,22 @@ internal object GraphOutput : RunOutput() {
 
             @Composable
             private fun EdgeLayer() {
-                // TODO: change this conditional operator to a || after implementing out-of-viewport detection
-                val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
-                Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
-                if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
+                // TODO: this will improve sharply after out-of-viewport detection
+                val simpleEdges = mutableListOf<State.Edge>()
+                val detailedEdges = mutableListOf<State.Edge>()
+                state.graph.edges.forEach {
+                    if (
+                        (state.graph.edges.size <= 500 && state.viewport.scale > 0.2)
+                        || state.interactions.focusedVertex in listOf(it.source, it.target)
+                    ) detailedEdges += it
+                    else simpleEdges += it
+                }
+
+                Canvas(Modifier.fillMaxSize()) {
+                    state.edgeRenderer(this).draw(simpleEdges, false)
+                    state.edgeRenderer(this).draw(detailedEdges, true)
+                }
+                detailedEdges.forEach { EdgeLabel(it) }
             }
 
             @Composable
@@ -1423,7 +1471,9 @@ internal object GraphOutput : RunOutput() {
             private fun VertexLayer() {
                 val vertices = state.graph.vertices
                 Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-                if (vertices.size <= 200) vertices.forEach { VertexLabel(it, it.geometry.position) }
+                // TODO: we won't need this distinction after out-of-viewport detection is done
+                val labelledVertices = if (vertices.size <= 200) vertices else state.interactions.focusedVertexNetwork
+                labelledVertices.forEach { VertexLabel(it, it.geometry.position) }
             }
 
             private fun DrawScope.drawVertexBackground(vertex: State.Vertex) {
@@ -1520,11 +1570,252 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class SidebarArea(private val state: State) {
+        // TODO: copied from browser/Browser.kt on 23/05/2022
+        abstract class Browser(
+            private val areaState: BrowserArea.State, internal val order: Int, initOpen: Boolean = false
+        ) {
+
+            companion object {
+                internal val MIN_HEIGHT = 80.dp
+            }
+
+            internal abstract val label: String
+            internal abstract val icon: Icon.Code
+            internal abstract val buttons: List<Form.IconButtonArg>
+
+            internal var isOpen: Boolean by mutableStateOf(initOpen)
+
+            @Composable
+            abstract fun BrowserLayout()
+
+            fun toggle() {
+                isOpen = !isOpen
+                areaState.mayUpdatePaneState()
+            }
+
+            @Composable
+            internal fun Layout() {
+                Column {
+                    Bar()
+                    Separator.Horizontal()
+                    Box(modifier = Modifier.weight(1f)) { BrowserLayout() }
+                }
+            }
+
+            @Composable
+            private fun Bar() {
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
+                    Icon.Render(icon = icon)
+                    Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
+                    Form.Text(value = label)
+                    Spacer(Modifier.weight(1f))
+                    Buttons(*buttons.toTypedArray(), isActive = true)
+                    Buttons(Form.IconButtonArg(Icon.Code.XMARK) { toggle() }, isActive = true)
+                }
+            }
+
+            @Composable
+            private fun Buttons(vararg buttons: Form.IconButtonArg, isActive: Boolean) {
+                buttons.forEach {
+                    Form.IconButton(
+                        icon = it.icon,
+                        hoverIcon = it.hoverIcon,
+                        modifier = Modifier.size(Theme.PANEL_BAR_HEIGHT),
+                        iconColor = it.color(),
+                        iconHoverColor = it.hoverColor?.invoke(),
+                        disabledColor = it.disabledColor?.invoke(),
+                        bgColor = androidx.compose.ui.graphics.Color.Transparent,
+                        roundedCorners = Theme.RoundedCorners.NONE,
+                        enabled = isActive && it.enabled,
+                        tooltip = it.tooltip,
+                        onClick = it.onClick,
+                    )
+                }
+            }
+        }
+
+        // TODO: copied from browser/BrowserArea.kt on 23/05/2022
+        object BrowserArea {
+
+            val WIDTH = 300.dp
+            val MIN_WIDTH = 150.dp
+            val SIDE_TAB_WIDTH = 22.dp
+            private val SIDE_TAB_HEIGHT = 100.dp
+            private val SIDE_TAB_SPACING = 8.dp
+            private val ICON_SIZE = 10.sp
+            private val TAB_OFFSET = 40.dp
+
+            class State constructor(state: GraphOutput.State, var paneState: Frame.PaneState) {
+
+                private var unfreezeSize: Dp by mutableStateOf(WIDTH)
+                internal val browser = PreviewBrowser(state, this, 0, false)
+                internal var isOpen
+                    get() = browser.isOpen
+                    set(value) { browser.isOpen = value }
+
+                fun mayUpdatePaneState() {
+                    if (!isOpen) {
+                        unfreezeSize = paneState.size
+                        paneState.freeze(SIDE_TAB_WIDTH)
+                    } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
+                }
+            }
+
+            @Composable
+            fun Layout(state: GraphOutput.State, paneState: Frame.PaneState) {
+                // Initialise browser area state if not inited previously; sync the new rendered PaneState into
+                // the browser area state (to ensure correctness after switching away from this Graph tab and back)
+                // TODO: this is all a little unintuitive - we need an architecture rethink
+                if (state.browserAreaState == null) state.browserAreaState = State(state, paneState)
+                state.browserAreaState!!.paneState = paneState
+                val areaState = state.browserAreaState!!
+
+                Row(Modifier.fillMaxSize()) {
+                    if (areaState.isOpen) {
+                        Frame.Column(
+                            modifier = Modifier.fillMaxHeight().weight(1f),
+                            separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                            Frame.Pane(
+                                id = areaState.browser.label, order = areaState.browser.order,
+                                minSize = Browser.MIN_HEIGHT, initSize = Either.second(1f)
+                            ) { areaState.browser.Layout() }
+                        )
+                        Separator.Vertical()
+                    }
+                    Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
+                        Tab(areaState.browser)
+                    }
+                }
+            }
+
+            @OptIn(ExperimentalComposeUiApi::class)
+            @Composable
+            private fun Tab(browser: Browser) {
+                @Composable
+                fun bgColor(): androidx.compose.ui.graphics.Color = if (browser.isOpen) Theme.colors.surface else Theme.colors.background0
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(SIDE_TAB_HEIGHT)
+                        .pointerHoverIcon(PointerIconDefaults.Hand)
+                        .clickable { browser.toggle() }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
+                            .rotate(90f)
+                            .offset(x = TAB_OFFSET)
+                            .background(color = bgColor())
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Icon.Render(icon = browser.icon, size = ICON_SIZE)
+                        Spacer(modifier = Modifier.width(SIDE_TAB_SPACING))
+                        Form.Text(value = browser.label)
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+                Separator.Horizontal()
+            }
+        }
+
+        class PreviewBrowser(private val state: State, areaState: BrowserArea.State, order: Int, initOpen: Boolean) :
+            Browser(areaState, order, initOpen) {
+
+            companion object {
+                private val LOGGER = KotlinLogging.logger {}
+            }
+
+            override val label: String = Label.PREVIEW
+            override val icon: Icon.Code = Icon.Code.EYE
+            override var buttons: List<Form.IconButtonArg> = emptyList()
+
+            private val PLACEHOLDER_PADDING = 20.dp
+
+            @Composable
+            override fun BrowserLayout() {
+                val focusedVertex = state.interactions.focusedVertex
+                if (focusedVertex == null) PlaceholderText()
+                else ConceptPreview(focusedVertex.concept).Layout()
+            }
+
+            @Composable
+            private fun PlaceholderText() {
+                Box(Modifier.fillMaxSize().padding(PLACEHOLDER_PADDING), Alignment.Center) {
+                    Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true)
+                }
+            }
+        }
+
+        class ConceptPreview(private val concept: Concept) {
+
+            private val TITLE_SECTION_PADDING = 10.dp
+            private val props = propertiesOf(concept)
 
             @Composable
             fun Layout() {
-                Form.Text("HARR HA HARR HARR")
+                Column {
+                    TitleSection()
+                    if (props.isNotEmpty()) Table()
+                }
+            }
+
+            // TODO: copied from TypePage.kt on 23/05/2022
+            @Composable
+            private fun TitleSection() {
+                val type = if (concept.isType) concept.asType() else concept.asThing().type
+                Box(Modifier.padding(TITLE_SECTION_PADDING)) {
+                    Form.TextBox(text = displayName(type), leadingIcon = Util.typeIcon(type))
+                }
+            }
+
+            @Composable
+            private fun displayName(type: Type): AnnotatedString = displayName(type, Theme.colors.onPrimary)
+
+            private fun displayName(type: Type, baseFontColor: androidx.compose.ui.graphics.Color): AnnotatedString {
+                return buildAnnotatedString {
+                    append(type.label.scopedName())
+                    if (type is AttributeType) type.valueType?.let { valueType ->
+                        append(" ")
+                        withStyle(SpanStyle(baseFontColor.copy(Color.FADED_OPACITY))) { append("(${valueType})") }
+                    }
+                }
+            }
+
+            @Composable
+            private fun Table() {
+                val tableHeight = Table.ROW_HEIGHT * (props.size + 1)
+                Table.Layout(
+                    items = props,
+                    modifier = Modifier.fillMaxWidth().height(tableHeight),
+                    columns = listOf(
+                        Table.Column(Label.PROPERTY, contentAlignment = Alignment.CenterStart, size = Either.first(1f)) {
+                            Form.Text(it.key, fontWeight = FontWeight.Bold)
+                        },
+                        Table.Column(Label.VALUE, contentAlignment = Alignment.CenterStart, size = Either.first(2f)) {
+                            Form.SelectableText(it.value, singleLine = true)
+                        }
+                    )
+                )
+            }
+
+            data class Property(val key: String, val value: String)
+
+            companion object {
+
+                fun propertiesOf(concept: Concept): List<Property> {
+                    return listOfNotNull(
+                        if (concept.isThing) Label.INTERNAL_ID to concept.asThing().iid else null,
+                        if (concept.isAttribute) Label.VALUE to concept.asAttribute().valueString() else null,
+                    )
+                }
+
+                private infix fun String.to(value: String): Property {
+                    return Property(this, value)
+                }
             }
         }
     }

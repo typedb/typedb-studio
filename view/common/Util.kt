@@ -25,16 +25,19 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.client.api.concept.thing.Attribute
+import com.vaticle.typedb.client.api.concept.type.AttributeType
+import com.vaticle.typedb.client.api.concept.type.EntityType
+import com.vaticle.typedb.client.api.concept.type.RelationType
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.state.schema.TypeState.Attribute
-import com.vaticle.typedb.studio.state.schema.TypeState.Entity
-import com.vaticle.typedb.studio.state.schema.TypeState.Relation
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.MouseInfo
 import java.awt.Point
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 object Util {
@@ -66,10 +69,24 @@ object Util {
         return area.contains(mouse.x, mouse.y)
     }
 
-    // TODO: may move this method to a package about type visualisations once we implement graph visualiser
+    // TODO: move these methods to a package about type visualisations
     fun typeIcon(type: TypeState.Thing) = when (type) {
-        is Entity -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
-        is Relation -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
-        is Attribute -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
+        is TypeState.Entity -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
+        is TypeState.Relation -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
+        is TypeState.Attribute -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
     }
+
+    // TODO: copied from typeIcon on 23/05/2022, needs refactor
+    fun typeIcon(type: Type) = when (type) {
+        is RelationType -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
+        is AttributeType -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
+        else -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
+    }
+
+    fun Attribute<*>.valueString(): String = when {
+        isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        else -> value.toString()
+    }
+
+    fun AttributeType.ValueType.schemaString(): String = name.lowercase()
 }

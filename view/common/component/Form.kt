@@ -263,6 +263,7 @@ object Form {
         value: String,
         style: TextStyle = Theme.typography.body1,
         color: Color = Theme.colors.onSurface,
+        singleLine: Boolean = false,
         modifier: Modifier = Modifier
     ) {
         BasicTextField(
@@ -271,6 +272,7 @@ object Form {
             onValueChange = {},
             readOnly = true,
             cursorBrush = SolidColor(Theme.colors.secondary),
+            singleLine = singleLine,
             textStyle = style.copy(color = color)
         )
     }

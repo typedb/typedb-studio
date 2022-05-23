@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 
-sealed class Browser(private val areaState: BrowserArea.State, internal val order: Int, initOpen: Boolean = false) {
+abstract class Browser(private val areaState: BrowserArea.State, internal val order: Int, initOpen: Boolean = false) {
 
     companion object {
         internal val MIN_HEIGHT = 80.dp
