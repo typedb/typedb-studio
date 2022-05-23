@@ -73,9 +73,9 @@ class ResourceManager(
     }
 
     fun activate(resource: Resource) {
-        active?.stopWatcher()
+        active?.deactivate()
         active = resource
-        active?.launchWatcher()
+        active?.activate()
     }
 
     fun activateNext() {

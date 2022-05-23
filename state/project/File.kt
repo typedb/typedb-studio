@@ -176,6 +176,16 @@ class File internal constructor(
         }
     }
 
+    override fun activate() {
+        if (watchFileSystem.compareAndSet(false, true)) {
+            launchWatcherCoroutine()
+        }
+    }
+
+    override fun deactivate() {
+        watchFileSystem.set(false)
+    }
+
     internal fun tryRename(newName: String): File? {
         val newPath = path.resolveSibling(newName)
         return if (parent!!.contains(newName)) {
@@ -245,16 +255,6 @@ class File internal constructor(
     fun content(lines: List<String>) {
         content = lines
         if (settings.autosave) saveContent()
-    }
-
-    override fun stopWatcher() {
-        watchFileSystem.set(false)
-    }
-
-    override fun launchWatcher() {
-        if (watchFileSystem.compareAndSet(false, true)) {
-            launchWatcherCoroutine()
-        }
     }
 
     @OptIn(ExperimentalTime::class)

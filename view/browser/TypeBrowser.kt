@@ -58,40 +58,40 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         val schema = GlobalState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!client.session.isOpen || schema.rootThingType == null || client.selectDBDialog.isOpen) SelectDBHelper()
+        else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
         else Content()
     }
 
     @Composable
     private fun Content() {
         val navState = rememberNavigatorState(
-            container = GlobalState.schema.rootThingType!!,
+            container = GlobalState.schema,
             title = Label.TYPE_BROWSER,
             initExpandDepth = 1,
         ) { GlobalState.resource.open(it.item) }
-        GlobalState.schema.onRootChange = { navState.replaceContainer(it) }
+        GlobalState.schema.onRootsUpdated = { navState.reloadEntries() }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
+            modifier = Modifier.fillMaxSize(),
             iconArg = { typeIcon(it.item) },
-            styleArgs = { listOf() },
             // TODO: contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
         )
     }
 
-    private fun refresh(navState: Navigator.NavigatorState<TypeState>) {
+    private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
         GlobalState.schema.refreshReadTx()
         navState.reloadEntries()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ROTATE,
             tooltip = Tooltip.Arg(title = Label.REFRESH)
         ) { refresh(navState) }
     }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState>): IconButtonArg {
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
             enabled = GlobalState.project.current != null,
@@ -108,7 +108,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
     }
 
     private fun contextMenuItems(
-        itemState: Navigator.ItemState<TypeState>, onChangeEntries: () -> Unit
+        itemState: Navigator.ItemState<TypeState.Thing>, onChangeEntries: () -> Unit
     ): List<List<ContextMenu.Item>> {
         return listOf() // TODO
     }

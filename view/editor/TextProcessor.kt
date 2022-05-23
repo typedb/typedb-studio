@@ -247,7 +247,7 @@ internal interface TextProcessor {
 
         override fun insertNewLine() {
             val line = content[target.cursor.row]
-            val tabs = floor(prefixSpaces(line).toDouble() / TAB_SIZE).toInt()
+            val tabs = floor(prefixSpaces(line).coerceAtMost(target.cursor.col).toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 

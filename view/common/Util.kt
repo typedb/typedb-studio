@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.state.schema.TypeState.Attribute
+import com.vaticle.typedb.studio.state.schema.TypeState.Entity
+import com.vaticle.typedb.studio.state.schema.TypeState.Relation
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
@@ -64,10 +67,9 @@ object Util {
     }
 
     // TODO: may move this method to a package about type visualisations once we implement graph visualiser
-    fun typeIcon(type: TypeState) = when {
-        type.isEntityType -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
-        type.isRelationType -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
-        type.isAttributeType -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
-        else -> Form.IconArg(Icon.Code.HEXAGON) {Theme.colors.secondary}
+    fun typeIcon(type: TypeState.Thing) = when (type) {
+        is Entity -> Form.IconArg(Icon.Code.RECTANGLE) { GraphTheme.colors.vertex.entityType }
+        is Relation -> Form.IconArg(Icon.Code.RHOMBUS) { GraphTheme.colors.vertex.relationType }
+        is Attribute -> Form.IconArg(Icon.Code.OVAL) { GraphTheme.colors.vertex.attributeType }
     }
 }

@@ -49,7 +49,7 @@ abstract class Page(var resource: Resource) {
         fun of(resource: Resource): Page {
             return when (resource) {
                 is File -> FilePage.create(resource)
-                is TypeState -> TypePage(resource)
+                is TypeState.Thing -> TypePage.create(resource)
                 else -> throw IllegalStateException("Unrecognised resource type")
             }
         }
