@@ -27,6 +27,7 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -74,11 +75,14 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Frame
+import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
@@ -123,6 +127,8 @@ internal object GraphOutput : RunOutput() {
         val physicsEngine = PhysicsEngine(this)
         var theme: Color.GraphTheme? = null
         val visualiser = Visualiser(this)
+        // TODO: this needs a better home
+        val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
 
         fun output(conceptMap: ConceptMap) {
             graphBuilder.add(conceptMap)
@@ -1079,7 +1085,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             val density = state.viewport.density
-            val edgeLabelSizes = state.visualiser.edgeLabelSizes
+            val edgeLabelSizes = state.edgeLabelSizes
 
             fun draw(edges: Iterable<Edge>, detailed: Boolean) {
                 for ((colorCode, edgeList) in EdgesByColorCode(edges, state)) {
@@ -1297,194 +1303,228 @@ internal object GraphOutput : RunOutput() {
 
     class Visualiser(private val state: State) {
 
-        val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
-
-        companion object {
-            // TODO: this is duplicated in 3 places
-            private const val BACKGROUND_ALPHA = .25f
-        }
+        private val graphArea = GraphArea(state)
+        private val sidebarArea = SidebarArea(state)
 
         @Composable
         fun Layout(modifier: Modifier) {
-            val density = LocalDensity.current.density
-            state.theme = GraphTheme.colors
-
-            Box(
-                modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
-                    .onGloballyPositioned { onLayout(density, it) }
-            ) {
-                Graphics(state.graph.physics.iteration, state.viewport.density, state.viewport.physicalSize, state.viewport.scale)
-            }
-
-            LaunchedEffect(Unit) { state.physicsEngine.run() }
-            LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
+            Frame.Row(
+                modifier = modifier,
+                separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                Frame.Pane(
+                    id = GraphArea::class.java.name,
+                    minSize = GraphArea.MIN_WIDTH,
+                    initSize = Either.second(1f)
+                ) { graphArea.Layout() },
+                Frame.Pane(
+                    id = SidebarArea::class.java.name,
+                    initSize = Either.second(0f)
+                ) { sidebarArea.Layout() }
+            )
         }
 
-        @Composable
-        @Suppress("UNUSED_PARAMETER")
-        // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
-        //       this explicit Composable with unused parameters - investigate why
-        fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-            // Keep EdgeLayer and VertexLayer synchronized on the same object. Otherwise, the renderer may block waiting
-            // to acquire a lock, and the vertex and edge drawing may go out of sync.
-            synchronized(state.graph.edges) {
-                Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
-                    EdgeLayer()
-                    VertexLayer()
+        class GraphArea(private val state: State) {
+
+            companion object {
+                val MIN_WIDTH = 120.dp
+                // TODO: this is duplicated in 3 places
+                private const val BACKGROUND_ALPHA = .25f
+            }
+
+            @Composable
+            fun Layout() {
+                val density = LocalDensity.current.density
+                state.theme = GraphTheme.colors
+
+                Box(
+                    Modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
+                        .onGloballyPositioned { onLayout(density, it) }
+                ) {
+                    Graphics(state.graph.physics.iteration, state.viewport.density, state.viewport.physicalSize, state.viewport.scale)
+                }
+
+                LaunchedEffect(Unit) { state.physicsEngine.run() }
+                LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
+            }
+
+            @Composable
+            @Suppress("UNUSED_PARAMETER")
+            // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
+            //       this explicit Composable with unused parameters - investigate why
+            fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
+                // Keep EdgeLayer and VertexLayer synchronized on the same object. Otherwise, the renderer may block waiting
+                // to acquire a lock, and the vertex and edge drawing may go out of sync.
+                synchronized(state.graph.edges) {
+                    Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
+                        EdgeLayer()
+                        VertexLayer()
+                    }
+                }
+                PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
+            }
+
+            private fun onLayout(density: Float, layout: LayoutCoordinates) {
+                state.viewport.updatePhysicalDimensions(layout.size.toSize(), density)
+                // TODO: this check exists because the first composition of GraphArea will have a width of MIN_WIDTH,
+                //       before inflating to fill the max width, but there should be a more elegant solution than this.
+                if (layout.size.width > MIN_WIDTH.value * density) {
+                    if (state.viewport.areInitialWorldCoordinatesSet.compareAndSet(false, true)) {
+                        state.viewport.alignWorldCenterWithPhysicalCenter()
+                    }
                 }
             }
-            PointerInput.Handler(state, Modifier.fillMaxSize().zIndex(100f))
-        }
 
-        private fun onLayout(density: Float, layout: LayoutCoordinates) {
-            state.viewport.updatePhysicalDimensions(layout.size.toSize(), density)
-            if (state.viewport.areInitialWorldCoordinatesSet.compareAndSet(false, true)) {
-                state.viewport.alignWorldCenterWithPhysicalCenter()
+            @Composable
+            private fun EdgeLayer() {
+                // TODO: change this conditional operator to a || after implementing out-of-viewport detection
+                val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
+                Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
+                if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
             }
-        }
 
-        @Composable
-        private fun EdgeLayer() {
-            // TODO: change this conditional operator to a || after implementing out-of-viewport detection
-            val detailed = state.graph.edges.size <= 500 && state.viewport.scale > 0.2
-            Canvas(Modifier.fillMaxSize()) { state.edgeRenderer(this).draw(state.graph.edges, detailed) }
-            if (detailed) state.graph.edges.forEach { EdgeLabel(it) }
-        }
-
-        @Composable
-        private fun EdgeLabel(edge: State.Edge) {
-            val density = LocalDensity.current.density
-            val position = edge.geometry.midpoint - state.viewport.worldCoordinates
-            val size = edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
-            val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
+            @Composable
+            private fun EdgeLabel(edge: State.Edge) {
+                val density = LocalDensity.current.density
+                val position = edge.geometry.midpoint - state.viewport.worldCoordinates
+                val size = state.edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
+                val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
-            val alpha = with(state.interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
-            val color = baseColor.copy(alpha)
+                val alpha = with(state.interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
+                val color = baseColor.copy(alpha)
 
-            when (size) {
-                null -> EdgeLabelMeasurer(edge)
-                else -> {
-                    val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
-                    Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
-                        Form.Text(
-                            value = edge.label,
-                            textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
-                            color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
-                        )
-                    }
-                }
-            }
-        }
-
-        @Composable
-        private fun EdgeLabelMeasurer(edge: State.Edge) {
-            with(LocalDensity.current) {
-                Form.Text(
-                    value = edge.label, textStyle = Theme.typography.code1,
-                    modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged {
-                        edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
-                    }
-                )
-            }
-        }
-
-        @Composable
-        private fun VertexLayer() {
-            val vertices = state.graph.vertices
-            Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-            if (vertices.size <= 200) vertices.forEach { VertexLabel(it, it.geometry.position) }
-        }
-
-        private fun DrawScope.drawVertexBackground(vertex: State.Vertex) {
-            state.vertexBackgroundRenderer(vertex, this).draw()
-        }
-
-        @Composable
-        @Suppress("UNUSED_PARAMETER")
-        // TODO: I'm not really sure why we need 'position' here. Without it, the vertex label intermittently desyncs
-        //       from the vertex's position, but it should be updating when physicsIteration does
-        private fun VertexLabel(vertex: State.Vertex, position: Offset) {
-            val r = vertex.geometry.rect
-            val x = (r.left - state.viewport.worldCoordinates.x).dp
-            val y = (r.top - state.viewport.worldCoordinates.y).dp
-            val color = GraphTheme.colors.vertexLabel
-
-            Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
-                Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
-            }
-        }
-
-        private object PointerInput {
-
-            @Composable
-            fun Handler(state: State, modifier: Modifier) {
-                DragAndScroll(state, modifier) {
-                    // Nested elements are required for drag and tap events to not conflict with each other
-                    TapAndHover(state, modifier)
-                }
-            }
-
-            @Composable
-            fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
-                val viewport = state.viewport
-                Box(modifier
-                    .pointerInput(viewport.density, viewport.scale) {
-                        detectDragGestures(
-                            onDragStart = { _ ->
-                                state.interactions.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
-                            },
-                            onDragEnd = {
-                                state.graph.physics.drag.onDragEnd()
-                                state.interactions.draggedVertex = null
-                            },
-                            onDragCancel = {
-                                state.graph.physics.drag.onDragEnd()
-                                state.interactions.draggedVertex = null
-                            }
-                        ) /* onDrag = */ { _, dragAmount ->
-                            val worldDragDistance = dragAmount / (viewport.scale * viewport.density)
-                            val draggedVertex = state.interactions.draggedVertex
-                            if (draggedVertex != null) {
-                                state.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
-                            } else {
-                                viewport.worldCoordinates -= worldDragDistance
-                            }
+                when (size) {
+                    null -> EdgeLabelMeasurer(edge)
+                    else -> {
+                        val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
+                        Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
+                            Form.Text(
+                                value = edge.label,
+                                textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
+                                color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
+                            )
                         }
                     }
-                    .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
-                        viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
-                        delta
-                    })
-                ) {
-                    content()
                 }
             }
 
-            @OptIn(ExperimentalComposeUiApi::class)
             @Composable
-            fun TapAndHover(state: State, modifier: Modifier) {
-                Box(modifier
-                    .pointerMoveFilter(
-                        onMove = { state.interactions.pointerPosition = it; false },
-                        onExit = { state.interactions.pointerPosition = null; false }
+            private fun EdgeLabelMeasurer(edge: State.Edge) {
+                with(LocalDensity.current) {
+                    Form.Text(
+                        value = edge.label, textStyle = Theme.typography.code1,
+                        modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged {
+                            state.edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
+                        }
                     )
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = { point ->
-                                state.interactions.draggedVertex = state.viewport.findVertexAt(point)
-                                if (tryAwaitRelease()) state.interactions.draggedVertex = null
-                            },
-                            onDoubleTap = { point ->
-                                state.viewport.findVertexAt(point)?.let {
-                                    // TODO
-                                    if (it is State.Vertex.Thing && it.thing.isInferred) println("explaining ${it.thing}")
+                }
+            }
+
+            @Composable
+            private fun VertexLayer() {
+                val vertices = state.graph.vertices
+                Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
+                if (vertices.size <= 200) vertices.forEach { VertexLabel(it, it.geometry.position) }
+            }
+
+            private fun DrawScope.drawVertexBackground(vertex: State.Vertex) {
+                state.vertexBackgroundRenderer(vertex, this).draw()
+            }
+
+            @Composable
+            @Suppress("UNUSED_PARAMETER")
+            // TODO: I'm not really sure why we need 'position' here. Without it, the vertex label intermittently desyncs
+            //       from the vertex's position, but it should be updating when physicsIteration does
+            private fun VertexLabel(vertex: State.Vertex, position: Offset) {
+                val r = vertex.geometry.rect
+                val x = (r.left - state.viewport.worldCoordinates.x).dp
+                val y = (r.top - state.viewport.worldCoordinates.y).dp
+                val color = GraphTheme.colors.vertexLabel
+
+                Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
+                    Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
+                }
+            }
+
+            private object PointerInput {
+
+                @Composable
+                fun Handler(state: State, modifier: Modifier) {
+                    DragAndScroll(state, modifier) {
+                        // Nested elements are required for drag and tap events to not conflict with each other
+                        TapAndHover(state, modifier)
+                    }
+                }
+
+                @Composable
+                fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
+                    val viewport = state.viewport
+                    Box(modifier
+                        .pointerInput(viewport.density, viewport.scale) {
+                            detectDragGestures(
+                                onDragStart = { _ ->
+                                    state.interactions.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
+                                },
+                                onDragEnd = {
+                                    state.graph.physics.drag.onDragEnd()
+                                    state.interactions.draggedVertex = null
+                                },
+                                onDragCancel = {
+                                    state.graph.physics.drag.onDragEnd()
+                                    state.interactions.draggedVertex = null
+                                }
+                            ) /* onDrag = */ { _, dragAmount ->
+                                val worldDragDistance = dragAmount / (viewport.scale * viewport.density)
+                                val draggedVertex = state.interactions.draggedVertex
+                                if (draggedVertex != null) {
+                                    state.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
+                                } else {
+                                    viewport.worldCoordinates -= worldDragDistance
                                 }
                             }
-                        ) /* onTap = */ { point ->
-                            state.interactions.focusedVertex = state.viewport.findVertexAt(point)
                         }
+                        .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                            viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
+                            delta
+                        })
+                    ) {
+                        content()
                     }
-                )
+                }
+
+                @OptIn(ExperimentalComposeUiApi::class)
+                @Composable
+                fun TapAndHover(state: State, modifier: Modifier) {
+                    Box(modifier
+                        .pointerMoveFilter(
+                            onMove = { state.interactions.pointerPosition = it; false },
+                            onExit = { state.interactions.pointerPosition = null; false }
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = { point ->
+                                    state.interactions.draggedVertex = state.viewport.findVertexAt(point)
+                                    if (tryAwaitRelease()) state.interactions.draggedVertex = null
+                                },
+                                onDoubleTap = { point ->
+                                    state.viewport.findVertexAt(point)?.let {
+                                        // TODO
+                                        if (it is State.Vertex.Thing && it.thing.isInferred) println("explaining ${it.thing}")
+                                    }
+                                }
+                            ) /* onTap = */ { point ->
+                                state.interactions.focusedVertex = state.viewport.findVertexAt(point)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        class SidebarArea(private val state: State) {
+
+            @Composable
+            fun Layout() {
+                Form.Text("HARR HA HARR HARR")
             }
         }
     }
