@@ -65,6 +65,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
@@ -225,7 +226,8 @@ object Navigator {
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
         private var itemWidth by mutableStateOf(0.dp)
-        private var areaWidth by mutableStateOf(0.dp)
+        internal var areaWidth by mutableStateOf(0.dp)
+        internal var areaHeight by mutableStateOf(0.dp)
         internal val minWidth get() = max(itemWidth, areaWidth)
         internal var selected: ItemState<T>? by mutableStateOf(null); private set
         internal var hovered: ItemState<T>? by mutableStateOf(null)
@@ -322,8 +324,9 @@ object Navigator {
             previous?.next = null
         }
 
-        internal fun updateAreaWidth(newRawWidth: Int) {
-            areaWidth = toDP(newRawWidth, density)
+        internal fun updateAreaSize(rawSize: IntSize) {
+            areaWidth = toDP(rawSize.width, density)
+            areaHeight = toDP(rawSize.height, density)
         }
 
         internal fun mayIncreaseItemWidth(newRawWidth: Int) {
@@ -399,9 +402,11 @@ object Navigator {
     ) {
         val density = LocalDensity.current.density
         val horScrollState = rememberScrollState()
+        val verScrollAdapter = rememberScrollbarAdapter(state.scroller)
+        val horScrollAdapter = rememberScrollbarAdapter(horScrollState)
         val root: ItemState<T>? = state.entries.firstOrNull()
         Box(modifier = modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
-            .onGloballyPositioned { state.density = density; state.updateAreaWidth(it.size.width) }) {
+            .onGloballyPositioned { state.density = density; state.updateAreaSize(it.size) }) {
             contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
             LazyColumn(
                 state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
@@ -411,8 +416,8 @@ object Navigator {
                 state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
                 if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
             }
-            Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
-            Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
+            Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
+            Scrollbar.Horizontal(horScrollAdapter, Modifier.align(Alignment.BottomCenter), state.areaWidth)
         }
     }
 
