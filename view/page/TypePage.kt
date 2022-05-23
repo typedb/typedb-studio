@@ -90,6 +90,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
+        initExpandDepth = 4,
         coroutineScope = coroutineScope
     ) { GlobalState.resource.open(it.item) }
 
@@ -101,6 +102,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
+        private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
 
         @Composable
         fun create(type: TypeState.Thing): TypePage {
@@ -390,11 +392,19 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun SubtypesSection() {
         SectionLine { Form.Text(value = Label.SUBTYPES) }
-        Navigator.Layout(
+        val modifier = Modifier.fillMaxWidth()
+            .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
+            .border(1.dp, Theme.colors.border)
+            .background(Theme.colors.background1)
+        if (type.hasSubtypes) Navigator.Layout(
             state = subtypesNavState,
-            modifier = Modifier.fillMaxWidth().height(200.dp).border(1.dp, Theme.colors.border),
+            modifier = modifier,
+            itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
+            bottomSpace = 0.dp,
             iconArg = { typeIcon(it.item) }
-        )
+        ) else Box(modifier, Alignment.Center) {
+            Form.Text(value = "(" + Label.NONE.lowercase() + ")", alpha = FADED_OPACITY)
+        }
     }
 
     @Composable

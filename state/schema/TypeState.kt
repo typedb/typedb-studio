@@ -77,9 +77,9 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     abstract val supertype: TypeState?
     abstract val supertypes: List<TypeState>
 
-    internal var hasSubtypes: Boolean by mutableStateOf(hasSubtypes)
     val isRoot get() = conceptType.isRoot
     var isAbstract: Boolean by mutableStateOf(false)
+    var hasSubtypes: Boolean by mutableStateOf(hasSubtypes)
     var ownsAttributeTypeProperties: Map<AttributeType, AttributeTypeProperties> by mutableStateOf(mapOf())
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.values.map { it.attributeType }
     var playsRoleTypeProperties: Map<RoleType, PlaysRoleTypeProperties> by mutableStateOf(mapOf())

@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.common.component
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -65,6 +64,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
@@ -105,7 +105,7 @@ object Navigator {
 
     @OptIn(ExperimentalTime::class)
     private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
-    private val ITEM_HEIGHT = 26.dp
+    val ITEM_HEIGHT = 26.dp
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
@@ -391,6 +391,8 @@ object Navigator {
     fun <T : Navigable<T>> Layout(
         state: NavigatorState<T>,
         modifier: Modifier = Modifier,
+        itemHeight: Dp = ITEM_HEIGHT,
+        bottomSpace: Dp = BOTTOM_SPACE,
         iconArg: (ItemState<T>) -> IconArg,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
         contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
@@ -406,19 +408,19 @@ object Navigator {
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
             ) {
-                state.entries.forEach { item { ItemLayout(state, it, iconArg, styleArgs) } }
-                item { Spacer(Modifier.height(BOTTOM_SPACE)) }
+                state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
+                if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(state.scroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScrollState), Modifier.align(Alignment.BottomCenter))
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T : Navigable<T>> ItemLayout(
-        state: NavigatorState<T>, item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg,
-        styleArgs: (ItemState<T>) -> List<Typography.Style>
+        state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
+        iconArg: (ItemState<T>) -> IconArg, styleArgs: (ItemState<T>) -> List<Typography.Style>
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
@@ -434,7 +436,7 @@ object Navigator {
         Row(
             modifier = Modifier.background(color = bgColor)
                 .alpha(if (styles.contains(Typography.Style.FADED)) FADED_OPACITY else 1f)
-                .widthIn(min = state.minWidth).height(ITEM_HEIGHT)
+                .widthIn(min = state.minWidth).height(itemHeight)
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
@@ -447,7 +449,7 @@ object Navigator {
                 modifier = Modifier.onGloballyPositioned { state.mayIncreaseItemWidth(it.size.width) }
             ) {
                 if (item.depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * item.depth))
-                ItemButton(item)
+                ItemButton(item, itemHeight)
                 ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
@@ -458,11 +460,11 @@ object Navigator {
     }
 
     @Composable
-    private fun <T : Navigable<T>> ItemButton(item: ItemState<T>) {
-        if (!item.isExpandable) Spacer(Modifier.size(ITEM_HEIGHT))
+    private fun <T : Navigable<T>> ItemButton(item: ItemState<T>, itemHeight: Dp) {
+        if (!item.isExpandable) Spacer(Modifier.size(itemHeight))
         else RawIconButton(
             icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
-            modifier = Modifier.size(ITEM_HEIGHT).onGloballyPositioned {
+            modifier = Modifier.size(itemHeight).onGloballyPositioned {
                 item.updateButtonArea(it.boundsInWindow())
             },
         ) { item.toggle() }
