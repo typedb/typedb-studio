@@ -439,6 +439,7 @@ object Navigator {
         }
 
         Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(color = bgColor)
                 .alpha(if (styles.contains(Typography.Style.FADED)) FADED_OPACITY else 1f)
                 .widthIn(min = state.minWidth).height(itemHeight)
@@ -453,8 +454,10 @@ object Navigator {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.onGloballyPositioned { state.mayIncreaseItemWidth(it.size.width) }
             ) {
-                if (item.depth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * item.depth))
-                ItemButton(item, itemHeight)
+                val rootsAreExpandable = state.entries.any { it.isExpandable }
+                val itemDepth = if (rootsAreExpandable) item.depth else item.depth - 1
+                if (itemDepth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * itemDepth))
+                if (rootsAreExpandable) ItemButton(item, itemHeight) else Spacer(Modifier.width(TEXT_SPACING))
                 ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
