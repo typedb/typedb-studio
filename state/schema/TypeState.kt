@@ -90,11 +90,12 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     abstract fun loadOtherProperties()
     abstract override fun toString(): String
 
-    fun reloadProperties() = schemaMgr.coroutineScope.launch {
+    fun loadProperties() = schemaMgr.coroutineScope.launch {
         try {
             loadSupertypes()
             loadAbstract()
             loadOtherProperties()
+            loadSubtypesRecursivelyBlocking()
         } catch (e: TypeDBClientException) {
             schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
         }
@@ -104,16 +105,16 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         isAbstract = conceptType.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
     }
 
-    fun reloadSubtypesRecursively() = schemaMgr.coroutineScope.launch {
-        reloadSubtypesRecursivelyBlocking()
+    fun loadSubtypesRecursively() = schemaMgr.coroutineScope.launch {
+        loadSubtypesRecursivelyBlocking()
     }
 
-    private fun reloadSubtypesRecursivelyBlocking() {
-        reloadSubtypesExplicit()
-        subtypes.forEach { it.reloadSubtypesRecursivelyBlocking() }
+    private fun loadSubtypesRecursivelyBlocking() {
+        loadSubtypesExplicit()
+        subtypes.forEach { it.loadSubtypesRecursivelyBlocking() }
     }
 
-    protected fun reloadSubtypesExplicit() {
+    protected fun loadSubtypesExplicit() {
         val tx = schemaMgr.openOrGetReadTx()
         val new = conceptType.asRemote(tx).subtypesExplicit.toList().toSet()
         val old = subtypes.map { it.conceptType }.toSet()
@@ -190,7 +191,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun execBeforeClose() {}
         override fun save(onSuccess: ((Resource) -> Unit)?) {}
         override fun move(onSuccess: ((Resource) -> Unit)?) {}
-        override fun reloadEntries() = reloadSubtypesExplicit()
+        override fun reloadEntries() = loadSubtypesExplicit()
         override fun rename(onSuccess: ((Resource) -> Unit)?) = Unit // TODO
         override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
         override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
@@ -203,7 +204,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         }
 
         override fun activate() {
-            reloadProperties()
+            loadProperties()
         }
 
         override fun close() {
@@ -316,7 +317,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isEntityType) schemaMgr.createTypeState(it.asEntityType()) else null }
-                ?.also { it.reloadProperties() }
+                ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isEntityType && it != remoteType }
                 .map { schemaMgr.createTypeState(it.asEntityType()) }.toList()
@@ -355,7 +356,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null }
-                ?.also { it.reloadProperties() }
+                ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isAttributeType && it != remoteType }
                 .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList()
@@ -418,7 +419,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isRelationType) schemaMgr.createTypeState(it.asRelationType()) else null }
-                ?.also { it.reloadProperties() }
+                ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isRelationType && it != remoteType }
                 .map { schemaMgr.createTypeState(it.asRelationType()) }.toList()
@@ -493,7 +494,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             val remoteType = conceptType.asRemote(schemaMgr.openOrGetReadTx())
             supertype = remoteType.supertype
                 ?.let { if (it.isRoleType) schemaMgr.createTypeState(it.asRoleType()) else null }
-                ?.also { it.reloadProperties() }
+                ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isRoleType && it != remoteType }
                 .map { schemaMgr.createTypeState(it.asRoleType()) }.toList()

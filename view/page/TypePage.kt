@@ -178,7 +178,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             Form.IconButton(
                 icon = Icon.Code.ROTATE,
                 tooltip = Tooltip.Arg(Label.REFRESH)
-            ) { type.reloadProperties() }
+            ) { type.loadProperties() }
             Form.IconButton(
                 icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
                 tooltip = Tooltip.Arg(Label.EXPORT)
@@ -267,8 +267,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                    onExpand = { GlobalState.schema.rootAttributeType?.reloadSubtypesRecursively() },
-                    onSelection = { attributeType = it; it.reloadProperties() },
+                    onExpand = { GlobalState.schema.rootAttributeType?.loadSubtypesRecursively() },
+                    onSelection = { attributeType = it; it.loadProperties() },
                     displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
@@ -360,7 +360,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                     selected = roleType,
                     placeholder = Label.SELECT_ROLE_TYPE,
                     onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
-                    onSelection = { roleType = it; it.reloadProperties() },
+                    onSelection = { roleType = it; it.loadProperties() },
                     displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
