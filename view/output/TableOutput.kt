@@ -32,7 +32,7 @@ internal object TableOutput : RunOutput() {
 
         override val name: String = Label.TABLE + " ($number)"
 
-        internal fun collect(conceptMap: ConceptMap) {
+        internal fun output(conceptMap: ConceptMap) {
             // TODO
         }
     }

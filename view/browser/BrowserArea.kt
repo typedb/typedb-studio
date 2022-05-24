@@ -64,7 +64,7 @@ object BrowserArea {
     private val ICON_SIZE = 10.sp
     private val TAB_OFFSET = (-40).dp
 
-    internal class State constructor(private val paneState: Frame.PaneState) {
+    class State constructor(private val paneState: Frame.PaneState) {
 
         private var unfreezeSize: Dp by mutableStateOf(MIN_WIDTH)
         internal val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }

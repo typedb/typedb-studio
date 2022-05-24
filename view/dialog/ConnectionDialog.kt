@@ -209,7 +209,7 @@ object ConnectionDialog {
         Text(
             value = statusText, color = when (GlobalState.client.status) {
                 DISCONNECTED -> Theme.colors.error2
-                CONNECTING -> Theme.colors.quaternary2
+                CONNECTING -> Theme.colors.warning2
                 CONNECTED -> Theme.colors.secondary
             }
         )

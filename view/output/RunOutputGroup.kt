@@ -32,8 +32,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.CompletableFuture
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -65,30 +69,35 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    @OptIn(ExperimentalTime::class)
+    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
     private fun consumeResponses() = coroutineScope.launch {
         val responses: MutableList<Response> = mutableListOf()
         do {
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
             responses.clear()
             runner.responses.drainTo(responses)
-            if (responses.isNotEmpty()) responses.forEach { output(it) }
+            if (responses.isNotEmpty()) withContext(Dispatchers.Default) { responses.forEach { output(it) } }
         } while (responses.lastOrNull() != Response.Done)
         runner.isConsumed()
     }
 
-    @OptIn(ExperimentalTime::class)
-    private suspend fun <T> consumeStream(stream: Response.Stream<T>, output: (T) -> Unit) {
+    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
+    private fun <T> consumeStream(
+        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
+    ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+        val tasks: MutableList<CompletableFuture<*>> = mutableListOf()
         do {
-            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            Thread.sleep(CONSUMER_PERIOD_MS.toLong())
             responses.clear()
             stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { tasks += CompletableFuture.supplyAsync { output(it.first()) } }
         } while (responses.lastOrNull()?.isSecond != true)
+        CompletableFuture.allOf(*tasks.toTypedArray()).join()
+        onCompleted?.let { it() }
     }
 
-    private suspend fun output(response: Response) {
+    private fun output(response: Response) {
         when (response) {
             is Response.Message -> log.output(response)
             is Response.Numeric -> log.output(response.value)
@@ -101,11 +110,12 @@ internal class RunOutputGroup constructor(
                     ).also { outputs.add(it) }
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
-                    ).also { outputs.add(it) }
-                    consumeStream(response) {
-                        log.output(it)
-                        table.collect(it)
+                    ).also { outputs.add(it); activate(it) }
+                    consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
+                        val task = log.output(it)
+                        table.output(it)
                         graph.output(it)
+                        task.join()
                     }
                 }
             }

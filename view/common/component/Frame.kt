@@ -130,7 +130,7 @@ object Frame {
         internal fun tryResizeSelfBy(delta: Dp, overrideConstraints: Boolean = false) {
             if (isFrozen) return
             size += delta
-            if (!overrideConstraints) size.coerceAtLeast(minSize)
+            if (!overrideConstraints) size = size.coerceAtLeast(minSize)
         }
 
         private fun tryResizeSelfAndNextBy(delta: Dp, overrideBounds: Boolean = false) {

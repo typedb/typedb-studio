@@ -55,6 +55,7 @@ import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.stream.Collectors
 import mu.KotlinLogging
+import java.util.concurrent.CompletableFuture
 
 internal object LogOutput : RunOutput() {
 
@@ -105,8 +106,8 @@ internal object LogOutput : RunOutput() {
             outputTypeQL(numeric.toString())
         }
 
-        internal fun output(conceptMap: ConceptMap) {
-            outputTypeQL(printConceptMap(conceptMap))
+        internal fun output(conceptMap: ConceptMap): CompletableFuture<Unit> {
+            return CompletableFuture.supplyAsync { outputTypeQL(printConceptMap(conceptMap)) }
         }
 
         internal fun output(conceptMapGroup: ConceptMapGroup) {

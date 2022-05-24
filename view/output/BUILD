@@ -35,10 +35,14 @@ kt_jvm_library(
         "//view/highlighter:highlighter",
 
         # External Vaticle Dependencies
+        "@vaticle_force_graph//:force_graph",
         "@vaticle_typedb_common//:common",
         "@vaticle_typedb_client_java//api:api",
         "@vaticle_typedb_client_java//common:common",
+        "@vaticle_typeql_lang_java//:typeql-lang",
         "@vaticle_typeql_lang_java//common:common",
+        "@vaticle_typeql_lang_java//pattern:pattern",
+        "@vaticle_typeql_lang_java//query:query",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -46,6 +50,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
