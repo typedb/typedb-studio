@@ -28,7 +28,7 @@ def vaticle_force_graph():
     git_repository(
         name = "vaticle_force_graph",
         remote = "https://github.com/vaticle/force-graph",
-        commit = "5b883087766168d5b4f5a2febcfc86e424b88597",
+        commit = "3b405f9e5b052e921c97939276fe1c95cc8c01ea",
     )
 
 def vaticle_typedb_common():

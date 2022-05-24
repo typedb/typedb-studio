@@ -56,6 +56,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIconDefaults
@@ -88,6 +89,7 @@ import com.vaticle.force.graph.force.XForce
 import com.vaticle.force.graph.force.YForce
 import com.vaticle.force.graph.impl.BasicSimulation
 import com.vaticle.force.graph.impl.BasicVertex
+import com.vaticle.force.graph.util.RandomEffects
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
@@ -115,16 +117,29 @@ import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
+import com.vaticle.typedb.studio.view.common.geometry.Geometry
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.Line
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.arcThroughPoints
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.arrowhead
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondArcIntersectAngles
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.normalisedAngle
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.radToDeg
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
+import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
+import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
 import com.vaticle.typeql.lang.TypeQL.`var`
 import com.vaticle.typeql.lang.TypeQL.match
 import kotlinx.coroutines.CoroutineScope
@@ -142,6 +157,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -157,7 +174,7 @@ internal object GraphOutput : RunOutput() {
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
         val graphBuilder = GraphBuilder(graph, transaction, coroutineScope)
         val viewport = Viewport(this)
-        val physicsEngine = PhysicsEngine(this)
+        val physicsRunner = PhysicsRunner(this)
         var theme: Color.GraphTheme? = null
         val visualiser = Visualiser(this)
         // TODO: this needs a better home
@@ -194,7 +211,7 @@ internal object GraphOutput : RunOutput() {
             val edges: Collection<Edge> get() = _edges
 
             val physics = Physics(this, state.interactions)
-            val reasoner = Reasoner
+            val reasoner = Reasoner()
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 return putVertexIfAbsent(iid, _thingVertices, vertexFn)
@@ -217,8 +234,15 @@ internal object GraphOutput : RunOutput() {
             }
 
             fun addEdge(edge: Edge) {
-                _edges += edge
-                onChange()
+                // TODO: figure out why this deduplication is required for correctness
+                if (_edges.none { it.source == edge.source && it.target == edge.target && it.label == edge.label }) {
+                    _edges += edge
+                    onChange()
+                }
+            }
+
+            fun makeEdgeCurved(edge: Edge) {
+                physics.addCurveProvider(edge)
             }
 
             private fun onChange() {
@@ -233,6 +257,8 @@ internal object GraphOutput : RunOutput() {
 
                 private object Constants {
                     const val COLLIDE_RADIUS = 65.0
+                    const val CURVE_COMPRESSION_POWER = 0.35
+                    const val CURVE_COLLIDE_RADIUS = 35.0
                 }
 
                 private val simulation = BasicSimulation().apply {
@@ -247,6 +273,7 @@ internal object GraphOutput : RunOutput() {
                     set(value) { simulation.alpha = value }
                 val drag = Drag(this)
                 var forceSource = ForceSource.Query
+                private var edgeCurveProviders = ConcurrentHashMap<Edge, com.vaticle.force.graph.api.Vertex>()
 
                 fun step() {
                     if (isStable || graph.isEmpty()) return
@@ -265,6 +292,16 @@ internal object GraphOutput : RunOutput() {
                     simulation.placeVertex(vertex)
                 }
 
+                fun addCurveProvider(edge: Edge) {
+                    edgeCurveProviders.computeIfAbsent(edge) {
+                        val basePosition = edge.geometry.midpoint
+                        val offset = RandomEffects.jiggle()
+                        val curveProvider = BasicVertex(basePosition.x + offset, basePosition.y + offset)
+                        edge.physics.curveProvider = curveProvider
+                        curveProvider
+                    }
+                }
+
                 fun addEnergy() {
                     simulation.alpha = 1.0
                 }
@@ -281,21 +318,37 @@ internal object GraphOutput : RunOutput() {
                     simulation.apply {
                         forces.clear()
                         localForces.clear()
+                        initialiseGlobalForces()
+                        initialiseLocalForces()
+                    }
+                }
 
-                        // TODO: track changes to vertices + edges, rebuild forces only if there are changes
-                        val vertices = graph.vertices.map { it.geometry }
-                        val edges = graph.edges.map { it.geometry }
-                        forces.add(CenterForce(vertices, 0.0, 0.0))
-                        forces.add(CollideForce(vertices, COLLIDE_RADIUS))
-                        forces.add(
-                            ManyBodyForce(
-                                vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
-                            )
+                private fun Simulation.initialiseGlobalForces() {
+                    // TODO: track changes to vertices + edges, rebuild forces only if there are changes
+                    val vertices = graph.vertices.map { it.geometry }
+                    val edges = graph.edges.map { it.geometry }
+                    forces.add(CenterForce(vertices, 0.0, 0.0))
+                    forces.add(CollideForce(vertices, COLLIDE_RADIUS))
+                    forces.add(
+                        ManyBodyForce(
+                            vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
                         )
-                        forces.add(LinkForce(vertices, edges, 90.0, 0.5))
-                        val gravityStrength = 0.1
-                        forces.add(XForce(vertices, 0.0, gravityStrength))
-                        forces.add(YForce(vertices, 0.0, gravityStrength))
+                    )
+                    forces.add(LinkForce(vertices, edges, 90.0, 0.5))
+                    val gravityStrength = 0.1
+                    forces.add(XForce(vertices, 0.0, gravityStrength))
+                    forces.add(YForce(vertices, 0.0, gravityStrength))
+                }
+
+                private fun Simulation.initialiseLocalForces() {
+                    localForces.add(CollideForce(edgeCurveProviders.values.toList(), CURVE_COLLIDE_RADIUS))
+                    edgeCurveProviders.forEach { (edge, curveProvider) ->
+                        localForces.add(
+                            XForce(listOf(curveProvider), edge.geometry.midpoint.x.toDouble(), CURVE_COMPRESSION_POWER)
+                        )
+                        localForces.add(
+                            YForce(listOf(curveProvider), edge.geometry.midpoint.y.toDouble(), CURVE_COMPRESSION_POWER)
+                        )
                     }
                 }
 
@@ -338,6 +391,7 @@ internal object GraphOutput : RunOutput() {
                             if (draggedVertex is Vertex.Thing && draggedVertex.isRoleplayer()) {
                                 pullLinkedRelations(draggedVertex)
                             }
+                            with(physics) { initialiseLocalForces() }
                         }
                     }
 
@@ -370,7 +424,7 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            object Reasoner {
+            class Reasoner {
 
                 val explainables: MutableMap<Vertex.Thing, ConceptMap.Explainable> = ConcurrentHashMap()
                 val explanationIterators: MutableMap<Vertex.Thing, Iterator<Explanation>> = ConcurrentHashMap()
@@ -431,13 +485,11 @@ internal object GraphOutput : RunOutput() {
                     override val geometry = Geometry.entity()
                 }
 
-                class Relation(val relation: com.vaticle.typedb.client.api.concept.thing.Relation, graph: Graph)
+                class Relation(relation: com.vaticle.typedb.client.api.concept.thing.Relation, graph: Graph)
                     : Thing(relation, graph) {
 
                     override val label = Label(relation.type.label.name(), Label.LengthLimits.RELATION)
                     override val geometry = Geometry.relation()
-                    var explanationMgr: ExplanationManager? = null
-                    val isExplainable get() = explanationMgr != null
 
                     fun roleplayerEdges(): Collection<Edge.Roleplayer> {
                         return graph.edges.filterIsInstance<Edge.Roleplayer>().filter { it.source == this }
@@ -458,11 +510,7 @@ internal object GraphOutput : RunOutput() {
                         "${attribute.type.label.name()}: $valueString", Label.LengthLimits.CONCEPT
                     )
                     override val geometry = Geometry.attribute()
-                    var explanationMgr: ExplanationManager? = null
-                    val isExplainable get() = explanationMgr != null
                 }
-
-                class ExplanationManager
             }
 
             sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph)
@@ -482,11 +530,11 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
 
-                class Thing(val thingType: ThingType, graph: Graph) : Type(thingType, graph) {
+                class Thing(thingType: ThingType, graph: Graph) : Type(thingType, graph) {
                     override val geometry = Geometry.entity()
                 }
 
-                class Entity(val entityType: EntityType, graph: Graph) : Type(entityType, graph) {
+                class Entity(entityType: EntityType, graph: Graph) : Type(entityType, graph) {
                     override val geometry = Geometry.entity()
                 }
 
@@ -495,7 +543,7 @@ internal object GraphOutput : RunOutput() {
                     override val geometry = Geometry.relation()
                 }
 
-                class Attribute(val attributeType: AttributeType, graph: Graph) : Type(attributeType, graph) {
+                class Attribute(attributeType: AttributeType, graph: Graph) : Type(attributeType, graph) {
                     override val geometry = Geometry.attribute()
                 }
             }
@@ -534,6 +582,9 @@ internal object GraphOutput : RunOutput() {
                 /** Find the endpoint of an edge drawn from `source` position to this vertex */
                 abstract fun edgeEndpoint(source: Offset): Offset?
 
+                /** Find the end angle of the given `Arc` when drawn as a curved edge to this vertex */
+                abstract fun curvedEdgeEndAngle(arc: Arc): Float?
+
                 companion object {
                     private const val ENTITY_WIDTH = 100f
                     private const val ENTITY_HEIGHT = 35f
@@ -549,16 +600,27 @@ internal object GraphOutput : RunOutput() {
 
                 class Entity(size: Size) : Geometry(size) {
 
+                    private val incomingEdgeTargetRect get() = Rect(
+                        Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
+                    )
+
                     override fun intersects(point: Offset) = rect.contains(point)
 
                     override fun edgeEndpoint(source: Offset): Offset? {
-                        val r = rect
-                        val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
-                        return rectIncomingLineIntersect(source, targetRect)
+                        return rectIncomingLineIntersect(source, incomingEdgeTargetRect)
+                    }
+
+                    override fun curvedEdgeEndAngle(arc: Arc): Float? {
+                        // There should be only one intersection point when the arc has an endpoint within the vertex
+                        return rectArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
                     }
                 }
 
                 class Relation(size: Size) : Geometry(size) {
+
+                    private val incomingEdgeTargetRect get() = Rect(
+                        Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
+                    )
 
                     override fun intersects(point: Offset): Boolean {
                         val r = rect
@@ -570,9 +632,11 @@ internal object GraphOutput : RunOutput() {
                     }
 
                     override fun edgeEndpoint(source: Offset): Offset? {
-                        val r = rect
-                        val targetRect = Rect(Offset(r.left - 4, r.top - 4), Size(r.width + 8, r.height + 8))
-                        return diamondIncomingLineIntersect(source, targetRect)
+                        return diamondIncomingLineIntersect(source, incomingEdgeTargetRect)
+                    }
+
+                    override fun curvedEdgeEndAngle(arc: Arc): Float? {
+                        return diamondArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
                     }
                 }
 
@@ -584,9 +648,18 @@ internal object GraphOutput : RunOutput() {
                         return xi + yi < 1f
                     }
 
-                    override fun edgeEndpoint(source: Offset): Offset? {
+                    override fun edgeEndpoint(source: Offset): Offset {
                         val ellipse = Ellipse(position.x, position.y, size.width / 2 + 2, size.height / 2 + 2)
                         return ellipseIncomingLineIntersect(source, ellipse)
+                    }
+
+                    override fun curvedEdgeEndAngle(arc: Arc): Float? {
+                        // TODO: this implementation approximates the elliptical vertex as a diamond (like a relation);
+                        //       we should have a dedicated implementation for intersecting an arc with an ellipse
+                        val incomingEdgeTargetRect = Rect(
+                            Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
+                        )
+                        return diamondArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
                     }
                 }
             }
@@ -602,6 +675,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             val geometry = Geometry(this)
+            val physics = Physics()
             abstract val label: String
 
             interface Inferrable {
@@ -619,7 +693,9 @@ internal object GraphOutput : RunOutput() {
                 fun copy(source: Vertex.Type, target: Vertex.Type.Attribute) = Owns(source, target)
             }
 
-            class Plays(override val source: Vertex.Type.Relation, override val target: Vertex.Type, val role: String) : Edge(source, target) {
+            class Plays(
+                override val source: Vertex.Type.Relation, override val target: Vertex.Type, private val role: String
+            ) : Edge(source, target) {
                 override val label = role
                 fun copy(source: Vertex.Type.Relation, target: Vertex.Type) = Plays(source, target, role)
             }
@@ -651,12 +727,19 @@ internal object GraphOutput : RunOutput() {
             }
 
             class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
-                private var curveMidpoint: Offset? = null
-                val isCurved get() = curveMidpoint != null
-                val midpoint get() = curveMidpoint ?: midpoint(edge.source.geometry.position, edge.target.geometry.position)
+
+                val isCurved get() = edge.physics.curveProvider != null
+                val midpoint get() = midpoint(edge.source.geometry.position, edge.target.geometry.position)
+                val curveMidpoint get() = edge.physics.curveProvider?.let {
+                    Offset(it.x.toFloat(), it.y.toFloat())
+                }
 
                 override fun source() = edge.source.geometry
                 override fun target() = edge.target.geometry
+            }
+
+            class Physics {
+                var curveProvider: com.vaticle.force.graph.api.Vertex? = null
             }
         }
 
@@ -787,14 +870,15 @@ internal object GraphOutput : RunOutput() {
 
             private fun dumpEdgesTo(graph: Graph) {
                 edges.forEach { dumpEdgeTo(it, graph) }
+                computeCurvedEdges(edges, graph)
                 edges.clear()
             }
 
-            private fun dumpEdgeTo(edge: Edge, graph: Graph) {
+            private fun dumpEdgeTo(edge: Edge, graph: Graph): Edge {
                 // 'source' and 'vertex' may be stale if they represent vertices previously added to the graph.
                 // Here we rebind them to the current graph state.
-                graph.apply {
-                    val syncedEdge = when (edge) {
+                return graph.run {
+                    when (edge) {
                         is Edge.Has -> edge.copy(
                             thingVertices[edge.source.thing.iid]!!,
                             thingVertices[edge.target.thing.iid] as Vertex.Thing.Attribute
@@ -817,9 +901,22 @@ internal object GraphOutput : RunOutput() {
                         is Edge.Sub -> edge.copy(
                             typeVertices[edge.source.type.label.name()]!!, typeVertices[edge.target.type.label.name()]!!
                         )
-                    }
-                    graph.addEdge(syncedEdge)
+                    }.also { addEdge(it) }
                 }
+            }
+
+            private fun computeCurvedEdges(edges: Iterable<Edge>, graph: Graph) {
+                val edgesBySource = graph.edges.groupBy { it.source }
+                edges.forEach { edge ->
+                    val edgeBand = getEdgeBand(edge, edgesBySource)
+                    if (edgeBand.size > 1) edgeBand.forEach { graph.makeEdgeCurved(it) }
+                }
+            }
+
+            private fun getEdgeBand(edge: Edge, allEdgesBySource: Map<Vertex, Collection<Edge>>): Collection<Edge> {
+                // Grouping edges by source allows us to minimise the number of passes we do over the whole graph
+                return (allEdgesBySource.getOrDefault(edge.source, listOf()).filter { it.target == edge.target }
+                        + allEdgesBySource.getOrDefault(edge.target, listOf()).filter { it.target == edge.source })
             }
 
             private fun dumpExplainablesTo(graph: Graph) {
@@ -1224,18 +1321,126 @@ internal object GraphOutput : RunOutput() {
 
             companion object {
                 private const val BACKGROUND_ALPHA = .25f
+                private const val ARROWHEAD_LENGTH = 6f
+                private const val ARROWHEAD_WIDTH = 3f
             }
 
             val density = state.viewport.density
-            val edgeLabelSizes = state.edgeLabelSizes
+            private val edgeLabelSizes = state.edgeLabelSizes
 
             fun draw(edges: Iterable<Edge>, detailed: Boolean) {
-                for ((colorCode, edgeList) in EdgesByColorCode(edges, state)) {
-                    ctx.drawScope.drawPoints(
-                        points = edgeCoordinates(edgeList, detailed), pointMode = PointMode.Lines,
-                        color = colorCode.toColor(ctx.theme), strokeWidth = density
-                    )
+                for ((colorCode, edgeGroup) in EdgesByColorCode(edges, state)) {
+                    draw(edgeGroup, detailed, colorCode.toColor(ctx.theme))
                 }
+            }
+
+            private fun draw(edges: Iterable<Edge>, detailed: Boolean, color: androidx.compose.ui.graphics.Color) {
+                if (detailed) {
+                    val (curvedEdges, straightEdges) = edges.partition { it.geometry.isCurved }
+                    drawLines(straightEdges, true, color)
+                    curvedEdges.forEach { drawCurvedEdge(it, color) }
+                } else {
+                    drawLines(edges, false, color)
+                }
+            }
+
+            private fun drawLines(edges: Iterable<Edge>, detailed: Boolean, color: androidx.compose.ui.graphics.Color) {
+                ctx.drawScope.drawPoints(edgeCoordinates(edges, detailed), PointMode.Lines, color, density)
+            }
+
+            private fun drawCurvedEdge(edge: Edge, color: androidx.compose.ui.graphics.Color) {
+                val curveMidpoint = edge.geometry.curveMidpoint!!
+                val arc = arcThroughPoints(edge.source.geometry.position, curveMidpoint, edge.target.geometry.position)
+                if (arc != null) {
+                    drawCurvedEdge(edge, color, arc, curveMidpoint)
+                } else {
+                    // the 3 points are almost collinear, so fall back to straight lines
+                    drawLines(listOf(edge), true, color)
+                }
+            }
+
+            private fun drawCurvedEdge(
+                edge: Edge, color: androidx.compose.ui.graphics.Color, fullArc: Arc, labelPosition: Offset
+            ) {
+                val source = edge.source.geometry
+                val target = edge.target.geometry
+                val labelRect = labelRect(edge, labelPosition) ?: return
+                val arcStartAngle = source.curvedEdgeEndAngle(fullArc) ?: return
+                val arcEndAngle = target.curvedEdgeEndAngle(fullArc) ?: return
+
+                // Once we have the arc angle at the label's position, we can split the arc into 2 segments,
+                // using them to identify the angles where the segments go into the label
+                val arcLabelAngle = atan2(labelPosition.y - fullArc.center.y, labelPosition.x - fullArc.center.x)
+                    .radToDeg().normalisedAngle()
+
+                // The "full arc" runs between the midpoints of the two vertices;
+                // the "major arc" runs between the points where the final arcs will enter the two vertices
+                val majorArc = MajorArc(arcStartAngle, arcLabelAngle, arcEndAngle)
+                drawCurveSegment1(fullArc, majorArc, labelRect, color, edge)
+                drawCurveSegment2(fullArc, majorArc, labelRect, color, edge)
+            }
+
+            class MajorArc(val start: Float, val label: Float, val end: Float)
+
+            private fun drawCurveSegment1(
+                fullArc: Arc, majorArc: MajorArc, labelRect: Rect,
+                color: androidx.compose.ui.graphics.Color, edge: Edge
+            ) {
+                // Find where the first arc segment goes into the label
+                // There should be precisely one intersection point since the arc ends inside the rectangle
+                val sweepAngleUnclipped = sweepAngle(from = majorArc.start, to = majorArc.label, fullArc.direction)
+                val arcSegmentUnclipped = Arc(fullArc.topLeft, fullArc.size, majorArc.start, sweepAngleUnclipped)
+                val labelIntersectAngle = rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
+
+                val sweepAngle = sweepAngle(from = majorArc.start, to = labelIntersectAngle, fullArc.direction)
+                when {
+                    abs(sweepAngle) < 180 -> ctx.drawScope.drawArc(
+                        color = color, startAngle = majorArc.start, sweepAngle = sweepAngle, useCenter = false,
+                        topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(), style = Stroke(density)
+                    )
+                    // If sweep angle > 180, most likely the label has reached an awkward spot to draw an arc through,
+                    // so we fall back to a straight line segment
+                    else -> PrettyEdgeCoordinates(edge, this).arrowSegment1(edge.source, labelRect)?.let {
+                        ctx.drawScope.drawPoints(it.toList(), PointMode.Lines, color, density)
+                    }
+                }
+            }
+
+            private fun drawCurveSegment2(
+                fullArc: Arc, majorArc: MajorArc, labelRect: Rect,
+                color: androidx.compose.ui.graphics.Color, edge: Edge
+            ) {
+                val sweepAngleUnclipped = sweepAngle(from = majorArc.label, to = majorArc.end, fullArc.direction)
+                val arcSegmentUnclipped = Arc(fullArc.topLeft, fullArc.size, majorArc.label, sweepAngleUnclipped)
+                val labelIntersectAngle = rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
+
+                val sweepAngle = sweepAngle(from = labelIntersectAngle, to = majorArc.end, fullArc.direction)
+                when {
+                    abs(sweepAngle) < 180 -> {
+                        ctx.drawScope.drawArc(
+                            color = color, startAngle = labelIntersectAngle, sweepAngle = sweepAngle, useCenter = false,
+                            topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(),
+                            style = Stroke(density)
+                        )
+                        curveArrowhead(fullArc, majorArc)?.toList()?.forEach {
+                            ctx.drawScope.drawLine(color, it.from, it.to, density)
+                        }
+                    }
+                    else -> PrettyEdgeCoordinates(edge, this).arrowSegment2(labelRect, edge.target)?.let {
+                        ctx.drawScope.drawPoints(it.toList(), PointMode.Lines, color, density)
+                    }
+                }
+            }
+
+            private fun curveArrowhead(fullArc: Arc, majorArc: MajorArc): Pair<Line, Line>? {
+                val arrowTarget = fullArc.offsetAtAngle(majorArc.end)
+                val approachAngle = when (fullArc.direction) {
+                    Clockwise -> (majorArc.end - 1).normalisedAngle()
+                    CounterClockwise -> (majorArc.end + 1).normalisedAngle()
+                }
+                val arrowSource = fullArc.offsetAtAngle(approachAngle)
+                val lines = arrowhead(arrowSource, arrowTarget, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
+                return lines?.let { Pair(it.first.toViewport(), it.second.toViewport()) }
             }
 
             private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
@@ -1257,8 +1462,26 @@ internal object GraphOutput : RunOutput() {
                 return (this - state.viewport.worldCoordinates) * density
             }
 
+            private fun Size.toViewport(): Size {
+                return this * density
+            }
+
+            private fun Line.toViewport(): Line {
+                return Line(from.toViewport(), to.toViewport())
+            }
+
             fun line(source: Offset, target: Offset): Iterable<Offset> {
                 return listOf(source.toViewport(), target.toViewport())
+            }
+
+            fun labelRect(edge: Edge, position: Offset): Rect? {
+                val labelSize = edgeLabelSizes[edge.label]
+                return labelSize?.let {
+                    Rect(
+                        Offset(position.x - it.width.value / 2 - 2, position.y - it.height.value / 2 - 2),
+                        Size(it.width.value + 4, it.height.value + 4)
+                    )
+                }
             }
 
             private enum class EdgeColorCode {
@@ -1304,55 +1527,33 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            private class PrettyEdgeCoordinates(edge: Edge, private val renderer: EdgeRenderer) {
+            private class PrettyEdgeCoordinates(val edge: Edge, private val renderer: EdgeRenderer) {
 
-                private val linePart1Source: Offset?
-                private val linePart1Target: Offset?
-                private val linePart2Source: Offset?
-                private val linePart2Target: Offset?
-                private val labelRect: Rect?
-
-                init {
-                    val source = edge.source.geometry
-                    val target = edge.target.geometry
-
-                    val labelSize = renderer.edgeLabelSizes[edge.label]
-                    labelRect = labelSize?.let {
-                        val m = midpoint(source.position, target.position)
-                        Rect(
-                            Offset(m.x - it.width.value / 2 - 2, m.y - it.height.value / 2 - 2),
-                            Size(it.width.value + 4, it.height.value + 4)
-                        )
-                    }
-
-                    linePart1Source = source.edgeEndpoint(target.position)
-                    linePart2Target = target.edgeEndpoint(source.position)
-                    linePart1Target = if (linePart1Source != null && labelRect != null) {
-                        rectIncomingLineIntersect(linePart1Source, labelRect)
-                    } else null
-                    linePart2Source = if (linePart2Target != null && labelRect != null) {
-                        rectIncomingLineIntersect(linePart2Target, labelRect)
-                    } else null
-                }
+                private val labelRect = renderer.labelRect(
+                    edge, midpoint(edge.source.geometry.position, edge.target.geometry.position)
+                )
 
                 fun get(): Iterable<Offset> {
-                    return listOfNotNull(linePart1(), linePart2(), arrowhead()).flatten()
+                    val arrowSegment1 = labelRect?.let { arrowSegment1(edge.source, it) }
+                    val arrowSegment2 = labelRect?.let { arrowSegment2(it, edge.target) }
+                    return listOfNotNull(arrowSegment1, arrowSegment2).flatten()
                 }
 
-                private fun linePart1(): Iterable<Offset>? {
-                    return if (linePart1Source == null || linePart1Target == null) null
-                    else renderer.line(linePart1Source, linePart1Target)
+                fun arrowSegment1(sourceVertex: Vertex, targetRect: Rect): Iterable<Offset>? {
+                    val source = sourceVertex.geometry.edgeEndpoint(targetRect.center)
+                    val target = source?.let { rectIncomingLineIntersect(it, targetRect) } ?: return null
+                    return renderer.line(source, target)
                 }
 
-                private fun linePart2(): Iterable<Offset>? {
-                    return if (linePart2Source == null || linePart2Target == null) null
-                    else renderer.line(linePart2Source, linePart2Target)
+                fun arrowSegment2(sourceRect: Rect, targetVertex: Vertex): Iterable<Offset>? {
+                    val target = targetVertex.geometry.edgeEndpoint(sourceRect.center)
+                    val source = target?.let { rectIncomingLineIntersect(it, sourceRect) } ?: return null
+                    return listOfNotNull(renderer.line(source, target), arrowhead(source, target)).flatten()
                 }
 
-                private fun arrowhead(): Iterable<Offset>? {
-                    if (linePart2Source == null || linePart2Target == null) return null
+                private fun arrowhead(source: Offset, target: Offset): Iterable<Offset>? {
                     return with(renderer) {
-                        val lines = arrowhead(linePart2Source, linePart2Target, arrowLength = 6f, arrowWidth = 3f)
+                        val lines = arrowhead(source, target, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
                         lines?.toList()?.flatMap { listOf(it.from.toViewport(), it.to.toViewport()) }
                     }
                 }
@@ -1361,7 +1562,7 @@ internal object GraphOutput : RunOutput() {
 
         data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme)
 
-        class PhysicsEngine(private val state: State) {
+        class PhysicsRunner(private val state: State) {
 
             suspend fun run() {
                 while (true) {
@@ -1501,7 +1702,7 @@ internal object GraphOutput : RunOutput() {
                     )
                 }
 
-                LaunchedEffect(Unit) { state.physicsEngine.run() }
+                LaunchedEffect(Unit) { state.physicsRunner.run() }
                 LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
             }
 
@@ -1510,7 +1711,8 @@ internal object GraphOutput : RunOutput() {
             // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
             //       this explicit Composable with unused parameters - investigate why
             fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-                // Keep EdgeLayer and VertexLayer synchronized on the same object. Otherwise, the renderer may block waiting
+                // Since edges is a List we need to synchronize on it. Additionally we keep EdgeLayer and VertexLayer
+                // synchronized on the same object. Otherwise, the renderer may block waiting
                 // to acquire a lock, and the vertex and edge drawing may go out of sync.
                 synchronized(state.graph.edges) {
                     Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
@@ -1555,7 +1757,8 @@ internal object GraphOutput : RunOutput() {
             @Composable
             private fun EdgeLabel(edge: State.Edge) {
                 val density = LocalDensity.current.density
-                val position = edge.geometry.midpoint - state.viewport.worldCoordinates
+                val rawPosition = edge.geometry.curveMidpoint ?: edge.geometry.midpoint
+                val position = rawPosition - state.viewport.worldCoordinates
                 val size = state.edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
                 val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
                 else GraphTheme.colors.edgeLabel
@@ -1847,15 +2050,11 @@ internal object GraphOutput : RunOutput() {
         class PreviewBrowser(private val state: State, areaState: BrowserArea.State, order: Int, initOpen: Boolean) :
             Browser(areaState, order, initOpen) {
 
-            companion object {
-                private val LOGGER = KotlinLogging.logger {}
-            }
-
             override val label: String = Label.PREVIEW
             override val icon: Icon.Code = Icon.Code.EYE
             override var buttons: List<Form.IconButtonArg> = emptyList()
 
-            private val PLACEHOLDER_PADDING = 20.dp
+            private val placeholderPadding = 20.dp
 
             @Composable
             override fun BrowserLayout() {
@@ -1866,7 +2065,7 @@ internal object GraphOutput : RunOutput() {
 
             @Composable
             private fun PlaceholderText() {
-                Box(Modifier.fillMaxSize().padding(PLACEHOLDER_PADDING), Alignment.Center) {
+                Box(Modifier.fillMaxSize().padding(placeholderPadding), Alignment.Center) {
                     Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true)
                 }
             }
@@ -1874,7 +2073,7 @@ internal object GraphOutput : RunOutput() {
 
         class ConceptPreview(private val concept: Concept) {
 
-            private val TITLE_SECTION_PADDING = 10.dp
+            private val titleSectionPadding = 10.dp
             private val props = propertiesOf(concept)
 
             @Composable
@@ -1889,7 +2088,7 @@ internal object GraphOutput : RunOutput() {
             @Composable
             private fun TitleSection() {
                 val type = if (concept is Type) concept else concept.asThing().type
-                Box(Modifier.padding(TITLE_SECTION_PADDING)) {
+                Box(Modifier.padding(titleSectionPadding)) {
                     Form.TextBox(text = displayName(type), leadingIcon = Util.typeIcon(type))
                 }
             }
@@ -1946,12 +2145,8 @@ internal object GraphOutput : RunOutput() {
 
     @Composable
     internal fun Layout(state: State) {
-        super.Layout(toolbarButtons(state)) { modifier ->
+        super.Layout(buttons = emptyList()) { modifier ->
             state.visualiser.Layout(modifier)
         }
-    }
-
-    private fun toolbarButtons(state: State): List<Form.IconButtonArg> {
-        return listOf()
     }
 }

@@ -61,10 +61,12 @@ object Geometry {
 
     data class Ellipse(val x: Float, val y: Float, /** half-width */ val hw: Float, /** half-height */ val hh: Float)
 
+    /** Convert radians to degrees */
     fun Float.radToDeg(): Float {
         return (this * 180 / PI).toFloat()
     }
 
+    /** Convert degrees to radians */
     fun Float.degToRad(): Float {
         return (this * PI / 180).toFloat()
     }
@@ -189,6 +191,7 @@ object Geometry {
 
     fun max(a: Float, b: Float): Float = a.coerceAtLeast(b)
 
+    /** Given an angle, return its normalised value in the range [0..360) */
     fun Float.normalisedAngle(): Float {
         return (this + 7200) % 360
     }
