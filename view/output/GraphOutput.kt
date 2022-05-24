@@ -165,7 +165,7 @@ internal object GraphOutput : RunOutput() {
         var browserAreaState: Visualiser.BrowserArea.State? by mutableStateOf(null)
 
         fun output(conceptMap: ConceptMap) {
-            graphBuilder.add(conceptMap)
+            graphBuilder.loadConceptMap(conceptMap)
         }
 
         fun onQueryCompleted() {
@@ -194,7 +194,7 @@ internal object GraphOutput : RunOutput() {
             val edges: Collection<Edge> get() = _edges
 
             val physics = Physics(this, state.interactions)
-            val reasoner = Reasoner(this)
+            val reasoner = Reasoner
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 return putVertexIfAbsent(iid, _thingVertices, vertexFn)
@@ -229,7 +229,7 @@ internal object GraphOutput : RunOutput() {
             fun isEmpty() = vertices.isEmpty()
             fun isNotEmpty() = vertices.isNotEmpty()
 
-            class Physics(val graph: Graph, val interactions: Interactions) {
+            class Physics(val graph: Graph, private val interactions: Interactions) {
 
                 private object Constants {
                     const val COLLIDE_RADIUS = 65.0
@@ -370,14 +370,13 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            class Reasoner(val graph: Graph) {
+            object Reasoner {
 
                 val explainables: MutableMap<Vertex.Thing, ConceptMap.Explainable> = ConcurrentHashMap()
                 val explanationIterators: MutableMap<Vertex.Thing, Iterator<Explanation>> = ConcurrentHashMap()
                 private val vertexExplanations = Collections.synchronizedList(mutableListOf<Pair<Vertex.Thing, Explanation>>())
 
-                var explanationsByVertex: Map<Vertex.Thing, Collection<Explanation>> = emptyMap(); private set
-                var verticesByExplanation: Map<Explanation, Collection<Vertex.Thing>> = emptyMap(); private set
+                var explanationsByVertex: Map<Vertex.Thing, Set<Explanation>> = emptyMap(); private set
 
                 fun addVertexExplanations(vertexExplanations: Iterable<Pair<Vertex.Thing, Explanation>>) {
                     synchronized(vertexExplanations) {
@@ -387,8 +386,9 @@ internal object GraphOutput : RunOutput() {
                 }
 
                 private fun rebuildIndexes() {
-                    explanationsByVertex = vertexExplanations.groupBy({ it.first }) { it.second }
-                    verticesByExplanation = vertexExplanations.groupBy({ it.second }) { it.first }
+                    explanationsByVertex = vertexExplanations
+                        .groupBy({ it.first }) { it.second }
+                        .mapValues { it.value.toSet() }
                 }
             }
         }
@@ -398,14 +398,10 @@ internal object GraphOutput : RunOutput() {
             abstract val label: Label
             abstract val geometry: Geometry
 
-            open val isHighlighted = false
-
             sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph)
                 : Vertex(thing, graph) {
 
                 override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
-
-                override val isHighlighted = thing.isInferred
 
                 companion object {
                     fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph): Thing {
@@ -676,7 +672,7 @@ internal object GraphOutput : RunOutput() {
             private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
             private val lock = ReentrantReadWriteLock(true)
 
-            fun add(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
+            fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
                 conceptMap.map().entries.map { (varName: String, concept: Concept) ->
                     when (concept) {
                         is Thing, is ThingType -> {
@@ -840,7 +836,7 @@ internal object GraphOutput : RunOutput() {
                 CompletableFuture.supplyAsync {
                     val iterator = graph.reasoner.explanationIterators[vertex]
                         ?: runExplainQuery(vertex).also { graph.reasoner.explanationIterators[vertex] = it }
-                    fetchNextExplanation(iterator)
+                    fetchNextExplanation(vertex, iterator)
                 }.exceptionally { e ->
                     GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
                 }
@@ -851,11 +847,11 @@ internal object GraphOutput : RunOutput() {
                 return transaction.query().explain(explainable).iterator()
             }
 
-            private fun fetchNextExplanation(iterator: Iterator<Explanation>) {
+            private fun fetchNextExplanation(vertex: Vertex.Thing, iterator: Iterator<Explanation>) {
                 if (iterator.hasNext()) {
                     val explanation = iterator.next()
-                    // TODO: check if we need graphBuilder.addVertexExplanation(vertex, explanation) here. Old Studio has it.
-                    add(explanation.condition(), AnswerSource.Explanation(explanation))
+                    vertexExplanations += Pair(vertex, explanation)
+                    loadConceptMap(explanation.condition(), AnswerSource.Explanation(explanation))
                 } else {
                     GlobalState.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
                 }
@@ -1099,7 +1095,7 @@ internal object GraphOutput : RunOutput() {
         }
 
         sealed class VertexBackgroundRenderer(
-            protected val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
+            private val vertex: Vertex, protected val state: State, protected val ctx: RendererContext
         ) {
             companion object {
                 private const val CORNER_RADIUS = 5f
@@ -1135,7 +1131,7 @@ internal object GraphOutput : RunOutput() {
                     else -> 1f
                 }
             }
-            protected val color = baseColor.copy(alpha = alpha)
+            protected val color = baseColor.copy(alpha)
             private val density = state.viewport.density
             protected val rect = vertex.geometry.let {
                 Rect(
@@ -1144,25 +1140,46 @@ internal object GraphOutput : RunOutput() {
                     it.size * density
                 )
             }
-            protected open val highlightRect get() = Rect(
+
+            protected val cornerRadius get() = CornerRadius(CORNER_RADIUS * density)
+
+            protected fun getHighlight(): Highlight? = when {
+                isInHoveredExplanationTree() -> Highlight.of(ctx.theme.explanation.copy(alpha), density * 1.5f, this)
+                isInferred() -> Highlight.of(ctx.theme.inferred.copy(alpha), density, this)
+                else -> null
+            }
+
+            protected open fun getHighlightRect(highlightWidth: Float) = Rect(
                 rect.topLeft - Offset(highlightWidth, highlightWidth),
                 Size(rect.size.width + highlightWidth * 2, rect.size.height + highlightWidth * 2)
             )
-            protected val cornerRadius get() = CornerRadius(CORNER_RADIUS * density)
 
-            protected val highlightColor get() = ctx.theme.inferred.copy(alpha = alpha)
-            protected val highlightWidth get() = density
+            private fun isInHoveredExplanationTree(): Boolean {
+                return state.graph.reasoner.explanationsByVertex[vertex]
+                    ?.any { it in state.interactions.hoveredVertexExplanations } ?: false
+            }
+
+            private fun isInferred() = vertex.concept is Thing && vertex.concept.isInferred
 
             abstract fun draw()
+
+            class Highlight private constructor(
+                val color: androidx.compose.ui.graphics.Color, val width: Float, val rect: Rect
+            ) {
+                companion object {
+                    fun of(color: androidx.compose.ui.graphics.Color, width: Float, renderer: VertexBackgroundRenderer)
+                    : Highlight {
+                        return Highlight(color, width, renderer.getHighlightRect(width))
+                    }
+                }
+            }
 
             class Entity(vertex: Vertex, state: State, ctx: RendererContext)
                 : VertexBackgroundRenderer(vertex, state, ctx) {
 
                 override fun draw() {
-                    if (vertex.isHighlighted) {
-                        ctx.drawScope.drawRoundRect(
-                            highlightColor, highlightRect.topLeft, highlightRect.size, cornerRadius
-                        )
+                    getHighlight()?.let {
+                        ctx.drawScope.drawRoundRect(it.color, it.rect.topLeft, it.rect.size, cornerRadius)
                     }
                     ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
                 }
@@ -1175,7 +1192,7 @@ internal object GraphOutput : RunOutput() {
                 private val n = (rect.height / sqrt(2.0)).toFloat()
                 private val baseShape = Rect(offset = rect.center - Offset(n / 2, n / 2), size = Size(n, n))
 
-                override val highlightRect get() = Rect(
+                override fun getHighlightRect(highlightWidth: Float) = Rect(
                     baseShape.topLeft - Offset(highlightWidth, highlightWidth),
                     Size(baseShape.size.width + highlightWidth * 2, baseShape.size.height + highlightWidth * 2)
                 )
@@ -1186,9 +1203,7 @@ internal object GraphOutput : RunOutput() {
                             scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
                             rotate(degrees = 45f, pivot = rect.center)
                         }) {
-                            if (vertex.isHighlighted) {
-                                drawRoundRect(highlightColor, highlightRect.topLeft, highlightRect.size, cornerRadius)
-                            }
+                            getHighlight()?.let { drawRoundRect(it.color, it.rect.topLeft, it.rect.size, cornerRadius) }
                             drawRoundRect(color, baseShape.topLeft, baseShape.size, cornerRadius)
                         }
                     }
@@ -1199,7 +1214,7 @@ internal object GraphOutput : RunOutput() {
                 : VertexBackgroundRenderer(vertex, state, ctx) {
 
                 override fun draw() {
-                    if (vertex.isHighlighted) ctx.drawScope.drawOval(color, highlightRect.topLeft, highlightRect.size)
+                    getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
                     ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
                 }
             }
@@ -1374,6 +1389,11 @@ internal object GraphOutput : RunOutput() {
         class Interactions(private val state: State) {
 
             var pointerPosition: Offset? by mutableStateOf(null)
+
+            var hoveredVertex: Vertex? by mutableStateOf(null)
+            val hoveredVertexChecker = HoveredVertexChecker(state)
+            var hoveredVertexExplanations: Set<Explanation> by mutableStateOf(emptySet())
+
             private var _focusedVertex: Vertex? by mutableStateOf(null)
             var focusedVertex: Vertex?
                 get() = _focusedVertex
@@ -1382,9 +1402,8 @@ internal object GraphOutput : RunOutput() {
                     _focusedVertex = value
                 }
             var focusedVertexNetwork: Set<Vertex> by mutableStateOf(emptySet())
-            var hoveredVertex: Vertex? by mutableStateOf(null)
+
             var draggedVertex: Vertex? by mutableStateOf(null)
-            val hoveredVertexChecker = HoveredVertexChecker(state)
 
             // Logically, if the vertex is dragged, it should also be hovered; however, this is not always true
             // because the vertex takes some time to "catch up" to the pointer. So check both conditions.
@@ -1420,7 +1439,13 @@ internal object GraphOutput : RunOutput() {
                 private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
 
                 private fun scan(pointerPosition: Offset) {
-                    state.interactions.hoveredVertex = state.viewport.findVertexAt(pointerPosition)
+                    val hoveredVertex = state.viewport.findVertexAt(pointerPosition)
+                    if (state.interactions.hoveredVertex == hoveredVertex) return
+                    state.interactions.hoveredVertex = hoveredVertex
+                    state.interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                        null -> emptySet()
+                        else -> state.graph.reasoner.explanationsByVertex[hoveredVertex] ?: emptySet()
+                    }
                     lastScanDoneTime = System.currentTimeMillis()
                 }
             }
