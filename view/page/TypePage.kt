@@ -184,7 +184,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             Form.Text(value = Label.SUPERTYPE)
             Spacer(modifier = Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
+                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = !type.isRoot,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }

@@ -160,6 +160,7 @@ object Label {
     const val SUPERTYPE = "Supertype"
     const val TABLE = "Table"
     const val TITLE = "Title"
+    const val THING = "Thing"
     const val TRACE = "Trace"
     const val TRANSACTION_STATUS = "Transaction Status"
     const val TRANSACTION_TYPE = "Transaction Type"
