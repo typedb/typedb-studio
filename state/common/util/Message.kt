@@ -188,6 +188,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
             val UNEXPECTED_ERROR =
                 Visualiser(1, "Unexpected error occurred in the graph visualiser.")
+            val FULLY_EXPLAINED =
+                Visualiser(2, "This concept has been fully explained.")
         }
     }
 }

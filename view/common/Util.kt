@@ -88,5 +88,5 @@ object Util {
         else -> value.toString()
     }
 
-    fun AttributeType.ValueType.schemaString(): String = name.lowercase()
+    fun AttributeType.ValueType.schemaString() = name.lowercase()
 }

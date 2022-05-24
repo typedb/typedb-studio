@@ -43,7 +43,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
@@ -92,11 +91,17 @@ import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
+import com.vaticle.typedb.client.api.concept.thing.Attribute
+import com.vaticle.typedb.client.api.concept.thing.Relation
+import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
+import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.client.api.logic.Explanation
+import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
@@ -129,6 +134,7 @@ import mu.KotlinLogging
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import java.util.Collections
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
@@ -180,14 +186,15 @@ internal object GraphOutput : RunOutput() {
 
             private val _thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
             private val _typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
+            private val _edges: MutableList<Edge> = Collections.synchronizedList(mutableListOf())
+
             val thingVertices: Map<String, Vertex.Thing> get() = _thingVertices
             val typeVertices: Map<String, Vertex.Type> get() = _typeVertices
             val vertices: Collection<Vertex> get() = thingVertices.values + typeVertices.values
-            private val _edges: MutableList<Edge> = Collections.synchronizedList(mutableListOf())
             val edges: Collection<Edge> get() = _edges
 
-            // val explanations: MutableList<Explanation> = mutableListOf()
             val physics = Physics(this, state.interactions)
+            val reasoner = Reasoner(this)
 
             fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
                 return putVertexIfAbsent(iid, _thingVertices, vertexFn)
@@ -362,6 +369,28 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
             }
+
+            class Reasoner(val graph: Graph) {
+
+                val explainables: MutableMap<Vertex.Thing, ConceptMap.Explainable> = ConcurrentHashMap()
+                val explanationIterators: MutableMap<Vertex.Thing, Iterator<Explanation>> = ConcurrentHashMap()
+                private val vertexExplanations = Collections.synchronizedList(mutableListOf<Pair<Vertex.Thing, Explanation>>())
+
+                var explanationsByVertex: Map<Vertex.Thing, Collection<Explanation>> = emptyMap(); private set
+                var verticesByExplanation: Map<Explanation, Collection<Vertex.Thing>> = emptyMap(); private set
+
+                fun addVertexExplanations(vertexExplanations: Iterable<Pair<Vertex.Thing, Explanation>>) {
+                    synchronized(vertexExplanations) {
+                        this.vertexExplanations += vertexExplanations
+                        rebuildIndexes()
+                    }
+                }
+
+                private fun rebuildIndexes() {
+                    explanationsByVertex = vertexExplanations.groupBy({ it.first }) { it.second }
+                    verticesByExplanation = vertexExplanations.groupBy({ it.second }) { it.first }
+                }
+            }
         }
 
         sealed class Vertex(val concept: Concept, protected val graph: Graph) {
@@ -380,10 +409,10 @@ internal object GraphOutput : RunOutput() {
 
                 companion object {
                     fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph): Thing {
-                        return when {
-                            thing.isEntity -> Entity(thing.asEntity(), graph)
-                            thing.isRelation -> Relation(thing.asRelation(), graph)
-                            thing.isAttribute -> Attribute(thing.asAttribute(), graph)
+                        return when (thing) {
+                            is com.vaticle.typedb.client.api.concept.thing.Entity -> Entity(thing, graph)
+                            is com.vaticle.typedb.client.api.concept.thing.Relation -> Relation(thing, graph)
+                            is com.vaticle.typedb.client.api.concept.thing.Attribute<*> -> Attribute(thing, graph)
                             else -> throw IllegalStateException("[$thing]'s encoding is not supported by Vertex.Thing")
                         }
                     }
@@ -447,11 +476,11 @@ internal object GraphOutput : RunOutput() {
 
                 companion object {
                     fun of(type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph): Type {
-                        return when {
-                            type.isEntityType -> Entity(type.asEntityType(), graph)
-                            type.isRelationType -> Relation(type.asRelationType(), graph)
-                            type.isAttributeType -> Attribute(type.asAttributeType(), graph)
-                            type.isThingType -> Thing(type.asThingType(), graph)
+                        return when (type) {
+                            is EntityType -> Entity(type, graph)
+                            is RelationType -> Relation(type, graph)
+                            is AttributeType -> Attribute(type, graph)
+                            is ThingType -> Thing(type, graph)
                             else -> throw IllegalStateException("[$type]'s encoding is not supported by Vertex.Type")
                         }
                     }
@@ -635,46 +664,46 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class Explanation(val vertices: Set<Vertex>)
-
         class GraphBuilder(
             val graph: Graph, val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope,
             val schema: Schema = Schema()
         ) {
-            private val thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
-            private val typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
-            private val edges: ConcurrentLinkedQueue<Edge> = ConcurrentLinkedQueue()
-            private val edgeCandidates: MutableMap<String, Collection<EdgeCandidate>> = ConcurrentHashMap()
+            private val thingVertices = ConcurrentHashMap<String, Vertex.Thing>()
+            private val typeVertices = ConcurrentHashMap<String, Vertex.Type>()
+            private val edges = ConcurrentLinkedQueue<Edge>()
+            private val edgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
+            private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
+            private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
             private val lock = ReentrantReadWriteLock(true)
 
-            fun add(conceptMap: ConceptMap) {
+            fun add(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
                 conceptMap.map().entries.map { (varName: String, concept: Concept) ->
-                    add(varName, concept)
-                }
-            }
-
-            private fun add(varName: String, concept: Concept) {
-                when {
-                    concept.isThing || concept.isThingType -> {
-                        val (added, vertex) = putVertexIfAbsent(concept)
-                        if (added) {
-                            if (concept.isThing && concept.asThing().isInferred) initExplainables(concept, varName)
-                            EdgeBuilder.of(concept, vertex, this).build()
+                    when (concept) {
+                        is Thing, is ThingType -> {
+                            val (added, vertex) = putVertexIfAbsent(concept)
+                            if (added) {
+                                if (concept is Thing) {
+                                    vertex as Vertex.Thing
+                                    if (concept.isInferred) {
+                                        addExplainables(concept, vertex, conceptMap.explainables(), varName)
+                                    }
+                                    if (answerSource is AnswerSource.Explanation) {
+                                        vertexExplanations += Pair(vertex, answerSource.explanation)
+                                    }
+                                }
+                                EdgeBuilder.of(concept, vertex, this).build()
+                            }
                         }
+                        is RoleType -> { /* do nothing */ }
+                        else -> throw unsupportedEncodingException(concept)
                     }
-                    concept.isRoleType -> { /* do nothing */ }
-                    else -> throw unsupportedEncodingException(concept)
                 }
             }
 
             private fun putVertexIfAbsent(concept: Concept): PutVertexResult {
-                return when {
-                    concept.isThing -> concept.asThing().let { thing ->
-                        putVertexIfAbsent(thing.iid, thingVertices) { Vertex.Thing.of(thing, graph) }
-                    }
-                    concept.isThingType -> concept.asThingType().let { type ->
-                        putVertexIfAbsent(type.label.name(), typeVertices) { Vertex.Type.of(type, graph) }
-                    }
+                return when (concept) {
+                    is Thing -> putVertexIfAbsent(concept.iid, thingVertices) { Vertex.Thing.of(concept, graph) }
+                    is ThingType -> putVertexIfAbsent(concept.label.name(), typeVertices) { Vertex.Type.of(concept, graph) }
                     else -> throw unsupportedEncodingException(concept)
                 }
             }
@@ -726,19 +755,43 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
-            private fun initExplainables(concept: Concept, varName: String) {
-                // TODO
+            private fun addExplainables(
+                thing: Thing, thingVertex: Vertex.Thing, explainables: ConceptMap.Explainables, varName: String
+            ) {
+                try {
+                    this.explainables.computeIfAbsent(thingVertex) {
+                        when (thing) {
+                            is Relation -> explainables.relation(varName)
+                            is Attribute<*> -> explainables.attribute(varName)
+                            else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute")
+                        }
+                    }
+                } catch (_: TypeDBClientException) {
+                    // TODO: Currently we need to catch this exception because not every Inferred concept is
+                    //       Explainable. Once that bug is fixed, remove this catch statement.
+                    /* do nothing */
+                }
             }
 
             fun dumpTo(graph: Graph) {
                 lock.writeLock().withLock {
-                    thingVertices.forEach { (iid, vertex) -> graph.putThingVertexIfAbsent(iid) { vertex } }
-                    typeVertices.forEach { (label, vertex) -> graph.putTypeVertexIfAbsent(label) { vertex } }
-                    edges.forEach { dumpEdgeTo(it, graph) }
-                    thingVertices.clear()
-                    typeVertices.clear()
-                    edges.clear()
+                    dumpVerticesTo(graph)
+                    dumpEdgesTo(graph)
+                    dumpExplainablesTo(graph)
+                    dumpExplanationStructureTo(graph)
                 }
+            }
+
+            private fun dumpVerticesTo(graph: Graph) {
+                thingVertices.forEach { (iid, vertex) -> graph.putThingVertexIfAbsent(iid) { vertex } }
+                typeVertices.forEach { (label, vertex) -> graph.putTypeVertexIfAbsent(label) { vertex } }
+                thingVertices.clear()
+                typeVertices.clear()
+            }
+
+            private fun dumpEdgesTo(graph: Graph) {
+                edges.forEach { dumpEdgeTo(it, graph) }
+                edges.clear()
             }
 
             private fun dumpEdgeTo(edge: Edge, graph: Graph) {
@@ -773,8 +826,48 @@ internal object GraphOutput : RunOutput() {
                 }
             }
 
+            private fun dumpExplainablesTo(graph: Graph) {
+                explainables.forEach { graph.reasoner.explainables.putIfAbsent(it.key, it.value) }
+                explainables.clear()
+            }
+
+            private fun dumpExplanationStructureTo(graph: Graph) {
+                graph.reasoner.addVertexExplanations(vertexExplanations)
+                vertexExplanations.clear()
+            }
+
+            fun explain(vertex: Vertex.Thing) {
+                CompletableFuture.supplyAsync {
+                    val iterator = graph.reasoner.explanationIterators[vertex]
+                        ?: runExplainQuery(vertex).also { graph.reasoner.explanationIterators[vertex] = it }
+                    fetchNextExplanation(iterator)
+                }.exceptionally { e ->
+                    GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
+                }
+            }
+
+            private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
+                val explainable = graph.reasoner.explainables[vertex] ?: throw IllegalStateException("Not explainable")
+                return transaction.query().explain(explainable).iterator()
+            }
+
+            private fun fetchNextExplanation(iterator: Iterator<Explanation>) {
+                if (iterator.hasNext()) {
+                    val explanation = iterator.next()
+                    // TODO: check if we need graphBuilder.addVertexExplanation(vertex, explanation) here. Old Studio has it.
+                    add(explanation.condition(), AnswerSource.Explanation(explanation))
+                } else {
+                    GlobalState.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
+                }
+            }
+
             fun unsupportedEncodingException(concept: Concept): IllegalStateException {
                 return IllegalStateException("[$concept]'s encoding is not supported by AnswerLoader")
+            }
+
+            sealed class AnswerSource {
+                object Query : AnswerSource()
+                class Explanation(val explanation: com.vaticle.typedb.client.api.logic.Explanation) : AnswerSource()
             }
 
             sealed class EdgeCandidate {
@@ -820,9 +913,13 @@ internal object GraphOutput : RunOutput() {
 
                 companion object {
                     fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder): EdgeBuilder {
-                        return when {
-                            concept.isThing -> Thing(concept.asThing(), vertex as Vertex.Thing, graphBuilder)
-                            concept.isThingType -> ThingType(concept.asThingType(), vertex as Vertex.Type, graphBuilder)
+                        return when (concept) {
+                            is com.vaticle.typedb.client.api.concept.thing.Thing -> {
+                                Thing(concept, vertex as Vertex.Thing, graphBuilder)
+                            }
+                            is com.vaticle.typedb.client.api.concept.type.ThingType -> {
+                                ThingType(concept.asThingType(), vertex as Vertex.Type, graphBuilder)
+                            }
                             else -> throw graphBuilder.unsupportedEncodingException(concept)
                         }
                     }
@@ -837,7 +934,7 @@ internal object GraphOutput : RunOutput() {
                     override fun build() {
                         loadIsaEdge()
                         loadHasEdges()
-                        if (thing.isRelation) loadRoleplayerEdgesAndVertices()
+                        if (thing is Relation) loadRoleplayerEdgesAndVertices()
                     }
 
                     private fun loadIsaEdge() {
@@ -1298,7 +1395,7 @@ internal object GraphOutput : RunOutput() {
             val Edge.isBackground get() = focusedVertex != null && source != focusedVertex && target != focusedVertex
 
             fun rebuildFocusedVertexNetwork(focusedVertex: Vertex? = _focusedVertex) {
-                if (focusedVertex != null) {
+                focusedVertexNetwork = if (focusedVertex != null) {
                     val linkedVertices = state.graph.edges.mapNotNull { edge ->
                         when (focusedVertex) {
                             edge.source -> edge.target
@@ -1306,8 +1403,8 @@ internal object GraphOutput : RunOutput() {
                             else -> null
                         }
                     }
-                    focusedVertexNetwork = setOf(focusedVertex) + linkedVertices
-                } else focusedVertexNetwork = emptySet()
+                    setOf(focusedVertex) + linkedVertices
+                } else emptySet()
             }
 
             class HoveredVertexChecker(private val state: State) {
@@ -1557,8 +1654,8 @@ internal object GraphOutput : RunOutput() {
                                 },
                                 onDoubleTap = { point ->
                                     state.viewport.findVertexAt(point)?.let {
-                                        // TODO
-                                        if (it is State.Vertex.Thing && it.thing.isInferred) println("explaining ${it.thing}")
+                                        // TODO: this should require SHIFT-doubleclick, not doubleclick
+                                        if (it is State.Vertex.Thing && it.thing.isInferred) state.graphBuilder.explain(it)
                                     }
                                 }
                             ) /* onTap = */ { point ->
@@ -1766,7 +1863,7 @@ internal object GraphOutput : RunOutput() {
             // TODO: copied from TypePage.kt on 23/05/2022
             @Composable
             private fun TitleSection() {
-                val type = if (concept.isType) concept.asType() else concept.asThing().type
+                val type = if (concept is Type) concept else concept.asThing().type
                 Box(Modifier.padding(TITLE_SECTION_PADDING)) {
                     Form.TextBox(text = displayName(type), leadingIcon = Util.typeIcon(type))
                 }
@@ -1780,7 +1877,9 @@ internal object GraphOutput : RunOutput() {
                     append(type.label.scopedName())
                     if (type is AttributeType) type.valueType?.let { valueType ->
                         append(" ")
-                        withStyle(SpanStyle(baseFontColor.copy(Color.FADED_OPACITY))) { append("(${valueType})") }
+                        withStyle(SpanStyle(baseFontColor.copy(Color.FADED_OPACITY))) {
+                            append("(${valueType.schemaString()})")
+                        }
                     }
                 }
             }
@@ -1808,8 +1907,8 @@ internal object GraphOutput : RunOutput() {
 
                 fun propertiesOf(concept: Concept): List<Property> {
                     return listOfNotNull(
-                        if (concept.isThing) Label.INTERNAL_ID to concept.asThing().iid else null,
-                        if (concept.isAttribute) Label.VALUE to concept.asAttribute().valueString() else null,
+                        if (concept is Thing) Label.INTERNAL_ID to concept.iid else null,
+                        if (concept is Attribute<*>) Label.VALUE to concept.valueString() else null,
                     )
                 }
 
