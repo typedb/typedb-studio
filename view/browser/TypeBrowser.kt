@@ -115,7 +115,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     @Composable
     private fun ConnectToServerHelper() {
-        Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
+        Box(Modifier.fillMaxSize().background(Theme.studio.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
                 leadingIcon = Form.IconArg(Icon.Code.SERVER)
@@ -125,7 +125,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     @Composable
     private fun NonInteractiveModeMessage() {
-        Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
+        Box(Modifier.fillMaxSize().background(Theme.studio.background2), Alignment.Center) {
             Form.Text(
                 value = Sentence.TYPE_BROWSER_ONLY_INTERACTIVE,
                 modifier = Modifier.padding(30.dp),
@@ -137,7 +137,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
 
     @Composable
     private fun SelectDBHelper() {
-        Box(Modifier.fillMaxSize().background(Theme.colors.background2), Alignment.Center) {
+        Box(Modifier.fillMaxSize().background(Theme.studio.background2), Alignment.Center) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
                 leadingIcon = Form.IconArg(Icon.Code.DATABASE)

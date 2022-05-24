@@ -433,7 +433,7 @@ object TextToolbar {
             value = state.status,
             overflow = TextOverflow.Ellipsis,
             modifier = modifier,
-            color = if (state.hasFindMatches) Theme.colors.secondary else Theme.colors.error
+            color = if (state.hasFindMatches) Theme.studio.secondary else Theme.studio.error
         )
     }
 
@@ -443,7 +443,7 @@ object TextToolbar {
     ): IconButtonArg {
         return IconButtonArg(
             icon = icon,
-            color = { if (isActive) Theme.colors.secondary else Theme.colors.icon },
+            color = { if (isActive) Theme.studio.secondary else Theme.studio.icon },
             tooltip = title?.let { Tooltip.Arg(title) },
             onClick = onClick
         )

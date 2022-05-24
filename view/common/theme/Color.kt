@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 
 object Color {
 
-    data class Theme( // TODO: rename to AppTheme when merging this PR - or Theme.App (and Theme.Graph)?
+    data class StudioTheme(
         val primary: Color,
         val secondary: Color,
         val tertiary: Color,
@@ -97,7 +97,7 @@ object Color {
     }
 
     object Themes {
-        val DARK = Theme(
+        val DARK_STUDIO = StudioTheme(
             primary = DarkPalette.Purple4,
             secondary = DarkPalette.Green,
             tertiary = DarkPalette.Pink1,
@@ -122,7 +122,7 @@ object Color {
             indicationBase = DarkPalette.White,
             isLight = false
         )
-        val GRAPH_DARK = GraphTheme(
+        val DARK_GRAPH = GraphTheme(
             background = DarkPalette.Purple0,
             vertex = GraphTheme.Vertex(
                 thingType = DarkPalette.Pink1,
@@ -154,7 +154,7 @@ object Color {
     }
 
     @Composable
-    fun materialOf(colors: Theme): Colors {
+    fun materialOf(colors: StudioTheme): Colors {
         // TODO: replace __UNUSED_COLOUR__ the moment we know where they are used
         val __UNUSED_COLOR__ = Color.Magenta
         return Colors(

@@ -196,7 +196,7 @@ object Studio {
         ) {
             val density = LocalDensity.current.density
             var titleBarHeight by remember { mutableStateOf(0.dp) }
-            val bgColor = Theme.colors.background1
+            val bgColor = Theme.studio.background1
             CompositionLocalProvider(LocalWindow provides window) {
                 Column(Modifier.fillMaxSize().background(bgColor).onGloballyPositioned {
                     titleBarHeight = window.height.dp - toDP(it.size.height, density)
@@ -251,16 +251,17 @@ object Studio {
             val clipboard = LocalClipboardManager.current
             val labelModifier = Modifier.width(ERROR_WINDOW_LABEL_WIDTH)
             val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
-            val contentColor = Theme.colors.error2
-            val contentModifier = Modifier.fillMaxWidth().border(1.dp, Theme.colors.border)
-                .background(Theme.colors.background0).padding(horizontal = ERROR_WINDOW_CONTENT_PADDING)
+            val contentColor = Theme.studio.error2
+            val contentModifier = Modifier.fillMaxWidth().border(1.dp, Theme.studio.border)
+                .background(Theme.studio.background0).padding(horizontal = ERROR_WINDOW_CONTENT_PADDING)
 
             fun exceptionText(): String =
                 "${Label.TITLE}: ${exception.message}\n${Label.TRACE}: ${exception.stackTraceToString()}"
 
             CompositionLocalProvider(LocalWindow provides window) {
                 Column(
-                    modifier = Modifier.fillMaxSize().background(Theme.colors.background1).padding(DIALOG_PADDING),
+                    modifier = Modifier.fillMaxSize().background(Theme.studio.background1)
+                        .padding(DIALOG_PADDING),
                     verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

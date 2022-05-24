@@ -45,7 +45,7 @@ internal sealed class RunOutput {
         Row {
             Toolbar(Modifier.fillMaxHeight().width(Theme.TOOLBAR_SIZE), buttons)
             Separator.Vertical()
-            content(Modifier.fillMaxHeight().weight(1f).background(Theme.colors.background0))
+            content(Modifier.fillMaxHeight().weight(1f).background(Theme.studio.background0))
         }
     }
 

@@ -161,7 +161,7 @@ object Tabs {
         trailingButton: IconButtonArg?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
-        val bgColor = if (isActive) Theme.colors.primary else Color.Transparent
+        val bgColor = if (isActive) Theme.studio.primary else Color.Transparent
         val height = if (isActive) PANEL_BAR_HEIGHT - TAB_UNDERLINE_HEIGHT else PANEL_BAR_HEIGHT
         var width by remember { mutableStateOf(0.dp) }
 
@@ -195,7 +195,7 @@ object Tabs {
 
     @Composable
     private fun ActiveIndicator(width: Dp) {
-        Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.colors.secondary, Modifier.width(width))
+        Separator.Horizontal(TAB_UNDERLINE_HEIGHT, Theme.studio.secondary, Modifier.width(width))
     }
 
     private suspend fun PointerInputScope.onPointerInput(

@@ -75,7 +75,8 @@ object Table {
     private val CELL_PADDING_VERTICAL = 4.dp
 
     @Composable
-    private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.colors.background2 else Theme.colors.background1
+    private fun bgColor(i: Int): Color =
+        if (i % 2 == 0) Theme.studio.background2 else Theme.studio.background1
 
     @Composable
     fun <T> Layout(
@@ -87,7 +88,7 @@ object Table {
         verCellPadding: Dp = CELL_PADDING_VERTICAL,
         columns: List<Column<T>>
     ) {
-        Column(modifier.border(1.dp, Theme.colors.border)) {
+        Column(modifier.border(1.dp, Theme.studio.border)) {
             Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
             Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
         }
@@ -130,7 +131,7 @@ object Table {
 
     @Composable
     private fun EmptyRow() {
-        Box(Modifier.fillMaxSize().background(Theme.colors.background1), Alignment.Center) {
+        Box(Modifier.fillMaxSize().background(Theme.studio.background1), Alignment.Center) {
             Form.Text(value = "(" + Label.NONE.lowercase() + ")")
         }
     }

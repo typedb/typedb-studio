@@ -209,7 +209,7 @@ object PageArea {
             }
         } else {
             val builder = AnnotatedString.Builder()
-            val style = SpanStyle(color = Theme.colors.onPrimary.copy(alpha = 0.6f))
+            val style = SpanStyle(color = Theme.studio.onPrimary.copy(alpha = 0.6f))
             builder.append(resource.name)
             builder.pushStyle(style)
             builder.append(" -- (${Label.READ_ONLY.lowercase()})")

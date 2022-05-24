@@ -271,7 +271,7 @@ object TextEditor {
         val textScale = GlobalState.editor.scale
         val density = LocalDensity.current.density
         val fontSize = ((state.font.fontSize.value * textScale * 100).roundToInt() / 100f).sp
-        val fontStyle = state.font.copy(color = Theme.colors.onBackground, fontSize = fontSize)
+        val fontStyle = state.font.copy(color = Theme.studio.onBackground, fontSize = fontSize)
         var fontWidthUnscaled by remember { mutableStateOf(DEFAULT_FONT_WIDTH) }
         val fontWidth = fontWidthUnscaled * textScale
         val lineGap = LINE_GAP * textScale
@@ -325,7 +325,7 @@ object TextEditor {
     private fun LineNumber(state: State, index: Int, font: TextStyle, width: Dp, lineGap: Dp) {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
-        val bgColor = if (isCursor || isSelected) Theme.colors.primary else Theme.colors.background1
+        val bgColor = if (isCursor || isSelected) Theme.studio.primary else Theme.studio.background1
         val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
         Column(
             modifier = Modifier.background(bgColor)
@@ -349,7 +349,7 @@ object TextEditor {
         }) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .background(Theme.colors.background0)
+                    .background(Theme.studio.background0)
                     .horizontalScroll(state.target.horScroller)
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
@@ -370,8 +370,8 @@ object TextEditor {
         val cursor = state.target.cursor
         val selection = state.target.selection
         val bgColor = when {
-            showLine && cursor.row == index && selection == null -> Theme.colors.primary
-            else -> Theme.colors.background0
+            showLine && cursor.row == index && selection == null -> Theme.studio.primary
+            else -> Theme.studio.background0
         }
         Box(
             contentAlignment = Alignment.TopStart,
@@ -382,12 +382,12 @@ object TextEditor {
         ) {
             val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
             val textLayout = if (isRenderedUpToDate) state.rendering.get(index) else null
-            val findColor = Theme.colors.warning2.copy(Theme.FIND_SELECTION_ALPHA)
+            val findColor = Theme.studio.warning2.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
                 Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
             }
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                val color = Theme.colors.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
+                val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
                 Selection(state, selection, index, textLayout, color, text.length, fontWidth)
             }
             Row {
@@ -442,14 +442,14 @@ object TextEditor {
             Column(
                 modifier = Modifier.offset(x = offsetX, y = CURSOR_LINE_PADDING)
                     .width(width).height(state.lineHeight - CURSOR_LINE_PADDING * 2)
-                    .background(fadeable(Theme.colors.secondary, !state.isFocused, DISABLED_CURSOR_OPACITY))
+                    .background(fadeable(Theme.studio.secondary, !state.isFocused, DISABLED_CURSOR_OPACITY))
             ) {
                 Spacer(Modifier.height(lineGap))
                 Text(
                     text = AnnotatedString.Builder(
                         if (cursor.col >= text.length) AnnotatedString("")
                         else text.subSequence(cursor.col, cursor.col + 1)
-                    ).also { it.addStyle(SpanStyle(Theme.colors.background0), 0, 1) }.toAnnotatedString(),
+                    ).also { it.addStyle(SpanStyle(Theme.studio.background0), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font
                 )

@@ -77,7 +77,7 @@ object RunOutputArea {
                 RunOutputGroup(
                     runner = runner,
                     textEditorState = TextEditor.createState(END_OF_OUTPUT_SPACE),
-                    colors = Theme.colors,
+                    colors = Theme.studio,
                     coroutineScope = coroutineScope
                 )
             }
@@ -150,9 +150,9 @@ object RunOutputArea {
                     trailingTabButtonFn = {
                         IconButtonArg(
                             icon = Icon.Code.THUMBTACK,
-                            color = { Theme.colors.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
-                            hoverColor = { Theme.colors.icon },
-                            disabledColor = { Theme.colors.icon },
+                            color = { Theme.studio.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
+                            hoverColor = { Theme.studio.icon },
+                            disabledColor = { Theme.studio.icon },
                             enabled = !runnerMgr.isSaved(it)
                         ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
                     }

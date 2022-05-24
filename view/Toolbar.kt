@@ -116,14 +116,14 @@ object Toolbar {
     private fun ToolbarIconButton(
         icon: Icon.Code,
         onClick: () -> Unit,
-        color: Color = Theme.colors.icon,
+        color: Color = Theme.studio.icon,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null
     ) {
         IconButton(
             icon = icon,
             modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
-            iconColor = if (enabled) color else Theme.colors.icon,
+            iconColor = if (enabled) color else Theme.studio.icon,
             enabled = enabled,
             tooltip = tooltip,
             onClick = onClick
@@ -361,7 +361,7 @@ object Toolbar {
                     RawIconButton(
                         icon = Icon.Code.CIRCLE,
                         modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
-                        iconColor = if (isInteractive && hasOpenTx) Theme.colors.secondary else Theme.colors.icon,
+                        iconColor = if (isInteractive && hasOpenTx) Theme.studio.secondary else Theme.studio.icon,
                         enabled = isInteractive && hasOpenSession,
                         tooltip = Tooltip.Arg(
                             title = Label.TRANSACTION_STATUS,
@@ -375,7 +375,7 @@ object Toolbar {
                     ToolbarIconButton(
                         icon = Icon.Code.XMARK,
                         onClick = { GlobalState.client.closeTransaction() },
-                        color = Theme.colors.error,
+                        color = Theme.studio.error,
                         enabled = enabled,
                         tooltip = Tooltip.Arg(
                             title = Label.CLOSE_TRANSACTION,
@@ -390,7 +390,7 @@ object Toolbar {
                     ToolbarIconButton(
                         icon = Icon.Code.ROTATE_LEFT,
                         onClick = { GlobalState.client.rollbackTransaction() },
-                        color = Theme.colors.warning2,
+                        color = Theme.studio.warning2,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
                             title = Label.ROLLBACK_TRANSACTION,
@@ -405,7 +405,7 @@ object Toolbar {
                     ToolbarIconButton(
                         icon = Icon.Code.CHECK,
                         onClick = { GlobalState.client.commitTransaction() },
-                        color = Theme.colors.secondary,
+                        color = Theme.studio.secondary,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
                             title = Label.COMMIT_TRANSACTION,
@@ -432,7 +432,7 @@ object Toolbar {
         private fun PlayButton() {
             ToolbarIconButton(
                 icon = Icon.Code.PLAY,
-                color = Theme.colors.secondary,
+                color = Theme.studio.secondary,
                 onClick = {
                     GlobalState.resource.active?.let {
                         if (it.isRunnable) GlobalState.resource.openAndMayRun(it.asRunnable())
@@ -450,7 +450,7 @@ object Toolbar {
         private fun StopButton() {
             ToolbarIconButton(
                 icon = Icon.Code.BOLT,
-                color = Theme.colors.error,
+                color = Theme.studio.error,
                 onClick = { GlobalState.client.sendStopSignal() },
                 enabled = hasRunningQuery && !hasStopSignal,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)

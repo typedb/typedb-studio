@@ -77,7 +77,7 @@ abstract class Browser(private val areaState: BrowserArea.State, internal val or
     @Composable
     private fun Bar() {
         Row(
-            modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
+            modifier = Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).background(color = Theme.studio.surface),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))

@@ -29,14 +29,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -78,7 +76,6 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -133,13 +130,18 @@ object Form {
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
     private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
 
-    data class Border(val width: Dp, val shape: Shape, val color: @Composable () -> Color = { Theme.colors.border })
-    data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.colors.icon })
+    data class Border(
+        val width: Dp,
+        val shape: Shape,
+        val color: @Composable () -> Color = { Theme.studio.border }
+    )
+
+    data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.studio.icon })
 
     data class IconButtonArg(
         val icon: Icon.Code,
         val hoverIcon: Icon.Code? = null,
-        val color: @Composable () -> Color = { Theme.colors.icon },
+        val color: @Composable () -> Color = { Theme.studio.icon },
         val hoverColor: @Composable (() -> Color)? = null,
         val disabledColor: @Composable (() -> Color)? = null,
         val enabled: Boolean = true,
@@ -149,7 +151,7 @@ object Form {
 
     data class TextButtonArg(
         val text: String,
-        val color: @Composable () -> Color = { Theme.colors.icon },
+        val color: @Composable () -> Color = { Theme.studio.icon },
         val enabled: Boolean = true,
         val tooltip: Tooltip.Arg? = null,
         val onClick: () -> Unit
@@ -214,7 +216,7 @@ object Form {
         fontStyle: FontStyle? = null,
         fontWeight: FontWeight? = null,
         textDecoration: TextDecoration? = null,
-        color: Color = Theme.colors.onPrimary,
+        color: Color = Theme.studio.onPrimary,
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier,
@@ -235,7 +237,7 @@ object Form {
         fontStyle: FontStyle? = null,
         fontWeight: FontWeight? = null,
         textDecoration: TextDecoration? = null,
-        color: Color = Theme.colors.onPrimary,
+        color: Color = Theme.studio.onPrimary,
         alpha: Float? = null,
         align: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier,
@@ -262,7 +264,7 @@ object Form {
     fun SelectableText(
         value: String,
         style: TextStyle = Theme.typography.body1,
-        color: Color = Theme.colors.onSurface,
+        color: Color = Theme.studio.onSurface,
         singleLine: Boolean = false,
         modifier: Modifier = Modifier
     ) {
@@ -271,7 +273,7 @@ object Form {
             value = value,
             onValueChange = {},
             readOnly = true,
-            cursorBrush = SolidColor(Theme.colors.secondary),
+            cursorBrush = SolidColor(Theme.studio.secondary),
             singleLine = singleLine,
             textStyle = style.copy(color = color)
         )
@@ -282,7 +284,7 @@ object Form {
         val uriHandler = LocalUriHandler.current
         ClickableText(
             value = text ?: url.toString(),
-            color = Theme.colors.secondary,
+            color = Theme.studio.secondary,
             onClick = { uriHandler.openUri(url.toString()) }
         )
     }
@@ -290,8 +292,8 @@ object Form {
     @Composable
     fun ClickableText(
         value: String,
-        color: Color = Theme.colors.onPrimary,
-        hoverColor: Color = Theme.colors.secondary,
+        color: Color = Theme.studio.onPrimary,
+        hoverColor: Color = Theme.studio.secondary,
         onClick: (Int) -> Unit
     ) { ClickableText(AnnotatedString(value), color, hoverColor, onClick) }
 
@@ -299,8 +301,8 @@ object Form {
     @Composable
     fun ClickableText(
         value: AnnotatedString,
-        color: Color = Theme.colors.onPrimary,
-        hoverColor: Color = Theme.colors.secondary,
+        color: Color = Theme.studio.onPrimary,
+        hoverColor: Color = Theme.studio.secondary,
         onClick: (Int) -> Unit
     ) {
         var isHover by remember { mutableStateOf(false) }
@@ -319,8 +321,8 @@ object Form {
     fun TextBox(
         text: String,
         modifier: Modifier = Modifier,
-        textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.primary,
+        textColor: Color = Theme.studio.onPrimary,
+        bgColor: Color = Theme.studio.primary,
         trailingIcon: IconArg? = null,
         leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
@@ -330,8 +332,8 @@ object Form {
     fun TextBox(
         text: AnnotatedString,
         modifier: Modifier = Modifier,
-        textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.primary,
+        textColor: Color = Theme.studio.onPrimary,
+        bgColor: Color = Theme.studio.primary,
         trailingIcon: IconArg? = null,
         leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
@@ -366,7 +368,7 @@ object Form {
         enabled: Boolean = true,
         isPassword: Boolean = false,
         modifier: Modifier = Modifier,
-        fontColor: Color = Theme.colors.onSurface,
+        fontColor: Color = Theme.studio.onSurface,
         textStyle: TextStyle = Theme.typography.body1,
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
@@ -381,13 +383,13 @@ object Form {
 
         BasicTextField(
             modifier = mod.pointerHoverIcon(pointerHoverIcon)
-                .background(fadeable(Theme.colors.surface, !enabled), shape ?: RectangleShape),
+                .background(fadeable(Theme.studio.surface, !enabled), shape ?: RectangleShape),
             value = value,
             onValueChange = onValueChange,
             readOnly = readOnly,
             singleLine = singleLine,
             enabled = enabled,
-            cursorBrush = SolidColor(Theme.colors.secondary),
+            cursorBrush = SolidColor(Theme.studio.secondary),
             textStyle = textStyle.copy(color = fadeable(fontColor, !enabled)),
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             onTextLayout = onTextLayout,
@@ -474,7 +476,7 @@ object Form {
         Row(
             verticalAlignment = Alignment.Top,
             modifier = modifier.fillMaxWidth()
-                .background(Theme.colors.surface)
+                .background(Theme.studio.surface)
                 .onSizeChanged { state.density = density }
                 .pointerHoverIcon(PointerIconDefaults.Text)
         ) {
@@ -492,8 +494,8 @@ object Form {
                             value = value,
                             onValueChange = { state.updateValue(it); onValueChange(it) },
                             onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
-                            cursorBrush = SolidColor(Theme.colors.secondary),
-                            textStyle = Theme.typography.body1.copy(Theme.colors.onSurface),
+                            cursorBrush = SolidColor(Theme.studio.secondary),
+                            textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
                             modifier = Modifier.focusRequester(focusReq)
                                 .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
                         )
@@ -509,7 +511,7 @@ object Form {
         Box(modifier.size(FIELD_HEIGHT), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
                 modifier = Modifier.size(LOADING_SPINNER_SIZE),
-                color = Theme.colors.secondary,
+                color = Theme.studio.secondary,
                 strokeWidth = LOADING_SPINNER_STROKE_WIDTH
             )
         }
@@ -517,11 +519,15 @@ object Form {
 
     @Composable
     fun toggleButtonColor(isActive: Boolean): Color {
-        return if (isActive) Theme.colors.secondary else Theme.colors.onPrimary
+        return if (isActive) Theme.studio.secondary else Theme.studio.onPrimary
     }
 
     @Composable
-    fun TextButtonRow(buttons: List<TextButtonArg>, height: Dp = FIELD_HEIGHT, bgColor: Color = Theme.colors.primary) {
+    fun TextButtonRow(
+        buttons: List<TextButtonArg>,
+        height: Dp = FIELD_HEIGHT,
+        bgColor: Color = Theme.studio.primary
+    ) {
         @Composable
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
             TextButton(
@@ -548,7 +554,7 @@ object Form {
     }
 
     @Composable
-    fun IconButtonRow(size: Dp, bgColor: Color = Theme.colors.primary, buttons: List<IconButtonArg>) {
+    fun IconButtonRow(size: Dp, bgColor: Color = Theme.studio.primary, buttons: List<IconButtonArg>) {
         @Composable
         fun IconButton(button: IconButtonArg, roundedCorners: RoundedCorners) {
             IconButton(
@@ -581,8 +587,8 @@ object Form {
     fun TextButton(
         text: String,
         modifier: Modifier = Modifier,
-        textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.primary,
+        textColor: Color = Theme.studio.onPrimary,
+        bgColor: Color = Theme.studio.primary,
         focusReq: FocusRequester? = null,
         leadingIcon: IconArg? = null,
         trailingIcon: IconArg? = null,
@@ -601,8 +607,8 @@ object Form {
     fun TextButton(
         text: AnnotatedString,
         modifier: Modifier = Modifier,
-        textColor: Color = Theme.colors.onPrimary,
-        bgColor: Color = Theme.colors.primary,
+        textColor: Color = Theme.studio.onPrimary,
+        bgColor: Color = Theme.studio.primary,
         focusReq: FocusRequester? = null,
         leadingIcon: IconArg? = null,
         trailingIcon: IconArg? = null,
@@ -644,7 +650,7 @@ object Form {
     fun RawIconButton(
         icon: Icon.Code,
         modifier: Modifier = Modifier,
-        iconColor: Color = Theme.colors.icon,
+        iconColor: Color = Theme.studio.icon,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
         onClick: (() -> Unit)? = null,
@@ -688,10 +694,10 @@ object Form {
         hoverIcon: Icon.Code? = null,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
-        iconColor: Color = Theme.colors.icon,
+        iconColor: Color = Theme.studio.icon,
         iconHoverColor: Color? = null,
         disabledColor: Color? = null,
-        bgColor: Color = Theme.colors.primary,
+        bgColor: Color = Theme.studio.primary,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
         enabled: Boolean = true,
         tooltip: Tooltip.Arg? = null,
@@ -717,7 +723,7 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun BoxButton(
-        bgColor: Color = Theme.colors.primary,
+        bgColor: Color = Theme.studio.primary,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL,
@@ -729,7 +735,7 @@ object Form {
         val density = LocalDensity.current.density
         val mod = if (focusReq != null) modifier.focusRequester(focusReq) else modifier
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
-        val hoverIndication = rectangleIndication(Theme.colors.indicationBase, density, roundedCorners)
+        val hoverIndication = rectangleIndication(Theme.studio.indicationBase, density, roundedCorners)
         var area: Rect? by remember { mutableStateOf(null) }
         val window = LocalWindow.current!!
         val titleBarHeight = LocalTitleBarHeight.current
@@ -773,14 +779,14 @@ object Form {
             checked = value,
             onCheckedChange = onChange,
             modifier = modifier.size(size)
-                .background(color = fadeable(Theme.colors.surface, !enabled), ROUNDED_CORNER_SHAPE)
-                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.colors.border, !enabled)), ROUNDED_CORNER_SHAPE)
+                .background(color = fadeable(Theme.studio.surface, !enabled), ROUNDED_CORNER_SHAPE)
+                .border(BORDER_WIDTH, SolidColor(fadeable(Theme.studio.border, !enabled)), ROUNDED_CORNER_SHAPE)
                 .mayRegisterOnKeyEvent(),
             enabled = enabled,
             colors = CheckboxDefaults.colors(
-                checkedColor = fadeable(Theme.colors.icon, !enabled),
-                uncheckedColor = fadeable(Theme.colors.surface, !enabled),
-                disabledColor = fadeable(Theme.colors.surface, !enabled)
+                checkedColor = fadeable(Theme.studio.icon, !enabled),
+                uncheckedColor = fadeable(Theme.studio.surface, !enabled),
+                disabledColor = fadeable(Theme.studio.surface, !enabled)
             )
         )
     }
@@ -834,7 +840,7 @@ object Form {
                     onEnter = { state.isButtonHover = true; false },
                     onExit = { state.isButtonHover = false; false }
                 ),
-                textColor = Theme.colors.onPrimary,
+                textColor = Theme.studio.onPrimary,
                 focusReq = focusReq,
                 trailingIcon = IconArg(CARET_DOWN),
                 enabled = enabled,
@@ -843,23 +849,27 @@ object Form {
             DropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
-                modifier = Modifier.background(Theme.colors.surface)
+                modifier = Modifier.background(Theme.studio.surface)
                     .defaultMinSize(minWidth = state.width)
-                    .border(BORDER_WIDTH, Theme.colors.border, ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
+                    .border(
+                        BORDER_WIDTH,
+                        Theme.studio.border,
+                        ROUNDED_CORNER_SHAPE
+                    ) // TODO: how to make not rounded?
             ) {
                 val padding = PaddingValues(horizontal = 0.dp)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
-                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.colors.surface)) {
+                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.studio.surface)) {
                     Row {
                         Spacer(Modifier.width(TEXT_BUTTON_PADDING))
                         Text(value = "(${Label.NONE})")
                     }
                 } else values.forEachIndexed { i, value ->
-                    val color = if (value == selected) Theme.colors.secondary else Theme.colors.onSurface
+                    val color = if (value == selected) Theme.studio.secondary else Theme.studio.onSurface
                     DropdownMenuItem(
                         onClick = { state.select(value) }, contentPadding = padding,
                         modifier = itemModifier
-                            .background(if (i == state.mouseIndex) Theme.colors.primary else Theme.colors.surface)
+                            .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                             .pointerMoveFilter(
                                 onExit = { state.mouseOutFrom(i); false },

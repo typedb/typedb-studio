@@ -108,10 +108,10 @@ object ConfirmationDialog {
             value = formState.verificationInput,
             placeholder = Label.DATABASE_NAME,
             onValueChange = { formState.verificationInput = it },
-            fontColor = Theme.colors.error,
+            fontColor = Theme.studio.error,
             modifier = Modifier.focusRequester(focusReq)
                 .fillMaxWidth().height(Form.FIELD_HEIGHT)
-                .border(1.dp, Theme.colors.error, Form.DEFAULT_BORDER.shape),
+                .border(1.dp, Theme.studio.error, Form.DEFAULT_BORDER.shape),
         )
     }
 

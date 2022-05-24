@@ -66,7 +66,7 @@ object ActionableList {
 
         @Composable
         fun Separator() {
-            Separator.Vertical(2.dp, Theme.colors.background1, Modifier.height(itemHeight * items.size))
+            Separator.Vertical(2.dp, Theme.studio.background1, Modifier.height(itemHeight * items.size))
         }
 
         Box(modifier) {
@@ -86,7 +86,8 @@ object ActionableList {
     }
 
     @Composable
-    private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.colors.background2 else Theme.colors.background1
+    private fun bgColor(i: Int): Color =
+        if (i % 2 == 0) Theme.studio.background2 else Theme.studio.background1
 
     @Composable
     private fun <T : Any> ItemColumn(modifier: Modifier, items: List<T>, itemHeight: Dp) {

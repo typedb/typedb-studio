@@ -297,7 +297,7 @@ internal class EventHandler constructor(
     private fun runFileMenuItem() = ContextMenu.Item(
         label = Label.RUN_FILE,
         icon = Icon.Code.PLAY,
-        iconColor = { Theme.colors.secondary },
+        iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && GlobalState.client.isReadyToRunQuery
     ) { mayRunFile() }
@@ -305,7 +305,7 @@ internal class EventHandler constructor(
     private fun runSelectionMenuItem() = ContextMenu.Item(
         label = Label.RUN_SELECTION,
         icon = Icon.Code.PLAY,
-        iconColor = { Theme.colors.secondary },
+        iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && target.selection != null && GlobalState.client.isReadyToRunQuery
     ) { mayRunSelection() }

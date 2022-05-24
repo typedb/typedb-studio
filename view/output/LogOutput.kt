@@ -53,9 +53,9 @@ import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
+import java.util.concurrent.CompletableFuture
 import java.util.stream.Collectors
 import mu.KotlinLogging
-import java.util.concurrent.CompletableFuture
 
 internal object LogOutput : RunOutput() {
 
@@ -63,7 +63,7 @@ internal object LogOutput : RunOutput() {
 
     internal class State constructor(
         internal val editorState: TextEditor.State,
-        private val colors: Color.Theme,
+        private val colors: Color.StudioTheme,
         val transaction: TypeDBTransaction
     ) : RunOutput.State() {
 
@@ -124,7 +124,11 @@ internal object LogOutput : RunOutput() {
 
         private fun highlightTypeQL(text: String) = SyntaxHighlighter.highlight(text, Property.FileType.TYPEQL)
 
-        private fun highlightText(type: Response.Message.Type, text: String, colors: Color.Theme): AnnotatedString {
+        private fun highlightText(
+            type: Response.Message.Type,
+            text: String,
+            colors: Color.StudioTheme
+        ): AnnotatedString {
             val builder = AnnotatedString.Builder()
             val style = SpanStyle(
                 color = when (type) {
@@ -216,7 +220,7 @@ internal object LogOutput : RunOutput() {
             IconButtonArg(Icon.Code.ARROW_UP_TO_LINE, tooltip = Tooltip.Arg(Label.JUMP_TO_TOP)) { state.jumpToTop() },
             IconButtonArg(
                 icon = Icon.Code.ARROW_DOWN_TO_LINE,
-                color = { if (state.editorState.stickToBottom) Theme.colors.secondary else Theme.colors.icon },
+                color = { if (state.editorState.stickToBottom) Theme.studio.secondary else Theme.studio.icon },
                 tooltip = Tooltip.Arg(Label.JUMP_AND_STICK_TO_BOTTOM)
             ) { state.editorState.stickToBottom = true }
         )

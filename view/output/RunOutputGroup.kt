@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
     textEditorState: TextEditor.State,
-    colors: Color.Theme,
+    colors: Color.StudioTheme,
     private val coroutineScope: CoroutineScope
 ) {
 

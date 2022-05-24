@@ -36,12 +36,12 @@ object Separator {
     val WEIGHT = 1.dp
 
     @Composable
-    fun Horizontal(height: Dp = WEIGHT, color: Color = Theme.colors.border, modifier: Modifier = Modifier) {
+    fun Horizontal(height: Dp = WEIGHT, color: Color = Theme.studio.border, modifier: Modifier = Modifier) {
         Spacer(modifier = modifier.fillMaxWidth().height(height = height).background(color = color))
     }
 
     @Composable
-    fun Vertical(width: Dp = WEIGHT, color: Color = Theme.colors.border, modifier: Modifier = Modifier) {
+    fun Vertical(width: Dp = WEIGHT, color: Color = Theme.studio.border, modifier: Modifier = Modifier) {
         Spacer(modifier = modifier.fillMaxHeight().width(width = width).background(color = color))
     }
 

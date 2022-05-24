@@ -107,12 +107,12 @@ object DatabaseDialog {
     private fun DeletableDatabaseList(modifier: Modifier) {
         ActionableList.Layout(
             items = GlobalState.client.databaseList,
-            modifier = modifier.border(1.dp, Theme.colors.border),
+            modifier = modifier.border(1.dp, Theme.studio.border),
             buttonSide = ActionableList.Side.RIGHT,
             buttonFn = { databaseName ->
                 IconButtonArg(
                     icon = Icon.Code.TRASH_CAN,
-                    color = { Theme.colors.error },
+                    color = { Theme.studio.error },
                     onClick = {
                         GlobalState.confirmation.submit(
                             title = Label.DELETE_DATABASE,

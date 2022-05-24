@@ -117,7 +117,6 @@ import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
-import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc
@@ -135,17 +134,12 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectA
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
 import com.vaticle.typedb.studio.view.common.theme.Color
-import com.vaticle.typedb.studio.view.common.theme.GraphTheme
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
 import com.vaticle.typeql.lang.TypeQL.`var`
 import com.vaticle.typeql.lang.TypeQL.match
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import mu.KotlinLogging
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import java.util.Collections
@@ -161,6 +155,10 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.pow
 import kotlin.math.sqrt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 internal object GraphOutput : RunOutput() {
 
@@ -352,10 +350,7 @@ internal object GraphOutput : RunOutput() {
                     }
                 }
 
-                enum class ForceSource {
-                    Query,
-                    Drag
-                }
+                enum class ForceSource { Query, Drag }
 
                 class Drag(private val physics: Physics) {
 
@@ -1690,10 +1685,10 @@ internal object GraphOutput : RunOutput() {
             @Composable
             fun Layout() {
                 val density = LocalDensity.current.density
-                state.theme = GraphTheme.colors
+                state.theme = Theme.graph
 
                 Box(
-                    Modifier.graphicsLayer(clip = true).background(GraphTheme.colors.background)
+                    Modifier.graphicsLayer(clip = true).background(Theme.graph.background)
                         .onGloballyPositioned { onLayout(density, it) }
                 ) {
                     Graphics(
@@ -1759,9 +1754,10 @@ internal object GraphOutput : RunOutput() {
                 val density = LocalDensity.current.density
                 val rawPosition = edge.geometry.curveMidpoint ?: edge.geometry.midpoint
                 val position = rawPosition - state.viewport.worldCoordinates
-                val size = state.edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
-                val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) GraphTheme.colors.inferred
-                else GraphTheme.colors.edgeLabel
+                val size =
+                    state.edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
+                val baseColor = if (edge is State.Edge.Inferrable && edge.isInferred) Theme.graph.inferred
+                else Theme.graph.edgeLabel
                 val alpha = with(state.interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
                 val color = baseColor.copy(alpha)
 
@@ -1769,7 +1765,10 @@ internal object GraphOutput : RunOutput() {
                     null -> EdgeLabelMeasurer(edge)
                     else -> {
                         val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
-                        Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
+                        Box(
+                            Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp),
+                            Alignment.Center
+                        ) {
                             Form.Text(
                                 value = edge.label,
                                 textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
@@ -1813,7 +1812,7 @@ internal object GraphOutput : RunOutput() {
                 val r = vertex.geometry.rect
                 val x = (r.left - state.viewport.worldCoordinates.x).dp
                 val y = (r.top - state.viewport.worldCoordinates.y).dp
-                val color = GraphTheme.colors.vertexLabel
+                val color = Theme.graph.vertexLabel
 
                 Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
                     Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
@@ -1930,7 +1929,8 @@ internal object GraphOutput : RunOutput() {
             @Composable
             private fun Bar() {
                 Row(
-                    modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT).background(color = Theme.colors.surface),
+                    modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT)
+                        .background(color = Theme.studio.surface),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
@@ -2021,7 +2021,8 @@ internal object GraphOutput : RunOutput() {
             @Composable
             private fun Tab(browser: Browser) {
                 @Composable
-                fun bgColor(): androidx.compose.ui.graphics.Color = if (browser.isOpen) Theme.colors.surface else Theme.colors.background0
+                fun bgColor(): androidx.compose.ui.graphics.Color =
+                    if (browser.isOpen) Theme.studio.surface else Theme.studio.background0
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2094,7 +2095,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             @Composable
-            private fun displayName(type: Type): AnnotatedString = displayName(type, Theme.colors.onPrimary)
+            private fun displayName(type: Type): AnnotatedString = displayName(type, Theme.studio.onPrimary)
 
             private fun displayName(type: Type, baseFontColor: androidx.compose.ui.graphics.Color): AnnotatedString {
                 return buildAnnotatedString {

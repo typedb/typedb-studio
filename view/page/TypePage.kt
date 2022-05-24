@@ -121,7 +121,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     override fun Content() {
         val density = LocalDensity.current.density
-        val bgColor = Theme.colors.background0
+        val bgColor = Theme.studio.background0
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
             .onGloballyPositioned { width = toDP(it.size.width, density) }) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
@@ -139,7 +139,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun Separator() {
         Separator.Horizontal(
-            color = Theme.colors.border.copy(alpha = FADED_OPACITY),
+            color = Theme.studio.border.copy(alpha = FADED_OPACITY),
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -237,7 +237,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     private fun OwnsAttributeTypeAddition() {
-        val baseFontColor = Theme.colors.onPrimary
+        val baseFontColor = Theme.studio.onPrimary
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes
             ?.filter { !type.ownsAttributeTypes.contains(it) }
@@ -286,7 +286,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWNS,
-                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
+                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.defineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
@@ -331,7 +331,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     private fun PlaysRoleTypeAddition() {
-        val baseFontColor = Theme.colors.onPrimary
+        val baseFontColor = Theme.studio.onPrimary
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val roleTypeList = GlobalState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
@@ -374,7 +374,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             }
             Form.TextButton(
                 text = Label.PLAYS,
-                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.colors.secondary },
+                leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { type.definePlaysRoleType(roleType!!, overriddenType) }
@@ -389,8 +389,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             state = subtypesNavState,
             modifier = Modifier.fillMaxWidth()
                 .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
-                .border(1.dp, Theme.colors.border)
-                .background(Theme.colors.background1),
+                .border(1.dp, Theme.studio.border)
+                .background(Theme.studio.background1),
             itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
             bottomSpace = 0.dp,
             iconArg = { typeIcon(it.item) }
@@ -411,8 +411,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private fun DeleteButton() {
         Form.TextButton(
             text = Label.DELETE,
-            textColor = Theme.colors.error,
-            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.colors.error },
+            textColor = Theme.studio.error,
+            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.error },
             enabled = isEditable,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { } // TODO
@@ -445,7 +445,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     }
 
     @Composable
-    protected fun displayName(type: TypeState): AnnotatedString = displayName(type, Theme.colors.onPrimary)
+    protected fun displayName(type: TypeState): AnnotatedString = displayName(type, Theme.studio.onPrimary)
 
     private fun displayName(type: TypeState, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
@@ -465,7 +465,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
             modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
-            iconColor = Theme.colors.error,
+            iconColor = Theme.studio.error,
             enabled = isEditable,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
@@ -474,7 +474,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     protected fun MayTickIcon(boolean: Boolean) {
-        if (boolean) Icon.Render(icon = Icon.Code.CHECK, color = Theme.colors.secondary)
+        if (boolean) Icon.Render(icon = Icon.Code.CHECK, color = Theme.studio.secondary)
     }
 
     @Composable

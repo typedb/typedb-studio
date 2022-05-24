@@ -58,7 +58,7 @@ object Frame {
     private val DRAGGABLE_BAR_SIZE = 8.dp
     private val PANE_MIN_SIZE = 10.dp
 
-    data class SeparatorArgs(val size: Dp, val color: @Composable () -> Color = { Theme.colors.border })
+    data class SeparatorArgs(val size: Dp, val color: @Composable () -> Color = { Theme.studio.border })
 
     data class Pane constructor(
         val id: String,

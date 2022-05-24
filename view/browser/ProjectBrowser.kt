@@ -89,7 +89,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
     private fun OpenProjectHelper() {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.colors.background2)
+            modifier = Modifier.fillMaxSize().background(color = Theme.studio.background2)
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
@@ -113,8 +113,8 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                 else -> IconArg(Icon.Code.FOLDER_BLANK)
             }
             is File -> when {
-                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.colors.secondary }
-                itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.studio.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
                 else -> IconArg(Icon.Code.FILE_LINES)
             }

@@ -431,8 +431,8 @@ object Navigator {
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
-            state.selected == item -> Theme.colors.primary
-            state.hovered == item -> Theme.colors.indicationBase.copy(INDICATION_HOVER_ALPHA)
+            state.selected == item -> Theme.studio.primary
+            state.hovered == item -> Theme.studio.indicationBase.copy(INDICATION_HOVER_ALPHA)
             else -> Color.Transparent
         }
 

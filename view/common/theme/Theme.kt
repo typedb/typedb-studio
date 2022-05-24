@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.common.theme
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.IndicationInstance
 import androidx.compose.foundation.LocalIndication
@@ -47,7 +46,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object Theme { // TODO: maybe create Theme.App and Theme.Graph when merging this PR
+object Theme {
 
     val DIALOG_PADDING = 16.dp
     val PANEL_BAR_HEIGHT = 28.dp
@@ -64,7 +63,8 @@ object Theme { // TODO: maybe create Theme.App and Theme.Graph when merging this
     const val FIND_SELECTION_ALPHA = 0.3f
     const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.2f
-    private val ColorsState = staticCompositionLocalOf { Color.Themes.DARK }
+    private val StudioColorsState = staticCompositionLocalOf { Color.Themes.DARK_STUDIO }
+    private val GraphColorsState = staticCompositionLocalOf { Color.Themes.DARK_GRAPH }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
     enum class RoundedCorners(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
@@ -89,26 +89,32 @@ object Theme { // TODO: maybe create Theme.App and Theme.Graph when merging this
             CornerRadius(bottomRight * density),
             CornerRadius(bottomLeft * density)
         )
+
     }
 
-    @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+    @OptIn(ExperimentalMaterialApi::class)
     private val MaterialThemeOverrides
         @Composable
         @ReadOnlyComposable
         get() = listOf(
             LocalMinimumTouchTargetEnforcement provides false,
-            LocalScrollbarStyle provides scrollbarStyle(colors.scrollbar),
-            LocalIndication provides rectangleIndication(colors.indicationBase, 1f, RoundedCorners.NONE),
+            LocalScrollbarStyle provides scrollbarStyle(studio.scrollbar),
+            LocalIndication provides rectangleIndication(studio.indicationBase, 1f, RoundedCorners.NONE),
             LocalTextSelectionColors provides TextSelectionColors(
-                backgroundColor = colors.tertiary.copy(alpha = TARGET_SELECTION_ALPHA),
-                handleColor = colors.tertiary
+                backgroundColor = studio.tertiary.copy(alpha = TARGET_SELECTION_ALPHA),
+                handleColor = studio.tertiary
             )
         )
 
-    val colors: Color.Theme
+    val studio: Color.StudioTheme
         @Composable
         @ReadOnlyComposable
-        get() = ColorsState.current
+        get() = StudioColorsState.current
+
+    val graph: Color.GraphTheme
+        @Composable
+        @ReadOnlyComposable
+        get() = GraphColorsState.current
 
     val typography: Typography.Theme
         @Composable
@@ -117,7 +123,7 @@ object Theme { // TODO: maybe create Theme.App and Theme.Graph when merging this
 
     @Composable
     fun Material(content: @Composable () -> Unit) {
-        MaterialTheme(colors = Color.materialOf(colors), typography = Typography.materialOf(typography)) {
+        MaterialTheme(colors = Color.materialOf(studio), typography = Typography.materialOf(typography)) {
             CompositionLocalProvider(*MaterialThemeOverrides.toTypedArray()) { content() }
         }
     }

@@ -75,7 +75,7 @@ object ContextMenu {
     data class Item(
         val label: String,
         val icon: Icon.Code? = null,
-        val iconColor: @Composable () -> Color = { Theme.colors.icon },
+        val iconColor: @Composable () -> Color = { Theme.studio.icon },
         val info: String? = null,
         val enabled: Boolean = true,
         val onClick: () -> Unit
@@ -143,8 +143,8 @@ object ContextMenu {
             ) {
                 Column(
                     modifier = Modifier.shadow(POPUP_SHADOW)
-                        .background(Theme.colors.surface)
-                        .border(Form.BORDER_WIDTH, Theme.colors.border, RectangleShape)
+                        .background(Theme.studio.surface)
+                        .border(Form.BORDER_WIDTH, Theme.studio.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
                     val itemsLists = itemListsFn()

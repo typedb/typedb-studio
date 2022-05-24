@@ -126,7 +126,7 @@ object Icon {
     @Composable
     fun Render(
         icon: Code,
-        color: Color = Theme.colors.icon,
+        color: Color = Theme.studio.icon,
         disabledColor: Color? = null,
         size: TextUnit = icon.size,
         modifier: Modifier = Modifier,

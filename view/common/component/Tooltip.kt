@@ -161,8 +161,8 @@ object Tooltip {
                 val boxMod = if (hasDetails) Modifier.width(TOOLTIP_WIDTH) else Modifier.widthIn(max = TOOLTIP_WIDTH)
                 val contentMod = if (hasDetails) Modifier.fillMaxWidth() else Modifier
                 Box(
-                    boxMod.background(color = Theme.colors.surface)
-                        .border(BORDER_WIDTH, Theme.colors.border, RectangleShape)
+                    boxMod.background(color = Theme.studio.surface)
+                        .border(BORDER_WIDTH, Theme.studio.border, RectangleShape)
                         .onSizeChanged { height = toDP(it.width, density) }
                         .pointerMoveFilter(
                             onEnter = { state.keepShowingOnTooltipHover(); false },
@@ -173,7 +173,7 @@ object Tooltip {
                         Row(contentMod, Arrangement.SpaceBetween) {
                             Text(value = state.arg.title, softWrap = true)
                             if (!showAll && hasDetails) {
-                                ClickableText(Label.READ_MORE, Theme.colors.secondary) {
+                                ClickableText(Label.READ_MORE, Theme.studio.secondary) {
                                     state.keepShowingOnTooltipHover(true)
                                     showAll = true
                                 }

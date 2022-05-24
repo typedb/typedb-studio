@@ -105,9 +105,9 @@ object NotificationArea {
     @Composable
     private fun colorArgsOf(type: Notification.Type): ColorArgs {
         return when (type) {
-            INFO -> ColorArgs(Theme.colors.border, Theme.colors.onSurface)
-            WARNING -> ColorArgs(Theme.colors.warning, Theme.colors.onSecondary)
-            ERROR -> ColorArgs(Theme.colors.error, Theme.colors.onError)
+            INFO -> ColorArgs(Theme.studio.border, Theme.studio.onSurface)
+            WARNING -> ColorArgs(Theme.studio.warning, Theme.studio.onSecondary)
+            ERROR -> ColorArgs(Theme.studio.error, Theme.studio.onError)
         }
     }
 }

@@ -34,7 +34,7 @@ class FilePage private constructor(
 ) : Page(file) {
 
     override val icon: Form.IconArg = when {
-        file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.colors.secondary }
+        file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
         else -> Form.IconArg(Icon.Code.FILE_LINES)
     }
 
