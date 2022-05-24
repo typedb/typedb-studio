@@ -28,16 +28,15 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.CompletableFuture
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -69,7 +68,7 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalTime::class)
     private fun consumeResponses() = coroutineScope.launch {
         val responses: MutableList<Response> = mutableListOf()
         do {
@@ -81,7 +80,6 @@ internal class RunOutputGroup constructor(
         runner.isConsumed()
     }
 
-    @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
     private fun <T> consumeStream(
         stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
     ) {
@@ -113,7 +111,7 @@ internal class RunOutputGroup constructor(
                     ).also { outputs.add(it); activate(it) }
                     consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
                         val task = log.output(it)
-                        table.output(it)
+                        // TODO: table.output(it)
                         graph.output(it)
                         task.join()
                     }
