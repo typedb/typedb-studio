@@ -74,12 +74,7 @@ object RunOutputArea {
         @Composable
         internal fun outputGroup(runner: QueryRunner): RunOutputGroup {
             return outputGroup.getOrPut(runner) {
-                RunOutputGroup(
-                    runner = runner,
-                    textEditorState = TextEditor.createState(END_OF_OUTPUT_SPACE),
-                    colors = Theme.studio,
-                    coroutineScope = coroutineScope
-                )
+                RunOutputGroup(runner, TextEditor.createState(END_OF_OUTPUT_SPACE), Theme.studio)
             }
         }
 

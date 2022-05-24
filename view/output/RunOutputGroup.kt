@@ -41,15 +41,15 @@ import kotlinx.coroutines.withContext
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
     textEditorState: TextEditor.State,
-    colors: Color.StudioTheme,
-    private val coroutineScope: CoroutineScope
+    colors: Color.StudioTheme
 ) {
 
     private val graphCount = AtomicInteger(0)
     private val tableCount = AtomicInteger(0)
-    private val log = LogOutput.State(textEditorState, colors, runner.transaction)
-    internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(log)
-    internal var active: RunOutput.State by mutableStateOf(log)
+    private val logOutput = LogOutput.State(textEditorState, colors, runner.transaction)
+    internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
+    internal var active: RunOutput.State by mutableStateOf(logOutput)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
 
     companion object {
@@ -97,11 +97,11 @@ internal class RunOutputGroup constructor(
 
     private fun output(response: Response) {
         when (response) {
-            is Response.Message -> log.output(response)
-            is Response.Numeric -> log.output(response.value)
+            is Response.Message -> logOutput.output(response)
+            is Response.Numeric -> logOutput.output(response.value)
             is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeStream(response) { log.output(it) }
-                is Response.Stream.ConceptMapGroups -> consumeStream(response) { log.output(it) }
+                is Response.Stream.NumericGroups -> consumeStream(response) { logOutput.output(it) }
+                is Response.Stream.ConceptMapGroups -> consumeStream(response) { logOutput.output(it) }
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
                         transaction = runner.transaction, number = tableCount.incrementAndGet()
@@ -110,7 +110,7 @@ internal class RunOutputGroup constructor(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
-                        val task = log.output(it)
+                        val task = logOutput.output(it)
                         table.output(it)
                         graph.output(it)
                         task.join()
