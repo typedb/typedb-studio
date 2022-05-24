@@ -95,7 +95,7 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         return IconButtonArg(
             icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
             enabled = GlobalState.project.current != null,
-            tooltip = Tooltip.Arg(title = Label.EXPORT)
+            tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
         ) {
             GlobalState.schema.exportTypeSchema { schema ->
                 refresh(navState)

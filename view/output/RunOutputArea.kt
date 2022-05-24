@@ -112,7 +112,9 @@ object RunOutputArea {
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                OutputGroup(state, Modifier.fillMaxSize())
+                state.resource.runner.activeRunner?.let { runner ->
+                    OutputGroup(state, runner, Modifier.fillMaxSize())
+                }
             }
         }
     }
@@ -160,14 +162,12 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun OutputGroup(state: State, modifier: Modifier) {
-        state.resource.runner.activeRunner?.let { runner ->
-            val outputGroup = state.outputGroup(runner)
-            Column(modifier) {
-                Output(outputGroup.active, Modifier.fillMaxWidth().weight(1f))
-                Separator.Horizontal()
-                OutputTabs(outputGroup, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
-            }
+    private fun OutputGroup(state: State, runner: QueryRunner, modifier: Modifier) {
+        val outputGroup = state.outputGroup(runner)
+        Column(modifier) {
+            Output(outputGroup.active, Modifier.fillMaxWidth().weight(1f))
+            Separator.Horizontal()
+            OutputTabs(outputGroup, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
         }
     }
 

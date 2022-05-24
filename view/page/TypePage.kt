@@ -90,6 +90,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
+        initExpandDepth = 4,
         coroutineScope = coroutineScope
     ) { GlobalState.resource.open(it.item) }
 
@@ -101,6 +102,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         private val VERTICAL_SPACING = 16.dp
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
+        private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
 
         @Composable
         fun create(type: TypeState.Thing): TypePage {
@@ -152,7 +154,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         Separator()
         MainSections()
         Separator()
-        DeleteButton()
+        ButtonsSection()
     }
 
     @Composable
@@ -171,16 +173,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private fun TitleSection() {
         SectionLine {
             Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
-            Spacer(modifier = Modifier.weight(1f))
             EditButton { } // TODO
-            Form.IconButton(
-                icon = Icon.Code.ROTATE,
-                tooltip = Tooltip.Arg(Label.REFRESH)
-            ) { type.reloadProperties() }
-            Form.IconButton(
-                icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
-                tooltip = Tooltip.Arg(Label.EXPORT)
-            ) { } // TODO
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 
@@ -190,7 +184,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             Form.Text(value = Label.SUPERTYPE)
             Spacer(modifier = Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.NONE.lowercase()})"),
+                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = !type.isRoot,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
@@ -219,7 +213,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private fun OwnsAttributeTypesTable() {
         val tableHeight = Table.ROW_HEIGHT * (type.ownsAttributeTypes.size + 1).coerceAtLeast(2)
         Table.Layout(
-            items = type.ownsAttributeTypeProperties.values.sortedBy { it.attributeType.name },
+            items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
@@ -265,8 +259,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                    onExpand = { GlobalState.schema.rootAttributeType?.reloadSubtypesRecursively() },
-                    onSelection = { attributeType = it; it.reloadProperties() },
+                    onExpand = { GlobalState.schema.rootAttributeType?.loadSubtypesRecursively() },
+                    onSelection = { attributeType = it; it.loadProperties() },
                     displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
@@ -303,15 +297,18 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionLine { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
-        PlaysRoleTypesTable()
+        RoleTypesTable(type.playsRoleTypeProperties) { type.undefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
 
     @Composable
-    private fun PlaysRoleTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.playsRoleTypes.size + 1).coerceAtLeast(2)
+    protected fun RoleTypesTable(
+        roleTypeProperties: List<TypeState.RoleTypeProperties>,
+        undefineFn: (TypeState.Role) -> Unit
+    ) {
+        val tableHeight = Table.ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         Table.Layout(
-            items = type.playsRoleTypeProperties.values.sortedBy { it.roleType.scopedName },
+            items = roleTypeProperties.sortedBy { it.roleType.scopedName },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
@@ -326,9 +323,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                     MayTickIcon(it.isInherited)
                 },
                 Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) {
-                        type.undefinePlaysRoleType(it.roleType)
-                    }
+                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) { undefineFn(it.roleType) }
                 },
             )
         )
@@ -358,7 +353,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                     selected = roleType,
                     placeholder = Label.SELECT_ROLE_TYPE,
                     onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
-                    onSelection = { roleType = it; it.reloadProperties() },
+                    onSelection = { roleType = it; it.loadProperties() },
                     displayFn = { displayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
@@ -392,14 +387,61 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         SectionLine { Form.Text(value = Label.SUBTYPES) }
         Navigator.Layout(
             state = subtypesNavState,
-            modifier = Modifier.fillMaxWidth().height(200.dp).border(1.dp, Theme.colors.border),
+            modifier = Modifier.fillMaxWidth()
+                .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
+                .border(1.dp, Theme.colors.border)
+                .background(Theme.colors.background1),
+            itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
+            bottomSpace = 0.dp,
             iconArg = { typeIcon(it.item) }
         )
     }
 
     @Composable
-    private fun DeleteButton() {
+    private fun ButtonsSection() {
+        SectionLine {
+            Spacer(Modifier.weight(1f))
+            DeleteButton()
+            ExportButton()
+            RefreshButton()
+        }
+    }
 
+    @Composable
+    private fun DeleteButton() {
+        Form.TextButton(
+            text = Label.DELETE,
+            textColor = Theme.colors.error,
+            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.colors.error },
+            enabled = isEditable,
+            tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
+        ) { } // TODO
+    }
+
+    @Composable
+    private fun ExportButton() {
+        Form.TextButton(
+            text = Label.EXPORT,
+            leadingIcon = Form.IconArg(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE),
+            enabled = GlobalState.project.current != null,
+            tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
+        ) {
+            type.exportSyntax { syntax ->
+                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                    file.content(syntax)
+                    GlobalState.resource.open(file)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun RefreshButton() {
+        Form.TextButton(
+            text = Label.REFRESH,
+            leadingIcon = Form.IconArg(Icon.Code.ROTATE),
+            tooltip = Tooltip.Arg(Label.REFRESH)
+        ) { type.loadProperties() }
     }
 
     @Composable
@@ -473,7 +515,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
         @Composable
         override fun MainSections() {
-            RelatedRolesSection()
+            RelatesRoleTypesSection()
+            Separator()
             OwnsAttributeTypesSection()
             Separator()
             SubtypesSection()
@@ -483,7 +526,14 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         }
 
         @Composable
-        private fun RelatedRolesSection() {
+        private fun RelatesRoleTypesSection() {
+            SectionLine { Form.Text(value = Label.RELATES_ROLE_TYPES) }
+            RoleTypesTable(type.relatesRoleTypeProperties) { type.undefineRelatesRoleType(it) }
+            RelatesRoleTypeAddition()
+        }
+
+        @Composable
+        private fun RelatesRoleTypeAddition() {
 
         }
     }

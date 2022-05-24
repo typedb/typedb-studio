@@ -56,7 +56,8 @@ object Sentence {
     const val CREATE_FILE =
         "Create a new file under %s."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
-        "To edit types in the schema, you need to have a 'SCHEMA' session and a 'WRITE' transaction'."
+        "Functionalities for editing schema types are under development and COMING SOON."
+        //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
     const val ENABLE_INFERENCE_DESCRIPTION =
         "Enabling inference means that you will get inferred answers in your match query. " +
                 BUTTON_ENABLED_WHEN_TRANSACTION_IS_READ

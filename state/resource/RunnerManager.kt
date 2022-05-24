@@ -46,7 +46,7 @@ class RunnerManager {
     }
 
     fun onLaunch(function: (QueryRunner) -> Unit) {
-        this.onLaunch.put(function)
+        onLaunch.put(function)
     }
 
     fun isActive(runner: QueryRunner): Boolean {
@@ -69,8 +69,8 @@ class RunnerManager {
         activeRunner = runner
         if (runners.isEmpty() || runners.all { saved.contains(it) }) runners.add(runner)
         else runners[runners.indexOf(runners.first { !saved.contains(it) })] = runner
-        onLaunch.forEach { it(runner) }
         runner.launch()
+        onLaunch.forEach { it(runner) }
     }
 
     fun delete(runner: QueryRunner) {

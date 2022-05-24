@@ -38,6 +38,7 @@ import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
@@ -108,6 +109,7 @@ class QueryRunner constructor(
         const val MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT =
             "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
+        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 1_000
         private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
     }
 
@@ -164,7 +166,11 @@ class QueryRunner constructor(
                 isRunning.set(false)
                 responses.put(Response.Done)
             }
-            consumerLatch.await()
+            var isConsumed: Boolean
+            if (!hasStopSignal.get()) {
+                do isConsumed = consumerLatch.await(COUNT_DOWN_LATCH_PERIOD_MS, MILLISECONDS)
+                while (!isConsumed && !hasStopSignal.get())
+            }
             onComplete()
         }
     }
