@@ -105,13 +105,13 @@ internal class RunOutputGroup constructor(
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
                         transaction = runner.transaction, number = tableCount.incrementAndGet()
-                    ).also { outputs.add(it) }
+                    )//TODO: .also { outputs.add(it) }
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
                         val task = log.output(it)
-                        // TODO: table.output(it)
+                        table.output(it)
                         graph.output(it)
                         task.join()
                     }
