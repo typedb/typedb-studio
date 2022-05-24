@@ -86,7 +86,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
-    private val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
+    protected val isEditable get() = type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
@@ -447,7 +447,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun displayName(type: TypeState): AnnotatedString = displayName(type, Theme.studio.onPrimary)
 
-    private fun displayName(type: TypeState, baseFontColor: Color): AnnotatedString {
+    protected fun displayName(type: TypeState, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
             when (type) {
                 is TypeState.Role -> append(type.scopedName)
@@ -534,7 +534,47 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
         @Composable
         private fun RelatesRoleTypeAddition() {
+            val baseFontColor = Theme.studio.onPrimary
+            var roleType: String by remember { mutableStateOf("") }
+            var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
+            val overridableTypeList = type.supertype?.relatesRoleTypes
+                ?.filter { GlobalState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
+                ?.sortedBy { it.scopedName } ?: listOf()
 
+            val isRelatable = isEditable && roleType.isNotEmpty()
+            val isOverridable = isEditable && overridableTypeList.isNotEmpty()
+
+            SectionLine {
+                Form.TextInput(
+                    value = roleType,
+                    placeholder = Label.ROLE.lowercase(),
+                    modifier = Modifier.weight(1f),
+                    onValueChange = { roleType = it },
+                    enabled = isEditable,
+                )
+                Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
+                Box(Modifier.weight(1f)) {
+                    Form.Dropdown(
+                        selected = overriddenType,
+                        placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                        onSelection = { overriddenType = it },
+                        displayFn = { displayName(it, baseFontColor) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = isOverridable,
+                        values = overridableTypeList
+                    )
+                }
+                Form.TextButton(
+                    text = Label.RELATES,
+                    leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
+                    enabled = isRelatable,
+                    tooltip = Tooltip.Arg(
+                        Label.DEFINE_RELATES_ROLE_TYPE,
+                        Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
+                    ),
+                    onClick = { type.defineRelatesRoleType(roleType, overriddenType) }
+                )
+            }
         }
     }
 

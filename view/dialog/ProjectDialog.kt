@@ -145,7 +145,7 @@ object ProjectDialog {
                     value = state.field,
                     placeholder = Label.PATH_OF_DIRECTORY,
                     onValueChange = { state.field = it },
-                    modifier = Modifier.fillMaxHeight().weight(1f).focusRequester(focusReq),
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
                 )
                 FormRowSpacer()
                 Form.IconButton(
@@ -276,7 +276,7 @@ object ProjectDialog {
                 value = text,
                 placeholder = "",
                 onValueChange = onChange,
-                modifier = Modifier.fillMaxHeight().focusRequester(focusReq),
+                modifier = Modifier.focusRequester(focusReq),
             )
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

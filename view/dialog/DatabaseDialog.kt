@@ -136,7 +136,7 @@ object DatabaseDialog {
                     value = CreateDatabaseForm.name,
                     placeholder = Label.DATABASE_NAME,
                     onValueChange = { CreateDatabaseForm.name = it },
-                    modifier = Modifier.height(FIELD_HEIGHT).weight(1f).focusRequester(focusReq),
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
                 )
                 FormRowSpacer()
                 TextButton(

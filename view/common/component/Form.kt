@@ -382,7 +382,7 @@ object Form {
         } ?: modifier
 
         BasicTextField(
-            modifier = mod.pointerHoverIcon(pointerHoverIcon)
+            modifier = mod.height(FIELD_HEIGHT).pointerHoverIcon(pointerHoverIcon)
                 .background(fadeable(Theme.studio.surface, !enabled), shape ?: RectangleShape),
             value = value,
             onValueChange = onValueChange,

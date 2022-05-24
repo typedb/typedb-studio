@@ -460,7 +460,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 properties.add(
                     RoleTypeProperties(
                         roleType = schemaMgr.createTypeState(roleType),
-                        overriddenType = typeTx.getRelatesOverridden(roleType.label.name())?.let {
+                        overriddenType = typeTx.getRelatesOverridden(roleType)?.let {
                             schemaMgr.createTypeState(it)
                         },
                         isInherited = isInherited
@@ -471,6 +471,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             typeTx.relatesExplicit.forEach { load(roleType = it, isInherited = false) }
             typeTx.relates.filter { !loaded.contains(it) }.forEach { load(roleType = it, isInherited = true) }
             relatesRoleTypeProperties = properties
+        }
+
+        fun defineRelatesRoleType(roleType: String, overriddenType: Role?) {
+            // TODO
         }
 
         fun undefineRelatesRoleType(roleType: Role) {
