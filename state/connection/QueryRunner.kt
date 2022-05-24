@@ -37,7 +37,7 @@ import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
@@ -166,8 +166,10 @@ class QueryRunner constructor(
                 responses.put(Response.Done)
             }
             var isConsumed: Boolean
-            do isConsumed = consumerLatch.await(COUNT_DOWN_LATCH_PERIOD_MS, TimeUnit.MILLISECONDS)
-            while (!isConsumed && !hasStopSignal.get())
+            if (!hasStopSignal.get()) {
+                do isConsumed = consumerLatch.await(COUNT_DOWN_LATCH_PERIOD_MS, MILLISECONDS)
+                while (!isConsumed && !hasStopSignal.get())
+            }
             onComplete()
         }
     }
