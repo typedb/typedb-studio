@@ -118,6 +118,7 @@ object Label {
     const val READ_MORE = "Read More"
     const val READ_ONLY = "Read Only"
     const val READ_TRANSACTION = "Read Transaction"
+    const val RELATES_ROLE_TYPES = "Relates Role Types"
     const val REFRESH = "Refresh"
     const val REGULAR_EXPRESSION = "Regular Expression"
     const val RENAME = "Rename"

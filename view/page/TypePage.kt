@@ -213,7 +213,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private fun OwnsAttributeTypesTable() {
         val tableHeight = Table.ROW_HEIGHT * (type.ownsAttributeTypes.size + 1).coerceAtLeast(2)
         Table.Layout(
-            items = type.ownsAttributeTypeProperties.values.sortedBy { it.attributeType.name },
+            items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
@@ -297,15 +297,18 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionLine { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
-        PlaysRoleTypesTable()
+        RoleTypesTable(type.playsRoleTypeProperties) { type.undefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
 
     @Composable
-    private fun PlaysRoleTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.playsRoleTypes.size + 1).coerceAtLeast(2)
+    protected fun RoleTypesTable(
+        roleTypeProperties: List<TypeState.RoleTypeProperties>,
+        undefineFn: (TypeState.Role) -> Unit
+    ) {
+        val tableHeight = Table.ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         Table.Layout(
-            items = type.playsRoleTypeProperties.values.sortedBy { it.roleType.scopedName },
+            items = roleTypeProperties.sortedBy { it.roleType.scopedName },
             modifier = Modifier.fillMaxWidth().height(tableHeight),
             columns = listOf(
                 Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
@@ -320,9 +323,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
                     MayTickIcon(it.isInherited)
                 },
                 Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) {
-                        type.undefinePlaysRoleType(it.roleType)
-                    }
+                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) { undefineFn(it.roleType) }
                 },
             )
         )
@@ -514,7 +515,8 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
         @Composable
         override fun MainSections() {
-            RelatedRolesSection()
+            RelatesRoleTypesSection()
+            Separator()
             OwnsAttributeTypesSection()
             Separator()
             SubtypesSection()
@@ -524,7 +526,14 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         }
 
         @Composable
-        private fun RelatedRolesSection() {
+        private fun RelatesRoleTypesSection() {
+            SectionLine { Form.Text(value = Label.RELATES_ROLE_TYPES) }
+            RoleTypesTable(type.relatesRoleTypeProperties) { type.undefineRelatesRoleType(it) }
+            RelatesRoleTypeAddition()
+        }
+
+        @Composable
+        private fun RelatesRoleTypeAddition() {
 
         }
     }
