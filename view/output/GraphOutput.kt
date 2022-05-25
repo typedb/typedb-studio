@@ -1698,7 +1698,7 @@ internal object GraphOutput : RunOutput() {
                 }
 
                 LaunchedEffect(state) { state.physicsRunner.run() }
-                LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
+                LaunchedEffect(state, state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
             }
 
             @Composable
