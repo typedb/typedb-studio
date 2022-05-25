@@ -18,8 +18,6 @@
 
 package com.vaticle.typedb.studio.state.connection
 
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.NumericGroup
@@ -52,9 +50,8 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
 class QueryRunner constructor(
-    val transaction: TypeDBTransaction, // TODO: restrict in the future, TypeDB 3.0 answers return complete info
+    private val transactionState: TransactionState, // TODO: restrict in the future, TypeDB 3.0 answers return complete info
     private val queries: String,
-    private val hasStopSignal: AtomicBoolean,
     private val onComplete: () -> Unit
 ) {
 
@@ -118,6 +115,8 @@ class QueryRunner constructor(
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
+    val transaction get() = transactionState.transaction
 
     fun launch() {
         isRunning.set(true)
@@ -218,7 +217,7 @@ class QueryRunner constructor(
             noResultMsg = INSERT_QUERY_NO_RESULT,
             queryStr = query.toString(),
             stream = Response.Stream.ConceptMaps()
-        ) { transaction.query().insert(query, TypeDBOptions.core().prefetch(true)) }
+        ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
     }
 
     private fun runUpdateQuery(query: TypeQLUpdate) {
@@ -228,7 +227,7 @@ class QueryRunner constructor(
             noResultMsg = UPDATE_QUERY_NO_RESULT,
             queryStr = query.toString(),
             stream = Response.Stream.ConceptMaps()
-        ) { transaction.query().update(query, TypeDBOptions.core().prefetch(true)) }
+        ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
     }
 
     private fun runMatchQuery(query: TypeQLMatch) {

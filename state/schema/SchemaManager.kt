@@ -183,8 +183,7 @@ class SchemaManager(
         synchronized(this) {
             lastTransactionUse.set(System.currentTimeMillis())
             if (readTx.get() != null) return readTx.get()
-            val options = TypeDBOptions.core().transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            readTx.set(session.transaction(options = options).also { it?.onClose { closeReadTx() } })
+            readTx.set(session.transaction().also { it?.onClose { closeReadTx() } })
             scheduleCloseReadTx()
             return readTx.get()
         }

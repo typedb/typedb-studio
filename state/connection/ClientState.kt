@@ -82,6 +82,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     private var runningClosingCommands = AtomicIntegerState(0)
     private var databaseListRefreshedTime = System.currentTimeMillis()
     private val asyncDepth = AtomicInteger(0)
+    internal val isCluster get() = _client is TypeDBClient.Cluster
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 

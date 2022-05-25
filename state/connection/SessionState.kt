@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference
 import mu.KotlinLogging
 
 class SessionState constructor(
-    private val client: ClientState,
+    internal val client: ClientState,
     internal val notificationMgr: NotificationManager
 ) {
 

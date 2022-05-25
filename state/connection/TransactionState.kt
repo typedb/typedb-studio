@@ -67,10 +67,11 @@ class TransactionState constructor(
     val hasStopSignal get() = hasStopSignalAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
     private val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
-    private val hasStopSignalAtomic = AtomicBooleanState(false)
+    internal val hasStopSignalAtomic = AtomicBooleanState(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _transaction: TypeDBTransaction? by mutableStateOf(null)
+    internal val transaction get() = _transaction!!
 
     val snapshot = ConfigState(
         activatedFn = { it || type.isWrite },
@@ -94,7 +95,7 @@ class TransactionState constructor(
     private fun tryOpen() {
         if (isOpen) return
         try {
-            val options = TypeDBOptions.core().infer(infer.activated)
+            val options = typeDBOptions().infer(infer.activated)
                 .explain(infer.activated).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown") }
@@ -112,7 +113,7 @@ class TransactionState constructor(
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
-                return if (isOpen) QueryRunner(_transaction!!, content, hasStopSignalAtomic.atomic) {
+                return if (isOpen) QueryRunner(this, content) {
                     if (!snapshot.activated) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
@@ -154,5 +155,9 @@ class TransactionState constructor(
             hasRunningQueryAtomic.set(false)
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
+    }
+
+    internal fun typeDBOptions(): TypeDBOptions {
+        return if (session.client.isCluster) TypeDBOptions.cluster() else TypeDBOptions.core()
     }
 }
