@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
@@ -1654,24 +1655,26 @@ internal object GraphOutput : RunOutput() {
 
         @Composable
         fun Layout(modifier: Modifier) {
-            Frame.Row(
-                modifier = modifier,
-                separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                Frame.Pane(
-                    id = GraphArea::class.java.name,
-                    minSize = GraphArea.MIN_WIDTH,
-                    initSize = Either.second(1f)
-                ) { graphArea.Layout() },
-                Frame.Pane(
-                    id = PreviewBrowser::class.java.name,
-                    minSize = BrowserArea.MIN_WIDTH,
-                    initSize = Either.first(
-                        state.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
-                            ?: BrowserArea.SIDE_TAB_WIDTH
-                    ),
-                    initFreeze = state.browserAreaState?.browser?.isOpen != true
-                ) { BrowserArea.Layout(state, it) }
-            )
+            key(state) {
+                Frame.Row(
+                    modifier = modifier,
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                    Frame.Pane(
+                        id = GraphArea::class.java.name,
+                        minSize = GraphArea.MIN_WIDTH,
+                        initSize = Either.second(1f)
+                    ) { graphArea.Layout() },
+                    Frame.Pane(
+                        id = PreviewBrowser::class.java.name,
+                        minSize = BrowserArea.MIN_WIDTH,
+                        initSize = Either.first(
+                            state.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
+                                ?: BrowserArea.SIDE_TAB_WIDTH
+                        ),
+                        initFreeze = state.browserAreaState?.browser?.isOpen != true
+                    ) { BrowserArea.Layout(state, it) }
+                )
+            }
         }
 
         class GraphArea(private val state: State) {
@@ -1833,7 +1836,7 @@ internal object GraphOutput : RunOutput() {
                 fun DragAndScroll(state: State, modifier: Modifier, content: @Composable () -> Unit) {
                     val viewport = state.viewport
                     Box(modifier
-                        .pointerInput(viewport.density, viewport.scale) {
+                        .pointerInput(state, viewport.density, viewport.scale) {
                             detectDragGestures(
                                 onDragStart = { _ ->
                                     state.interactions.draggedVertex?.let { state.graph.physics.drag.onDragStart(it) }
@@ -1873,7 +1876,7 @@ internal object GraphOutput : RunOutput() {
                             onMove = { state.interactions.pointerPosition = it; false },
                             onExit = { state.interactions.pointerPosition = null; false }
                         )
-                        .pointerInput(Unit) {
+                        .pointerInput(state) {
                             detectTapGestures(
                                 onPress = { point ->
                                     state.interactions.draggedVertex = state.viewport.findVertexAt(point)
