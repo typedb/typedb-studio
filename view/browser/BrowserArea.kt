@@ -71,9 +71,9 @@ object BrowserArea {
         internal val browsers = listOf(
             ProjectBrowser(this, 1, true),
             TypeBrowser(this, 2, true),
-            RuleBrowser(this, 3),
-            UserBrowser(this, 4),
-            RoleBrowser(this, 5)
+//            RuleBrowser(this, 3),
+//            UserBrowser(this, 4),
+//            RoleBrowser(this, 5)
         )
 
         fun mayUpdatePaneState() {
