@@ -1697,7 +1697,7 @@ internal object GraphOutput : RunOutput() {
                     )
                 }
 
-                LaunchedEffect(Unit) { state.physicsRunner.run() }
+                LaunchedEffect(state) { state.physicsRunner.run() }
                 LaunchedEffect(state.viewport.scale, state.viewport.density) { state.interactions.hoveredVertexChecker.poll() }
             }
 
