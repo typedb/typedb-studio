@@ -354,9 +354,11 @@ object TextEditor {
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
-                LazyLines.Area(lazyColumnState, onScroll, Modifier.width(state.textAreaWidth)) { index, text ->
-                    TextLine(state, index, text, font, fontWidth, lineGap, showLine)
-                }
+                LazyLines.Area(
+                    state = lazyColumnState,
+                    onScroll = onScroll,
+                    modifier = Modifier.defaultMinSize(minWidth = state.textAreaWidth)
+                ) { index, text -> TextLine(state, index, text, font, fontWidth, lineGap, showLine) }
             }
             Scrollbar.Vertical(state.target.verScroller, Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(state.target.horScrollerAdapter, Modifier.align(Alignment.BottomCenter))
