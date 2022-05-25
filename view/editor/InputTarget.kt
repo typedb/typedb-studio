@@ -138,8 +138,8 @@ internal class InputTarget constructor(
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
     private var mayDragSelectByLineNumber: Boolean by mutableStateOf(false)
     private var selectionDragStart: Selection? by mutableStateOf(null)
-    private var textAreaRect: Rect by mutableStateOf(Rect.Zero)
-    private val lineNumberBorder: Float get() = textAreaRect.left - horPadding.value
+    private var textAreaBounds: Rect by mutableStateOf(Rect.Zero)
+    private val lineNumberBorder: Float get() = textAreaBounds.left - horPadding.value
     private val lineCount: Int get() = content.size
     private val end: Cursor get() = Cursor(content.size - 1, content.last().length)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -153,18 +153,19 @@ internal class InputTarget constructor(
         textWidth = 0.dp
     }
 
-    internal fun updateTextArea(rawRectangle: Rect) {
-        textAreaRect = Rect(
+    internal fun updateBounds(rawRectangle: Rect) {
+        textAreaBounds = Rect(
             left = toDP(rawRectangle.left, density).value + horPadding.value,
             top = toDP(rawRectangle.top, density).value,
             right = toDP(rawRectangle.right, density).value - horPadding.value,
             bottom = toDP(rawRectangle.bottom, density).value
         )
+        println("InputTarget.textAreaRect: $textAreaBounds")
     }
 
     private fun createCursor(x: Int, y: Int): Cursor {
-        val relX = x - textAreaRect.left + toDP(horScroller.value, density).value
-        val relY = y - textAreaRect.top + verScroller.offset.value
+        val relX = x - textAreaBounds.left + toDP(horScroller.value, density).value
+        val relY = y - textAreaBounds.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
         val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
@@ -217,7 +218,7 @@ internal class InputTarget constructor(
     }
 
     internal fun mayUpdateCursor(x: Int, y: Int, isSelecting: Boolean) {
-        if (x <= textAreaRect.right) {
+        if (x <= textAreaBounds.right) {
             updateCursor(createCursor(x, y), isSelecting, false)
             if (x > lineNumberBorder) mayDragSelectByChar = true
             else mayDragSelectByLineNumber = true
@@ -244,10 +245,10 @@ internal class InputTarget constructor(
 
     private fun mayScrollToCursor() {
         fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
-            val left = textAreaRect.left.toInt() + padding
-            val right = textAreaRect.right.toInt() - padding
-            val top = textAreaRect.top.toInt() + padding
-            val bottom = textAreaRect.bottom.toInt() - padding
+            val left = textAreaBounds.left.toInt() + padding
+            val right = textAreaBounds.right.toInt() - padding
+            val top = textAreaBounds.top.toInt() + padding
+            val bottom = textAreaBounds.bottom.toInt() - padding
             if (x < left) coroutineScope.launch {
                 horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
             } else if (x > right) coroutineScope.launch {
@@ -260,8 +261,8 @@ internal class InputTarget constructor(
         val cursorRect = rendering.get(cursor.row)?.let {
             it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
         } ?: Rect(0f, 0f, 0f, 0f)
-        val x = textAreaRect.left + toDP(cursorRect.left - horScroller.value, density).value
-        val y = textAreaRect.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
+        val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
+        val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
         mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
     }
 
@@ -388,14 +389,14 @@ internal class InputTarget constructor(
     }
 
     internal fun moveCursorUpByPage(isSelecting: Boolean = false) {
-        val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
+        val fullyVisibleLines = floor(textAreaBounds.height / lineHeight.value).toInt()
         val newRow = (cursor.row - fullyVisibleLines).coerceAtLeast(0)
         val newCol = cursor.col.coerceAtMost(content[newRow].length)
         updateCursor(Cursor(newRow, newCol), isSelecting)
     }
 
     internal fun moveCursorDownByPage(isSelecting: Boolean = false) {
-        val fullyVisibleLines = floor(textAreaRect.height / lineHeight.value).toInt()
+        val fullyVisibleLines = floor(textAreaBounds.height / lineHeight.value).toInt()
         val newRow = (cursor.row + fullyVisibleLines).coerceAtMost(content.size - 1)
         val newCol = cursor.col.coerceAtMost(content[newRow].length)
         updateCursor(Cursor(newRow, newCol), isSelecting)

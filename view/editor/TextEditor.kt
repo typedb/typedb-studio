@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -345,7 +346,7 @@ object TextEditor {
         val lazyColumnState = LazyLines.createState(state.content, state.target.verScroller)
         Box(modifier = Modifier.onGloballyPositioned {
             state.textAreaWidth = toDP(it.size.width, state.density)
-            state.target.updateTextArea(it.boundsInWindow())
+            state.target.updateBounds(it.boundsInWindow())
         }) {
             Box(
                 modifier = Modifier.fillMaxSize()
@@ -371,6 +372,8 @@ object TextEditor {
     ) {
         val cursor = state.target.cursor
         val selection = state.target.selection
+        val minWidth = (state.target.textWidth + RIGHT_PADDING + AREA_PADDING_HOR * 2)
+            .coerceIn(state.textAreaWidth, MAX_LINE_MIN_WIDTH)
         val bgColor = when {
             showLine && cursor.row == index && selection == null -> Theme.studio.primary
             else -> Theme.studio.background0
@@ -378,8 +381,7 @@ object TextEditor {
         Box(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.background(bgColor)
-                .defaultMinSize(minWidth = state.target.textWidth.coerceIn(state.textAreaWidth, MAX_LINE_MIN_WIDTH))
-                .height(state.lineHeight)
+                .defaultMinSize(minWidth = minWidth).height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
             val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
