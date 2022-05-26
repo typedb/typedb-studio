@@ -1,5 +1,10 @@
 ---
-name: Bug Report about: Report a bug here, or visit forum.vaticle.com for troubleshooting discussions labels: bug
+name: Bug Report
+about: Report a bug here, or visit forum.vaticle.com for troubleshooting discussions
+title: ''
+labels: bug
+assignees: ''
+
 ---
 
 Please replace every line in curly brackets ( { like this } ) with appropriate answers, and remove this line.

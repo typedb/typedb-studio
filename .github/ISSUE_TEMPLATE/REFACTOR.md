@@ -1,5 +1,10 @@
 ---
-name: Refactor about: Propose an architecture refactor here labels: refactor
+name: Refactor
+about: Propose an architecture refactor here
+title: ''
+labels: refactor
+assignees: ''
+
 ---
 
 Please replace every line in curly brackets { like this } with appropriate answers, and remove this line.

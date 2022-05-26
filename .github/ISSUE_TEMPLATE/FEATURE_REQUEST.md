@@ -1,5 +1,10 @@
 ---
-name: Feature Request about: Request a feature here, or visit forum.vaticle.com for ideas and questions labels: feature
+name: Feature Request
+about: Request a feature here, or visit forum.vaticle.com for ideas and questions
+title: ''
+labels: feature
+assignees: ''
+
 ---
 
 Please replace every line in curly brackets ( { like this } ) with appropriate answers, and remove this line.
