@@ -555,7 +555,6 @@ sealed class TypePage(
             OwnsAttributeTypesSection()
             Separator()
             SubtypesSection()
-            Separator()
             AdvanceSections {
                 PlaysRoleTypesSection()
             }
