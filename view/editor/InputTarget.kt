@@ -160,7 +160,6 @@ internal class InputTarget constructor(
             right = toDP(rawRectangle.right, density).value - horPadding.value,
             bottom = toDP(rawRectangle.bottom, density).value
         )
-        println("InputTarget.textAreaRect: $textAreaBounds")
     }
 
     private fun createCursor(x: Int, y: Int): Cursor {
