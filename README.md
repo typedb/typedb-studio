@@ -6,7 +6,7 @@
 
 ## TypeDB Studio
 
-![TypeDB Studio](https://user-images.githubusercontent.com/1386526/133821723-11f2df6f-bc70-4eb3-83e8-0455eb227dcb.png)
+[![TypeDB Studio](https://user-images.githubusercontent.com/567679/170486678-8f226139-4163-4356-8567-082abf8487cc.png)](https://user-images.githubusercontent.com/567679/170486678-8f226139-4163-4356-8567-082abf8487cc.png)
 
 TypeDB Studio is TypeDB's Integrated Development Environment to perform knowledge engineering.
 
