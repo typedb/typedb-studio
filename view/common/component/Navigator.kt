@@ -347,7 +347,7 @@ object Navigator {
         }
 
         internal fun selectParent(item: ItemState<T>) {
-            item.parent?.let { select(it) }
+            item.parent?.let { if (it != container) select(it) }
         }
 
         internal fun select(item: ItemState<T>) {
