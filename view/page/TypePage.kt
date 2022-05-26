@@ -26,6 +26,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -77,7 +78,11 @@ import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import kotlinx.coroutines.CoroutineScope
 
-sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : Page(type) {
+sealed class TypePage(
+    type: TypeState.Thing,
+    showAdvance: Boolean = false,
+    coroutineScope: CoroutineScope
+) : Page(type) {
 
     override val icon: Form.IconArg = typeIcon(type)
     protected abstract val type: TypeState.Thing
@@ -87,6 +92,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
     protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
+    private var showAdvance by mutableStateOf(showAdvance)
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
@@ -98,8 +104,9 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         private val MIN_WIDTH = 600.dp
         private val MAX_WIDTH = 900.dp
         private val PAGE_PADDING = 40.dp
-        private val HORIZONTAL_SPACING = 8.dp
-        private val VERTICAL_SPACING = 16.dp
+        private val LINE_SPACING = 8.dp
+        private val LINE_END_PADDING = 4.dp
+        private val VERTICAL_SPACING = 20.dp
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
@@ -125,10 +132,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
             .onGloballyPositioned { width = toDP(it.size.width, density) }) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
-                Column(
-                    modifier = Modifier.width(width.coerceIn(MIN_WIDTH, MAX_WIDTH)).padding(PAGE_PADDING),
-                    verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING),
-                ) { TypeSections() }
+                SectionColumn(Modifier.padding(PAGE_PADDING)) { TypeSections() }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(verScroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
@@ -137,11 +141,48 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     }
 
     @Composable
-    protected fun Separator() {
+    private fun SectionColumn(modifier: Modifier = Modifier, column: @Composable ColumnScope.() -> Unit) {
+        Column(
+            modifier = modifier.width(width.coerceIn(MIN_WIDTH, MAX_WIDTH)),
+            verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING)
+        ) { column() }
+    }
+
+    @Composable
+    protected fun SectionRow(modifier: Modifier = Modifier, row: @Composable RowScope.() -> Unit) {
+        Row(modifier.fillMaxWidth(), Arrangement.spacedBy(LINE_SPACING), Alignment.CenterVertically) {
+            Spacer(Modifier.width(LINE_END_PADDING))
+            row()
+            Spacer(Modifier.width(LINE_END_PADDING))
+        }
+    }
+
+    @Composable
+    protected fun Separator(color: Color = Theme.studio.border.copy(alpha = FADED_OPACITY)) {
         Separator.Horizontal(
-            color = Theme.studio.border.copy(alpha = FADED_OPACITY),
+            color = color,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+
+    @Composable
+    protected fun AdvanceSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
+        val borderColor = if (!showAdvance) Theme.studio.border.copy(alpha = FADED_OPACITY)
+        else Theme.studio.warning2.copy(alpha = FADED_OPACITY / 3)
+        val modifier = if (!showAdvance) Modifier
+        else Modifier.background(Theme.studio.warning.copy(alpha = FADED_OPACITY / 5))
+        SectionColumn(modifier) {
+            Separator(borderColor)
+            SectionRow {
+                Form.Text(value = Label.ADVANCE)
+                Spacer(Modifier.weight(1f))
+                Form.IconButton(
+                    icon = if (showAdvance) Icon.Code.CHEVRON_UP else Icon.Code.CHEVRON_DOWN
+                ) { showAdvance = !showAdvance }
+            }
+            if (showAdvance) sections { Separator(borderColor) }
+            Separator(borderColor)
+        }
     }
 
     @Composable
@@ -153,36 +194,23 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         AbstractSection()
         Separator()
         MainSections()
-        Separator()
         ButtonsSection()
     }
 
     @Composable
-    protected fun AdvanceSections(sections: @Composable () -> Unit) {
-
-    }
-
-    @Composable
-    protected fun SectionLine(content: @Composable RowScope.() -> Unit) {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(HORIZONTAL_SPACING), Alignment.CenterVertically) {
-            content()
-        }
-    }
-
-    @Composable
     private fun TitleSection() {
-        SectionLine {
+        SectionRow {
             Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
             EditButton { } // TODO
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(Modifier.weight(1f))
         }
     }
 
     @Composable
     private fun SupertypeSection() {
-        SectionLine {
+        SectionRow {
             Form.Text(value = Label.SUPERTYPE)
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(Modifier.weight(1f))
             Form.TextButton(
                 text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
@@ -194,9 +222,9 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     private fun AbstractSection() {
-        SectionLine {
+        SectionRow {
             Form.Text(value = Label.ABSTRACT)
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
             EditButton { } // TODO
         }
@@ -204,7 +232,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     protected fun OwnsAttributeTypesSection() {
-        SectionLine { Form.Text(value = Label.OWNS_ATTRIBUTE_TYPES) }
+        SectionRow { Form.Text(value = Label.OWNS_ATTRIBUTE_TYPES) }
         OwnsAttributeTypesTable()
         OwnsAttributeTypeAddition()
     }
@@ -212,27 +240,29 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
     @Composable
     private fun OwnsAttributeTypesTable() {
         val tableHeight = Table.ROW_HEIGHT * (type.ownsAttributeTypes.size + 1).coerceAtLeast(2)
-        Table.Layout(
-            items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
-            modifier = Modifier.fillMaxWidth().height(tableHeight),
-            columns = listOf(
-                Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
-                    ClickableText(displayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
-                },
-                Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
-                    props.overriddenType?.let { ot -> ClickableText(displayName(ot)) { GlobalState.resource.open(ot) } }
-                },
-                Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
-                Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
-                    MayTickIcon(it.isInherited)
-                },
-                Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
-                        type.undefineOwnsAttributeType(it.attributeType)
-                    }
-                },
+        SectionRow {
+            Table.Layout(
+                items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
+                modifier = Modifier.weight(1f).height(tableHeight),
+                columns = listOf(
+                    Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
+                        ClickableText(displayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
+                    },
+                    Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
+                        props.overriddenType?.let { ot -> ClickableText(displayName(ot)) { GlobalState.resource.open(ot) } }
+                    },
+                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
+                    Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
+                        MayTickIcon(it.isInherited)
+                    },
+                    Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
+                        MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
+                            type.undefineOwnsAttributeType(it.attributeType)
+                        }
+                    },
+                )
             )
-        )
+        }
     }
 
     @Composable
@@ -254,7 +284,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         val isKeyable = isEditable && attributeType?.isKeyable == true
         var isKey: Boolean by remember { mutableStateOf(false) }
 
-        SectionLine {
+        SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = attributeType,
@@ -296,7 +326,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     protected fun PlaysRoleTypesSection() {
-        SectionLine { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
+        SectionRow { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
         RoleTypesTable(type.playsRoleTypeProperties) { type.undefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
@@ -307,26 +337,28 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         undefineFn: (TypeState.Role) -> Unit
     ) {
         val tableHeight = Table.ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
-        Table.Layout(
-            items = roleTypeProperties.sortedBy { it.roleType.scopedName },
-            modifier = Modifier.fillMaxWidth().height(tableHeight),
-            columns = listOf(
-                Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
-                    ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
-                },
-                Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
-                    props.overriddenType?.let { ot ->
-                        ClickableText(ot.scopedName) { GlobalState.resource.open(ot.relationType) }
-                    }
-                },
-                Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
-                    MayTickIcon(it.isInherited)
-                },
-                Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                    MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) { undefineFn(it.roleType) }
-                },
+        SectionRow {
+            Table.Layout(
+                items = roleTypeProperties.sortedBy { it.roleType.scopedName },
+                modifier = Modifier.weight(1f).height(tableHeight),
+                columns = listOf(
+                    Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
+                        ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
+                    },
+                    Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
+                        props.overriddenType?.let { ot ->
+                            ClickableText(ot.scopedName) { GlobalState.resource.open(ot.relationType) }
+                        }
+                    },
+                    Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
+                        MayTickIcon(it.isInherited)
+                    },
+                    Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
+                        MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) { undefineFn(it.roleType) }
+                    },
+                )
             )
-        )
+        }
     }
 
     @Composable
@@ -347,7 +379,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
         val isPlayable = isEditable && roleType != null
         val isOverridable = isEditable && overridableTypeList.isNotEmpty()
 
-        SectionLine {
+        SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = roleType,
@@ -384,22 +416,24 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     @Composable
     protected fun SubtypesSection() {
-        SectionLine { Form.Text(value = Label.SUBTYPES) }
-        Navigator.Layout(
-            state = subtypesNavState,
-            modifier = Modifier.fillMaxWidth()
-                .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
-                .border(1.dp, Theme.studio.border)
-                .background(Theme.studio.background1),
-            itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
-            bottomSpace = 0.dp,
-            iconArg = { typeIcon(it.item) }
-        )
+        SectionRow { Form.Text(value = Label.SUBTYPES) }
+        SectionRow {
+            Navigator.Layout(
+                state = subtypesNavState,
+                modifier = Modifier.weight(1f)
+                    .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
+                    .border(1.dp, Theme.studio.border)
+                    .background(Theme.studio.background1),
+                itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
+                bottomSpace = 0.dp,
+                iconArg = { typeIcon(it.item) }
+            )
+        }
     }
 
     @Composable
     private fun ButtonsSection() {
-        SectionLine {
+        SectionRow {
             Spacer(Modifier.weight(1f))
             DeleteButton()
             ExportButton()
@@ -489,7 +523,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     class Entity(
         override var type: TypeState.Entity, coroutineScope: CoroutineScope
-    ) : TypePage(type, coroutineScope) {
+    ) : TypePage(type, false, coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Entity
@@ -502,12 +536,13 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             PlaysRoleTypesSection()
             Separator()
             SubtypesSection()
+            Separator()
         }
     }
 
     class Relation(
         override var type: TypeState.Relation, coroutineScope: CoroutineScope
-    ) : TypePage(type, coroutineScope) {
+    ) : TypePage(type, type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Relation
@@ -520,6 +555,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             OwnsAttributeTypesSection()
             Separator()
             SubtypesSection()
+            Separator()
             AdvanceSections {
                 PlaysRoleTypesSection()
             }
@@ -527,7 +563,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
         @Composable
         private fun RelatesRoleTypesSection() {
-            SectionLine { Form.Text(value = Label.RELATES_ROLE_TYPES) }
+            SectionRow { Form.Text(value = Label.RELATES_ROLE_TYPES) }
             RoleTypesTable(type.relatesRoleTypeProperties) { type.undefineRelatesRoleType(it) }
             RelatesRoleTypeAddition()
         }
@@ -544,7 +580,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             val isRelatable = isEditable && roleType.isNotEmpty()
             val isOverridable = isEditable && overridableTypeList.isNotEmpty()
 
-            SectionLine {
+            SectionRow {
                 Form.TextInput(
                     value = roleType,
                     placeholder = Label.ROLE.lowercase(),
@@ -580,7 +616,7 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
 
     class Attribute(
         override var type: TypeState.Attribute, coroutineScope: CoroutineScope
-    ) : TypePage(type, coroutineScope) {
+    ) : TypePage(type, type.ownsAttributeTypes.isNotEmpty() || type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
         override fun updateResourceInner(resource: Resource) {
             type = resource as TypeState.Attribute
@@ -591,32 +627,34 @@ sealed class TypePage(type: TypeState.Thing, coroutineScope: CoroutineScope) : P
             OwnersSection()
             Separator()
             SubtypesSection()
-            AdvanceSections {
+            AdvanceSections { separator ->
                 OwnsAttributeTypesSection()
-                Separator()
+                separator()
                 PlaysRoleTypesSection()
             }
         }
 
         @Composable
         private fun OwnersSection() {
-            SectionLine { Form.Text(value = Label.OWNER_TYPES) }
             val tableHeight = Table.ROW_HEIGHT * (type.ownerTypes.size + 1).coerceAtLeast(2)
-            Table.Layout(
-                items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
-                modifier = Modifier.fillMaxWidth().height(tableHeight),
-                columns = listOf(
-                    Table.Column(header = Label.OWNER, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(displayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
-                    },
-                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
-                        MayTickIcon(it.isKey)
-                    },
-                    Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
-                        MayTickIcon(it.isInherited)
-                    }
+            SectionRow { Form.Text(value = Label.OWNER_TYPES) }
+            SectionRow {
+                Table.Layout(
+                    items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
+                    modifier = Modifier.weight(1f).height(tableHeight),
+                    columns = listOf(
+                        Table.Column(header = Label.OWNER, contentAlignment = Alignment.CenterStart) { props ->
+                            ClickableText(displayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
+                        },
+                        Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
+                            MayTickIcon(it.isKey)
+                        },
+                        Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
+                            MayTickIcon(it.isInherited)
+                        }
+                    )
                 )
-            )
+            }
         }
     }
 }

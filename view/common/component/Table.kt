@@ -99,7 +99,10 @@ object Table {
         rowHeight: Dp, columnBorderSize: Dp,
         horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
     ) {
-        Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(rowHeight).background(Theme.studio.background0),
+            horizontalArrangement = Arrangement.spacedBy(columnBorderSize)
+        ) {
             columns.forEach { col ->
                 Box(
                     contentAlignment = col.headerAlignment,
