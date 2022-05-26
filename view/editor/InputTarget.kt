@@ -473,9 +473,10 @@ internal class InputTarget constructor(
         val list = mutableListOf<AnnotatedString>()
         for (i in start.row..end.row) {
             val line = content[i]
-            if (i == start.row && end.row > start.row) list.add(line.subSequence(start.col, line.length))
-            else if (i == start.row) list.add(line.subSequence(start.col, end.col))
-            else if (i == end.row) list.add(line.subSequence(0, end.col))
+            fun cap(i: Int) = i.coerceAtMost(line.length) // TODO: figure out why we need this!
+            if (i == start.row && end.row > start.row) list.add(line.subSequence(cap(start.col), line.length))
+            else if (i == start.row) list.add(line.subSequence(cap(start.col), cap(end.col)))
+            else if (i == end.row) list.add(line.subSequence(0, cap(end.col)))
             else list.add(line)
         }
         return list
