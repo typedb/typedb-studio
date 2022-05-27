@@ -29,6 +29,7 @@ import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -50,7 +51,9 @@ internal class RunOutputGroup constructor(
     internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
     internal var active: RunOutput.State by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<() -> Unit>, Done>>()
+    private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit>, Done>>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val futuresLatch = CountDownLatch(2)
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
 
     object Done
@@ -61,7 +64,9 @@ internal class RunOutputGroup constructor(
 
     init {
         consumeResponses()
-        printSerialOutput { runner.isConsumed() }
+        printSerialOutput()
+        concludeNonSerialOutput()
+        concludeRunnerIsConsumed()
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {
@@ -73,19 +78,40 @@ internal class RunOutputGroup constructor(
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun printSerialOutput(onComplete: () -> Unit) = coroutineScope.launch {
+    private fun concludeRunnerIsConsumed() = coroutineScope.launch {
+        futuresLatch.await()
+        runner.isConsumed()
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun concludeNonSerialOutput() = coroutineScope.launch {
+        val futures = mutableListOf<CompletableFuture<Unit>>()
+        do {
+            val future = nonSerialOutputFutures.take()
+            if (future.isFirst) futures += future.first()
+        } while(future.isFirst)
+        CompletableFuture.allOf(*futures.toTypedArray()).join()
+        futuresLatch.countDown()
+    }
+
+    private fun collectNonSerial(future: CompletableFuture<Unit>) {
+        nonSerialOutputFutures.put(Either.first(future))
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun printSerialOutput() = coroutineScope.launch {
         do {
             val future = serialOutputFutures.take()
             if (future.isFirst) future.first().join().invoke()
         } while (future.isFirst)
-        onComplete()
+        futuresLatch.countDown()
     }
 
-    private fun queueSerialOutput(outputFn: () -> Unit) {
-        queueSerialOutput(CompletableFuture.completedFuture(outputFn))
+    private fun collectSerial(outputFn: () -> Unit) {
+        collectSerial(CompletableFuture.completedFuture(outputFn))
     }
 
-    private fun queueSerialOutput(outputFnFuture: CompletableFuture<() -> Unit>?) {
+    private fun collectSerial(outputFnFuture: CompletableFuture<() -> Unit>?) {
         serialOutputFutures.put(Either.first(outputFnFuture))
     }
 
@@ -99,12 +125,13 @@ internal class RunOutputGroup constructor(
             if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
         } while (responses.lastOrNull() != Response.Done)
         serialOutputFutures.put(Either.second(Done))
+        nonSerialOutputFutures.put(Either.second(Done))
     }
 
     private fun consumeResponse(response: Response) {
         when (response) {
-            is Response.Message -> queueSerialOutput { logOutput.outputFn(response).invoke() }
-            is Response.Numeric -> queueSerialOutput { logOutput.outputFn(response.value).invoke() }
+            is Response.Message -> collectSerial { logOutput.outputFn(response).invoke() }
+            is Response.Numeric -> collectSerial { logOutput.outputFn(response.value).invoke() }
             is Response.Stream<*> -> when (response) {
                 is Response.Stream.NumericGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
                 is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
@@ -116,13 +143,9 @@ internal class RunOutputGroup constructor(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {
-                        CompletableFuture.supplyAsync { graph.output(it) }
-                        val futures = listOf(
-                            CompletableFuture.supplyAsync { logOutput.outputFn(it) },
-                            CompletableFuture.supplyAsync { table.outputFn(it) }
-                        )
-                        CompletableFuture.allOf(*futures.toTypedArray()).join()
-                        return@consumeResponseStream { futures.forEach { it.get().invoke() } }
+                        collectNonSerial(CompletableFuture.supplyAsync { graph.output(it) })
+                        collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
+                        collectSerial(CompletableFuture.supplyAsync { table.outputFn(it) })
                     }
                 }
             }
@@ -131,16 +154,14 @@ internal class RunOutputGroup constructor(
     }
 
     private fun <T> consumeResponseStream(
-        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, outputFn: (T) -> (() -> Unit)
+        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
             Thread.sleep(CONSUMER_PERIOD_MS.toLong())
             responses.clear()
             stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach {
-                queueSerialOutput(CompletableFuture.supplyAsync { outputFn(it.first()) })
-            }
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
         } while (responses.lastOrNull()?.isSecond != true)
         onCompleted?.let { it() }
     }
