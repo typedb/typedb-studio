@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.app.StatusManager
@@ -54,16 +55,21 @@ object StatusBar {
                 val status = statusMgr.statuses[it]
                 if (!status.isNullOrEmpty()) {
                     Separator.Vertical()
-                    Column {
-                        Row {
-                            Spacer(Modifier.width(PADDING))
-                            Form.Text(value = status, textStyle = fontStyle)
-                            Spacer(Modifier.width(PADDING))
-                        }
-                        Spacer(Modifier.height(2.dp))
-                    }
+                    StatusDisplay(status, fontStyle)
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun StatusDisplay(status: String, fontStyle: TextStyle) {
+        Column {
+            Row {
+                Spacer(Modifier.width(PADDING))
+                Form.Text(value = status, textStyle = fontStyle)
+                Spacer(Modifier.width(PADDING))
+            }
+            Spacer(Modifier.height(2.dp))
         }
     }
 }
