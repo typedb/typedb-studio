@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTime::class)
 class QueryRunner constructor(
-    private val transactionState: TransactionState, // TODO: restrict in the future, TypeDB 3.0 answers return complete info
+    val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val queries: String,
     private val onComplete: () -> Unit
 ) {
@@ -116,7 +116,7 @@ class QueryRunner constructor(
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
-    val transaction get() = transactionState.transaction
+    private val transaction get() = transactionState.transaction!!
 
     fun launch() {
         isRunning.set(true)

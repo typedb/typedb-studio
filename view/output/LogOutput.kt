@@ -25,7 +25,6 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.Numeric
@@ -43,6 +42,7 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
@@ -63,7 +63,7 @@ internal object LogOutput : RunOutput() {
     internal class State constructor(
         internal val editorState: TextEditor.State,
         private val colors: Color.StudioTheme,
-        val transaction: TypeDBTransaction
+        val transactionState: TransactionState
     ) : RunOutput.State() {
 
         override val name: String = Label.LOG
@@ -176,7 +176,11 @@ internal object LogOutput : RunOutput() {
 
         private fun printType(type: Type): String {
             var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
-            type.asRemote(transaction).supertype?.let { str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName() }
+            transactionState.transaction?.let {
+                type.asRemote(it).supertype?.let {
+                    str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName()
+                }
+            }
             return str
         }
 
@@ -193,9 +197,11 @@ internal object LogOutput : RunOutput() {
         }
 
         private fun printRolePlayers(relation: Relation): String {
-            val rolePlayers = relation.asRemote(transaction).playersByRoleType.flatMap { (role, players) ->
-                players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
-            }.stream().collect(Collectors.joining(", "))
+            val rolePlayers = transactionState.transaction?.let {
+                relation.asRemote(it).playersByRoleType.flatMap { (role, players) ->
+                    players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
+                }.stream().collect(Collectors.joining(", "))
+            } ?: " "
             return "($rolePlayers)"
         }
     }

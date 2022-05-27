@@ -91,7 +91,6 @@ import com.vaticle.force.graph.force.YForce
 import com.vaticle.force.graph.impl.BasicSimulation
 import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.force.graph.util.RandomEffects
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
@@ -108,6 +107,7 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util
 import com.vaticle.typedb.studio.view.common.Util.schemaString
@@ -165,13 +165,13 @@ internal object GraphOutput : RunOutput() {
 
     val LOGGER = KotlinLogging.logger {}
 
-    internal class State(val transaction: TypeDBTransaction, number: Int) : RunOutput.State() {
+    internal class State(val transactionState: TransactionState, number: Int) : RunOutput.State() {
 
         override val name: String = "${Label.GRAPH} ($number)"
         val interactions = Interactions(this)
         val graph = Graph(this)
         val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-        val graphBuilder = GraphBuilder(graph, transaction, coroutineScope)
+        val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
         val viewport = Viewport(this)
         val physicsRunner = PhysicsRunner(this)
         var theme: Color.GraphTheme? = null
@@ -740,7 +740,7 @@ internal object GraphOutput : RunOutput() {
         }
 
         class GraphBuilder(
-            val graph: Graph, val transaction: TypeDBTransaction, val coroutineScope: CoroutineScope,
+            val graph: Graph, val transactionState: TransactionState, val coroutineScope: CoroutineScope,
             val schema: Schema = Schema()
         ) {
             private val thingVertices = ConcurrentHashMap<String, Vertex.Thing>()
@@ -937,7 +937,8 @@ internal object GraphOutput : RunOutput() {
 
             private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
                 val explainable = graph.reasoner.explainables[vertex] ?: throw IllegalStateException("Not explainable")
-                return transaction.query().explain(explainable).iterator()
+                return transactionState.transaction?.query()?.explain(explainable)?.iterator()
+                    ?: Collections.emptyIterator()
             }
 
             private fun fetchNextExplanation(vertex: Vertex.Thing, iterator: Iterator<Explanation>) {
@@ -1016,9 +1017,10 @@ internal object GraphOutput : RunOutput() {
 
                 class Thing(
                     val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
-                    val thingVertex: Vertex.Thing, ctx: GraphBuilder
+                    private val thingVertex: Vertex.Thing,
+                    private val ctx: GraphBuilder
                 ) : EdgeBuilder(ctx) {
-                    private val remoteThing = thing.asRemote(ctx.transaction)
+                    private val remoteThing get() = ctx.transactionState.transaction?.let { thing.asRemote(it) }
 
                     override fun build() {
                         loadIsaEdge()
@@ -1039,24 +1041,35 @@ internal object GraphOutput : RunOutput() {
                         // test for ability to own attributes, to ensure query will not throw during type inference
                         if (!canOwnAttributes()) return
                         val (x, attr) = Pair("x", "attr")
-                        graphBuilder.transaction.query().match(match(`var`(x).iid(thing.iid).has(`var`(attr)))).forEach { answer ->
-                            val attribute = answer.get(attr).asAttribute()
-                            // TODO: test logic (was 'attr in explainables().attributes().keys', not 'attribute.isInferred')
-                            val isEdgeInferred = attribute.isInferred || ownershipIsExplainable(attr, answer)
-                            val attributeVertex = graphBuilder.thingVertices[attribute.iid] as? Vertex.Thing.Attribute
-                            if (attributeVertex != null) {
-                                graphBuilder.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
-                            } else {
-                                graphBuilder.addEdgeCandidate(EdgeCandidate.Has(thingVertex, attribute.iid, isEdgeInferred))
+                        graphBuilder.transactionState.transaction?.query()
+                            ?.match(match(`var`(x).iid(thing.iid).has(`var`(attr))))
+                            ?.forEach { answer ->
+                                val attribute = answer.get(attr).asAttribute()
+                                // TODO: test logic (was 'attr in explainables().attributes().keys', not 'attribute.isInferred')
+                                val isEdgeInferred = attribute.isInferred || ownershipIsExplainable(attr, answer)
+                                val attributeVertex =
+                                    graphBuilder.thingVertices[attribute.iid] as? Vertex.Thing.Attribute
+                                if (attributeVertex != null) {
+                                    graphBuilder.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
+                                } else {
+                                    graphBuilder.addEdgeCandidate(
+                                        EdgeCandidate.Has(
+                                            thingVertex,
+                                            attribute.iid,
+                                            isEdgeInferred
+                                        )
+                                    )
+                                }
                             }
-                        }
                     }
 
                     private fun canOwnAttributes(): Boolean {
                         val typeLabel = thing.type.label.name()
                         return graphBuilder.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
                             // non-atomic update as Concept API call is idempotent and cheaper than locking the map
-                            thing.type.asRemote(graphBuilder.transaction).owns.findAny().isPresent
+                            graphBuilder.transactionState.transaction?.let {
+                                thing.type.asRemote(it).owns.findAny().isPresent
+                            } ?: false
                         }
                     }
 
@@ -1066,7 +1079,7 @@ internal object GraphOutput : RunOutput() {
 
                     private fun loadRoleplayerEdgesAndVertices() {
                         graphBuilder.apply {
-                            remoteThing.asRelation().playersByRoleType.entries.forEach { (roleType, roleplayers) ->
+                            remoteThing?.asRelation()?.playersByRoleType?.entries?.forEach { (roleType, roleplayers) ->
                                 roleplayers.forEach { roleplayer ->
                                     putVertexIfAbsent(roleplayer.iid, thingVertices) {
                                         Vertex.Thing.of(roleplayer, graph)
@@ -1085,10 +1098,11 @@ internal object GraphOutput : RunOutput() {
                 }
 
                 class ThingType(
-                    thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
-                    private val typeVertex: Vertex.Type, ctx: GraphBuilder
+                    private val thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
+                    private val typeVertex: Vertex.Type,
+                    private val ctx: GraphBuilder
                 ) : EdgeBuilder(ctx) {
-                    private val remoteThingType = thingType.asRemote(ctx.transaction)
+                    private val remoteThingType get() = ctx.transactionState.transaction?.let { thingType.asRemote(it) }
 
                     override fun build() {
                         loadSubEdge()
@@ -1097,7 +1111,7 @@ internal object GraphOutput : RunOutput() {
                     }
 
                     private fun loadSubEdge() {
-                        remoteThingType.supertype?.let { supertype ->
+                        remoteThingType?.supertype?.let { supertype ->
                             val supertypeVertex = graphBuilder.typeVertices[supertype.label.name()]
                             if (supertypeVertex != null) graphBuilder.addEdge(Edge.Sub(typeVertex, supertypeVertex))
                             else graphBuilder.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name()))
@@ -1105,7 +1119,7 @@ internal object GraphOutput : RunOutput() {
                     }
 
                     private fun loadOwnsEdges() {
-                        remoteThingType.owns.forEach { attributeType ->
+                        remoteThingType?.owns?.forEach { attributeType ->
                             val attributeTypeLabel = attributeType.label.name()
                             val attributeTypeVertex = graphBuilder.typeVertices[attributeTypeLabel]
                                     as? Vertex.Type.Attribute
@@ -1116,7 +1130,7 @@ internal object GraphOutput : RunOutput() {
                     }
 
                     private fun loadPlaysEdges() {
-                        remoteThingType.plays.forEach { roleType ->
+                        remoteThingType?.plays?.forEach { roleType ->
                             val relationTypeLabel = roleType.label.scope().get()
                             val roleLabel = roleType.label.name()
                             val relationTypeVertex = graphBuilder.typeVertices[relationTypeLabel]

@@ -71,7 +71,7 @@ class TransactionState constructor(
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _transaction: TypeDBTransaction? by mutableStateOf(null)
-    internal val transaction get() = _transaction!!
+    val transaction get() = _transaction // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
 
     val snapshot = ConfigState(
         activatedFn = { it || type.isWrite },

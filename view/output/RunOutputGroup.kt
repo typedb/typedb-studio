@@ -47,7 +47,7 @@ internal class RunOutputGroup constructor(
 
     private val graphCount = AtomicInteger(0)
     private val tableCount = AtomicInteger(0)
-    private val logOutput = LogOutput.State(textEditorState, colors, runner.transaction)
+    private val logOutput = LogOutput.State(textEditorState, colors, runner.transactionState)
     internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
     internal var active: RunOutput.State by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<() -> Unit>, Done>>()
@@ -137,10 +137,10 @@ internal class RunOutputGroup constructor(
                 is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
-                        transaction = runner.transaction, number = tableCount.incrementAndGet()
+                        transaction = runner.transactionState, number = tableCount.incrementAndGet()
                     )//TODO: .also { outputs.add(it) }
                     val graph = GraphOutput.State(
-                        transaction = runner.transaction, number = graphCount.incrementAndGet()
+                        transactionState = runner.transactionState, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {
                         collectNonSerial(CompletableFuture.supplyAsync { graph.output(it) })
