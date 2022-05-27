@@ -163,12 +163,16 @@ workflows:
             - build-linux
             - build-mac
             - build-windows
+      - deploy-approval:
+          type: approval
+          requires:
+            - deploy-github
       - deploy-brew:
           filters:
             branches:
               only: release
           requires:
-            - deploy-github
+            - deploy-approval
       - release-cleanup:
           filters:
             branches:
