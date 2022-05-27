@@ -61,7 +61,7 @@ internal class RunOutputGroup constructor(
 
     init {
         consumeResponses()
-        printSerialOutput()
+        printSerialOutput { runner.isConsumed() }
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {
@@ -73,11 +73,12 @@ internal class RunOutputGroup constructor(
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun printSerialOutput() = coroutineScope.launch {
+    private fun printSerialOutput(onComplete: () -> Unit) = coroutineScope.launch {
         do {
             val future = serialOutputFutures.take()
             if (future.isFirst) future.first().join().invoke()
         } while (future.isFirst)
+        onComplete()
     }
 
     private fun queueSerialOutput(outputFn: () -> Unit) {
@@ -98,7 +99,6 @@ internal class RunOutputGroup constructor(
             if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
         } while (responses.lastOrNull() != Response.Done)
         serialOutputFutures.put(Either.second(Done))
-        runner.isConsumed()
     }
 
     private fun consumeResponse(response: Response) {
