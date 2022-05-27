@@ -12,3 +12,7 @@ brew install --cask vaticle/tap/typedb-studio
 ```
 
 { release notes }
+
+---
+
+Please refer to [full release notes of 2.10.0-alpha](https://github.com/vaticle/typedb-studio/releases/tag/2.10.0-alpha) to see the changes in 2.10.0.
