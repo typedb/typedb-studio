@@ -29,6 +29,7 @@ import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -36,7 +37,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -49,8 +49,11 @@ internal class RunOutputGroup constructor(
     private val logOutput = LogOutput.State(textEditorState, colors, runner.transaction)
     internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
     internal var active: RunOutput.State by mutableStateOf(logOutput)
+    private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<() -> Unit>, Done>>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
+
+    object Done
 
     companion object {
         private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
@@ -58,6 +61,7 @@ internal class RunOutputGroup constructor(
 
     init {
         consumeResponses()
+        printSerialOutput()
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {
@@ -68,40 +72,42 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun consumeResponses() = coroutineScope.launch {
-        val responses: MutableList<Response> = mutableListOf()
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun printSerialOutput() = coroutineScope.launch {
         do {
+            val future = serialOutputFutures.take()
+            if (future.isFirst) future.first().join().invoke()
+        } while (future.isFirst)
+    }
+
+    private fun queueSerialOutput(outputFn: () -> Unit) {
+        queueSerialOutput(CompletableFuture.completedFuture(outputFn))
+    }
+
+    private fun queueSerialOutput(outputFnFuture: CompletableFuture<() -> Unit>?) {
+        serialOutputFutures.put(Either.first(outputFnFuture))
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun consumeResponses() = coroutineScope.launch {
+        do {
+            val responses: MutableList<Response> = mutableListOf()
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
-            responses.clear()
             runner.responses.drainTo(responses)
-            if (responses.isNotEmpty()) withContext(Dispatchers.Default) { responses.forEach { output(it) } }
+            if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
         } while (responses.lastOrNull() != Response.Done)
+        serialOutputFutures.put(Either.second(Done))
         runner.isConsumed()
     }
 
-    private fun <T> consumeStream(
-        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
-    ) {
-        val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
-        val tasks: MutableList<CompletableFuture<*>> = mutableListOf()
-        do {
-            Thread.sleep(CONSUMER_PERIOD_MS.toLong())
-            responses.clear()
-            stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { tasks += CompletableFuture.supplyAsync { output(it.first()) } }
-        } while (responses.lastOrNull()?.isSecond != true)
-        CompletableFuture.allOf(*tasks.toTypedArray()).join()
-        onCompleted?.let { it() }
-    }
-
-    private fun output(response: Response) {
+    private fun consumeResponse(response: Response) {
         when (response) {
-            is Response.Message -> logOutput.output(response)
-            is Response.Numeric -> logOutput.output(response.value)
+            is Response.Message -> queueSerialOutput { logOutput.outputFn(response).invoke() }
+            is Response.Numeric -> queueSerialOutput { logOutput.outputFn(response.value).invoke() }
             is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeStream(response) { logOutput.output(it) }
-                is Response.Stream.ConceptMapGroups -> consumeStream(response) { logOutput.output(it) }
+                is Response.Stream.NumericGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
+                is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
                         transaction = runner.transaction, number = tableCount.incrementAndGet()
@@ -109,15 +115,33 @@ internal class RunOutputGroup constructor(
                     val graph = GraphOutput.State(
                         transaction = runner.transaction, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
-                    consumeStream(response, onCompleted = { graph.onQueryCompleted() }) {
-                        val task = logOutput.output(it)
-                        table.output(it)
-                        graph.output(it)
-                        task.join()
+                    consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {
+                        CompletableFuture.supplyAsync { graph.output(it) }
+                        val futures = listOf(
+                            CompletableFuture.supplyAsync { logOutput.outputFn(it) },
+                            CompletableFuture.supplyAsync { table.outputFn(it) }
+                        )
+                        CompletableFuture.allOf(*futures.toTypedArray()).join()
+                        return@consumeResponseStream { futures.forEach { it.get().invoke() } }
                     }
                 }
             }
             is Response.Done -> {}
         }
+    }
+
+    private fun <T> consumeResponseStream(
+        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, outputFn: (T) -> (() -> Unit)
+    ) {
+        val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
+        do {
+            Thread.sleep(CONSUMER_PERIOD_MS.toLong())
+            responses.clear()
+            stream.queue.drainTo(responses)
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach {
+                queueSerialOutput(CompletableFuture.supplyAsync { outputFn(it.first()) })
+            }
+        } while (responses.lastOrNull()?.isSecond != true)
+        onCompleted?.let { it() }
     }
 }

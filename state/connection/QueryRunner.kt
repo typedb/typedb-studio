@@ -312,7 +312,6 @@ class QueryRunner constructor(
         }
         if (started) {
             stream.queue.put(Either.second(Response.Done))
-            collectEmptyLine()
             collectMessage(INFO, COMPLETED)
         } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
     }

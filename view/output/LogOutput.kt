@@ -53,7 +53,6 @@ import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
-import java.util.concurrent.CompletableFuture
 import java.util.stream.Collectors
 import mu.KotlinLogging
 
@@ -92,7 +91,7 @@ internal object LogOutput : RunOutput() {
             GlobalState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
         }
 
-        internal fun output(message: Response.Message) {
+        internal fun outputFn(message: Response.Message): () -> Unit = {
             editorState.content.addAll(message.text.split("\n").map {
                 when (message.type) {
                     INFO -> AnnotatedString(it)
@@ -102,20 +101,21 @@ internal object LogOutput : RunOutput() {
             })
         }
 
-        internal fun output(numeric: Numeric) {
-            outputTypeQL(numeric.toString())
+        internal fun outputFn(numeric: Numeric): () -> Unit = { outputTypeQL(numeric.toString()) }
+
+        internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
+            val output = loadToString(conceptMap)
+            return { outputTypeQL(output) }
         }
 
-        internal fun output(conceptMap: ConceptMap): CompletableFuture<Unit> {
-            return CompletableFuture.supplyAsync { outputTypeQL(printConceptMap(conceptMap)) }
+        internal fun outputFn(conceptMapGroup: ConceptMapGroup): () -> Unit {
+            val output = loadToString(conceptMapGroup)
+            return { outputTypeQL(output) }
         }
 
-        internal fun output(conceptMapGroup: ConceptMapGroup) {
-            outputTypeQL(printConceptMapGroup(conceptMapGroup))
-        }
-
-        internal fun output(numericGroup: NumericGroup) {
-            outputTypeQL(printNumericGroup(numericGroup))
+        internal fun outputFn(numericGroup: NumericGroup): () -> Unit {
+            val output = loadToString(numericGroup)
+            return { outputTypeQL(output) }
         }
 
         private fun outputTypeQL(text: String) {
@@ -143,20 +143,20 @@ internal object LogOutput : RunOutput() {
             return builder.toAnnotatedString()
         }
 
-        private fun printNumericGroup(group: NumericGroup): String {
-            return printConcept(group.owner()) + " => " + group.numeric().asNumber()
+        private fun loadToString(group: NumericGroup): String {
+            return loadToString(group.owner()) + " => " + group.numeric().asNumber()
         }
 
-        private fun printConceptMapGroup(group: ConceptMapGroup): String {
-            val str = StringBuilder(printConcept(group.owner()) + " => {\n")
-            group.conceptMaps().forEach { str.append(Strings.indent(printConceptMap(it))) }
+        private fun loadToString(group: ConceptMapGroup): String {
+            val str = StringBuilder(loadToString(group.owner()) + " => {\n")
+            group.conceptMaps().forEach { str.append(Strings.indent(loadToString(it))) }
             str.append("\n}")
             return str.toString()
         }
 
-        private fun printConceptMap(conceptMap: ConceptMap): String {
+        private fun loadToString(conceptMap: ConceptMap): String {
             val content = conceptMap.map().map {
-                "$" + it.key + " " + printConcept(it.value) + ";"
+                "$" + it.key + " " + loadToString(it.value) + ";"
             }.stream().collect(Collectors.joining("\n"))
 
             val str = StringBuilder("{")
@@ -166,7 +166,7 @@ internal object LogOutput : RunOutput() {
             return str.toString()
         }
 
-        private fun printConcept(concept: Concept): String {
+        private fun loadToString(concept: Concept): String {
             return when (concept) {
                 is Type -> printType(concept)
                 is Thing -> printThing(concept)
