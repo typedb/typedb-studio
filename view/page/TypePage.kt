@@ -204,7 +204,7 @@ sealed class TypePage(
     @Composable
     private fun TitleSection() {
         SectionRow {
-            Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
+            Form.TextBox(text = TypeDisplayName(type), leadingIcon = typeIcon(type))
             EditButton { } // TODO
             Spacer(Modifier.weight(1f))
         }
@@ -216,7 +216,7 @@ sealed class TypePage(
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.let { displayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
+                text = type.supertype?.let { TypeDisplayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
                 leadingIcon = type.supertype?.let { typeIcon(it) },
                 enabled = !type.isRoot,
             ) { type.supertype?.let { GlobalState.resource.open(it) } }
@@ -236,7 +236,7 @@ sealed class TypePage(
 
     @Composable
     protected fun OwnsAttributeTypesSection() {
-        SectionRow { Form.Text(value = Label.OWNS_ATTRIBUTE_TYPES) }
+        SectionRow { Form.Text(value = Label.OWNS) }
         OwnsAttributeTypesTable()
         OwnsAttributeTypeAddition()
     }
@@ -249,11 +249,17 @@ sealed class TypePage(
                 items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.weight(1f).height(tableHeight),
                 columns = listOf(
-                    Table.Column(header = Label.OWNS, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(displayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
+                    Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
+                        ClickableText(TypeDisplayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
-                        props.overriddenType?.let { ot -> ClickableText(displayName(ot)) { GlobalState.resource.open(ot) } }
+                        props.overriddenType?.let { ot ->
+                            ClickableText(TypeDisplayName(ot)) {
+                                GlobalState.resource.open(
+                                    ot
+                                )
+                            }
+                        }
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
@@ -295,7 +301,7 @@ sealed class TypePage(
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
                     onExpand = { GlobalState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadProperties() },
-                    displayFn = { displayName(it, baseFontColor) },
+                    displayFn = { TypeDisplayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = attributeTypeList
@@ -307,7 +313,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { displayName(it, baseFontColor) },
+                    displayFn = { TypeDisplayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -330,7 +336,7 @@ sealed class TypePage(
 
     @Composable
     protected fun PlaysRoleTypesSection() {
-        SectionRow { Form.Text(value = Label.PLAYS_ROLE_TYPES) }
+        SectionRow { Form.Text(value = Label.PLAYS) }
         RoleTypesTable(type.playsRoleTypeProperties) { type.undefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
@@ -346,7 +352,7 @@ sealed class TypePage(
                 items = roleTypeProperties.sortedBy { it.roleType.scopedName },
                 modifier = Modifier.weight(1f).height(tableHeight),
                 columns = listOf(
-                    Table.Column(header = Label.PLAYS, contentAlignment = Alignment.CenterStart) { props ->
+                    Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
@@ -390,7 +396,7 @@ sealed class TypePage(
                     placeholder = Label.SELECT_ROLE_TYPE,
                     onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadProperties() },
-                    displayFn = { displayName(it, baseFontColor) },
+                    displayFn = { TypeDisplayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = roleTypeList
@@ -402,7 +408,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { displayName(it, baseFontColor) },
+                    displayFn = { TypeDisplayName(it, baseFontColor) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -483,17 +489,28 @@ sealed class TypePage(
     }
 
     @Composable
-    protected fun displayName(type: TypeState): AnnotatedString = displayName(type, Theme.studio.onPrimary)
+    protected fun TypeDisplayName(type: TypeState): AnnotatedString = TypeDisplayName(type, Theme.studio.onPrimary)
 
-    protected fun displayName(type: TypeState, baseFontColor: Color): AnnotatedString {
+    protected fun TypeDisplayName(type: TypeState, baseFontColor: Color): AnnotatedString {
+        val primary = when (type) {
+            is TypeState.Role -> type.scopedName
+            is TypeState.Thing -> type.name
+        }
+        val secondary = if (type is TypeState.Attribute) type.valueType else null
+        return AnnotatedString(primary, secondary, baseFontColor)
+    }
+
+    @Composable
+    protected fun AnnotatedString(primary: String, secondary: String? = null): AnnotatedString {
+        return AnnotatedString(primary, secondary, Theme.studio.onPrimary)
+    }
+
+    protected fun AnnotatedString(primary: String, secondary: String? = null, baseFontColor: Color): AnnotatedString {
         return buildAnnotatedString {
-            when (type) {
-                is TypeState.Role -> append(type.scopedName)
-                is TypeState.Thing -> append(type.name)
-            }
-            if (type is TypeState.Attribute) type.valueType?.let { valueType ->
+            append(primary)
+            secondary?.let {
                 append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${valueType})") }
+                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${it})") }
             }
         }
     }
@@ -566,7 +583,7 @@ sealed class TypePage(
 
         @Composable
         private fun RelatesRoleTypesSection() {
-            SectionRow { Form.Text(value = Label.RELATES_ROLE_TYPES) }
+            SectionRow { Form.Text(value = Label.RELATES) }
             RoleTypesTable(type.relatesRoleTypeProperties) { type.undefineRelatesRoleType(it) }
             RelatesRoleTypeAddition()
         }
@@ -597,7 +614,7 @@ sealed class TypePage(
                         selected = overriddenType,
                         placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                         onSelection = { overriddenType = it },
-                        displayFn = { displayName(it, baseFontColor) },
+                        displayFn = { TypeDisplayName(it, baseFontColor) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverridable,
                         values = overridableTypeList
@@ -635,14 +652,14 @@ sealed class TypePage(
         @Composable
         private fun OwnersSection() {
             val tableHeight = Table.ROW_HEIGHT * (type.ownerTypes.size + 1).coerceAtLeast(2)
-            SectionRow { Form.Text(value = Label.OWNER_TYPES) }
+            SectionRow { Form.Text(value = Label.OWNERS) }
             SectionRow {
                 Table.Layout(
                     items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
                     modifier = Modifier.weight(1f).height(tableHeight),
                     columns = listOf(
-                        Table.Column(header = Label.OWNER, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(displayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
+                        Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
+                            ClickableText(TypeDisplayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)
