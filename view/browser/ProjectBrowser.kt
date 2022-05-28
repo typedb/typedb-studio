@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.view.browser
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,8 +68,10 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
             val navState = rememberNavigatorState(
                 container = GlobalState.project.current!!,
                 title = Label.PROJECT_BROWSER,
+                mode = Navigator.Mode.BROWSER,
                 initExpandDepth = 1,
-                liveUpdate = true
+                liveUpdate = true,
+                contextMenuFn = { contextMenuItems(it) }
             ) { projectItemOpen(it) }
             GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
             GlobalState.project.onContentChange = { navState.reloadEntries() }
@@ -79,8 +80,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                 state = navState,
                 modifier = Modifier.fillMaxSize(),
                 iconArg = { projectItemIcon(it) },
-                styleArgs = { projectItemStyles(it) },
-                contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
+                styleArgs = { projectItemStyles(it) }
             )
         }
     }
@@ -125,20 +125,14 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
         return if (itemState.item.isProjectData) listOf(ITALIC, FADED) else listOf()
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun contextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
-    ): List<List<ContextMenu.Item>> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
         return when (itemState.item) {
-            is Directory -> directoryContextMenuItems(itemState, onChangeEntries)
-            is File -> fileContextMenuItems(itemState, onChangeEntries)
+            is Directory -> directoryContextMenuItems(itemState)
+            is File -> fileContextMenuItems(itemState)
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun directoryContextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
-    ): List<List<ContextMenu.Item>> {
+    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
         val createItemDialog = GlobalState.project.createItemDialog
         val directory = itemState.item.asDirectory()
         return listOf(
@@ -176,17 +170,14 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_DIRECTORY_DELETION,
                         message = Sentence.CONFIRM_DIRECTORY_DELETION,
-                        onConfirm = { directory.delete(); onChangeEntries() }
+                        onConfirm = { directory.delete(); itemState.navState.reloadEntries() }
                     )
                 }
             )
         )
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun fileContextMenuItems(
-        itemState: Navigator.ItemState<ProjectItem>, onChangeEntries: () -> Unit
-    ): List<List<ContextMenu.Item>> {
+    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
         val file = itemState.item.asFile()
         return listOf(
             listOf(
@@ -214,7 +205,7 @@ internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen
                     GlobalState.confirmation.submit(
                         title = Label.CONFIRM_FILE_DELETION,
                         message = Sentence.CONFIRM_FILE_DELETION,
-                        onConfirm = { file.delete(); onChangeEntries() }
+                        onConfirm = { file.delete(); itemState.navState.reloadEntries() }
                     )
                 }
             )

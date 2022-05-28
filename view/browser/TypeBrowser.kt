@@ -67,15 +67,16 @@ internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boole
         val navState = rememberNavigatorState(
             container = GlobalState.schema,
             title = Label.TYPE_BROWSER,
+            mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
+            // TODO: contextMenuFn = { contextMenuItems(it) }
         ) { GlobalState.resource.open(it.item) }
         GlobalState.schema.onRootsUpdated = { navState.reloadEntries() }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { typeIcon(it.item) },
-            // TODO: contextMenuFn = { item, onChangeEntries -> contextMenuItems(item, onChangeEntries) }
+            iconArg = { typeIcon(it.item) }
         )
     }
 

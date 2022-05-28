@@ -104,6 +104,11 @@ import mu.KotlinLogging
 
 object Navigator {
 
+    enum class Mode(val clicksToOpenItem: Int) {
+        BROWSER(2),
+        LIST(1),
+    }
+
     @OptIn(ExperimentalTime::class)
     private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
     val ITEM_HEIGHT = 26.dp
@@ -116,7 +121,7 @@ object Navigator {
     private val LOGGER = KotlinLogging.logger {}
 
     class ItemState<T : Navigable<T>> internal constructor(
-        val item: T, internal val parent: ItemState<T>?, private val navState: NavigatorState<T>
+        val item: T, internal val parent: ItemState<T>?, val navState: NavigatorState<T>
     ) : Comparable<ItemState<T>> {
 
         var isExpanded: Boolean by mutableStateOf(false)
@@ -136,7 +141,7 @@ object Navigator {
             return item.compareTo(other.item)
         }
 
-        internal fun isHoverButton(x: Int, y: Int): Boolean {
+        internal fun isHoverExpandButton(x: Int, y: Int): Boolean {
             return isExpandable && buttonArea?.contains(x, y) ?: false
         }
 
@@ -214,12 +219,14 @@ object Navigator {
         }
     }
 
-    class NavigatorState<T : Navigable<T>> constructor(
+    class NavigatorState<T : Navigable<T>>(
         container: Navigable<T>,
         private val title: String,
+        internal val mode: Mode,
         private val initExpandDepth: Int = 0,
         private val liveUpdate: Boolean = false,
         private var coroutineScope: CoroutineScope,
+        internal val contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
         private val openFn: (ItemState<T>) -> Unit
     ) {
         private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this))
@@ -336,22 +343,25 @@ object Navigator {
 
         internal fun open(item: ItemState<T>) {
             openFn(item)
+            if (mode == Mode.LIST) hovered = null
         }
 
-        internal fun selectNext(item: ItemState<T>) {
-            item.next?.let { select(it) }
+        internal fun maySelectNext(item: ItemState<T>) {
+            item.next?.let { maySelect(it) }
         }
 
-        internal fun selectPrevious(item: ItemState<T>) {
-            item.previous?.let { select(it) }
+        internal fun mauSelectPrevious(item: ItemState<T>) {
+            item.previous?.let { maySelect(it) }
         }
 
-        internal fun selectParent(item: ItemState<T>) {
-            item.parent?.let { if (it != container) select(it) }
+        internal fun maySelectParent(item: ItemState<T>) {
+            item.parent?.let { if (it != container) maySelect(it) }
         }
 
-        internal fun select(item: ItemState<T>) {
+        internal fun maySelect(item: ItemState<T>) {
+            if (mode == Mode.LIST) return
             selected = item
+            item.focusReq.requestFocus()
             mayScrollToAndFocusOnSelected()
         }
 
@@ -382,11 +392,15 @@ object Navigator {
 
     @Composable
     fun <T : Navigable<T>> rememberNavigatorState(
-        container: Navigable<T>, title: String, initExpandDepth: Int = 0,
-        liveUpdate: Boolean = false, openFn: (ItemState<T>) -> Unit
+        container: Navigable<T>, title: String, mode: Mode,
+        initExpandDepth: Int = 0, liveUpdate: Boolean = false,
+        contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
+        openFn: (ItemState<T>) -> Unit
     ): NavigatorState<T> {
         val coroutineScope = rememberCoroutineScope()
-        return remember { NavigatorState(container, title, initExpandDepth, liveUpdate, coroutineScope, openFn) }
+        return remember {
+            NavigatorState(container, title, mode, initExpandDepth, liveUpdate, coroutineScope, contextMenuFn, openFn)
+        }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -398,16 +412,17 @@ object Navigator {
         bottomSpace: Dp = BOTTOM_SPACE,
         iconArg: (ItemState<T>) -> IconArg,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
-        contextMenuFn: ((item: ItemState<T>, onChangeEntries: () -> Unit) -> List<List<ContextMenu.Item>>)? = null
     ) {
         val density = LocalDensity.current.density
         val horScrollState = rememberScrollState()
         val verScrollAdapter = rememberScrollbarAdapter(state.scroller)
         val horScrollAdapter = rememberScrollbarAdapter(horScrollState)
         val root: ItemState<T>? = state.entries.firstOrNull()
-        if (state.entries.isNotEmpty()) Box(modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
-            .onGloballyPositioned { state.density = density; state.updateAreaSize(it.size) }) {
-            contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) { state.reloadEntries() } } }
+        if (state.entries.isNotEmpty()) Box(
+            modifier = modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
+                .onGloballyPositioned { state.density = density; state.updateAreaSize(it.size) }
+        ) {
+            state.contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) } }
             LazyColumn(
                 state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
@@ -436,8 +451,11 @@ object Navigator {
             else -> Color.Transparent
         }
 
-        fun onDoublePrimaryReleased(event: MouseEvent) {
-            if (event.button == 1 && event.clickCount == 2 && !item.isHoverButton(event.x, event.y)) state.open(item)
+        fun mayOpenItem(event: MouseEvent) {
+            val isLeftClick = event.button == 1
+            val isOpenClickCount = event.clickCount == state.mode.clicksToOpenItem
+            val isHoverExpandButton = item.isHoverExpandButton(event.x, event.y)
+            if (isLeftClick && isOpenClickCount && !isHoverExpandButton) state.open(item)
         }
 
         Row(
@@ -449,7 +467,7 @@ object Navigator {
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(state, item) }
-                .onPointerEvent(Release) { onDoublePrimaryReleased(it.awtEvent) }
+                .onPointerEvent(Release) { mayOpenItem(it.awtEvent) }
                 .pointerMoveFilter(onEnter = { state.hovered = item; false })
         ) {
             Row(
@@ -508,8 +526,8 @@ object Navigator {
     ) {
         state.contextMenu.onPointerInput(
             pointerInputScope = this,
-            onSinglePrimaryPressed = { state.select(item); item.focusReq.requestFocus() },
-            onSecondaryClick = { state.select(item) }
+            onSinglePrimaryPressed = { state.maySelect(item) },
+            onSecondaryClick = { state.maySelect(item) }
         )
     }
 
@@ -522,25 +540,25 @@ object Navigator {
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {
                     if (state.selected == item) state.open(item)
-                    else state.select(item)
+                    else state.maySelect(item)
                     true
                 }
                 Key.DirectionLeft -> {
                     if (item.isExpanded) item.collapse()
-                    else state.selectParent(item)
+                    else state.maySelectParent(item)
                     true
                 }
                 Key.DirectionRight -> {
                     if (!item.isExpanded) item.expand()
-                    else state.selectNext(item)
+                    else state.maySelectNext(item)
                     true
                 }
                 Key.DirectionUp -> {
-                    state.selectPrevious(item)
+                    state.mauSelectPrevious(item)
                     true
                 }
                 Key.DirectionDown -> {
-                    state.selectNext(item)
+                    state.maySelectNext(item)
                     true
                 }
                 else -> false
