@@ -630,11 +630,6 @@ sealed class TypePage(
             OwnersSection()
             Separator()
             SubtypesSection()
-            AdvanceSections { separator ->
-                OwnsAttributeTypesSection()
-                separator()
-                PlaysRoleTypesSection()
-            }
         }
 
         @Composable
