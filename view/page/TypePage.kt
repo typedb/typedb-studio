@@ -180,7 +180,10 @@ sealed class TypePage(
                     icon = if (showAdvance) Icon.Code.CHEVRON_UP else Icon.Code.CHEVRON_DOWN
                 ) { showAdvance = !showAdvance }
             }
-            if (showAdvance) sections { Separator(borderColor) }
+            if (showAdvance) {
+                Separator(borderColor)
+                sections { Separator(borderColor) }
+            }
             Separator(borderColor)
         }
     }
