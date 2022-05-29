@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.page
+package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -26,39 +26,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
-import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
-import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
-import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 abstract class Page {
 
     companion object {
-
         private val CONTENT_MIN_HEIGHT = 64.dp
         private val RUN_PANEL_MIN_HEIGHT = 64.dp
-
-        @Composable
-        fun of(resource: Resource): Page {
-            return when (resource) {
-                is File -> FilePage.create(resource)
-                is TypeState.Thing -> TypePage.create(resource)
-                else -> throw IllegalStateException("Unrecognised resource type")
-            }
-        }
     }
 
-
     private var frameState: Frame.FrameState? by mutableStateOf(null)
-    internal var tabSize by mutableStateOf(0.dp)
-
     protected abstract val hasSecondary: Boolean
-    internal abstract val icon: IconArg
+    abstract val icon: IconArg
 
     abstract fun updateResource(resource: Resource)
 
@@ -74,13 +56,13 @@ abstract class Page {
             frameState = createFrameState(
                 separator = Frame.SeparatorArgs(Separator.WEIGHT),
                 Frame.Pane(
-                    id = Page::class.java.canonicalName,
+                    id = Page::class.java.canonicalName + ".primary",
                     order = 1,
                     minSize = CONTENT_MIN_HEIGHT,
                     initSize = Either.second(1f)
                 ) { PrimaryContent() },
                 Frame.Pane(
-                    id = RunOutputArea::class.java.canonicalName,
+                    id = Page::class.java.canonicalName + ".secondary",
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
                     initSize = Either.first(PANEL_BAR_HEIGHT),
@@ -92,8 +74,11 @@ abstract class Page {
     }
 
     @Composable
-    internal fun Layout() {
+    fun Layout() {
         if (!hasSecondary) PrimaryContent()
-        else Frame.Column(state = frameState(), modifier = Modifier.fillMaxSize())
+        else Frame.Column(
+            state = frameState(),
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

@@ -21,20 +21,15 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 package(default_visibility = ["//view:__pkg__"])
 
 kt_jvm_library(
-    name = "page",
+    name = "types",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/app:app",
-        "//state/common:common",
-        "//state/connection:connection",
         "//state/project:project",
         "//state/resource:resource",
         "//state/schema:schema",
         "//state:state",
         "//view/common:common",
-        "//view/editor:editor",
-        "//view/output:output",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
@@ -51,7 +46,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-page:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-types:{pom_version}"],
 )
 
 checkstyle_test(

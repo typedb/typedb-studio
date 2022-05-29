@@ -77,7 +77,6 @@ import com.vaticle.typedb.studio.view.dialog.ConfirmationDialog
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 import com.vaticle.typedb.studio.view.dialog.ProjectDialog
-import com.vaticle.typedb.studio.view.page.PageArea
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager

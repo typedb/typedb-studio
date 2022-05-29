@@ -18,31 +18,26 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//view/project:__pkg__"])
+package(default_visibility = ["//view:__pkg__"])
 
 kt_jvm_library(
-    name = "output",
+    name = "project",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/app:app",
-        "//state/common:common",
-        "//state/connection:connection",
+#        "//state/app:app",
+#        "//state/common:common",
+#        "//state/connection:connection",
+        "//state/project:project",
         "//state/resource:resource",
-        "//state:state",
+#        "//state/schema:schema",
+#        "//state:state",
         "//view/common:common",
         "//view/editor:editor",
-        "//view/highlighter:highlighter",
+        "//view/output:output",
 
         # External Vaticle Dependencies
-        "@vaticle_force_graph//:force_graph",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_client_java//api:api",
-        "@vaticle_typedb_client_java//common:common",
-        "@vaticle_typeql_lang_java//:typeql-lang",
-        "@vaticle_typeql_lang_java//common:common",
-        "@vaticle_typeql_lang_java//pattern:pattern",
-        "@vaticle_typeql_lang_java//query:query",
+#        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -50,14 +45,13 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-output:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-project:{pom_version}"],
 )
 
 checkstyle_test(

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.page
+package com.vaticle.typedb.studio.view
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
@@ -41,7 +41,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
@@ -51,6 +53,9 @@ import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.component.Page
+import com.vaticle.typedb.studio.view.project.FilePage
+import com.vaticle.typedb.studio.view.types.TypePage
 import kotlinx.coroutines.CoroutineScope
 
 object PageArea {
@@ -81,7 +86,7 @@ object PageArea {
         @Composable
         internal fun openedPages(resource: Resource): Page {
             return openedPages.getOrPut(resource) {
-                val page = Page.of(resource)
+                val page = createPage(resource)
                 resource.onClose { openedPages.remove(it) }
                 resource.onReopen {
                     page.updateResource(it)
@@ -89,6 +94,12 @@ object PageArea {
                 }
                 page
             }
+        }
+
+        private fun createPage(resource: Resource) = when (resource) {
+            is File -> FilePage.create(resource)
+            is TypeState.Thing -> TypePage.create(resource)
+            else -> throw IllegalStateException("Unrecognised resource type")
         }
 
         internal fun createAndOpenNewFile(): Boolean {

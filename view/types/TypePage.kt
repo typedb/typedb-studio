@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.page
+package com.vaticle.typedb.studio.view.types
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -70,6 +70,7 @@ import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Navigator
+import com.vaticle.typedb.studio.view.common.component.Page
 import com.vaticle.typedb.studio.view.common.component.Scrollbar
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.component.Table
