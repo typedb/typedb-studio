@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view.users
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
@@ -24,14 +24,14 @@ import com.vaticle.typedb.studio.view.common.component.Browser
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.component.Icon
 
-class RoleBrowser constructor(
+class UserBrowser constructor(
     isOpen: Boolean = false,
     order: Int,
     onUpdatePane: () -> Unit
 ) : Browser(isOpen, order, onUpdatePane) {
 
-    override val label: String = Label.ROLES
-    override val icon: Icon.Code = Icon.Code.USER_GROUP
+    override val label: String = Label.USERS
+    override val icon: Icon.Code = Icon.Code.USER
     override val isActive: Boolean get() = false // TODO
     override val buttons: List<IconButtonArg> = listOf()
 
