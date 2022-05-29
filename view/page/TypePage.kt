@@ -93,6 +93,9 @@ sealed class TypePage(
     private var width: Dp by mutableStateOf(0.dp)
     protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
     private var showAdvance by mutableStateOf(showAdvance)
+    private var showEditLabelDialog by mutableStateOf(false)
+    private var showEditSupertypeDialog by mutableStateOf(false)
+    private var showEditAbstractDialog by mutableStateOf(false)
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
@@ -139,7 +142,25 @@ sealed class TypePage(
             Scrollbar.Vertical(rememberScrollbarAdapter(verScroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
         }
+        if (showEditLabelDialog) EditLabelDialog()
+        if (showEditSupertypeDialog) EditSupertypeDialog()
+        if (showEditAbstractDialog) EditAbstractDialog()
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
+    }
+
+    @Composable
+    private fun EditLabelDialog() {
+
+    }
+
+    @Composable
+    private fun EditSupertypeDialog() {
+
+    }
+
+    @Composable
+    private fun EditAbstractDialog() {
+
     }
 
     @Composable
@@ -192,7 +213,7 @@ sealed class TypePage(
 
     @Composable
     private fun TypeSections() {
-        TitleSection()
+        LabelSection()
         Separator()
         SupertypeSection()
         Separator()
@@ -203,7 +224,7 @@ sealed class TypePage(
     }
 
     @Composable
-    private fun TitleSection() {
+    private fun LabelSection() {
         SectionRow {
             Form.TextBox(text = TypeDisplayName(type), leadingIcon = typeIcon(type))
             EditButton { } // TODO
