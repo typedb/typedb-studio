@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.dialog
+package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -39,8 +39,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Dialog
-import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.theme.Theme

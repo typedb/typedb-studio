@@ -72,7 +72,7 @@ import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
-import com.vaticle.typedb.studio.view.dialog.ConfirmationDialog
+import com.vaticle.typedb.studio.view.common.component.ConfirmationDialog
 import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
 import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
 import com.vaticle.typedb.studio.view.project.ProjectDialog
