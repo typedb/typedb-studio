@@ -73,8 +73,8 @@ import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.view.common.component.ConfirmationDialog
-import com.vaticle.typedb.studio.view.dialog.ConnectionDialog
-import com.vaticle.typedb.studio.view.dialog.DatabaseDialog
+import com.vaticle.typedb.studio.view.connection.ServerDialog
+import com.vaticle.typedb.studio.view.connection.DatabaseDialog
 import com.vaticle.typedb.studio.view.project.ProjectDialog
 import java.awt.Window
 import java.awt.event.WindowEvent
@@ -222,7 +222,7 @@ object Studio {
                 }
                 if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
                 if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
-                if (GlobalState.client.connectServerDialog.isOpen) ConnectionDialog.ConnectServer()
+                if (GlobalState.client.connectServerDialog.isOpen) ServerDialog.ConnectServer()
                 if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
                 if (GlobalState.client.selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
                 if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()

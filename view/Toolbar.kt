@@ -56,7 +56,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SPACING
-import com.vaticle.typedb.studio.view.dialog.DatabaseDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.view.connection.DatabaseDialog.DatabaseDropdown
 
 object Toolbar {
 

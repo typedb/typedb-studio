@@ -34,7 +34,7 @@ kt_jvm_library(
         "//state:state",
         "//view/browser:browser",
         "//view/common:common",
-        "//view/dialog:dialog",
+        "//view/connection:connection",
         "//view/project:project",
         "//view/types:types",
 

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.dialog
+package com.vaticle.typedb.studio.view.connection
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -52,7 +52,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-object ConnectionDialog {
+object ServerDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 340.dp

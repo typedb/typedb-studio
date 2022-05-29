@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.dialog
+package com.vaticle.typedb.studio.view.connection
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
