@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view.types
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.typeIcon
+import com.vaticle.typedb.studio.view.common.component.Browser
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
@@ -44,8 +45,11 @@ import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigat
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 
-internal class TypeBrowser(state: BrowserArea.State, order: Int, initOpen: Boolean = false) :
-    Browser(state, order, initOpen) {
+class TypeBrowser constructor(
+    isOpen: Boolean = false,
+    order: Int,
+    onUpdatePane: () -> Unit
+) : Browser(isOpen, order, onUpdatePane) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,41 +35,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 
-abstract class Browser(
-    private val areaState: BrowserArea.State,
-    internal val order: Int, initOpen: Boolean = false
+abstract class Browser constructor(
+    isOpen: Boolean = false,
+    val order: Int,
+    val onUpdatePane: () -> Unit
 ) {
 
     companion object {
-        internal val MIN_HEIGHT = 80.dp
+        val MIN_HEIGHT = 80.dp
     }
 
-    internal abstract val label: String
-    internal abstract val icon: Icon.Code
-    internal abstract val isActive: Boolean
-    internal abstract val buttons: List<IconButtonArg>
+    abstract val label: String
+    abstract val icon: Icon.Code
+    abstract val isActive: Boolean
+    abstract val buttons: List<IconButtonArg>
 
-    internal var isOpen: Boolean by mutableStateOf(initOpen)
+    var isOpen: Boolean by mutableStateOf(isOpen)
 
     @Composable
     abstract fun BrowserLayout()
 
     fun toggle() {
         isOpen = !isOpen
-        areaState.mayUpdatePaneState()
+        onUpdatePane()
     }
 
 
     @Composable
-    internal fun Layout() {
+    fun Layout() {
         Column {
             Bar()
             Separator.Horizontal()

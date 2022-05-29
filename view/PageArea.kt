@@ -96,6 +96,7 @@ object PageArea {
             }
         }
 
+        @Composable
         private fun createPage(resource: Resource) = when (resource) {
             is File -> FilePage.create(resource)
             is TypeState.Thing -> TypePage.create(resource)

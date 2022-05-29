@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view.project
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.view.common.component.Browser
 import com.vaticle.typedb.studio.view.common.component.ContextMenu
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.IconArg
@@ -49,8 +50,11 @@ import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
 import mu.KotlinLogging
 
-internal class ProjectBrowser(areaState: BrowserArea.State, order: Int, initOpen: Boolean = false) :
-    Browser(areaState, order, initOpen) {
+class ProjectBrowser constructor(
+    order: Int,
+    initOpen: Boolean = false,
+    onUpdatePane: () -> Unit
+) : Browser(initOpen, order, onUpdatePane) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

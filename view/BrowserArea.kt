@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.browser
+package com.vaticle.typedb.studio.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,11 +48,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.view.common.component.Browser
+import com.vaticle.typedb.studio.view.types.TypeBrowser
 import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.project.ProjectBrowser
 
 object BrowserArea {
 
@@ -69,11 +72,11 @@ object BrowserArea {
         private var unfreezeSize: Dp by mutableStateOf(MIN_WIDTH)
         internal val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }
         internal val browsers = listOf(
-            ProjectBrowser(this, 1, true),
-            TypeBrowser(this, 2, true),
-//            RuleBrowser(this, 3),
-//            UserBrowser(this, 4),
-//            RoleBrowser(this, 5)
+            ProjectBrowser(1, true) { mayUpdatePaneState() },
+            TypeBrowser(true, 2) { mayUpdatePaneState() },
+//            RuleBrowser(false, 3) { mayUpdatePaneState() },
+//            UserBrowser(false, 4) { mayUpdatePaneState() },
+//            RoleBrowser(false, 5) { mayUpdatePaneState() },
         )
 
         fun mayUpdatePaneState() {
