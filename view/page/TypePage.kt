@@ -82,8 +82,9 @@ sealed class TypePage(
     type: TypeState.Thing,
     showAdvance: Boolean = false,
     coroutineScope: CoroutineScope
-) : Page(type) {
+) : Page() {
 
+    override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = typeIcon(type)
     protected abstract val type: TypeState.Thing
 
@@ -131,7 +132,7 @@ sealed class TypePage(
     abstract fun MainSections()
 
     @Composable
-    override fun Content() {
+    override fun PrimaryContent() {
         val density = LocalDensity.current.density
         val bgColor = Theme.studio.background0
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
@@ -569,7 +570,7 @@ sealed class TypePage(
         override var type: TypeState.Entity, coroutineScope: CoroutineScope
     ) : TypePage(type, false, coroutineScope) {
 
-        override fun updateResourceInner(resource: Resource) {
+        override fun updateResource(resource: Resource) {
             type = resource as TypeState.Entity
         }
 
@@ -588,7 +589,7 @@ sealed class TypePage(
         override var type: TypeState.Relation, coroutineScope: CoroutineScope
     ) : TypePage(type, type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResourceInner(resource: Resource) {
+        override fun updateResource(resource: Resource) {
             type = resource as TypeState.Relation
         }
 
@@ -661,7 +662,7 @@ sealed class TypePage(
         override var type: TypeState.Attribute, coroutineScope: CoroutineScope
     ) : TypePage(type, type.ownsAttributeTypes.isNotEmpty() || type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResourceInner(resource: Resource) {
+        override fun updateResource(resource: Resource) {
             type = resource as TypeState.Attribute
         }
 

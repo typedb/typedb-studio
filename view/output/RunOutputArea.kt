@@ -59,7 +59,7 @@ object RunOutputArea {
     class State constructor(
         var resource: Resource.Runnable,
         private val paneState: Frame.PaneState,
-        private val coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope
     ) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)

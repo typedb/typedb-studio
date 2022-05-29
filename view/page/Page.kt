@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -36,9 +35,8 @@ import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.output.RunOutputArea
-import kotlinx.coroutines.CoroutineScope
 
-abstract class Page(var resource: Resource) {
+abstract class Page {
 
     companion object {
 
@@ -55,33 +53,23 @@ abstract class Page(var resource: Resource) {
         }
     }
 
-    private var runOutputState: RunOutputArea.State? by mutableStateOf(null)
+
     private var frameState: Frame.FrameState? by mutableStateOf(null)
     internal var tabSize by mutableStateOf(0.dp)
 
+    protected abstract val hasSecondary: Boolean
     internal abstract val icon: IconArg
 
-    internal abstract fun updateResourceInner(resource: Resource)
+    abstract fun updateResource(resource: Resource)
 
     @Composable
-    abstract fun Content()
-
-    fun updateResource(resource: Resource) {
-        this.resource = resource
-        runOutputState?.let { it.resource = resource.asRunnable() }
-        updateResourceInner(resource)
-    }
+    abstract fun PrimaryContent()
 
     @Composable
-    private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
-        if (runOutputState == null) {
-            runOutputState = RunOutputArea.State(resource.asRunnable(), paneState, coroutineScope)
-        }
-        return runOutputState!!
-    }
+    protected open fun SecondaryContent(paneState: Frame.PaneState) {}
 
     @Composable
-    private fun frameState(coroutineScope: CoroutineScope): Frame.FrameState {
+    private fun frameState(): Frame.FrameState {
         if (frameState == null) {
             frameState = createFrameState(
                 separator = Frame.SeparatorArgs(Separator.WEIGHT),
@@ -90,14 +78,14 @@ abstract class Page(var resource: Resource) {
                     order = 1,
                     minSize = CONTENT_MIN_HEIGHT,
                     initSize = Either.second(1f)
-                ) { Content() },
+                ) { PrimaryContent() },
                 Frame.Pane(
                     id = RunOutputArea::class.java.canonicalName,
                     order = 2,
                     minSize = RUN_PANEL_MIN_HEIGHT,
                     initSize = Either.first(PANEL_BAR_HEIGHT),
                     initFreeze = true
-                ) { paneState -> RunOutputArea.Layout(runOutputState(paneState, coroutineScope)) }
+                ) { paneState -> SecondaryContent(paneState) }
             )
         }
         return frameState!!
@@ -105,7 +93,7 @@ abstract class Page(var resource: Resource) {
 
     @Composable
     internal fun Layout() {
-        if (!resource.isRunnable) Content()
-        else Frame.Column(state = frameState(rememberCoroutineScope()), modifier = Modifier.fillMaxSize())
+        if (!hasSecondary) PrimaryContent()
+        else Frame.Column(state = frameState(), modifier = Modifier.fillMaxSize())
     }
 }

@@ -20,23 +20,33 @@ package com.vaticle.typedb.studio.view.page
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.common.component.Frame
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import com.vaticle.typedb.studio.view.output.RunOutputArea
+import kotlinx.coroutines.CoroutineScope
 
 class FilePage private constructor(
     private var file: File,
     private val editor: TextEditor.State
-) : Page(file) {
+) : Page() {
 
+    override val hasSecondary: Boolean = true
     override val icon: Form.IconArg = when {
         file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
         else -> Form.IconArg(Icon.Code.FILE_LINES)
     }
+
+    private var runOutputState: RunOutputArea.State? by mutableStateOf(null)
 
     companion object {
         @Composable
@@ -45,14 +55,25 @@ class FilePage private constructor(
         }
     }
 
-    override fun updateResourceInner(resource: Resource) {
+    override fun updateResource(resource: Resource) {
         // TODO: guarantee that new file has identical content as previous, or update content.
+        runOutputState?.let { it.resource = resource.asRunnable() }
         file = resource as File
         editor.updateFile(file)
     }
 
+    private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
+        if (runOutputState == null) runOutputState = RunOutputArea.State(file, paneState, coroutineScope)
+        return runOutputState!!
+    }
+
     @Composable
-    override fun Content() {
+    override fun PrimaryContent() {
         TextEditor.Layout(state = editor, modifier = Modifier.fillMaxSize())
+    }
+
+    @Composable
+    override fun SecondaryContent(paneState: Frame.PaneState) {
+        RunOutputArea.Layout(runOutputState(paneState, rememberCoroutineScope()))
     }
 }
