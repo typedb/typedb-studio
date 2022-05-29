@@ -16,10 +16,9 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.dialog
+package com.vaticle.typedb.studio.view.project
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +47,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.Submission
 import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Tooltip
+import com.vaticle.typedb.studio.view.common.component.Dialog
 import java.awt.FileDialog
 import javax.swing.JFileChooser
 import kotlin.io.path.Path

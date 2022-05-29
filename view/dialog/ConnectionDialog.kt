@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.view.common.component.Dialog
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Checkbox
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown

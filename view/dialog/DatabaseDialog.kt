@@ -40,6 +40,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.component.ActionableList
+import com.vaticle.typedb.studio.view.common.component.Dialog
 import com.vaticle.typedb.studio.view.common.component.Form
 import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
 import com.vaticle.typedb.studio.view.common.component.Form.FIELD_HEIGHT
@@ -52,7 +53,7 @@ import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.dialog.Dialog.DIALOG_SPACING
+import com.vaticle.typedb.studio.view.common.component.Dialog.DIALOG_SPACING
 
 object DatabaseDialog {
 

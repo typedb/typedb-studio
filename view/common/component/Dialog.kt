@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.dialog
+package com.vaticle.typedb.studio.view.common.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 
 object Dialog {
 
-    internal val DIALOG_SPACING = 16.dp
+    val DIALOG_SPACING = 16.dp
 
     private fun handleKeyEvent(event: KeyEvent, state: DialogManager): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
