@@ -647,6 +647,7 @@ sealed class TypePage(
             OwnersSection()
             Separator()
             SubtypesSection()
+            Separator()
         }
 
         @Composable
