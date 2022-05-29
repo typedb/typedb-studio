@@ -111,6 +111,7 @@ sealed class TypePage(
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
+        private const val MAX_VISIBLE_SUBTYPES = 10
 
         @Composable
         fun create(type: TypeState.Thing): TypePage {
@@ -426,12 +427,13 @@ sealed class TypePage(
 
     @Composable
     protected fun SubtypesSection() {
+        val visibleSize = type.subtypes.size.coerceAtMost(MAX_VISIBLE_SUBTYPES)
         SectionRow { Form.Text(value = Label.SUBTYPES) }
         SectionRow {
             Navigator.Layout(
                 state = subtypesNavState,
                 modifier = Modifier.weight(1f)
-                    .height((Navigator.ITEM_HEIGHT * type.subtypes.size).coerceAtLeast(EMPTY_BOX_HEIGHT))
+                    .height((Navigator.ITEM_HEIGHT * visibleSize).coerceAtLeast(EMPTY_BOX_HEIGHT))
                     .border(1.dp, Theme.studio.border)
                     .background(Theme.studio.background1),
                 itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
