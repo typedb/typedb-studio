@@ -74,15 +74,15 @@ class TransactionState constructor(
     val transaction get() = _transaction // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
 
     val snapshot = ConfigState(
-        activatedFn = { it || type.isWrite },
+        valueFn = { it || type.isWrite },
         enabledFn = { session.isOpen && !type.isWrite }
     )
     val infer = ConfigState(
-        activatedFn = { it && !type.isWrite },
+        valueFn = { it && !type.isWrite },
         enabledFn = { session.isOpen && !type.isWrite }
     )
     val explain = ConfigState(
-        activatedFn = { it && infer.value && snapshot.value },
+        valueFn = { it && infer.value && snapshot.value },
         enabledFn = { session.isOpen && infer.value && snapshot.value }
     )
 
