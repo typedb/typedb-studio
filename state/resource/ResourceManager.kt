@@ -90,7 +90,7 @@ class ResourceManager(
 
     fun openAndMayRun(resource: Resource.Runnable, content: String = resource.runContent) {
         open(resource)
-        client.runner(content) { resource.runner.launch(it) }
+        client.runner(content)?.let { resource.runner.launch(it) }
     }
 
     fun close(resource: Resource) {

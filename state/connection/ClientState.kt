@@ -181,19 +181,19 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
-    fun runner(content: String, onSuccess: (QueryRunner) -> Unit) {
-        if (!isReadyToRunQuery) return
-        if (isScriptMode) scriptRunner(content, onSuccess)
-        else if (isInteractiveMode) queryRunner(content, onSuccess)
+    fun runner(content: String): QueryRunner? {
+        return if (!isReadyToRunQuery) null
+        else if (isScriptMode) scriptRunner(content)
+        else if (isInteractiveMode) queryRunner(content)
         else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
-    private fun scriptRunner(content: String, onSuccess: (QueryRunner) -> Unit) = runAsyncCommand {
-        // TODO
+    private fun scriptRunner(content: String): QueryRunner? {
+        return null // TODO
     }
 
-    private fun queryRunner(content: String, onSuccess: (QueryRunner) -> Unit) = runAsyncCommand {
-        session.transaction.queryRunner(content)?.let { onSuccess(it) }
+    private fun queryRunner(content: String): QueryRunner? {
+        return session.transaction.queryRunner(content)
     }
 
     fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = runAsyncCommand {
