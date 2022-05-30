@@ -91,7 +91,7 @@ internal object LogOutput : RunOutput() {
             GlobalState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
         }
 
-        internal fun outputFn(message: Response.Message): () -> Unit = {
+        internal fun output(message: Response.Message) {
             editorState.content.addAll(message.text.split("\n").map {
                 when (message.type) {
                     INFO -> AnnotatedString(it)
@@ -101,7 +101,7 @@ internal object LogOutput : RunOutput() {
             })
         }
 
-        internal fun outputFn(numeric: Numeric): () -> Unit = { outputTypeQL(numeric.toString()) }
+        internal fun output(numeric: Numeric) = outputTypeQL(numeric.toString())
 
         internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
             val output = loadToString(conceptMap)
@@ -110,11 +110,13 @@ internal object LogOutput : RunOutput() {
 
         internal fun outputFn(conceptMapGroup: ConceptMapGroup): () -> Unit {
             val output = loadToString(conceptMapGroup)
+            println("group output string constructed: " + output)
             return { outputTypeQL(output) }
         }
 
         internal fun outputFn(numericGroup: NumericGroup): () -> Unit {
             val output = loadToString(numericGroup)
+            println("group numeric output string constructed: " + output)
             return { outputTypeQL(output) }
         }
 

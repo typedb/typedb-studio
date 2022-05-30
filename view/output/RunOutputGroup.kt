@@ -130,11 +130,15 @@ internal class RunOutputGroup constructor(
 
     private fun consumeResponse(response: Response) {
         when (response) {
-            is Response.Message -> collectSerial { logOutput.outputFn(response).invoke() }
-            is Response.Numeric -> collectSerial { logOutput.outputFn(response.value).invoke() }
+            is Response.Message -> collectSerial { logOutput.output(response) }
+            is Response.Numeric -> collectSerial { logOutput.output(response.value) }
             is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
-                is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) { logOutput.outputFn(it) }
+                is Response.Stream.NumericGroups -> consumeResponseStream(response) {
+                    collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
+                }
+                is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) {
+                    collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
+                }
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
                         transaction = runner.transactionState, number = tableCount.incrementAndGet()
