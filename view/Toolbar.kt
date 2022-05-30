@@ -375,7 +375,7 @@ object Toolbar {
                     ToolbarIconButton(
                         icon = Icon.Code.XMARK,
                         onClick = { GlobalState.client.closeTransaction() },
-                        color = Theme.studio.error,
+                        color = Theme.studio.error2,
                         enabled = enabled,
                         tooltip = Tooltip.Arg(
                             title = Label.CLOSE_TRANSACTION,
@@ -450,7 +450,7 @@ object Toolbar {
         private fun StopButton() {
             ToolbarIconButton(
                 icon = Icon.Code.BOLT,
-                color = Theme.studio.error,
+                color = Theme.studio.error2,
                 onClick = { GlobalState.client.sendStopSignal() },
                 enabled = hasRunningQuery && !hasStopSignal,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)

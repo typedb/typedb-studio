@@ -480,8 +480,8 @@ sealed class TypePage(
     private fun DeleteButton() {
         Form.TextButton(
             text = Label.DELETE,
-            textColor = Theme.studio.error,
-            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.error },
+            textColor = Theme.studio.error2,
+            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.error2 },
             enabled = isEditable,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { } // TODO
@@ -545,7 +545,7 @@ sealed class TypePage(
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
             modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
-            iconColor = Theme.studio.error,
+            iconColor = Theme.studio.error2,
             enabled = isEditable,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
