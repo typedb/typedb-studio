@@ -433,7 +433,7 @@ object TextToolbar {
             value = state.status,
             overflow = TextOverflow.Ellipsis,
             modifier = modifier,
-            color = if (state.hasFindMatches) Theme.studio.secondary else Theme.studio.error2
+            color = if (state.hasFindMatches) Theme.studio.secondary else Theme.studio.error
         )
     }
 

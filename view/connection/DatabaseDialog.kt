@@ -113,7 +113,7 @@ object DatabaseDialog {
             buttonFn = { databaseName ->
                 IconButtonArg(
                     icon = Icon.Code.TRASH_CAN,
-                    color = { Theme.studio.error2 },
+                    color = { Theme.studio.error },
                     onClick = {
                         GlobalState.confirmation.submit(
                             title = Label.DELETE_DATABASE,

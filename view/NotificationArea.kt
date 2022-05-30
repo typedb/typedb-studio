@@ -107,7 +107,7 @@ object NotificationArea {
         return when (type) {
             INFO -> ColorArgs(Theme.studio.border, Theme.studio.onSurface)
             WARNING -> ColorArgs(Theme.studio.warning, Theme.studio.onSecondary)
-            ERROR -> ColorArgs(Theme.studio.error, Theme.studio.onError)
+            ERROR -> ColorArgs(Theme.studio.error2, Theme.studio.onError)
         }
     }
 }

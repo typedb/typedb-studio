@@ -209,7 +209,7 @@ object ServerDialog {
         val statusText = "${Label.STATUS}: ${GlobalState.client.status.name.lowercase()}"
         Text(
             value = statusText, color = when (GlobalState.client.status) {
-                DISCONNECTED -> Theme.studio.error2
+                DISCONNECTED -> Theme.studio.error
                 CONNECTING -> Theme.studio.warning2
                 CONNECTED -> Theme.studio.secondary
             }
@@ -226,7 +226,7 @@ object ServerDialog {
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.error2) { GlobalState.client.close() }
+        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.error) { GlobalState.client.close() }
         FormRowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

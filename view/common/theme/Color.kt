@@ -90,8 +90,8 @@ object Color {
         val Purple6 = Color(0xFF392D7F)
         val Purple7 = Color(0xFF544899)
         val Purple8 = Color(0xFF888DCA)
-        val Red1 = Color(0xFFFA5765)
-        val Red2 = Color(0xFFF66B65)
+        val Red1 = Color(0xFFF66B65)
+        val Red2 = Color(0xFFFA5765)
         val White = Color(0xFFFFFFFF)
         val White2 = Color(0xFFd5ccff)
     }
@@ -137,7 +137,7 @@ object Color {
             edge = DarkPalette.Blue1,
             edgeLabel = DarkPalette.Blue1,
             inferred = DarkPalette.Green,
-            explanation = DarkPalette.Red1,
+            explanation = DarkPalette.Red2,
         )
     }
 
@@ -164,7 +164,7 @@ object Color {
             secondaryVariant = __UNUSED_COLOR__,
             background = colors.background1,
             surface = colors.surface,
-            error = colors.error,
+            error = colors.error2,
             onPrimary = colors.onPrimary,
             onSecondary = __UNUSED_COLOR__,
             onBackground = colors.onBackground,

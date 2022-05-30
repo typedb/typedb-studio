@@ -135,7 +135,7 @@ internal object LogOutput : RunOutput() {
             val style = SpanStyle(
                 color = when (type) {
                     SUCCESS -> colors.secondary
-                    ERROR -> colors.error2
+                    ERROR -> colors.error
                     else -> throw IllegalArgumentException()
                 }
             )

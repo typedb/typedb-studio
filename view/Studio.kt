@@ -249,7 +249,7 @@ object Studio {
             val clipboard = LocalClipboardManager.current
             val labelModifier = Modifier.width(ERROR_WINDOW_LABEL_WIDTH)
             val labelStyle = Theme.typography.body1.copy(fontWeight = FontWeight.Bold)
-            val contentColor = Theme.studio.error2
+            val contentColor = Theme.studio.error
             val contentModifier = Modifier.fillMaxWidth().border(1.dp, Theme.studio.border)
                 .background(Theme.studio.background0).padding(horizontal = ERROR_WINDOW_CONTENT_PADDING)
 
