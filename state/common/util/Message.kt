@@ -72,7 +72,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
         Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
 
         companion object {
-            private const val CODE_PREFIX = "CON"
+            private const val CODE_PREFIX = "CNX"
             private const val MESSAGE_PREFIX = "TypeDB Connection"
 
             val UNEXPECTED_ERROR =
