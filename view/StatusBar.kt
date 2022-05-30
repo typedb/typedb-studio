@@ -25,8 +25,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
@@ -34,6 +37,7 @@ import com.vaticle.typedb.studio.state.app.StatusManager
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.material.Tooltip
 
 object StatusBar {
 
@@ -52,21 +56,27 @@ object StatusBar {
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.width(PADDING))
             StatusManager.Key.values().reversed().forEach {
-                val status = statusMgr.statuses[it]
-                if (!status.isNullOrEmpty()) {
+                val statusValue = statusMgr.statuses[it]
+                if (!statusValue.isNullOrEmpty()) {
                     Separator.Vertical()
-                    StatusDisplay(status, fontStyle)
+                    StatusDisplay(it.displayName, statusValue, fontStyle)
                 }
             }
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun StatusDisplay(status: String, fontStyle: TextStyle) {
-        Column {
+    private fun StatusDisplay(statusName: String, statusValue: String, fontStyle: TextStyle) {
+        val tooltipState: Tooltip.State = remember { Tooltip.State(Tooltip.Arg(statusName)) }
+        Tooltip.Popup(tooltipState)
+        Column(Modifier.pointerMoveFilter(
+            onEnter = { tooltipState.mayShowOnTargetHover(); false },
+            onExit = { tooltipState.mayHideOnTargetExit(); false }
+        )) {
             Row {
                 Spacer(Modifier.width(PADDING))
-                Form.Text(value = status, textStyle = fontStyle)
+                Form.Text(value = statusValue, textStyle = fontStyle)
                 Spacer(Modifier.width(PADDING))
             }
             Spacer(Modifier.height(2.dp))

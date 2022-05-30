@@ -30,9 +30,10 @@ class StatusManager {
      * The order of keys defined in this enum determine the order in which they
      * get displayed on the status bar.
      */
-    enum class Key {
-        TEXT_POSITION,
-        QUERY_RESPONSE_TIME,
+    enum class Key(val displayName: String) {
+        TEXT_CURSOR_POSITION("Text Cursor Position"),
+        OUTPUT_RESPONSE_TIME("Output (Log/Table/Graph) Response Time"),
+        QUERY_RESPONSE_TIME("Query Response Time"),
     }
 
     val statuses: SnapshotStateMap<Key, String> = mutableStateMapOf()

@@ -92,7 +92,7 @@ object Tooltip {
             isOpen = true
         }
 
-        internal fun mayShowOnTargetHover() {
+        fun mayShowOnTargetHover() {
             if (mouseHoverDisabled.get()) return
             mouseHoverTarget.set(true)
             coroutineScope.launch {
@@ -101,7 +101,7 @@ object Tooltip {
             }
         }
 
-        internal fun mayHideOnTargetExit() {
+        fun mayHideOnTargetExit() {
             mouseHoverTarget.set(false)
             delayHide()
         }

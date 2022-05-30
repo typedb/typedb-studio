@@ -32,7 +32,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_POSITION
+import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
@@ -235,11 +235,11 @@ internal class InputTarget constructor(
     }
 
     internal fun updateStatus() {
-        GlobalState.status.publish(TEXT_POSITION, selection?.label() ?: cursor.label())
+        GlobalState.status.publish(TEXT_CURSOR_POSITION, selection?.label() ?: cursor.label())
     }
 
     internal fun clearStatus() {
-        GlobalState.status.clear(TEXT_POSITION)
+        GlobalState.status.clear(TEXT_CURSOR_POSITION)
     }
 
     private fun mayScrollToCursor() {
