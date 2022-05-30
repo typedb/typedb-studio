@@ -69,11 +69,11 @@ object Toolbar {
     private val isDataSession get() = GlobalState.client.session.isData
     private val isReadTransaction get() = GlobalState.client.session.transaction.isRead
     private val isWriteTransaction get() = GlobalState.client.session.transaction.isWrite
-    private val isSnapshotActivated get() = GlobalState.client.session.transaction.snapshot.activated
+    private val isSnapshotActivated get() = GlobalState.client.session.transaction.snapshot.value
     private val isSnapshotEnabled get() = GlobalState.client.session.transaction.snapshot.enabled
-    private val isInferActivated get() = GlobalState.client.session.transaction.infer.activated
+    private val isInferActivated get() = GlobalState.client.session.transaction.infer.value
     private val isInferEnabled get() = GlobalState.client.session.transaction.infer.enabled
-    private val isExplainActivated get() = GlobalState.client.session.transaction.explain.activated
+    private val isExplainActivated get() = GlobalState.client.session.transaction.explain.value
     private val isExplainEnabled get() = GlobalState.client.session.transaction.explain.enabled
     private val isReadyToRunQuery get() = GlobalState.client.isReadyToRunQuery
     private val hasRunnablePage get() = GlobalState.resource.active?.isRunnable == true

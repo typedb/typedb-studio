@@ -48,15 +48,15 @@ class TransactionState constructor(
     }
 
     class ConfigState constructor(
-        private val activatedFn: (value: Boolean) -> Boolean,
-        private val enabledFn: () -> Boolean,
+        private val valueFn: (value: Boolean) -> Boolean,
+        private val enabledFn: () -> Boolean
     ) {
-        private var value by mutableStateOf(false)
-        val activated get() = activatedFn(value)
+        private var _value by mutableStateOf(false)
+        val value get() = valueFn(_value)
         val enabled get() = enabledFn()
 
         fun toggle() {
-            value = !value
+            _value = !_value
         }
     }
 
@@ -82,8 +82,8 @@ class TransactionState constructor(
         enabledFn = { session.isOpen && !type.isWrite }
     )
     val explain = ConfigState(
-        activatedFn = { it && infer.activated && snapshot.activated },
-        enabledFn = { session.isOpen && infer.activated && snapshot.activated }
+        activatedFn = { it && infer.value && snapshot.value },
+        enabledFn = { session.isOpen && infer.value && snapshot.value }
     )
 
     fun onSchemaWrite(function: () -> Unit) = onSchemaWrite.put(function)
@@ -95,8 +95,8 @@ class TransactionState constructor(
     private fun tryOpen() {
         if (isOpen) return
         try {
-            val options = typeDBOptions().infer(infer.activated)
-                .explain(infer.activated).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
+            val options = typeDBOptions().infer(infer.value)
+                .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown") }
             }
@@ -114,7 +114,7 @@ class TransactionState constructor(
                 hasStopSignalAtomic.set(false)
                 tryOpen()
                 return if (isOpen) QueryRunner(this, content) {
-                    if (!snapshot.activated) close()
+                    if (!snapshot.value) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
                     hasRunningQueryAtomic.set(false)
