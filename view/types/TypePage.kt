@@ -81,7 +81,7 @@ import kotlinx.coroutines.CoroutineScope
 
 sealed class TypePage(
     type: TypeState.Thing,
-    showAdvance: Boolean = false,
+    showAdvanced: Boolean = false,
     coroutineScope: CoroutineScope
 ) : Page() {
 
@@ -94,7 +94,7 @@ sealed class TypePage(
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
     protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
-    private var showAdvance by mutableStateOf(showAdvance)
+    private var showAdvanced by mutableStateOf(showAdvanced)
     private var showEditLabelDialog by mutableStateOf(false)
     private var showEditSupertypeDialog by mutableStateOf(false)
     private var showEditAbstractDialog by mutableStateOf(false)
@@ -191,21 +191,21 @@ sealed class TypePage(
     }
 
     @Composable
-    protected fun AdvanceSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
-        val borderColor = if (!showAdvance) Theme.studio.border.copy(alpha = FADED_OPACITY)
+    protected fun AdvancedSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
+        val borderColor = if (!showAdvanced) Theme.studio.border.copy(alpha = FADED_OPACITY)
         else Theme.studio.warningStroke.copy(alpha = FADED_OPACITY / 3)
-        val modifier = if (!showAdvance) Modifier
+        val modifier = if (!showAdvanced) Modifier
         else Modifier.background(Theme.studio.warningBackground.copy(alpha = FADED_OPACITY / 5))
         SectionColumn(modifier) {
             Separator(borderColor)
             SectionRow {
-                Form.Text(value = Label.ADVANCE)
+                Form.Text(value = Label.ADVANCED)
                 Spacer(Modifier.weight(1f))
                 Form.IconButton(
-                    icon = if (showAdvance) Icon.Code.CHEVRON_UP else Icon.Code.CHEVRON_DOWN
-                ) { showAdvance = !showAdvance }
+                    icon = if (showAdvanced) Icon.Code.CHEVRON_UP else Icon.Code.CHEVRON_DOWN
+                ) { showAdvanced = !showAdvanced }
             }
-            if (showAdvance) {
+            if (showAdvanced) {
                 Separator(borderColor)
                 sections { Separator(borderColor) }
             }
@@ -601,7 +601,7 @@ sealed class TypePage(
             OwnsAttributeTypesSection()
             Separator()
             SubtypesSection()
-            AdvanceSections {
+            AdvancedSections {
                 PlaysRoleTypesSection()
             }
         }

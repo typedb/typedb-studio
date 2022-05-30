@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.view.common
 object Label {
     const val ABSTRACT = "Abstract"
     const val ADDRESS = "Address"
-    const val ADVANCE = "Advance"
+    const val ADVANCED = "Advanced"
     const val AS = "As"
     const val ATTRIBUTE_TYPES = "Attribute Types"
     const val ATTRIBUTES = "Attributes"
