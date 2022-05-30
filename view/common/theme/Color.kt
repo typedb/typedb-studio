@@ -74,8 +74,8 @@ object Color {
         val Blue2 = Color(0xFF92E4FC)
         val Green = Color(0xFF02DAC9)
         val Orange1 = Color(0xFFBD8119)
-        val Orange2 = Color(0xFFF6C94C)
-        val Orange3 = Color(0xFFEBC53D)
+        val Orange2 = Color(0xFFD68E11)
+        val Orange3 = Color(0xFFF6C94C)
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
         val Pink3 = Color(0xFFE69CFF)
@@ -106,7 +106,7 @@ object Color {
             border = DarkPalette.Purple6,
             scrollbar = DarkPalette.Purple8,
             icon = DarkPalette.Purple8,
-            warningStroke = DarkPalette.Orange2,
+            warningStroke = DarkPalette.Orange3,
             warningBackground = DarkPalette.Orange1,
             errorStroke = DarkPalette.Red2,
             errorBackground = DarkPalette.Red1,
@@ -123,7 +123,7 @@ object Color {
             vertex = GraphTheme.Vertex(
                 thingType = DarkPalette.Pink1,
                 entityType = DarkPalette.Pink1,
-                relationType = DarkPalette.Orange1,
+                relationType = DarkPalette.Orange2,
                 attributeType = DarkPalette.Blue1,
                 entity = DarkPalette.Pink3,
                 relation = DarkPalette.Orange3,
