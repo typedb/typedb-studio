@@ -117,7 +117,7 @@ object BrowserArea {
     @Composable
     private fun Tab(browser: Browser) {
         @Composable
-        fun bgColor(): Color = if (browser.isOpen) Theme.studio.surface else Theme.studio.background0
+        fun bgColor(): Color = if (browser.isOpen) Theme.studio.surface else Theme.studio.backgroundDark
         Box(
             modifier = Modifier
                 .fillMaxWidth()

@@ -135,7 +135,7 @@ sealed class TypePage(
     @Composable
     override fun PrimaryContent() {
         val density = LocalDensity.current.density
-        val bgColor = Theme.studio.background0
+        val bgColor = Theme.studio.backgroundDark
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
             .onGloballyPositioned { width = toDP(it.size.width, density) }) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
@@ -193,9 +193,9 @@ sealed class TypePage(
     @Composable
     protected fun AdvanceSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
         val borderColor = if (!showAdvance) Theme.studio.border.copy(alpha = FADED_OPACITY)
-        else Theme.studio.warning2.copy(alpha = FADED_OPACITY / 3)
+        else Theme.studio.warningStroke.copy(alpha = FADED_OPACITY / 3)
         val modifier = if (!showAdvance) Modifier
-        else Modifier.background(Theme.studio.warning.copy(alpha = FADED_OPACITY / 5))
+        else Modifier.background(Theme.studio.warningBackground.copy(alpha = FADED_OPACITY / 5))
         SectionColumn(modifier) {
             Separator(borderColor)
             SectionRow {
@@ -458,7 +458,7 @@ sealed class TypePage(
                 modifier = Modifier.weight(1f)
                     .height((Navigator.ITEM_HEIGHT * visibleSize).coerceAtLeast(EMPTY_BOX_HEIGHT))
                     .border(1.dp, Theme.studio.border)
-                    .background(Theme.studio.background1),
+                    .background(Theme.studio.backgroundMedium),
                 itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
                 bottomSpace = 0.dp,
                 iconArg = { typeIcon(it.item) }
@@ -480,8 +480,8 @@ sealed class TypePage(
     private fun DeleteButton() {
         Form.TextButton(
             text = Label.DELETE,
-            textColor = Theme.studio.error,
-            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.error },
+            textColor = Theme.studio.errorStroke,
+            leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
             enabled = isEditable,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { } // TODO
@@ -545,7 +545,7 @@ sealed class TypePage(
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
             modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
-            iconColor = Theme.studio.error,
+            iconColor = Theme.studio.errorStroke,
             enabled = isEditable,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick

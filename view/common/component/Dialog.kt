@@ -69,7 +69,7 @@ object Dialog {
                 size = DpSize(width, height)
             )
         ) {
-            Box(Modifier.background(Theme.studio.background1).padding(Theme.DIALOG_PADDING)
+            Box(Modifier.background(Theme.studio.backgroundMedium).padding(Theme.DIALOG_PADDING)
                 .onKeyEvent { handleKeyEvent(it, state) }) {
                 content()
             }

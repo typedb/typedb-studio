@@ -93,7 +93,7 @@ class ProjectBrowser constructor(
     private fun OpenProjectHelper() {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().background(color = Theme.studio.background2)
+            modifier = Modifier.fillMaxSize().background(color = Theme.studio.backgroundLight)
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,

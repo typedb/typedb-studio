@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.view.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -326,7 +325,7 @@ object TextEditor {
     private fun LineNumber(state: State, index: Int, font: TextStyle, width: Dp, lineGap: Dp) {
         val isCursor = state.target.cursor.row == index
         val isSelected = state.target.selection?.let { it.min.row <= index && it.max.row >= index } ?: false
-        val bgColor = if (isCursor || isSelected) Theme.studio.primary else Theme.studio.background1
+        val bgColor = if (isCursor || isSelected) Theme.studio.primary else Theme.studio.backgroundMedium
         val fontAlpha = if (isCursor || isSelected) 0.9f else 0.5f
         Column(
             modifier = Modifier.background(bgColor)
@@ -350,7 +349,7 @@ object TextEditor {
         }) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .background(Theme.studio.background0)
+                    .background(Theme.studio.backgroundDark)
                     .horizontalScroll(state.target.horScroller)
                     .pointerHoverIcon(PointerIconDefaults.Text)
             ) {
@@ -376,7 +375,7 @@ object TextEditor {
             .coerceIn(state.textAreaWidth, MAX_LINE_MIN_WIDTH)
         val bgColor = when {
             showLine && cursor.row == index && selection == null -> Theme.studio.primary
-            else -> Theme.studio.background0
+            else -> Theme.studio.backgroundDark
         }
         Box(
             contentAlignment = Alignment.TopStart,
@@ -386,7 +385,7 @@ object TextEditor {
         ) {
             val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
             val textLayout = if (isRenderedUpToDate) state.rendering.get(index) else null
-            val findColor = Theme.studio.warning2.copy(Theme.FIND_SELECTION_ALPHA)
+            val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
                 Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
             }
@@ -453,7 +452,7 @@ object TextEditor {
                     text = AnnotatedString.Builder(
                         if (cursor.col >= text.length) AnnotatedString("")
                         else text.subSequence(cursor.col, cursor.col + 1)
-                    ).also { it.addStyle(SpanStyle(Theme.studio.background0), 0, 1) }.toAnnotatedString(),
+                    ).also { it.addStyle(SpanStyle(Theme.studio.backgroundDark), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font
                 )

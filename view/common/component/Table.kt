@@ -76,7 +76,7 @@ object Table {
 
     @Composable
     private fun bgColor(i: Int): Color =
-        if (i % 2 == 0) Theme.studio.background2 else Theme.studio.background1
+        if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
 
     @Composable
     fun <T> Layout(
@@ -100,7 +100,7 @@ object Table {
         horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(rowHeight).background(Theme.studio.background0),
+            modifier = Modifier.fillMaxWidth().height(rowHeight).background(Theme.studio.backgroundDark),
             horizontalArrangement = Arrangement.spacedBy(columnBorderSize)
         ) {
             columns.forEach { col ->
@@ -134,7 +134,7 @@ object Table {
 
     @Composable
     private fun EmptyRow() {
-        Box(Modifier.fillMaxSize().background(Theme.studio.background1), Alignment.Center) {
+        Box(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium), Alignment.Center) {
             Form.Text(value = "(" + Label.NONE.lowercase() + ")")
         }
     }

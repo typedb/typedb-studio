@@ -106,8 +106,8 @@ object NotificationArea {
     private fun colorArgsOf(type: Notification.Type): ColorArgs {
         return when (type) {
             INFO -> ColorArgs(Theme.studio.border, Theme.studio.onSurface)
-            WARNING -> ColorArgs(Theme.studio.warning, Theme.studio.onSecondary)
-            ERROR -> ColorArgs(Theme.studio.error2, Theme.studio.onError)
+            WARNING -> ColorArgs(Theme.studio.warningBackground, Theme.studio.onError)
+            ERROR -> ColorArgs(Theme.studio.errorBackground, Theme.studio.onError)
         }
     }
 }

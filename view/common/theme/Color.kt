@@ -28,19 +28,17 @@ object Color {
         val primary: Color,
         val secondary: Color,
         val tertiary: Color,
-        val tertiary2: Color,
-        val background0: Color,
-        val background1: Color,
-        val background2: Color,
+        val backgroundDark: Color,
+        val backgroundMedium: Color,
+        val backgroundLight: Color,
         val surface: Color,
-        val surface2: Color,
         val border: Color,
         val scrollbar: Color,
         val icon: Color,
-        val warning: Color,
-        val warning2: Color,
-        val error: Color,
-        val error2: Color,
+        val warningStroke: Color,
+        val warningBackground: Color,
+        val errorStroke: Color,
+        val errorBackground: Color,
         val onPrimary: Color,
         val onSecondary: Color,
         val onBackground: Color,
@@ -75,7 +73,7 @@ object Color {
         val Blue1 = Color(0xFF5CA8FF)
         val Blue2 = Color(0xFF92E4FC)
         val Green = Color(0xFF02DAC9)
-        val Orange1 = Color(0xFFd68e11)
+        val Orange1 = Color(0xFFBD8119)
         val Orange2 = Color(0xFFF6C94C)
         val Orange3 = Color(0xFFEBC53D)
         val Pink1 = Color(0xFFF28DD7)
@@ -90,8 +88,8 @@ object Color {
         val Purple6 = Color(0xFF392D7F)
         val Purple7 = Color(0xFF544899)
         val Purple8 = Color(0xFF888DCA)
-        val Red1 = Color(0xFFF66B65)
-        val Red2 = Color(0xFFCF4A55)
+        val Red1 = Color(0xFFCF4A55)
+        val Red2 = Color(0xFFF66B65)
         val White = Color(0xFFFFFFFF)
         val White2 = Color(0xFFd5ccff)
     }
@@ -101,21 +99,19 @@ object Color {
             primary = DarkPalette.Purple4,
             secondary = DarkPalette.Green,
             tertiary = DarkPalette.Pink1,
-            tertiary2 = DarkPalette.Pink2,
-            background0 = DarkPalette.Purple0,
-            background1 = DarkPalette.Purple1,
-            background2 = DarkPalette.Purple2,
+            backgroundDark = DarkPalette.Purple0,
+            backgroundMedium = DarkPalette.Purple1,
+            backgroundLight = DarkPalette.Purple2,
             surface = DarkPalette.Purple3,
-            surface2 = DarkPalette.Purple5,
             border = DarkPalette.Purple6,
             scrollbar = DarkPalette.Purple8,
             icon = DarkPalette.Purple8,
-            warning = DarkPalette.Orange1,
-            warning2 = DarkPalette.Orange2,
-            error = DarkPalette.Red1,
-            error2 = DarkPalette.Red2,
+            warningStroke = DarkPalette.Orange2,
+            warningBackground = DarkPalette.Orange1,
+            errorStroke = DarkPalette.Red2,
+            errorBackground = DarkPalette.Red1,
             onPrimary = DarkPalette.White2,
-            onSecondary = DarkPalette.White,
+            onSecondary = DarkPalette.Purple0,
             onBackground = DarkPalette.White2,
             onSurface = DarkPalette.White2,
             onError = DarkPalette.White,
@@ -137,7 +133,7 @@ object Color {
             edge = DarkPalette.Blue1,
             edgeLabel = DarkPalette.Blue1,
             inferred = DarkPalette.Green,
-            explanation = DarkPalette.Red2,
+            explanation = DarkPalette.Red1,
         )
     }
 
@@ -162,9 +158,9 @@ object Color {
             primaryVariant = __UNUSED_COLOR__,
             secondary = __UNUSED_COLOR__,
             secondaryVariant = __UNUSED_COLOR__,
-            background = colors.background1,
+            background = colors.backgroundMedium,
             surface = colors.surface,
-            error = colors.error2,
+            error = colors.errorBackground,
             onPrimary = colors.onPrimary,
             onSecondary = __UNUSED_COLOR__,
             onBackground = colors.onBackground,

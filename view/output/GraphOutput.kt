@@ -2039,7 +2039,7 @@ internal object GraphOutput : RunOutput() {
             private fun Tab(browser: Browser) {
                 @Composable
                 fun bgColor(): androidx.compose.ui.graphics.Color =
-                    if (browser.isOpen) Theme.studio.surface else Theme.studio.background0
+                    if (browser.isOpen) Theme.studio.surface else Theme.studio.backgroundDark
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
