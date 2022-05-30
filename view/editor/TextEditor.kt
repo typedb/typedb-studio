@@ -74,14 +74,14 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FIL
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Scrollbar
-import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
+import com.vaticle.typedb.studio.view.material.ContextMenu
+import com.vaticle.typedb.studio.view.material.Scrollbar
+import com.vaticle.typedb.studio.view.material.Separator
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10

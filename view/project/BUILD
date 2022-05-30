@@ -32,6 +32,7 @@ kt_jvm_library(
         "//state:state",
         "//view/common:common",
         "//view/editor:editor",
+        "//view/material:material",
         "//view/output:output",
 
         # External Vaticle Dependencies

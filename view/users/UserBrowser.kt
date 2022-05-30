@@ -20,9 +20,9 @@ package com.vaticle.typedb.studio.view.users
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Browser
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Icon
+import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Icon
 
 class UserBrowser constructor(
     isOpen: Boolean = false,

@@ -86,10 +86,10 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_RESET
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TOGGLE_COMMENT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Icon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
+import com.vaticle.typedb.studio.view.material.ContextMenu
+import com.vaticle.typedb.studio.view.material.Icon
 
 internal class EventHandler constructor(
     private val target: InputTarget,

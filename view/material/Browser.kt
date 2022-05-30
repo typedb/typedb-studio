@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,10 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 
 abstract class Browser constructor(
     isOpen: Boolean = false,

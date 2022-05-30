@@ -28,9 +28,9 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchA
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.view.common.component.Tabs
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
+import com.vaticle.typedb.studio.view.material.Tabs
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue

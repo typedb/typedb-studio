@@ -22,11 +22,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Path
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2

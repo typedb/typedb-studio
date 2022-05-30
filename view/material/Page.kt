@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -27,9 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.view.common.component.Form.IconArg
-import com.vaticle.typedb.studio.view.common.component.Frame.createFrameState
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.vaticle.typedb.studio.view.material.Form.IconArg
+import com.vaticle.typedb.studio.view.material.Frame.createFrameState
 
 abstract class Page {
 

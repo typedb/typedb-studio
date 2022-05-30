@@ -111,15 +111,9 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchC
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Util
 import com.vaticle.typedb.studio.view.common.Util.schemaString
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.valueString
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Frame
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.component.Table
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc
@@ -138,9 +132,15 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineI
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Frame
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.material.Table
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
+import com.vaticle.typedb.studio.view.output.GraphOutput.State.Vertex.Type.Companion.typeIcon
 import com.vaticle.typeql.lang.TypeQL.`var`
 import com.vaticle.typeql.lang.TypeQL.match
 import java.awt.Polygon
@@ -523,6 +523,13 @@ internal object GraphOutput : RunOutput() {
                             is ThingType -> Thing(type, graph)
                             else -> throw IllegalStateException("[$type]'s encoding is not supported by Vertex.Type")
                         }
+                    }
+
+                    // TODO: copied from typeIcon on 23/05/2022, needs refactor
+                    fun typeIcon(type: com.vaticle.typedb.client.api.concept.type.Type) = when (type) {
+                        is RelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
+                        is AttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
+                        else -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
                     }
                 }
 
@@ -2109,7 +2116,7 @@ internal object GraphOutput : RunOutput() {
             private fun TitleSection() {
                 val type = if (concept is Type) concept else concept.asThing().type
                 Box(Modifier.padding(titleSectionPadding)) {
-                    Form.TextBox(text = displayName(type), leadingIcon = Util.typeIcon(type))
+                    Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
                 }
             }
 

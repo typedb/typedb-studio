@@ -44,13 +44,13 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Tooltip
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.stream.Collectors

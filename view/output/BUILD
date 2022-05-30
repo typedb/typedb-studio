@@ -33,6 +33,7 @@ kt_jvm_library(
         "//view/common:common",
         "//view/editor:editor",
         "//view/highlighter:highlighter",
+        "//view/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_force_graph//:force_graph",

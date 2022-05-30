@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,8 +58,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
-import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Form.Text
 import java.awt.event.MouseEvent
 import mu.KotlinLogging
 

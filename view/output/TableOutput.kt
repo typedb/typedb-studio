@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form
+import com.vaticle.typedb.studio.view.material.Form
 
 internal object TableOutput : RunOutput() {
 

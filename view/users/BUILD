@@ -26,6 +26,7 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//view/common:common",
+        "//view/material:material",
 
         # External Vaticle Dependencies
 #        "@vaticle_typedb_common//:common",

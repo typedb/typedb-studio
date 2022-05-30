@@ -25,22 +25,14 @@ kt_jvm_library(
     srcs = glob(["*.kt", "*/*.kt"], exclude = ["*/*Test.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/app:app",
         "//state/common:common",
-        "//state/resource:resource",
-        "//state/schema:schema",
-        "//state:state",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_desktop_desktop_jvm",
-        "@maven//:org_jetbrains_compose_animation_animation_core_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_material_material_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
@@ -48,7 +40,6 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
     resources = [

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -51,11 +51,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.component.Form.IconArg
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
+import com.vaticle.typedb.studio.view.material.Form.IconArg
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

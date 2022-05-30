@@ -29,10 +29,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconButton
-import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.IconButton
+import com.vaticle.typedb.studio.view.material.Separator
 
 internal sealed class RunOutput {
 

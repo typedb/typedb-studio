@@ -35,19 +35,19 @@ import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
-import com.vaticle.typedb.studio.view.common.component.Browser
-import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconArg
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Icon.Code.FOLDER_PLUS
-import com.vaticle.typedb.studio.view.common.component.Navigator
-import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
+import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.ContextMenu
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.IconArg
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Icon.Code.FOLDER_PLUS
+import com.vaticle.typedb.studio.view.material.Navigator
+import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import mu.KotlinLogging
 
 class ProjectBrowser constructor(

@@ -34,16 +34,16 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
-import com.vaticle.typedb.studio.view.common.Util.typeIcon
-import com.vaticle.typedb.studio.view.common.component.Browser
-import com.vaticle.typedb.studio.view.common.component.ContextMenu
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Navigator
-import com.vaticle.typedb.studio.view.common.component.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.ContextMenu
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Navigator
+import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
+import com.vaticle.typedb.studio.view.material.Tooltip
+import com.vaticle.typedb.studio.view.types.TypePage.Companion.typeIcon
 
 class TypeBrowser constructor(
     isOpen: Boolean = false,

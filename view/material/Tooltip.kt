@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,11 +51,11 @@ import androidx.compose.ui.window.rememberCursorPositionProvider
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.component.Form.BORDER_WIDTH
-import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
-import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Form.URLText
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Form.BORDER_WIDTH
+import com.vaticle.typedb.studio.view.material.Form.ClickableText
+import com.vaticle.typedb.studio.view.material.Form.Text
+import com.vaticle.typedb.studio.view.material.Form.URLText
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean

@@ -39,21 +39,21 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
-import com.vaticle.typedb.studio.view.common.component.ActionableList
-import com.vaticle.typedb.studio.view.common.component.Dialog
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
-import com.vaticle.typedb.studio.view.common.component.Form.FIELD_HEIGHT
-import com.vaticle.typedb.studio.view.common.component.Form.Field
-import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Form.Submission
-import com.vaticle.typedb.studio.view.common.component.Form.TextButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextInput
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.component.Dialog.DIALOG_SPACING
+import com.vaticle.typedb.studio.view.material.ActionableList
+import com.vaticle.typedb.studio.view.material.Dialog
+import com.vaticle.typedb.studio.view.material.Dialog.DIALOG_SPACING
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.Dropdown
+import com.vaticle.typedb.studio.view.material.Form.FIELD_HEIGHT
+import com.vaticle.typedb.studio.view.material.Form.Field
+import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Form.Submission
+import com.vaticle.typedb.studio.view.material.Form.TextButton
+import com.vaticle.typedb.studio.view.material.Form.TextInput
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Tooltip
 
 object DatabaseDialog {
 

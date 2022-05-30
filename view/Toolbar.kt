@@ -40,23 +40,23 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTE
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.IconButton
-import com.vaticle.typedb.studio.view.common.component.Form.LoadingIndicator
-import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextButtonArg
-import com.vaticle.typedb.studio.view.common.component.Form.TextButtonRow
-import com.vaticle.typedb.studio.view.common.component.Form.toggleButtonColor
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SPACING
 import com.vaticle.typedb.studio.view.connection.DatabaseDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.IconButton
+import com.vaticle.typedb.studio.view.material.Form.LoadingIndicator
+import com.vaticle.typedb.studio.view.material.Form.RawIconButton
+import com.vaticle.typedb.studio.view.material.Form.TextButton
+import com.vaticle.typedb.studio.view.material.Form.TextButtonArg
+import com.vaticle.typedb.studio.view.material.Form.TextButtonRow
+import com.vaticle.typedb.studio.view.material.Form.toggleButtonColor
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.material.Tooltip
 
 object Toolbar {
 

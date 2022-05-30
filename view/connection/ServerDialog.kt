@@ -40,17 +40,17 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Dialog
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.Checkbox
-import com.vaticle.typedb.studio.view.common.component.Form.Dropdown
-import com.vaticle.typedb.studio.view.common.component.Form.Field
-import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
-import com.vaticle.typedb.studio.view.common.component.Form.Submission
-import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Form.TextButton
-import com.vaticle.typedb.studio.view.common.component.Form.TextInput
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Dialog
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.Checkbox
+import com.vaticle.typedb.studio.view.material.Form.Dropdown
+import com.vaticle.typedb.studio.view.material.Form.Field
+import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.material.Form.Submission
+import com.vaticle.typedb.studio.view.material.Form.Text
+import com.vaticle.typedb.studio.view.material.Form.TextButton
+import com.vaticle.typedb.studio.view.material.Form.TextInput
 
 object ServerDialog {
 

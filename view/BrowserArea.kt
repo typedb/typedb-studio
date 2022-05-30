@@ -48,14 +48,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.view.common.component.Browser
-import com.vaticle.typedb.studio.view.types.TypeBrowser
-import com.vaticle.typedb.studio.view.common.component.Form.Text
-import com.vaticle.typedb.studio.view.common.component.Frame
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Separator
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.Form.Text
+import com.vaticle.typedb.studio.view.material.Frame
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.project.ProjectBrowser
+import com.vaticle.typedb.studio.view.types.TypeBrowser
 
 object BrowserArea {
 

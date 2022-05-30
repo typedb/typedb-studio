@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -76,10 +76,6 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.contains
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.toRectDP
-import com.vaticle.typedb.studio.view.common.component.Form.IconArg
-import com.vaticle.typedb.studio.view.common.component.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.common.component.Form.RawIconButton
-import com.vaticle.typedb.studio.view.common.component.Form.Text
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.INDICATION_HOVER_ALPHA
@@ -87,6 +83,10 @@ import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.BOLD
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.UNDERLINE
+import com.vaticle.typedb.studio.view.material.Form.IconArg
+import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.view.material.Form.RawIconButton
+import com.vaticle.typedb.studio.view.material.Form.Text
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min

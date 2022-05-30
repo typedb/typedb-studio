@@ -27,12 +27,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.RelationType
-import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.awt.MouseInfo
 import java.awt.Point
 import java.time.format.DateTimeFormatter
@@ -65,20 +59,6 @@ object Util {
     fun isMouseHover(area: Rect, window: ComposeWindow, titleBarHeight: Dp): Boolean {
         val mouse = mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
-    }
-
-    // TODO: move these methods to a package about type visualisations
-    fun typeIcon(type: TypeState.Thing) = when (type) {
-        is TypeState.Entity -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
-        is TypeState.Relation -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
-        is TypeState.Attribute -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
-    }
-
-    // TODO: copied from typeIcon on 23/05/2022, needs refactor
-    fun typeIcon(type: Type) = when (type) {
-        is RelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
-        is AttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
-        else -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
     }
 
     fun Attribute<*>.valueString(): String = when {

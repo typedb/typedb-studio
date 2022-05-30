@@ -32,6 +32,7 @@ kt_jvm_library(
         "//state/schema:schema",
         "//state:state",
         "//view/common:common",
+        "//view/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

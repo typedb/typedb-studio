@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -39,10 +39,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.component.Form.FormRowSpacer
-import com.vaticle.typedb.studio.view.common.component.Form.TextButton
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.component.Dialog.DIALOG_SPACING
+import com.vaticle.typedb.studio.view.material.Dialog.DIALOG_SPACING
+import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.view.material.Form.TextButton
 
 object ConfirmationDialog {
 

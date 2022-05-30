@@ -65,18 +65,17 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.Util.typeIcon
-import com.vaticle.typedb.studio.view.common.component.Form
-import com.vaticle.typedb.studio.view.common.component.Form.ClickableText
-import com.vaticle.typedb.studio.view.common.component.Icon
-import com.vaticle.typedb.studio.view.common.component.Navigator
-import com.vaticle.typedb.studio.view.common.component.Page
-import com.vaticle.typedb.studio.view.common.component.Scrollbar
-import com.vaticle.typedb.studio.view.common.component.Separator
-import com.vaticle.typedb.studio.view.common.component.Table
-import com.vaticle.typedb.studio.view.common.component.Tooltip
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Form.ClickableText
+import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Navigator
+import com.vaticle.typedb.studio.view.material.Page
+import com.vaticle.typedb.studio.view.material.Scrollbar
+import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.material.Table
+import com.vaticle.typedb.studio.view.material.Tooltip
 import kotlinx.coroutines.CoroutineScope
 
 sealed class TypePage(
@@ -126,6 +125,13 @@ sealed class TypePage(
                 is TypeState.Relation -> Relation(type, coroutineScope)
                 is TypeState.Attribute -> Attribute(type, coroutineScope)
             }
+        }
+
+        // TODO: move these methods to a package about type visualisations
+        internal fun typeIcon(type: TypeState.Thing) = when (type) {
+            is TypeState.Entity -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
+            is TypeState.Relation -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
+            is TypeState.Attribute -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
         }
     }
 

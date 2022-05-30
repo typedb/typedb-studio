@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common.component
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.ScrollState
@@ -99,12 +99,12 @@ import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.isMouseHover
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.toRectDP
-import com.vaticle.typedb.studio.view.common.component.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.view.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
+import com.vaticle.typedb.studio.view.material.Icon.Code.CARET_DOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext
