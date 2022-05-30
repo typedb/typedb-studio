@@ -759,7 +759,7 @@ internal object GraphOutput : RunOutput() {
                             if (added) {
                                 if (concept is Thing) {
                                     vertex as Vertex.Thing
-                                    if (concept.isInferred) {
+                                    if (transactionState.explain.value && concept.isInferred) {
                                         addExplainables(concept, vertex, conceptMap.explainables(), varName)
                                     }
                                     if (answerSource is AnswerSource.Explanation) {
