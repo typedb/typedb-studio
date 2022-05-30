@@ -106,6 +106,8 @@ import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
@@ -144,7 +146,6 @@ import com.vaticle.typeql.lang.TypeQL.match
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import java.util.Collections
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
@@ -158,12 +159,11 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 internal object GraphOutput : RunOutput() {
 
-    val LOGGER = KotlinLogging.logger {}
+    private val LOGGER = KotlinLogging.logger {}
 
     internal class State(val transactionState: TransactionState, number: Int) : RunOutput.State() {
 
@@ -926,7 +926,7 @@ internal object GraphOutput : RunOutput() {
             }
 
             fun explain(vertex: Vertex.Thing) {
-                CompletableFuture.supplyAsync {
+                launchCompletableFuture(GlobalState.notification, LOGGER) {
                     val iterator = graph.reasoner.explanationIterators[vertex]
                         ?: runExplainQuery(vertex).also { graph.reasoner.explanationIterators[vertex] = it }
                     fetchNextExplanation(vertex, iterator)
@@ -1577,7 +1577,9 @@ internal object GraphOutput : RunOutput() {
             suspend fun run() {
                 while (true) {
                     withFrameMillis {
-                        return@withFrameMillis if (isReadyToStep()) { state.coroutineScope.launch { step() } } else Job()
+                        return@withFrameMillis if (isReadyToStep()) {
+                            state.coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) { step() }
+                        } else Job()
                     }.join()
                 }
             }

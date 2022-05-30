@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
@@ -43,7 +44,6 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class ProjectManager constructor(private val settings: Settings, private val notificationMgr: NotificationManager) {
@@ -192,7 +192,7 @@ class ProjectManager constructor(private val settings: Settings, private val not
         }
     }
 
-    fun tryRenameFile(file: File, newName: String) = coroutineScope.launch {
+    fun tryRenameFile(file: File, newName: String) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         file.tryRename(newName)?.let {
             renameFileDialog.onSuccess?.let { fn -> fn(it.asFile()) }
             renameFileDialog.close()

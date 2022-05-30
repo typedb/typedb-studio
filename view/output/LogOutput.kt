@@ -110,13 +110,11 @@ internal object LogOutput : RunOutput() {
 
         internal fun outputFn(conceptMapGroup: ConceptMapGroup): () -> Unit {
             val output = loadToString(conceptMapGroup)
-            println("group output string constructed: " + output)
             return { outputTypeQL(output) }
         }
 
         internal fun outputFn(numericGroup: NumericGroup): () -> Unit {
             val output = loadToString(numericGroup)
-            println("group numeric output string constructed: " + output)
             return { outputTypeQL(output) }
         }
 

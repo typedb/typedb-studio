@@ -113,7 +113,7 @@ class TransactionState constructor(
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
-                return if (isOpen) QueryRunner(this, content) {
+                return if (isOpen) QueryRunner(this, notificationMgr, content) {
                     if (!snapshot.value) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)

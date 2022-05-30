@@ -22,6 +22,8 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.NumericGroup
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
@@ -46,11 +48,12 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class QueryRunner constructor(
+class QueryRunner(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
+    private val notificationMgr: NotificationManager,
     private val queries: String,
     private val onComplete: () -> Unit
 ) {
@@ -108,6 +111,7 @@ class QueryRunner constructor(
 
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 1_000
         private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     val responses = LinkedBlockingQueue<Response>()
@@ -120,8 +124,8 @@ class QueryRunner constructor(
 
     fun launch() {
         isRunning.set(true)
-        coroutineScope.launch { runningQueryIndicator() }
-        coroutineScope.launch { runQueries() }
+        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runningQueryIndicator() }
+        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }
     }
 
     fun isConsumed() {

@@ -45,7 +45,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val CODE_PREFIX = "SYS"
             private const val MESSAGE_PREFIX = "TypeDB Studio System"
 
-            val ILLEGAL_CAST = System(1, "Illegal cast of %s to %s")
+            val UNEXPECTED_ERROR_IN_COROUTINE = System(1, "Unexpected error occurred with a coroutine: %s")
+            val ILLEGAL_CAST = System(2, "Illegal cast of %s to %s")
         }
     }
 

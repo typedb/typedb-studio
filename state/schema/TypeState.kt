@@ -28,6 +28,7 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
 import com.vaticle.typedb.studio.state.resource.Navigable
@@ -36,7 +37,6 @@ import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: SchemaManager) {
@@ -84,7 +84,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     abstract fun loadOtherProperties()
     abstract override fun toString(): String
 
-    fun loadProperties() = schemaMgr.coroutineScope.launch {
+    fun loadProperties() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notificationMgr, LOGGER) {
         try {
             loadSupertypes()
             loadAbstract()
@@ -99,7 +99,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         isAbstract = conceptType.asRemote(schemaMgr.openOrGetReadTx()).isAbstract
     }
 
-    fun loadSubtypesRecursively() = schemaMgr.coroutineScope.launch {
+    fun loadSubtypesRecursively() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notificationMgr, LOGGER) {
         loadSubtypesRecursivelyBlocking()
     }
 
@@ -296,9 +296,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             // TODO
         }
 
-        fun exportSyntax(onSuccess: (syntax: String) -> Unit) = schemaMgr.coroutineScope.launch {
-            conceptType.asRemote(schemaMgr.openOrGetReadTx()).syntax?.let { onSuccess(it) }
-        }
+        fun exportSyntax(onSuccess: (syntax: String) -> Unit) =
+            schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notificationMgr, LOGGER) {
+                conceptType.asRemote(schemaMgr.openOrGetReadTx()).syntax?.let { onSuccess(it) }
+            }
     }
 
     class Entity internal constructor(
@@ -436,14 +437,15 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             loadRelatesRoleType()
         }
 
-        fun loadRelatesRoleTypeRecursively() = schemaMgr.coroutineScope.launch {
-            try {
-                loadRelatesRoleTypeRecursivelyBlocking()
-            } catch (e: Exception) {
-                LOGGER.error { e }
-                e.printStackTrace()
+        fun loadRelatesRoleTypeRecursively() =
+            schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notificationMgr, LOGGER) {
+                try {
+                    loadRelatesRoleTypeRecursivelyBlocking()
+                } catch (e: Exception) {
+                    LOGGER.error { e }
+                    e.printStackTrace()
+                }
             }
-        }
 
         private fun loadRelatesRoleTypeRecursivelyBlocking() {
             loadRelatesRoleType()

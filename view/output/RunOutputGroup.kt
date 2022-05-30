@@ -23,6 +23,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.view.common.component.Tabs
@@ -37,7 +40,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -50,8 +53,8 @@ internal class RunOutputGroup constructor(
     private val logOutput = LogOutput.State(textEditorState, colors, runner.transactionState)
     internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
     internal var active: RunOutput.State by mutableStateOf(logOutput)
-    private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<() -> Unit>, Done>>()
-    private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit>, Done>>()
+    private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<(() -> Unit)?>, Done>>()
+    private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit?>, Done>>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val futuresLatch = CountDownLatch(2)
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
@@ -60,6 +63,7 @@ internal class RunOutputGroup constructor(
 
     companion object {
         private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     init {
@@ -78,31 +82,31 @@ internal class RunOutputGroup constructor(
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun concludeRunnerIsConsumed() = coroutineScope.launch {
+    private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         futuresLatch.await()
         runner.isConsumed()
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun concludeNonSerialOutput() = coroutineScope.launch {
-        val futures = mutableListOf<CompletableFuture<Unit>>()
+    private fun concludeNonSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
+        val futures = mutableListOf<CompletableFuture<Unit?>>()
         do {
             val future = nonSerialOutputFutures.take()
             if (future.isFirst) futures += future.first()
-        } while(future.isFirst)
+        } while (future.isFirst)
         CompletableFuture.allOf(*futures.toTypedArray()).join()
         futuresLatch.countDown()
     }
 
-    private fun collectNonSerial(future: CompletableFuture<Unit>) {
+    private fun collectNonSerial(future: CompletableFuture<Unit?>) {
         nonSerialOutputFutures.put(Either.first(future))
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun printSerialOutput() = coroutineScope.launch {
+    private fun printSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         do {
             val future = serialOutputFutures.take()
-            if (future.isFirst) future.first().join().invoke()
+            if (future.isFirst) future.first().join()?.invoke()
         } while (future.isFirst)
         futuresLatch.countDown()
     }
@@ -111,13 +115,13 @@ internal class RunOutputGroup constructor(
         collectSerial(CompletableFuture.completedFuture(outputFn))
     }
 
-    private fun collectSerial(outputFnFuture: CompletableFuture<() -> Unit>?) {
+    private fun collectSerial(outputFnFuture: CompletableFuture<(() -> Unit)?>) {
         serialOutputFutures.put(Either.first(outputFnFuture))
     }
 
     @OptIn(ExperimentalTime::class)
     @Suppress("BlockingMethodInNonBlockingContext")
-    private fun consumeResponses() = coroutineScope.launch {
+    private fun consumeResponses() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
@@ -134,10 +138,10 @@ internal class RunOutputGroup constructor(
             is Response.Numeric -> collectSerial { logOutput.output(response.value) }
             is Response.Stream<*> -> when (response) {
                 is Response.Stream.NumericGroups -> consumeResponseStream(response) {
-                    collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
+                    collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
                 }
                 is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) {
-                    collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
+                    collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
                 }
                 is Response.Stream.ConceptMaps -> {
                     val table = TableOutput.State(
@@ -147,9 +151,13 @@ internal class RunOutputGroup constructor(
                         transactionState = runner.transactionState, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {
-                        collectNonSerial(CompletableFuture.supplyAsync { graph.output(it) })
-                        collectSerial(CompletableFuture.supplyAsync { logOutput.outputFn(it) })
-                        collectSerial(CompletableFuture.supplyAsync { table.outputFn(it) })
+                        collectNonSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { graph.output(it) })
+                        collectSerial(
+                            launchCompletableFuture(
+                                GlobalState.notification,
+                                LOGGER
+                            ) { logOutput.outputFn(it) })
+                        collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { table.outputFn(it) })
                     }
                 }
             }

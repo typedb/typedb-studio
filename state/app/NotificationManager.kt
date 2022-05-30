@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.app
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.util.Message
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -28,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KLogger
+import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
 class NotificationManager {
@@ -42,13 +44,45 @@ class NotificationManager {
 
     companion object {
         private val HIDE_DELAY = Duration.seconds(10)
+        private val LOGGER = KotlinLogging.logger {}
+
+        fun <T> launchCompletableFuture(
+            notificationMgr: NotificationManager,
+            logger: KLogger,
+            function: () -> T
+        ): CompletableFuture<T?> = CompletableFuture.supplyAsync {
+            return@supplyAsync try {
+                function()
+            } catch (e: Throwable) {
+                notificationMgr.systemError(
+                    logger, e,
+                    Message.System.UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: Message.UNKNOWN
+                )
+                null
+            }
+        }
+
+        fun CoroutineScope.launchAndHandle(
+            notificationMgr: NotificationManager,
+            logger: KLogger,
+            function: suspend () -> Unit
+        ) = this.launch {
+            try {
+                function()
+            } catch (e: Throwable) {
+                notificationMgr.systemError(
+                    logger, e,
+                    Message.System.UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: Message.UNKNOWN
+                )
+            }
+        }
     }
 
     fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
         val notification = Notification(Notification.Type.INFO, message.code(), stringOf(message, *params))
         queue += notification
-        coroutineScope.launch {
+        coroutineScope.launchAndHandle(this, LOGGER) {
             delay(HIDE_DELAY)
             dismiss(notification)
         }

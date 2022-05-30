@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.state.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
@@ -30,9 +29,9 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.connection.SessionState
-import com.vaticle.typedb.studio.state.connection.TransactionState.Companion.ONE_HOUR_IN_MILLS
 import com.vaticle.typedb.studio.state.resource.Navigable
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
@@ -43,7 +42,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
 class SchemaManager(
@@ -77,6 +76,7 @@ class SchemaManager(
 
     companion object {
         private val TX_IDLE_TIME = Duration.seconds(16)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     init {
@@ -166,9 +166,10 @@ class SchemaManager(
         isOpenAtomic.set(true)
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launch {
-        session.typeSchema()?.let { onSuccess(it) }
-    }
+    fun exportTypeSchema(onSuccess: (String) -> Unit) =
+        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+            session.typeSchema()?.let { onSuccess(it) }
+        }
 
     fun refreshReadTx() {
         synchronized(this) {
@@ -189,7 +190,7 @@ class SchemaManager(
         }
     }
 
-    private fun scheduleCloseReadTx() = coroutineScope.launch {
+    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)

@@ -30,6 +30,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
@@ -46,7 +47,6 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class ClientState constructor(private val notificationMgr: NotificationManager) {
@@ -104,8 +104,8 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     private fun tryConnect(
         newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient
-    ) = coroutineScope.launch {
-        if (isConnecting || isConnected) return@launch
+    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+        if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
             address = newAddress
@@ -125,7 +125,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         val depth = asyncDepth.incrementAndGet()
         assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
-            coroutineScope.launch {
+            coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
                 try {
                     function()
                 } catch (e: Exception) {
@@ -141,7 +141,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     private fun runAsyncClosingCommand(function: () -> Unit) {
         val depth = runningClosingCommands.incrementAndGet()
         assert(depth == 1) { "You should not call runAsyncClosingCommand nested in each other" }
-        coroutineScope.launch {
+        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
             try {
                 function()
             } catch (e: Exception) {
