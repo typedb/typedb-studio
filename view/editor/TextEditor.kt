@@ -234,7 +234,7 @@ object TextEditor {
             }
 
         internal fun updateStatus() {
-            target.updateStatus()
+            target.publishStatus()
         }
 
         internal fun clearStatus() {

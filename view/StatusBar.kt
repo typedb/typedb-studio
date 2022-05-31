@@ -68,7 +68,7 @@ object StatusBar {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun StatusDisplay(statusName: String, statusValue: String, fontStyle: TextStyle) {
-        val tooltipState: Tooltip.State = remember { Tooltip.State(Tooltip.Arg(statusName)) }
+        val tooltipState: Tooltip.State = Tooltip.State(Tooltip.Arg(statusName))
         Tooltip.Popup(tooltipState)
         Column(Modifier.pointerMoveFilter(
             onEnter = { tooltipState.mayShowOnTargetHover(); false },

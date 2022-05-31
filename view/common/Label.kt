@@ -94,6 +94,7 @@ object Label {
     const val MANAGE_DATABASES = "Manage Databases"
     const val MOVE = "Move"
     const val MOVE_DIRECTORY = "Move Directory"
+    const val MS = "ms"
     const val NEXT_OCCURRENCE = "Next Occurrence"
     const val NO = "No"
     const val NONE = "None"

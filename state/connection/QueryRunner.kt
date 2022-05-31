@@ -51,7 +51,7 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class QueryRunner(
+class QueryRunner constructor(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val notificationMgr: NotificationManager,
     private val queries: String,
@@ -114,13 +114,19 @@ class QueryRunner(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    var startTime: Long? = null
+    var endTime: Long? = null
     val responses = LinkedBlockingQueue<Response>()
+    val isConsumed: Boolean get() = consumerLatch.count == 0L
     private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
     private val transaction get() = transactionState.transaction!!
+    private val onClose = LinkedBlockingQueue<() -> Unit>()
+
+    fun onClose(function: () -> Unit) = onClose.put(function)
 
     fun launch() {
         isRunning.set(true)
@@ -128,7 +134,7 @@ class QueryRunner(
         coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }
     }
 
-    fun isConsumed() {
+    fun setConsumed() {
         consumerLatch.countDown()
     }
 
@@ -160,11 +166,13 @@ class QueryRunner(
 
     private fun runQueries() {
         try {
+            startTime = System.currentTimeMillis()
             runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
         } catch (e: Exception) {
             collectEmptyLine()
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
+            endTime = System.currentTimeMillis()
             synchronized(this) {
                 isRunning.set(false)
                 responses.put(Response.Done)
@@ -318,5 +326,9 @@ class QueryRunner(
             stream.queue.put(Either.second(Response.Done))
             collectMessage(INFO, COMPLETED)
         } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
+    }
+
+    fun close() {
+        onClose.forEach { it() }
     }
 }

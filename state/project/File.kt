@@ -341,7 +341,7 @@ class File internal constructor(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
-            runner.reset()
+            runner.close()
             watchFileSystem.set(false)
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()

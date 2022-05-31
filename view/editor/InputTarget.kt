@@ -206,7 +206,7 @@ internal class InputTarget constructor(
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
         selection = newSelection
         if (selection != null) updateCursor(selection!!.end, true, mayScroll)
-        else updateStatus()
+        else publishStatus()
     }
 
     internal fun updateCursorIfOutOfSelection(x: Int, y: Int) {
@@ -231,10 +231,10 @@ internal class InputTarget constructor(
         } else selection = null
         _cursor = newCursor
         if (mayScroll) mayScrollToCursor()
-        updateStatus()
+        publishStatus()
     }
 
-    internal fun updateStatus() {
+    internal fun publishStatus() {
         GlobalState.status.publish(TEXT_CURSOR_POSITION, selection?.label() ?: cursor.label())
     }
 

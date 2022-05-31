@@ -32,7 +32,7 @@ class StatusManager {
      */
     enum class Key(val displayName: String) {
         TEXT_CURSOR_POSITION("Text Cursor Position"),
-        OUTPUT_RESPONSE_TIME("Output (Log/Table/Graph) Response Time"),
+        OUTPUT_RESPONSE_TIME("Output (Log, Table, Graph) Response Time"),
         QUERY_RESPONSE_TIME("Query Response Time"),
     }
 

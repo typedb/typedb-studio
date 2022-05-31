@@ -26,6 +26,8 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
+import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.view.common.theme.Color
@@ -57,6 +59,7 @@ internal class RunOutputGroup constructor(
     private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit?>, Done>>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val futuresLatch = CountDownLatch(2)
+    private var endTime: Long? = null
     internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
 
     object Done
@@ -67,10 +70,37 @@ internal class RunOutputGroup constructor(
     }
 
     init {
+        runner.onClose { clearStatus() }
         consumeResponses()
         printSerialOutput()
         concludeNonSerialOutput()
         concludeRunnerIsConsumed()
+    }
+
+    internal fun publishStatus() {
+        publishQueryResponseTime()
+        publishOutputResponseTime()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun publishQueryResponseTime() {
+        runner.startTime?.let { startTime ->
+            val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
+            GlobalState.status.publish(QUERY_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun publishOutputResponseTime() {
+        runner.endTime?.let { queryEndTime ->
+            val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
+            GlobalState.status.publish(OUTPUT_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+        }
+    }
+
+    private fun clearStatus() {
+        GlobalState.status.clear(QUERY_RESPONSE_TIME)
+        GlobalState.status.clear(OUTPUT_RESPONSE_TIME)
     }
 
     internal fun isActive(runOutput: RunOutput.State): Boolean {
@@ -84,7 +114,8 @@ internal class RunOutputGroup constructor(
     @Suppress("BlockingMethodInNonBlockingContext")
     private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         futuresLatch.await()
-        runner.isConsumed()
+        runner.setConsumed()
+        endTime = System.currentTimeMillis()
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")

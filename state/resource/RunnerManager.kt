@@ -73,7 +73,8 @@ class RunnerManager {
         onLaunch.forEach { it(runner) }
     }
 
-    fun delete(runner: QueryRunner) {
+    fun close(runner: QueryRunner) {
+        runner.close()
         if (activeRunner == runner) {
             val i = runners.indexOf(activeRunner)
             activeRunner = if (runners.size == 1) null
@@ -83,8 +84,9 @@ class RunnerManager {
         runners.remove(runner)
     }
 
-    fun reset() {
+    fun close() {
         activeRunner = null
+        runners.forEach { it.close() }
         runners.clear()
         onLaunch.clear()
     }

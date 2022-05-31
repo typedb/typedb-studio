@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -51,6 +52,7 @@ import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.output.LogOutput.END_OF_OUTPUT_SPACE
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 
 object RunOutputArea {
 
@@ -141,7 +143,7 @@ object RunOutputArea {
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
-                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { runnerMgr.delete(it) } },
+                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { runnerMgr.close(it) } },
                     trailingTabButtonFn = {
                         IconButtonArg(
                             icon = Icon.Code.THUMBTACK,
@@ -163,6 +165,12 @@ object RunOutputArea {
             Output(outputGroup.active, Modifier.fillMaxWidth().weight(1f))
             Separator.Horizontal()
             OutputTabs(outputGroup, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
+        }
+        LaunchedEffect(outputGroup) {
+            do {
+                outputGroup.publishStatus()
+                delay(50)
+            } while(!runner.isConsumed)
         }
     }
 
