@@ -104,78 +104,6 @@ object Studio {
         }
     }
 
-    private fun getMainWindowTitle(): String {
-        val projectName = GlobalState.project.current?.directory?.name
-        val pageName = GlobalState.resource.active?.windowTitle
-        return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
-    }
-
-    @JvmStatic
-    fun main(args: Array<String>) {
-        try {
-            addShutdownHook()
-            setConfigurations()
-            Message.loadClasses()
-            GlobalState.appData.initialise()
-            while (!quit) {
-                application { MainWindow(::exitApplication) }
-                error?.let { exception ->
-                    LOGGER.error(exception.message, exception)
-                    application { ErrorWindow(exception) { error = null; exitApplication() } }
-                }
-            }
-            exitProcess(0)
-        } catch (exception: Exception) {
-            LOGGER.error(exception.message, exception)
-            exitProcess(1)
-        }
-    }
-
-    private fun addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(object : Thread() {
-            override fun run(): Unit = runBlocking {
-                LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                GlobalState.client.closeBlocking()
-            }
-        })
-    }
-
-    private fun setConfigurations() {
-        // Enable anti-aliasing
-        System.setProperty("awt.useSystemAAFontSettings", "on")
-        System.setProperty("swing.aatext", "true")
-        // Enable FileDialog to select "directories" on MacOS
-        System.setProperty("apple.awt.fileDialogForDirectories", "true")
-        // Enable native Windows UI style
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    private fun application(window: @Composable ApplicationScope.() -> Unit) {
-        androidx.compose.ui.window.application(exitProcessOnExit = false) {
-            Theme.Material {
-                CompositionLocalProvider(LocalWindowExceptionHandlerFactory provides ExceptionHandler) {
-                    window()
-                }
-            }
-        }
-    }
-
-    private fun handleKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean {
-        return if (event.type == KeyEventType.KeyUp) false
-        else KeyMapper.CURRENT.map(event)?.let { executeCommand(it, onClose) } ?: false
-    }
-
-    private fun executeCommand(command: KeyMapper.Command, onClose: () -> Unit): Boolean {
-        return when (command) {
-            KeyMapper.Command.QUIT -> {
-                onClose()
-                true
-            }
-            else -> false
-        }
-    }
-
     @Composable
     private fun MainWindow(exitApplicationFn: () -> Unit) {
         fun confirmClose() = GlobalState.confirmation.submit(
@@ -223,6 +151,25 @@ object Studio {
                 MayShowDialog(window)
             }
         }
+    }
+
+    private fun getMainWindowTitle(): String {
+        val projectName = GlobalState.project.current?.directory?.name
+        val pageName = GlobalState.resource.active?.windowTitle
+        return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
+    }
+
+    private fun handleKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean {
+        return if (event.type == KeyEventType.KeyUp) false
+        else KeyMapper.CURRENT.map(event)?.let {
+            when (it) {
+                KeyMapper.Command.QUIT -> {
+                    onClose()
+                    true
+                }
+                else -> false
+            }
+        } ?: false
     }
 
     @Composable
@@ -287,6 +234,57 @@ object Studio {
                     }
                 }
             }
+        }
+    }
+
+    private fun addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(object : Thread() {
+            override fun run(): Unit = runBlocking {
+                LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
+                GlobalState.client.closeBlocking()
+            }
+        })
+    }
+
+    private fun setConfigurations() {
+        // Enable anti-aliasing
+        System.setProperty("awt.useSystemAAFontSettings", "on")
+        System.setProperty("swing.aatext", "true")
+        // Enable FileDialog to select "directories" on MacOS
+        System.setProperty("apple.awt.fileDialogForDirectories", "true")
+        // Enable native Windows UI style
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    private fun application(window: @Composable ApplicationScope.() -> Unit) {
+        androidx.compose.ui.window.application(exitProcessOnExit = false) {
+            Theme.Material {
+                CompositionLocalProvider(
+                    LocalWindowExceptionHandlerFactory provides ExceptionHandler
+                ) { window() }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        try {
+            addShutdownHook()
+            setConfigurations()
+            Message.loadClasses()
+            GlobalState.appData.initialise()
+            while (!quit) {
+                application { MainWindow(::exitApplication) }
+                error?.let { exception ->
+                    LOGGER.error(exception.message, exception)
+                    application { ErrorWindow(exception) { error = null; exitApplication() } }
+                }
+            }
+            exitProcess(0)
+        } catch (exception: Exception) {
+            LOGGER.error(exception.message, exception)
+            exitProcess(1)
         }
     }
 }
