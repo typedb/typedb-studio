@@ -1979,7 +1979,9 @@ internal object GraphOutput : RunOutput() {
             override val isActive: Boolean = true
             override var buttons: List<Form.IconButtonArg> = emptyList()
 
-            private val placeholderPadding = 20.dp
+            companion object {
+                private val MESSAGE_PADDING = 20.dp
+            }
 
             @Composable
             override fun BrowserLayout() {
@@ -1990,9 +1992,10 @@ internal object GraphOutput : RunOutput() {
 
             @Composable
             private fun SelectVertexMessage() {
-                Box(Modifier.fillMaxSize().padding(placeholderPadding), Alignment.Center) {
-                    Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true)
-                }
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight).padding(MESSAGE_PADDING),
+                    contentAlignment = Alignment.Center
+                ) { Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true) }
             }
         }
 
@@ -2003,7 +2006,7 @@ internal object GraphOutput : RunOutput() {
 
             @Composable
             fun Layout() {
-                Column {
+                Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {
                     TitleSection()
                     if (props.isNotEmpty()) Table()
                 }
