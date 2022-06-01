@@ -60,7 +60,7 @@ internal class RunOutputGroup constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val futuresLatch = CountDownLatch(2)
     private var endTime: Long? = null
-    internal val tabsState = Tabs.State<RunOutput.State>(coroutineScope)
+    internal val tabsState = Tabs.Horizontal.State<RunOutput.State>(coroutineScope)
 
     object Done
 

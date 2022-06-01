@@ -65,7 +65,7 @@ object PageArea {
     internal class State(coroutineScope: CoroutineScope) {
 
         private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
-        internal val tabsState = Tabs.State<Resource>(coroutineScope)
+        internal val tabsState = Tabs.Horizontal.State<Resource>(coroutineScope)
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -191,7 +191,7 @@ object PageArea {
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
                 .onKeyEvent { state.handleKeyEvent(it) }
         ) {
-            Tabs.Layout(
+            Tabs.Horizontal.Layout(
                 state = state.tabsState,
                 tabs = GlobalState.resource.opened,
                 iconFn = { resource -> state.openedPages(resource).icon },

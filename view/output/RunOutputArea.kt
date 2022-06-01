@@ -65,7 +65,7 @@ object RunOutputArea {
     ) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
-        internal val runnerTabs = Tabs.State<QueryRunner>(coroutineScope)
+        internal val runnerTabs = Tabs.Horizontal.State<QueryRunner>(coroutineScope)
         private val outputGroup: MutableMap<QueryRunner, RunOutputGroup> = mutableMapOf()
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
@@ -137,7 +137,7 @@ object RunOutputArea {
             Form.Text(value = Label.RUN + ":")
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
-                Tabs.Layout(
+                Tabs.Horizontal.Layout(
                     state = state.runnerTabs,
                     tabs = runnerMgr.runners,
                     labelFn = { AnnotatedString(runnerName(it)) },
@@ -200,10 +200,10 @@ object RunOutputArea {
             Form.Text(value = Label.OUTPUT + ":")
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Box(Modifier.weight(1f)) {
-                Tabs.Layout(
+                Tabs.Horizontal.Layout(
                     state = outputGroup.tabsState,
                     tabs = outputGroup.outputs,
-                    position = Tabs.Position.BOTTOM,
+                    position = Tabs.Horizontal.Position.BOTTOM,
                     iconFn = { Form.IconArg(outputIcon(it)) },
                     labelFn = { AnnotatedString(it.name) },
                     isActiveFn = { outputGroup.isActive(it) },
