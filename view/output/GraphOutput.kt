@@ -20,26 +20,21 @@ package com.vaticle.typedb.studio.view.output
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,7 +45,6 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -60,8 +54,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIconDefaults
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -78,7 +70,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.vaticle.force.graph.api.Simulation
@@ -130,11 +121,13 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineI
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Browser
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Table
+import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.output.GraphOutput.State.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
@@ -1690,7 +1683,7 @@ internal object GraphOutput : RunOutput() {
                         minSize = BrowserArea.MIN_WIDTH,
                         initSize = Either.first(
                             state.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
-                                ?: BrowserArea.SIDE_TAB_WIDTH
+                                ?: Tabs.Vertical.WIDTH
                         ),
                         initFreeze = state.browserAreaState?.browser?.isOpen != true
                     ) { BrowserArea.Layout(state, it) }
@@ -1918,98 +1911,26 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        // TODO: copied from browser/Browser.kt on 23/05/2022
-        abstract class Browser(
-            private val areaState: BrowserArea.State, internal val order: Int, initOpen: Boolean = false
-        ) {
-
-            companion object {
-                internal val MIN_HEIGHT = 80.dp
-            }
-
-            internal abstract val label: String
-            internal abstract val icon: Icon.Code
-            internal abstract val buttons: List<Form.IconButtonArg>
-
-            internal var isOpen: Boolean by mutableStateOf(initOpen)
-
-            @Composable
-            abstract fun BrowserLayout()
-
-            fun toggle() {
-                isOpen = !isOpen
-                areaState.mayUpdatePaneState()
-            }
-
-            @Composable
-            internal fun Layout() {
-                Column {
-                    Bar()
-                    Separator.Horizontal()
-                    Box(modifier = Modifier.weight(1f)) { BrowserLayout() }
-                }
-            }
-
-            @Composable
-            private fun Bar() {
-                Row(
-                    modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT)
-                        .background(color = Theme.studio.surface),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
-                    Icon.Render(icon = icon)
-                    Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
-                    Form.Text(value = label)
-                    Spacer(Modifier.weight(1f))
-                    Buttons(*buttons.toTypedArray(), isActive = true)
-                    Buttons(Form.IconButtonArg(Icon.Code.XMARK) { toggle() }, isActive = true)
-                }
-            }
-
-            @Composable
-            private fun Buttons(vararg buttons: Form.IconButtonArg, isActive: Boolean) {
-                buttons.forEach {
-                    Form.IconButton(
-                        icon = it.icon,
-                        hoverIcon = it.hoverIcon,
-                        modifier = Modifier.size(Theme.PANEL_BAR_HEIGHT),
-                        iconColor = it.color(),
-                        iconHoverColor = it.hoverColor?.invoke(),
-                        disabledColor = it.disabledColor?.invoke(),
-                        bgColor = androidx.compose.ui.graphics.Color.Transparent,
-                        roundedCorners = Theme.RoundedCorners.NONE,
-                        enabled = isActive && it.enabled,
-                        tooltip = it.tooltip,
-                        onClick = it.onClick,
-                    )
-                }
-            }
-        }
-
         // TODO: copied from browser/BrowserArea.kt on 23/05/2022
         object BrowserArea {
 
             val WIDTH = 300.dp
             val MIN_WIDTH = 150.dp
-            val SIDE_TAB_WIDTH = 22.dp
-            private val SIDE_TAB_HEIGHT = 100.dp
-            private val SIDE_TAB_SPACING = 8.dp
-            private val ICON_SIZE = 10.sp
-            private val TAB_OFFSET = 40.dp
 
             class State constructor(state: GraphOutput.State, var paneState: Frame.PaneState) {
 
                 private var unfreezeSize: Dp by mutableStateOf(WIDTH)
-                internal val browser = PreviewBrowser(state, this, 0, false)
+                internal val browser = PreviewBrowser(state, 0, false) { mayUpdatePaneState() }
                 internal var isOpen
                     get() = browser.isOpen
-                    set(value) { browser.isOpen = value }
+                    set(value) {
+                        browser.isOpen = value
+                    }
 
                 fun mayUpdatePaneState() {
                     if (!isOpen) {
                         unfreezeSize = paneState.size
-                        paneState.freeze(SIDE_TAB_WIDTH)
+                        paneState.freeze(Tabs.Vertical.WIDTH)
                     } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
                 }
             }
@@ -2035,48 +1956,27 @@ internal object GraphOutput : RunOutput() {
                         )
                         Separator.Vertical()
                     }
-                    Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
-                        Tab(areaState.browser)
-                    }
+                    Tabs.Vertical.Layout(
+                        tabs = listOf(areaState.browser),
+                        position = Tabs.Vertical.Position.RIGHT,
+                        labelFn = { it.label },
+                        iconFn = { it.icon },
+                        isActiveFn = { it.isOpen },
+                    ) { it.toggle() }
                 }
-            }
-
-            @OptIn(ExperimentalComposeUiApi::class)
-            @Composable
-            private fun Tab(browser: Browser) {
-                @Composable
-                fun bgColor(): androidx.compose.ui.graphics.Color =
-                    if (browser.isOpen) Theme.studio.surface else Theme.studio.backgroundDark
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(SIDE_TAB_HEIGHT)
-                        .pointerHoverIcon(PointerIconDefaults.Hand)
-                        .clickable { browser.toggle() }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
-                            .rotate(90f)
-                            .offset(x = TAB_OFFSET)
-                            .background(color = bgColor())
-                    ) {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Icon.Render(icon = browser.icon, size = ICON_SIZE)
-                        Spacer(modifier = Modifier.width(SIDE_TAB_SPACING))
-                        Form.Text(value = browser.label)
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-                Separator.Horizontal()
             }
         }
 
-        class PreviewBrowser(private val state: State, areaState: BrowserArea.State, order: Int, initOpen: Boolean) :
-            Browser(areaState, order, initOpen) {
+        class PreviewBrowser constructor(
+            private val state: State,
+            order: Int,
+            isOpen: Boolean,
+            onUpdatePane: () -> Unit
+        ) : Browser(isOpen, order, onUpdatePane) {
 
             override val label: String = Label.PREVIEW
             override val icon: Icon.Code = Icon.Code.EYE
+            override val isActive: Boolean = true
             override var buttons: List<Form.IconButtonArg> = emptyList()
 
             private val placeholderPadding = 20.dp
@@ -2084,12 +1984,12 @@ internal object GraphOutput : RunOutput() {
             @Composable
             override fun BrowserLayout() {
                 val focusedVertex = state.interactions.focusedVertex
-                if (focusedVertex == null) PlaceholderText()
+                if (focusedVertex == null) SelectVertexMessage()
                 else ConceptPreview(focusedVertex.concept).Layout()
             }
 
             @Composable
-            private fun PlaceholderText() {
+            private fun SelectVertexMessage() {
                 Box(Modifier.fillMaxSize().padding(placeholderPadding), Alignment.Center) {
                     Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true)
                 }

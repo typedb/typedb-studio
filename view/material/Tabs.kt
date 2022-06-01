@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -74,9 +75,11 @@ object Tabs {
 
         val WIDTH = 22.dp
         private val TAB_HEIGHT = 100.dp
-        private val TAB_OFFSET = (-40).dp
 
-        enum class Position(internal val degree: Float) { LEFT(-90f), RIGHT(90f) }
+        enum class Position(internal val degree: Float, internal val offset: Dp) {
+            LEFT(-90f, (-40).dp),
+            RIGHT(90f, 40.dp)
+        }
 
         @Composable
         fun <T : Any> Layout(
@@ -88,7 +91,7 @@ object Tabs {
             onClick: (T) -> Unit,
         ) {
             Column(
-                modifier = Modifier.width(WIDTH).background(Theme.studio.backgroundMedium),
+                modifier = Modifier.width(WIDTH).fillMaxHeight().background(Theme.studio.backgroundMedium),
                 verticalArrangement = Arrangement.Top
             ) { tabs.forEach { Tab(it, position, labelFn, iconFn, isActiveFn, onClick) } }
         }
@@ -116,7 +119,7 @@ object Tabs {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.requiredWidth(TAB_HEIGHT)
                         .rotate(position.degree)
-                        .offset(x = TAB_OFFSET)
+                        .offset(x = position.offset)
                         .background(color = bgColor())
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
