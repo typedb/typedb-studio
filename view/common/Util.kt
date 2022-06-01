@@ -22,14 +22,12 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.thing.Attribute
-import com.vaticle.typedb.client.api.concept.type.AttributeType
 import java.awt.MouseInfo
 import java.awt.Point
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 object Util {
@@ -61,10 +59,9 @@ object Util {
         return area.contains(mouse.x, mouse.y)
     }
 
-    fun Attribute<*>.valueString(): String = when {
-        isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        else -> value.toString()
+    // TODO: Investigate usages of this method -- why were they needed to begin with. Most likely is race condition.
+    fun AnnotatedString.subSequenceSafely(start: Int, end: Int): AnnotatedString {
+        val coercedStart = start.coerceIn(0, length)
+        return this.subSequence(coercedStart, end.coerceIn(coercedStart, length))
     }
-
-    fun AttributeType.ValueType.schemaString() = name.lowercase()
 }

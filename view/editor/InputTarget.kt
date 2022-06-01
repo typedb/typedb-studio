@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.view.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
@@ -473,10 +474,9 @@ internal class InputTarget constructor(
         val list = mutableListOf<AnnotatedString>()
         for (i in start.row..end.row) {
             val line = content[i]
-            fun cap(i: Int) = i.coerceAtMost(line.length) // TODO: figure out why we need this!
-            if (i == start.row && end.row > start.row) list.add(line.subSequence(cap(start.col), line.length))
-            else if (i == start.row) list.add(line.subSequence(cap(start.col), cap(end.col)))
-            else if (i == end.row) list.add(line.subSequence(0, cap(end.col)))
+            if (i == start.row && end.row > start.row) list.add(line.subSequenceSafely(start.col, line.length))
+            else if (i == start.row) list.add(line.subSequenceSafely(start.col, end.col))
+            else if (i == end.row) list.add(line.subSequenceSafely(0, end.col))
             else list.add(line)
         }
         return list

@@ -27,9 +27,6 @@ kt_jvm_library(
     deps = [
         "//state/common:common",
 
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//api",
-
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",

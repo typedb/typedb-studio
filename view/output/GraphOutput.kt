@@ -111,9 +111,7 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchC
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Util.schemaString
 import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.Util.valueString
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc
@@ -2129,7 +2127,7 @@ internal object GraphOutput : RunOutput() {
                     if (type is AttributeType) type.valueType?.let { valueType ->
                         append(" ")
                         withStyle(SpanStyle(baseFontColor.copy(Color.FADED_OPACITY))) {
-                            append("(${valueType.schemaString()})")
+                            append("(${valueType.name.lowercase()})")
                         }
                     }
                 }
@@ -2165,6 +2163,11 @@ internal object GraphOutput : RunOutput() {
 
                 private infix fun String.to(value: String): Property {
                     return Property(this, value)
+                }
+
+                private fun Attribute<*>.valueString(): String = when {
+                    isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    else -> value.toString()
                 }
             }
         }

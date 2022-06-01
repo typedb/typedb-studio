@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.view.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
@@ -328,8 +329,8 @@ internal interface TextProcessor {
         private fun applyDeletion(deletion: Deletion) {
             val start = deletion.selection().min
             val end = deletion.selection().max
-            val prefix = content[start.row].subSequence(0, start.col)
-            val suffix = content[end.row].subSequence(end.col, content[end.row].length)
+            val prefix = content[start.row].subSequenceSafely(0, start.col)
+            val suffix = content[end.row].subSequenceSafely(end.col, content[end.row].length)
             content[start.row] = prefix + suffix
             if (end.row > start.row) {
                 rendering.removeRange(start.row + 1, end.row + 1)
@@ -341,8 +342,8 @@ internal interface TextProcessor {
         private fun applyInsertion(insertion: Insertion) {
             // TODO: investigate how it is possible for subSequence() to throw IndexOutOfBounds without coercion
             val cursor = insertion.cursor
-            val prefix = content[cursor.row].let { it.subSequence(0, cursor.col.coerceAtMost(it.length)) }
-            val suffix = content[cursor.row].let { it.subSequence(cursor.col.coerceAtMost(it.length), it.length) }
+            val prefix = content[cursor.row].subSequenceSafely(0, cursor.col)
+            val suffix = content[cursor.row].let { it.subSequenceSafely(cursor.col, it.length) }
             val texts = insertion.text.toMutableList()
             texts[0] = prefix + texts[0]
             texts[texts.size - 1] = texts[texts.size - 1] + suffix
