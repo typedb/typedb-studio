@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -59,7 +58,7 @@ object StatusBar {
                 val statusValue = statusMgr.statuses[it]
                 if (!statusValue.isNullOrEmpty()) {
                     Separator.Vertical()
-                    StatusDisplay(it.displayName, statusValue, fontStyle)
+                    StatusDisplay(it.displayName, it.description, statusValue, fontStyle)
                 }
             }
         }
@@ -67,8 +66,8 @@ object StatusBar {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun StatusDisplay(statusName: String, statusValue: String, fontStyle: TextStyle) {
-        val tooltipState: Tooltip.State = Tooltip.State(Tooltip.Arg(statusName))
+    private fun StatusDisplay(name: String, description: String?, value: String, fontStyle: TextStyle) {
+        val tooltipState: Tooltip.State = Tooltip.State(Tooltip.Arg(name, description))
         Tooltip.Popup(tooltipState)
         Column(Modifier.pointerMoveFilter(
             onEnter = { tooltipState.mayShowOnTargetHover(); false },
@@ -76,7 +75,7 @@ object StatusBar {
         )) {
             Row {
                 Spacer(Modifier.width(PADDING))
-                Form.Text(value = statusValue, textStyle = fontStyle)
+                Form.Text(value = value, textStyle = fontStyle)
                 Spacer(Modifier.width(PADDING))
             }
             Spacer(Modifier.height(2.dp))

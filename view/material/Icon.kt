@@ -115,6 +115,7 @@ object Icon {
         STOP(0xf04du, 13.sp),
         TABLE_CELLS_LARGE(0xf009u),
         THUMBTACK(0xf08du),
+        TIMER(0xe29eu),
         TRASH_CAN(0xf2edu),
         USER(0xf007u),
         USER_GROUP(0xf500u),
