@@ -18,42 +18,22 @@
 
 package com.vaticle.typedb.studio.view
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIconDefaults
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Browser
-import com.vaticle.typedb.studio.view.material.Form.Text
 import com.vaticle.typedb.studio.view.material.Frame
-import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.project.ProjectBrowser
 import com.vaticle.typedb.studio.view.types.TypeBrowser
 
@@ -61,11 +41,6 @@ object BrowserArea {
 
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
-    private val SIDE_TAB_WIDTH = 22.dp
-    private val SIDE_TAB_HEIGHT = 100.dp
-    private val SIDE_TAB_SPACING = 8.dp
-    private val ICON_SIZE = 10.sp
-    private val TAB_OFFSET = (-40).dp
 
     class State constructor(private val paneState: Frame.PaneState) {
 
@@ -82,7 +57,7 @@ object BrowserArea {
         fun mayUpdatePaneState() {
             if (openedBrowsers.isEmpty()) {
                 unfreezeSize = paneState.size
-                paneState.freeze(SIDE_TAB_WIDTH)
+                paneState.freeze(Tabs.Vertical.WIDTH)
             } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
         }
     }
@@ -92,9 +67,9 @@ object BrowserArea {
         val state = remember { State(paneState) }
         val openedBrowsers = state.openedBrowsers
         Row(Modifier.fillMaxSize()) {
-            VerticalTabs(
+            Tabs.Vertical.Layout(
                 tabs = state.browsers,
-                position = Position.LEFT,
+                position = Tabs.Vertical.Position.LEFT,
                 labelFn = { it.label },
                 iconFn = { it.icon },
                 isActiveFn = { it.isOpen }
@@ -115,57 +90,5 @@ object BrowserArea {
                 )
             }
         }
-    }
-
-    enum class Position(internal val degree: Float) { LEFT(-90f), RIGHT(90f) }
-
-    @Composable
-    private fun <T : Any> VerticalTabs(
-        tabs: List<T>,
-        position: Position,
-        labelFn: (T) -> String,
-        iconFn: (T) -> Icon.Code,
-        isActiveFn: (T) -> Boolean,
-        onClick: (T) -> Unit,
-    ) {
-        Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
-            tabs.forEach { Tab(it, position, labelFn, iconFn, isActiveFn, onClick) }
-        }
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    private fun <T : Any> Tab(
-        tab: T,
-        position: Position,
-        labelFn: (T) -> String,
-        iconFn: (T) -> Icon.Code,
-        isActiveFn: (T) -> Boolean,
-        onClick: (T) -> Unit,
-    ) {
-        @Composable
-        fun bgColor(): Color = if (isActiveFn(tab)) Theme.studio.surface else Theme.studio.backgroundDark
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(SIDE_TAB_HEIGHT)
-                .pointerHoverIcon(PointerIconDefaults.Hand)
-                .clickable { onClick(tab) }
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
-                    .rotate(position.degree)
-                    .offset(x = TAB_OFFSET)
-                    .background(color = bgColor())
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                Icon.Render(icon = iconFn(tab), size = ICON_SIZE)
-                Spacer(modifier = Modifier.width(SIDE_TAB_SPACING))
-                Text(value = labelFn(tab))
-                Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-        Separator.Horizontal()
     }
 }

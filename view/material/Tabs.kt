@@ -20,13 +20,17 @@ package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -39,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -52,8 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
-import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 import com.vaticle.typedb.studio.view.material.Form.IconArg
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import java.awt.event.MouseEvent
@@ -64,9 +67,72 @@ object Tabs {
 
     private val TAB_UNDERLINE_HEIGHT = 2.dp
     private val TAB_SCROLL_DELTA = 200.dp
-    private val ICON_SIZE = 10.sp
+    private val TAB_ICON_SIZE = 10.sp
+    private val TAB_SPACING = Theme.PANEL_BAR_SPACING
+
+    object Vertical {
+
+        val WIDTH = 22.dp
+        private val TAB_HEIGHT = 100.dp
+        private val TAB_OFFSET = (-40).dp
+
+        enum class Position(internal val degree: Float) { LEFT(-90f), RIGHT(90f) }
+
+        @Composable
+        fun <T : Any> Layout(
+            tabs: List<T>,
+            position: Position,
+            labelFn: (T) -> String,
+            iconFn: (T) -> Icon.Code,
+            isActiveFn: (T) -> Boolean,
+            onClick: (T) -> Unit,
+        ) {
+            Column(
+                modifier = Modifier.width(WIDTH).background(Theme.studio.backgroundMedium),
+                verticalArrangement = Arrangement.Top
+            ) { tabs.forEach { Tab(it, position, labelFn, iconFn, isActiveFn, onClick) } }
+        }
+
+        @OptIn(ExperimentalComposeUiApi::class)
+        @Composable
+        private fun <T : Any> Tab(
+            tab: T,
+            position: Position,
+            labelFn: (T) -> String,
+            iconFn: (T) -> Icon.Code,
+            isActiveFn: (T) -> Boolean,
+            onClick: (T) -> Unit,
+        ) {
+            @Composable
+            fun bgColor(): Color = if (isActiveFn(tab)) Theme.studio.surface else Theme.studio.backgroundDark
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(TAB_HEIGHT)
+                    .pointerHoverIcon(PointerIconDefaults.Hand)
+                    .clickable { onClick(tab) }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.requiredWidth(TAB_HEIGHT)
+                        .rotate(position.degree)
+                        .offset(x = TAB_OFFSET)
+                        .background(color = bgColor())
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon.Render(icon = iconFn(tab), size = TAB_ICON_SIZE)
+                    Spacer(modifier = Modifier.width(TAB_SPACING))
+                    Form.Text(value = labelFn(tab))
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            Separator.Horizontal()
+        }
+    }
 
     object Horizontal {
+
+        private val HEIGHT = Theme.PANEL_BAR_HEIGHT
 
         enum class Position { TOP, BOTTOM }
 
@@ -118,15 +184,15 @@ object Tabs {
             state.density = LocalDensity.current.density
             val closedTabs = state.openedTabSize.keys - tabs.toSet()
             closedTabs.forEach { state.openedTabSize.remove(it) }
-            Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT).onSizeChanged {
-                state.maxWidth = toDP(it.width, state.density) - PANEL_BAR_HEIGHT * 3
+            Row(Modifier.fillMaxWidth().height(HEIGHT).onSizeChanged {
+                state.maxWidth = toDP(it.width, state.density) - HEIGHT * 3
             }) {
                 if (tabs.isNotEmpty()) Separator.Vertical()
                 if (state.scroller.maxValue > 0) {
                     PreviousTabsButton(state)
                     Separator.Vertical()
                 }
-                Row(Modifier.widthIn(max = state.maxWidth).height(PANEL_BAR_HEIGHT).horizontalScroll(state.scroller)) {
+                Row(Modifier.widthIn(max = state.maxWidth).height(HEIGHT).horizontalScroll(state.scroller)) {
                     tabs.forEach { tab ->
                         val icon = iconFn?.let { it(tab) }
                         val label = labelFn(tab)
@@ -157,7 +223,7 @@ object Tabs {
 
         @Composable
         private fun Spacer() {
-            Spacer(modifier = Modifier.width(PANEL_BAR_SPACING))
+            Spacer(modifier = Modifier.width(TAB_SPACING))
         }
 
         @OptIn(ExperimentalComposeUiApi::class)
@@ -170,7 +236,7 @@ object Tabs {
         ) {
             val contextMenuState = remember { ContextMenu.State() }
             val bgColor = if (isActive) Theme.studio.primary else Color.Transparent
-            val height = if (isActive) PANEL_BAR_HEIGHT - TAB_UNDERLINE_HEIGHT else PANEL_BAR_HEIGHT
+            val height = if (isActive) HEIGHT - TAB_UNDERLINE_HEIGHT else HEIGHT
             var width by remember { mutableStateOf(0.dp) }
 
             Box {
@@ -188,7 +254,7 @@ object Tabs {
                         trailingButton?.let { Button(it) }
                         icon?.let {
                             Spacer()
-                            Icon.Render(icon = it.code, color = it.color(), size = ICON_SIZE)
+                            Icon.Render(icon = it.code, color = it.color(), size = TAB_ICON_SIZE)
                             Spacer()
                         }
                         if (trailingButton == null && icon == null) Spacer()
@@ -220,7 +286,7 @@ object Tabs {
         private fun <T : Any> PreviousTabsButton(state: State<T>) {
             Form.IconButton(
                 icon = Icon.Code.CARET_LEFT,
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
+                modifier = Modifier.size(HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,
                 enabled = state.scroller.value > 0
@@ -231,7 +297,7 @@ object Tabs {
         private fun <T : Any> NextTabsButton(state: State<T>) {
             Form.IconButton(
                 icon = Icon.Code.CARET_RIGHT,
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
+                modifier = Modifier.size(HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,
                 enabled = state.scroller.value < state.scroller.maxValue
@@ -243,7 +309,7 @@ object Tabs {
             Form.IconButton(
                 icon = buttonArg.icon,
                 hoverIcon = buttonArg.hoverIcon,
-                modifier = Modifier.size(PANEL_BAR_HEIGHT),
+                modifier = Modifier.size(HEIGHT),
                 iconColor = buttonArg.color(),
                 iconHoverColor = buttonArg.hoverColor?.invoke(),
                 disabledColor = buttonArg.disabledColor?.invoke(),
