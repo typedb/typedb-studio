@@ -98,7 +98,7 @@ internal class InputTarget constructor(
         val max: Cursor get() = if (end >= start) end else start
         val isForward: Boolean get() = start <= end
         fun label(): String {
-            return "${start.label()} -- ${end.label()}"
+            return "${start.label()} to ${end.label()}"
         }
 
         companion object {

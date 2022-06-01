@@ -51,12 +51,12 @@ object Typography {
     private val TITILLIUM_WEB_SEMI_BOLD = "resources/fonts/titilliumweb/TitilliumWeb-SemiBold.ttf"
     private val UBUNTU_MONO_REGULAR = "resources/fonts/ubuntumono/UbuntuMono-Regular.ttf"
     private const val DEFAULT_BODY_FONT_SIZE_MEDIUM = 13
-    private const val DEFAULT_BODY_FONT_SIZE_SMALL = 11
+    private const val DEFAULT_BODY_FONT_SIZE_SMALL = 12
     private const val DEFAULT_CODE_FONT_SIZE_MEDIUM = 14
     private const val DEFAULT_CODE_FONT_SIZE_SMALL = 12
 
     @Stable
-    class Theme(
+    class Theme constructor(
         variableWidthFontFamily: FontFamily, fixedWidthFontFamily: FontFamily,
         bodySizeMedium: Int, bodySizeSmall: Int, codeSizeMedium: Int, codeSizeSmall: Int
     ) {

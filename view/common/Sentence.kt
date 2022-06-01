@@ -57,7 +57,7 @@ object Sentence {
         "Create a new file under %s."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
-        //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
+    //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
     const val ENABLE_INFERENCE_DESCRIPTION =
         "Enabling inference means that you will get inferred answers in your match query. " +
                 BUTTON_ENABLED_WHEN_TRANSACTION_IS_READ
@@ -83,6 +83,9 @@ object Sentence {
                 BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_DATABASES_MESSAGE =
         "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
+    const val OUTPUT_RESPONSE_TIME_DESCRIPTION = "Duration to collect all answers of the query from the server."
+    const val QUERY_RESPONSE_TIME_DESCRIPTION =
+        "Duration to collect auxiliary information/concepts to display informative log & graph output."
     const val RENAME_DIRECTORY =
         "Rename the directory at %s."
     const val RENAME_FILE =
