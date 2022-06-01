@@ -92,9 +92,13 @@ object BrowserArea {
         val state = remember { State(paneState) }
         val openedBrowsers = state.openedBrowsers
         Row(Modifier.fillMaxSize()) {
-            Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
-                state.browsers.forEach { Tab(it) }
-            }
+            VerticalTabs(
+                tabs = state.browsers,
+                position = Position.LEFT,
+                labelFn = { it.label },
+                iconFn = { it.icon },
+                isActiveFn = { it.isOpen }
+            ) { it.toggle() }
             if (openedBrowsers.isNotEmpty()) {
                 Separator.Vertical()
                 Frame.Column(
@@ -113,29 +117,52 @@ object BrowserArea {
         }
     }
 
+    enum class Position(internal val degree: Float) { LEFT(-90f), RIGHT(90f) }
+
+    @Composable
+    private fun <T : Any> VerticalTabs(
+        tabs: List<T>,
+        position: Position,
+        labelFn: (T) -> String,
+        iconFn: (T) -> Icon.Code,
+        isActiveFn: (T) -> Boolean,
+        onClick: (T) -> Unit,
+    ) {
+        Column(Modifier.width(SIDE_TAB_WIDTH), verticalArrangement = Arrangement.Top) {
+            tabs.forEach { Tab(it, position, labelFn, iconFn, isActiveFn, onClick) }
+        }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Tab(browser: Browser) {
+    private fun <T : Any> Tab(
+        tab: T,
+        position: Position,
+        labelFn: (T) -> String,
+        iconFn: (T) -> Icon.Code,
+        isActiveFn: (T) -> Boolean,
+        onClick: (T) -> Unit,
+    ) {
         @Composable
-        fun bgColor(): Color = if (browser.isOpen) Theme.studio.surface else Theme.studio.backgroundDark
+        fun bgColor(): Color = if (isActiveFn(tab)) Theme.studio.surface else Theme.studio.backgroundDark
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(SIDE_TAB_HEIGHT)
                 .pointerHoverIcon(PointerIconDefaults.Hand)
-                .clickable { browser.toggle() }
+                .clickable { onClick(tab) }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.requiredWidth(SIDE_TAB_HEIGHT)
-                    .rotate(-90f)
+                    .rotate(position.degree)
                     .offset(x = TAB_OFFSET)
                     .background(color = bgColor())
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                Icon.Render(icon = browser.icon, size = ICON_SIZE)
+                Icon.Render(icon = iconFn(tab), size = ICON_SIZE)
                 Spacer(modifier = Modifier.width(SIDE_TAB_SPACING))
-                Text(value = browser.label)
+                Text(value = labelFn(tab))
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
