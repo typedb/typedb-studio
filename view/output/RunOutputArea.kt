@@ -168,8 +168,8 @@ object RunOutputArea {
         }
         LaunchedEffect(outputGroup) {
             do {
-                outputGroup.publishStatus()
                 delay(50)
+                outputGroup.publishStatus()
             } while(!runner.isConsumed)
         }
     }
