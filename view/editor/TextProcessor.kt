@@ -191,32 +191,31 @@ internal interface TextProcessor {
 
         override fun toggleComment() {
             if (fileType == Property.FileType.UNKNOWN) return
-            val commentToken = fileType.commentToken
             val oldSelection = target.selection
             val oldCursor = target.cursor
 
             target.updateSelection(target.selectionOfLines(oldSelection ?: oldCursor.toSelection()))
-            val oldLines = target.selectedTextLines()
-            val newLines: List<AnnotatedString>
-            val newPosition: Either<Cursor, Selection>
-            if (oldLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }) {
-                newLines = oldLines.map {
-                    if (it.isEmpty()) it
-                    else {
-                        val i = it.indexOf(commentToken)
-                        it.subSequence(0, i) + it.subSequence(i + commentToken.length, it.length)
-                    }
+            val textLines = target.selectedTextLines()
+            val commentToken = fileType.commentToken
+
+            fun commentSelection(oldLines: List<AnnotatedString>) = oldLines.map { AnnotatedString(commentToken) + it }
+            fun uncommentSelection(oldLines: List<AnnotatedString>) = oldLines.map {
+                if (it.isEmpty()) it
+                else it.indexOf(commentToken).let { index ->
+                    it.subSequence(0, index) + it.subSequence(index + commentToken.length, it.length)
                 }
-                newPosition = oldSelection?.let {
-                    Either.second(target.selectionShiftedBy(oldSelection, -commentToken.length, -commentToken.length))
-                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col - commentToken.length))
-            } else {
-                newLines = oldLines.map { AnnotatedString(commentToken) + it }
-                newPosition = oldSelection?.let {
-                    Either.second(target.selectionShiftedBy(oldSelection, commentToken.length, commentToken.length))
-                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + commentToken.length))
             }
-            insertText(newLines, newPosition)
+
+            fun newPosition(sign: Int): Either<Cursor, Selection> {
+                val shift = sign * commentToken.length
+                return oldSelection?.let {
+                    Either.second(target.selectionShiftedBy(it, shift, shift))
+                } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + shift))
+            }
+
+            val isComment = textLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }
+            if (isComment) insertText(uncommentSelection(textLines), newPosition(-1))
+            else insertText(commentSelection(textLines), newPosition(1))
         }
 
         override fun outdentTab() {
