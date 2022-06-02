@@ -58,6 +58,7 @@ internal interface TextProcessor {
     fun replaceAllFound(text: String)
     fun insertText(text: String): Boolean
     fun insertNewLine()
+    fun duplicateLine()
     fun deleteSelection()
     fun toggleComment()
     fun indentTab()
@@ -89,6 +90,7 @@ internal interface TextProcessor {
         override fun replaceAllFound(text: String) = mayDisplayWarning()
         override fun insertText(text: String): Boolean = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
+        override fun duplicateLine() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
         override fun toggleComment() = mayDisplayWarning()
         override fun indentTab() = mayDisplayWarning()
@@ -250,6 +252,16 @@ internal interface TextProcessor {
             val line = content[target.cursor.row]
             val tabs = floor(prefixSpaces(line).coerceAtMost(target.cursor.col).toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
+        }
+
+        override fun duplicateLine() {
+            val oldCursor = target.cursor
+            target.selectLine()
+            var textLine = target.selectedText().toString()
+            target.updateCursor(target.selection!!.end, false)
+            if (oldCursor.row == content.size - 1) textLine = "\n" + textLine
+            insertText(textLine)
+            target.updateCursor(Cursor(oldCursor.row + 1, oldCursor.col), false)
         }
 
         private fun asAnnotatedLines(text: String): List<AnnotatedString> {

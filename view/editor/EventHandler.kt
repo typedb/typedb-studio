@@ -38,6 +38,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_LINE_END
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_LINE_START
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_NEXT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DELETE_WORD_PREV
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.DUPLICATE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.EMOJI_WINDOW
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.ENTER_SHIFT
@@ -163,6 +164,7 @@ internal class EventHandler constructor(
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()
+            DUPLICATE -> processor.duplicateLine()
             UNDO -> processor.undo()
             REDO -> processor.redo()
             TEXT_SIZE_INCREASE -> GlobalState.editor.increaseScale()

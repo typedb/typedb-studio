@@ -64,7 +64,7 @@ internal class InputTarget constructor(
         }
     }
 
-    internal data class Cursor(val row: Int, val col: Int) : Comparable<Cursor> {
+    internal data class Cursor constructor(val row: Int, val col: Int) : Comparable<Cursor> {
 
         companion object {
             fun min(first: Cursor, second: Cursor): Cursor {
@@ -93,7 +93,7 @@ internal class InputTarget constructor(
 
     }
 
-    internal class Selection(val start: Cursor, endInit: Cursor) {
+    internal class Selection constructor(val start: Cursor, endInit: Cursor) {
         var end: Cursor by mutableStateOf(endInit)
         val min: Cursor get() = if (start <= end) start else end
         val max: Cursor get() = if (end >= start) end else start
