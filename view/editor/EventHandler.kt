@@ -193,7 +193,7 @@ internal class EventHandler constructor(
     }
 
     private fun cut() {
-        if (target.selection == null) return
+        if (target.selection == null) target.selectLine()
         copy()
         processor.deleteSelection()
     }

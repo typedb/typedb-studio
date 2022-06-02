@@ -193,11 +193,11 @@ internal class InputTarget constructor(
     }
 
     private fun dragSelectionByWord(x: Int, y: Int) {
-        selectWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
+        selectionOfWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
     }
 
     private fun dragSelectionByLine(x: Int, y: Int) {
-        updateSelection(Selection.coverage(selectionDragStart!!, selectLine(createCursor(x, y))))
+        updateSelection(Selection.coverage(selectionDragStart!!, selectionOfLine(createCursor(x, y))))
     }
 
     private fun dragSelectionByLineNumber(x: Int, y: Int) {
@@ -414,47 +414,55 @@ internal class InputTarget constructor(
         updateSelection(Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false)
     }
 
+    internal fun selectNone() {
+        updateSelection(null)
+    }
+
     internal fun maySelectWord(x: Int) {
         if (x > lineNumberBorder) {
-            val selectedWord = selectWord(cursor)
-            updateSelection(selectedWord)
-            selectionDragStart = selectedWord
+            selectWord()
+            selectionDragStart = selection
             mayDragSelectByWord = true
         }
     }
 
-    private fun selectWord(cursor: Cursor): Selection? {
+    private fun selectWord() {
+        updateSelection(selectionOfWord(cursor))
+    }
+
+    internal fun maySelectLine(x: Int) {
+        if (x > lineNumberBorder) {
+            selectLine()
+            selectionDragStart = selection
+            mayDragSelectByLine = true
+        }
+    }
+
+    internal fun selectLine() {
+        updateSelection(selectionOfLine(cursor))
+    }
+
+    private fun selectionOfWord(cursor: Cursor): Selection? {
         return rendering.get(cursor.row)?.let {
             val boundary = wordBoundary(it, cursor.row, cursor.col)
             Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
         }
     }
 
-    internal fun maySelectLine(x: Int) {
-        if (x > lineNumberBorder) {
-            val selectedLine = selectLine(cursor)
-            updateSelection(selectedLine)
-            selectionDragStart = selectedLine
-            mayDragSelectByLine = true
-        }
+    private fun selectionOfLine(cursor: Cursor): Selection {
+        val endCursor = if (cursor.row < content.size - 1) Cursor(cursor.row + 1, 0)
+        else Cursor(cursor.row, content[cursor.row].length)
+        return Selection(Cursor(cursor.row, 0), endCursor)
     }
 
-    private fun selectLine(cursor: Cursor): Selection {
-        return Selection(Cursor(cursor.row, 0), Cursor(cursor.row, content[cursor.row].length))
-    }
-
-    internal fun selectNone() {
-        updateSelection(null)
-    }
-
-    internal fun shiftSelection(selection: Selection, startShift: Int, endShift: Int) = Selection(
-        Cursor(selection.start.row, (selection.start.col + startShift).coerceAtLeast(0)),
-        Cursor(selection.end.row, (selection.end.col + endShift).coerceAtLeast(0))
-    )
-
-    internal fun expandSelection(selection: Selection): Selection = Selection(
+    internal fun selectionOfLines(selection: Selection) = Selection(
         Cursor(selection.min.row, 0),
         Cursor(selection.max.row, content[selection.max.row].length)
+    )
+
+    internal fun selectionShiftedBy(selection: Selection, startShift: Int, endShift: Int) = Selection(
+        Cursor(selection.start.row, (selection.start.col + startShift).coerceAtLeast(0)),
+        Cursor(selection.end.row, (selection.end.col + endShift).coerceAtLeast(0))
     )
 
     internal fun selectedText(): AnnotatedString {

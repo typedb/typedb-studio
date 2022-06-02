@@ -193,7 +193,7 @@ internal interface TextProcessor {
             val oldSelection = target.selection
             val oldCursor = target.cursor
 
-            target.updateSelection(target.expandSelection(oldSelection ?: oldCursor.toSelection()))
+            target.updateSelection(target.selectionOfLines(oldSelection ?: oldCursor.toSelection()))
             val oldLines = target.selectedTextLines()
             val newLines: List<AnnotatedString>
             val newPosition: Either<Cursor, Selection>
@@ -206,12 +206,12 @@ internal interface TextProcessor {
                     }
                 }
                 newPosition = oldSelection?.let {
-                    Either.second(target.shiftSelection(oldSelection, -commentToken.length, -commentToken.length))
+                    Either.second(target.selectionShiftedBy(oldSelection, -commentToken.length, -commentToken.length))
                 } ?: Either.first(Cursor(oldCursor.row, oldCursor.col - commentToken.length))
             } else {
                 newLines = oldLines.map { AnnotatedString(commentToken) + it }
                 newPosition = oldSelection?.let {
-                    Either.second(target.shiftSelection(oldSelection, commentToken.length, commentToken.length))
+                    Either.second(target.selectionShiftedBy(oldSelection, commentToken.length, commentToken.length))
                 } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + commentToken.length))
             }
             insertText(newLines, newPosition)
@@ -220,8 +220,8 @@ internal interface TextProcessor {
         override fun outdentTab() {
             val oldSelection = target.selection
             val oldCursor = target.cursor
-            val newSelection = oldSelection?.let { target.expandSelection(it) }
-                ?: target.expandSelection(oldCursor.toSelection())
+            val newSelection = oldSelection?.let { target.selectionOfLines(it) }
+                ?: target.selectionOfLines(oldCursor.toSelection())
             target.updateSelection(newSelection)
             val oldTextLines = target.selectedTextLines()
             val newTextLines = indent(oldTextLines, -TAB_SIZE)
@@ -230,7 +230,7 @@ internal interface TextProcessor {
             val newPosition: Either<Cursor, Selection> = oldSelection?.let {
                 val startCursorShift = if (it.isForward) firstLineShift else lastLineShift
                 val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
-                Either.second(target.shiftSelection(it, startCursorShift, endCursorShift))
+                Either.second(target.selectionShiftedBy(it, startCursorShift, endCursorShift))
             } ?: Either.first(Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
             insertText(newTextLines, newPosition)
         }
@@ -240,8 +240,8 @@ internal interface TextProcessor {
             val cursor = target.cursor
             if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
-                val newSelection = target.shiftSelection(selection, TAB_SIZE, TAB_SIZE)
-                target.updateSelection(target.expandSelection(selection))
+                val newSelection = target.selectionShiftedBy(selection, TAB_SIZE, TAB_SIZE)
+                target.updateSelection(target.selectionOfLines(selection))
                 insertText(indent(target.selectedTextLines(), TAB_SIZE), Either.second(newSelection))
             }
         }

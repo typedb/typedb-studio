@@ -99,6 +99,7 @@ interface KeyMapper {
         COPY,
         PASTE,
         CUT,
+        DUPLICATE,
 
         UNDO,
         REDO,
@@ -176,6 +177,7 @@ interface KeyMapper {
                     Keys.C, Keys.Insert -> Command.COPY
                     Keys.V -> Command.PASTE
                     Keys.X -> Command.CUT
+                    Keys.D -> Command.DUPLICATE
                     Keys.A -> Command.SELECT_ALL
                     Keys.Z -> Command.UNDO
                     Keys.F -> Command.FIND
