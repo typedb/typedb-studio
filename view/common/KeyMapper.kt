@@ -171,6 +171,10 @@ interface KeyMapper {
                 shortcutModifier(event) && event.isShiftPressed -> when (event.key) {
                     Keys.Z -> Command.REDO
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER_SHIFT
+                    Keys.DirectionLeft -> Command.SELECT_LINE_LEFT
+                    Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
+                    Keys.DirectionUp -> Command.SELECT_HOME
+                    Keys.DirectionDown -> Command.SELECT_END
                     else -> null
                 }
                 shortcutModifier(event) -> when (event.key) {
@@ -200,6 +204,13 @@ interface KeyMapper {
                     Keys.Tab -> Command.CTRL_TAB
                     else -> null
                 }
+                event.isAltPressed && event.isShiftPressed -> when (event.key) {
+                    Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
+                    Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
+                    Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
+                    Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
+                    else -> null
+                }
                 event.isShiftPressed -> when (event.key) {
                     Keys.DirectionLeft -> Command.SELECT_CHAR_LEFT
                     Keys.DirectionRight -> Command.SELECT_CHAR_RIGHT
@@ -207,8 +218,8 @@ interface KeyMapper {
                     Keys.DirectionDown -> Command.SELECT_LINE_DOWN
                     Keys.PageUp -> Command.SELECT_PAGE_UP
                     Keys.PageDown -> Command.SELECT_PAGE_DOWN
-                    Keys.MoveHome -> Command.SELECT_LINE_START
-                    Keys.MoveEnd -> Command.SELECT_LINE_END
+                    Keys.MoveHome -> Command.SELECT_HOME
+                    Keys.MoveEnd -> Command.SELECT_END
                     Keys.Insert -> Command.PASTE
                     Keys.Tab -> Command.TAB_SHIFT
                     Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT
@@ -243,11 +254,8 @@ interface KeyMapper {
 
         override fun map(event: KeyEvent): Command? {
             return when {
-                event.isShiftPressed && event.isCtrlPressed -> when (event.key) {
-                    Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
-                    Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
-                    Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
-                    Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
+                event.isCtrlPressed && event.isShiftPressed -> when (event.key) {
+                    // no unique keys to filter, but necessary to route event to CommonKeyMapper
                     else -> null
                 }
                 event.isCtrlPressed -> when (event.key) {
@@ -259,11 +267,6 @@ interface KeyMapper {
                     Keys.Delete -> Command.DELETE_WORD_NEXT
                     Keys.Backspace -> Command.DELETE_WORD_PREV
                     Keys.Backslash -> Command.SELECT_NONE
-                    else -> null
-                }
-                event.isShiftPressed -> when (event.key) {
-                    Keys.MoveHome -> Command.SELECT_HOME
-                    Keys.MoveEnd -> Command.SELECT_END
                     else -> null
                 }
                 else -> null
@@ -281,18 +284,8 @@ interface KeyMapper {
                     Keys.Space -> Command.EMOJI_WINDOW
                     else -> null
                 }
-                event.isShiftPressed && event.isAltPressed -> when (event.key) {
-                    Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
-                    Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
-                    Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
-                    Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
-                    else -> null
-                }
-                event.isShiftPressed && event.isMetaPressed -> when (event.key) {
-                    Keys.DirectionLeft -> Command.SELECT_LINE_LEFT
-                    Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
-                    Keys.DirectionUp -> Command.SELECT_HOME
-                    Keys.DirectionDown -> Command.SELECT_END
+                event.isMetaPressed && event.isShiftPressed -> when (event.key) {
+                    // no unique keys to filter, but necessary to route event to CommonKeyMapper
                     else -> null
                 }
                 event.isMetaPressed -> when (event.key) {
@@ -305,7 +298,7 @@ interface KeyMapper {
                     else -> null
                 }
                 // Emacs-like shortcuts
-                event.isCtrlPressed && event.isShiftPressed && event.isAltPressed -> when (event.key) {
+                event.isCtrlPressed && event.isAltPressed && event.isShiftPressed -> when (event.key) {
                     Keys.F -> Command.SELECT_WORD_RIGHT
                     Keys.B -> Command.SELECT_WORD_LEFT
                     else -> null
@@ -337,11 +330,8 @@ interface KeyMapper {
                     Keys.O -> Command.ENTER
                     else -> null
                 }
-                // end of emacs-like shortcuts
-
-                event.isShiftPressed -> when (event.key) {
-                    Keys.MoveHome -> Command.SELECT_HOME
-                    Keys.MoveEnd -> Command.SELECT_END
+                event.isAltPressed && event.isShiftPressed -> when (event.key) {
+                    // no unique keys to filter, but necessary to route event to CommonKeyMapper
                     else -> null
                 }
                 event.isAltPressed -> when (event.key) {
