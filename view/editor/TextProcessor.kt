@@ -56,9 +56,9 @@ internal interface TextProcessor {
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
-    fun insertText(text: String): Boolean
+    fun insertText(text: String): Insertion?
     fun insertNewLine()
-    fun duplicateLine()
+    fun duplicate()
     fun deleteSelection()
     fun toggleComment()
     fun indentTab()
@@ -88,9 +88,9 @@ internal interface TextProcessor {
 
         override fun replaceCurrentFound(text: String) = mayDisplayWarning()
         override fun replaceAllFound(text: String) = mayDisplayWarning()
-        override fun insertText(text: String): Boolean = displayWarningOnStartTyping()
+        override fun insertText(text: String): Insertion? = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
-        override fun duplicateLine() = mayDisplayWarning()
+        override fun duplicate() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
         override fun toggleComment() = mayDisplayWarning()
         override fun indentTab() = mayDisplayWarning()
@@ -107,11 +107,11 @@ internal interface TextProcessor {
             file?.path?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
         }
 
-        private fun displayWarningOnStartTyping(): Boolean {
+        private fun displayWarningOnStartTyping(): Insertion? {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastTyped > TYPING_WINDOW_MILLIS) mayDisplayWarning()
             lastTyped = currentTime
-            return true
+            return null
         }
     }
 
@@ -254,38 +254,52 @@ internal interface TextProcessor {
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 
-        override fun duplicateLine() {
+        override fun duplicate() {
+            if (target.selection == null) duplicateLine() else duplicateSelection()
+        }
+
+        private fun duplicateLine() {
             val oldCursor = target.cursor
             target.selectLine()
-            var textLine = target.selectedText().toString()
-            target.updateCursor(target.selection!!.end, false)
-            if (oldCursor.row == content.size - 1) textLine = "\n" + textLine
+            val textLine = target.selectedText().toString()
+            target.updateCursor(target.selection!!.max, false)
+            if (oldCursor.row == content.size - 1) insertNewLine()
             insertText(textLine)
             target.updateCursor(Cursor(oldCursor.row + 1, oldCursor.col), false)
+        }
+
+        private fun duplicateSelection() {
+            val selection = target.selectedText().toString()
+            target.updateCursor(target.selection!!.max, false)
+            insertText(selection)?.let { target.updateSelection(it.selection()) }
         }
 
         private fun asAnnotatedLines(text: String): List<AnnotatedString> {
             return if (text.isEmpty()) listOf() else text.split("\n").map { AnnotatedString(it) }
         }
 
-        override fun insertText(text: String): Boolean {
-            insertText(text, recomputeFinder = true)
-            return true
+        override fun insertText(text: String): Insertion? {
+            return insertText(text, recomputeFinder = true)
         }
 
-        private fun insertText(text: String, recomputeFinder: Boolean) {
-            insertText(asAnnotatedLines(text), newPosition = null, recomputeFinder)
+        private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
+            return insertText(asAnnotatedLines(text), newPosition = null, recomputeFinder)
         }
 
         private fun insertText(
             strings: List<AnnotatedString>,
             newPosition: Either<Cursor, Selection>?,
             recomputeFinder: Boolean = true
-        ) {
+        ): Insertion? {
             val operations = mutableListOf<TextChange.Operation>()
             if (target.selection != null) operations.add(deletionOperation())
-            if (strings.isNotEmpty()) operations.add(Insertion(target.selection?.min ?: target.cursor, strings))
+            val insertion: Insertion?
+            if (strings.isNotEmpty()) {
+                insertion = Insertion(target.selection?.min ?: target.cursor, strings)
+                operations.add(insertion)
+            } else insertion = null
             applyOriginal(TextChange(operations), newPosition, recomputeFinder)
+            return insertion
         }
 
         override fun undo() {

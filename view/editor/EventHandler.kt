@@ -104,7 +104,10 @@ internal class EventHandler constructor(
     internal fun handleEditorEvent(event: KeyEvent): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
         else when {
-            event.isTypedEvent -> processor.insertText(event.awtEvent.keyChar.toString())
+            event.isTypedEvent -> {
+                processor.insertText(event.awtEvent.keyChar.toString())
+                true
+            }
             else -> KeyMapper.CURRENT.map(event)?.let { executeEditorCommand(it) } ?: false
         }
     }
@@ -164,7 +167,7 @@ internal class EventHandler constructor(
             CUT -> cut()
             COPY -> copy()
             PASTE -> paste()
-            DUPLICATE -> processor.duplicateLine()
+            DUPLICATE -> processor.duplicate()
             UNDO -> processor.undo()
             REDO -> processor.redo()
             TEXT_SIZE_INCREASE -> GlobalState.editor.increaseScale()

@@ -120,7 +120,11 @@ internal class TextChange(val operations: List<Operation>) {
 
     }
 
-    class Insertion(cursor: Cursor, text: List<AnnotatedString>) : Operation(cursor, text) {
+    class Insertion constructor(
+        cursor: Cursor,
+        text: List<AnnotatedString>
+    ) : Operation(cursor, text) {
+
         override fun invert(): Deletion {
             return Deletion(cursor, text)
         }
@@ -131,8 +135,12 @@ internal class TextChange(val operations: List<Operation>) {
     }
 
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
-    class Deletion(cursor: Cursor, text: List<AnnotatedString>, selection: Selection? = null) :
-        Operation(cursor, text, selection) {
+    class Deletion constructor(
+        cursor: Cursor,
+        text: List<AnnotatedString>,
+        selection: Selection? = null
+    ) : Operation(cursor, text, selection) {
+
         override fun invert(): Insertion {
             return Insertion(cursor, text)
         }
