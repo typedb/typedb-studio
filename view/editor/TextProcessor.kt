@@ -186,7 +186,9 @@ internal interface TextProcessor {
 
         override fun deleteSelection() {
             if (target.selection == null) return
-            applyOriginal(TextChange(deletionOperation()))
+            val change = TextChange(deletionOperation())
+            applyChange(change)
+            queueChangeStack(change)
         }
 
         override fun toggleComment() {
@@ -214,8 +216,8 @@ internal interface TextProcessor {
             }
 
             val isComment = textLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }
-            if (isComment) insertText(uncommentSelection(textLines), newPosition(-1))
-            else insertText(commentSelection(textLines), newPosition(1))
+            insertText(if (isComment) uncommentSelection(textLines) else commentSelection(textLines))
+            target.updatePosition(newPosition(if (isComment) -1 else 1))
         }
 
         override fun outdentTab() {
@@ -229,11 +231,12 @@ internal interface TextProcessor {
             val firstLineShift = newTextLines.first().length - oldTextLines.first().length
             val lastLineShift = newTextLines.last().length - oldTextLines.last().length
             val newPosition: Either<Cursor, Selection> = oldSelection?.let {
-                val startCursorShift = if (it.isForward) firstLineShift else lastLineShift
-                val endCursorShift = if (it.isForward) lastLineShift else firstLineShift
-                Either.second(target.selectionShiftedBy(it, startCursorShift, endCursorShift))
+                val startShift = if (it.isForward) firstLineShift else lastLineShift
+                val endShift = if (it.isForward) lastLineShift else firstLineShift
+                Either.second(target.selectionShiftedBy(it, startShift, endShift))
             } ?: Either.first(Cursor(oldCursor.row, (oldCursor.col + firstLineShift).coerceAtLeast(0)))
-            insertText(newTextLines, newPosition)
+            insertText(newTextLines)
+            target.updatePosition(newPosition)
         }
 
         override fun indentTab() {
@@ -243,7 +246,8 @@ internal interface TextProcessor {
             else {
                 val newSelection = target.selectionShiftedBy(selection, TAB_SIZE, TAB_SIZE)
                 target.updateSelection(target.selectionOfLines(selection))
-                insertText(indent(target.selectedTextLines(), TAB_SIZE), Either.second(newSelection))
+                insertText(indent(target.selectedTextLines(), TAB_SIZE))
+                target.updateSelection(newSelection)
             }
         }
 
@@ -282,14 +286,10 @@ internal interface TextProcessor {
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
-            return insertText(asAnnotatedLines(text), newPosition = null, recomputeFinder)
+            return insertText(asAnnotatedLines(text), recomputeFinder)
         }
 
-        private fun insertText(
-            strings: List<AnnotatedString>,
-            newPosition: Either<Cursor, Selection>?,
-            recomputeFinder: Boolean = true
-        ): Insertion? {
+        private fun insertText(strings: List<AnnotatedString>, recomputeFinder: Boolean = true): Insertion? {
             val operations = mutableListOf<TextChange.Operation>()
             if (target.selection != null) operations.add(deletionOperation())
             val insertion: Insertion?
@@ -297,7 +297,9 @@ internal interface TextProcessor {
                 insertion = Insertion(target.selection?.min ?: target.cursor, strings)
                 operations.add(insertion)
             } else insertion = null
-            applyOriginal(TextChange(operations), newPosition, recomputeFinder)
+            val change = TextChange(operations)
+            applyChange(change, recomputeFinder)
+            queueChangeStack(change)
             return insertion
         }
 
@@ -308,17 +310,6 @@ internal interface TextProcessor {
 
         override fun redo() {
             if (redoStack.isNotEmpty()) applyReplay(redoStack.removeLast(), ReplayType.REDO)
-        }
-
-        private fun applyOriginal(
-            change: TextChange, newPosition: Either<Cursor, Selection>? = null, recomputeFinder: Boolean = true
-        ) {
-            assert(recomputeFinder || (!recomputeFinder && newPosition == null)) {
-                "If recomputeFinder==false, then there should not be a newPosition provided"
-            }
-            applyChange(change, recomputeFinder)
-            newPosition?.let{ target.updatePosition(it) }
-            queueChange(change)
         }
 
         private fun applyReplay(change: TextChange, replayType: ReplayType) {
@@ -375,7 +366,7 @@ internal interface TextProcessor {
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun queueChange(change: TextChange) {
+        private fun queueChangeStack(change: TextChange) {
             redoStack.clear()
             changeQueue.put(change)
             changeCount.incrementAndGet()
