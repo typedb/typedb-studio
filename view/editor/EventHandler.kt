@@ -61,6 +61,8 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.MOVE_WORD_RIGHT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.PASTE
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REDO
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REORDER_LINES_DOWN
+import com.vaticle.typedb.studio.view.common.KeyMapper.Command.REORDER_LINES_UP
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_ALL
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_LEFT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.SELECT_CHAR_RIGHT
@@ -153,6 +155,8 @@ internal class EventHandler constructor(
             SELECT_END -> target.moveCursorToEnd(true)
             SELECT_ALL -> target.selectAll()
             SELECT_NONE -> target.selectNone()
+            REORDER_LINES_UP -> processor.reorderLinesUp()
+            REORDER_LINES_DOWN -> processor.reorderLinesDown()
             DELETE_CHAR_PREV -> deleteSelectionOr { target.moveCursorPrevByChar(true); processor.deleteSelection() }
             DELETE_CHAR_NEXT -> deleteSelectionOr { target.moveCursorNextByChar(true); processor.deleteSelection() }
             DELETE_WORD_PREV -> deleteSelectionOr { target.moveCursorPrevByWord(true); processor.deleteSelection() }
@@ -198,7 +202,9 @@ internal class EventHandler constructor(
     }
 
     private fun cut() {
-        if (target.selection == null) target.selectLine()
+        if (target.selection == null) {
+            target.updateSelection(target.selectionOfLineAndBreak(target.cursor))
+        }
         copy()
         processor.deleteSelection()
     }

@@ -475,7 +475,7 @@ object TextEditor {
                 state.target.mayUpdateCursor(it.x, it.y, it.isShiftDown)
             },
             onDoublePrimaryPressed = { state.target.maySelectWord(it.x) },
-            onTriplePrimaryPressed = { state.target.maySelectLine(it.x) },
+            onTriplePrimaryPressed = { state.target.maySelectLineAndBreak(it.x) },
             onSecondaryClick = { state.target.updateCursorIfOutOfSelection(it.x, it.y) }
         )
     }

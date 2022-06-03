@@ -198,7 +198,7 @@ internal class InputTarget constructor(
     }
 
     private fun dragSelectionByLine(x: Int, y: Int) {
-        updateSelection(Selection.coverage(selectionDragStart!!, selectionOfLine(createCursor(x, y))))
+        updateSelection(Selection.coverage(selectionDragStart!!, selectionOfLineAndBreak(createCursor(x, y))))
     }
 
     private fun dragSelectionByLineNumber(x: Int, y: Int) {
@@ -438,16 +438,12 @@ internal class InputTarget constructor(
         updateSelection(selectionOfWord(cursor))
     }
 
-    internal fun maySelectLine(x: Int) {
+    internal fun maySelectLineAndBreak(x: Int) {
         if (x > lineNumberBorder) {
-            selectLine()
+            updateSelection(selectionOfLineAndBreak(cursor))
             selectionDragStart = selection
             mayDragSelectByLine = true
         }
-    }
-
-    internal fun selectLine() {
-        updateSelection(selectionOfLine(cursor))
     }
 
     private fun selectionOfWord(cursor: Cursor): Selection? {
@@ -457,16 +453,26 @@ internal class InputTarget constructor(
         }
     }
 
-    private fun selectionOfLine(cursor: Cursor): Selection {
+    internal fun selectionOfLineAndBreak(cursor: Cursor): Selection {
         val endCursor = if (cursor.row < content.size - 1) Cursor(cursor.row + 1, 0)
         else Cursor(cursor.row, content[cursor.row].length)
         return Selection(Cursor(cursor.row, 0), endCursor)
     }
 
-    internal fun selectionOfLines(selection: Selection) = Selection(
+    internal fun selectionOfLineContent(selection: Selection) = Selection(
         Cursor(selection.min.row, 0),
         Cursor(selection.max.row, content[selection.max.row].length)
     )
+
+    internal fun selectionOfPreviousLineAndBreak(row: Int): Selection? {
+        return if (row < 1) null
+        else Selection(Cursor(row - 1, 0), Cursor(row, 0))
+    }
+
+    internal fun selectionOfNextBreakAndLine(row: Int): Selection? {
+        return if (row > content.size - 2) null
+        else Selection(Cursor(row, content[row].length), Cursor(row + 1, content[row + 1].length))
+    }
 
     internal fun selectionShiftedBy(selection: Selection, startShift: Int, endShift: Int) = Selection(
         Cursor(selection.start.row, (selection.start.col + startShift).coerceAtLeast(0)),

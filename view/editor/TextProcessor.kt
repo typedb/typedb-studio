@@ -59,6 +59,8 @@ internal interface TextProcessor {
     fun insertText(text: String): Insertion?
     fun insertNewLine()
     fun duplicate()
+    fun reorderLinesUp()
+    fun reorderLinesDown()
     fun deleteSelection()
     fun toggleComment()
     fun indentTab()
@@ -91,6 +93,8 @@ internal interface TextProcessor {
         override fun insertText(text: String): Insertion? = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
         override fun duplicate() = mayDisplayWarning()
+        override fun reorderLinesUp() = mayDisplayWarning()
+        override fun reorderLinesDown() = mayDisplayWarning()
         override fun deleteSelection() = mayDisplayWarning()
         override fun toggleComment() = mayDisplayWarning()
         override fun indentTab() = mayDisplayWarning()
@@ -196,7 +200,7 @@ internal interface TextProcessor {
             val oldSelection = target.selection
             val oldCursor = target.cursor
 
-            target.updateSelection(target.selectionOfLines(oldSelection ?: oldCursor.toSelection()))
+            target.updateSelection(target.selectionOfLineContent(oldSelection ?: oldCursor.toSelection()))
             val textLines = target.selectedTextLines()
             val commentToken = fileType.commentToken
 
@@ -223,9 +227,7 @@ internal interface TextProcessor {
         override fun outdentTab() {
             val oldSelection = target.selection
             val oldCursor = target.cursor
-            val newSelection = oldSelection?.let { target.selectionOfLines(it) }
-                ?: target.selectionOfLines(oldCursor.toSelection())
-            target.updateSelection(newSelection)
+            target.updateSelection(target.selectionOfLineContent(oldSelection ?: oldCursor.toSelection()))
             val oldTextLines = target.selectedTextLines()
             val newTextLines = indent(oldTextLines, -TAB_SIZE)
             val firstLineShift = newTextLines.first().length - oldTextLines.first().length
@@ -245,15 +247,15 @@ internal interface TextProcessor {
             if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
                 val newSelection = target.selectionShiftedBy(selection, TAB_SIZE, TAB_SIZE)
-                target.updateSelection(target.selectionOfLines(selection))
+                target.updateSelection(target.selectionOfLineContent(selection))
                 insertText(indent(target.selectedTextLines(), TAB_SIZE))
                 target.updateSelection(newSelection)
             }
         }
 
         override fun insertNewLine() {
-            val line = content[target.cursor.row]
-            val tabs = floor(prefixSpaces(line).coerceAtMost(target.cursor.col).toDouble() / TAB_SIZE).toInt()
+            val lineText = content[target.cursor.row]
+            val tabs = floor(prefixSpaces(lineText).coerceAtMost(target.cursor.col).toDouble() / TAB_SIZE).toInt()
             insertText("\n" + " ".repeat(TAB_SIZE * tabs))
         }
 
@@ -263,11 +265,11 @@ internal interface TextProcessor {
 
         private fun duplicateLine() {
             val oldCursor = target.cursor
-            target.selectLine()
-            val textLine = target.selectedText().toString()
+            target.updateSelection(target.selectionOfLineAndBreak(target.cursor))
+            val lineAndBreak = target.selectedTextLines()
             target.updateCursor(target.selection!!.max, false)
-            if (oldCursor.row == content.size - 1) insertNewLine()
-            insertText(textLine)
+            if (lineAndBreak.size == 1) insertNewLine()
+            insertText(lineAndBreak)
             target.updateCursor(Cursor(oldCursor.row + 1, oldCursor.col), false)
         }
 
@@ -277,12 +279,71 @@ internal interface TextProcessor {
             insertText(selection)?.let { target.updateSelection(it.selection()) }
         }
 
+        override fun reorderLinesUp() {
+            val minRow = target.selection?.min?.row ?: target.cursor.row
+            if (minRow == 0) return
+
+            val oldPosition: Either<Cursor, Selection> =
+                target.selection?.let { Either.second(it) } ?: Either.first(target.cursor)
+
+            target.updateSelection(target.selectionOfPreviousLineAndBreak(minRow))
+            val lineAndBreak = target.selectedTextLines()
+            deleteSelection()
+
+            val newPosition: Either<Cursor, Selection> = oldPosition.apply(
+                { Either.first(Cursor(it.row - 1, it.col)) },
+                { Either.second(Selection(Cursor(it.start.row - 1, it.start.col), Cursor(it.end.row - 1, it.end.col))) }
+            )
+            val maxRow = newPosition.apply({ it.row }, { it.max.row })
+            if (maxRow < content.size - 1) {
+                target.updateCursor(Cursor(maxRow + 1, 0), false)
+                insertText(lineAndBreak)
+            } else {
+                target.updateCursor(Cursor(maxRow, content[maxRow].length), false)
+                insertText("\n")
+                insertText(lineAndBreak.first())
+            }
+            target.updatePosition(newPosition)
+        }
+
+        override fun reorderLinesDown() {
+            val minRow = target.selection?.min?.row ?: target.cursor.row
+            val maxRow = target.selection?.max?.row ?: target.cursor.row
+            if (maxRow == content.size - 1) return
+
+            val oldPosition: Either<Cursor, Selection> =
+                target.selection?.let { Either.second(it) } ?: Either.first(target.cursor)
+
+            target.updateSelection(target.selectionOfNextBreakAndLine(maxRow))
+            val breakAndLine = target.selectedTextLines()
+            deleteSelection()
+
+            if (minRow > 0) {
+                target.updateCursor(Cursor(minRow - 1, content[minRow - 1].length), false)
+                insertText(breakAndLine)
+            } else {
+                target.updateCursor(Cursor(minRow, 0), false)
+                insertText(breakAndLine.last())
+                insertText("\n")
+            }
+
+            val newPosition: Either<Cursor, Selection> = oldPosition.apply(
+                { Either.first(Cursor(it.row + 1, it.col)) },
+                { Either.second(Selection(Cursor(it.start.row + 1, it.start.col), Cursor(it.end.row + 1, it.end.col))) }
+            )
+            target.updatePosition(newPosition)
+        }
+
         private fun asAnnotatedLines(text: String): List<AnnotatedString> {
             return if (text.isEmpty()) listOf() else text.split("\n").map { AnnotatedString(it) }
         }
 
         override fun insertText(text: String): Insertion? {
             return insertText(text, recomputeFinder = true)
+        }
+
+        private fun insertText(text: AnnotatedString): Insertion? {
+            return insertText(listOf(text))
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {

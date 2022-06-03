@@ -99,7 +99,10 @@ interface KeyMapper {
         COPY,
         PASTE,
         CUT,
+
         DUPLICATE,
+        REORDER_LINES_UP,
+        REORDER_LINES_DOWN,
 
         UNDO,
         REDO,
@@ -173,8 +176,8 @@ interface KeyMapper {
                     Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER_SHIFT
                     Keys.DirectionLeft -> Command.SELECT_LINE_LEFT
                     Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
-                    Keys.DirectionUp -> Command.SELECT_HOME
-                    Keys.DirectionDown -> Command.SELECT_END
+                    Keys.DirectionUp -> Command.REORDER_LINES_UP
+                    Keys.DirectionDown -> Command.REORDER_LINES_DOWN
                     else -> null
                 }
                 shortcutModifier(event) -> when (event.key) {
