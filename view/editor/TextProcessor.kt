@@ -317,20 +317,13 @@ internal interface TextProcessor {
                 "If recomputeFinder==false, then there should not be a newPosition provided"
             }
             applyChange(change, recomputeFinder)
-            if (newPosition != null) when {
-                newPosition.isFirst -> target.updateCursor(newPosition.first(), false)
-                newPosition.isSecond -> target.updateSelection(newPosition.second())
-            }
+            newPosition?.let{ target.updatePosition(it) }
             queueChange(change)
         }
 
         private fun applyReplay(change: TextChange, replayType: ReplayType) {
             applyChange(change)
-            val newTarget = change.target()
-            when {
-                newTarget.isFirst -> target.updateCursor(newTarget.first(), false)
-                newTarget.isSecond -> target.updateSelection(newTarget.second())
-            }
+            target.updatePosition(change.target())
             when (replayType) {
                 ReplayType.UNDO -> redoStack.addLast(change.invert())
                 ReplayType.REDO -> undoStack.addLast(change.invert())

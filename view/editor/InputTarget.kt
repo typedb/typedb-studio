@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.studio.view.common.Util.subSequenceSafely
@@ -202,6 +203,13 @@ internal class InputTarget constructor(
 
     private fun dragSelectionByLineNumber(x: Int, y: Int) {
         updateCursor(createCursor(x, y + lineHeight.value.toInt()), true)
+    }
+
+    internal fun updatePosition(newPosition: Either<Cursor, Selection>) {
+        newPosition.apply(
+            { updateCursor(it, false) },
+            { updateSelection(it) }
+        )
     }
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
