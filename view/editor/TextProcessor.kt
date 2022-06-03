@@ -242,12 +242,12 @@ internal interface TextProcessor {
         }
 
         override fun indentTab() {
-            val selection = target.selection
+            val oldSelection = target.selection
             val cursor = target.cursor
-            if (selection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
+            if (oldSelection == null) insertText(" ".repeat(TAB_SIZE - prefixSpaces(content[cursor.row]) % TAB_SIZE))
             else {
-                val newSelection = target.selectionShiftedBy(selection, TAB_SIZE, TAB_SIZE)
-                target.updateSelection(target.selectionOfLineContent(selection))
+                val newSelection = target.selectionShiftedBy(oldSelection, TAB_SIZE, TAB_SIZE)
+                target.updateSelection(target.selectionOfLineContent(oldSelection))
                 insertText(indent(target.selectedTextLines(), TAB_SIZE))
                 target.updateSelection(newSelection)
             }
