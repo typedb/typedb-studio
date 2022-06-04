@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.users
+package com.vaticle.typedb.studio.view.user
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label

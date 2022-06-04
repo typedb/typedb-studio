@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.types
+package com.vaticle.typedb.studio.view.type
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Navigator
 import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.material.Tooltip
-import com.vaticle.typedb.studio.view.types.TypePage.Companion.typeIcon
+import com.vaticle.typedb.studio.view.type.TypePage.Companion.typeIcon
 
 class TypeBrowser constructor(
     isOpen: Boolean = false,

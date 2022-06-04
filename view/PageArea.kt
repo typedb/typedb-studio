@@ -55,7 +55,7 @@ import com.vaticle.typedb.studio.view.material.Page
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.project.FilePage
-import com.vaticle.typedb.studio.view.types.TypePage
+import com.vaticle.typedb.studio.view.type.TypePage
 import kotlinx.coroutines.CoroutineScope
 
 object PageArea {

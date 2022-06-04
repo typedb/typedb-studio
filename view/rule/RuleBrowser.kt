@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.rules
+package com.vaticle.typedb.studio.view.rule
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.roles
+package com.vaticle.typedb.studio.view.role
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label

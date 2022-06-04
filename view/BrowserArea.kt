@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.project.ProjectBrowser
-import com.vaticle.typedb.studio.view.types.TypeBrowser
+import com.vaticle.typedb.studio.view.type.TypeBrowser
 
 object BrowserArea {
 

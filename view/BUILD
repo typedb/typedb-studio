@@ -36,10 +36,10 @@ kt_jvm_library(
         "//view/connection:connection",
         "//view/material:material",
         "//view/project:project",
-        "//view/roles:roles",
-        "//view/rules:rules",
-        "//view/types:types",
-        "//view/users:users",
+        "//view/role:role",
+        "//view/rule:rule",
+        "//view/type:type",
+        "//view/user:user",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",
