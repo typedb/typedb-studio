@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
@@ -69,6 +70,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.view.connection.DatabaseDialog
 import com.vaticle.typedb.studio.view.connection.ServerDialog
+import com.vaticle.typedb.studio.view.material.Browser
 import com.vaticle.typedb.studio.view.material.ConfirmationDialog
 import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.material.Form.SelectableText
@@ -76,7 +78,9 @@ import com.vaticle.typedb.studio.view.material.Form.Text
 import com.vaticle.typedb.studio.view.material.Form.TextButton
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.project.ProjectBrowser
 import com.vaticle.typedb.studio.view.project.ProjectDialog
+import com.vaticle.typedb.studio.view.type.TypeBrowser
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
@@ -94,6 +98,16 @@ object Studio {
 
     private var error: Throwable? by mutableStateOf(null)
     private var quit: Boolean by mutableStateOf(false)
+
+    private var browserGroupWidth: Dp by mutableStateOf(BrowserGroup.MIN_WIDTH)
+    private val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }
+    private val browsers = listOf(
+        ProjectBrowser(true, 1),
+        TypeBrowser(true, 2),
+        // RuleBrowser(false, 3),
+        // UserBrowser(false, 4),
+        // RoleBrowser(false, 5),
+    )
 
     @OptIn(ExperimentalComposeUiApi::class)
     private object ExceptionHandler : WindowExceptionHandlerFactory {
@@ -134,10 +148,10 @@ object Studio {
                             modifier = Modifier.fillMaxWidth().weight(1f),
                             separator = Frame.SeparatorArgs(Separator.WEIGHT),
                             Frame.Pane(
-                                id = BrowserArea.javaClass.name,
-                                minSize = BrowserArea.MIN_WIDTH,
-                                initSize = Either.first(BrowserArea.WIDTH)
-                            ) { BrowserArea.Layout(it) },
+                                id = BrowserGroup.javaClass.name,
+                                minSize = BrowserGroup.MIN_WIDTH,
+                                initSize = Either.first(BrowserGroup.WIDTH)
+                            ) { BrowserGroup.Layout(browsers, it) },
                             Frame.Pane(
                                 id = PageArea.javaClass.name,
                                 minSize = PageArea.MIN_WIDTH,

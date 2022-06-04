@@ -45,11 +45,7 @@ import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.material.Tooltip
 import com.vaticle.typedb.studio.view.type.TypePage.Companion.typeIcon
 
-class TypeBrowser constructor(
-    isOpen: Boolean = false,
-    order: Int,
-    onUpdatePane: () -> Unit
-) : Browser(isOpen, order, onUpdatePane) {
+class TypeBrowser(isOpen: Boolean = false, order: Int) : Browser(isOpen, order) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP

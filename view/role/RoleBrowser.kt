@@ -24,11 +24,7 @@ import com.vaticle.typedb.studio.view.material.Browser
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
 
-class RoleBrowser constructor(
-    isOpen: Boolean = false,
-    order: Int,
-    onUpdatePane: () -> Unit
-) : Browser(isOpen, order, onUpdatePane) {
+class RoleBrowser(isOpen: Boolean = false, order: Int) : Browser(isOpen, order) {
 
     override val label: String = Label.ROLES
     override val icon: Icon.Code = Icon.Code.USER_GROUP

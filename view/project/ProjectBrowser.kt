@@ -50,11 +50,7 @@ import com.vaticle.typedb.studio.view.material.Navigator
 import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import mu.KotlinLogging
 
-class ProjectBrowser constructor(
-    order: Int,
-    initOpen: Boolean = false,
-    onUpdatePane: () -> Unit
-) : Browser(initOpen, order, onUpdatePane) {
+class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browser(initOpen, order) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

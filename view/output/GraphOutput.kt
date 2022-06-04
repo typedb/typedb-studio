@@ -66,7 +66,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -1919,20 +1918,12 @@ internal object GraphOutput : RunOutput() {
 
             class State constructor(state: GraphOutput.State, var paneState: Frame.PaneState) {
 
-                private var unfreezeSize: Dp by mutableStateOf(WIDTH)
-                internal val browser = PreviewBrowser(state, 0, false) { mayUpdatePaneState() }
+                internal val browser = PreviewBrowser(state, 0, false)
                 internal var isOpen
                     get() = browser.isOpen
                     set(value) {
                         browser.isOpen = value
                     }
-
-                fun mayUpdatePaneState() {
-                    if (!isOpen) {
-                        unfreezeSize = paneState.size
-                        paneState.freeze(Tabs.Vertical.WIDTH)
-                    } else if (paneState.isFrozen) paneState.unfreeze(unfreezeSize)
-                }
             }
 
             @Composable
@@ -1967,12 +1958,11 @@ internal object GraphOutput : RunOutput() {
             }
         }
 
-        class PreviewBrowser constructor(
+        class PreviewBrowser(
             private val state: State,
             order: Int,
-            isOpen: Boolean,
-            onUpdatePane: () -> Unit
-        ) : Browser(isOpen, order, onUpdatePane) {
+            isOpen: Boolean
+        ) : Browser(isOpen, order) {
 
             override val label: String = Label.PREVIEW
             override val icon: Icon.Code = Icon.Code.EYE

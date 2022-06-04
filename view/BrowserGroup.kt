@@ -34,25 +34,23 @@ import com.vaticle.typedb.studio.view.material.Browser
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
-import com.vaticle.typedb.studio.view.project.ProjectBrowser
-import com.vaticle.typedb.studio.view.type.TypeBrowser
 
-object BrowserArea {
+object BrowserGroup {
 
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
 
-    class State constructor(private val paneState: Frame.PaneState) {
+    class State constructor(
+        internal val browsers: List<Browser>,
+        private val paneState: Frame.PaneState
+    ) {
 
         private var unfreezeSize: Dp by mutableStateOf(MIN_WIDTH)
         internal val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }
-        internal val browsers = listOf(
-            ProjectBrowser(1, true) { mayUpdatePaneState() },
-            TypeBrowser(true, 2) { mayUpdatePaneState() },
-//            RuleBrowser(false, 3) { mayUpdatePaneState() },
-//            UserBrowser(false, 4) { mayUpdatePaneState() },
-//            RoleBrowser(false, 5) { mayUpdatePaneState() },
-        )
+
+        init {
+            browsers.forEach { it.onUpdatePane { mayUpdatePaneState() } }
+        }
 
         fun mayUpdatePaneState() {
             if (openedBrowsers.isEmpty()) {
@@ -63,8 +61,8 @@ object BrowserArea {
     }
 
     @Composable
-    fun Layout(paneState: Frame.PaneState) {
-        val state = remember { State(paneState) }
+    fun Layout(browsers: List<Browser>, paneState: Frame.PaneState) {
+        val state = remember { State(browsers, paneState) }
         val openedBrowsers = state.openedBrowsers
         Row(Modifier.fillMaxSize()) {
             Tabs.Vertical.Layout(

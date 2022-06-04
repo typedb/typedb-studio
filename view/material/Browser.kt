@@ -39,12 +39,9 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
+import java.util.concurrent.LinkedBlockingQueue
 
-abstract class Browser constructor(
-    isOpen: Boolean = false,
-    val order: Int,
-    val onUpdatePane: () -> Unit
-) {
+abstract class Browser(isOpen: Boolean = false, val order: Int) {
 
     companion object {
         val MIN_HEIGHT = 80.dp
@@ -55,6 +52,8 @@ abstract class Browser constructor(
     abstract val isActive: Boolean
     abstract val buttons: List<IconButtonArg>
 
+    private val onUpdatePane = LinkedBlockingQueue<() -> Unit>()
+
     var isOpen: Boolean by mutableStateOf(isOpen)
 
     @Composable
@@ -62,9 +61,12 @@ abstract class Browser constructor(
 
     fun toggle() {
         isOpen = !isOpen
-        onUpdatePane()
+        onUpdatePane.forEach { it() }
     }
 
+    fun onUpdatePane(function: () -> Unit) {
+        onUpdatePane.put(function)
+    }
 
     @Composable
     fun Layout() {
