@@ -46,7 +46,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
@@ -70,7 +69,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.view.connection.DatabaseDialog
 import com.vaticle.typedb.studio.view.connection.ServerDialog
-import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.ConfirmationDialog
 import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.material.Form.SelectableText
@@ -99,8 +98,6 @@ object Studio {
     private var error: Throwable? by mutableStateOf(null)
     private var quit: Boolean by mutableStateOf(false)
 
-    private var browserGroupWidth: Dp by mutableStateOf(BrowserGroup.MIN_WIDTH)
-    private val openedBrowsers: List<Browser> get() = browsers.filter { it.isOpen }
     private val browsers = listOf(
         ProjectBrowser(true, 1),
         TypeBrowser(true, 2),

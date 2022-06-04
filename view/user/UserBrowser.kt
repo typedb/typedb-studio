@@ -20,11 +20,11 @@ package com.vaticle.typedb.studio.view.user
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
 
-class UserBrowser(isOpen: Boolean = false, order: Int) : Browser(isOpen, order) {
+class UserBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(isOpen, order) {
 
     override val label: String = Label.USERS
     override val icon: Icon.Code = Icon.Code.USER

@@ -120,7 +120,7 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineI
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Browser
+import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Icon
@@ -1942,7 +1942,7 @@ internal object GraphOutput : RunOutput() {
                             separator = Frame.SeparatorArgs(Separator.WEIGHT),
                             Frame.Pane(
                                 id = areaState.browser.label, order = areaState.browser.order,
-                                minSize = Browser.MIN_HEIGHT, initSize = Either.second(1f)
+                                minSize = BrowserGroup.Browser.MIN_HEIGHT, initSize = Either.second(1f)
                             ) { areaState.browser.Layout() }
                         )
                         Separator.Vertical()
@@ -1962,7 +1962,7 @@ internal object GraphOutput : RunOutput() {
             private val state: State,
             order: Int,
             isOpen: Boolean
-        ) : Browser(isOpen, order) {
+        ) : BrowserGroup.Browser(isOpen, order) {
 
             override val label: String = Label.PREVIEW
             override val icon: Icon.Code = Icon.Code.EYE
