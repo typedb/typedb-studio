@@ -62,7 +62,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
-    override fun BrowserLayout() {
+    override fun Content() {
         if (!isActive) OpenProjectHelper()
         else {
             val navState = rememberNavigatorState(

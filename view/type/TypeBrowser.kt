@@ -53,17 +53,17 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
-    override fun BrowserLayout() {
+    override fun Content() {
         val client = GlobalState.client
         val schema = GlobalState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
         else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
-        else Content()
+        else NavigatorLayout()
     }
 
     @Composable
-    private fun Content() {
+    private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
             container = GlobalState.schema,
             title = Label.TYPE_BROWSER,

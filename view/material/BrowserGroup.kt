@@ -48,6 +48,8 @@ object BrowserGroup {
     val WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
 
+    enum class Position { LEFT, RIGHT }
+
     private class State constructor(
         val browsers: List<Browser>,
         val paneState: Frame.PaneState
@@ -69,33 +71,45 @@ object BrowserGroup {
     }
 
     @Composable
-    fun Layout(browsers: List<Browser>, paneState: Frame.PaneState) {
+    fun Layout(browsers: List<Browser>, paneState: Frame.PaneState, position: Position) {
         val state = remember { State(browsers, paneState) }
         val openedBrowsers = state.openedBrowsers
         Row(Modifier.fillMaxSize()) {
-            Tabs.Vertical.Layout(
-                tabs = state.browsers,
-                position = Tabs.Vertical.Position.LEFT,
-                labelFn = { it.label },
-                iconFn = { it.icon },
-                isActiveFn = { it.isOpen }
-            ) { it.toggle() }
+            if (position == Position.LEFT) Tabs(state)
             if (openedBrowsers.isNotEmpty()) {
-                Separator.Vertical()
-                Frame.Column(
-                    modifier = Modifier.fillMaxHeight().weight(1f),
-                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    *openedBrowsers.map { browser ->
-                        Frame.Pane(
-                            id = browser.label,
-                            order = browser.order,
-                            minSize = Browser.MIN_HEIGHT,
-                            initSize = Either.second(1f)
-                        ) { browser.Layout() }
-                    }.toTypedArray()
-                )
+                if (position == Position.LEFT) Separator.Vertical()
+                Browsers(Modifier.fillMaxHeight().weight(1f), openedBrowsers)
+                if (position == Position.RIGHT) Separator.Vertical()
             }
+            if (position == Position.RIGHT) Tabs(state)
         }
+    }
+
+    @Composable
+    private fun Tabs(state: State) {
+        Tabs.Vertical.Layout(
+            tabs = state.browsers,
+            position = Tabs.Vertical.Position.LEFT,
+            labelFn = { it.label },
+            iconFn = { it.icon },
+            isActiveFn = { it.isOpen }
+        ) { it.toggle() }
+    }
+
+    @Composable
+    private fun Browsers(modifier: Modifier, openedBrowsers: List<Browser>) {
+        Frame.Column(
+            modifier = modifier,
+            separator = Frame.SeparatorArgs(Separator.WEIGHT),
+            *openedBrowsers.map { browser ->
+                Frame.Pane(
+                    id = browser.label,
+                    order = browser.order,
+                    minSize = Browser.MIN_HEIGHT,
+                    initSize = Either.second(1f)
+                ) { browser.Layout() }
+            }.toTypedArray()
+        )
     }
 
     abstract class Browser(isOpen: Boolean = false, val order: Int) {
@@ -114,7 +128,7 @@ object BrowserGroup {
         var isOpen: Boolean by mutableStateOf(isOpen)
 
         @Composable
-        abstract fun BrowserLayout()
+        abstract fun Content()
 
         fun toggle() {
             isOpen = !isOpen
@@ -130,7 +144,7 @@ object BrowserGroup {
             Column {
                 Bar()
                 Separator.Horizontal()
-                Box(modifier = Modifier.weight(1f)) { BrowserLayout() }
+                Box(modifier = Modifier.weight(1f)) { Content() }
             }
         }
 

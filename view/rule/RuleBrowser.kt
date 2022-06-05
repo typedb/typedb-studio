@@ -32,7 +32,7 @@ class RuleBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
     override val buttons: List<IconButtonArg> = listOf()
 
     @Composable
-    override fun BrowserLayout() {
+    override fun Content() {
 
     }
 }

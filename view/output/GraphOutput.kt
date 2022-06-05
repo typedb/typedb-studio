@@ -1700,7 +1700,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                         minSize = BrowserGroup.MIN_WIDTH,
                         initSize = Either.first(Tabs.Vertical.WIDTH),
                         initFreeze = true
-                    ) { BrowserGroup.Layout(output.browsers, it) }
+                    ) { BrowserGroup.Layout(output.browsers, it, BrowserGroup.Position.RIGHT) }
                 )
             }
         }
@@ -1978,7 +1978,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
 
             @Composable
-            override fun BrowserLayout() {
+            override fun Content() {
                 val focusedVertex = output.interactions.focusedVertex
                 if (focusedVertex == null) SelectVertexMessage()
                 else Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {

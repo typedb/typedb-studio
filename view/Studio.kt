@@ -148,7 +148,7 @@ object Studio {
                                 id = BrowserGroup.javaClass.name,
                                 minSize = BrowserGroup.MIN_WIDTH,
                                 initSize = Either.first(BrowserGroup.WIDTH)
-                            ) { BrowserGroup.Layout(browsers, it) },
+                            ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.LEFT) },
                             Frame.Pane(
                                 id = PageArea.javaClass.name,
                                 minSize = PageArea.MIN_WIDTH,
