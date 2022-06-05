@@ -50,7 +50,7 @@ import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
-import com.vaticle.typedb.studio.view.output.LogOutput.END_OF_OUTPUT_SPACE
+import com.vaticle.typedb.studio.view.output.LogOutput.Companion.END_OF_OUTPUT_SPACE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 
@@ -162,7 +162,7 @@ object RunOutputArea {
     private fun OutputGroup(state: State, runner: QueryRunner, modifier: Modifier) {
         val outputGroup = state.outputGroup(runner)
         Column(modifier) {
-            Output(outputGroup.active, Modifier.fillMaxWidth().weight(1f))
+            Box(Modifier.fillMaxWidth().weight(1f)) { outputGroup.active.Layout() }
             Separator.Horizontal()
             OutputTabs(outputGroup, Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT))
         }
@@ -175,26 +175,7 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun Output(outputState: RunOutput.State, modifier: Modifier) {
-        Box(modifier) {
-            when (outputState) {
-                is LogOutput.State -> LogOutput.Layout(outputState)
-                is GraphOutput.State -> GraphOutput.Layout(outputState)
-                is TableOutput.State -> TableOutput.Layout(outputState)
-            }
-        }
-    }
-
-    @Composable
     private fun OutputTabs(outputGroup: RunOutputGroup, modifier: Modifier) {
-        fun outputIcon(output: RunOutput.State): Icon.Code {
-            return when (output) {
-                is LogOutput.State -> Icon.Code.ALIGN_LEFT
-                is GraphOutput.State -> Icon.Code.DIAGRAM_PROJECT
-                is TableOutput.State -> Icon.Code.TABLE_CELLS_LARGE
-            }
-        }
-
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
             Form.Text(value = Label.OUTPUT + ":")
@@ -204,7 +185,7 @@ object RunOutputArea {
                     state = outputGroup.tabsState,
                     tabs = outputGroup.outputs,
                     position = Tabs.Horizontal.Position.BOTTOM,
-                    iconFn = { Form.IconArg(outputIcon(it)) },
+                    iconFn = { Form.IconArg(it.icon) },
                     labelFn = { AnnotatedString(it.name) },
                     isActiveFn = { outputGroup.isActive(it) },
                     onClick = { outputGroup.activate(it) },

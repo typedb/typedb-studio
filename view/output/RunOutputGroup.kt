@@ -52,15 +52,15 @@ internal class RunOutputGroup constructor(
 
     private val graphCount = AtomicInteger(0)
     private val tableCount = AtomicInteger(0)
-    private val logOutput = LogOutput.State(textEditorState, colors, runner.transactionState)
-    internal val outputs: MutableList<RunOutput.State> = mutableStateListOf(logOutput)
-    internal var active: RunOutput.State by mutableStateOf(logOutput)
+    private val logOutput = LogOutput(textEditorState, runner.transactionState, colors)
+    internal val outputs: MutableList<RunOutput> = mutableStateListOf(logOutput)
+    internal var active: RunOutput by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<(() -> Unit)?>, Done>>()
     private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit?>, Done>>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val futuresLatch = CountDownLatch(2)
     private var endTime: Long? = null
-    internal val tabsState = Tabs.Horizontal.State<RunOutput.State>(coroutineScope)
+    internal val tabsState = Tabs.Horizontal.State<RunOutput>(coroutineScope)
 
     object Done
 
@@ -103,11 +103,11 @@ internal class RunOutputGroup constructor(
         GlobalState.status.clear(OUTPUT_RESPONSE_TIME)
     }
 
-    internal fun isActive(runOutput: RunOutput.State): Boolean {
+    internal fun isActive(runOutput: RunOutput): Boolean {
         return active == runOutput
     }
 
-    internal fun activate(runOutput: RunOutput.State) {
+    internal fun activate(runOutput: RunOutput) {
         active = runOutput
     }
 
@@ -175,10 +175,10 @@ internal class RunOutputGroup constructor(
                     collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
                 }
                 is Response.Stream.ConceptMaps -> {
-                    val table = TableOutput.State(
+                    val table = TableOutput(
                         transaction = runner.transactionState, number = tableCount.incrementAndGet()
                     )//TODO: .also { outputs.add(it) }
-                    val graph = GraphOutput.State(
+                    val graph = GraphOutput(
                         transactionState = runner.transactionState, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
                     consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {

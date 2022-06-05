@@ -32,16 +32,20 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
+import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
 
 internal sealed class RunOutput {
 
-    sealed class State {
-        abstract val name: String
-    }
+    abstract val name: String
+    abstract val icon: Icon.Code
+    abstract val buttons: List<Form.IconButtonArg>
 
     @Composable
-    internal fun Layout(buttons: List<Form.IconButtonArg>, content: @Composable (Modifier) -> Unit) {
+    abstract fun content(modifier: Modifier)
+
+    @Composable
+    internal fun Layout() {
         Row {
             Toolbar(Modifier.fillMaxHeight().width(Theme.TOOLBAR_SIZE), buttons)
             Separator.Vertical()

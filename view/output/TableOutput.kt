@@ -25,31 +25,23 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.material.Form
+import com.vaticle.typedb.studio.view.material.Icon
 
-internal object TableOutput : RunOutput() {
+internal class TableOutput constructor(
+    val transaction: TransactionState,
+    number: Int
+) : RunOutput() {
 
-    internal class State(val transaction: TransactionState, number: Int) : RunOutput.State() {
+    override val name: String = Label.TABLE + " ($number)"
+    override val icon: Icon.Code = Icon.Code.TABLE_CELLS_LARGE
+    override val buttons: List<Form.IconButtonArg> = listOf()
 
-        override val name: String = Label.TABLE + " ($number)"
-
-        internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
-            return {} // TODO
-        }
+    internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
+        return {} // TODO
     }
 
     @Composable
-    internal fun Layout(state: State) {
-        super.Layout(toolbarButtons(state)) { modifier ->
-            Content(state, modifier)
-        }
-    }
-
-    private fun toolbarButtons(state: State): List<Form.IconButtonArg> {
-        return listOf()
-    }
-
-    @Composable
-    private fun Content(state: State, modifier: Modifier) {
+    override fun content(modifier: Modifier) {
         Box(modifier) // TODO
     }
 }
