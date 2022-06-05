@@ -27,8 +27,6 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -169,10 +167,10 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
     val visualiser = Visualiser(this)
+    val browsers: List<BrowserGroup.Browser> = listOf(Visualiser.ConceptPreview(this, 0, false))
 
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
-    var browserAreaState: Visualiser.BrowserArea.State? by mutableStateOf(null)
 
     fun output(conceptMap: ConceptMap) {
         graphBuilder.loadConceptMap(conceptMap)
@@ -1699,13 +1697,10 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                     ) { graphArea.Layout() },
                     Frame.Pane(
                         id = ConceptPreview::class.java.name,
-                        minSize = BrowserArea.MIN_WIDTH,
-                        initSize = Either.first(
-                            output.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
-                                ?: Tabs.Vertical.WIDTH
-                        ),
-                        initFreeze = output.browserAreaState?.browser?.isOpen != true
-                    ) { BrowserArea.Layout(output, it) }
+                        minSize = BrowserGroup.MIN_WIDTH,
+                        initSize = Either.first(Tabs.Vertical.WIDTH),
+                        initFreeze = true
+                    ) { BrowserGroup.Layout(output.browsers, it) }
                 )
             }
         }
@@ -1943,54 +1938,6 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                             }
                         }
                     )
-                }
-            }
-        }
-
-        // TODO: copied from browser/BrowserArea.kt on 23/05/2022
-        object BrowserArea {
-
-            val WIDTH = 300.dp
-            val MIN_WIDTH = 150.dp
-
-            class State constructor(output: GraphOutput, var paneState: Frame.PaneState) {
-
-                internal val browser = ConceptPreview(output, 0, false)
-                internal var isOpen
-                    get() = browser.isOpen
-                    set(value) {
-                        browser.isOpen = value
-                    }
-            }
-
-            @Composable
-            fun Layout(output: GraphOutput, paneState: Frame.PaneState) {
-                // Initialise browser area state if not inited previously; sync the new rendered PaneState into
-                // the browser area state (to ensure correctness after switching away from this Graph tab and back)
-                // TODO: this is all a little unintuitive - we need an architecture rethink
-                if (output.browserAreaState == null) output.browserAreaState = State(output, paneState)
-                output.browserAreaState!!.paneState = paneState
-                val areaState = output.browserAreaState!!
-
-                Row(Modifier.fillMaxSize()) {
-                    if (areaState.isOpen) {
-                        Frame.Column(
-                            modifier = Modifier.fillMaxHeight().weight(1f),
-                            separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                            Frame.Pane(
-                                id = areaState.browser.label, order = areaState.browser.order,
-                                minSize = BrowserGroup.Browser.MIN_HEIGHT, initSize = Either.second(1f)
-                            ) { areaState.browser.Layout() }
-                        )
-                        Separator.Vertical()
-                    }
-                    Tabs.Vertical.Layout(
-                        tabs = listOf(areaState.browser),
-                        position = Tabs.Vertical.Position.RIGHT,
-                        labelFn = { it.label },
-                        iconFn = { it.icon },
-                        isActiveFn = { it.isOpen },
-                    ) { it.toggle() }
                 }
             }
         }
