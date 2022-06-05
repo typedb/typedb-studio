@@ -1698,7 +1698,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                         initSize = Either.second(1f)
                     ) { graphArea.Layout() },
                     Frame.Pane(
-                        id = PreviewBrowser::class.java.name,
+                        id = ConceptPreview::class.java.name,
                         minSize = BrowserArea.MIN_WIDTH,
                         initSize = Either.first(
                             output.browserAreaState?.let { if (it.browser.isOpen) it.paneState.size else null }
@@ -1955,7 +1955,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
             class State constructor(output: GraphOutput, var paneState: Frame.PaneState) {
 
-                internal val browser = PreviewBrowser(output, 0, false)
+                internal val browser = ConceptPreview(output, 0, false)
                 internal var isOpen
                     get() = browser.isOpen
                     set(value) {
@@ -1995,7 +1995,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        class PreviewBrowser(
+        class ConceptPreview constructor(
             private val output: GraphOutput,
             order: Int,
             isOpen: Boolean
@@ -2006,15 +2006,38 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             override val isActive: Boolean = true
             override var buttons: List<Form.IconButtonArg> = emptyList()
 
+            private val titleSectionPadding = 10.dp
+
+            data class Property(val key: String, val value: String)
+
             companion object {
                 private val MESSAGE_PADDING = 20.dp
+
+                fun propertiesOf(concept: Concept): List<Property> {
+                    return listOfNotNull(
+                        if (concept is Thing) Label.INTERNAL_ID to concept.iid else null,
+                        if (concept is Attribute<*>) Label.VALUE to concept.valueString() else null,
+                    )
+                }
+
+                private infix fun String.to(value: String): Property {
+                    return Property(this, value)
+                }
+
+                private fun Attribute<*>.valueString(): String = when {
+                    isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    else -> value.toString()
+                }
             }
 
             @Composable
             override fun BrowserLayout() {
                 val focusedVertex = output.interactions.focusedVertex
                 if (focusedVertex == null) SelectVertexMessage()
-                else ConceptPreview(focusedVertex.concept).Layout()
+                else Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {
+                    TitleSection(focusedVertex.concept)
+                    if (propertiesOf(focusedVertex.concept).isNotEmpty()) Table(focusedVertex.concept)
+                }
             }
 
             @Composable
@@ -2024,24 +2047,10 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                     contentAlignment = Alignment.Center
                 ) { Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true) }
             }
-        }
-
-        class ConceptPreview(private val concept: Concept) {
-
-            private val titleSectionPadding = 10.dp
-            private val props = propertiesOf(concept)
-
-            @Composable
-            fun Layout() {
-                Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {
-                    TitleSection()
-                    if (props.isNotEmpty()) Table()
-                }
-            }
 
             // TODO: copied from TypePage.kt on 23/05/2022
             @Composable
-            private fun TitleSection() {
+            private fun TitleSection(concept: Concept) {
                 val type = if (concept is Type) concept else concept.asThing().type
                 Box(Modifier.padding(titleSectionPadding)) {
                     Form.TextBox(text = displayName(type), leadingIcon = typeIcon(type))
@@ -2064,41 +2073,19 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
 
             @Composable
-            private fun Table() {
-                val tableHeight = Table.ROW_HEIGHT * (props.size + 1)
+            private fun Table(concept: Concept) {
                 Table.Layout(
-                    items = props,
-                    modifier = Modifier.fillMaxWidth().height(tableHeight),
+                    items = propertiesOf(concept),
+                    modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * (propertiesOf(concept).size + 1)),
                     columns = listOf(
-                        Table.Column(Label.PROPERTY, contentAlignment = Alignment.CenterStart, size = Either.first(1f)) {
+                        Table.Column(Label.PROPERTY, Alignment.CenterStart, size = Either.first(1f)) {
                             Form.Text(it.key, fontWeight = FontWeight.Bold)
                         },
-                        Table.Column(Label.VALUE, contentAlignment = Alignment.CenterStart, size = Either.first(2f)) {
+                        Table.Column(Label.VALUE, Alignment.CenterStart, size = Either.first(2f)) {
                             Form.SelectableText(it.value, singleLine = true)
                         }
                     )
                 )
-            }
-
-            data class Property(val key: String, val value: String)
-
-            companion object {
-
-                fun propertiesOf(concept: Concept): List<Property> {
-                    return listOfNotNull(
-                        if (concept is Thing) Label.INTERNAL_ID to concept.iid else null,
-                        if (concept is Attribute<*>) Label.VALUE to concept.valueString() else null,
-                    )
-                }
-
-                private infix fun String.to(value: String): Property {
-                    return Property(this, value)
-                }
-
-                private fun Attribute<*>.valueString(): String = when {
-                    isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                    else -> value.toString()
-                }
             }
         }
     }
