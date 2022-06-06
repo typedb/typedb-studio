@@ -25,7 +25,7 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.geometry.Offset
 import com.vaticle.typedb.client.api.logic.Explanation
 
-class Interactions constructor(private val graphArea: GraphVisualiser.GraphArea) {
+class Interactions constructor(private val graphArea: GraphArea) {
 
     var pointerPosition: Offset? by mutableStateOf(null)
     var hoveredVertex: Vertex? by mutableStateOf(null)
@@ -64,7 +64,7 @@ class Interactions constructor(private val graphArea: GraphVisualiser.GraphArea)
         } else emptySet()
     }
 
-    class HoveredVertexChecker constructor(private val graphArea: GraphVisualiser.GraphArea) {
+    class HoveredVertexChecker constructor(private val graphArea: GraphArea) {
 
         private var lastScanDoneTime = System.currentTimeMillis()
 

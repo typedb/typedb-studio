@@ -25,7 +25,7 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import kotlinx.coroutines.Job
 import mu.KotlinLogging
 
-class PhysicsRunner constructor(private val graphArea: GraphVisualiser.GraphArea) {
+class PhysicsRunner constructor(private val graphArea: GraphArea) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

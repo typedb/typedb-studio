@@ -30,7 +30,7 @@ import com.vaticle.typedb.studio.view.common.theme.Color
 import kotlin.math.abs
 import kotlin.math.atan2
 
-class EdgeRenderer(private val graphArea: GraphVisualiser.GraphArea, private val ctx: RendererContext) {
+class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererContext) {
 
     companion object {
         private const val BACKGROUND_ALPHA = .25f
@@ -204,7 +204,7 @@ class EdgeRenderer(private val graphArea: GraphVisualiser.GraphArea, private val
         InferredBackground;
 
         companion object {
-            fun of(edge: Edge, graphArea: GraphVisualiser.GraphArea): EdgeColorCode {
+            fun of(edge: Edge, graphArea: GraphArea): EdgeColorCode {
                 val isInferred = edge is Edge.Inferrable && edge.isInferred
                 val isBackground = with(graphArea.interactions) { edge.isBackground }
                 return when {
@@ -225,7 +225,7 @@ class EdgeRenderer(private val graphArea: GraphVisualiser.GraphArea, private val
     }
 
     private class EdgesByColorCode(
-        edges: Iterable<Edge>, graphArea: GraphVisualiser.GraphArea
+        edges: Iterable<Edge>, graphArea: GraphArea
     ) : Iterable<Map.Entry<EdgeColorCode, List<Edge>>> {
 
         private val _map = EdgeColorCode.values().associateWith { mutableListOf<Edge>() }

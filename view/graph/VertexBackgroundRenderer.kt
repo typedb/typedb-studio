@@ -28,7 +28,7 @@ import kotlin.math.sqrt
 
 sealed class VertexBackgroundRenderer(
     private val vertex: Vertex,
-    private val graphArea: GraphVisualiser.GraphArea,
+    private val graphArea: GraphArea,
     protected val ctx: RendererContext
 ) {
     companion object {
@@ -37,7 +37,7 @@ sealed class VertexBackgroundRenderer(
         private const val BACKGROUND_ALPHA = .25f
         private const val HOVERED_BACKGROUND_ALPHA = .175f
 
-        fun of(vertex: Vertex, graphArea: GraphVisualiser.GraphArea, ctx: RendererContext): VertexBackgroundRenderer =
+        fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer =
             when (vertex) {
                 is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(
                     vertex,
@@ -114,7 +114,7 @@ sealed class VertexBackgroundRenderer(
         }
     }
 
-    class Entity(vertex: Vertex, graphArea: GraphVisualiser.GraphArea, ctx: RendererContext) :
+    class Entity(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext) :
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
         override fun draw() {
@@ -125,7 +125,7 @@ sealed class VertexBackgroundRenderer(
         }
     }
 
-    class Relation(vertex: Vertex, graphArea: GraphVisualiser.GraphArea, ctx: RendererContext) :
+    class Relation(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext) :
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
         // We start with a square of width n and transform it into a rhombus
@@ -150,7 +150,7 @@ sealed class VertexBackgroundRenderer(
         }
     }
 
-    class Attribute(vertex: Vertex, graphArea: GraphVisualiser.GraphArea, ctx: RendererContext) :
+    class Attribute(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext) :
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
         override fun draw() {
