@@ -181,7 +181,7 @@ internal class RunOutputGroup constructor(
                     val graph = GraphOutput(
                         transactionState = runner.transactionState, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
-                    consumeResponseStream(response, onCompleted = { graph.onQueryCompleted() }) {
+                    consumeResponseStream(response, onCompleted = { graph.setCompleted() }) {
                         collectNonSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { graph.output(it) })
                         collectSerial(
                             launchCompletableFuture(
