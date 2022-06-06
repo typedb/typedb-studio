@@ -159,39 +159,34 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
     override val icon: Icon.Code = Icon.Code.DIAGRAM_PROJECT
     override val buttons: List<Form.IconButtonArg> = emptyList()
 
-    val interactions = Interactions(this)
-    val graph = Graph(this)
-    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
-    val viewport = Viewport(this)
-    val physicsRunner = PhysicsRunner(this)
-    var theme: Color.GraphTheme? = null
-    private val graphArea = Visualiser.GraphArea(this)
-    private var frameState: Frame.FrameState? by mutableStateOf(null)
-    private val browsers: List<BrowserGroup.Browser> = listOf(Visualiser.ConceptPreview(this, 0, false))
-
-    // TODO: this needs a better home
-    val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+    private val graphArea = Visualiser.GraphArea(transactionState)
+    private val browsers: List<BrowserGroup.Browser> = listOf(Visualiser.ConceptPreview(graphArea, 0, false))
+    private var frameState: Frame.FrameState = Frame.createFrameState(
+        separator = Frame.SeparatorArgs(Separator.WEIGHT),
+        Frame.Pane(
+            id = Visualiser.GraphArea::class.java.name,
+            order = 1,
+            minSize = Visualiser.GraphArea.MIN_WIDTH,
+            initSize = Either.second(1f)
+        ) { graphArea.Layout() },
+        Frame.Pane(
+            id = Visualiser.ConceptPreview::class.java.name,
+            order = 2,
+            minSize = BrowserGroup.DEFAULT_WIDTH,
+            initSize = Either.first(Tabs.Vertical.WIDTH),
+            initFreeze = true
+        ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.RIGHT) }
+    )
 
     fun output(conceptMap: ConceptMap) {
-        graphBuilder.loadConceptMap(conceptMap)
+        graphArea.graphBuilder.loadConceptMap(conceptMap)
     }
 
     fun onQueryCompleted() {
-        graphBuilder.completeAllEdges(graph)
+        graphArea.graphBuilder.completeAllEdges(graphArea.graph)
     }
 
-    private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
-
-    fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
-        return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
-    }
-
-    fun edgeRenderer(drawScope: DrawScope): EdgeRenderer {
-        return EdgeRenderer(this, rendererContext(drawScope))
-    }
-
-    class Graph(private val output: GraphOutput) {
+    class Graph(private val interactions: Interactions) {
 
         private val _thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
         private val _typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
@@ -202,7 +197,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         val vertices: Collection<Vertex> get() = thingVertices.values + typeVertices.values
         val edges: Collection<Edge> get() = _edges
 
-        val physics = Physics(this, output.interactions)
+        val physics = Physics(this, interactions)
         val reasoner = Reasoner()
 
         fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
@@ -239,7 +234,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
         private fun onChange() {
             physics.addEnergy()
-            output.interactions.rebuildFocusedVertexNetwork()
+            interactions.rebuildFocusedVertexNetwork()
         }
 
         fun isEmpty() = vertices.isEmpty()
@@ -290,9 +285,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                 edgeCurveProviders.computeIfAbsent(edge) {
                     val basePosition = edge.geometry.midpoint
                     val offset = RandomEffects.jiggle()
-                    val curveProvider = BasicVertex(basePosition.x + offset, basePosition.y + offset)
-                    edge.physics.curveProvider = curveProvider
-                    curveProvider
+                    edge.curvePoint = BasicVertex(basePosition.x + offset, basePosition.y + offset)
+                    edge.curvePoint!!
                 }
             }
 
@@ -505,8 +499,10 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        sealed class Type(val type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph) :
-            Vertex(type, graph) {
+        sealed class Type constructor(
+            val type: com.vaticle.typedb.client.api.concept.type.Type,
+            graph: Graph
+        ) : Vertex(type, graph) {
 
             override val label = Label(type.label.name(), Label.LengthLimits.CONCEPT)
 
@@ -547,7 +543,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        class Label(val fullText: String, truncatedLength: Int) {
+        class Label(fullText: String, truncatedLength: Int) {
 
             val text = fullText.substring(0, truncatedLength.coerceAtMost(fullText.length))
 
@@ -680,7 +676,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
 
         val geometry = Geometry(this)
-        val physics = Physics()
+        var curvePoint: com.vaticle.force.graph.api.Vertex? = null
         abstract val label: String
 
         interface Inferrable {
@@ -734,19 +730,15 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
         class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
 
-            val isCurved get() = edge.physics.curveProvider != null
+            val isCurved get() = edge.curvePoint != null
             val midpoint get() = midpoint(edge.source.geometry.position, edge.target.geometry.position)
             val curveMidpoint
-                get() = edge.physics.curveProvider?.let {
+                get() = edge.curvePoint?.let {
                     Offset(it.x.toFloat(), it.y.toFloat())
                 }
 
             override fun source() = edge.source.geometry
             override fun target() = edge.target.geometry
-        }
-
-        class Physics {
-            var curveProvider: com.vaticle.force.graph.api.Vertex? = null
         }
     }
 
@@ -1160,7 +1152,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
     }
 
-    class Viewport(private val output: GraphOutput) {
+    class Viewport constructor(private val graph: Graph) {
         var density: Float by mutableStateOf(1f); private set
         var physicalSize by mutableStateOf(DpSize.Zero); private set
 
@@ -1205,7 +1197,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
             // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
             val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
-            output.graph.vertices.associateWithTo(vertexDistances) {
+            graph.vertices.associateWithTo(vertexDistances) {
                 (worldPoint - it.geometry.position).getDistanceSquared()
             }
             return sequence {
@@ -1217,7 +1209,9 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
     }
 
     sealed class VertexBackgroundRenderer(
-        private val vertex: Vertex, protected val output: GraphOutput, protected val ctx: RendererContext
+        private val vertex: Vertex,
+        private val graphArea: Visualiser.GraphArea,
+        protected val ctx: RendererContext
     ) {
         companion object {
             private const val CORNER_RADIUS = 5f
@@ -1225,11 +1219,15 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             private const val BACKGROUND_ALPHA = .25f
             private const val HOVERED_BACKGROUND_ALPHA = .175f
 
-            fun of(vertex: Vertex, output: GraphOutput, ctx: RendererContext): VertexBackgroundRenderer =
+            fun of(vertex: Vertex, graphArea: Visualiser.GraphArea, ctx: RendererContext): VertexBackgroundRenderer =
                 when (vertex) {
-                    is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, output, ctx)
-                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, output, ctx)
-                    is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, output, ctx)
+                    is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(
+                        vertex,
+                        graphArea,
+                        ctx
+                    )
+                    is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, graphArea, ctx)
+                    is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, graphArea, ctx)
                 }
         }
 
@@ -1247,7 +1245,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
         // Logically, if the vertex is dragged, it should also be hovered; however, this is not always true
         // because the vertex takes some time to "catch up" to the pointer. So check both conditions.
-        private val alpha = with(output.interactions) {
+        private val alpha = with(graphArea.interactions) {
             when {
                 vertex.isHovered && vertex.isBackground -> HOVERED_BACKGROUND_ALPHA
                 vertex.isBackground -> BACKGROUND_ALPHA
@@ -1256,10 +1254,10 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
         protected val color = baseColor.copy(alpha)
-        private val density = output.viewport.density
+        private val density = graphArea.viewport.density
         protected val rect = vertex.geometry.let {
             Rect(
-                (it.position - output.viewport.worldCoordinates) * density
+                (it.position - graphArea.viewport.worldCoordinates) * density
                         - Offset(it.size.width * density / 2, it.size.height * density / 2),
                 it.size * density
             )
@@ -1279,8 +1277,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         )
 
         private fun isInHoveredExplanationTree(): Boolean {
-            return output.graph.reasoner.explanationsByVertex[vertex]
-                ?.any { it in output.interactions.hoveredVertexExplanations } ?: false
+            return graphArea.graph.reasoner.explanationsByVertex[vertex]
+                ?.any { it in graphArea.interactions.hoveredVertexExplanations } ?: false
         }
 
         private fun isInferred() = vertex.concept is Thing && vertex.concept.isInferred
@@ -1298,8 +1296,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        class Entity(vertex: Vertex, output: GraphOutput, ctx: RendererContext) :
-            VertexBackgroundRenderer(vertex, output, ctx) {
+        class Entity(vertex: Vertex, graphArea: Visualiser.GraphArea, ctx: RendererContext) :
+            VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
             override fun draw() {
                 getHighlight()?.let {
@@ -1309,8 +1307,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        class Relation(vertex: Vertex, output: GraphOutput, ctx: RendererContext) :
-            VertexBackgroundRenderer(vertex, output, ctx) {
+        class Relation(vertex: Vertex, graphArea: Visualiser.GraphArea, ctx: RendererContext) :
+            VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
             // We start with a square of width n and transform it into a rhombus
             private val n = (rect.height / sqrt(2.0)).toFloat()
@@ -1334,8 +1332,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             }
         }
 
-        class Attribute(vertex: Vertex, output: GraphOutput, ctx: RendererContext) :
-            VertexBackgroundRenderer(vertex, output, ctx) {
+        class Attribute(vertex: Vertex, graphArea: Visualiser.GraphArea, ctx: RendererContext) :
+            VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
             override fun draw() {
                 getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
@@ -1344,7 +1342,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
     }
 
-    class EdgeRenderer(private val output: GraphOutput, private val ctx: RendererContext) {
+    class EdgeRenderer(private val graphArea: Visualiser.GraphArea, private val ctx: RendererContext) {
 
         companion object {
             private const val BACKGROUND_ALPHA = .25f
@@ -1352,11 +1350,11 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             private const val ARROWHEAD_WIDTH = 3f
         }
 
-        val density = output.viewport.density
-        private val edgeLabelSizes = output.edgeLabelSizes
+        val density = graphArea.viewport.density
+        private val edgeLabelSizes = graphArea.edgeLabelSizes
 
         fun draw(edges: Iterable<Edge>, detailed: Boolean) {
-            for ((colorCode, edgeGroup) in EdgesByColorCode(edges, output)) {
+            for ((colorCode, edgeGroup) in EdgesByColorCode(edges, graphArea)) {
                 draw(edgeGroup, detailed, colorCode.toColor(ctx.theme))
             }
         }
@@ -1486,7 +1484,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
 
         fun Offset.toViewport(): Offset {
-            return (this - output.viewport.worldCoordinates) * density
+            return (this - graphArea.viewport.worldCoordinates) * density
         }
 
         private fun Size.toViewport(): Size {
@@ -1518,9 +1516,9 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             InferredBackground;
 
             companion object {
-                fun of(edge: Edge, output: GraphOutput): EdgeColorCode {
+                fun of(edge: Edge, graphArea: Visualiser.GraphArea): EdgeColorCode {
                     val isInferred = edge is Edge.Inferrable && edge.isInferred
-                    val isBackground = with(output.interactions) { edge.isBackground }
+                    val isBackground = with(graphArea.interactions) { edge.isBackground }
                     return when {
                         isInferred && isBackground -> InferredBackground
                         isBackground -> Background
@@ -1539,14 +1537,14 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
 
         private class EdgesByColorCode(
-            edges: Iterable<Edge>, output: GraphOutput
+            edges: Iterable<Edge>, graphArea: Visualiser.GraphArea
         ) : Iterable<Map.Entry<EdgeColorCode, List<Edge>>> {
 
             private val _map = EdgeColorCode.values().associateWith { mutableListOf<Edge>() }
             val map: Map<EdgeColorCode, List<Edge>> get() = _map
 
             init {
-                synchronized(edges) { edges.forEach { _map[EdgeColorCode.of(it, output)]!! += it } }
+                synchronized(edges) { edges.forEach { _map[EdgeColorCode.of(it, graphArea)]!! += it } }
             }
 
             override fun iterator(): Iterator<Map.Entry<EdgeColorCode, List<Edge>>> {
@@ -1589,39 +1587,38 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
     data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme)
 
-    class PhysicsRunner(private val output: GraphOutput) {
+    class PhysicsRunner constructor(private val graphArea: Visualiser.GraphArea) {
 
         suspend fun run() {
             while (true) {
                 withFrameMillis {
                     return@withFrameMillis if (isReadyToStep()) {
-                        output.coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) { step() }
+                        graphArea.coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) { step() }
                     } else Job()
                 }.join()
             }
         }
 
         private fun isReadyToStep(): Boolean {
-            return !output.graph.physics.isStepRunning.get()
+            return !graphArea.graph.physics.isStepRunning.get()
         }
 
         private fun step() {
             try {
-                output.graphBuilder.dumpTo(output.graph)
-                output.graph.physics.step()
+                graphArea.graphBuilder.dumpTo(graphArea.graph)
+                graphArea.graph.physics.step()
             } catch (e: Exception) {
                 GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
-                output.graph.physics.terminate()
+                graphArea.graph.physics.terminate()
             }
         }
     }
 
-    class Interactions(private val output: GraphOutput) {
+    class Interactions constructor(private val graphArea: Visualiser.GraphArea) {
 
         var pointerPosition: Offset? by mutableStateOf(null)
-
         var hoveredVertex: Vertex? by mutableStateOf(null)
-        val hoveredVertexChecker = HoveredVertexChecker(output)
+        val hoveredVertexChecker = HoveredVertexChecker(graphArea)
         var hoveredVertexExplanations: Set<Explanation> by mutableStateOf(emptySet())
 
         private var _focusedVertex: Vertex? by mutableStateOf(null)
@@ -1645,7 +1642,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
         fun rebuildFocusedVertexNetwork(focusedVertex: Vertex? = _focusedVertex) {
             focusedVertexNetwork = if (focusedVertex != null) {
-                val linkedVertices = output.graph.edges.mapNotNull { edge ->
+                val linkedVertices = graphArea.graph.edges.mapNotNull { edge ->
                     when (focusedVertex) {
                         edge.source -> edge.target
                         edge.target -> edge.source
@@ -1656,25 +1653,25 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             } else emptySet()
         }
 
-        class HoveredVertexChecker(private val output: GraphOutput) {
+        class HoveredVertexChecker constructor(private val graphArea: Visualiser.GraphArea) {
 
             private var lastScanDoneTime = System.currentTimeMillis()
 
             suspend fun poll() {
                 while (true) {
-                    withFrameMillis { output.interactions.pointerPosition?.let { if (isReadyToScan()) scan(it) } }
+                    withFrameMillis { graphArea.interactions.pointerPosition?.let { if (isReadyToScan()) scan(it) } }
                 }
             }
 
             private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
 
             private fun scan(pointerPosition: Offset) {
-                val hoveredVertex = output.viewport.findVertexAt(pointerPosition)
-                if (output.interactions.hoveredVertex == hoveredVertex) return
-                output.interactions.hoveredVertex = hoveredVertex
-                output.interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
+                if (graphArea.interactions.hoveredVertex == hoveredVertex) return
+                graphArea.interactions.hoveredVertex = hoveredVertex
+                graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
                     null -> emptySet()
-                    else -> output.graph.reasoner.explanationsByVertex[hoveredVertex] ?: emptySet()
+                    else -> graphArea.graph.reasoner.explanationsByVertex[hoveredVertex] ?: emptySet()
                 }
                 lastScanDoneTime = System.currentTimeMillis()
             }
@@ -1683,7 +1680,18 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
     class Visualiser {
 
-        class GraphArea(private val output: GraphOutput) {
+        class GraphArea(transactionState: TransactionState) {
+
+            val interactions = Interactions(this)
+            val graph = Graph(interactions)
+            val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+            val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
+            val viewport = Viewport(graph)
+            val physicsRunner = PhysicsRunner(this)
+            var theme: Color.GraphTheme? = null
+
+            // TODO: this needs a better home
+            val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
 
             companion object {
                 val MIN_WIDTH = 120.dp
@@ -1695,24 +1703,17 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             @Composable
             fun Layout() {
                 val density = LocalDensity.current.density
-                output.theme = Theme.graph
+                theme = Theme.graph
 
                 Box(
                     Modifier.graphicsLayer(clip = true).background(Theme.graph.background)
                         .onGloballyPositioned { onLayout(density, it) }
-                ) {
-                    Graphics(
-                        output.graph.physics.iteration, output.viewport.density, output.viewport.physicalSize,
-                        output.viewport.scale
-                    )
-                }
+                ) { Graphics(graph.physics.iteration, viewport.density, viewport.physicalSize, viewport.scale) }
 
-                LaunchedEffect(output) { output.physicsRunner.run() }
-                LaunchedEffect(
-                    output,
-                    output.viewport.scale,
-                    output.viewport.density
-                ) { output.interactions.hoveredVertexChecker.poll() }
+                LaunchedEffect(this) { physicsRunner.run() }
+                LaunchedEffect(this, viewport.scale, viewport.density) {
+                    interactions.hoveredVertexChecker.poll()
+                }
             }
 
             @Composable
@@ -1723,24 +1724,34 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                 // Since edges is a List we need to synchronize on it. Additionally we keep EdgeLayer and VertexLayer
                 // synchronized on the same object. Otherwise, the renderer may block waiting
                 // to acquire a lock, and the vertex and edge drawing may go out of sync.
-                synchronized(output.graph.edges) {
+                synchronized(graph.edges) {
                     Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
                         EdgeLayer()
                         VertexLayer()
                     }
                 }
-                PointerInput.Handler(output, Modifier.fillMaxSize().zIndex(100f))
+                PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
             }
 
             private fun onLayout(density: Float, layout: LayoutCoordinates) {
-                output.viewport.updatePhysicalDimensions(layout.size.toSize(), density)
+                viewport.updatePhysicalDimensions(layout.size.toSize(), density)
                 // TODO: this check exists because the first composition of GraphArea will have a width of MIN_WIDTH,
                 //       before inflating to fill the max width, but there should be a more elegant solution than this.
                 if (layout.size.width > MIN_WIDTH.value * density) {
-                    if (output.viewport.areInitialWorldCoordinatesSet.compareAndSet(false, true)) {
-                        output.viewport.alignWorldCenterWithPhysicalCenter()
+                    if (viewport.areInitialWorldCoordinatesSet.compareAndSet(false, true)) {
+                        viewport.alignWorldCenterWithPhysicalCenter()
                     }
                 }
+            }
+
+            private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
+
+            fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
+                return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
+            }
+
+            fun edgeRenderer(drawScope: DrawScope): EdgeRenderer {
+                return EdgeRenderer(this, rendererContext(drawScope))
             }
 
             @Composable
@@ -1748,17 +1759,17 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                 // TODO: this will improve sharply after out-of-viewport detection
                 val simpleEdges = mutableListOf<Edge>()
                 val detailedEdges = mutableListOf<Edge>()
-                output.graph.edges.forEach {
+                graph.edges.forEach {
                     if (
-                        (output.graph.edges.size <= 500 && output.viewport.scale > 0.2)
-                        || output.interactions.focusedVertex in listOf(it.source, it.target)
+                        (graph.edges.size <= 500 && viewport.scale > 0.2)
+                        || interactions.focusedVertex in listOf(it.source, it.target)
                     ) detailedEdges += it
                     else simpleEdges += it
                 }
 
                 Canvas(Modifier.fillMaxSize()) {
-                    output.edgeRenderer(this).draw(simpleEdges, false)
-                    output.edgeRenderer(this).draw(detailedEdges, true)
+                    edgeRenderer(this).draw(simpleEdges, false)
+                    edgeRenderer(this).draw(detailedEdges, true)
                 }
                 detailedEdges.forEach { EdgeLabel(it) }
             }
@@ -1767,12 +1778,13 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             private fun EdgeLabel(edge: Edge) {
                 val density = LocalDensity.current.density
                 val rawPosition = edge.geometry.curveMidpoint ?: edge.geometry.midpoint
-                val position = rawPosition - output.viewport.worldCoordinates
-                val size =
-                    output.edgeLabelSizes[edge.label]?.let { Size(it.width.value * density, it.height.value * density) }
+                val position = rawPosition - viewport.worldCoordinates
+                val size = edgeLabelSizes[edge.label]?.let {
+                    Size(it.width.value * density, it.height.value * density)
+                }
                 val baseColor = if (edge is Edge.Inferrable && edge.isInferred) Theme.graph.inferred
                 else Theme.graph.edgeLabel
-                val alpha = with(output.interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
+                val alpha = with(interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
                 val color = baseColor.copy(alpha)
 
                 when (size) {
@@ -1799,7 +1811,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
                     Form.Text(
                         value = edge.label, textStyle = Theme.typography.code1,
                         modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged {
-                            output.edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
+                            edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
                         }
                     )
                 }
@@ -1807,15 +1819,15 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
             @Composable
             private fun VertexLayer() {
-                val vertices = output.graph.vertices
+                val vertices = graph.vertices
                 Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
                 // TODO: we won't need this distinction after out-of-viewport detection is done
-                val labelledVertices = if (vertices.size <= 200) vertices else output.interactions.focusedVertexNetwork
+                val labelledVertices = if (vertices.size <= 200) vertices else interactions.focusedVertexNetwork
                 labelledVertices.forEach { VertexLabel(it, it.geometry.position) }
             }
 
             private fun DrawScope.drawVertexBackground(vertex: Vertex) {
-                output.vertexBackgroundRenderer(vertex, this).draw()
+                vertexBackgroundRenderer(vertex, this).draw()
             }
 
             @Composable
@@ -1824,8 +1836,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             //       from the vertex's position, but it should be updating when physicsIteration does
             private fun VertexLabel(vertex: Vertex, position: Offset) {
                 val r = vertex.geometry.rect
-                val x = (r.left - output.viewport.worldCoordinates.x).dp
-                val y = (r.top - output.viewport.worldCoordinates.y).dp
+                val x = (r.left - viewport.worldCoordinates.x).dp
+                val y = (r.top - viewport.worldCoordinates.y).dp
                 val color = Theme.graph.vertexLabel
 
                 Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
@@ -1841,40 +1853,38 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
             private object PointerInput {
 
                 @Composable
-                fun Handler(output: GraphOutput, modifier: Modifier) {
-                    DragAndScroll(output, modifier) {
+                fun Handler(graphArea: GraphArea, modifier: Modifier) {
+                    DragAndScroll(graphArea, modifier) {
                         // Nested elements are required for drag and tap events to not conflict with each other
-                        TapAndHover(output, modifier)
+                        TapAndHover(graphArea, modifier)
                     }
                 }
 
                 @Composable
-                fun DragAndScroll(output: GraphOutput, modifier: Modifier, content: @Composable () -> Unit) {
-                    val viewport = output.viewport
+                fun DragAndScroll(graphArea: GraphArea, modifier: Modifier, content: @Composable () -> Unit) {
+                    val viewport = graphArea.viewport
                     Box(
                         modifier
-                            .pointerInput(output, viewport.density, viewport.scale) {
+                            .pointerInput(graphArea, viewport.density, viewport.scale) {
                                 detectDragGestures(
                                     onDragStart = { _ ->
-                                        output.interactions.draggedVertex?.let {
-                                            output.graph.physics.drag.onDragStart(
-                                                it
-                                            )
+                                        graphArea.interactions.draggedVertex?.let {
+                                            graphArea.graph.physics.drag.onDragStart(it)
                                         }
                                     },
                                     onDragEnd = {
-                                        output.graph.physics.drag.onDragEnd()
-                                        output.interactions.draggedVertex = null
+                                        graphArea.graph.physics.drag.onDragEnd()
+                                        graphArea.interactions.draggedVertex = null
                                     },
                                     onDragCancel = {
-                                        output.graph.physics.drag.onDragEnd()
-                                        output.interactions.draggedVertex = null
+                                        graphArea.graph.physics.drag.onDragEnd()
+                                        graphArea.interactions.draggedVertex = null
                                     }
                                 ) /* onDrag = */ { _, dragAmount ->
                                     val worldDragDistance = dragAmount / (viewport.scale * viewport.density)
-                                    val draggedVertex = output.interactions.draggedVertex
+                                    val draggedVertex = graphArea.interactions.draggedVertex
                                     if (draggedVertex != null) {
-                                        output.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
+                                        graphArea.graph.physics.drag.onDragMove(draggedVertex, worldDragDistance)
                                     } else {
                                         viewport.worldCoordinates -= worldDragDistance
                                     }
@@ -1891,28 +1901,28 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
                 @OptIn(ExperimentalComposeUiApi::class)
                 @Composable
-                fun TapAndHover(output: GraphOutput, modifier: Modifier) {
+                fun TapAndHover(graphArea: GraphArea, modifier: Modifier) {
                     Box(modifier
                         .pointerMoveFilter(
-                            onMove = { output.interactions.pointerPosition = it; false },
-                            onExit = { output.interactions.pointerPosition = null; false }
+                            onMove = { graphArea.interactions.pointerPosition = it; false },
+                            onExit = { graphArea.interactions.pointerPosition = null; false }
                         )
-                        .pointerInput(output) {
+                        .pointerInput(graphArea) {
                             detectTapGestures(
                                 onPress = { point ->
-                                    output.interactions.draggedVertex = output.viewport.findVertexAt(point)
-                                    if (tryAwaitRelease()) output.interactions.draggedVertex = null
+                                    graphArea.interactions.draggedVertex = graphArea.viewport.findVertexAt(point)
+                                    if (tryAwaitRelease()) graphArea.interactions.draggedVertex = null
                                 },
                                 onDoubleTap = { point ->
-                                    output.viewport.findVertexAt(point)?.let {
+                                    graphArea.viewport.findVertexAt(point)?.let {
                                         // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                        if (it is Vertex.Thing && it.thing.isInferred) output.graphBuilder.explain(
+                                        if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(
                                             it
                                         )
                                     }
                                 }
                             ) /* onTap = */ { point ->
-                                output.interactions.focusedVertex = output.viewport.findVertexAt(point)
+                                graphArea.interactions.focusedVertex = graphArea.viewport.findVertexAt(point)
                             }
                         }
                     )
@@ -1921,7 +1931,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
 
         class ConceptPreview constructor(
-            private val output: GraphOutput,
+            private val graphArea: GraphArea,
             order: Int,
             isOpen: Boolean
         ) : BrowserGroup.Browser(isOpen, order) {
@@ -1957,7 +1967,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
 
             @Composable
             override fun Content() {
-                val focusedVertex = output.interactions.focusedVertex
+                val focusedVertex = graphArea.interactions.focusedVertex
                 if (focusedVertex == null) SelectVertexMessage()
                 else Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {
                     TitleSection(focusedVertex.concept)
@@ -2015,30 +2025,8 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
     }
 
-    private fun frameState(): Frame.FrameState {
-        if (frameState == null) {
-            frameState = Frame.createFrameState(
-                separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                Frame.Pane(
-                    id = Visualiser.GraphArea::class.java.name,
-                    order = 1,
-                    minSize = Visualiser.GraphArea.MIN_WIDTH,
-                    initSize = Either.second(1f)
-                ) { graphArea.Layout() },
-                Frame.Pane(
-                    id = Visualiser.ConceptPreview::class.java.name,
-                    order = 2,
-                    minSize = BrowserGroup.DEFAULT_WIDTH,
-                    initSize = Either.first(Tabs.Vertical.WIDTH),
-                    initFreeze = true
-                ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.RIGHT) }
-            )
-        }
-        return frameState!!
-    }
-
     @Composable
     override fun content(modifier: Modifier) {
-        key(this) { Frame.Row(frameState(), modifier) }
+        key(this) { Frame.Row(frameState, modifier) }
     }
 }
