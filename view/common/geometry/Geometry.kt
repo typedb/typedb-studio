@@ -31,6 +31,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+// TODO: why is this class here and not in //view/graph? Do we plan on using it for other components?
 object Geometry {
 
     data class Ray(val origin: Offset, val directionVector: Offset) {
