@@ -84,7 +84,7 @@ object PageArea {
         }
 
         @Composable
-        internal fun openedPages(resource: Resource): Page {
+        internal fun openedPage(resource: Resource): Page {
             return openedPages.getOrPut(resource) {
                 val page = createPage(resource)
                 resource.onClose { openedPages.remove(it) }
@@ -194,7 +194,7 @@ object PageArea {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
                 tabs = GlobalState.resource.opened,
-                iconFn = { resource -> state.openedPages(resource).icon },
+                iconFn = { resource -> state.openedPage(resource).icon },
                 labelFn = { tabLabel(it) },
                 isActiveFn = { GlobalState.resource.isActive(it) },
                 onClick = { GlobalState.resource.activate(it) },
@@ -206,7 +206,7 @@ object PageArea {
                 })
             )
             Separator.Horizontal()
-            GlobalState.resource.active?.let { resource -> state.openedPages(resource).Layout() }
+            GlobalState.resource.active?.let { resource -> state.openedPage(resource).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

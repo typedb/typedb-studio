@@ -166,8 +166,9 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
     val viewport = Viewport(this)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
-    val visualiser = Visualiser(this)
-    val browsers: List<BrowserGroup.Browser> = listOf(Visualiser.ConceptPreview(this, 0, false))
+    private val graphArea = Visualiser.GraphArea(this)
+    private var frameState: Frame.FrameState? by mutableStateOf(null)
+    private val browsers: List<BrowserGroup.Browser> = listOf(Visualiser.ConceptPreview(this, 0, false))
 
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
@@ -1680,30 +1681,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
     }
 
-    class Visualiser(private val output: GraphOutput) {
-
-        private val graphArea = GraphArea(output)
-
-        @Composable
-        fun Layout(modifier: Modifier) {
-            key(output) {
-                Frame.Row(
-                    modifier = modifier,
-                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(
-                        id = GraphArea::class.java.name,
-                        minSize = GraphArea.MIN_WIDTH,
-                        initSize = Either.second(1f)
-                    ) { graphArea.Layout() },
-                    Frame.Pane(
-                        id = ConceptPreview::class.java.name,
-                        minSize = BrowserGroup.MIN_WIDTH,
-                        initSize = Either.first(Tabs.Vertical.WIDTH),
-                        initFreeze = true
-                    ) { BrowserGroup.Layout(output.browsers, it, BrowserGroup.Position.RIGHT) }
-                )
-            }
-        }
+    class Visualiser {
 
         class GraphArea(private val output: GraphOutput) {
 
@@ -2037,8 +2015,30 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
         }
     }
 
+    private fun frameState(): Frame.FrameState {
+        if (frameState == null) {
+            frameState = Frame.createFrameState(
+                separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                Frame.Pane(
+                    id = Visualiser.GraphArea::class.java.name,
+                    order = 1,
+                    minSize = Visualiser.GraphArea.MIN_WIDTH,
+                    initSize = Either.second(1f)
+                ) { graphArea.Layout() },
+                Frame.Pane(
+                    id = Visualiser.ConceptPreview::class.java.name,
+                    order = 2,
+                    minSize = BrowserGroup.DEFAULT_WIDTH,
+                    initSize = Either.first(Tabs.Vertical.WIDTH),
+                    initFreeze = true
+                ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.RIGHT) }
+            )
+        }
+        return frameState!!
+    }
+
     @Composable
     override fun content(modifier: Modifier) {
-        visualiser.Layout(modifier)
+        key(this) { Frame.Row(frameState(), modifier) }
     }
 }

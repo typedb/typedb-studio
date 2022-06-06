@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.material
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -75,10 +76,12 @@ abstract class Page {
 
     @Composable
     fun Layout() {
-        if (!hasSecondary) PrimaryContent()
-        else Frame.Column(
-            state = frameState(),
-            modifier = Modifier.fillMaxSize()
-        )
+        key(this) {
+            if (!hasSecondary) PrimaryContent()
+            else Frame.Column(
+                state = frameState(),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }

@@ -45,7 +45,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 object BrowserGroup {
 
-    val WIDTH = 300.dp
+    val DEFAULT_WIDTH = 300.dp
     val MIN_WIDTH = 120.dp
 
     enum class Position { LEFT, RIGHT }
@@ -125,7 +125,7 @@ object BrowserGroup {
 
         private val onUpdatePane = LinkedBlockingQueue<() -> Unit>()
 
-        var isOpen: Boolean by mutableStateOf(isOpen)
+        internal var isOpen: Boolean by mutableStateOf(isOpen)
 
         @Composable
         abstract fun Content()
@@ -151,8 +151,7 @@ object BrowserGroup {
         @Composable
         private fun Bar() {
             Row(
-                modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT)
-                    .background(color = Theme.studio.surface),
+                modifier = Modifier.fillMaxWidth().height(Theme.PANEL_BAR_HEIGHT).background(Theme.studio.surface),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(Modifier.width(Theme.PANEL_BAR_SPACING))
