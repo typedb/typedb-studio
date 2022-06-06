@@ -64,25 +64,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
     @Composable
     override fun Content() {
         if (!isActive) OpenProjectHelper()
-        else {
-            val navState = rememberNavigatorState(
-                container = GlobalState.project.current!!,
-                title = Label.PROJECT_BROWSER,
-                mode = Navigator.Mode.BROWSER,
-                initExpandDepth = 1,
-                liveUpdate = true,
-                contextMenuFn = { contextMenuItems(it) }
-            ) { projectItemOpen(it) }
-            GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
-            GlobalState.project.onContentChange = { navState.reloadEntries() }
-            buttons = navState.buttons
-            Navigator.Layout(
-                state = navState,
-                modifier = Modifier.fillMaxSize(),
-                iconArg = { projectItemIcon(it) },
-                styleArgs = { projectItemStyles(it) }
-            )
-        }
+        else NavigatorLayout()
     }
 
     @Composable
@@ -96,6 +78,27 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                 leadingIcon = IconArg(Icon.Code.FOLDER_OPEN)
             ) { GlobalState.project.openProjectDialog.open() }
         }
+    }
+
+    @Composable
+    private fun NavigatorLayout() {
+        val navState = rememberNavigatorState(
+            container = GlobalState.project.current!!,
+            title = Label.PROJECT_BROWSER,
+            mode = Navigator.Mode.BROWSER,
+            initExpandDepth = 1,
+            liveUpdate = true,
+            contextMenuFn = { contextMenuItems(it) }
+        ) { projectItemOpen(it) }
+        GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
+        GlobalState.project.onContentChange = { navState.reloadEntries() }
+        buttons = navState.buttons
+        Navigator.Layout(
+            state = navState,
+            modifier = Modifier.fillMaxSize(),
+            iconArg = { projectItemIcon(it) },
+            styleArgs = { projectItemStyles(it) }
+        )
     }
 
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
