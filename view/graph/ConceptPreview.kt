@@ -47,6 +47,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Table
 import java.time.format.DateTimeFormatter
 
 class ConceptPreview constructor(
@@ -128,23 +129,14 @@ class ConceptPreview constructor(
 
     @Composable
     private fun Table(concept: Concept) {
-        com.vaticle.typedb.studio.view.material.Table.Layout(
+        Table.Layout(
             items = propertiesOf(concept),
-            modifier = Modifier.fillMaxWidth()
-                .height(com.vaticle.typedb.studio.view.material.Table.ROW_HEIGHT * (propertiesOf(concept).size + 1)),
+            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * (propertiesOf(concept).size + 1)),
             columns = listOf(
-                com.vaticle.typedb.studio.view.material.Table.Column(
-                    Label.PROPERTY,
-                    Alignment.CenterStart,
-                    size = Either.first(1f)
-                ) {
+                Table.Column(Label.PROPERTY, Alignment.CenterStart, size = Either.first(1f)) {
                     Form.Text(it.key, fontWeight = FontWeight.Bold)
                 },
-                com.vaticle.typedb.studio.view.material.Table.Column(
-                    Label.VALUE,
-                    Alignment.CenterStart,
-                    size = Either.first(2f)
-                ) {
+                Table.Column(Label.VALUE, Alignment.CenterStart, size = Either.first(2f)) {
                     Form.SelectableText(it.value, singleLine = true)
                 }
             )

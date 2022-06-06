@@ -25,7 +25,6 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.material.BrowserGroup
-import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
@@ -34,7 +33,6 @@ class GraphVisualiser constructor(transactionState: TransactionState) {
 
     private val graphArea = GraphArea(transactionState)
     private val browsers: List<BrowserGroup.Browser> = listOf(ConceptPreview(graphArea, 0, false))
-    val buttons: List<Form.IconButtonArg> = emptyList()
     private var frameState: Frame.FrameState = Frame.createFrameState(
         separator = Frame.SeparatorArgs(Separator.WEIGHT),
         Frame.Pane(
