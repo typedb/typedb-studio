@@ -35,8 +35,8 @@ object Sentence {
     const val BUTTON_ENABLED_WHEN_RUNNING =
         "This button will only be enabled when there is a running query."
     const val BUTTON_ENABLED_WHEN_RUNNABLE =
-        "This button will only be enabled when a session is opened to a database, and a runnable page is opened and active " +
-                "(such as a TypeQL file), and no running query."
+        "This button will only be enabled when a session is opened to a database, and TypeQL file is opened and active " +
+                "while no other query is running. A TypeQL file is a file with .tql or .typeql extension."
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =

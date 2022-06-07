@@ -68,7 +68,7 @@ internal interface TextProcessor {
     fun undo()
     fun redo()
     fun drainChanges()
-    fun reset()
+    fun clearHistory()
     fun updateFile(file: File)
 
     companion object {
@@ -102,7 +102,7 @@ internal interface TextProcessor {
         override fun undo() = mayDisplayWarning()
         override fun redo() = mayDisplayWarning()
         override fun drainChanges() {}
-        override fun reset() {}
+        override fun clearHistory() {}
         override fun updateFile(file: File) {
             this.file = file
         }
@@ -138,7 +138,7 @@ internal interface TextProcessor {
         private var changeCount: AtomicInteger = AtomicInteger(0)
         private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-        override fun reset() {
+        override fun clearHistory() {
             version = 0
             undoStack.clear()
             redoStack.clear()

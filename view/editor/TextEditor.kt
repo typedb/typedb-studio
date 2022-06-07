@@ -109,10 +109,6 @@ object TextEditor {
     @Composable
     fun createState(file: File, bottomSpace: Dp = END_OF_FILE_SPACE): State {
         val editor = createState(
-            content = SnapshotStateList<AnnotatedString>().apply {
-                val content = file.readContent().map { normaliseWhiteSpace(it) }
-                addAll(highlight(content, file.fileType))
-            },
             bottomSpace = bottomSpace,
             processorFn = when {
                 !file.isWritable -> { _, _, _, _ -> TextProcessor.ReadOnly(file) }
@@ -129,6 +125,7 @@ object TextEditor {
                 }
             }
         )
+        editor.loadFileContent(file)
         file.beforeRun { editor.processor.drainChanges() }
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
@@ -139,25 +136,24 @@ object TextEditor {
 
     @Composable
     fun createState(bottomSpace: Dp): State {
-        return createState(
-            content = SnapshotStateList(),
-            bottomSpace = bottomSpace
-        ) { _, _, _, _ -> TextProcessor.ReadOnly() }
+        return createState(bottomSpace) { _, _, _, _ -> TextProcessor.ReadOnly() }
     }
 
     @Composable
     private fun createState(
-        content: SnapshotStateList<AnnotatedString>,
         bottomSpace: Dp,
         processorFn: (
             content: SnapshotStateList<AnnotatedString>,
-            rendering: TextRendering, finder: TextFinder, target: InputTarget
+            rendering: TextRendering,
+            finder: TextFinder,
+            target: InputTarget
         ) -> TextProcessor
     ): State {
         val font = Theme.typography.code1
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
+        val content = SnapshotStateList<AnnotatedString>()
         val rendering = TextRendering(content.size)
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, bottomSpace, currentDensity.density)
@@ -177,7 +173,7 @@ object TextEditor {
 
         file.onDiskChangeContent {
             reinitialiseContent(it)
-            editor.processor.reset()
+            editor.processor.clearHistory()
             GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
         }
 
@@ -241,8 +237,17 @@ object TextEditor {
             target.clearStatus()
         }
 
+        fun loadFileContent(file: File) {
+            content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
+        }
+
         fun updateFile(file: File) {
+            val oldContent = content.map { it.text }
+            content.clear()
             processor.updateFile(file)
+            loadFileContent(file)
+            val newContent = content.map { it.text }
+            if (oldContent != newContent) processor.clearHistory()
         }
 
         fun toggleFinder() {
