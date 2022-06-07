@@ -40,20 +40,17 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     // Type edges
     class Sub(override val source: Vertex.Type, override val target: Vertex.Type) : Edge(source, target) {
         override val label = Labels.SUB
-        fun copy(source: Vertex.Type, target: Vertex.Type) = Sub(source, target)
     }
 
     class Owns(override val source: Vertex.Type, override val target: Vertex.Type.Attribute) :
         Edge(source, target) {
         override val label = Labels.OWNS
-        fun copy(source: Vertex.Type, target: Vertex.Type.Attribute) = Owns(source, target)
     }
 
     class Plays(
         override val source: Vertex.Type.Relation, override val target: Vertex.Type, private val role: String
     ) : Edge(source, target) {
         override val label = role
-        fun copy(source: Vertex.Type.Relation, target: Vertex.Type) = Plays(source, target, role)
     }
 
     // Thing edges
@@ -61,25 +58,19 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
         override val source: Vertex.Thing, override val target: Vertex.Thing.Attribute,
         override val isInferred: Boolean = false
     ) : Edge(source, target), Inferrable {
-
         override val label = Labels.HAS
-        fun copy(source: Vertex.Thing, target: Vertex.Thing.Attribute) = Has(source, target, isInferred)
     }
 
     class Roleplayer(
         override val source: Vertex.Thing.Relation, override val target: Vertex.Thing, val role: String,
         override val isInferred: Boolean = false
     ) : Edge(source, target), Inferrable {
-
         override val label = role
-        fun copy(source: Vertex.Thing.Relation, target: Vertex.Thing) =
-            Roleplayer(source, target, role, isInferred)
     }
 
     // Thing-to-type edges
     class Isa(override val source: Vertex.Thing, override val target: Vertex.Type) : Edge(source, target) {
         override val label = Labels.ISA
-        fun copy(source: Vertex.Thing, target: Vertex.Type) = Isa(source, target)
     }
 
     class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {

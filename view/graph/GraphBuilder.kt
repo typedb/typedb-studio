@@ -177,40 +177,9 @@ class GraphBuilder(
     }
 
     private fun dumpEdgesTo(graph: Graph) {
-        edges.forEach { dumpEdgeTo(it, graph) }
+        edges.forEach { graph.addEdge(it) }
         computeCurvedEdges(edges, graph)
         edges.clear()
-    }
-
-    private fun dumpEdgeTo(edge: Edge, graph: Graph): Edge {
-        // 'source' and 'vertex' may be stale if they represent vertices previously added to the graph.
-        // Here we rebind them to the current graph state.
-        return graph.run {
-            when (edge) {
-                is Edge.Has -> edge.copy(
-                    thingVertices[edge.source.thing.iid]!!,
-                    thingVertices[edge.target.thing.iid] as Vertex.Thing.Attribute
-                )
-                is Edge.Isa -> edge.copy(
-                    thingVertices[edge.source.thing.iid]!!, typeVertices[edge.target.type.label.name()]!!
-                )
-                is Edge.Owns -> edge.copy(
-                    typeVertices[edge.source.type.label.name()]!!,
-                    typeVertices[edge.target.type.label.name()] as Vertex.Type.Attribute
-                )
-                is Edge.Plays -> edge.copy(
-                    typeVertices[edge.source.type.label.name()]!! as Vertex.Type.Relation,
-                    typeVertices[edge.target.type.label.name()]!!
-                )
-                is Edge.Roleplayer -> edge.copy(
-                    thingVertices[(edge.source as Vertex.Thing).thing.iid]!! as Vertex.Thing.Relation,
-                    thingVertices[edge.target.thing.iid]!!
-                )
-                is Edge.Sub -> edge.copy(
-                    typeVertices[edge.source.type.label.name()]!!, typeVertices[edge.target.type.label.name()]!!
-                )
-            }.also { addEdge(it) }
-        }
     }
 
     private fun computeCurvedEdges(edges: Iterable<Edge>, graph: Graph) {
