@@ -48,8 +48,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form.BORDER_WIDTH

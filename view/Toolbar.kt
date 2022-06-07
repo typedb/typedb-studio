@@ -33,12 +33,12 @@ import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
-import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.URL
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE

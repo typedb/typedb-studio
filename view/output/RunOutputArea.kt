@@ -37,9 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING

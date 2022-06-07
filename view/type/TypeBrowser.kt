@@ -31,9 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Sentence
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.ContextMenu

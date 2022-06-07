@@ -37,8 +37,8 @@ import com.vaticle.typedb.studio.state.app.StatusManager
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
-import com.vaticle.typedb.studio.view.common.Label
-import com.vaticle.typedb.studio.view.common.Sentence
+import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon

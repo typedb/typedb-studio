@@ -47,7 +47,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 

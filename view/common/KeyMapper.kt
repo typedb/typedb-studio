@@ -25,6 +25,7 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property.OS
 import java.awt.event.KeyEvent.KEY_LOCATION_NUMPAD
 

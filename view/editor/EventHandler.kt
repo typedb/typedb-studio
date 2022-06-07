@@ -28,6 +28,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.COPY
@@ -88,7 +89,6 @@ import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_INCREAS
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TEXT_SIZE_RESET
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.TOGGLE_COMMENT
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command.UNDO
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
 import com.vaticle.typedb.studio.view.material.ContextMenu

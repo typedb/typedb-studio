@@ -69,10 +69,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.util.Message.View.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.resource.Navigable
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.Util.contains
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.Util.toRectDP
