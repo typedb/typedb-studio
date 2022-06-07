@@ -19,6 +19,9 @@
 package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.DpSize
 
 sealed class Edge(open val source: Vertex, open val target: Vertex) {
 
@@ -84,6 +87,12 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
             get() = edge.curvePoint?.let {
                 Offset(it.x.toFloat(), it.y.toFloat())
             }
+
+        fun labelRect(dpSize: DpSize, density: Float): Rect {
+            val labelCenter = curveMidpoint ?: midpoint
+            val size = Size(dpSize.width.value * density, dpSize.height.value * density)
+            return Rect(Offset(labelCenter.x - size.width / 2, labelCenter.y - size.height / 2), size)
+        }
 
         override fun source() = edge.source.geometry
         override fun target() = edge.target.geometry

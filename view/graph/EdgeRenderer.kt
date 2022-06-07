@@ -38,6 +38,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         private const val ARROWHEAD_WIDTH = 3f
     }
 
+    private val viewport = graphArea.viewport
     val density = graphArea.viewport.density
     private val edgeLabelSizes = graphArea.edgeLabelSizes
 
@@ -107,10 +108,12 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
 
         val sweepAngle = Geometry.sweepAngle(from = majorArc.start, to = labelIntersectAngle, fullArc.direction)
         when {
-            abs(sweepAngle) < 180 -> ctx.drawScope.drawArc(
-                color = color, startAngle = majorArc.start, sweepAngle = sweepAngle, useCenter = false,
-                topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(), style = Stroke(density)
-            )
+            abs(sweepAngle) < 180 -> with(viewport) {
+                ctx.drawScope.drawArc(
+                    color = color, startAngle = majorArc.start, sweepAngle = sweepAngle, useCenter = false,
+                    topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(), style = Stroke(density)
+                )
+            }
             // If sweep angle > 180, most likely the label has reached an awkward spot to draw an arc through,
             // so we fall back to a straight line segment
             else -> PrettyEdgeCoordinates(edge, this).arrowSegment1(edge.source, labelRect)?.let {
@@ -130,11 +133,13 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         val sweepAngle = Geometry.sweepAngle(from = labelIntersectAngle, to = majorArc.end, fullArc.direction)
         when {
             abs(sweepAngle) < 180 -> {
-                ctx.drawScope.drawArc(
-                    color = color, startAngle = labelIntersectAngle, sweepAngle = sweepAngle, useCenter = false,
-                    topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(),
-                    style = Stroke(density)
-                )
+                with(viewport) {
+                    ctx.drawScope.drawArc(
+                        color = color, startAngle = labelIntersectAngle, sweepAngle = sweepAngle, useCenter = false,
+                        topLeft = fullArc.topLeft.toViewport(), size = fullArc.size.toViewport(),
+                        style = Stroke(density)
+                    )
+                }
                 curveArrowhead(fullArc, majorArc)?.toList()?.forEach {
                     ctx.drawScope.drawLine(color, it.from, it.to, density)
                 }
@@ -153,7 +158,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         }
         val arrowSource = fullArc.offsetAtAngle(approachAngle)
         val lines = Geometry.arrowhead(arrowSource, arrowTarget, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
-        return lines?.let { Pair(it.first.toViewport(), it.second.toViewport()) }
+        return with(viewport) { lines?.let { Pair(it.first.toViewport(), it.second.toViewport()) } }
     }
 
     private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
@@ -171,20 +176,8 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         return PrettyEdgeCoordinates(edge, this).get()
     }
 
-    fun Offset.toViewport(): Offset {
-        return (this - graphArea.viewport.worldCoordinates) * density
-    }
-
-    private fun Size.toViewport(): Size {
-        return this * density
-    }
-
-    private fun Geometry.Line.toViewport(): Geometry.Line {
-        return Geometry.Line(from.toViewport(), to.toViewport())
-    }
-
     fun line(source: Offset, target: Offset): Iterable<Offset> {
-        return listOf(source.toViewport(), target.toViewport())
+        return with(viewport) { listOf(source.toViewport(), target.toViewport()) }
     }
 
     fun labelRect(edge: Edge, position: Offset): Rect? {
@@ -265,7 +258,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         }
 
         private fun arrowhead(source: Offset, target: Offset): Iterable<Offset>? {
-            return with(renderer) {
+            return with(renderer.viewport) {
                 val lines = Geometry.arrowhead(source, target, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
                 lines?.toList()?.flatMap { listOf(it.from.toViewport(), it.to.toViewport()) }
             }

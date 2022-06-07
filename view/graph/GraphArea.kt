@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
@@ -64,12 +65,11 @@ class GraphArea(transactionState: TransactionState) {
     val graph = Graph(interactions)
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
-    val viewport = Viewport(graph)
-    val physicsRunner = PhysicsRunner(this)
-    var theme: Color.GraphTheme? = null
-
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+    val viewport = Viewport(graph, edgeLabelSizes)
+    val physicsRunner = PhysicsRunner(this)
+    var theme: Color.GraphTheme? = null
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -124,26 +124,20 @@ class GraphArea(transactionState: TransactionState) {
 
     private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
 
-    fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
+    private fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
         return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
     }
 
-    fun edgeRenderer(drawScope: DrawScope): EdgeRenderer {
+    private fun edgeRenderer(drawScope: DrawScope): EdgeRenderer {
         return EdgeRenderer(this, rendererContext(drawScope))
     }
 
     @Composable
     private fun EdgeLayer() {
-        // TODO: this will improve sharply after out-of-viewport detection
-        val simpleEdges = mutableListOf<Edge>()
-        val detailedEdges = mutableListOf<Edge>()
-        graph.edges.forEach {
-            if (
-                (graph.edges.size <= 500 && viewport.scale > 0.2)
-                || interactions.focusedVertex in listOf(it.source, it.target)
-            ) detailedEdges += it
-            else simpleEdges += it
-        }
+        val detailedEdges = viewport.detailedEdges.let { if (it.size < 500 && viewport.scale > 0.2) it else emptySet() }
+        val simpleEdges = graph.edges.filter { it !in detailedEdges }
+
+        graph.edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
 
         Canvas(Modifier.fillMaxSize()) {
             edgeRenderer(this).draw(simpleEdges, false)
@@ -154,32 +148,20 @@ class GraphArea(transactionState: TransactionState) {
 
     @Composable
     private fun EdgeLabel(edge: Edge) {
+        val size = edgeLabelSizes[edge.label] ?: return
         val density = LocalDensity.current.density
-        val rawPosition = edge.geometry.curveMidpoint ?: edge.geometry.midpoint
-        val position = rawPosition - viewport.worldCoordinates
-        val size = edgeLabelSizes[edge.label]?.let {
-            Size(it.width.value * density, it.height.value * density)
-        }
+        val rect = edge.geometry.labelRect(size, density).translate(-viewport.worldCoordinates)
         val baseColor = if (edge is Edge.Inferrable && edge.isInferred) Theme.graph.inferred
         else Theme.graph.edgeLabel
         val alpha = with(interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
         val color = baseColor.copy(alpha)
 
-        when (size) {
-            null -> EdgeLabelMeasurer(edge)
-            else -> {
-                val rect = Rect(Offset(position.x - size.width / 2, position.y - size.height / 2), size)
-                Box(
-                    Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp),
-                    Alignment.Center
-                ) {
-                    Form.Text(
-                        value = edge.label,
-                        textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
-                        color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
-                    )
-                }
-            }
+        Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
+            Form.Text(
+                value = edge.label,
+                textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
+                color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
+            )
         }
     }
 
@@ -197,11 +179,11 @@ class GraphArea(transactionState: TransactionState) {
 
     @Composable
     private fun VertexLayer() {
-        val vertices = graph.vertices
+        val vertices = viewport.visibleVertices
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-        // TODO: we won't need this distinction after out-of-viewport detection is done
-        val labelledVertices = if (vertices.size <= 200) vertices else interactions.focusedVertexNetwork
-        labelledVertices.forEach { VertexLabel(it, it.geometry.position) }
+        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
+            vertices.forEach { VertexLabel(it, it.geometry.position) }
+        }
     }
 
     private fun DrawScope.drawVertexBackground(vertex: Vertex) {
