@@ -56,32 +56,23 @@ class Graph(private val interactions: Interactions) {
     val physics = Physics(this, interactions)
     val reasoner = Reasoner()
 
-    fun putThingVertexIfAbsent(iid: String, vertexFn: () -> Vertex.Thing): Boolean {
-        return putVertexIfAbsent(iid, _thingVertices, vertexFn)
+    fun putThingVertex(iid: String, vertex: Vertex.Thing) {
+        putVertex(iid, _thingVertices, vertex)
     }
 
-    fun putTypeVertexIfAbsent(label: String, vertexFn: () -> Vertex.Type): Boolean {
-        return putVertexIfAbsent(label, _typeVertices, vertexFn)
+    fun putTypeVertex(label: String, vertex: Vertex.Type) {
+        putVertex(label, _typeVertices, vertex)
     }
 
-    private fun <VERTEX : Vertex> putVertexIfAbsent(
-        key: String, vertexMap: MutableMap<String, VERTEX>, vertexFn: () -> VERTEX
-    ): Boolean {
-        var added = false
-        val vertex = vertexMap.computeIfAbsent(key) { added = true; vertexFn() }
-        if (added) {
-            physics.placeVertex(vertex.geometry)
-            onChange()
-        }
-        return added
+    private fun <VERTEX : Vertex> putVertex(key: String, vertexMap: MutableMap<String, VERTEX>, vertex: VERTEX) {
+        vertexMap[key] = vertex
+        physics.placeVertex(vertex.geometry)
+        onChange()
     }
 
     fun addEdge(edge: Edge) {
-        // TODO: figure out why this deduplication is required for correctness
-        if (_edges.none { it.source == edge.source && it.target == edge.target && it.label == edge.label }) {
-            _edges += edge
-            onChange()
-        }
+        _edges += edge
+        onChange()
     }
 
     fun makeEdgeCurved(edge: Edge) {

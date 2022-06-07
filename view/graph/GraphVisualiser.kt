@@ -60,6 +60,6 @@ class GraphVisualiser constructor(transactionState: TransactionState) {
     }
 
     fun setCompleted() {
-        graphArea.graphBuilder.completeAllEdges(graphArea.graph)
+        graphArea.graphBuilder.completeAllEdges()
     }
 }
