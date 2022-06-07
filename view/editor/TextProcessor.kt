@@ -57,7 +57,6 @@ internal interface TextProcessor {
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
     fun insertText(text: String): Insertion?
-    fun insertText(text: AnnotatedString): Insertion?
     fun insertNewLine()
     fun duplicate()
     fun reorderLinesUp()
@@ -77,16 +76,9 @@ internal interface TextProcessor {
         internal const val TYPING_WINDOW_MILLIS = 400
         private const val UNDO_LIMIT = 1_000
         private val LOGGER = KotlinLogging.logger {}
-        private const val TAB_CHAR = "\t"
-        private const val NO_BREAK_SPACE = "\u00a0"
 
         fun normaliseWhiteSpace(string: String): String {
-            return string.replace(TAB_CHAR, " ".repeat(TAB_SIZE)).replace(NO_BREAK_SPACE, " ")
-        }
-
-        fun normaliseWhiteSpace(string: AnnotatedString): AnnotatedString {
-            return if (!string.contains(TAB_CHAR) && !string.contains(NO_BREAK_SPACE)) string
-            else AnnotatedString(normaliseWhiteSpace(string.text))
+            return string.replace("\t", " ".repeat(TAB_SIZE)).replace("\u00a0", " ")
         }
     }
 
@@ -99,7 +91,6 @@ internal interface TextProcessor {
         override fun replaceCurrentFound(text: String) = mayDisplayWarning()
         override fun replaceAllFound(text: String) = mayDisplayWarning()
         override fun insertText(text: String): Insertion? = displayWarningOnStartTyping()
-        override fun insertText(text: AnnotatedString): Insertion? = displayWarningOnStartTyping()
         override fun insertNewLine() = mayDisplayWarning()
         override fun duplicate() = mayDisplayWarning()
         override fun reorderLinesUp() = mayDisplayWarning()
@@ -351,7 +342,7 @@ internal interface TextProcessor {
             return insertText(text, recomputeFinder = true)
         }
 
-        override fun insertText(text: AnnotatedString): Insertion? {
+        private fun insertText(text: AnnotatedString): Insertion? {
             return insertText(listOf(text))
         }
 
