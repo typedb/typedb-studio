@@ -215,7 +215,8 @@ internal class EventHandler constructor(
     }
 
     private fun paste() {
-        clipboard.getText()?.let { if (it.text.isNotEmpty()) processor.insertText(normaliseWhiteSpace(it.text)) }
+        // TODO: this method should paste text with syntax highlighting: https://github.com/JetBrains/compose-jb/issues/2103
+        clipboard.getText()?.let { if (it.isNotEmpty()) processor.insertText(normaliseWhiteSpace(it)) }
     }
 
     private fun mayRunSelectionOrFile() {
