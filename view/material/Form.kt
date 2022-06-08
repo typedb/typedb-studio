@@ -833,6 +833,7 @@ object Form {
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
         val placeholderAnnStr = AnnotatedString(placeholder)
+        val itemPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING)
         Box {
             TextButton(
                 text = selected?.let { displayFn(it).ifBlank { placeholderAnnStr } } ?: placeholderAnnStr,
@@ -851,23 +852,15 @@ object Form {
                 onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
                 modifier = Modifier.background(Theme.studio.surface)
                     .defaultMinSize(minWidth = state.width)
-                    .border(
-                        BORDER_WIDTH,
-                        Theme.studio.border,
-                        ROUNDED_CORNER_SHAPE
-                    ) // TODO: how to make not rounded?
+                    .border(BORDER_WIDTH, Theme.studio.border, ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
             ) {
-                val padding = PaddingValues(horizontal = 0.dp)
                 val itemModifier = Modifier.height(FIELD_HEIGHT)
                 if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.studio.surface)) {
-                    Row {
-                        Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-                        Text(value = "(${Label.NONE})")
-                    }
+                    Row { Text(value = "(${Label.NONE})") }
                 } else values.forEachIndexed { i, value ->
                     val color = if (value == selected) Theme.studio.secondary else Theme.studio.onSurface
                     DropdownMenuItem(
-                        onClick = { state.select(value) }, contentPadding = padding,
+                        onClick = { state.select(value) }, contentPadding = itemPadding,
                         modifier = itemModifier
                             .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
@@ -875,12 +868,7 @@ object Form {
                                 onExit = { state.mouseOutFrom(i); false },
                                 onEnter = { state.mouseInTo(i); false }
                             ),
-                    ) {
-                        Row {
-                            Spacer(Modifier.width(TEXT_BUTTON_PADDING))
-                            Text(value = displayFn(value), color = color)
-                        }
-                    }
+                    ) { Row { Text(value = displayFn(value), color = color) } }
                 }
             }
         }
