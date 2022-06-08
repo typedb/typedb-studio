@@ -42,6 +42,7 @@ object Label {
     const val CONNECT = "Connect"
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
+    const val CONVERT_FILE_TYPE = "Converting File Type"
     const val COPY = "Copy"
     const val COPY_All = "Copy All"
     const val CREATE = "Create"

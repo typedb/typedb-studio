@@ -32,7 +32,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FIL
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
-import com.vaticle.typedb.studio.state.common.util.Property.FileType.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Settings
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.RunnerManager
@@ -106,11 +105,7 @@ class File internal constructor(
         }
     }
 
-    val extension: String = this.path.extension
-    val fileType: FileType = when {
-        TYPEQL.extensions.contains(extension) -> TYPEQL
-        else -> UNKNOWN
-    }
+    val fileType: FileType = FileType.of(path.extension)
     val isTypeQL: Boolean = fileType == TYPEQL
     val isTextFile: Boolean = checkIsTextFile()
 
@@ -128,7 +123,7 @@ class File internal constructor(
     }
     override var runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
-    override val isRunnable: Boolean = isTypeQL
+    override val isRunnable: Boolean = fileType.isRunnable
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
     override val isUnsavedResource: Boolean get() = parent == projectMgr.unsavedFilesDir
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)

@@ -18,6 +18,9 @@
 
 package com.vaticle.typedb.studio.state.common.util
 
+import java.nio.file.Path
+import kotlin.io.path.extension
+
 object Property {
 
     const val DEFAULT_SERVER_ADDRESS: String = "localhost:1729"
@@ -62,9 +65,25 @@ object Property {
         }
     }
 
-    enum class FileType constructor(val extensions: List<String> = emptyList(), val commentToken: String = "") {
-        TYPEQL(listOf("tql", "typeql"), "#"),
+    enum class FileType constructor(
+        val extensions: List<String> = emptyList(),
+        val commentToken: String = "",
+        val isRunnable: Boolean = false
+    ) {
+        TYPEQL(listOf("tql", "typeql"), "#", true),
         UNKNOWN;
+
+        companion object {
+
+            val RUNNABLE_TYPES get() = values().filter { it.isRunnable }
+            val RUNNABLE_EXTENSIONS get() = RUNNABLE_TYPES.flatMap { it.extensions }
+
+            fun of(path: Path): FileType = of(path.extension)
+            fun of(extension: String): FileType = when {
+                TYPEQL.extensions.contains(extension) -> TYPEQL
+                else -> UNKNOWN
+            }
+        }
     }
 
 

@@ -46,6 +46,10 @@ object Sentence {
         "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_DELETION =
         "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDONE"
+    const val CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE =
+        "You are about to convert this runnable file (%s) to a non-runnable file (%s). " +
+                "Runnable files are those with the extensions: %s. " +
+                "Are you sure you want to proceed?"
     const val CONFIRM_QUITING_APPLICATION = "Are you sure you want to close TypeDB Studio? " +
             "Unsaved files will still be available when you reopen."
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =

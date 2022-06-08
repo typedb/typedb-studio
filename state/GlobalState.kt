@@ -37,7 +37,7 @@ object GlobalState {
     val confirmation = ConfirmationManager()
     val notification = NotificationManager()
     val status = StatusManager()
-    val project = ProjectManager(settings, notification)
+    val project = ProjectManager(settings, confirmation, notification)
     val client = ClientState(notification)
     val resource = ResourceManager(client, notification)
     val schema = SchemaManager(client.session, notification)
