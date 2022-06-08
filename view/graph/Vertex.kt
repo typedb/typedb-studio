@@ -27,6 +27,12 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondArcIntersectAngles
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
@@ -208,18 +214,12 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             override fun intersects(point: Offset) = rect.contains(point)
 
             override fun edgeEndpoint(source: Offset): Offset? {
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect(
-                    source,
-                    incomingEdgeTargetRect
-                )
+                return rectIncomingLineIntersect(source, incomingEdgeTargetRect)
             }
 
             override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float? {
                 // There should be only one intersection point when the arc has an endpoint within the vertex
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles(
-                    arc,
-                    incomingEdgeTargetRect
-                ).firstOrNull()
+                return rectArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
             }
         }
 
@@ -240,17 +240,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
 
             override fun edgeEndpoint(source: Offset): Offset? {
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLineIntersect(
-                    source,
-                    incomingEdgeTargetRect
-                )
+                return diamondIncomingLineIntersect(source, incomingEdgeTargetRect)
             }
 
             override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float? {
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondArcIntersectAngles(
-                    arc,
-                    incomingEdgeTargetRect
-                ).firstOrNull()
+                return diamondArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
             }
         }
 
@@ -263,28 +257,17 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
 
             override fun edgeEndpoint(source: Offset): Offset {
-                val ellipse = com.vaticle.typedb.studio.view.common.geometry.Geometry.Ellipse(
-                    position.x,
-                    position.y,
-                    size.width / 2 + 2,
-                    size.height / 2 + 2
-                )
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect(
-                    source,
-                    ellipse
-                )
+                val ellipse = Ellipse(position.x, position.y, size.width / 2 + 2, size.height / 2 + 2)
+                return ellipseIncomingLineIntersect(source, ellipse)
             }
 
             override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float? {
-                // TODO: this implementation approximates the elliptical vertex as a diamond (like a relation);
-                //       we should have a dedicated implementation for intersecting an arc with an ellipse
+                // This implementation approximates the elliptical vertex as a diamond (like a relation); technically it
+                // should intersect an arc with an ellipse. However, curved edges to/from attribute vertices are rare.
                 val incomingEdgeTargetRect = Rect(
                     Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
                 )
-                return com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondArcIntersectAngles(
-                    arc,
-                    incomingEdgeTargetRect
-                ).firstOrNull()
+                return diamondArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
             }
         }
     }

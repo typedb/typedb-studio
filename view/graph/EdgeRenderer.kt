@@ -169,7 +169,12 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     }
 
     private fun simpleEdgeCoordinates(edge: Edge): Iterable<Offset> {
-        return line(edge.source.geometry.position, edge.target.geometry.position)
+        val source = edge.source.geometry.position
+        val target = edge.target.geometry.position
+        return when (val arrowTarget = edge.target.geometry.edgeEndpoint(source)) {
+            null -> line(source, target)
+            else -> listOfNotNull(line(source, arrowTarget), arrowhead(source, arrowTarget)).flatten()
+        }
     }
 
     private fun prettyEdgeCoordinates(edge: Edge): Iterable<Offset> {
@@ -178,6 +183,13 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
 
     fun line(source: Offset, target: Offset): Iterable<Offset> {
         return with(viewport) { listOf(source.toViewport(), target.toViewport()) }
+    }
+
+    private fun arrowhead(source: Offset, target: Offset): Iterable<Offset>? {
+        return with(viewport) {
+            val lines = Geometry.arrowhead(source, target, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
+            lines?.toList()?.flatMap { listOf(it.from.toViewport(), it.to.toViewport()) }
+        }
     }
 
     fun labelRect(edge: Edge, position: Offset): Rect? {
@@ -254,14 +266,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         fun arrowSegment2(sourceRect: Rect, targetVertex: Vertex): Iterable<Offset>? {
             val target = targetVertex.geometry.edgeEndpoint(sourceRect.center)
             val source = target?.let { Geometry.rectIncomingLineIntersect(it, sourceRect) } ?: return null
-            return listOfNotNull(renderer.line(source, target), arrowhead(source, target)).flatten()
-        }
-
-        private fun arrowhead(source: Offset, target: Offset): Iterable<Offset>? {
-            return with(renderer.viewport) {
-                val lines = Geometry.arrowhead(source, target, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
-                lines?.toList()?.flatMap { listOf(it.from.toViewport(), it.to.toViewport()) }
-            }
+            return listOfNotNull(renderer.line(source, target), renderer.arrowhead(source, target)).flatten()
         }
     }
 }
