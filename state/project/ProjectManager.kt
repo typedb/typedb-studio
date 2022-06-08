@@ -200,6 +200,15 @@ class ProjectManager(
         }
     }
 
+    fun tryMoveDirectory(directory: Directory, newParent: Path) {
+        directory.tryMove(newParent)?.let {
+            moveDirectoryDialog.close()
+            onContentChange?.let { it() }
+        } ?: if (!newParent.startsWith(current!!.path)) {
+            notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
+        }
+    }
+
     fun tryRenameFile(file: File, newName: String) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
             file.tryRename(newName)?.let { newFile ->
@@ -239,15 +248,6 @@ class ProjectManager(
         } else confirmedModifyFileFn { newFile ->
             dialog.onSuccess?.let { it(newFile) }
             dialog.close()
-        }
-    }
-
-    fun tryMoveDirectory(directory: Directory, newParent: Path) {
-        directory.tryMove(newParent)?.let {
-            moveDirectoryDialog.close()
-            onContentChange?.let { it() }
-        } ?: if (!newParent.startsWith(current!!.path)) {
-            notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
         }
     }
 }
