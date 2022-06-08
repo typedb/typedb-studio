@@ -146,13 +146,16 @@ class GraphArea(transactionState: TransactionState) {
         detailedEdgeSet.forEach { EdgeLabel(it) }
     }
 
-    // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
-    // adding detail if they meet certain criteria.
     private fun detailedEdgeSet(density: Float): Set<Edge> {
+        // Ensure smooth performance when zoomed out
         if (graph.edges.size > 500 && viewport.scale < 0.2) return emptySet()
         return graph.edges.filter { edge ->
+            // Only draw visible labels (and only draw curves when label is visible, as curves are expensive)
             edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
-        }.let { if (it.size < 100 || graph.physics.alpha < 0.25) it.toSet() else emptySet() }
+        }.let {
+            // Ensure smooth performance during initial explosion
+            if (it.size < 100 || graph.physics.alpha < 0.25) it.toSet() else emptySet()
+        }
     }
 
     @Composable
@@ -190,6 +193,7 @@ class GraphArea(transactionState: TransactionState) {
     private fun VertexLayer() {
         val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
+        // Ensure smooth performance when zoomed out, and during initial explosion
         if (viewport.scale > 0.2 && (vertices.size < 100 || graph.physics.alpha < 0.25)) {
             vertices.forEach { VertexLabel(it, it.geometry.position) }
         }
