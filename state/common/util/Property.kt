@@ -77,6 +77,7 @@ object Property {
 
             val RUNNABLE_TYPES get() = values().filter { it.isRunnable }
             val RUNNABLE_EXTENSIONS get() = RUNNABLE_TYPES.flatMap { it.extensions }
+            val RUNNABLE_EXTENSIONS_STR get() = RUNNABLE_EXTENSIONS.joinToString(", ") { ".$it" }
 
             fun of(path: Path): FileType = of(path.extension)
             fun of(extension: String): FileType = when {

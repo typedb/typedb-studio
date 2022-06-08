@@ -32,11 +32,12 @@ object Sentence {
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'read'."
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
+    private const val RUNNABLE_FILE_EXTENSIONS = "Runnable files are those with the extensions: %s."
     const val BUTTON_ENABLED_WHEN_RUNNING =
         "This button will only be enabled when there is a running query."
     const val BUTTON_ENABLED_WHEN_RUNNABLE =
-        "This button will only be enabled when a session is opened to a database, and TypeQL file is opened and active " +
-                "while no other query is running. A TypeQL file is a file with .tql or .typeql extension."
+        "This button will only be enabled when a session is opened to a database, and runnable file is opened and active " +
+                "while no other query is running. " + RUNNABLE_FILE_EXTENSIONS
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CONFIRM_DATABASE_DELETION =
@@ -48,8 +49,8 @@ object Sentence {
         "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE =
         "You are about to convert this runnable file (%s) to a non-runnable file (%s). " +
-                "Runnable files are those with the extensions: %s. " +
-                "Are you sure you want to proceed?"
+                RUNNABLE_FILE_EXTENSIONS +
+                " Are you sure you want to proceed?"
     const val CONFIRM_QUITING_APPLICATION = "Are you sure you want to close TypeDB Studio? " +
             "Unsaved files will still be available when you reopen."
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =

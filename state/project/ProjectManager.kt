@@ -232,7 +232,7 @@ class ProjectManager(
                 title = Label.CONVERT_FILE_TYPE,
                 message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
                     file.name, newPath.fileName,
-                    Property.FileType.RUNNABLE_EXTENSIONS.joinToString(", ") { ".$it" }
+                    Property.FileType.RUNNABLE_EXTENSIONS_STR
                 ),
                 onConfirm = { confirmedModifyFileFn(onSuccess) }
             )

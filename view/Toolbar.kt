@@ -34,6 +34,7 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Property.FileType.Companion.RUNNABLE_EXTENSIONS_STR
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
@@ -441,7 +442,7 @@ object Toolbar {
                 enabled = isReadyToRunQuery && hasRunnablePage,
                 tooltip = Tooltip.Arg(
                     title = if (isInteractive) Label.RUN_QUERY else Label.RUN_SCRIPT,
-                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE
+                    description = Sentence.BUTTON_ENABLED_WHEN_RUNNABLE.format(RUNNABLE_EXTENSIONS_STR)
                 )
             )
         }
