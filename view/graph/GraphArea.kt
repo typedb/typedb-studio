@@ -35,8 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -51,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.state.connection.TransactionState
-import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
@@ -65,11 +62,12 @@ class GraphArea(transactionState: TransactionState) {
     val graph = Graph(interactions)
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
-    // TODO: this needs a better home
-    val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
-    val viewport = Viewport(graph, edgeLabelSizes)
+    val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
+
+    // TODO: this needs a better home
+    val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -134,16 +132,27 @@ class GraphArea(transactionState: TransactionState) {
 
     @Composable
     private fun EdgeLayer() {
-        val detailedEdges = viewport.detailedEdges.let { if (it.size < 500 && viewport.scale > 0.2) it else emptySet() }
-        val simpleEdges = graph.edges.filter { it !in detailedEdges }
+        // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
+        // adding detail if they meet certain criteria.
+        val detailedEdgeSet = detailedEdgeSet(LocalDensity.current.density)
+        val simpleEdges = graph.edges.filter { it !in detailedEdgeSet }
 
         graph.edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
 
         Canvas(Modifier.fillMaxSize()) {
             edgeRenderer(this).draw(simpleEdges, false)
-            edgeRenderer(this).draw(detailedEdges, true)
+            edgeRenderer(this).draw(detailedEdgeSet, true)
         }
-        detailedEdges.forEach { EdgeLabel(it) }
+        detailedEdgeSet.forEach { EdgeLabel(it) }
+    }
+
+    // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
+    // adding detail if they meet certain criteria.
+    private fun detailedEdgeSet(density: Float): Set<Edge> {
+        if (graph.edges.size > 500 && viewport.scale < 0.2) return emptySet()
+        return graph.edges.filter { edge ->
+            edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
+        }.let { if (it.size < 100 || graph.physics.alpha < 0.25) it.toSet() else emptySet() }
     }
 
     @Composable
@@ -179,9 +188,9 @@ class GraphArea(transactionState: TransactionState) {
 
     @Composable
     private fun VertexLayer() {
-        val vertices = viewport.visibleVertices
+        val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
+        if (viewport.scale > 0.2 && (vertices.size < 100 || graph.physics.alpha < 0.25)) {
             vertices.forEach { VertexLabel(it, it.geometry.position) }
         }
     }
@@ -201,12 +210,7 @@ class GraphArea(transactionState: TransactionState) {
         val color = Theme.graph.vertexLabel
 
         Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
-            Form.Text(
-                vertex.label.text,
-                textStyle = Theme.typography.code1,
-                color = color,
-                align = TextAlign.Center
-            )
+            Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
         }
     }
 
@@ -276,9 +280,7 @@ class GraphArea(transactionState: TransactionState) {
                         onDoubleTap = { point ->
                             graphArea.viewport.findVertexAt(point)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(
-                                    it
-                                )
+                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
                             }
                         }
                     ) /* onTap = */ { point ->

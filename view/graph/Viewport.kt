@@ -30,7 +30,7 @@ import com.vaticle.typedb.studio.view.common.Util
 import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean
 
-class Viewport constructor(private val graph: Graph, private val edgeLabelSizes: Map<String, DpSize>) {
+class Viewport(private val graph: Graph) {
     var density: Float by mutableStateOf(1f); private set
     var physicalSize by mutableStateOf(DpSize.Zero); private set
 
@@ -47,14 +47,8 @@ class Viewport constructor(private val graph: Graph, private val edgeLabelSizes:
             _scale = value.coerceIn(0.001f..10f)
         }
     var areInitialWorldCoordinatesSet = AtomicBoolean(false)
-    val visibleVertices get() = graph.vertices.filter { rectIsVisible(it.geometry.rect) }
-    // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
-    // adding detail if they meet certain criteria.
-    val detailedEdges get() = graph.edges.filter { edge ->
-        edgeLabelSizes[edge.label]?.let { rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
-    }.toSet()
 
-    private fun rectIsVisible(rect: Rect): Boolean {
+    fun rectIsVisible(rect: Rect): Boolean {
         // Because we use Modifier.graphicsLayer for scaling, the top-left corner of the viewport may not
         // necessarily be physically at Offset.Zero. It will actually be at
         // (transformOrigin * (1 - 1 / scale)) (which happens to be 0 when scale = 1).
