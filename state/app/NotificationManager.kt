@@ -21,6 +21,8 @@ package com.vaticle.typedb.studio.state.app
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -54,10 +56,7 @@ class NotificationManager {
             return@supplyAsync try {
                 function()
             } catch (e: Throwable) {
-                notificationMgr.systemError(
-                    logger, e,
-                    Message.System.UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: Message.UNKNOWN
-                )
+                notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
                 null
             }
         }
@@ -70,10 +69,7 @@ class NotificationManager {
             try {
                 function()
             } catch (e: Throwable) {
-                notificationMgr.systemError(
-                    logger, e,
-                    Message.System.UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: Message.UNKNOWN
-                )
+                notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
             }
         }
     }

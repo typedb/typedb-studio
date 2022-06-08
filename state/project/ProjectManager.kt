@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.ConfirmationManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
@@ -209,7 +208,7 @@ class ProjectManager(
         }
     }
 
-    fun tryRenameFile(file: File, newName: String) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    fun tryRenameFile(file: File, newName: String) {
         mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
             file.tryRename(newName)?.let { newFile ->
                 onSuccess?.let { it(newFile) }

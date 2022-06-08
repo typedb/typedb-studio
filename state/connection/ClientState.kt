@@ -44,7 +44,6 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
@@ -76,12 +75,11 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationMgr)
-    private val statusAtomic = AtomicReferenceState<Status>(DISCONNECTED)
+    private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var runningClosingCommands = AtomicIntegerState(0)
     private var databaseListRefreshedTime = System.currentTimeMillis()
-    private val asyncDepth = AtomicInteger(0)
     internal val isCluster get() = _client is TypeDBClient.Cluster
 
     private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
@@ -121,33 +119,10 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         }
     }
 
-    private fun runAsyncCommand(function: () -> Unit) {
-        val depth = asyncDepth.incrementAndGet()
-        assert(depth == 1) { "You should not call runAsyncCommand nested in each other" }
+    private fun mayRunAsyncCommand(function: () -> Unit) {
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
-            coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-                try {
-                    function()
-                } catch (e: Exception) {
-                    notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
-                } finally {
-                    hasRunningCommandAtomic.set(false)
-                    asyncDepth.decrementAndGet()
-                }
-            }
-        }
-    }
-
-    private fun runAsyncClosingCommand(function: () -> Unit) {
-        val depth = runningClosingCommands.incrementAndGet()
-        assert(depth == 1) { "You should not call runAsyncClosingCommand nested in each other" }
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-            try {
-                function()
-            } catch (e: Exception) {
-                notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
-            } finally {
-                runningClosingCommands.decrementAndGet()
+            coroutineScope.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
+                hasRunningCommandAtomic.set(false)
             }
         }
     }
@@ -156,8 +131,8 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         session.transaction.sendStopSignal()
     }
 
-    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = runAsyncCommand {
-        if (session.transaction.type == type) return@runAsyncCommand
+    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = mayRunAsyncCommand {
+        if (session.transaction.type == type) return@mayRunAsyncCommand
         session.transaction.close()
         session.transaction.type = type
     }
@@ -169,11 +144,11 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
 
-    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = runAsyncCommand {
+    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = mayRunAsyncCommand {
         session.tryOpen(database, type)
     }
 
-    fun refreshDatabaseList() = runAsyncCommand { refreshDatabaseListFn() }
+    fun refreshDatabaseList() = mayRunAsyncCommand { refreshDatabaseListFn() }
 
     private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
@@ -196,7 +171,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         return session.transaction.queryRunner(content)
     }
 
-    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = runAsyncCommand {
+    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = mayRunAsyncCommand {
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
             try {
@@ -209,7 +184,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
     }
 
-    fun tryDeleteDatabase(database: String) = runAsyncCommand {
+    fun tryDeleteDatabase(database: String) = mayRunAsyncCommand {
         try {
             if (session.database == database) session.close()
             _client?.databases()?.get(database)?.delete()
@@ -223,15 +198,17 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
         return _client?.session(database, type)
     }
 
-    fun commitTransaction() = runAsyncCommand { session.transaction.commit() }
+    fun commitTransaction() = mayRunAsyncCommand { session.transaction.commit() }
 
-    fun rollbackTransaction() = runAsyncCommand { session.transaction.rollback() }
+    fun rollbackTransaction() = mayRunAsyncCommand { session.transaction.rollback() }
 
-    fun closeTransaction(message: Message? = null, vararg params: Any) = runAsyncClosingCommand {
+    fun closeTransaction(
+        message: Message? = null, vararg params: Any
+    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         session.transaction.close(message, *params)
     }
 
-    fun close() = runAsyncClosingCommand {
+    fun close() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         closeBlocking()
     }
 
