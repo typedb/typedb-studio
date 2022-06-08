@@ -258,7 +258,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
-                val yi = (point.y - position.y).pow(2) / (size.height).pow(2)
+                val yi = (point.y - position.y).pow(2) / (size.height / 2).pow(2)
                 return xi + yi < 1f
             }
 
