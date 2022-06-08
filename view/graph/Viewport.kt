@@ -22,17 +22,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import com.vaticle.typedb.studio.view.common.Util
+import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean
 
-class Viewport constructor(private val graph: Graph) {
+class Viewport(private val graph: Graph) {
     var density: Float by mutableStateOf(1f); private set
     var physicalSize by mutableStateOf(DpSize.Zero); private set
 
-    /** The world coordinates at the top-left corner of the viewport. */
+    /**
+     * The world coordinates at the top-left corner of the viewport BEFORE scaling is applied.
+     * These are typically easier to work with, as Modifier.graphicsLayer handles visual scaling itself.
+     * */
     var worldCoordinates by mutableStateOf(Offset.Zero)
     private val physicalCenter get() = DpOffset(physicalSize.width / 2, physicalSize.height / 2)
     private var _scale by mutableStateOf(1f)
@@ -42,6 +47,31 @@ class Viewport constructor(private val graph: Graph) {
             _scale = value.coerceIn(0.001f..10f)
         }
     var areInitialWorldCoordinatesSet = AtomicBoolean(false)
+
+    fun rectIsVisible(rect: Rect): Boolean {
+        // Because we use Modifier.graphicsLayer for scaling, the top-left corner of the viewport may not
+        // necessarily be physically at Offset.Zero. It will actually be at
+        // (transformOrigin * (1 - 1 / scale)) (which happens to be 0 when scale = 1).
+        val viewportBounds = Rect(
+            left = (physicalCenter.x.value * (1 - 1 / scale) - rect.width / 2),
+            right = (physicalCenter.x.value * (1 + 1 / scale) + rect.width / 2),
+            top = (physicalCenter.y.value * (1 - 1 / scale) - rect.height / 2),
+            bottom = (physicalCenter.y.value * (1 + 1 / scale) + rect.height / 2)
+        )
+        return viewportBounds.contains(rect.center - worldCoordinates)
+    }
+
+    fun Offset.toViewport(): Offset {
+        return (this - worldCoordinates) * density
+    }
+
+    fun Size.toViewport(): Size {
+        return this * density
+    }
+
+    fun Geometry.Line.toViewport(): Geometry.Line {
+        return Geometry.Line(from.toViewport(), to.toViewport())
+    }
 
     fun updatePhysicalDimensions(size: Size, density: Float) {
         this.density = density
