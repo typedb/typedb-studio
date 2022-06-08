@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common
+package com.vaticle.typedb.studio.state.common.util
 
 object Label {
     const val ABSTRACT = "Abstract"

@@ -37,7 +37,7 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Notification
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.INFO
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.WARNING
-import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton

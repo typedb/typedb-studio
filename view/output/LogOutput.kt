@@ -36,6 +36,7 @@ import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
@@ -44,7 +45,6 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
 import com.vaticle.typedb.studio.state.connection.TransactionState
-import com.vaticle.typedb.studio.view.common.Label
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor

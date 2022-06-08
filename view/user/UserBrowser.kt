@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.view.user
 
 import androidx.compose.runtime.Composable
-import com.vaticle.typedb.studio.view.common.Label
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
