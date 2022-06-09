@@ -66,7 +66,17 @@ internal class RunOutputGroup constructor(
 
     companion object {
         private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
+        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 10
         private val LOGGER = KotlinLogging.logger {}
+
+        private suspend fun <E> LinkedBlockingQueue<E>.takeNonBlocking(periodMS: Long): E {
+            var item: E
+            do {
+                item = this.poll()
+                delay(periodMS)
+            } while (item == null)
+            return item
+        }
     }
 
     init {
@@ -111,18 +121,19 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
-        futuresLatch.await()
+        do {
+            val isConsumed = futuresLatch.count == 0L
+            delay(COUNT_DOWN_LATCH_PERIOD_MS)
+        } while (!isConsumed)
         runner.setConsumed()
         endTime = System.currentTimeMillis()
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     private fun concludeNonSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         val futures = mutableListOf<CompletableFuture<Unit?>>()
         do {
-            val future = nonSerialOutputFutures.take()
+            val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
             if (future.isFirst) futures += future.first()
         } while (future.isFirst)
         CompletableFuture.allOf(*futures.toTypedArray()).join()
@@ -133,10 +144,9 @@ internal class RunOutputGroup constructor(
         nonSerialOutputFutures.put(Either.first(future))
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     private fun printSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         do {
-            val future = serialOutputFutures.take()
+            val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
             if (future.isFirst) future.first().join()?.invoke()
         } while (future.isFirst)
         futuresLatch.countDown()
