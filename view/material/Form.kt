@@ -404,7 +404,11 @@ object Form {
                     }
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
-                        if (value.isEmpty()) Text(value = placeholder, color = fadeable(fontColor, true))
+                        if (value.isEmpty()) Text(
+                            value = Label.E_G_ + " " + placeholder,
+                            textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
+                            color = fadeable(fontColor, true)
+                        )
                     }
                     trailingIcon?.let {
                         Spacer(Modifier.width(ICON_SPACING))

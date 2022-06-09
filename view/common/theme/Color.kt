@@ -137,7 +137,7 @@ object Color {
         )
     }
 
-    const val FADED_OPACITY = 0.5f
+    const val FADED_OPACITY = 0.42f
 
     fun hexToColor(hexString: String): Color {
         return Color(("ff" + hexString.removePrefix("#").lowercase()).toLong(16))
