@@ -109,7 +109,7 @@ class ProjectManager(
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        const val DATA_DIR_NAME = ".tdbs"
+        const val DATA_DIR_NAME = ".typedb-studio"
         const val UNSAVED_DATA_DIR_NAME = ".unsaved"
     }
 

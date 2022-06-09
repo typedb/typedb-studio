@@ -47,8 +47,7 @@ class DataManager {
     companion object {
         private val DATA_DIR: Path = when (Property.OS.Current) {
             WINDOWS -> Path.of(getenv("AppData")).resolve("TypeDB Studio")
-            MACOS -> Path.of(getProperty("user.home"), "Library", "Application Support").resolve("TypeDB Studio")
-            LINUX -> Path.of("var", "lib").resolve("typedb-studio")
+            MACOS, LINUX -> Path.of(getProperty("user.home")).resolve(".typedb-studio")
         }
         private var LOG_DIR = DATA_DIR.resolve("log")
         private var LOG_FILE = LOG_DIR.resolve("typedb-studio.log").toFile()
