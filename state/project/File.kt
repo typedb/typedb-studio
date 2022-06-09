@@ -43,7 +43,6 @@ import java.nio.file.Path
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -55,6 +54,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
@@ -114,7 +114,7 @@ class File internal constructor(
     private var watchFileSystem = AtomicBoolean(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override val windowTitle: String = computeWindowTitle(path, projectMgr)
     override val runContent: String get() {

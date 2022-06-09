@@ -53,14 +53,14 @@ import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 class GraphArea(transactionState: TransactionState) {
 
     val interactions = Interactions(this)
     val graph = Graph(interactions)
-    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
     val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)

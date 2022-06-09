@@ -44,8 +44,8 @@ import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
 import java.nio.file.Path
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
 class ClientState constructor(private val notificationMgr: NotificationManager) {
@@ -82,7 +82,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     private var databaseListRefreshedTime = System.currentTimeMillis()
     internal val isCluster get() = _client is TypeDBClient.Cluster
 
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     fun tryConnectToTypeDB(address: String) {
         tryConnect(address, null) { TypeDB.coreClient(address) }

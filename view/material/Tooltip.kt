@@ -59,10 +59,10 @@ import com.vaticle.typedb.studio.view.material.Form.URLText
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,7 +84,7 @@ object Tooltip {
         private val mouseHoverDisabled = AtomicBoolean(false)
         private val mouseHoverTooltip = AtomicBoolean(false)
         private var tooltipExpanded = AtomicBoolean(false)
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
         internal fun keepShowingOnTooltipHover(expanded: Boolean = false) {
             mouseHoverTooltip.set(true)

@@ -38,7 +38,6 @@ import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.common.util.Settings
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -46,7 +45,6 @@ import kotlin.io.path.isReadable
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
-import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
 class ProjectManager(
@@ -126,7 +124,6 @@ class ProjectManager(
     val renameDirectoryDialog = ModifyDirectoryDialog()
     val renameFileDialog = ModifyFileDialog()
     val saveFileDialog = ModifyFileDialog()
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
     fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)

@@ -39,6 +39,7 @@ import com.vaticle.typedb.studio.view.common.Util.toDP
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal class InputTarget constructor(
@@ -144,7 +145,7 @@ internal class InputTarget constructor(
     private val lineNumberBorder: Float get() = textAreaBounds.left - horPadding.value
     private val lineCount: Int get() = content.size
     private val end: Cursor get() = Cursor(content.size - 1, content.last().length)
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     internal fun mayIncreaseTextWidth(newRawWidth: Int) {
         val newWidth = toDP(newRawWidth, density)

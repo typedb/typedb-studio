@@ -63,10 +63,10 @@ import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tooltip
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -111,7 +111,7 @@ object TextToolbar {
         internal val status: String get() = finder.status()
         internal val density: Float get() = target.density
         private var changeCount: AtomicInteger = AtomicInteger(0)
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
         internal fun hide() {
             showFinder = false

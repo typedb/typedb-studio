@@ -107,8 +107,8 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.rectangleIndication
 import com.vaticle.typedb.studio.view.material.Icon.Code.CARET_DOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object Form {
@@ -428,7 +428,7 @@ object Form {
         internal var density by mutableStateOf(initDensity)
         internal var boxWidth by mutableStateOf(0.dp)
         internal var horScroller = ScrollState(0)
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
         fun reset() {
             boxWidth = 0.dp

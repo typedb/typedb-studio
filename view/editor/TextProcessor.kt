@@ -39,11 +39,11 @@ import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.floor
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -136,7 +136,7 @@ internal interface TextProcessor {
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
         private var changeCount: AtomicInteger = AtomicInteger(0)
-        private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+        private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
         override fun clearHistory() {
             version = 0

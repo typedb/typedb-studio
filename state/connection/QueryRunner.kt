@@ -42,11 +42,11 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.toList
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
@@ -121,7 +121,7 @@ class QueryRunner constructor(
     private val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
-    private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
     private val transaction get() = transactionState.transaction!!
     private val onClose = LinkedBlockingQueue<() -> Unit>()
