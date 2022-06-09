@@ -154,7 +154,7 @@ class GraphArea(transactionState: TransactionState) {
             edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
         }.let {
             // Ensure smooth performance during initial explosion
-            if (it.size < 100 || graph.physics.alpha < 0.25) it.toSet() else emptySet()
+            if (it.size < 200 || graph.physics.alpha < 0.5) it.toSet() else emptySet()
         }
     }
 
@@ -194,7 +194,7 @@ class GraphArea(transactionState: TransactionState) {
         val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
         // Ensure smooth performance when zoomed out, and during initial explosion
-        if (viewport.scale > 0.2 && (vertices.size < 100 || graph.physics.alpha < 0.25)) {
+        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
             vertices.forEach { VertexLabel(it, it.geometry.position) }
         }
     }

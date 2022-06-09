@@ -108,7 +108,7 @@ class QueryRunner constructor(
         const val MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT =
             "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
-        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 10
+        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
         private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
         private val LOGGER = KotlinLogging.logger {}
     }
@@ -180,7 +180,7 @@ class QueryRunner constructor(
             if (!hasStopSignal.get()) {
                 do {
                     isConsumed = consumerLatch.count == 0L
-                    delay(COUNT_DOWN_LATCH_PERIOD_MS)
+                    if (!isConsumed) delay(COUNT_DOWN_LATCH_PERIOD_MS)
                 } while (!isConsumed && !hasStopSignal.get())
             }
             onComplete()

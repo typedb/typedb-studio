@@ -43,6 +43,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -66,16 +67,14 @@ internal class RunOutputGroup constructor(
 
     companion object {
         private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
-        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 10
+        private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
         private val LOGGER = KotlinLogging.logger {}
 
         private suspend fun <E> LinkedBlockingQueue<E>.takeNonBlocking(periodMS: Long): E {
-            var item: E
-            do {
-                item = this.poll()
-                delay(periodMS)
-            } while (item == null)
-            return item
+            while (true) {
+                val item = this.poll(1, MILLISECONDS)
+                if (item != null) return item else delay(periodMS)
+            }
         }
     }
 
@@ -122,10 +121,9 @@ internal class RunOutputGroup constructor(
     }
 
     private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
-        do {
-            val isConsumed = futuresLatch.count == 0L
+        while (futuresLatch.count > 0L) {
             delay(COUNT_DOWN_LATCH_PERIOD_MS)
-        } while (!isConsumed)
+        }
         runner.setConsumed()
         endTime = System.currentTimeMillis()
     }
