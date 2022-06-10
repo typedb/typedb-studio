@@ -36,10 +36,10 @@ import mu.KotlinLogging
  * are identical and Compose may not recompose that Text and simply reuse the
  * previously identical text line on that same position.
  */
-internal class TextRendering(initSize: Int) {
+internal class TextRendering {
 
-    private var results = initResults(initSize)
-    private var versions = initVersions(initSize)
+    private var results = initResults(0)
+    private var versions = initVersions(0)
     private var deleted = initDeleted()
 
     companion object {

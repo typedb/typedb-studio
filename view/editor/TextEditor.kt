@@ -125,7 +125,7 @@ object TextEditor {
                 }
             }
         )
-        editor.loadFileContent(file)
+        editor.reloadContent(file)
         file.beforeRun { editor.processor.drainChanges() }
         file.beforeSave { editor.processor.drainChanges() }
         file.beforeClose { editor.processor.drainChanges() }
@@ -154,7 +154,7 @@ object TextEditor {
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
         val content = SnapshotStateList<AnnotatedString>()
-        val rendering = TextRendering(content.size)
+        val rendering = TextRendering()
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, bottomSpace, currentDensity.density)
         val processor = processorFn(content, rendering, finder, target)
@@ -164,21 +164,13 @@ object TextEditor {
     }
 
     private fun onChangeFromDisk(file: File, editor: State) {
-        fun reinitialiseContent(file: File) {
-            val newContent = file.readContent().map { normaliseWhiteSpace(it) }
-            editor.content.clear()
-            editor.content.addAll(highlight(newContent, file.fileType))
-            editor.rendering.reinitialize(editor.content.size)
-        }
-
         file.onDiskChangeContent {
-            reinitialiseContent(it)
+            editor.reloadContent(it)
             editor.processor.clearHistory()
             GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
         }
-
         file.onDiskChangePermission {
-            reinitialiseContent(it)
+            editor.reloadContent(it)
             val newProcessor = when {
                 !it.isWritable -> TextProcessor.ReadOnly(it)
                 else -> TextProcessor.Writable(
@@ -237,15 +229,16 @@ object TextEditor {
             target.clearStatus()
         }
 
-        fun loadFileContent(file: File) {
+        internal fun reloadContent(file: File) {
+            content.clear()
             content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
+            rendering.reinitialize(content.size)
         }
 
         fun updateFile(file: File) {
             val oldContent = content.map { it.text }
-            content.clear()
             processor.updateFile(file)
-            loadFileContent(file)
+            reloadContent(file)
             val newContent = content.map { it.text }
             if (oldContent != newContent) processor.clearHistory()
         }
