@@ -164,13 +164,15 @@ class Graph(private val interactions: Interactions) {
             val edges = graph.edges.map { it.geometry }
             forces.add(CenterForce(vertices, 0.0, 0.0))
             forces.add(CollideForce(vertices, COLLIDE_RADIUS))
-            forces.add(
-                ManyBodyForce(
-                    vertices, (-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))
-                )
-            )
-            forces.add(LinkForce(vertices, edges, 90.0, 0.5))
-            val gravityStrength = 0.1
+            forces.add(ManyBodyForce(
+                vertices, ((-500.0 - vertices.size / 3) * (1 + edges.size / (vertices.size + 1))) * 10
+            ))
+            // TODO: fix force-graph so that we can have a single LinkForce with strength = 4.0
+            forces.add(LinkForce(vertices, edges, 90.0, 1.0))
+            forces.add(LinkForce(vertices, edges, 90.0, 1.0))
+            forces.add(LinkForce(vertices, edges, 90.0, 1.0))
+            forces.add(LinkForce(vertices, edges, 90.0, 1.0))
+            val gravityStrength = 0.5
             forces.add(XForce(vertices, 0.0, gravityStrength))
             forces.add(YForce(vertices, 0.0, gravityStrength))
         }
