@@ -185,7 +185,7 @@ object Studio {
 
     @Composable
     private fun MayShowDialog(window: ComposeWindow) {
-        if (GlobalState.notification.queue.isNotEmpty()) NotificationArea.Layout()
+        if (GlobalState.notification.isOpen) NotificationArea.Layout()
         if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
         if (GlobalState.client.connectServerDialog.isOpen) ServerDialog.ConnectServer()
         if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()

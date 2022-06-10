@@ -19,13 +19,18 @@
 package com.vaticle.typedb.studio.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +48,7 @@ import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
 import com.vaticle.typedb.studio.view.material.Form.SelectableText
 import com.vaticle.typedb.studio.view.material.Icon
+import com.vaticle.typedb.studio.view.material.Scrollbar
 
 object NotificationArea {
 
@@ -56,12 +62,18 @@ object NotificationArea {
 
     @Composable
     fun Layout() {
+        val scrollState = rememberScrollState()
         Popup(alignment = Alignment.BottomEnd) {
-            Column(modifier = Modifier.padding(NOTIFICATION_MARGIN)) {
-                if (GlobalState.notification.queue.size > 1) DismissAllButton()
-                GlobalState.notification.queue.forEach { notification ->
-                    Notification(notification = notification)
+            Box {
+                Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
+                    Spacer(Modifier.height(NOTIFICATION_MARGIN))
+                    if (GlobalState.notification.queue.size > 1) DismissAllButton()
+                    GlobalState.notification.queue.forEach { notification ->
+                        Notification(notification = notification)
+                    }
+                    Spacer(Modifier.height(NOTIFICATION_MARGIN))
                 }
+                Scrollbar.Vertical(rememberScrollbarAdapter(scrollState), Modifier.align(Alignment.CenterEnd))
             }
         }
     }

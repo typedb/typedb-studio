@@ -42,6 +42,7 @@ class NotificationManager {
     }
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
+    val isOpen: Boolean get() = queue.isNotEmpty()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     companion object {
