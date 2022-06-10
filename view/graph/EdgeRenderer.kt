@@ -162,10 +162,8 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     }
 
     private fun edgeCoordinates(edges: Iterable<Edge>, detailed: Boolean): List<Offset> {
-        return synchronized(edges) {
-            if (detailed) edges.flatMap { prettyEdgeCoordinates(it) }
-            else edges.flatMap { simpleEdgeCoordinates(it) }
-        }
+        return if (detailed) edges.flatMap { prettyEdgeCoordinates(it) }
+        else edges.flatMap { simpleEdgeCoordinates(it) }
     }
 
     private fun simpleEdgeCoordinates(edge: Edge): Iterable<Offset> {

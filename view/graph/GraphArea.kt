@@ -97,14 +97,12 @@ class GraphArea(transactionState: TransactionState) {
     // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
     //       this explicit Composable with unused parameters - investigate why
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-        // Since edges is a List we need to synchronize on it. Additionally we keep EdgeLayer and VertexLayer
-        // synchronized on the same object. Otherwise, the renderer may block waiting
-        // to acquire a lock, and the vertex and edge drawing may go out of sync.
-        synchronized(graph.edges) {
-            Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
-                EdgeLayer()
-                VertexLayer()
-            }
+        // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
+        val edges = graph.edges.toList()
+        val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
+        Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
+            EdgeLayer(edges)
+            VertexLayer(vertices)
         }
         PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
     }
@@ -131,13 +129,13 @@ class GraphArea(transactionState: TransactionState) {
     }
 
     @Composable
-    private fun EdgeLayer() {
+    private fun EdgeLayer(edges: Collection<Edge>) {
         // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
         // adding detail if they meet certain criteria.
-        val detailedEdgeSet = detailedEdgeSet(LocalDensity.current.density)
-        val simpleEdges = graph.edges.filter { it !in detailedEdgeSet }
+        val detailedEdgeSet = detailedEdgeSet(edges, LocalDensity.current.density)
+        val simpleEdges = edges.filter { it !in detailedEdgeSet }
 
-        graph.edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
+        edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
 
         Canvas(Modifier.fillMaxSize()) {
             edgeRenderer(this).draw(simpleEdges, false)
@@ -146,10 +144,10 @@ class GraphArea(transactionState: TransactionState) {
         detailedEdgeSet.forEach { EdgeLabel(it) }
     }
 
-    private fun detailedEdgeSet(density: Float): Set<Edge> {
+    private fun detailedEdgeSet(edges: Collection<Edge>, density: Float): Set<Edge> {
         // Ensure smooth performance when zoomed out
-        if (graph.edges.size > 500 && viewport.scale < 0.2) return emptySet()
-        return graph.edges.filter { edge ->
+        if (edges.size > 500 && viewport.scale < 0.2) return emptySet()
+        return edges.filter { edge ->
             // Only draw visible labels (and only draw curves when label is visible, as curves are expensive)
             edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
         }.let {
@@ -190,8 +188,7 @@ class GraphArea(transactionState: TransactionState) {
     }
 
     @Composable
-    private fun VertexLayer() {
-        val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
+    private fun VertexLayer(vertices: Collection<Vertex>) {
         Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
         // Ensure smooth performance when zoomed out, and during initial explosion
         if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
