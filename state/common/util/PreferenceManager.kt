@@ -18,15 +18,21 @@
 
 package com.vaticle.typedb.studio.state.common.util
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import java.nio.file.Path
+import kotlin.io.path.name
 
-class Settings {
+// TODO: make this file configurable through a Preference Dialog
+class PreferenceManager {
 
     companion object {
-        private const val AUTO_SAVE = true
+        private const val AUTO_SAVE_DEFAULT = true
+        private val IGNORED_PATHS_DEFAULT = listOf(".git")
     }
 
-    var autosave: Boolean by mutableStateOf(AUTO_SAVE)
+    var autosave: Boolean = AUTO_SAVE_DEFAULT
+    var ignoredPaths: List<String> = IGNORED_PATHS_DEFAULT
+
+    fun isIgnoredPath(path: Path): Boolean {
+        return ignoredPaths.contains(path.name)
+    }
 }

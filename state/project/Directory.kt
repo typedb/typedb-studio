@@ -31,7 +31,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
@@ -48,10 +48,10 @@ import mu.KotlinLogging
 class Directory internal constructor(
     path: Path,
     parent: Directory?,
-    settings: Settings,
     projectMgr: ProjectManager,
+    preferenceMgr: PreferenceManager,
     notificationMgr: NotificationManager
-) : ProjectItem(Type.DIRECTORY, path, parent, settings, projectMgr, notificationMgr) {
+) : ProjectItem(Type.DIRECTORY, path, parent, preferenceMgr, projectMgr, notificationMgr) {
 
     companion object {
         private const val UNTITLED = "Untitled"
@@ -73,7 +73,7 @@ class Directory internal constructor(
     }
 
     override fun reloadEntries() {
-        val new = path.listDirectoryEntries().filter { it.isReadable() }.toSet()
+        val new = path.listDirectoryEntries().filter { it.isReadable() && !preferenceMgr.isIgnoredPath(it) }.toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) {
             val deleted = old - new
@@ -84,8 +84,8 @@ class Directory internal constructor(
     }
 
     private fun projectItemOf(it: Path): ProjectItem {
-        return if (it.isDirectory()) Directory(it, this, settings, projectMgr, notificationMgr)
-        else File(it, this, settings, projectMgr, notificationMgr)
+        return if (it.isDirectory()) Directory(it, this, projectMgr, preferenceMgr, notificationMgr)
+        else File(it, this, projectMgr, preferenceMgr, notificationMgr)
     }
 
     fun nextUntitledDirName(): String {

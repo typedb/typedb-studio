@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.resource.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -36,7 +36,7 @@ sealed class ProjectItem constructor(
     val projectItemType: Type,
     val path: Path,
     final override val parent: Directory?,
-    val settings: Settings,
+    val preferenceMgr: PreferenceManager,
     val projectMgr: ProjectManager,
     val notificationMgr: NotificationManager
 ) : Navigable<ProjectItem> {

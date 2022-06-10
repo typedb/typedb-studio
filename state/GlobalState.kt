@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.state.app.DataManager
 import com.vaticle.typedb.studio.state.app.EditorManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.StatusManager
-import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.project.ProjectManager
 import com.vaticle.typedb.studio.state.resource.ResourceManager
@@ -31,13 +31,13 @@ import com.vaticle.typedb.studio.state.schema.SchemaManager
 
 object GlobalState {
 
-    val settings = Settings()
+    val preferenceMgr = PreferenceManager()
     val appData = DataManager()
     val editor = EditorManager()
     val confirmation = ConfirmationManager()
     val notification = NotificationManager()
     val status = StatusManager()
-    val project = ProjectManager(settings, confirmation, notification)
+    val project = ProjectManager(preferenceMgr, confirmation, notification)
     val client = ClientState(notification)
     val resource = ResourceManager(client, notification)
     val schema = SchemaManager(client.session, notification)

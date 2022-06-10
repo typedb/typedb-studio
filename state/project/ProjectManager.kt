@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PAT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
@@ -48,7 +48,7 @@ import kotlin.io.path.notExists
 import mu.KotlinLogging
 
 class ProjectManager(
-    private val settings: Settings,
+    private val preferenceMgr: PreferenceManager,
     private val confirmationMgr: ConfirmationManager,
     private val notificationMgr: NotificationManager
 ) {
@@ -146,7 +146,7 @@ class ProjectManager(
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, settings, this, notificationMgr)
+        current = Project(dir, this, preferenceMgr, notificationMgr)
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()

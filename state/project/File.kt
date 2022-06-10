@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FIL
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
-import com.vaticle.typedb.studio.state.common.util.Settings
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.RunnerManager
 import java.io.BufferedReader
@@ -61,10 +61,10 @@ import mu.KotlinLogging
 class File internal constructor(
     path: Path,
     parent: Directory,
-    settings: Settings,
     projectMgr: ProjectManager,
+    preferenceMgr: PreferenceManager,
     notificationMgr: NotificationManager
-) : ProjectItem(Type.FILE, path, parent, settings, projectMgr, notificationMgr), Resource.Runnable {
+) : ProjectItem(Type.FILE, path, parent, preferenceMgr, projectMgr, notificationMgr), Resource.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -249,7 +249,7 @@ class File internal constructor(
 
     fun content(lines: List<String>) {
         content = lines
-        if (settings.autosave) saveContent()
+        if (preferenceMgr.autosave) saveContent()
     }
 
     @OptIn(ExperimentalTime::class)
