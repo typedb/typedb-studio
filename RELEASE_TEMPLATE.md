@@ -13,6 +13,8 @@ brew install --cask vaticle/tap/typedb-studio
 
 - 2.10.0 and above
 
+---
+
 { release notes }
 
 ---
