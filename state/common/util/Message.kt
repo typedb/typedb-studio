@@ -47,6 +47,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
 
             val UNEXPECTED_ERROR_IN_COROUTINE = System(1, "Unexpected error occurred with a coroutine: %s")
             val ILLEGAL_CAST = System(2, "Illegal cast of %s to %s")
+            val DATA_DIR_NOT_WRITABLE = System(3, "Does not have write permission to Application Data Directory: %s")
+            val UNEXPECTED_ERROR_APP_DATA_DIR =
+                System(4, "Unexpected exception occurred while setting up Application Data Directory: %s")
+            val APP_DATA_DIR_DISABLED = System(5, "Application properties and logging may be disabled.")
         }
     }
 

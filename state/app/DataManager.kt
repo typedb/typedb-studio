@@ -28,6 +28,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
+import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
+import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
+import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Property.OS.LINUX
 import com.vaticle.typedb.studio.state.common.util.Property.OS.MACOS
@@ -108,14 +111,14 @@ class DataManager {
                 initLogFile()
                 isEnabled = true
             } else {
-                LOGGER.error { "Does not have write permission to Application Data Directory: $DATA_DIR" }
+                LOGGER.error { DATA_DIR_NOT_WRITABLE.message(DATA_DIR) }
             }
         } catch (e: Exception) {
-            LOGGER.error { "An exception occurred while setting up Application Data Directory" }
+            LOGGER.error { UNEXPECTED_ERROR_APP_DATA_DIR.message(e.message) }
             LOGGER.error { e }
             isEnabled = false
         } finally {
-            if (!isEnabled) LOGGER.error { "Application properties and logging may be disabled." }
+            if (!isEnabled) LOGGER.error { APP_DATA_DIR_DISABLED }
         }
     }
 
