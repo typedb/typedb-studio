@@ -28,6 +28,9 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
@@ -71,9 +74,11 @@ class QueryRunner constructor(
 
             val queue = LinkedBlockingQueue<Either<T, Done>>()
 
-            class ConceptMaps : Stream<ConceptMap>()
             class ConceptMapGroups : Stream<ConceptMapGroup>()
             class NumericGroups : Stream<NumericGroup>()
+            class ConceptMaps constructor(val source: Source) : Stream<ConceptMap>() {
+                enum class Source { INSERT, UPDATE, MATCH }
+            }
         }
     }
 
@@ -229,7 +234,7 @@ class QueryRunner constructor(
             successMsg = INSERT_QUERY_SUCCESS,
             noResultMsg = INSERT_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps()
+            stream = Response.Stream.ConceptMaps(INSERT)
         ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
     }
 
@@ -239,7 +244,7 @@ class QueryRunner constructor(
             successMsg = UPDATE_QUERY_SUCCESS,
             noResultMsg = UPDATE_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps()
+            stream = Response.Stream.ConceptMaps(UPDATE)
         ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
     }
 
@@ -249,7 +254,7 @@ class QueryRunner constructor(
             successMsg = MATCH_QUERY_SUCCESS,
             noResultMsg = MATCH_QUERY_NO_RESULT,
             queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps()
+            stream = Response.Stream.ConceptMaps(MATCH)
         ) { transaction.query().match(query) }
     }
 

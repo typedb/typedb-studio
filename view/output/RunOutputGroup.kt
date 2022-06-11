@@ -30,12 +30,14 @@ import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIM
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
+import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.material.Tabs
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -43,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
@@ -183,20 +184,23 @@ internal class RunOutputGroup constructor(
                     collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
                 }
                 is Response.Stream.ConceptMaps -> {
-                    val table = TableOutput(
+                    // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
+                    val table = if (response.source != MATCH) null else TableOutput(
                         transaction = runner.transactionState, number = tableCount.incrementAndGet()
-                    )//TODO: .also { outputs.add(it) }
-                    val graph = GraphOutput(
+                    ) // TODO: .also { outputs.add(it) }
+                    val graph = if (response.source != MATCH) null else GraphOutput(
                         transactionState = runner.transactionState, number = graphCount.incrementAndGet()
                     ).also { outputs.add(it); activate(it) }
-                    consumeResponseStream(response, onCompleted = { graph.setCompleted() }) {
-                        collectNonSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { graph.output(it) })
-                        collectSerial(
-                            launchCompletableFuture(
-                                GlobalState.notification,
-                                LOGGER
-                            ) { logOutput.outputFn(it) })
-                        collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { table.outputFn(it) })
+                    consumeResponseStream(response, onCompleted = { graph?.setCompleted() }) {
+                        collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) {
+                            logOutput.outputFn(it)
+                        })
+                        table?.let { t ->
+                            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { t.outputFn(it) })
+                        }
+                        graph?.let { g ->
+                            collectNonSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { g.output(it) })
+                        }
                     }
                 }
             }
