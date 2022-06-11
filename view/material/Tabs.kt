@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -139,7 +140,7 @@ object Tabs {
 
         enum class Position { TOP, BOTTOM }
 
-        class State<T : Any> constructor(private val coroutineScope: CoroutineScope) {
+        class State<T : Any> {
 
             var density: Float by mutableStateOf(1f)
             val scroller = ScrollState(0)
@@ -147,6 +148,7 @@ object Tabs {
             var maxWidth by mutableStateOf(4096.dp)
             val openedTabSize: MutableMap<T, Dp> = mutableMapOf()
             var activeTab: T? by mutableStateOf(null)
+            internal var coroutineScope: CoroutineScope? = null
 
             internal fun initTab(tab: T, isActive: Boolean, rawWidth: Int) {
                 if (tab == activeTab) return
@@ -166,7 +168,7 @@ object Tabs {
 
             internal fun scrollTabsBy(dp: Dp) {
                 val pos = scroller.value + (dp.value * density).toInt()
-                coroutineScope.launch { scroller.animateScrollTo(pos) }
+                coroutineScope?.launch { scroller.animateScrollTo(pos) }
             }
         }
 
@@ -185,6 +187,7 @@ object Tabs {
             extraBarButtons: List<IconButtonArg> = listOf()
         ) {
             state.density = LocalDensity.current.density
+            state.coroutineScope = rememberCoroutineScope()
             val closedTabs = state.openedTabSize.keys - tabs.toSet()
             closedTabs.forEach { state.openedTabSize.remove(it) }
             Row(Modifier.fillMaxWidth().height(HEIGHT).onSizeChanged {

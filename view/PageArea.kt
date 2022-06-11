@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -56,16 +55,15 @@ import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.project.FilePage
 import com.vaticle.typedb.studio.view.type.TypePage
-import kotlinx.coroutines.CoroutineScope
 
 object PageArea {
 
     val MIN_WIDTH = 300.dp
 
-    internal class State(coroutineScope: CoroutineScope) {
+    internal class State {
 
         private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
-        internal val tabsState = Tabs.Horizontal.State<Resource>(coroutineScope)
+        internal val tabsState = Tabs.Horizontal.State<Resource>()
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -180,8 +178,7 @@ object PageArea {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Layout() {
-        val coroutineScope = rememberCoroutineScope()
-        val state = remember { State(coroutineScope) }
+        val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
             if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()

@@ -51,21 +51,16 @@ import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
 import com.vaticle.typedb.studio.view.output.LogOutput.Companion.END_OF_OUTPUT_SPACE
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 
 object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State constructor(
-        var resource: Resource.Runnable,
-        private val paneState: Frame.PaneState,
-        coroutineScope: CoroutineScope
-    ) {
+    class State constructor(var resource: Resource.Runnable, private val paneState: Frame.PaneState) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
-        internal val runnerTabs = Tabs.Horizontal.State<QueryRunner>(coroutineScope)
+        internal val runnerTabs = Tabs.Horizontal.State<QueryRunner>()
         private val outputGroup: MutableMap<QueryRunner, RunOutputGroup> = mutableMapOf()
         private var unfreezeSize: Dp? by mutableStateOf(null)
 

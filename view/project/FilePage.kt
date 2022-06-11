@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.project.File
@@ -34,7 +33,6 @@ import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Page
 import com.vaticle.typedb.studio.view.output.RunOutputArea
-import kotlinx.coroutines.CoroutineScope
 
 class FilePage private constructor(
     private var file: File,
@@ -63,8 +61,8 @@ class FilePage private constructor(
         editor.updateFile(file)
     }
 
-    private fun runOutputState(paneState: Frame.PaneState, coroutineScope: CoroutineScope): RunOutputArea.State {
-        if (runOutputState == null) runOutputState = RunOutputArea.State(file, paneState, coroutineScope)
+    private fun runOutputState(paneState: Frame.PaneState): RunOutputArea.State {
+        if (runOutputState == null) runOutputState = RunOutputArea.State(file, paneState)
         return runOutputState!!
     }
 
@@ -75,6 +73,6 @@ class FilePage private constructor(
 
     @Composable
     override fun SecondaryContent(paneState: Frame.PaneState) {
-        RunOutputArea.Layout(runOutputState(paneState, rememberCoroutineScope()))
+        RunOutputArea.Layout(runOutputState(paneState))
     }
 }
