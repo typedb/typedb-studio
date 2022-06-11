@@ -79,14 +79,14 @@ object ServerDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> GlobalState.client.tryConnectToTypeDB(address)
+                TYPEDB -> GlobalState.client.tryConnectToTypeDB(address) { GlobalState.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
                     caCertificate.isBlank() -> GlobalState.client.tryConnectToTypeDBCluster(
                         address, username, password, tlsEnabled
-                    )
+                    ) { GlobalState.client.connectServerDialog.close() }
                     else -> GlobalState.client.tryConnectToTypeDBCluster(
                         address, username, password, caCertificate
-                    )
+                    ) { GlobalState.client.connectServerDialog.close() }
                 }
             }
             appData.server = server

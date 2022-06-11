@@ -84,24 +84,41 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    fun tryConnectToTypeDB(address: String) {
-        tryConnect(address, null) { TypeDB.coreClient(address) }
+    fun tryConnectToTypeDB(address: String, onSuccess: () -> Unit) {
+        tryConnect(address, null, onSuccess) { TypeDB.coreClient(address) }
     }
 
-    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, tlsEnabled: Boolean) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled))
+    fun tryConnectToTypeDBCluster(
+        address: String,
+        username: String,
+        password: String,
+        tlsEnabled: Boolean,
+        onSuccess: () -> Unit
+    ) {
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
     }
 
-    fun tryConnectToTypeDBCluster(address: String, username: String, password: String, caPath: String) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)))
+    fun tryConnectToTypeDBCluster(
+        address: String,
+        username: String,
+        password: String,
+        caPath: String,
+        onSuccess: () -> Unit
+    ) {
+        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess)
     }
 
-    private fun tryConnectToTypeDBCluster(address: String, username: String, credentials: TypeDBCredential) {
-        tryConnect(address, username) { TypeDB.clusterClient(address, credentials) }
+    private fun tryConnectToTypeDBCluster(
+        address: String,
+        username: String,
+        credentials: TypeDBCredential,
+        onSuccess: () -> Unit
+    ) {
+        tryConnect(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
     }
 
     private fun tryConnect(
-        newAddress: String, newUsername: String?, clientConstructor: () -> TypeDBClient
+        newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
     ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
@@ -110,6 +127,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
             username = newUsername
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
+            onSuccess()
         } catch (e: TypeDBClientException) {
             statusAtomic.set(DISCONNECTED)
             notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
