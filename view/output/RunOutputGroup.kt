@@ -173,38 +173,38 @@ internal class RunOutputGroup constructor(
 
     private fun consumeResponse(response: Response) {
         when (response) {
-            is Response.Message -> consumeMessage(response)
-            is Response.Numeric -> consumeNumeric(response)
+            is Response.Message -> consumeMessageResponse(response)
+            is Response.Numeric -> consumeNumericResponse(response)
             is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeNumericGroupStream(response)
-                is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStream(response)
-                is Response.Stream.ConceptMaps -> consumeConceptMapStream(response)
+                is Response.Stream.NumericGroups -> consumeNumericGroupStreamResponse(response)
+                is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
+                is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
             }
             is Response.Done -> {}
         }
     }
 
-    private fun consumeMessage(response: Response.Message) {
+    private fun consumeMessageResponse(response: Response.Message) {
         collectSerial { logOutput.output(response) }
     }
 
-    private fun consumeNumeric(response: Response.Numeric) {
+    private fun consumeNumericResponse(response: Response.Numeric) {
         collectSerial { logOutput.output(response.value) }
     }
 
-    private fun consumeNumericGroupStream(response: Response.Stream.NumericGroups) {
-        consumeResponseStream(response) {
+    private fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
+        consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
-    private fun consumeConceptMapGroupStream(response: Response.Stream.ConceptMapGroups) {
-        consumeResponseStream(response) {
+    private fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
+        consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
-    private fun consumeConceptMapStream(response: Response.Stream.ConceptMaps) {
+    private fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
         val notificationMgr = GlobalState.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
@@ -213,14 +213,14 @@ internal class RunOutputGroup constructor(
         val graph = if (response.source != MATCH) null else GraphOutput(
             transactionState = runner.transactionState, number = graphCount.incrementAndGet()
         ).also { outputs.add(it); activate(it) }
-        consumeResponseStream(response, onCompleted = { graph?.setCompleted() }) {
+        consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { logOutput.outputFn(it) })
             table?.let { t -> collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { t.outputFn(it) }) }
             graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationMgr, LOGGER) { g.output(it) }) }
         }
     }
 
-    private fun <T> consumeResponseStream(
+    private fun <T> consumeStreamResponse(
         stream: Response.Stream<T>,
         onCompleted: (() -> Unit)? = null,
         output: (T) -> Unit
