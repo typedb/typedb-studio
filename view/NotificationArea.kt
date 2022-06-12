@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,9 +32,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import com.vaticle.typedb.studio.state.GlobalState
@@ -43,6 +48,7 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.INFO
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.WARNING
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
@@ -94,24 +100,38 @@ object NotificationArea {
 
     @Composable
     private fun Notification(notification: Notification) {
+        var height = remember { NOTIFICATION_HEIGHT }
         val colorArgs = colorArgsOf(notification.type)
+        val clipboard = LocalClipboardManager.current
+        val density = LocalDensity.current.density
         Row(
             modifier = Modifier.width(NOTIFICATION_WIDTH)
-                .defaultMinSize(minHeight = NOTIFICATION_HEIGHT).padding(MESSAGE_PADDING)
+                .height(height).padding(MESSAGE_PADDING)
                 .background(color = colorArgs.background, shape = Theme.ROUNDED_CORNER_SHAPE)
         ) {
             SelectableText(
                 value = notification.message,
                 color = colorArgs.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
+                    .onSizeChanged { height = toDP(it.height, density).coerceAtLeast(NOTIFICATION_HEIGHT) }
             )
-            IconButton(
-                icon = Icon.Code.XMARK,
-                modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
-                iconColor = colorArgs.foreground,
-                bgColor = Color.Transparent
-            ) { GlobalState.notification.dismiss(notification) }
+            Column(Modifier.fillMaxHeight()) {
+                Button(Icon.Code.XMARK, colorArgs) { GlobalState.notification.dismiss(notification) }
+                Spacer(Modifier.weight(1f))
+                Button(Icon.Code.COPY, colorArgs) { clipboard.setText(AnnotatedString(notification.message)) }
+            }
         }
+    }
+
+    @Composable
+    private fun Button(closeIcon: Icon.Code, colorArgs: ColorArgs, onClick: () -> Unit) {
+        IconButton(
+            icon = closeIcon,
+            modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
+            iconColor = colorArgs.foreground,
+            bgColor = Color.Transparent,
+            onClick = onClick
+        )
     }
 
     @Composable
