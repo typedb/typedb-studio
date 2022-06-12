@@ -63,7 +63,7 @@ object NotificationArea {
     @Composable
     fun Layout() {
         val scrollState = rememberScrollState()
-        Popup(alignment = Alignment.BottomEnd) {
+        Popup(alignment = Alignment.BottomEnd, focusable = true) {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
