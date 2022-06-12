@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import com.vaticle.typedb.studio.state.GlobalState
@@ -54,7 +55,7 @@ import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
-import com.vaticle.typedb.studio.view.material.Form.SelectableText
+import com.vaticle.typedb.studio.view.material.Form.Text
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Scrollbar
 
@@ -71,7 +72,7 @@ object NotificationArea {
     @Composable
     fun Layout() {
         val scrollState = rememberScrollState()
-        Popup(alignment = Alignment.BottomEnd, focusable = true) {
+        Popup(alignment = Alignment.BottomEnd) {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
@@ -111,11 +112,16 @@ object NotificationArea {
                 .width(NOTIFICATION_WIDTH).height(height)
                 .background(color = colorArgs.background, shape = Theme.ROUNDED_CORNER_SHAPE)
         ) {
-            SelectableText(
+            Text(
                 value = notification.message,
                 color = colorArgs.foreground,
+                overflow = TextOverflow.Visible,
+                softWrap = true,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
-            ) { height = (toDP(it.size.height, density) + MESSAGE_PADDING * 2).coerceAtLeast(NOTIFICATION_HEIGHT_MIN) }
+            ) {
+                val textHeight = toDP(it.multiParagraph.height, density) + MESSAGE_PADDING * 2
+                height = textHeight.coerceAtLeast(NOTIFICATION_HEIGHT_MIN)
+            }
             Column(Modifier.fillMaxHeight()) {
                 Button(Icon.Code.XMARK, colorArgs) { GlobalState.notification.dismiss(notification) }
                 Spacer(Modifier.weight(1f))

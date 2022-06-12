@@ -223,10 +223,11 @@ object Form {
         overflow: TextOverflow = TextOverflow.Clip,
         softWrap: Boolean = false,
         enabled: Boolean = true,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
     ) {
         Text(
             AnnotatedString(value), textStyle, fontStyle, fontWeight, textDecoration,
-            color, alpha, align, modifier, overflow, softWrap, enabled
+            color, alpha, align, modifier, overflow, softWrap, enabled, onTextLayout
         )
     }
 
@@ -244,6 +245,7 @@ object Form {
         overflow: TextOverflow = TextOverflow.Clip,
         softWrap: Boolean = false,
         enabled: Boolean = true,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
     ) {
         androidx.compose.material.Text(
             text = value,
@@ -256,6 +258,7 @@ object Form {
             overflow = overflow,
             softWrap = softWrap,
             textAlign = align,
+            onTextLayout = onTextLayout
         )
     }
 
