@@ -174,42 +174,57 @@ internal class RunOutputGroup constructor(
 
     private fun consumeResponse(response: Response) {
         when (response) {
-            is Response.Message -> collectSerial { logOutput.output(response) }
-            is Response.Numeric -> collectSerial { logOutput.output(response.value) }
+            is Response.Message -> consumeMessage(response)
+            is Response.Numeric -> consumeNumeric(response)
             is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeResponseStream(response) {
-                    collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
-                }
-                is Response.Stream.ConceptMapGroups -> consumeResponseStream(response) {
-                    collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
-                }
-                is Response.Stream.ConceptMaps -> {
-                    // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
-                    val table = if (response.source != MATCH) null else TableOutput(
-                        transaction = runner.transactionState, number = tableCount.incrementAndGet()
-                    ) // TODO: .also { outputs.add(it) }
-                    val graph = if (response.source != MATCH) null else GraphOutput(
-                        transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-                    ).also { outputs.add(it); activate(it) }
-                    consumeResponseStream(response, onCompleted = { graph?.setCompleted() }) {
-                        collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) {
-                            logOutput.outputFn(it)
-                        })
-                        table?.let { t ->
-                            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { t.outputFn(it) })
-                        }
-                        graph?.let { g ->
-                            collectNonSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { g.output(it) })
-                        }
-                    }
-                }
+                is Response.Stream.NumericGroups -> consumeNumericGroupStream(response)
+                is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStream(response)
+                is Response.Stream.ConceptMaps -> consumeConceptMapStream(response)
             }
             is Response.Done -> {}
         }
     }
 
+    private fun consumeMessage(response: Response.Message) {
+        collectSerial { logOutput.output(response) }
+    }
+
+    private fun consumeNumeric(response: Response.Numeric) {
+        collectSerial { logOutput.output(response.value) }
+    }
+
+    private fun consumeNumericGroupStream(response: Response.Stream.NumericGroups) {
+        consumeResponseStream(response) {
+            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
+        }
+    }
+
+    private fun consumeConceptMapGroupStream(response: Response.Stream.ConceptMapGroups) {
+        consumeResponseStream(response) {
+            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
+        }
+    }
+
+    private fun consumeConceptMapStream(response: Response.Stream.ConceptMaps) {
+        val notificationMgr = GlobalState.notification
+        // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
+        val table = if (response.source != MATCH) null else TableOutput(
+            transaction = runner.transactionState, number = tableCount.incrementAndGet()
+        ) // TODO: .also { outputs.add(it) }
+        val graph = if (response.source != MATCH) null else GraphOutput(
+            transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+        ).also { outputs.add(it); activate(it) }
+        consumeResponseStream(response, onCompleted = { graph?.setCompleted() }) {
+            collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { logOutput.outputFn(it) })
+            table?.let { t -> collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { t.outputFn(it) }) }
+            graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationMgr, LOGGER) { g.output(it) }) }
+        }
+    }
+
     private fun <T> consumeResponseStream(
-        stream: Response.Stream<T>, onCompleted: (() -> Unit)? = null, output: (T) -> Unit
+        stream: Response.Stream<T>,
+        onCompleted: (() -> Unit)? = null,
+        output: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
