@@ -266,7 +266,8 @@ object Form {
         style: TextStyle = Theme.typography.body1,
         color: Color = Theme.studio.onSurface,
         singleLine: Boolean = false,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
     ) {
         BasicTextField(
             modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
@@ -275,7 +276,8 @@ object Form {
             readOnly = true,
             cursorBrush = SolidColor(Theme.studio.secondary),
             singleLine = singleLine,
-            textStyle = style.copy(color = color)
+            textStyle = style.copy(color = color),
+            onTextLayout = onTextLayout
         )
     }
 

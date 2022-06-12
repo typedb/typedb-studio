@@ -32,11 +32,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -60,7 +62,7 @@ object NotificationArea {
 
     private val NOTIFICATION_MARGIN = 30.dp
     private val NOTIFICATION_WIDTH = 360.dp
-    private val NOTIFICATION_HEIGHT = 80.dp
+    private val NOTIFICATION_HEIGHT_MIN = 56.dp
     private val MESSAGE_PADDING = 8.dp
     private val MESSAGE_CLOSE_SIZE = 26.dp
 
@@ -87,7 +89,7 @@ object NotificationArea {
     @Composable
     private fun DismissAllButton() {
         val colorArgs = colorArgsOf(GlobalState.notification.queue.first().type)
-        Row(modifier = Modifier.width(NOTIFICATION_WIDTH).padding(MESSAGE_PADDING)) {
+        Row(modifier = Modifier.padding(MESSAGE_PADDING).width(NOTIFICATION_WIDTH)) {
             Spacer(Modifier.weight(1f))
             Form.TextButton(
                 text = Label.DISMISS_ALL,
@@ -100,21 +102,20 @@ object NotificationArea {
 
     @Composable
     private fun Notification(notification: Notification) {
-        var height = remember { NOTIFICATION_HEIGHT }
+        var height by remember { mutableStateOf(NOTIFICATION_HEIGHT_MIN) }
         val colorArgs = colorArgsOf(notification.type)
         val clipboard = LocalClipboardManager.current
         val density = LocalDensity.current.density
         Row(
-            modifier = Modifier.width(NOTIFICATION_WIDTH)
-                .height(height).padding(MESSAGE_PADDING)
+            modifier = Modifier.padding(MESSAGE_PADDING)
+                .width(NOTIFICATION_WIDTH).height(height)
                 .background(color = colorArgs.background, shape = Theme.ROUNDED_CORNER_SHAPE)
         ) {
             SelectableText(
                 value = notification.message,
                 color = colorArgs.foreground,
                 modifier = Modifier.padding(MESSAGE_PADDING).weight(1f)
-                    .onSizeChanged { height = toDP(it.height, density).coerceAtLeast(NOTIFICATION_HEIGHT) }
-            )
+            ) { height = (toDP(it.size.height, density) + MESSAGE_PADDING * 2).coerceAtLeast(NOTIFICATION_HEIGHT_MIN) }
             Column(Modifier.fillMaxHeight()) {
                 Button(Icon.Code.XMARK, colorArgs) { GlobalState.notification.dismiss(notification) }
                 Spacer(Modifier.weight(1f))
