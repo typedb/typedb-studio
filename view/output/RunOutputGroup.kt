@@ -160,7 +160,6 @@ internal class RunOutputGroup constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    @Suppress("BlockingMethodInNonBlockingContext")
     private fun consumeResponses() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
@@ -168,8 +167,8 @@ internal class RunOutputGroup constructor(
             runner.responses.drainTo(responses)
             if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
         } while (responses.lastOrNull() != Response.Done)
-        serialOutputFutures.put(Either.second(Done))
-        nonSerialOutputFutures.put(Either.second(Done))
+        serialOutputFutures.add(Either.second(Done))
+        nonSerialOutputFutures.add(Either.second(Done))
     }
 
     private fun consumeResponse(response: Response) {
