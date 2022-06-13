@@ -266,10 +266,10 @@ interface KeyMapper {
                     Keys.DirectionRight -> Command.MOVE_WORD_RIGHT
                     Keys.DirectionUp -> Command.MOVE_PARAGRAPH_PREV
                     Keys.DirectionDown -> Command.MOVE_PARAGRAPH_NEXT
-                    Keys.H -> Command.REPLACE
                     Keys.Delete -> Command.DELETE_WORD_NEXT
                     Keys.Backspace -> Command.DELETE_WORD_PREV
                     Keys.Backslash -> Command.SELECT_NONE
+                    Keys.H -> Command.REPLACE
                     else -> null
                 }
                 else -> null
@@ -321,7 +321,6 @@ interface KeyMapper {
                     else -> null
                 }
                 event.isCtrlPressed -> when (event.key) {
-                    Keys.R -> Command.REPLACE
                     Keys.F -> Command.MOVE_CHAR_LEFT
                     Keys.B -> Command.MOVE_CHAR_RIGHT
                     Keys.P -> Command.MOVE_LINE_UP
@@ -332,6 +331,7 @@ interface KeyMapper {
                     Keys.D -> Command.DELETE_CHAR_NEXT
                     Keys.K -> Command.DELETE_LINE_END
                     Keys.O -> Command.ENTER
+                    Keys.R -> Command.REPLACE
                     else -> null
                 }
                 event.isAltPressed && event.isShiftPressed -> when (event.key) {
