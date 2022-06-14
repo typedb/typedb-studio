@@ -95,7 +95,7 @@ sealed class VertexBackgroundRenderer(
     )
 
     private fun isInHoveredExplanationTree(): Boolean {
-        return graphArea.graph.reasoner.explanationsByVertex[vertex]
+        return graphArea.graph.reasoning.explanationsByVertex[vertex]
             ?.any { it in graphArea.interactions.hoveredVertexExplanations } ?: false
     }
 
