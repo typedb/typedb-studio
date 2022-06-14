@@ -35,6 +35,7 @@ artifacts = [
     "org.jetbrains.kotlin:kotlin-test",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core",
     "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
+    "org.jetbrains.skiko:skiko-awt",
     "org.jetbrains.skiko:skiko-awt-runtime-linux-x64",
     "org.jetbrains.skiko:skiko-awt-runtime-macos-x64",
     "org.jetbrains.skiko:skiko-awt-runtime-windows-x64",

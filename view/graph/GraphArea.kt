@@ -29,22 +29,39 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.InternalFoundationTextApi
+import androidx.compose.foundation.text.TextDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.MultiParagraph
+import androidx.compose.ui.text.TextLayoutInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
@@ -55,6 +72,11 @@ import com.vaticle.typedb.studio.view.material.Form
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.skia.Data
+import org.jetbrains.skia.Font
+import org.jetbrains.skia.Paint
+import org.jetbrains.skia.TextLine
+import org.jetbrains.skia.Typeface
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -68,6 +90,17 @@ class GraphArea(transactionState: TransactionState) {
 
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+    val vertexLabelSizes: MutableMap<String, IntSize> = ConcurrentHashMap()
+    val vertexLabelBitmaps: MutableMap<String, ImageBitmap> = ConcurrentHashMap()
+
+    val contextClassLoader = Thread.currentThread().contextClassLoader!!
+    val resourceName = "resources/fonts/ubuntumono/UbuntuMono-Regular.ttf"
+    val resource = contextClassLoader.getResourceAsStream(resourceName)
+        ?: error("Can't load font from $resourceName")
+    val bytes = resource.use { it.readAllBytes() }
+    val typeface = Typeface.makeFromData(Data.makeFromBytes(bytes))
+    var _font: Font? = null
+    val font get() = if (_font != null) _font else { _font = Font(typeface, 13f * 2); _font }
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -188,23 +221,64 @@ class GraphArea(transactionState: TransactionState) {
     }
 
     @Composable
+    private fun VertexLabelMeasurer(vertex: Vertex) {
+        Form.Text(
+            value = vertex.label.text, textStyle = Theme.typography.code1,
+            modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged { vertexLabelSizes[vertex.label.text] = it }
+        )
+    }
+
+    @OptIn(InternalFoundationTextApi::class)
+    @Composable
     private fun VertexLayer(vertices: Collection<Vertex>) {
-        Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-        // Ensure smooth performance when zoomed out, and during initial explosion
-        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
-            vertices.forEach { VertexLabel(it, it.geometry.position) }
+        val localDensity = LocalDensity.current
+        val fontLoader = LocalFontLoader.current
+        Canvas(Modifier.fillMaxSize()) {
+            vertices.forEach { vertex ->
+                drawVertexBackground(vertex)
+                drawVertexLabel(vertex)
+//                when (val img = vertexLabelBitmaps[vertex.label.text]) {
+//                    null -> vertexLabelSizes[vertex.label.text]?.let {
+//                        (this as Canvas).nativeCanvas.drawTextLine(
+//                            TextLine.Companion.make(
+//                                vertex.label.text, Font("resources/fonts/ubuntumono/UbuntuMono-Regular.ttf")
+//                            )
+//                        )
+//                        vertexLabelBitmaps[vertex.label.text] = ImageBitmap(it.width, it.height, ImageBitmapConfig.Gpu)
+//                            .apply {
+//
+//                            }
+//                    }
+//                    else -> drawImage(img, vertex.geometry.position - Offset(img.width / 2f, img.height / 2f))
+//                }
+//                drawIntoCanvas { canvas ->
+//                    canvas.nativeCanvas.drawTextLine(TextLine.make(vertex.label.text, font))
+//                }
+            }
         }
+        // Ensure smooth performance when zoomed out, and during initial explosion
+//        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
+//        vertices.filter { it.label.text !in vertexLabelSizes.keys }.forEach { VertexLabelMeasurer(it) }
+//        }
     }
 
     private fun DrawScope.drawVertexBackground(vertex: Vertex) {
         vertexBackgroundRenderer(vertex, this).draw()
     }
 
+    private fun DrawScope.drawVertexLabel(vertex: Vertex) {
+        val center = vertex.geometry.position
+        val x = (center.x - viewport.worldCoordinates.x) * density
+        val y = (center.y - viewport.worldCoordinates.y) * density
+//        val color = Theme.graph.vertexLabel
+
+        drawIntoCanvas { canvas ->
+            canvas.nativeCanvas.drawTextLine(TextLine.make(vertex.label.text, font), x, y, Paint())
+        }
+    }
+
     @Composable
-    @Suppress("UNUSED_PARAMETER")
-    // TODO: I'm not really sure why we need 'position' here. Without it, the vertex label intermittently desyncs
-    //       from the vertex's position, but it should be updating when physicsIteration does
-    private fun VertexLabel(vertex: Vertex, position: Offset) {
+    private fun VertexLabel(vertex: Vertex) {
         val r = vertex.geometry.rect
         val x = (r.left - viewport.worldCoordinates.x).dp
         val y = (r.top - viewport.worldCoordinates.y).dp
