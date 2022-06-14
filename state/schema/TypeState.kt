@@ -48,23 +48,15 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         val isInherited: Boolean
     )
 
-    data class OwnerTypeProperties(
-        val ownerType: Thing,
-        val isKey: Boolean,
-        val isInherited: Boolean
-    )
+    data class OwnerTypeProperties(val ownerType: Thing, val isKey: Boolean, val isInherited: Boolean)
 
-    data class RoleTypeProperties(
-        val roleType: Role,
-        val overriddenType: Role?,
-        val isInherited: Boolean
-    )
+    data class RoleTypeProperties(val roleType: Role, val overriddenType: Role?, val isInherited: Boolean)
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    internal abstract val conceptType: Type
+    abstract val conceptType: Type
     internal abstract val baseType: TypeQLToken.Type
     internal abstract val subtypesExplicit: List<TypeState>
     abstract val subtypes: List<TypeState>

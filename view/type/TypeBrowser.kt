@@ -34,6 +34,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.ContextMenu
@@ -43,7 +44,6 @@ import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Navigator
 import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.material.Tooltip
-import com.vaticle.typedb.studio.view.type.TypePage.Companion.typeIcon
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(isOpen, order) {
 
@@ -76,7 +76,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { typeIcon(it.item) }
+            iconArg = { conceptIcon(it.item.conceptType) }
         )
     }
 

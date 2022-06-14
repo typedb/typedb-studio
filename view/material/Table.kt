@@ -75,13 +75,13 @@ object Table {
     private val CELL_PADDING_VERTICAL = 4.dp
 
     @Composable
-    private fun bgColor(i: Int): Color =
-        if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
+    private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
 
     @Composable
     fun <T> Layout(
         items: List<T>,
         modifier: Modifier = Modifier,
+        showHeaders: Boolean = true,
         rowHeight: Dp = ROW_HEIGHT,
         columnBorderSize: Dp = COLUMN_BORDER_SIZE,
         horCellPadding: Dp = CELL_PADDING_HORIZONTAL,
@@ -89,7 +89,7 @@ object Table {
         columns: List<Column<T>>
     ) {
         Column(modifier.border(1.dp, Theme.studio.border)) {
-            Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+            if (showHeaders) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
             Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
         }
     }

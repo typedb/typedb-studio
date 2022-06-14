@@ -33,9 +33,6 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLi
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Icon
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import kotlin.math.pow
@@ -122,13 +119,6 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                     is ThingType -> Thing(type, graph)
                     else -> throw IllegalStateException("[$type]'s encoding is not supported by Vertex.Type")
                 }
-            }
-
-            // TODO: copied from typeIcon on 23/05/2022, needs refactor
-            fun typeIcon(type: com.vaticle.typedb.client.api.concept.type.Type) = when (type) {
-                is RelationType -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
-                is AttributeType -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
-                else -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
             }
         }
 

@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.view.graph
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,27 +29,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.view.common.theme.Color
+import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Table
-import java.time.format.DateTimeFormatter
 
 class ConceptPreview constructor(
     private val graphArea: GraphArea,
@@ -61,28 +58,8 @@ class ConceptPreview constructor(
     override val isActive: Boolean = true
     override var buttons: List<Form.IconButtonArg> = emptyList()
 
-    private val titleSectionPadding = 10.dp
-
-    data class Property(val key: String, val value: String)
-
     companion object {
         private val MESSAGE_PADDING = 20.dp
-
-        fun propertiesOf(concept: Concept): List<Property> {
-            return listOfNotNull(
-                if (concept is Thing) Label.INTERNAL_ID to concept.iid else null,
-                if (concept is Attribute<*>) Label.VALUE to concept.valueString() else null,
-            )
-        }
-
-        private infix fun String.to(value: String): Property {
-            return Property(this, value)
-        }
-
-        private fun Attribute<*>.valueString(): String = when {
-            isDateTime -> asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            else -> value.toString()
-        }
     }
 
     @Composable
@@ -90,8 +67,7 @@ class ConceptPreview constructor(
         val focusedVertex = graphArea.interactions.focusedVertex
         if (focusedVertex == null) SelectVertexMessage()
         else Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)) {
-            TitleSection(focusedVertex.concept)
-            if (propertiesOf(focusedVertex.concept).isNotEmpty()) Table(focusedVertex.concept)
+            Table(focusedVertex.concept)
         }
     }
 
@@ -103,27 +79,13 @@ class ConceptPreview constructor(
         ) { Form.Text(Label.GRAPH_CONCEPT_PREVIEW_PLACEHOLDER, align = TextAlign.Center, softWrap = true) }
     }
 
-    // TODO: copied from TypePage.kt on 23/05/2022
     @Composable
-    private fun TitleSection(concept: Concept) {
+    private fun ConceptTypePreview(concept: Concept) {
         val type = if (concept is Type) concept else concept.asThing().type
-        Box(Modifier.padding(titleSectionPadding)) {
-            Form.TextBox(text = displayName(type), leadingIcon = Vertex.Type.typeIcon(type))
-        }
-    }
-
-    @Composable
-    private fun displayName(type: Type): AnnotatedString = displayName(type, Theme.studio.onPrimary)
-
-    private fun displayName(type: Type, baseFontColor: androidx.compose.ui.graphics.Color): AnnotatedString {
-        return buildAnnotatedString {
-            append(type.label.scopedName())
-            if (type is AttributeType) type.valueType?.let { valueType ->
-                append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(Color.FADED_OPACITY))) {
-                    append("(${valueType.name.lowercase()})")
-                }
-            }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            conceptIcon(type).let { Icon.Render(it.code, it.color()) }
+            Form.ButtonSpacer()
+            Form.Text(ConceptSummaryText(type))
         }
     }
 
@@ -131,15 +93,53 @@ class ConceptPreview constructor(
     private fun Table(concept: Concept) {
         Table.Layout(
             items = propertiesOf(concept),
-            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * (propertiesOf(concept).size + 1)),
+            modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * propertiesOf(concept).size),
+            showHeaders = false,
             columns = listOf(
-                Table.Column(Label.PROPERTY, Alignment.CenterStart, size = Either.first(1f)) {
-                    Form.Text(it.key, fontWeight = FontWeight.Bold)
+                Table.Column(header = null, contentAlignment = Alignment.CenterStart, size = Either.first(1f)) {
+                    it.layout.Key()
                 },
-                Table.Column(Label.VALUE, Alignment.CenterStart, size = Either.first(2f)) {
-                    Form.SelectableText(it.value, singleLine = true)
+                Table.Column(header = null, contentAlignment = Alignment.CenterStart, size = Either.first(2f)) {
+                    it.layout.Value()
                 }
             )
+        )
+    }
+
+    private sealed class Property {
+        abstract val layout: Layout
+
+        class Layout(private val key: kotlin.String, private val valueView: @Composable () -> Unit) {
+            @Composable
+            fun Key() {
+                Form.Text(key, fontWeight = FontWeight.Bold)
+            }
+
+            @Composable
+            fun Value() {
+                valueView()
+            }
+        }
+
+        class Generic(key: kotlin.String, val valueView: @Composable () -> Unit): Property() {
+            override val layout = Layout(key) { valueView() }
+        }
+
+        class String(key: kotlin.String, val value: kotlin.String): Property() {
+            override val layout = Layout(key) { Value() }
+
+            @Composable
+            private fun Value() {
+                Form.SelectableText(value, singleLine = true)
+            }
+        }
+    }
+
+    private fun propertiesOf(concept: Concept): List<Property> {
+        return listOfNotNull(
+            Property.Generic(Label.TYPE) { ConceptTypePreview(concept) },
+            if (concept is Thing) Property.String(Label.INTERNAL_ID, concept.iid) else null,
+            if (concept is Attribute<*>) Property.String(Label.VALUE, attributeValueString(concept)) else null,
         )
     }
 }
