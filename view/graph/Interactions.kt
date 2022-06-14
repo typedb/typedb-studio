@@ -82,7 +82,7 @@ class Interactions constructor(private val graphArea: GraphArea) {
             graphArea.interactions.hoveredVertex = hoveredVertex
             graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
                 null -> emptySet()
-                else -> graphArea.graph.reasoner.explanationsByVertex[hoveredVertex] ?: emptySet()
+                else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
             }
             lastScanDoneTime = System.currentTimeMillis()
         }

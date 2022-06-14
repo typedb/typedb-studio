@@ -197,19 +197,19 @@ class GraphBuilder(
     }
 
     private fun dumpExplainablesTo(graph: Graph) {
-        explainables.forEach { graph.reasoner.explainables.putIfAbsent(it.key, it.value) }
+        explainables.forEach { graph.reasoning.explainables.putIfAbsent(it.key, it.value) }
         explainables.clear()
     }
 
     private fun dumpExplanationStructureTo(graph: Graph) {
-        graph.reasoner.addVertexExplanations(vertexExplanations)
+        graph.reasoning.addVertexExplanations(vertexExplanations)
         vertexExplanations.clear()
     }
 
     fun explain(vertex: Vertex.Thing) {
         NotificationManager.launchCompletableFuture(GlobalState.notification, LOGGER) {
-            val iterator = graph.reasoner.explanationIterators[vertex]
-                ?: runExplainQuery(vertex).also { graph.reasoner.explanationIterators[vertex] = it }
+            val iterator = graph.reasoning.explanationIterators[vertex]
+                ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
             fetchNextExplanation(vertex, iterator)
         }.exceptionally { e ->
             GlobalState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
@@ -217,7 +217,7 @@ class GraphBuilder(
     }
 
     private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
-        val explainable = graph.reasoner.explainables[vertex] ?: throw IllegalStateException("Not explainable")
+        val explainable = graph.reasoning.explainables[vertex] ?: throw IllegalStateException("Not explainable")
         return transactionState.transaction?.query()?.explain(explainable)?.iterator()
             ?: Collections.emptyIterator()
     }

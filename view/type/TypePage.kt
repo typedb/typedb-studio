@@ -52,10 +52,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
@@ -64,9 +60,11 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.ClickableText
 import com.vaticle.typedb.studio.view.material.Icon
@@ -85,7 +83,7 @@ sealed class TypePage(
 ) : Page() {
 
     override val hasSecondary: Boolean = false
-    override val icon: Form.IconArg = typeIcon(type)
+    override val icon: Form.IconArg = conceptIcon(type.conceptType)
     protected abstract val type: TypeState.Thing
 
     private val focusReq = FocusRequester()
@@ -125,13 +123,6 @@ sealed class TypePage(
                 is TypeState.Relation -> Relation(type, coroutineScope)
                 is TypeState.Attribute -> Attribute(type, coroutineScope)
             }
-        }
-
-        // TODO: move these methods to a package about type visualisations
-        internal fun typeIcon(type: TypeState.Thing) = when (type) {
-            is TypeState.Entity -> Form.IconArg(Icon.Code.RECTANGLE) { Theme.graph.vertex.entityType }
-            is TypeState.Relation -> Form.IconArg(Icon.Code.RHOMBUS) { Theme.graph.vertex.relationType }
-            is TypeState.Attribute -> Form.IconArg(Icon.Code.OVAL) { Theme.graph.vertex.attributeType }
         }
     }
 
@@ -234,7 +225,7 @@ sealed class TypePage(
     @Composable
     private fun LabelSection() {
         SectionRow {
-            Form.TextBox(text = TypeDisplayName(type), leadingIcon = typeIcon(type))
+            Form.TextBox(text = ConceptSummaryText(type.conceptType), leadingIcon = conceptIcon(type.conceptType))
             EditButton { } // TODO
             Spacer(Modifier.weight(1f))
         }
@@ -242,14 +233,15 @@ sealed class TypePage(
 
     @Composable
     private fun SupertypeSection() {
+        val supertype = type.supertype ?: type
         SectionRow {
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = type.supertype?.let { TypeDisplayName(it) } ?: AnnotatedString("(${Label.THING.lowercase()})"),
-                leadingIcon = type.supertype?.let { typeIcon(it) },
+                text = ConceptSummaryText(supertype.conceptType),
+                leadingIcon = conceptIcon(supertype.conceptType),
                 enabled = !type.isRoot,
-            ) { type.supertype?.let { GlobalState.resource.open(it) } }
+            ) { GlobalState.resource.open(supertype) }
             EditButton { } // TODO
         }
     }
@@ -280,11 +272,11 @@ sealed class TypePage(
                 modifier = Modifier.weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(TypeDisplayName(props.attributeType)) { GlobalState.resource.open(props.attributeType) }
+                        ClickableText(ConceptSummaryText(props.attributeType.conceptType)) { GlobalState.resource.open(props.attributeType) }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(TypeDisplayName(ot)) {
+                            ClickableText(ConceptSummaryText(ot.conceptType)) {
                                 GlobalState.resource.open(
                                     ot
                                 )
@@ -307,7 +299,6 @@ sealed class TypePage(
 
     @Composable
     private fun OwnsAttributeTypeAddition() {
-        val baseFontColor = Theme.studio.onPrimary
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes
             ?.filter { !type.ownsAttributeTypes.contains(it) }
@@ -331,7 +322,7 @@ sealed class TypePage(
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
                     onExpand = { GlobalState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadProperties() },
-                    displayFn = { TypeDisplayName(it, baseFontColor) },
+                    displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = attributeTypeList
@@ -343,7 +334,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { TypeDisplayName(it, baseFontColor) },
+                    displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -403,7 +394,6 @@ sealed class TypePage(
 
     @Composable
     private fun PlaysRoleTypeAddition() {
-        val baseFontColor = Theme.studio.onPrimary
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val roleTypeList = GlobalState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
@@ -426,7 +416,7 @@ sealed class TypePage(
                     placeholder = Label.SELECT_ROLE_TYPE,
                     onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadProperties() },
-                    displayFn = { TypeDisplayName(it, baseFontColor) },
+                    displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = roleTypeList
@@ -438,7 +428,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                     onSelection = { overriddenType = it },
-                    displayFn = { TypeDisplayName(it, baseFontColor) },
+                    displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -467,7 +457,7 @@ sealed class TypePage(
                     .background(Theme.studio.backgroundMedium),
                 itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
                 bottomSpace = 0.dp,
-                iconArg = { typeIcon(it.item) }
+                iconArg = { conceptIcon(it.item.conceptType) }
             )
         }
     }
@@ -517,33 +507,6 @@ sealed class TypePage(
             leadingIcon = Form.IconArg(Icon.Code.ROTATE),
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) { type.loadProperties() }
-    }
-
-    @Composable
-    protected fun TypeDisplayName(type: TypeState): AnnotatedString = TypeDisplayName(type, Theme.studio.onPrimary)
-
-    protected fun TypeDisplayName(type: TypeState, baseFontColor: Color): AnnotatedString {
-        val primary = when (type) {
-            is TypeState.Role -> type.scopedName
-            is TypeState.Thing -> type.name
-        }
-        val secondary = if (type is TypeState.Attribute) type.valueType else null
-        return AnnotatedString(primary, secondary, baseFontColor)
-    }
-
-    @Composable
-    protected fun AnnotatedString(primary: String, secondary: String? = null): AnnotatedString {
-        return AnnotatedString(primary, secondary, Theme.studio.onPrimary)
-    }
-
-    protected fun AnnotatedString(primary: String, secondary: String? = null, baseFontColor: Color): AnnotatedString {
-        return buildAnnotatedString {
-            append(primary)
-            secondary?.let {
-                append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${it})") }
-            }
-        }
     }
 
     @Composable
@@ -621,7 +584,6 @@ sealed class TypePage(
 
         @Composable
         private fun RelatesRoleTypeAddition() {
-            val baseFontColor = Theme.studio.onPrimary
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
             val overridableTypeList = type.supertype?.relatesRoleTypes
@@ -645,7 +607,7 @@ sealed class TypePage(
                         selected = overriddenType,
                         placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
                         onSelection = { overriddenType = it },
-                        displayFn = { TypeDisplayName(it, baseFontColor) },
+                        displayFn = { ConceptSummaryText(it.conceptType) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverridable,
                         values = overridableTypeList
@@ -691,7 +653,7 @@ sealed class TypePage(
                     modifier = Modifier.weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(TypeDisplayName(props.ownerType)) { GlobalState.resource.open(props.ownerType) }
+                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { GlobalState.resource.open(props.ownerType) }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)

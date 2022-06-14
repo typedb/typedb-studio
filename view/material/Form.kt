@@ -207,7 +207,7 @@ object Form {
     }
 
     @Composable
-    private fun ButtonSpacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
+    fun ButtonSpacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
 
     @Composable
     fun Text(
@@ -805,7 +805,7 @@ object Form {
     fun <T : Any> Dropdown(
         values: List<T>,
         selected: T?,
-        displayFn: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
+        displayFn: @Composable (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
         onExpand: (() -> Unit)? = null,
         onSelection: (value: T) -> Unit,
         placeholder: String = "",
