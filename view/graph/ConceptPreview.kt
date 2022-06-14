@@ -80,16 +80,6 @@ class ConceptPreview constructor(
     }
 
     @Composable
-    private fun ConceptTypePreview(concept: Concept) {
-        val type = if (concept is Type) concept else concept.asThing().type
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            conceptIcon(type).let { Icon.Render(it.code, it.color()) }
-            Form.ButtonSpacer()
-            Form.Text(ConceptSummaryText(type))
-        }
-    }
-
-    @Composable
     private fun Table(concept: Concept) {
         Table.Layout(
             items = propertiesOf(concept),
@@ -104,6 +94,16 @@ class ConceptPreview constructor(
                 }
             )
         )
+    }
+
+    @Composable
+    private fun ConceptTypePreview(concept: Concept) {
+        val type = if (concept is Type) concept else concept.asThing().type
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            conceptIcon(type).let { Icon.Render(it.code, it.color()) }
+            Form.ButtonSpacer()
+            Form.Text(ConceptSummaryText(type))
+        }
     }
 
     private sealed class Property {

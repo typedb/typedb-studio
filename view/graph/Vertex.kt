@@ -35,7 +35,6 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectA
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
 import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
 import java.awt.Polygon
-import java.time.format.DateTimeFormatter
 import kotlin.math.pow
 
 sealed class Vertex(val concept: Concept, protected val graph: Graph) {
