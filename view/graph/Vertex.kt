@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLi
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
+import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
 import java.awt.Polygon
 import java.time.format.DateTimeFormatter
 import kotlin.math.pow
@@ -89,15 +90,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>, graph: Graph) :
             Thing(attribute, graph) {
 
-            private val valueString = when {
-                attribute.isDateTime -> {
-                    attribute.asDateTime().value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                }
-                else -> attribute.value.toString()
-            }
-
             override val label = Label(
-                "${attribute.type.label.name()}: $valueString", Label.LengthLimits.CONCEPT
+                "${attribute.type.label.name()}: ${attributeValueString(attribute)}", Label.LengthLimits.CONCEPT
             )
             override val geometry = Geometry.attribute()
         }
