@@ -126,12 +126,7 @@ class ConceptPreview constructor(
         }
 
         class String(key: kotlin.String, val value: kotlin.String): Property() {
-            override val layout = Layout(key) { Value() }
-
-            @Composable
-            private fun Value() {
-                Form.SelectableText(value, singleLine = true)
-            }
+            override val layout = Layout(key) { Form.SelectableText(value, singleLine = true) }
         }
     }
 
