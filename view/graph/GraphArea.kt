@@ -30,21 +30,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InternalFoundationTextApi
-import androidx.compose.foundation.text.TextDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -52,31 +48,25 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.MultiParagraph
-import androidx.compose.ui.text.TextLayoutInput
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.material.Form
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.skia.Data
 import org.jetbrains.skia.Font
-import org.jetbrains.skia.Paint
+import org.jetbrains.skia.Rect
+import org.jetbrains.skia.TextBlob
+import org.jetbrains.skia.TextBlobBuilder
 import org.jetbrains.skia.TextLine
-import org.jetbrains.skia.Typeface
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -91,16 +81,6 @@ class GraphArea(transactionState: TransactionState) {
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
     val vertexLabelSizes: MutableMap<String, IntSize> = ConcurrentHashMap()
-    val vertexLabelBitmaps: MutableMap<String, ImageBitmap> = ConcurrentHashMap()
-
-    val contextClassLoader = Thread.currentThread().contextClassLoader!!
-    val resourceName = "resources/fonts/ubuntumono/UbuntuMono-Regular.ttf"
-    val resource = contextClassLoader.getResourceAsStream(resourceName)
-        ?: error("Can't load font from $resourceName")
-    val bytes = resource.use { it.readAllBytes() }
-    val typeface = Typeface.makeFromData(Data.makeFromBytes(bytes))
-    var _font: Font? = null
-    val font get() = if (_font != null) _font else { _font = Font(typeface, 13f * 2); _font }
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -231,12 +211,16 @@ class GraphArea(transactionState: TransactionState) {
     @OptIn(InternalFoundationTextApi::class)
     @Composable
     private fun VertexLayer(vertices: Collection<Vertex>) {
-        val localDensity = LocalDensity.current
+        val density = LocalDensity.current.density
         val fontLoader = LocalFontLoader.current
+        val typography = Theme.typography
+        val textPaint = Paint().apply { color = Theme.graph.vertexLabel }.asFrameworkPaint()
         Canvas(Modifier.fillMaxSize()) {
             vertices.forEach { vertex ->
                 drawVertexBackground(vertex)
-                drawVertexLabel(vertex)
+                if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
+                    drawVertexLabel(vertex, textPaint, typography)
+                }
 //                when (val img = vertexLabelBitmaps[vertex.label.text]) {
 //                    null -> vertexLabelSizes[vertex.label.text]?.let {
 //                        (this as Canvas).nativeCanvas.drawTextLine(
@@ -266,14 +250,40 @@ class GraphArea(transactionState: TransactionState) {
         vertexBackgroundRenderer(vertex, this).draw()
     }
 
-    private fun DrawScope.drawVertexLabel(vertex: Vertex) {
+    private fun DrawScope.drawVertexLabel(
+        vertex: Vertex, paint: org.jetbrains.skia.Paint, typography: Typography.Theme
+    ) {
         val center = vertex.geometry.position
         val x = (center.x - viewport.worldCoordinates.x) * density
         val y = (center.y - viewport.worldCoordinates.y) * density
-//        val color = Theme.graph.vertexLabel
 
+        val text = vertex.label.text
         drawIntoCanvas { canvas ->
-            canvas.nativeCanvas.drawTextLine(TextLine.make(vertex.label.text, font), x, y, Paint())
+            val font = Font(typography.fixedWidthSkiaTypeface, typography.codeSizeMedium * density)
+//            val textBlob = TextBlobBuilder().appendRun(font, "Hello World", 0f, 0f, Rect(0f, 0f, 4f, 4f)).build()!!
+//            val textBlob = TextBlobBuilder() .appendRun(
+//                font, text, x, y,
+//                Rect(
+//                    x - vertex.geometry.size.width / 2 * density, y + vertex.geometry.size.height / 2 * density,
+//                    x + vertex.geometry.size.width / 2 * density, y - vertex.geometry.size.height / 2 * density
+//                )
+//            ).build()
+            val lineLengthApprox = when (vertex.geometry) {
+                is Vertex.Geometry.Relation -> 11 // TODO
+                else -> 13
+            }
+            // TODO: this algorithm will break for double-width characters (Chinese glyphs etc)
+            if (text.length <= lineLengthApprox) {
+                val line = TextLine.make(text, font)
+                canvas.nativeCanvas.drawTextLine(line, x - line.width / 2, y + line.capHeight / 2, paint)
+            } else {
+                val line1 = TextLine.make(text.substring(0 until lineLengthApprox), font)
+                val line2 = TextLine.make(text.substring(lineLengthApprox), font)
+                canvas.nativeCanvas.drawTextLine(line1, x - line1.width / 2, y + line1.capHeight / 2 - line1.height / 2, paint)
+                canvas.nativeCanvas.drawTextLine(line2, x - line2.width / 2, y + line2.capHeight / 2 + line2.height / 2, paint)
+            }
+//            canvas.nativeCanvas.drawTextBlob(textBlob, x - vertex.geometry.size.width / 2 * density, y + vertex.geometry.size.height / 2 * density, paint)
+//            canvas.nativeCanvas.drawTextLine(textLine, x - size.width / 2, y + size.height / 2, paint)
         }
     }
 

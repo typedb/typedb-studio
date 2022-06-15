@@ -23,10 +23,15 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontListFontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.ResourceFont
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import org.jetbrains.skia.Data
+import org.jetbrains.skia.Typeface
+import org.jetbrains.skia.makeFromFileName
 
 object Typography {
 
@@ -58,7 +63,8 @@ object Typography {
     @Stable
     class Theme constructor(
         variableWidthFontFamily: FontFamily, fixedWidthFontFamily: FontFamily,
-        bodySizeMedium: Int, bodySizeSmall: Int, codeSizeMedium: Int, codeSizeSmall: Int
+        val fixedWidthSkiaTypeface: Typeface,
+        bodySizeMedium: Int, bodySizeSmall: Int, val codeSizeMedium: Int, codeSizeSmall: Int,
     ) {
         val body1 = TextStyle(fontSize = bodySizeMedium.sp, fontFamily = variableWidthFontFamily)
         val body2 = TextStyle(fontSize = bodySizeSmall.sp, fontFamily = variableWidthFontFamily)
@@ -72,11 +78,17 @@ object Typography {
         Font(TITILLIUM_WEB_REGULAR, FontWeight.Normal, FontStyle.Normal),
         Font(TITILLIUM_WEB_SEMI_BOLD, FontWeight.SemiBold, FontStyle.Normal)
     )
+    private val UBUNTU_MONO_SKIA_TYPEFACE = Typeface.makeFromData(
+        Data.makeFromBytes(
+            ClassLoader.getSystemClassLoader().getResourceAsStream(UBUNTU_MONO_REGULAR)!!.use { it.readAllBytes() }
+        )
+    )
 
     object Themes {
         val DEFAULT = Theme(
             variableWidthFontFamily = TITILLIUM_WEB_FAMILY,
             fixedWidthFontFamily = UBUNTU_MONO_FAMILY,
+            fixedWidthSkiaTypeface = UBUNTU_MONO_SKIA_TYPEFACE,
             bodySizeMedium = DEFAULT_BODY_FONT_SIZE_MEDIUM,
             bodySizeSmall = DEFAULT_BODY_FONT_SIZE_SMALL,
             codeSizeMedium = DEFAULT_CODE_FONT_SIZE_MEDIUM,
