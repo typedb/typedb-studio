@@ -21,9 +21,9 @@ package com.vaticle.typedb.studio.view.graph
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.geometry.Offset
 import com.vaticle.typedb.client.api.logic.Explanation
+import com.vaticle.typedb.studio.view.common.FixedScheduleRunner
 
 class Interactions constructor(private val graphArea: GraphArea) {
 
@@ -64,27 +64,22 @@ class Interactions constructor(private val graphArea: GraphArea) {
         } else emptySet()
     }
 
-    class HoveredVertexChecker constructor(private val graphArea: GraphArea) {
+    class HoveredVertexChecker constructor(private val graphArea: GraphArea): FixedScheduleRunner(runIntervalMs = 33) {
 
-        private var lastScanDoneTime = System.currentTimeMillis()
-
-        suspend fun poll() {
-            while (true) {
-                withFrameMillis { graphArea.interactions.pointerPosition?.let { if (isReadyToScan()) scan(it) } }
-            }
+        override fun canRun(): Boolean {
+            return graphArea.interactions.pointerPosition != null
         }
 
-        private fun isReadyToScan() = System.currentTimeMillis() - lastScanDoneTime > 33
-
-        private fun scan(pointerPosition: Offset) {
-            val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
-            if (graphArea.interactions.hoveredVertex == hoveredVertex) return
-            graphArea.interactions.hoveredVertex = hoveredVertex
-            graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
-                null -> emptySet()
-                else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
+        override fun run() {
+            graphArea.interactions.pointerPosition?.let { pointerPosition ->
+                val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
+                if (graphArea.interactions.hoveredVertex == hoveredVertex) return
+                graphArea.interactions.hoveredVertex = hoveredVertex
+                graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                    null -> emptySet()
+                    else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
+                }
             }
-            lastScanDoneTime = System.currentTimeMillis()
         }
     }
 }

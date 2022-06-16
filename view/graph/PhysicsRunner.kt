@@ -25,13 +25,14 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import kotlinx.coroutines.Job
 import mu.KotlinLogging
 
+// TODO: Should extend FixedScheduleRunner
 class PhysicsRunner constructor(private val graphArea: GraphArea) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    suspend fun run() {
+    suspend fun launch() {
         while (true) {
             withFrameMillis {
                 return@withFrameMillis if (isReadyToStep()) {

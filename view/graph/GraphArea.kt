@@ -88,10 +88,11 @@ class GraphArea(transactionState: TransactionState) {
                 .onGloballyPositioned { onLayout(density, it) }
         ) { Graphics(graph.physics.iteration, viewport.density, viewport.physicalSize, viewport.scale) }
 
-        LaunchedEffect(this) { physicsRunner.run() }
+        LaunchedEffect(this) { physicsRunner.launch() }
         LaunchedEffect(this, viewport.scale, viewport.density) {
-            interactions.hoveredVertexChecker.poll()
+            interactions.hoveredVertexChecker.launch()
         }
+        LaunchedEffect(this) { viewport.autoScaler.launch() }
     }
 
     @Composable
@@ -273,6 +274,7 @@ class GraphArea(transactionState: TransactionState) {
                         }
                     }
                     .scrollable(orientation = Orientation.Vertical, state = rememberScrollableState { delta ->
+                        viewport.wasManuallyRescaled = true
                         viewport.scale *= 1 + (delta * 0.0006f / viewport.density)
                         delta
                     })

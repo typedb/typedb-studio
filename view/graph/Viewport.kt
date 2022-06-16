@@ -26,9 +26,11 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
+import com.vaticle.typedb.studio.view.common.FixedScheduleRunner
 import com.vaticle.typedb.studio.view.common.Util
 import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.sqrt
 
 class Viewport(private val graph: Graph) {
     var density: Float by mutableStateOf(1f); private set
@@ -43,10 +45,10 @@ class Viewport(private val graph: Graph) {
     private var _scale by mutableStateOf(1f)
     var scale: Float
         get() = _scale
-        set(value) {
-            _scale = value.coerceIn(0.001f..10f)
-        }
+        set(value) { _scale = value.coerceIn(0.001f..10f) }
+    var wasManuallyRescaled = false
     var areInitialWorldCoordinatesSet = AtomicBoolean(false)
+    val autoScaler = AutoScaler(this)
 
     fun rectIsVisible(rect: Rect): Boolean {
         // Because we use Modifier.graphicsLayer for scaling, the top-left corner of the viewport may not
@@ -79,7 +81,7 @@ class Viewport(private val graph: Graph) {
     }
 
     fun alignWorldCenterWithPhysicalCenter() {
-        worldCoordinates = Offset(-physicalCenter.x.value, -physicalCenter.y.value) / scale
+        worldCoordinates = Offset(-physicalCenter.x.value, -physicalCenter.y.value)
     }
 
     fun findVertexAt(physicalPoint: Offset): Vertex? {
@@ -111,5 +113,17 @@ class Viewport(private val graph: Graph) {
                 yield(vertexDistances.entries.minByOrNull { it.value }!!.key)
             }
         }.take(10)
+    }
+
+    class AutoScaler(private val viewport: Viewport): FixedScheduleRunner(runIntervalMs = 33) {
+
+        override fun canRun() = !viewport.wasManuallyRescaled
+
+        override fun run() {
+            val vertexAreaApprox = 180f * 180f
+            val baseCapacity = (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
+            val requiredCapacity = viewport.graph.vertices.size.coerceAtLeast(10)
+            viewport.scale = sqrt(baseCapacity / requiredCapacity)
+        }
     }
 }
