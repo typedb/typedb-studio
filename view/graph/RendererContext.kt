@@ -20,5 +20,6 @@ package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.vaticle.typedb.studio.view.common.theme.Color
+import com.vaticle.typedb.studio.view.common.theme.Typography
 
-data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme)
+data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme, val typography: Typography.Theme)

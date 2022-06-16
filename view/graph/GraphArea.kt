@@ -27,23 +27,23 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -51,10 +51,13 @@ import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.material.Form
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.skia.Font
+import org.jetbrains.skia.TextLine
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -65,21 +68,20 @@ class GraphArea(transactionState: TransactionState) {
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
+    var typography: Typography.Theme? = null
 
     // TODO: this needs a better home
     val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
 
     companion object {
         val MIN_WIDTH = 120.dp
-
-        // TODO: this is duplicated in 3 places
-        private const val BACKGROUND_ALPHA = .25f
     }
 
     @Composable
     fun Layout() {
         val density = LocalDensity.current.density
         theme = Theme.graph
+        typography = Theme.typography
 
         Box(
             Modifier.graphicsLayer(clip = true).background(Theme.graph.background)
@@ -100,10 +102,13 @@ class GraphArea(transactionState: TransactionState) {
         // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
         val edges = graph.edges.toList()
         val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
-        Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
-            EdgeLayer(edges)
-            VertexLayer(vertices)
+        val typography = Theme.typography
+        val vertexLabelPaint = Paint().apply { color = Theme.graph.vertexLabel }.asFrameworkPaint()
+        Canvas(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
+            drawEdges(edges)
+            drawVertices(vertices, vertexLabelPaint, typography)
         }
+        edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
         PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
     }
 
@@ -118,7 +123,7 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!)
+    private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!, typography!!)
 
     private fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
         return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
@@ -128,22 +133,17 @@ class GraphArea(transactionState: TransactionState) {
         return EdgeRenderer(this, rendererContext(drawScope))
     }
 
-    @Composable
-    private fun EdgeLayer(edges: Collection<Edge>) {
+    private fun DrawScope.drawEdges(edges: Collection<Edge>) {
         // Because DrawScope.drawPoints() is so cheap, we can draw all edges as plain edges by default,
         // adding detail if they meet certain criteria.
-        val detailedEdgeSet = detailedEdgeSet(edges, LocalDensity.current.density)
+        val detailedEdgeSet = detailedEdgeSet(edges, viewport.density)
         val simpleEdges = edges.filter { it !in detailedEdgeSet }
 
-        edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
-
-        Canvas(Modifier.fillMaxSize()) {
-            edgeRenderer(this).draw(simpleEdges, false)
-            edgeRenderer(this).draw(detailedEdgeSet, true)
-        }
-        detailedEdgeSet.forEach { EdgeLabel(it) }
+        edgeRenderer(this).draw(simpleEdges, false)
+        edgeRenderer(this).draw(detailedEdgeSet, true)
     }
 
+    // TODO: this should now be movable into EdgeRenderer
     private fun detailedEdgeSet(edges: Collection<Edge>, density: Float): Set<Edge> {
         // Ensure smooth performance when zoomed out
         if (edges.size > 500 && viewport.scale < 0.2) return emptySet()
@@ -156,25 +156,7 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    @Composable
-    private fun EdgeLabel(edge: Edge) {
-        val size = edgeLabelSizes[edge.label] ?: return
-        val density = LocalDensity.current.density
-        val rect = edge.geometry.labelRect(size, density).translate(-viewport.worldCoordinates)
-        val baseColor = if (edge is Edge.Inferrable && edge.isInferred) Theme.graph.inferred
-        else Theme.graph.edgeLabel
-        val alpha = with(interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
-        val color = baseColor.copy(alpha)
-
-        Box(Modifier.offset(rect.left.dp, rect.top.dp).size(rect.width.dp, rect.height.dp), Alignment.Center) {
-            Form.Text(
-                value = edge.label,
-                textStyle = Theme.typography.code1.copy(color = color, textAlign = TextAlign.Center),
-                color = color, // TODO: remove this hack when Form.Text.textStyle.color is supported
-            )
-        }
-    }
-
+    // TODO: get these metrics from EdgeRenderer instead? (via Skia's TextLine.width and TextLine.capHeight)
     @Composable
     private fun EdgeLabelMeasurer(edge: Edge) {
         with(LocalDensity.current) {
@@ -187,12 +169,15 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    @Composable
-    private fun VertexLayer(vertices: Collection<Vertex>) {
-        Canvas(Modifier.fillMaxSize()) { vertices.forEach { drawVertexBackground(it) } }
-        // Ensure smooth performance when zoomed out, and during initial explosion
-        if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
-            vertices.forEach { VertexLabel(it, it.geometry.position) }
+    private fun DrawScope.drawVertices(
+        vertices: Collection<Vertex>, labelPaint: org.jetbrains.skia.Paint, typography: Typography.Theme
+    ) {
+        vertices.forEach { vertex ->
+            drawVertexBackground(vertex)
+            // Ensure smooth performance when zoomed out, and during initial explosion
+            if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
+                drawVertexLabel(vertex, labelPaint, typography)
+            }
         }
     }
 
@@ -200,19 +185,51 @@ class GraphArea(transactionState: TransactionState) {
         vertexBackgroundRenderer(vertex, this).draw()
     }
 
-    @Composable
-    @Suppress("UNUSED_PARAMETER")
-    // TODO: I'm not really sure why we need 'position' here. Without it, the vertex label intermittently desyncs
-    //       from the vertex's position, but it should be updating when physicsIteration does
-    private fun VertexLabel(vertex: Vertex, position: Offset) {
-        val r = vertex.geometry.rect
-        val x = (r.left - viewport.worldCoordinates.x).dp
-        val y = (r.top - viewport.worldCoordinates.y).dp
-        val color = Theme.graph.vertexLabel
-
-        Box(Modifier.offset(x, y).size(r.width.dp, r.height.dp), Alignment.Center) {
-            Form.Text(vertex.label.text, textStyle = Theme.typography.code1, color = color, align = TextAlign.Center)
+    private fun DrawScope.drawVertexLabel(
+        vertex: Vertex, paint: org.jetbrains.skia.Paint, typography: Typography.Theme
+    ) {
+        drawIntoCanvas {
+            drawVertexLabelLines(
+                canvas = it,
+                text = vertex.label,
+                font = Font(typography.fixedWidthSkiaTypeface, typography.codeSizeMedium * density),
+                center = (vertex.geometry.position - viewport.worldCoordinates) * density,
+                maxWidth = vertex.geometry.labelMaxWidth * density,
+                paint = paint
+            )
         }
+    }
+
+    private fun drawVertexLabelLines(
+        canvas: Canvas, text: String, font: Font, center: Offset, maxWidth: Float, paint: org.jetbrains.skia.Paint
+    ) {
+        val line = TextLine.make(text, font)
+        val lineBreakIndex = lineBreakIndex(line, maxWidth)
+        if (lineBreakIndex == null) {
+            canvas.nativeCanvas.drawTextLine(line, center.x - line.width / 2, center.y + line.capHeight / 2, paint)
+        } else {
+            val line1 = TextLine.make(text.substring(0 until lineBreakIndex), font)
+            var line2Text = text.substring(lineBreakIndex)
+            var line2 = TextLine.make(line2Text, font)
+            val line2BreakIndex = lineBreakIndex(line2, maxWidth)
+            if (line2BreakIndex != null) {
+                line2Text = line2Text.substring(0 until line2BreakIndex)
+                line2 = TextLine.make(line2Text, font)
+            }
+            canvas.nativeCanvas.drawTextLine(
+                line1, center.x - line1.width / 2, center.y + line1.capHeight / 2 - line1.height / 2, paint
+            )
+            canvas.nativeCanvas.drawTextLine(
+                line2, center.x - line2.width / 2, center.y + line2.capHeight / 2 + line2.height / 2, paint
+            )
+        }
+    }
+
+    private fun lineBreakIndex(textLine: TextLine, lineMaxWidth: Float): Int? {
+        return textLine.positions
+            .filterIndexed { idx, _ -> idx % 2 == 0 }
+            .indexOfFirst { it > lineMaxWidth }
+            .let { if (it == -1) null else it }
     }
 
     private object PointerInput {
