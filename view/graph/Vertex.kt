@@ -39,13 +39,13 @@ import kotlin.math.pow
 
 sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
-    abstract val label: Label
+    abstract val label: String
     abstract val geometry: Geometry
 
     sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph) :
         Vertex(thing, graph) {
 
-        override val label = Label(thing.type.label.name(), Label.LengthLimits.CONCEPT)
+        override val label = thing.type.label.name()
 
         companion object {
             fun of(thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph): Thing {
@@ -78,7 +78,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Relation(relation: com.vaticle.typedb.client.api.concept.thing.Relation, graph: Graph) :
             Thing(relation, graph) {
 
-            override val label = Label(relation.type.label.name(), Label.LengthLimits.RELATION)
+            override val label = relation.type.label.name()
             override val geometry = Geometry.relation()
 
             fun roleplayerEdges(): Collection<Edge.Roleplayer> {
@@ -89,9 +89,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>, graph: Graph) :
             Thing(attribute, graph) {
 
-            override val label = Label(
-                "${attribute.type.label.name()}: ${attributeValueString(attribute)}", Label.LengthLimits.CONCEPT
-            )
+            override val label = "${attribute.type.label.name()}: ${attributeValueString(attribute)}"
             override val geometry = Geometry.attribute()
         }
     }
@@ -101,7 +99,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         graph: Graph
     ) : Vertex(type, graph) {
 
-        override val label = Label(type.label.name(), Label.LengthLimits.CONCEPT)
+        override val label = type.label.name()
 
         companion object {
             fun of(type: com.vaticle.typedb.client.api.concept.type.Type, graph: Graph): Type {
@@ -124,22 +122,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
 
         class Relation(val relationType: RelationType, graph: Graph) : Type(relationType, graph) {
-            override val label = Label(relationType.label.name(), Label.LengthLimits.RELATION)
             override val geometry = Geometry.relation()
         }
 
         class Attribute(attributeType: AttributeType, graph: Graph) : Type(attributeType, graph) {
             override val geometry = Geometry.attribute()
-        }
-    }
-
-    class Label(fullText: String, truncatedLength: Int) {
-
-        val text = fullText.substring(0, truncatedLength.coerceAtMost(fullText.length))
-
-        object LengthLimits {
-            const val CONCEPT = 26
-            const val RELATION = 22
         }
     }
 
@@ -164,6 +151,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 isXFixed = value
                 isYFixed = value
             }
+
+        abstract val labelMaxWidth: Float
 
         /** Returns `true` if the given `Offset` intersects the given vertex, else, `false` */
         abstract fun intersects(point: Offset): Boolean
@@ -194,6 +183,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                     Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
                 )
 
+            override val labelMaxWidth get() = size.width - 4f
+
             override fun intersects(point: Offset) = rect.contains(point)
 
             override fun edgeEndpoint(source: Offset): Offset? {
@@ -212,6 +203,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 get() = Rect(
                     Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
                 )
+
+            override val labelMaxWidth get() = size.width * 0.7f - 4f
 
             override fun intersects(point: Offset): Boolean {
                 val r = rect
@@ -232,6 +225,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
 
         class Attribute(size: Size) : Geometry(size) {
+
+            override val labelMaxWidth get() = size.width * 0.8f - 4f
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
