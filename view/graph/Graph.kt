@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import com.vaticle.force.graph.api.Simulation
 import com.vaticle.force.graph.force.CenterForce
 import com.vaticle.force.graph.force.CollideForce
@@ -35,12 +34,9 @@ import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.force.graph.util.RandomEffects
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.logic.Explanation
-import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.graph.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.graph.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.vaticle.typedb.studio.view.graph.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
-import org.jetbrains.skia.Font
-import org.jetbrains.skia.TextLine
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -59,33 +55,6 @@ class Graph(private val interactions: Interactions) {
 
     val physics = Physics(this, interactions)
     val reasoning = Reasoning()
-
-//    private var _textRendering: TextRendering? = null
-//
-//    class TextRendering(val typography: Typography.Theme, val density: Float, val font: Font) {
-//        private val _map = ConcurrentHashMap<String, Value>()
-//
-//        operator fun get(key: String) = _map[key]
-//
-//        // TODO: support multiline text
-//        fun compute(key: String) {
-//            _map.computeIfAbsent(key) { TextLine.make(key, font).let { Value(it, Size(it.width, it.capHeight)) } }
-//        }
-//
-//        fun isUpToDate(currentTypography: Typography.Theme, currentDensity: Float): Boolean {
-//            return typography == currentTypography && density == currentDensity
-//        }
-//
-//        data class Value(val textLine: TextLine, val size: Size)
-//    }
-//
-//    // TODO: this will wipe out the rendering data when changing screens
-//    fun getTextRendering(typography: Typography.Theme, density: Float): TextRendering {
-//        val current = _textRendering
-//        if (current?.isUpToDate(typography, density) == true) return current
-//        val font = Font(typeface = typography.fixedWidthSkiaTypeface, size = typography.codeSizeMedium * density)
-//        return TextRendering(typography, density, font).also { _textRendering = it }
-//    }
 
     fun putThingVertex(iid: String, vertex: Vertex.Thing) {
         putVertex(iid, _thingVertices, vertex)
