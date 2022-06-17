@@ -26,7 +26,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
-import com.vaticle.typedb.studio.view.common.FixedScheduleRunner
 import com.vaticle.typedb.studio.view.common.Util
 import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean

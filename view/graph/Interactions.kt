@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.vaticle.typedb.client.api.logic.Explanation
-import com.vaticle.typedb.studio.view.common.FixedScheduleRunner
 
 class Interactions constructor(private val graphArea: GraphArea) {
 

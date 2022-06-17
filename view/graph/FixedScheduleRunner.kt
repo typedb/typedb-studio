@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.common
+package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.runtime.withFrameMillis
 
