@@ -146,15 +146,18 @@ class GraphArea(transactionState: TransactionState) {
 
     // TODO: this should now be movable into EdgeRenderer
     private fun detailedEdgeSet(edges: Collection<Edge>, density: Float): Set<Edge> {
-        // Ensure smooth performance when zoomed out
+        // Ensure smooth performance when zoomed out, and during initial explosion
         if (edges.size > 500 && viewport.scale < 0.2) return emptySet()
-        return edges.filter { edge ->
+        val edgesWithVisibleLabels = edges.filter { edge ->
             // Only draw visible labels (and only draw curves when label is visible, as curves are expensive)
             edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
-        }.let {
-            // Ensure smooth performance during initial explosion
-            if (it.size < 200 || graph.physics.alpha < 0.5) it.toSet() else emptySet()
         }
+        val shouldDrawLabels = when {
+            graph.physics.alpha > 0.5 -> edgesWithVisibleLabels.size < 50
+            graph.physics.alpha > 0.05 -> edgesWithVisibleLabels.size < 100
+            else -> edgesWithVisibleLabels.size < 500
+        }
+        return if (shouldDrawLabels) edgesWithVisibleLabels.toSet() else emptySet()
     }
 
     // TODO: get these metrics from EdgeRenderer instead? (via Skia's TextLine.width and TextLine.capHeight)
@@ -173,12 +176,15 @@ class GraphArea(transactionState: TransactionState) {
     private fun DrawScope.drawVertices(
         vertices: Collection<Vertex>, labelPaint: org.jetbrains.skia.Paint, typography: Typography.Theme
     ) {
+        // Ensure smooth performance when zoomed out, and during initial explosion
+        val shouldDrawLabels = viewport.scale > 0.2 && when {
+            graph.physics.alpha > 0.5 -> vertices.size < 50
+            graph.physics.alpha > 0.05 -> vertices.size < 100
+            else -> vertices.size < 500
+        }
         vertices.forEach { vertex ->
             drawVertexBackground(vertex)
-            // Ensure smooth performance when zoomed out, and during initial explosion
-            if (viewport.scale > 0.2 && (vertices.size < 200 || graph.physics.alpha < 0.5)) {
-                drawVertexLabel(vertex, labelPaint, typography)
-            }
+            if (shouldDrawLabels) drawVertexLabel(vertex, labelPaint, typography)
         }
     }
 
@@ -201,6 +207,7 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
+    // TODO: this method is expensive for long labels
     private fun drawVertexLabelLines(
         canvas: Canvas, text: String, font: Font, center: Offset, maxWidth: Float, paint: org.jetbrains.skia.Paint
     ) {
