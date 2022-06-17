@@ -130,7 +130,7 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
-            icon = painterResource("resources/icons/vaticle/vaticle-bot-128px.png"),
+            icon = painterResource("resources/icons/vaticle/vaticle-bot-64px.png"),
             onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {

@@ -35,8 +35,8 @@ filegroup(
 )
 
 filegroup(
-    name = "vaticle-bot-128px",
-    srcs = ["vaticle-bot-128px.png"],
+    name = "vaticle-bot-64px",
+    srcs = ["vaticle-bot-64px.png"],
 )
 
 checkstyle_test(
