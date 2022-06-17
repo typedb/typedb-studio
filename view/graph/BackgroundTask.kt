@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.runtime.withFrameMillis
 
-abstract class FixedScheduleRunner(private val runIntervalMs: Int) {
+abstract class BackgroundTask(private val runIntervalMs: Int) {
     private var lastRunDoneTime = System.currentTimeMillis()
 
     suspend fun launch() {

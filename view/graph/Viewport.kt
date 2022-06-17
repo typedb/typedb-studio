@@ -114,7 +114,7 @@ class Viewport(private val graph: Graph) {
         }.take(10)
     }
 
-    class AutoScaler(private val viewport: Viewport): FixedScheduleRunner(runIntervalMs = 33) {
+    class AutoScaler(private val viewport: Viewport): BackgroundTask(runIntervalMs = 33) {
 
         override fun canRun() = !viewport.wasManuallyRescaled
 
