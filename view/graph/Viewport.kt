@@ -102,7 +102,7 @@ class Viewport(private val graph: Graph) {
     }
 
     private fun nearestVertices(worldPoint: Offset): Sequence<Vertex> {
-        // TODO: once we have out-of-viewport detection, use it to make this function more performant on large graphs
+        // TODO: use out-of-viewport detection to make this function more performant on large graphs
         val vertexDistances: MutableMap<Vertex, Float> = mutableMapOf()
         graph.vertices.associateWithTo(vertexDistances) {
             (worldPoint - it.geometry.position).getDistanceSquared()
