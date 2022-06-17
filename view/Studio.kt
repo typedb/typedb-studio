@@ -44,6 +44,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
@@ -129,6 +130,7 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
+            icon = painterResource("resources/icons/vaticle/vaticle-bot-128px.png"),
             onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {

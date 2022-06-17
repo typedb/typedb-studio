@@ -34,6 +34,11 @@ filegroup(
     srcs = ["vaticle-bot.ico"],
 )
 
+filegroup(
+    name = "vaticle-bot-128px",
+    srcs = ["vaticle-bot-128px.png"],
+)
+
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
