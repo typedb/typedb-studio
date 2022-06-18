@@ -33,7 +33,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.GlobalState.notification
 import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -51,6 +53,8 @@ import com.vaticle.typedb.studio.view.material.Tooltip
 import java.awt.FileDialog
 import javax.swing.JFileChooser
 import kotlin.io.path.Path
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
 
@@ -283,7 +287,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun SaveFile(window: ComposeWindow) {
+    fun SaveFile(window: ComposeWindow) = CoroutineScope(Dispatchers.Default).launchAndHandle(notification, LOGGER) {
         val projectFile = GlobalState.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
             directory = GlobalState.project.current?.path.toString()

@@ -144,9 +144,8 @@ object PageArea {
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
                     rejectLabel = Label.DELETE,
-                    cancelOnConfirm = false,
                     onReject = { closeFn() },
-                    onConfirm = { resource.save { GlobalState.confirmation.close(); it.close() } }
+                    onConfirm = { resource.save() }
                 )
             } else closeFn()
             return true

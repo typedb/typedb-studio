@@ -43,7 +43,6 @@ class ConfirmationManager : DialogManager() {
         cancelLabel: String? = null,
         rejectLabel: String? = null,
         confirmLabel: String? = null,
-        cancelOnConfirm: Boolean = true,
         onReject: (() -> Unit)? = null,
         onConfirm: (() -> Unit)? = null,
     ) {
@@ -53,7 +52,6 @@ class ConfirmationManager : DialogManager() {
         this.cancelLabel = cancelLabel
         this.rejectLabel = rejectLabel
         this.confirmLabel = confirmLabel
-        this.cancelOnConfirm = cancelOnConfirm
         this.onReject = onReject
         this.onConfirm = onConfirm
         isOpen = true
@@ -77,6 +75,6 @@ class ConfirmationManager : DialogManager() {
 
     fun confirm() {
         onConfirm?.let { it() }
-        if (cancelOnConfirm) close()
+        close()
     }
 }
