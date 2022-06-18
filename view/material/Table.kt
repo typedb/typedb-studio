@@ -81,15 +81,15 @@ object Table {
     fun <T> Layout(
         items: List<T>,
         modifier: Modifier = Modifier,
-        showHeaders: Boolean = true,
+        showHeader: Boolean = true,
         rowHeight: Dp = ROW_HEIGHT,
         columnBorderSize: Dp = COLUMN_BORDER_SIZE,
         horCellPadding: Dp = CELL_PADDING_HORIZONTAL,
         verCellPadding: Dp = CELL_PADDING_VERTICAL,
         columns: List<Column<T>>
     ) {
-        Column(modifier.border(1.dp, Theme.studio.border)) {
-            if (showHeaders) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+        Column(modifier) {
+            if (showHeader) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
             Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
         }
     }

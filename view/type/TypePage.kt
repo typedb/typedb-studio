@@ -269,7 +269,7 @@ sealed class TypePage(
         SectionRow {
             Table.Layout(
                 items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
-                modifier = Modifier.weight(1f).height(tableHeight),
+                modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(ConceptSummaryText(props.attributeType.conceptType)) { GlobalState.resource.open(props.attributeType) }
@@ -371,7 +371,7 @@ sealed class TypePage(
         SectionRow {
             Table.Layout(
                 items = roleTypeProperties.sortedBy { it.roleType.scopedName },
-                modifier = Modifier.weight(1f).height(tableHeight),
+                modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
@@ -650,7 +650,7 @@ sealed class TypePage(
             SectionRow {
                 Table.Layout(
                     items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
-                    modifier = Modifier.weight(1f).height(tableHeight),
+                    modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                             ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { GlobalState.resource.open(props.ownerType) }

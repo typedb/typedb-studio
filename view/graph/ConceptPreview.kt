@@ -84,7 +84,7 @@ class ConceptPreview constructor(
         Table.Layout(
             items = propertiesOf(concept),
             modifier = Modifier.fillMaxWidth().height(Table.ROW_HEIGHT * propertiesOf(concept).size),
-            showHeaders = false,
+            showHeader = false,
             columns = listOf(
                 Table.Column(header = null, contentAlignment = Alignment.CenterStart, size = Either.first(1f)) {
                     it.layout.Key()
