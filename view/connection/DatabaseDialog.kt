@@ -81,7 +81,13 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun ManageDatabases() {
+    fun MayShowDialogs() {
+        if (GlobalState.client.manageDatabasesDialog.isOpen) ManageDatabases()
+        if (GlobalState.client.selectDBDialog.isOpen) SelectDatabase()
+    }
+
+    @Composable
+    private fun ManageDatabases() {
         val dialogState = GlobalState.client.manageDatabasesDialog
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -154,7 +160,7 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun SelectDatabase() {
+    private fun SelectDatabase() {
         val dialogState = GlobalState.client.selectDBDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {

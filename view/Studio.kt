@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
@@ -161,7 +160,11 @@ object Studio {
                         StatusBar.Layout()
                     }
                 }
-                MayShowDialog(window)
+                NotificationArea.MayShowPopup()
+                ConfirmationDialog.MayShowDialog()
+                ServerDialog.MayShowDialogs()
+                DatabaseDialog.MayShowDialogs()
+                ProjectDialog.MayShowDialogs(window)
             }
         }
     }
@@ -183,21 +186,6 @@ object Studio {
                 else -> false
             }
         } ?: false
-    }
-
-    @Composable
-    private fun MayShowDialog(window: ComposeWindow) {
-        if (GlobalState.notification.isOpen) NotificationArea.Layout()
-        if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
-        if (GlobalState.client.connectServerDialog.isOpen) ServerDialog.ConnectServer()
-        if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
-        if (GlobalState.client.selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
-        if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
-        if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
-        if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()
-        if (GlobalState.project.renameDirectoryDialog.isOpen) ProjectDialog.RenameDirectory()
-        if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
-        if (GlobalState.project.renameFileDialog.isOpen) ProjectDialog.RenameFile()
     }
 
     @Composable

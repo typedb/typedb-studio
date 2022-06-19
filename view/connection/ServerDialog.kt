@@ -98,7 +98,12 @@ object ServerDialog {
     }
 
     @Composable
-    fun ConnectServer() {
+    fun MayShowDialogs() {
+        if (GlobalState.client.connectServerDialog.isOpen) ConnectServer()
+    }
+
+    @Composable
+    private fun ConnectServer() {
         val state = remember { ConnectServerForm() }
         Dialog.Layout(GlobalState.client.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {

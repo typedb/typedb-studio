@@ -70,7 +70,12 @@ object NotificationArea {
     data class ColorArgs(val background: Color, val foreground: Color)
 
     @Composable
-    fun Layout() {
+    fun MayShowPopup() {
+        if (GlobalState.notification.isOpen) Layout()
+    }
+
+    @Composable
+    private fun Layout() {
         val scrollState = rememberScrollState()
         Popup(alignment = Alignment.BottomEnd) {
             Box {

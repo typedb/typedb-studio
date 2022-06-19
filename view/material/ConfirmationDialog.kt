@@ -78,7 +78,12 @@ object ConfirmationDialog {
     }
 
     @Composable
-    fun Layout() {
+    fun MayShowDialog() {
+        if (GlobalState.confirmation.isOpen) Layout()
+    }
+
+    @Composable
+    private fun Layout() {
         val dialogState = GlobalState.confirmation
         val formState = remember { State() }
         val focusReq = remember { FocusRequester() }

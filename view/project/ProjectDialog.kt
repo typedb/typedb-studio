@@ -84,10 +84,21 @@ object ProjectDialog {
     private val SELECT_DIR_HEIGHT = 200.dp
     private val NAMING_WIDTH = 500.dp
     private val NAMING_HEIGHT = 200.dp
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val LOGGER = KotlinLogging.logger {}
 
     @Composable
-    fun OpenProject() {
+    fun MayShowDialogs(window: ComposeWindow) {
+        if (GlobalState.project.createItemDialog.isOpen) CreateProjectItem()
+        if (GlobalState.project.openProjectDialog.isOpen) OpenProject()
+        if (GlobalState.project.moveDirectoryDialog.isOpen) MoveDirectory()
+        if (GlobalState.project.renameDirectoryDialog.isOpen) RenameDirectory()
+        if (GlobalState.project.renameFileDialog.isOpen) RenameFile()
+        if (GlobalState.project.saveFileDialog.isOpen) SaveFile(window)
+    }
+
+    @Composable
+    private fun OpenProject() {
         val formState = ProjectItemForm(
             initField = GlobalState.appData.project.path?.toString() ?: "",
             onCancel = { GlobalState.project.openProjectDialog.close() },
@@ -112,7 +123,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun MoveDirectory() {
+    private fun MoveDirectory() {
         val directory = GlobalState.project.moveDirectoryDialog.directory!!
         val state = ProjectItemForm(
             initField = directory.path.parent.toString(),
@@ -193,7 +204,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun CreateProjectItem() {
+    private fun CreateProjectItem() {
         when (GlobalState.project.createItemDialog.type!!) {
             DIRECTORY -> CreateDirectory()
             FILE -> CreateFile()
@@ -231,7 +242,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun RenameDirectory() {
+    private fun RenameDirectory() {
         val dialogState = GlobalState.project.renameDirectoryDialog
         val directory = dialogState.directory!!
         val message = Sentence.RENAME_DIRECTORY.format(directory)
@@ -246,7 +257,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun RenameFile() {
+    private fun RenameFile() {
         val dialogState = GlobalState.project.renameFileDialog
         val file = dialogState.file!!
         val message = Sentence.RENAME_FILE.format(file)
@@ -287,7 +298,7 @@ object ProjectDialog {
     }
 
     @Composable
-    fun SaveFile(window: ComposeWindow) = CoroutineScope(Dispatchers.Default).launchAndHandle(notification, LOGGER) {
+    private fun SaveFile(window: ComposeWindow) = coroutineScope.launchAndHandle(notification, LOGGER) {
         val projectFile = GlobalState.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
             directory = GlobalState.project.current?.path.toString()
