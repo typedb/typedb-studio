@@ -155,7 +155,7 @@ object Toolbar {
             val activePage = GlobalState.resource.active
             ToolbarIconButton(
                 icon = Icon.Code.FLOPPY_DISK,
-                onClick = { GlobalState.resource.saveAndReopen(activePage!!) },
+                onClick = { activePage?.initiateSave() },
                 enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedResource == true,
                 tooltip = Tooltip.Arg(
                     title = Label.SAVE_CURRENT_FILE,

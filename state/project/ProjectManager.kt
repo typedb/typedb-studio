@@ -33,10 +33,10 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PAT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.resource.ResourceManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
@@ -47,10 +47,11 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager(
+class ProjectManager constructor(
     private val preferenceMgr: PreferenceManager,
     private val confirmationMgr: ConfirmationManager,
-    private val notificationMgr: NotificationManager
+    private val notificationMgr: NotificationManager,
+    internal val resourceMgr: ResourceManager
 ) {
 
     class CreateItemDialog : DialogManager() {
@@ -94,7 +95,7 @@ class ProjectManager(
         var file: File? by mutableStateOf(null)
         var onSuccess: ((File) -> Unit)? by mutableStateOf(null)
 
-        internal fun open(file: File, onSuccess: ((Resource) -> Unit)? = null) {
+        internal fun open(file: File, onSuccess: ((File) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess

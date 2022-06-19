@@ -30,9 +30,9 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.RunnerManager
 import java.io.BufferedReader
@@ -310,19 +310,18 @@ class File internal constructor(
         callbacks.beforeClose.forEach { it(this) }
     }
 
-    override fun rename(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedResource) saveContent()
+    override fun initiateRename() {
+        saveContent()
+        val onSuccess = if (isOpen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
         projectMgr.renameFileDialog.open(this, onSuccess)
     }
 
-    override fun move(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedResource) saveContent()
-        projectMgr.saveFileDialog.open(this, onSuccess)
-    }
-
-    override fun save(onSuccess: ((Resource) -> Unit)?) {
+    override fun initiateSave(isMove: Boolean, reopen: Boolean) {
         saveContent()
-        if (isUnsavedResource) projectMgr.saveFileDialog.open(this, onSuccess)
+        if (isUnsavedResource || isMove) {
+            val onSuccess = if (isOpen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
+            projectMgr.saveFileDialog.open(this, onSuccess)
+        }
     }
 
     private fun saveContent() {

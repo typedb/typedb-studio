@@ -175,10 +175,9 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun beforeSave(function: (Resource) -> Unit) {}
         override fun beforeClose(function: (Resource) -> Unit) {}
         override fun execBeforeClose() {}
-        override fun save(onSuccess: ((Resource) -> Unit)?) {}
-        override fun move(onSuccess: ((Resource) -> Unit)?) {}
+        override fun initiateSave(isMove: Boolean, reopen: Boolean) {}
+        override fun initiateRename() {} // TODO
         override fun reloadEntries() = loadSubtypesExplicit()
-        override fun rename(onSuccess: ((Resource) -> Unit)?) = Unit // TODO
         override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
         override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
         override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)

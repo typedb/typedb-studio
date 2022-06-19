@@ -70,7 +70,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
             // TODO: contextMenuFn = { contextMenuItems(it) }
-        ) { GlobalState.resource.open(it.item) }
+        ) { GlobalState.resource.tryOpen(it.item) }
         GlobalState.schema.onRootsUpdated = { navState.reloadEntries() }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
@@ -102,7 +102,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
                 refresh(navState)
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
-                    GlobalState.resource.open(file)
+                    GlobalState.resource.tryOpen(file)
                 }
             }
         }

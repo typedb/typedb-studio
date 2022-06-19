@@ -52,11 +52,9 @@ interface Resource {
 
     fun execBeforeClose()
 
-    fun rename(onSuccess: ((Resource) -> Unit)? = null)
+    fun initiateRename()
 
-    fun save(onSuccess: ((Resource) -> Unit)? = null)
-
-    fun move(onSuccess: ((Resource) -> Unit)? = null)
+    fun initiateSave(isMove: Boolean = false, reopen: Boolean = true)
 
     fun close()
 

@@ -102,9 +102,9 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
     }
 
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
-        when (itemState.item) {
+        when (val item = itemState.item) {
             is Directory -> itemState.toggle()
-            is File -> GlobalState.resource.open(itemState.item.asFile())
+            is File -> GlobalState.resource.tryOpen(item)
         }
     }
 
@@ -187,19 +187,19 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                 ContextMenu.Item(
                     label = Label.OPEN,
                     icon = Icon.Code.BLOCK_QUOTE
-                ) { GlobalState.resource.open(file.asFile()) },
+                ) { GlobalState.resource.tryOpen(file) },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.resource.renameAndReopen(file) else file.rename() },
+                ) { file.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.resource.moveAndReopen(file) else file.move() },
+                ) { file.initiateSave(isMove = true) },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

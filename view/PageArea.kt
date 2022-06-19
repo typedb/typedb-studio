@@ -102,12 +102,12 @@ object PageArea {
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.open(it) }
+            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.tryOpen(it) }
             return true
         }
 
         private fun saveActivePage(): Boolean {
-            GlobalState.resource.saveAndReopen(GlobalState.resource.active!!)
+            GlobalState.resource.active?.initiateSave()
             return true
         }
 
@@ -145,7 +145,7 @@ object PageArea {
                     confirmLabel = Label.SAVE,
                     rejectLabel = Label.DELETE,
                     onReject = { closeFn() },
-                    onConfirm = { resource.save() }
+                    onConfirm = { resource.initiateSave(reopen = false) }
                 )
             } else closeFn()
             return true
@@ -171,7 +171,7 @@ object PageArea {
             icon = Icon.Code.FLOPPY_DISK,
             info = "${KeyMapper.CURRENT.modKey} + S",
             enabled = resource.hasUnsavedChanges || resource.isUnsavedResource
-        ) { GlobalState.resource.saveAndReopen(resource) }
+        ) { resource.initiateSave() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)

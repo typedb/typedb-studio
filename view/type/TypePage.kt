@@ -60,11 +60,11 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.ClickableText
 import com.vaticle.typedb.studio.view.material.Icon
@@ -101,7 +101,7 @@ sealed class TypePage(
         mode = Navigator.Mode.LIST,
         initExpandDepth = 4,
         coroutineScope = coroutineScope
-    ) { GlobalState.resource.open(it.item) }
+    ) { GlobalState.resource.tryOpen(it.item) }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -241,7 +241,7 @@ sealed class TypePage(
                 text = ConceptSummaryText(supertype.conceptType),
                 leadingIcon = conceptIcon(supertype.conceptType),
                 enabled = !type.isRoot,
-            ) { GlobalState.resource.open(supertype) }
+            ) { GlobalState.resource.tryOpen(supertype) }
             EditButton { } // TODO
         }
     }
@@ -272,14 +272,14 @@ sealed class TypePage(
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(ConceptSummaryText(props.attributeType.conceptType)) { GlobalState.resource.open(props.attributeType) }
+                        ClickableText(ConceptSummaryText(props.attributeType.conceptType)) {
+                            GlobalState.resource.tryOpen(props.attributeType)
+                        }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
                             ClickableText(ConceptSummaryText(ot.conceptType)) {
-                                GlobalState.resource.open(
-                                    ot
-                                )
+                                GlobalState.resource.tryOpen(ot)
                             }
                         }
                     },
@@ -374,11 +374,15 @@ sealed class TypePage(
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(props.roleType.scopedName) { GlobalState.resource.open(props.roleType.relationType) }
+                        ClickableText(props.roleType.scopedName) {
+                            GlobalState.resource.tryOpen(props.roleType.relationType)
+                        }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(ot.scopedName) { GlobalState.resource.open(ot.relationType) }
+                            ClickableText(ot.scopedName) {
+                                GlobalState.resource.tryOpen(ot.relationType)
+                            }
                         }
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
@@ -494,7 +498,7 @@ sealed class TypePage(
             type.exportSyntax { syntax ->
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
-                    GlobalState.resource.open(file)
+                    GlobalState.resource.tryOpen(file)
                 }
             }
         }
@@ -653,7 +657,11 @@ sealed class TypePage(
                     modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { GlobalState.resource.open(props.ownerType) }
+                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) {
+                                GlobalState.resource.tryOpen(
+                                    props.ownerType
+                                )
+                            }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)

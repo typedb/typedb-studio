@@ -42,29 +42,19 @@ class ResourceManager(
         return active == resource
     }
 
-    fun renameAndReopen(resource: Resource) {
+    fun tryReopenAndActivateFn(resource: Resource): ((Resource) -> Unit) {
         val index = opened.indexOf(resource) // must be computed before passing into lambda
-        resource.rename { openAndActivate(it, index) }
+        return ({ tryOpenAndActivate(it, index) })
     }
 
-    fun saveAndReopen(resource: Resource) {
-        val index = opened.indexOf(resource) // must be computed before passing into lambda
-        resource.save { openAndActivate(it, index) }
-    }
-
-    fun moveAndReopen(resource: Resource) {
-        val index = opened.indexOf(resource) // must be computed before passing into lambda
-        resource.move { openAndActivate(it, index) }
-    }
-
-    fun open(resource: Resource) {
+    fun tryOpen(resource: Resource) {
         if (resource !in opened) {
-            openAndActivate(resource, opened.size)
+            tryOpenAndActivate(resource, opened.size)
             resource.onClose { close(it) }
         } else activate(resource)
     }
 
-    private fun openAndActivate(resource: Resource, index: Int) {
+    private fun tryOpenAndActivate(resource: Resource, index: Int) {
         if (resource !in opened) {
             if (resource.tryOpen()) opened.add(index.coerceIn(0, (opened.size).coerceAtLeast(0)), resource)
             else return
@@ -89,7 +79,7 @@ class ResourceManager(
     }
 
     fun openAndMayRun(resource: Resource.Runnable, content: String = resource.runContent) {
-        open(resource)
+        tryOpen(resource)
         client.runner(content)?.let { resource.runner.launch(it) }
     }
 
