@@ -80,10 +80,8 @@ object ProjectDialog {
         }
     }
 
-    private val SELECT_DIR_WIDTH = 500.dp
-    private val SELECT_DIR_HEIGHT = 200.dp
-    private val NAMING_WIDTH = 500.dp
-    private val NAMING_HEIGHT = 200.dp
+    private val DIALOG_WIDTH = 500.dp
+    private val DIALOG_HEIGHT = 200.dp
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val LOGGER = KotlinLogging.logger {}
 
@@ -143,7 +141,7 @@ object ProjectDialog {
     private fun SelectDirectoryDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, SELECT_DIR_WIDTH, SELECT_DIR_HEIGHT) {
+        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title)
@@ -275,7 +273,7 @@ object ProjectDialog {
     private fun ProjectItemNamingDialog(
         dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, NAMING_WIDTH, NAMING_HEIGHT) {
+        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
                 ProjectItemNamingField(formState.field) { formState.field = it }

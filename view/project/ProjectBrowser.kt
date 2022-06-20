@@ -200,6 +200,8 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
                 ) { file.initiateSave(isMove = true) },
+            ),
+            listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
