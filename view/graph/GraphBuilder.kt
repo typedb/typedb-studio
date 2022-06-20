@@ -82,11 +82,11 @@ class GraphBuilder(
         }
     }
 
-    private fun putVertexIfAbsent(concept: Concept): PutVertexResult = when (concept) {
-        is Thing -> putVertexIfAbsent(concept.iid, concept, newThingVertices, allThingVertices) {
+    private fun putVertexIfAbsent(concept: Concept): PutVertexResult = when {
+        concept is Thing -> putVertexIfAbsent(concept.iid, concept, newThingVertices, allThingVertices) {
             Vertex.Thing.of(concept, graph)
         }
-        is ThingType -> putVertexIfAbsent(concept.label.name(), concept, newTypeVertices, allTypeVertices) {
+        concept is ThingType && !concept.isRoot -> putVertexIfAbsent(concept.label.name(), concept, newTypeVertices, allTypeVertices) {
             Vertex.Type.of(concept, graph)
         }
         else -> throw unsupportedEncodingException(concept)
