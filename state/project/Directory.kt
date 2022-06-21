@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
@@ -30,8 +31,9 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.PreferenceManager
+import com.vaticle.typedb.studio.state.common.util.Property
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
@@ -106,6 +108,30 @@ class Directory internal constructor(
     internal fun contains(newName: String): Boolean {
         reloadEntries()
         return entries.any { it.name == newName }
+    }
+
+    fun initiateCreateDirectory(onSuccess: () -> Unit) {
+        projectMgr.createItemDialog.open(this, Type.DIRECTORY, onSuccess)
+    }
+
+    fun initiateCreateFile(onSuccess: () -> Unit) {
+        projectMgr.createItemDialog.open(this, Type.FILE, onSuccess)
+    }
+
+    override fun initiateRename() {
+        projectMgr.renameDirectoryDialog.open(this)
+    }
+
+    override fun initiateMove() {
+        projectMgr.moveDirectoryDialog.open(this)
+    }
+
+    override fun initiateDelete(onSuccess: () -> Unit) {
+        projectMgr.confirmationMgr.submit(
+            title = Label.CONFIRM_DIRECTORY_DELETION,
+            message = Sentence.CONFIRM_DIRECTORY_DELETION,
+            onConfirm = { delete(); onSuccess() }
+        )
     }
 
     internal fun createDirectory(name: String): Directory? {

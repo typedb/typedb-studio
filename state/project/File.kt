@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
@@ -33,6 +34,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLE
 import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.resource.RunnerManager
 import java.io.BufferedReader
@@ -316,12 +318,28 @@ class File internal constructor(
         projectMgr.renameFileDialog.open(this, onSuccess)
     }
 
-    override fun initiateSave(isMove: Boolean, reopen: Boolean) {
+    override fun initiateMove() {
+        initiateMoveOrSave(isMove = true, reopen = true)
+    }
+
+    override fun initiateSave(reopen: Boolean) {
+        initiateMoveOrSave(isMove = false, reopen = reopen)
+    }
+
+    private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean) {
         saveContent()
         if (isUnsavedResource || isMove) {
-            val onSuccess = if (isOpen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
+            val onSuccess = if (isOpen && reopen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
             projectMgr.saveFileDialog.open(this, onSuccess)
         }
+    }
+
+    override fun initiateDelete(onSuccess: () -> Unit) {
+        projectMgr.confirmationMgr.submit(
+            title = Label.CONFIRM_FILE_DELETION,
+            message = Sentence.CONFIRM_FILE_DELETION,
+            onConfirm = { delete(); onSuccess() }
+        )
     }
 
     private fun saveContent() {

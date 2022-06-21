@@ -47,10 +47,10 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager constructor(
+class ProjectManager(
     private val preferenceMgr: PreferenceManager,
-    private val confirmationMgr: ConfirmationManager,
     private val notificationMgr: NotificationManager,
+    internal val confirmationMgr: ConfirmationManager,
     internal val resourceMgr: ResourceManager
 ) {
 
@@ -60,7 +60,7 @@ class ProjectManager constructor(
         var type: ProjectItem.Type? by mutableStateOf(null)
         var onSuccess: (() -> Unit)? by mutableStateOf(null)
 
-        fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
+        internal fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
             isOpen = true
             this.parent = parent
             this.type = type
@@ -79,7 +79,7 @@ class ProjectManager constructor(
 
         var directory: Directory? by mutableStateOf(null)
 
-        fun open(item: Directory) {
+        internal fun open(item: Directory) {
             isOpen = true
             this.directory = item
         }

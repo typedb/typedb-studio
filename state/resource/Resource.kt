@@ -54,7 +54,9 @@ interface Resource {
 
     fun initiateRename()
 
-    fun initiateSave(isMove: Boolean = false, reopen: Boolean = true)
+    fun initiateMove()
+
+    fun initiateSave(reopen: Boolean = true)
 
     fun close()
 

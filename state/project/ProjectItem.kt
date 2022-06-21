@@ -64,6 +64,9 @@ sealed class ProjectItem constructor(
     abstract val isWritable: Boolean
     abstract fun asDirectory(): Directory
     abstract fun asFile(): File
+    abstract fun initiateRename()
+    abstract fun initiateMove()
+    abstract fun initiateDelete(onSuccess: () -> Unit)
     abstract fun close()
     abstract fun closeRecursive()
     abstract fun delete()

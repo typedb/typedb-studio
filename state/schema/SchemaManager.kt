@@ -166,10 +166,9 @@ class SchemaManager(
         isOpenAtomic.set(true)
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) =
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-            session.typeSchema()?.let { onSuccess(it) }
-        }
+    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+        session.typeSchema()?.let { onSuccess(it) }
+    }
 
     fun refreshReadTx() {
         synchronized(this) {

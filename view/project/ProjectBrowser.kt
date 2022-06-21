@@ -136,7 +136,6 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
     }
 
     private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
-        val createItemDialog = GlobalState.project.createItemDialog
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
@@ -147,35 +146,29 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                     label = Label.CREATE_DIRECTORY,
                     icon = FOLDER_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, DIRECTORY) { itemState.expand() } },
+                ) { directory.initiateCreateDirectory { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
                     icon = Icon.Code.FILE_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, FILE) { itemState.expand() } },
+                ) { directory.initiateCreateFile { itemState.expand() } },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.renameDirectoryDialog.open(directory) },
+                ) { directory.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.moveDirectoryDialog.open(directory) },
+                ) { directory.initiateMove() },
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !directory.isRoot && !directory.isProjectData,
-                ) {
-                    GlobalState.confirmation.submit(
-                        title = Label.CONFIRM_DIRECTORY_DELETION,
-                        message = Sentence.CONFIRM_DIRECTORY_DELETION,
-                        onConfirm = { directory.delete(); itemState.navState.reloadEntries() }
-                    )
-                }
+                ) { directory.initiateDelete { itemState.navState.reloadEntries() } }
             )
         )
     }
@@ -199,20 +192,14 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) { file.initiateSave(isMove = true) },
+                ) { file.initiateMove() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !file.isProjectData,
-                ) {
-                    GlobalState.confirmation.submit(
-                        title = Label.CONFIRM_FILE_DELETION,
-                        message = Sentence.CONFIRM_FILE_DELETION,
-                        onConfirm = { file.delete(); itemState.navState.reloadEntries() }
-                    )
-                }
+                ) { file.initiateDelete { itemState.navState.reloadEntries() } }
             )
         )
     }
