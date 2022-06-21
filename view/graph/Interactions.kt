@@ -30,6 +30,7 @@ class Interactions constructor(private val graphArea: GraphArea) {
     var hoveredVertex: Vertex? by mutableStateOf(null)
     val hoveredVertexChecker = HoveredVertexChecker(graphArea)
     var hoveredVertexExplanations: Set<Explanation> by mutableStateOf(emptySet())
+    val vertexExpandedStateCleanupJob = VertexExpandedStateCleanupJob(graphArea)
 
     private var _focusedVertex: Vertex? by mutableStateOf(null)
     var focusedVertex: Vertex?
@@ -37,6 +38,7 @@ class Interactions constructor(private val graphArea: GraphArea) {
         set(value) {
             rebuildFocusedVertexNetwork(value)
             _focusedVertex = value
+            _focusedVertex?.let { it.geometry.isExpanded = true }
         }
     var focusedVertexNetwork: Set<Vertex> by mutableStateOf(emptySet())
 
@@ -65,19 +67,33 @@ class Interactions constructor(private val graphArea: GraphArea) {
 
     class HoveredVertexChecker constructor(private val graphArea: GraphArea): BackgroundTask(runIntervalMs = 33) {
 
+        private val interactions get() = graphArea.interactions
+
         override fun canRun(): Boolean {
-            return graphArea.interactions.pointerPosition != null
+            return interactions.pointerPosition != null
         }
 
         override fun run() {
-            graphArea.interactions.pointerPosition?.let { pointerPosition ->
+            interactions.pointerPosition?.let { pointerPosition ->
                 val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
-                if (graphArea.interactions.hoveredVertex == hoveredVertex) return
-                graphArea.interactions.hoveredVertex = hoveredVertex
-                graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                if (interactions.hoveredVertex == hoveredVertex) return
+                interactions.hoveredVertex = hoveredVertex
+                interactions.hoveredVertexExplanations = when (hoveredVertex) {
                     null -> emptySet()
                     else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
                 }
+                hoveredVertex?.let { it.geometry.isExpanded = true }
+            }
+        }
+    }
+
+    class VertexExpandedStateCleanupJob(private val graphArea: GraphArea) : BackgroundTask(runIntervalMs = 33) {
+
+        private val interactions get() = graphArea.interactions
+
+        override fun run() {
+            graphArea.graph.vertices.forEach {
+                it.geometry.isExpanded = it == interactions.hoveredVertex || it == interactions.focusedVertex
             }
         }
     }

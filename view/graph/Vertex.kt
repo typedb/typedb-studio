@@ -18,6 +18,11 @@
 
 package com.vaticle.typedb.studio.view.graph
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -72,14 +77,14 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         class Entity(val entity: com.vaticle.typedb.client.api.concept.thing.Entity, graph: Graph) :
             Thing(entity, graph) {
-            override val geometry = Geometry.entity()
+            override val geometry = Geometry.Entity()
         }
 
         class Relation(relation: com.vaticle.typedb.client.api.concept.thing.Relation, graph: Graph) :
             Thing(relation, graph) {
 
             override val label = relation.type.label.name()
-            override val geometry = Geometry.relation()
+            override val geometry = Geometry.Relation()
 
             fun roleplayerEdges(): Collection<Edge.Roleplayer> {
                 return graph.edges.filterIsInstance<Edge.Roleplayer>().filter { it.source == this }
@@ -90,7 +95,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             Thing(attribute, graph) {
 
             override val label = "${attribute.type.label.name()}: ${attributeValueString(attribute)}"
-            override val geometry = Geometry.attribute()
+            override val geometry = Geometry.Attribute()
         }
     }
 
@@ -114,45 +119,54 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
 
         class Thing(thingType: ThingType, graph: Graph) : Type(thingType, graph) {
-            override val geometry = Geometry.entity()
+            override val geometry = Geometry.Entity()
         }
 
         class Entity(entityType: EntityType, graph: Graph) : Type(entityType, graph) {
-            override val geometry = Geometry.entity()
+            override val geometry = Geometry.Entity()
         }
 
         class Relation(val relationType: RelationType, graph: Graph) : Type(relationType, graph) {
-            override val geometry = Geometry.relation()
+            override val geometry = Geometry.Relation()
         }
 
         class Attribute(attributeType: AttributeType, graph: Graph) : Type(attributeType, graph) {
-            override val geometry = Geometry.attribute()
+            override val geometry = Geometry.Attribute()
         }
     }
 
-    sealed class Geometry(val size: Size) : BasicVertex(0.0, 0.0) {
+    sealed class Geometry(size: Size) : BasicVertex(0.0, 0.0) {
 
         var position: Offset
-            get() {
-                return Offset(x.toFloat(), y.toFloat())
-            }
+            get() = Offset(x.toFloat(), y.toFloat())
             set(value) {
                 x = value.x.toDouble()
                 y = value.y.toDouble()
             }
 
+        val baseSize = size
+        val size get() = _size.value
         val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
 
         var isFrozen: Boolean
-            get() {
-                return isXFixed
-            }
+            get() = isXFixed
             set(value) {
                 isXFixed = value
                 isYFixed = value
             }
 
+        var isExpanded by mutableStateOf(false)
+        val isVisiblyCollapsed get() = size.width - baseSize.width < 4f
+        val isVisiblyExpanded get() = EXPANDED_SIZE.width - size.width < 4f
+
+        private val _size = Animatable(size, Size.VectorConverter)
+
         abstract val labelMaxWidth: Float
+
+        fun labelMaxLines(fontSize: Int) = when (isVisiblyCollapsed) {
+            true -> 2
+            false -> ((size.height - PADDING) / fontSize).toInt()
+        }
 
         /** Returns `true` if the given `Offset` intersects the given vertex, else, `false` */
         abstract fun intersects(point: Offset): Boolean
@@ -163,6 +177,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         /** Find the end angle of the given `Arc` when drawn as a curved edge to this vertex */
         abstract fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float?
 
+        suspend fun animateExpansion() {
+            println("animating expansion to ${(if (isExpanded) EXPANDED_SIZE else baseSize)}")
+            _size.animateTo(if (isExpanded) EXPANDED_SIZE else baseSize)
+        }
+
         companion object {
             private const val ENTITY_WIDTH = 100f
             private const val ENTITY_HEIGHT = 35f
@@ -170,20 +189,26 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             private const val RELATION_HEIGHT = 55f
             private const val ATTRIBUTE_WIDTH = 100f
             private const val ATTRIBUTE_HEIGHT = 35f
+            protected const val PADDING = 4f
 
-            fun entity() = Entity(Size(ENTITY_WIDTH, ENTITY_HEIGHT))
-            fun relation() = Relation(Size(RELATION_WIDTH, RELATION_HEIGHT))
-            fun attribute() = Attribute(Size(ATTRIBUTE_WIDTH, ATTRIBUTE_HEIGHT))
+            val ENTITY_SIZE = Size(ENTITY_WIDTH, ENTITY_HEIGHT)
+            val RELATION_SIZE = Size(RELATION_WIDTH, RELATION_HEIGHT)
+            val ATTRIBUTE_SIZE = Size(ATTRIBUTE_WIDTH, ATTRIBUTE_HEIGHT)
+            val EXPANDED_SIZE = ENTITY_SIZE * 2f
         }
 
-        class Entity(size: Size) : Geometry(size) {
+        class Entity : Geometry(ENTITY_SIZE) {
 
             private val incomingEdgeTargetRect
                 get() = Rect(
                     Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
                 )
 
-            override val labelMaxWidth get() = size.width - 4f
+            override val labelMaxWidth get() = when {
+                isVisiblyCollapsed -> baseSize.width - PADDING
+                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                else -> size.width - PADDING
+            }
 
             override fun intersects(point: Offset) = rect.contains(point)
 
@@ -197,14 +222,18 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
         }
 
-        class Relation(size: Size) : Geometry(size) {
+        class Relation : Geometry(RELATION_SIZE) {
 
             private val incomingEdgeTargetRect
                 get() = Rect(
                     Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
                 )
 
-            override val labelMaxWidth get() = size.width * 0.7f - 4f
+            override val labelMaxWidth get() = when {
+                isVisiblyCollapsed -> baseSize.width * 0.7f - PADDING
+                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                else -> size.width - PADDING
+            }
 
             override fun intersects(point: Offset): Boolean {
                 val r = rect
@@ -224,9 +253,13 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
         }
 
-        class Attribute(size: Size) : Geometry(size) {
+        class Attribute : Geometry(ATTRIBUTE_SIZE) {
 
-            override val labelMaxWidth get() = size.width * 0.8f - 4f
+            override val labelMaxWidth get() = when {
+                isVisiblyCollapsed -> baseSize.width * 0.8f - PADDING
+                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                else -> size.width - PADDING
+            }
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)

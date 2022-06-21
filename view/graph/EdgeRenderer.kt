@@ -21,17 +21,12 @@ package com.vaticle.typedb.studio.view.graph
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import com.vaticle.typedb.studio.view.common.geometry.Geometry
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.normalisedAngle
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.radToDeg
 import com.vaticle.typedb.studio.view.common.theme.Color
-import org.jetbrains.skia.Font
-import org.jetbrains.skia.TextLine
 import kotlin.math.abs
 import kotlin.math.atan2
 
@@ -46,7 +41,6 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     private val viewport = graphArea.viewport
     private val interactions = graphArea.interactions
     val density = graphArea.viewport.density
-    private val edgeLabelSizes = graphArea.edgeLabelSizes
 
     fun draw(edges: Iterable<Edge>, detailed: Boolean) {
         for ((colorCode, edgeGroup) in EdgesByColorCode(edges, graphArea)) {
@@ -198,7 +192,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     }
 
     fun labelRect(edge: Edge, position: Offset): Rect? {
-        val labelSize = edgeLabelSizes[edge.label]
+        val labelSize = graphArea.textRenderer.edgeLabelSizes[edge.label]
         return labelSize?.let {
             Rect(
                 Offset(position.x - it.width.value / 2 - 2, position.y - it.height.value / 2 - 2),
@@ -211,17 +205,7 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         val center = with(viewport) { (edge.geometry.curveMidpoint ?: edge.geometry.midpoint).toViewport() }
         val baseColor = if (edge is Edge.Inferrable && edge.isInferred) ctx.theme.inferred else ctx.theme.edgeLabel
         val alpha = with(interactions) { if (edge.isBackground) BACKGROUND_ALPHA else 1f }
-        val textLine = TextLine.make(
-            edge.label, Font(ctx.typography.fixedWidthSkiaTypeface, ctx.typography.codeSizeMedium * density)
-        )
-        ctx.drawScope.drawIntoCanvas {
-            it.nativeCanvas.drawTextLine(
-                textLine,
-                center.x - textLine.width / 2,
-                center.y + textLine.capHeight / 2,
-                Paint().apply { color = baseColor.copy(alpha) }.asFrameworkPaint()
-            )
-        }
+        graphArea.textRenderer.drawSingleLine(ctx.drawScope, edge.label, center, baseColor.copy(alpha), ctx.typography)
     }
 
     private enum class EdgeColorCode {

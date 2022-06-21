@@ -27,7 +27,7 @@ import com.vaticle.typedb.client.api.concept.thing.Thing
 import kotlin.math.sqrt
 
 sealed class VertexBackgroundRenderer(
-    private val vertex: Vertex,
+    protected val vertex: Vertex,
     private val graphArea: GraphArea,
     protected val ctx: RendererContext
 ) {
@@ -37,16 +37,11 @@ sealed class VertexBackgroundRenderer(
         private const val BACKGROUND_ALPHA = .25f
         private const val HOVERED_BACKGROUND_ALPHA = .175f
 
-        fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer =
-            when (vertex) {
-                is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(
-                    vertex,
-                    graphArea,
-                    ctx
-                )
-                is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, graphArea, ctx)
-                is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, graphArea, ctx)
-            }
+        fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
+            is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, graphArea, ctx)
+            is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, graphArea, ctx)
+            is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, graphArea, ctx)
+        }
     }
 
     private val baseColor = ctx.theme.vertex.let { colors ->
@@ -154,8 +149,13 @@ sealed class VertexBackgroundRenderer(
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
         override fun draw() {
-            getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
-            ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
+            if (vertex.geometry.isVisiblyCollapsed) {
+                getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
+                ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
+            } else {
+                getHighlight()?.let { ctx.drawScope.drawRoundRect(it.color, it.rect.topLeft, it.rect.size, CornerRadius(8f)) }
+                ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, CornerRadius(8f))
+            }
         }
     }
 }
