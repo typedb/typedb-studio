@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
@@ -31,7 +30,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -63,10 +61,8 @@ import mu.KotlinLogging
 class File internal constructor(
     path: Path,
     parent: Directory,
-    projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-    notificationMgr: NotificationManager
-) : ProjectItem(Type.FILE, path, parent, preferenceMgr, projectMgr, notificationMgr), Resource.Runnable {
+    projectMgr: ProjectManager
+) : ProjectItem(parent, path, Type.FILE, projectMgr), Resource.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -159,7 +155,7 @@ class File internal constructor(
 
     override fun tryOpen(): Boolean {
         if (!path.isReadable()) {
-            notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
+            projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
             return false
         }
         return try {
@@ -168,7 +164,7 @@ class File internal constructor(
             callbacks.onReopen.forEach { it(this) }
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
-            notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
+            projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
             false
         }
     }
@@ -186,7 +182,7 @@ class File internal constructor(
     internal fun tryRename(newName: String): File? {
         val newPath = path.resolveSibling(newName)
         return if (parent!!.contains(newName)) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             val clonedRunner = runner.clone()
@@ -198,7 +194,7 @@ class File internal constructor(
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
             null
         }
     }
@@ -215,7 +211,7 @@ class File internal constructor(
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
             null
         }
     }
@@ -251,12 +247,12 @@ class File internal constructor(
 
     fun content(lines: List<String>) {
         content = lines
-        if (preferenceMgr.autosave) saveContent()
+        if (projectMgr.preference.autosave) saveContent()
     }
 
     @OptIn(ExperimentalTime::class)
     private fun launchWatcherCoroutine() {
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+        coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
             try {
                 do {
                     val isReadable = path.isReadable()
@@ -275,7 +271,7 @@ class File internal constructor(
                 } while (watchFileSystem.get())
             } catch (e: CancellationException) {
             } catch (e: java.lang.Exception) {
-                notificationMgr.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
+                projectMgr.notification.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
             }
         }
     }
@@ -314,7 +310,7 @@ class File internal constructor(
 
     override fun initiateRename() {
         saveContent()
-        val onSuccess = if (isOpen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
+        val onSuccess = if (isOpen) projectMgr.resource.tryReopenAndActivateFn(this) else null
         projectMgr.renameFileDialog.open(this, onSuccess)
     }
 
@@ -329,13 +325,13 @@ class File internal constructor(
     private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean) {
         saveContent()
         if (isUnsavedResource || isMove) {
-            val onSuccess = if (isOpen && reopen) projectMgr.resourceMgr.tryReopenAndActivateFn(this) else null
+            val onSuccess = if (isOpen && reopen) projectMgr.resource.tryReopenAndActivateFn(this) else null
             projectMgr.saveFileDialog.open(this, onSuccess)
         }
     }
 
     override fun initiateDelete(onSuccess: () -> Unit) {
-        projectMgr.confirmationMgr.submit(
+        projectMgr.confirmation.submit(
             title = Label.CONFIRM_FILE_DELETION,
             message = Sentence.CONFIRM_FILE_DELETION,
             onConfirm = { delete(); onSuccess() }
@@ -370,7 +366,7 @@ class File internal constructor(
             path.deleteExisting()
             parent!!.remove(this)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
+            projectMgr.notification.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
         }
     }
 }

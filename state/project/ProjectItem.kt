@@ -18,8 +18,6 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.resource.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -33,12 +31,10 @@ import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
 sealed class ProjectItem constructor(
-    val projectItemType: Type,
-    val path: Path,
     final override val parent: Directory?,
-    val preferenceMgr: PreferenceManager,
+    val path: Path,
+    val type: Type,
     val projectMgr: ProjectManager,
-    val notificationMgr: NotificationManager
 ) : Navigable<ProjectItem> {
 
     enum class Type(val index: Int) {
@@ -56,8 +52,8 @@ sealed class ProjectItem constructor(
     val isRoot = parent == null
 
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-    val isDirectory: Boolean = projectItemType == Type.DIRECTORY
-    val isFile: Boolean = projectItemType == Type.FILE
+    val isDirectory: Boolean = type == Type.DIRECTORY
+    val isFile: Boolean = type == Type.FILE
     val isProjectData: Boolean by lazy { if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false }
 
     abstract val isReadable: Boolean
@@ -95,9 +91,9 @@ sealed class ProjectItem constructor(
 
     override fun compareTo(other: Navigable<ProjectItem>): Int {
         other as ProjectItem
-        return if (this.projectItemType == other.projectItemType) {
+        return if (this.type == other.type) {
             this.path.toString().compareTo(other.path.toString(), ignoreCase = true)
-        } else this.projectItemType.index.compareTo(other.projectItemType.index)
+        } else this.type.index.compareTo(other.type.index)
     }
 
     override fun equals(other: Any?): Boolean {

@@ -30,7 +30,7 @@ class Project internal constructor(
     notificationMgr: NotificationManager
 ) : Navigable<ProjectItem> {
 
-    val directory: Directory = Directory(path, null, projectMgr, preferenceMgr, notificationMgr)
+    val directory: Directory = Directory(path, null, projectMgr)
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
     override val parent: Navigable<ProjectItem>? = null

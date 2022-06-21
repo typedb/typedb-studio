@@ -47,11 +47,11 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager(
-    private val preferenceMgr: PreferenceManager,
-    private val notificationMgr: NotificationManager,
-    internal val confirmationMgr: ConfirmationManager,
-    internal val resourceMgr: ResourceManager
+class ProjectManager constructor(
+    internal val preference: PreferenceManager,
+    internal val notification: NotificationManager,
+    internal val confirmation: ConfirmationManager,
+    internal val resource: ResourceManager
 ) {
 
     class CreateItemDialog : DialogManager() {
@@ -129,14 +129,14 @@ class ProjectManager(
     fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
         val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
-        if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, dir)
-        else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, dir)
-        else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, dir)
-        else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
+        if (!dir.exists()) notification.userError(LOGGER, PATH_NOT_EXIST, dir)
+        else if (!dir.isReadable()) notification.userError(LOGGER, PATH_NOT_READABLE, dir)
+        else if (!dir.isWritable()) notification.userError(LOGGER, PATH_NOT_WRITABLE, dir)
+        else if (!dir.isDirectory()) notification.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
         else if (dataDirPath.exists() && dataDirPath.isRegularFile()) {
-            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
+            notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
         } else if (unsavedFilesDirPath.exists() && unsavedFilesDirPath.isRegularFile()) {
-            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
+            notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
         } else {
             initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
             onProjectChange?.let { it(current!!) }
@@ -147,7 +147,7 @@ class ProjectManager(
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, this, preferenceMgr, notificationMgr)
+        current = Project(dir, this, preference, notification)
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()
@@ -169,7 +169,7 @@ class ProjectManager(
             onContentChange?.let { it() }
             newFile
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
+            notification.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
         }
     }
@@ -202,7 +202,7 @@ class ProjectManager(
             moveDirectoryDialog.close()
             onContentChange?.let { it() }
         } ?: if (!newParent.startsWith(current!!.path)) {
-            notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
+            notification.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
         }
     }
 
@@ -221,7 +221,7 @@ class ProjectManager(
                 onSuccess?.let { it(newFile) }
                 onContentChange?.let { it() }
             } ?: if (!newPath.startsWith(current!!.path)) {
-                notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
+                notification.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
             }
         }
     }
@@ -234,7 +234,7 @@ class ProjectManager(
             // we need to record dialog.onSuccess before dialog.close() which clears it
             val onSuccess = dialog.onSuccess
             dialog.close()
-            confirmationMgr.submit(
+            confirmation.submit(
                 title = Label.CONVERT_FILE_TYPE,
                 message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
                     file.name, newPath.fileName,

@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
@@ -31,7 +30,6 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import java.nio.file.Path
@@ -50,10 +48,8 @@ import mu.KotlinLogging
 class Directory internal constructor(
     path: Path,
     parent: Directory?,
-    projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-    notificationMgr: NotificationManager
-) : ProjectItem(Type.DIRECTORY, path, parent, preferenceMgr, projectMgr, notificationMgr) {
+    projectMgr: ProjectManager
+) : ProjectItem(parent, path, Type.DIRECTORY, projectMgr) {
 
     companion object {
         private const val UNTITLED = "Untitled"
@@ -75,7 +71,9 @@ class Directory internal constructor(
     }
 
     override fun reloadEntries() {
-        val new = path.listDirectoryEntries().filter { it.isReadable() && !preferenceMgr.isIgnoredPath(it) }.toSet()
+        val new = path.listDirectoryEntries().filter {
+            it.isReadable() && !projectMgr.preference.isIgnoredPath(it)
+        }.toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) {
             val deleted = old - new
@@ -86,8 +84,8 @@ class Directory internal constructor(
     }
 
     private fun projectItemOf(it: Path): ProjectItem {
-        return if (it.isDirectory()) Directory(it, this, projectMgr, preferenceMgr, notificationMgr)
-        else File(it, this, projectMgr, preferenceMgr, notificationMgr)
+        return if (it.isDirectory()) Directory(it, this, projectMgr)
+        else File(it, this, projectMgr)
     }
 
     fun nextUntitledDirName(): String {
@@ -127,7 +125,7 @@ class Directory internal constructor(
     }
 
     override fun initiateDelete(onSuccess: () -> Unit) {
-        projectMgr.confirmationMgr.submit(
+        projectMgr.confirmation.submit(
             title = Label.CONFIRM_DIRECTORY_DELETION,
             message = Sentence.CONFIRM_DIRECTORY_DELETION,
             onConfirm = { delete(); onSuccess() }
@@ -152,14 +150,14 @@ class Directory internal constructor(
 
     private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): ProjectItem? {
         return if (newPath.exists()) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             createFn(newPath)
             reloadEntries()
             entries.first { it.name == newPath.name }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, failureMessage, newPath)
+            projectMgr.notification.userError(LOGGER, failureMessage, newPath)
             null
         }
     }
@@ -167,14 +165,14 @@ class Directory internal constructor(
     internal fun tryRename(newName: String): Directory? {
         val newPath = path.resolveSibling(newName)
         return if (parent?.contains(newName) == true) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             closeRecursive()
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
             null
         }
     }
@@ -182,20 +180,20 @@ class Directory internal constructor(
     internal fun tryMove(newParent: Path): Directory? {
         val newPath = newParent.resolve(name)
         return if (newParent == path.parent) {
-            notificationMgr.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
+            projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
             null
         } else if (newParent.notExists()) {
-            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
             null
         } else if (newPath.exists()) {
-            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
             null
         } else try {
             closeRecursive()
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
+            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
             null
         }
     }
@@ -213,7 +211,7 @@ class Directory internal constructor(
             path.deleteExisting()
             parent?.remove(this)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
+            projectMgr.notification.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
         }
     }
 
