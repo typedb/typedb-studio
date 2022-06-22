@@ -145,6 +145,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
 
         val baseSize = size
+        open val expandedSize = size * 1.6f
         val size get() = _size.value
         val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
 
@@ -157,7 +158,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         var isExpanded by mutableStateOf(false)
         val isVisiblyCollapsed get() = size.width - baseSize.width < 4f
-        val isVisiblyExpanded get() = EXPANDED_SIZE.width - size.width < 4f
+        val isVisiblyExpanded get() = expandedSize.width - size.width < 4f
 
         private val _size = Animatable(size, Size.VectorConverter)
 
@@ -178,7 +179,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         abstract fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float?
 
         suspend fun animateExpansion() {
-            _size.animateTo(if (isExpanded) EXPANDED_SIZE else baseSize)
+            _size.animateTo(if (isExpanded) expandedSize else baseSize)
         }
 
         companion object {
@@ -193,7 +194,6 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             val ENTITY_SIZE = Size(ENTITY_WIDTH, ENTITY_HEIGHT)
             val RELATION_SIZE = Size(RELATION_WIDTH, RELATION_HEIGHT)
             val ATTRIBUTE_SIZE = Size(ATTRIBUTE_WIDTH, ATTRIBUTE_HEIGHT)
-            val EXPANDED_SIZE = ENTITY_SIZE * 2f
         }
 
         class Entity : Geometry(ENTITY_SIZE) {
@@ -205,7 +205,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             override val labelMaxWidth get() = when {
                 isVisiblyCollapsed -> baseSize.width - PADDING
-                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                isVisiblyExpanded -> expandedSize.width - PADDING
                 else -> size.width - PADDING
             }
 
@@ -224,13 +224,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Relation : Geometry(RELATION_SIZE) {
 
             private val incomingEdgeTargetRect
-                get() = Rect(
-                    Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
-                )
+                get() = Rect(Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8))
 
             override val labelMaxWidth get() = when {
                 isVisiblyCollapsed -> baseSize.width * 0.7f - PADDING
-                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                isVisiblyExpanded -> expandedSize.width * 0.7f - PADDING
                 else -> size.width - PADDING
             }
 
@@ -256,9 +254,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             override val labelMaxWidth get() = when {
                 isVisiblyCollapsed -> baseSize.width * 0.8f - PADDING
-                isVisiblyExpanded -> EXPANDED_SIZE.width - PADDING
+                isVisiblyExpanded -> expandedSize.width - PADDING
                 else -> size.width - PADDING
             }
+
+            override val expandedSize = baseSize * 2f
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
