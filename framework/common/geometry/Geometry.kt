@@ -330,7 +330,7 @@ object Geometry {
     /**
      * Find intersection point of a line from `sourcePoint` through the centre of `ellipse`, with the edge of `ellipse`
      */
-    fun ellipseIncomingLineIntersect(sourcePoint: Offset, ellipse: Ellipse): Offset {
+    fun ellipseIncomingLineIntersect(sourcePoint: Offset, ellipse: Ellipse): Offset? {
         var px = sourcePoint.x;
         var py = sourcePoint.y
         val x = ellipse.x;
@@ -342,9 +342,12 @@ object Geometry {
         px -= x
         py -= y
 
+        val denominator = sqrt(a*a * py*py + b*b * px*px)
+        if (denominator == 0F) return null
+
         // compute intersection points: +-(x0, y0)
-        val x0 = (a * b * px) / sqrt(a * a * py * py + b * b * px * px)
-        val y0 = (a * b * py) / sqrt(a * a * py * py + b * b * px * px)
+        val x0 = (a * b * px) / denominator
+        val y0 = (a * b * py) / denominator
 
         return Offset(x0 + x, y0 + y)
     }
