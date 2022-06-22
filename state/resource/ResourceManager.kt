@@ -33,13 +33,8 @@ class ResourceManager(
 
     val opened: MutableList<Resource> = mutableStateListOf()
     var active: Resource? by mutableStateOf(null); private set
-    val next: Resource get() = opened[(opened.indexOf(active) + 1) % opened.size]
-    val previous: Resource
-        get() {
-            var previousIndex = opened.indexOf(active) - 1
-            if (previousIndex < 0) previousIndex += opened.size
-            return opened[previousIndex]
-        }
+    val next: Resource get() = opened[(opened.indexOf(active) + 1).mod(opened.size)]
+    val previous: Resource get() = opened[(opened.indexOf(active) - 1).mod(opened.size)]
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
