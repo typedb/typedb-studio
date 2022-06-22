@@ -34,7 +34,7 @@ interface Resource {
         throw ClassCastException("Illegal cast of resource into runnable")
     }
 
-    fun tryOpen(): Boolean
+    fun tryOpen()
 
     fun activate()
 

@@ -40,5 +40,5 @@ object GlobalState {
     val client = ClientState(notification)
     val resource = ResourceManager(client, notification)
     val project = ProjectManager(preference, notification, confirmation, resource)
-    val schema = SchemaManager(client.session, notification)
+    val schema = SchemaManager(client.session, resource, notification)
 }

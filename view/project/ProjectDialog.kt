@@ -100,12 +100,12 @@ object ProjectDialog {
         val formState = ProjectItemForm(
             initField = GlobalState.appData.project.path?.toString() ?: "",
             onCancel = { GlobalState.project.openProjectDialog.close() },
-            onSubmit = {
+            onSubmit = { dir ->
                 val previous = GlobalState.project.current
-                if (GlobalState.project.tryOpenProject(Path(it))) {
+                if (GlobalState.project.tryOpenProject(Path(dir))) {
                     if (previous != GlobalState.project.current) {
                         previous?.close()
-                        GlobalState.project.unsavedFiles().forEach { f -> GlobalState.resource.tryOpen(f) }
+                        GlobalState.project.unsavedFiles().forEach { it.tryOpen() }
                         GlobalState.appData.project.path = GlobalState.project.current!!.path
                     }
                 }

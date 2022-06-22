@@ -29,12 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.Directory
 import com.vaticle.typedb.studio.state.project.File
 import com.vaticle.typedb.studio.state.project.ProjectItem
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
@@ -104,7 +101,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
     private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
         when (val item = itemState.item) {
             is Directory -> itemState.toggle()
-            is File -> GlobalState.resource.tryOpen(item)
+            is File -> item.tryOpen()
         }
     }
 
@@ -180,7 +177,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                 ContextMenu.Item(
                     label = Label.OPEN,
                     icon = Icon.Code.BLOCK_QUOTE
-                ) { GlobalState.resource.tryOpen(file) },
+                ) { file.tryOpen() },
             ),
             listOf(
                 ContextMenu.Item(

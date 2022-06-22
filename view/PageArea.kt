@@ -102,7 +102,7 @@ object PageArea {
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.tryOpen(it) }
+            GlobalState.project.tryCreateUntitledFile()?.let { it.tryOpen() }
             return true
         }
 
@@ -112,12 +112,12 @@ object PageArea {
         }
 
         private fun showNextPage(): Boolean {
-            GlobalState.resource.activateNext()
+            GlobalState.resource.next.activate()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            GlobalState.resource.activatePrevious()
+            GlobalState.resource.previous.activate()
             return true
         }
 
@@ -129,7 +129,7 @@ object PageArea {
             resource.execBeforeClose()
             fun closeFn() {
                 openedPages.remove(resource)
-                GlobalState.resource.close(resource)
+                resource.close()
                 if (resource.isUnsavedResource) resource.delete()
             }
             if (resource.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
@@ -192,8 +192,8 @@ object PageArea {
                 tabs = GlobalState.resource.opened,
                 iconFn = { resource -> state.openedPage(resource).icon },
                 labelFn = { tabLabel(it) },
-                isActiveFn = { GlobalState.resource.isActive(it) },
-                onClick = { GlobalState.resource.activate(it) },
+                isActiveFn = { GlobalState.resource.active == it },
+                onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,

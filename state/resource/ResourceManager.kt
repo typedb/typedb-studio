@@ -33,53 +33,32 @@ class ResourceManager(
 
     val opened: MutableList<Resource> = mutableStateListOf()
     var active: Resource? by mutableStateOf(null); private set
+    val next: Resource get() = opened[(opened.indexOf(active) + 1) % opened.size]
+    val previous: Resource
+        get() {
+            var previousIndex = opened.indexOf(active) - 1
+            if (previousIndex < 0) previousIndex += opened.size
+            return opened[previousIndex]
+        }
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    fun isActive(resource: Resource): Boolean {
-        return active == resource
+    fun opened(resource: Resource, index: Int? = null) {
+        val i = index ?: opened.size
+        if (resource !in opened) opened.add(i.coerceIn(0, (opened.size).coerceAtLeast(0)), resource)
+        active(resource)
     }
 
-    fun tryReopenAndActivateFn(resource: Resource): ((Resource) -> Unit) {
-        val index = opened.indexOf(resource) // must be computed before passing into lambda
-        return ({ tryOpenAndActivate(it, index) })
-    }
-
-    fun tryOpen(resource: Resource) {
-        if (resource !in opened) {
-            tryOpenAndActivate(resource, opened.size)
-            resource.onClose { close(it) }
-        } else activate(resource)
-    }
-
-    private fun tryOpenAndActivate(resource: Resource, index: Int) {
-        if (resource !in opened) {
-            if (resource.tryOpen()) opened.add(index.coerceIn(0, (opened.size).coerceAtLeast(0)), resource)
-            else return
-        }
-        activate(resource)
-    }
-
-    fun activate(resource: Resource) {
+    fun active(resource: Resource) {
+        if (active == resource) return
         active?.deactivate()
         active = resource
-        active?.activate()
-    }
-
-    fun activateNext() {
-        activate(opened[(opened.indexOf(active) + 1) % opened.size])
-    }
-
-    fun activatePrevious() {
-        var previousIndex = opened.indexOf(active) - 1
-        if (previousIndex < 0) previousIndex += opened.size
-        activate(opened[previousIndex])
     }
 
     fun openAndMayRun(resource: Resource.Runnable, content: String = resource.runContent) {
-        tryOpen(resource)
+        resource.tryOpen()
         client.runner(content)?.let { resource.runner.launch(it) }
     }
 

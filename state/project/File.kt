@@ -115,10 +115,11 @@ class File internal constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override val windowTitle: String = computeWindowTitle(path, projectMgr)
-    override val runContent: String get() {
-        callbacks.beforeRun.forEach { it(this) }
-        return content.joinToString("\n")
-    }
+    override val runContent: String
+        get() {
+            callbacks.beforeRun.forEach { it(this) }
+            return content.joinToString("\n")
+        }
     override var runner: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = fileType.isRunnable
@@ -133,7 +134,20 @@ class File internal constructor(
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
+    fun onDiskChangeContent(function: (File) -> Unit) = callbacks.onDiskChangeContent.put(function)
+    fun onDiskChangePermission(function: (File) -> Unit) = callbacks.onDiskChangePermission.put(function)
+    override fun beforeRun(function: (Resource) -> Unit) = callbacks.beforeRun.put(function)
+    override fun beforeSave(function: (Resource) -> Unit) = callbacks.beforeSave.put(function)
+    override fun beforeClose(function: (Resource) -> Unit) = callbacks.beforeClose.put(function)
+    override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
+    override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
+    override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
+    override fun tryOpen() = tryOpen(null)
     override fun reloadEntries() {}
+    override fun asFile(): File = this
+    override fun asDirectory(): Directory {
+        throw TypeCastException(ILLEGAL_CAST.message(File::class.simpleName, Directory::class.simpleName))
+    }
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
@@ -145,34 +159,24 @@ class File internal constructor(
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
-    override fun asDirectory(): Directory {
-        throw TypeCastException(ILLEGAL_CAST.message(File::class.simpleName, Directory::class.simpleName))
-    }
-
-    override fun asFile(): File {
-        return this
-    }
-
-    override fun tryOpen(): Boolean {
+    private fun tryOpen(index: Int? = null) {
         if (!path.isReadable()) {
             projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
-            return false
-        }
-        return try {
+        } else try {
             readContent()
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
-            true
+            projectMgr.resource.opened(this, index)
+            activate()
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
-            false
         }
     }
 
     override fun activate() {
-        if (watchFileSystem.compareAndSet(false, true)) {
-            launchWatcherCoroutine()
-        }
+        assert(isOpen) { "Only opened files can be activated" }
+        if (watchFileSystem.compareAndSet(false, true)) launchWatcherCoroutine()
+        projectMgr.resource.active(this)
     }
 
     override fun deactivate() {
@@ -276,42 +280,11 @@ class File internal constructor(
         }
     }
 
-    fun onDiskChangeContent(function: (File) -> Unit) {
-        callbacks.onDiskChangeContent.put(function)
-    }
-
-    fun onDiskChangePermission(function: (File) -> Unit) {
-        callbacks.onDiskChangePermission.put(function)
-    }
-
-    override fun beforeRun(function: (Resource) -> Unit) {
-        callbacks.beforeRun.put(function)
-    }
-
-    override fun beforeSave(function: (Resource) -> Unit) {
-        callbacks.beforeSave.put(function)
-    }
-
-    override fun beforeClose(function: (Resource) -> Unit) {
-        callbacks.beforeClose.put(function)
-    }
-
-    override fun onClose(function: (Resource) -> Unit) {
-        callbacks.onClose.put(function)
-    }
-
-    override fun onReopen(function: (Resource) -> Unit) {
-        callbacks.onReopen.put(function)
-    }
-
-    override fun execBeforeClose() {
-        callbacks.beforeClose.forEach { it(this) }
-    }
-
     override fun initiateRename() {
         saveContent()
-        val onSuccess = if (isOpen) projectMgr.resource.tryReopenAndActivateFn(this) else null
-        projectMgr.renameFileDialog.open(this, onSuccess)
+        // currentIndex must be computed before passing into lambda
+        val currentIndex = if (isOpen) projectMgr.resource.opened.indexOf(this) else -1
+        projectMgr.renameFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
     }
 
     override fun initiateMove() {
@@ -325,8 +298,9 @@ class File internal constructor(
     private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean) {
         saveContent()
         if (isUnsavedResource || isMove) {
-            val onSuccess = if (isOpen && reopen) projectMgr.resource.tryReopenAndActivateFn(this) else null
-            projectMgr.saveFileDialog.open(this, onSuccess)
+            // currentIndex must be computed before passing into lambda
+            val currentIndex = if (isOpen && reopen) projectMgr.resource.opened.indexOf(this) else -1
+            projectMgr.saveFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
         }
     }
 
@@ -351,6 +325,7 @@ class File internal constructor(
         if (isOpenAtomic.compareAndSet(true, false)) {
             runner.close()
             watchFileSystem.set(false)
+            projectMgr.resource.close(this)
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()
         }

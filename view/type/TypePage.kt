@@ -101,7 +101,7 @@ sealed class TypePage(
         mode = Navigator.Mode.LIST,
         initExpandDepth = 4,
         coroutineScope = coroutineScope
-    ) { GlobalState.resource.tryOpen(it.item) }
+    ) { it.item.tryOpen() }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -241,7 +241,7 @@ sealed class TypePage(
                 text = ConceptSummaryText(supertype.conceptType),
                 leadingIcon = conceptIcon(supertype.conceptType),
                 enabled = !type.isRoot,
-            ) { GlobalState.resource.tryOpen(supertype) }
+            ) { supertype.tryOpen() }
             EditButton { } // TODO
         }
     }
@@ -273,14 +273,12 @@ sealed class TypePage(
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(ConceptSummaryText(props.attributeType.conceptType)) {
-                            GlobalState.resource.tryOpen(props.attributeType)
+                            props.attributeType.tryOpen()
                         }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(ConceptSummaryText(ot.conceptType)) {
-                                GlobalState.resource.tryOpen(ot)
-                            }
+                            ClickableText(ConceptSummaryText(ot.conceptType)) { ot.tryOpen() }
                         }
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
@@ -374,16 +372,10 @@ sealed class TypePage(
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(props.roleType.scopedName) {
-                            GlobalState.resource.tryOpen(props.roleType.relationType)
-                        }
+                        ClickableText(props.roleType.scopedName) { props.roleType.relationType.tryOpen() }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
-                        props.overriddenType?.let { ot ->
-                            ClickableText(ot.scopedName) {
-                                GlobalState.resource.tryOpen(ot.relationType)
-                            }
-                        }
+                        props.overriddenType?.let { ot -> ClickableText(ot.scopedName) { ot.relationType.tryOpen() } }
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
@@ -498,7 +490,7 @@ sealed class TypePage(
             type.exportSyntax { syntax ->
                 GlobalState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
-                    GlobalState.resource.tryOpen(file)
+                    file.tryOpen()
                 }
             }
         }
@@ -657,11 +649,7 @@ sealed class TypePage(
                     modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) {
-                                GlobalState.resource.tryOpen(
-                                    props.ownerType
-                                )
-                            }
+                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)

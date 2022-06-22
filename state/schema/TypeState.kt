@@ -183,18 +183,21 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
         override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)
 
-        override fun tryOpen(): Boolean {
+        override fun tryOpen() {
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
-            return true
+            schemaMgr.resource.opened(this)
+            loadProperties()
         }
 
         override fun activate() {
+            schemaMgr.resource.active(this)
             loadProperties()
         }
 
         override fun close() {
             if (isOpenAtomic.compareAndSet(true, false)) {
+                schemaMgr.resource.close(this)
                 callbacks.onClose.forEach { it(this) }
                 callbacks.clear()
             }
