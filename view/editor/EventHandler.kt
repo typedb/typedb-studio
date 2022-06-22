@@ -224,12 +224,12 @@ internal class EventHandler constructor(
 
     private fun mayRunFile() {
         if (!GlobalState.client.isReadyToRunQuery) return
-        processor.file?.let { if (it.isRunnable) GlobalState.resource.openAndMayRun(it) }
+        processor.file?.mayOpenAndRun()
     }
 
     private fun mayRunSelection() {
         if (!GlobalState.client.isReadyToRunQuery) return
-        processor.file?.let { if (it.isRunnable) GlobalState.resource.openAndMayRun(it, target.selectedText().text) }
+        processor.file?.mayOpenAndRun(target.selectedText().text)
     }
 
     private fun hideToolbar(): Boolean {

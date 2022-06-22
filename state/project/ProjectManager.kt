@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PRO
 import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.resource.ResourceManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
@@ -47,11 +48,12 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager constructor(
+class ProjectManager(
     internal val preference: PreferenceManager,
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager,
-    internal val resource: ResourceManager
+    internal val resource: ResourceManager,
+    internal val client: ClientState
 ) {
 
     class CreateItemDialog : DialogManager() {

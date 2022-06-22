@@ -34,7 +34,7 @@ interface Resource {
         throw ClassCastException("Illegal cast of resource into runnable")
     }
 
-    fun tryOpen()
+    fun tryOpen(): Boolean
 
     fun activate()
 
@@ -69,6 +69,8 @@ interface Resource {
         val runContent: String
         val runner: RunnerManager
         override val isRunnable: Boolean get() = true
+
+        fun mayOpenAndRun(content: String = runContent)
 
         override fun asRunnable(): Runnable {
             return this

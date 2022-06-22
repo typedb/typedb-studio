@@ -434,11 +434,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.Code.PLAY,
                 color = Theme.studio.secondary,
-                onClick = {
-                    GlobalState.resource.active?.let {
-                        if (it.isRunnable) GlobalState.resource.openAndMayRun(it.asRunnable())
-                    }
-                },
+                onClick = { GlobalState.resource.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() } },
                 enabled = isReadyToRunQuery && hasRunnablePage,
                 tooltip = Tooltip.Arg(
                     title = if (isInteractive) Label.RUN_QUERY else Label.RUN_SCRIPT,

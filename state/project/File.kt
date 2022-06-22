@@ -142,7 +142,7 @@ class File internal constructor(
     override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
     override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
     override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
-    override fun tryOpen() = tryOpen(null)
+    override fun tryOpen(): Boolean = tryOpen(null)
     override fun reloadEntries() {}
     override fun asFile(): File = this
     override fun asDirectory(): Directory {
@@ -159,17 +159,20 @@ class File internal constructor(
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
-    private fun tryOpen(index: Int? = null) {
-        if (!path.isReadable()) {
+    private fun tryOpen(index: Int? = null): Boolean {
+        return if (!path.isReadable()) {
             projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
+            false
         } else try {
             readContent()
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
             projectMgr.resource.opened(this, index)
             activate()
+            true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
             projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
+            false
         }
     }
 
@@ -181,6 +184,11 @@ class File internal constructor(
 
     override fun deactivate() {
         watchFileSystem.set(false)
+    }
+
+    override fun mayOpenAndRun(content: String) {
+        if (!isRunnable || (!isOpen && !tryOpen())) return
+        projectMgr.client.runner(content)?.let { runner.launch(it) }
     }
 
     internal fun tryRename(newName: String): File? {
