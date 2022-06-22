@@ -109,7 +109,7 @@ internal class TextRenderer(private val viewport: Viewport) {
         return textLine.positions
             .filterIndexed { idx, _ -> idx % 2 == 0 }
             .indexOfFirst { it > lineMaxWidth }
-            .let { if (it == -1) null else it }
+            .let { if (it == -1) null else (it - 1).coerceAtLeast(0) }
     }
 
     // TODO: get these metrics via drawSingleLine instead of a Composable?
