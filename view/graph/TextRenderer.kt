@@ -33,6 +33,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
+import com.vaticle.typedb.studio.view.graph.TextRenderer.LineBreak.Reason.BlockStart
+import com.vaticle.typedb.studio.view.graph.TextRenderer.LineBreak.Reason.Overflow
+import com.vaticle.typedb.studio.view.graph.TextRenderer.LineBreak.Reason.Whitespace
+import com.vaticle.typedb.studio.view.graph.TextRenderer.LineBreak.Reason.WordBreak
 import com.vaticle.typedb.studio.view.material.Form
 import org.jetbrains.skia.Font
 import org.jetbrains.skia.TextLine
@@ -71,7 +75,6 @@ internal class TextRenderer(private val viewport: Viewport) {
         }
     }
 
-    // TODO: this method is expensive for long labels
     private fun drawMultiLine(
         canvas: Canvas,
         text: String,
@@ -82,16 +85,18 @@ internal class TextRenderer(private val viewport: Viewport) {
         color: Color
     ) {
         val lines = mutableListOf<TextLine>()
-        var startIndex = 0
+        var remainingText = text.trim()
         while (lines.size < maxLines) {
-            val remainingTextLine = TextLine.make(text.substring(startIndex), font)
-            val breakIndex = lineBreakIndex(remainingTextLine, maxWidth)?.plus(startIndex)
-            if (breakIndex == null) {
+            val remainingTextLine = TextLine.make(remainingText, font)
+            val lineBreak = findLineBreak(remainingTextLine, remainingText, maxWidth)
+            if (lineBreak == null) {
                 lines += remainingTextLine
                 break
+            } else {
+                val breakIndex = lineBreak.index - (if (lineBreak.reason == BlockStart) 1 else 0)
+                lines += TextLine.make(remainingText.substring(0 until breakIndex), font)
+                remainingText = remainingText.substring(breakIndex).trim()
             }
-            lines += TextLine.make(text.substring(startIndex until breakIndex), font)
-            startIndex = breakIndex
         }
         drawTextLines(canvas, lines, center, Paint().apply { this.color = color }.asFrameworkPaint())
     }
@@ -105,12 +110,34 @@ internal class TextRenderer(private val viewport: Viewport) {
         }
     }
 
-    private fun lineBreakIndex(textLine: TextLine, lineMaxWidth: Float): Int? {
-        return textLine.positions
+    private fun findLineBreak(textLine: TextLine, text: String, lineMaxWidth: Float): LineBreak? {
+        val lineOverflowIndex = textLine.positions
             .filterIndexed { idx, _ -> idx % 2 == 0 }
             .indexOfFirst { it > lineMaxWidth }
-            .let { if (it == -1) null else (it - 1).coerceAtLeast(0) }
+            .let { if (it == -1) null else (it - 1).coerceAtLeast(0) } ?: return null
+        var lineEndIndex = lineOverflowIndex
+        while (lineEndIndex > 0) {
+            val char = text[lineEndIndex]
+            if (char.isWhitespace()) return LineBreak(lineEndIndex, Whitespace)
+            if (char.isWordBreakSymbol()) return LineBreak(lineEndIndex + 1, WordBreak)
+            if (char.isBlockStartSymbol()) return LineBreak(lineEndIndex, BlockStart)
+            lineEndIndex--
+        }
+        return LineBreak(index = lineOverflowIndex, Overflow)
     }
+
+    private data class LineBreak(val index: Int, val reason: Reason) {
+        enum class Reason {
+            Whitespace,
+            WordBreak,
+            BlockStart,
+            Overflow
+        }
+    }
+
+    private fun Char.isWordBreakSymbol() = this in "-/|"
+
+    private fun Char.isBlockStartSymbol() = this in "({["
 
     // TODO: get these metrics via drawSingleLine instead of a Composable?
     @Composable
