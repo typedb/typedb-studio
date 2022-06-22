@@ -234,7 +234,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 return xi + yi < 1f
             }
 
-            override fun edgeEndpoint(source: Offset): Offset {
+            override fun edgeEndpoint(source: Offset): Offset? {
                 val ellipse = Ellipse(position.x, position.y, size.width / 2 + 2, size.height / 2 + 2)
                 return ellipseIncomingLineIntersect(source, ellipse)
             }
