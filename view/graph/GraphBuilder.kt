@@ -60,23 +60,23 @@ class GraphBuilder(
     }
 
     fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
-        conceptMap.map().entries.map { (varName: String, concept: Concept) ->
-            when (concept) {
-                is Thing, is ThingType -> {
+        conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
+            when {
+                concept is Thing -> {
                     val (added, vertex) = putVertexIfAbsent(concept)
                     if (added) {
-                        if (concept is Thing) {
-                            vertex as Vertex.Thing
-                            if (transactionState.explain.value && concept.isInferred) {
-                                addExplainables(concept, vertex, conceptMap.explainables(), varName)
-                            }
-                            if (answerSource is AnswerSource.Explanation) {
-                                vertexExplanations += Pair(vertex, answerSource.explanation)
-                            }
+                        vertex as Vertex.Thing
+                        if (transactionState.explain.value && concept.isInferred) {
+                            addExplainables(concept, vertex, conceptMap.explainables(), varName)
+                        }
+                        if (answerSource is AnswerSource.Explanation) {
+                            vertexExplanations += Pair(vertex, answerSource.explanation)
                         }
                     }
                 }
-                is RoleType -> { /* do nothing */ }
+                concept is ThingType && concept.isRoot -> { /* skip root thing types */ }
+                concept is ThingType -> { putVertexIfAbsent(concept) }
+                concept is RoleType -> { /* skip role types */ }
                 else -> throw unsupportedEncodingException(concept)
             }
         }
