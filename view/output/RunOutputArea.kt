@@ -104,7 +104,7 @@ object RunOutputArea {
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.resource.runner.activeRunner?.let { runner ->
+                state.resource.runner.active?.let { runner ->
                     OutputGroup(state, runner, Modifier.fillMaxSize())
                 }
             }
@@ -134,7 +134,7 @@ object RunOutputArea {
             Box(Modifier.weight(1f)) {
                 Tabs.Horizontal.Layout(
                     state = state.runnerTabs,
-                    tabs = runnerMgr.runners,
+                    tabs = runnerMgr.launched,
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },

@@ -52,8 +52,8 @@ class ProjectManager(
     internal val preference: PreferenceManager,
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager,
-    internal val resource: ResourceManager,
-    internal val client: ClientState
+    internal val client: ClientState,
+    internal val resource: ResourceManager
 ) {
 
     class CreateItemDialog : DialogManager() {

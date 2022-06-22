@@ -33,8 +33,8 @@ import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLE
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.state.connection.RunnerManager
 import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.resource.RunnerManager
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
