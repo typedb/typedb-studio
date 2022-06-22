@@ -94,7 +94,10 @@ class GraphArea(transactionState: TransactionState) {
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
         // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
         val edges = graph.edges.toList()
-        val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
+        val vertices = graph.vertices.filter { it.readyToCompose && viewport.rectIsVisible(it.geometry.rect) }
+        // Since vertices contain MutableStates and are created on a different thread, we need to ensure their lifetime
+        // has been at least one composition cycle before trying to read those states
+        graph.vertices.filter { !it.readyToCompose }.forEach { it.readyToCompose = true }
         val typography = Theme.typography
         val vertexLabelColor = Theme.graph.vertexLabel
         Canvas(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {

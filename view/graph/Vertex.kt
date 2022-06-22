@@ -46,6 +46,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
     abstract val label: String
     abstract val geometry: Geometry
+    var readyToCompose = false
 
     sealed class Thing(val thing: com.vaticle.typedb.client.api.concept.thing.Thing, graph: Graph) :
         Vertex(thing, graph) {
