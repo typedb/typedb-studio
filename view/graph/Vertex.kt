@@ -178,7 +178,6 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         abstract fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float?
 
         suspend fun animateExpansion() {
-            println("animating expansion to ${(if (isExpanded) EXPANDED_SIZE else baseSize)}")
             _size.animateTo(if (isExpanded) EXPANDED_SIZE else baseSize)
         }
 

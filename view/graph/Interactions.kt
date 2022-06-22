@@ -74,16 +74,14 @@ class Interactions constructor(private val graphArea: GraphArea) {
         }
 
         override fun run() {
-            interactions.pointerPosition?.let { pointerPosition ->
-                val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
-                if (interactions.hoveredVertex == hoveredVertex) return
-                interactions.hoveredVertex = hoveredVertex
-                interactions.hoveredVertexExplanations = when (hoveredVertex) {
-                    null -> emptySet()
-                    else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
-                }
-                hoveredVertex?.let { it.geometry.isExpanded = true }
+            val hoveredVertex = interactions.pointerPosition?.let { graphArea.viewport.findVertexAt(it) }
+            if (interactions.hoveredVertex == hoveredVertex) return
+            interactions.hoveredVertex = hoveredVertex
+            interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                null -> emptySet()
+                else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
             }
+            hoveredVertex?.let { it.geometry.isExpanded = true }
         }
     }
 
