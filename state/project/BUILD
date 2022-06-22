@@ -29,6 +29,7 @@ kt_jvm_library(
     deps = [
         "//state/app:app",
         "//state/common:common",
+        "//state/connection:connection",
         "//state/resource:resource",
 
         # External Vaticle Dependencies
