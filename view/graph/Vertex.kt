@@ -157,6 +157,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 isYFixed = value
             }
 
+        var isExpandable = false
         var isExpanded by mutableStateOf(false)
         val isVisiblyCollapsed get() = size.width - baseSize.width < 4f
         val isVisiblyExpanded get() = expandedSize.width - size.width < 4f

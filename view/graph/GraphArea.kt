@@ -281,7 +281,7 @@ class GraphArea(transactionState: TransactionState) {
         private val interactions get() = graphArea.interactions
 
         override fun run() {
-            graphArea.graph.vertices.forEach {
+            graphArea.graph.vertices.filter { it.geometry.isExpandable }.forEach {
                 val previousValue = it.geometry.isExpanded
                 val newValue = it == interactions.hoveredVertex || it == interactions.focusedVertex
                 if (previousValue != newValue) {

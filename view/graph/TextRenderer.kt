@@ -71,7 +71,9 @@ internal class TextRenderer(private val viewport: Viewport) {
                 maxWidth = vertex.geometry.labelMaxWidth * density,
                 maxLines = vertex.geometry.labelMaxLines(typography.codeSizeMedium),
                 color = color
-            )
+            ).also { result ->
+                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.isExpandable = true
+            }
         }
     }
 
@@ -83,7 +85,8 @@ internal class TextRenderer(private val viewport: Viewport) {
         maxWidth: Float,
         maxLines: Int,
         color: Color
-    ) {
+    ): DrawMultiLineResult {
+        var fullyDrawnWithoutTruncation = false
         val lines = mutableListOf<TextLine>()
         var remainingText = text.trim()
         while (lines.size < maxLines) {
@@ -91,6 +94,7 @@ internal class TextRenderer(private val viewport: Viewport) {
             val lineBreak = findLineBreak(remainingTextLine, remainingText, maxWidth)
             if (lineBreak == null) {
                 lines += remainingTextLine
+                fullyDrawnWithoutTruncation = true
                 break
             } else {
                 val breakIndex = lineBreak.index - (if (lineBreak.reason == BlockStart) 1 else 0)
@@ -99,7 +103,10 @@ internal class TextRenderer(private val viewport: Viewport) {
             }
         }
         drawTextLines(canvas, lines, center, Paint().apply { this.color = color }.asFrameworkPaint())
+        return DrawMultiLineResult(isTruncated = !fullyDrawnWithoutTruncation)
     }
+
+    data class DrawMultiLineResult(val isTruncated: Boolean)
 
     private fun drawTextLines(canvas: Canvas, lines: List<TextLine>, center: Offset, paint: org.jetbrains.skia.Paint) {
         lines.forEachIndexed { index, line ->
