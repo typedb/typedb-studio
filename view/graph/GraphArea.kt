@@ -81,7 +81,9 @@ class GraphArea(transactionState: TransactionState) {
         LaunchedEffect(this, viewport.scale, viewport.density) {
             interactions.hoveredVertexChecker.launch()
         }
-        LaunchedEffect(this) { interactions.vertexExpandedStateCleanupJob.launch() }
+        LaunchedEffect(this) {
+            VertexExpandedStateCleanupJob(graphArea = this@GraphArea, coroutineScope = this).launch()
+        }
         LaunchedEffect(this) { viewport.autoScaler.launch() }
     }
 
@@ -99,7 +101,7 @@ class GraphArea(transactionState: TransactionState) {
             drawEdges(edges)
             drawVertices(vertices, vertexLabelColor, typography)
         }
-        if (graph.physics.alpha < 0.5 && viewport.scale > 0.2) vertices.forEach { VertexAnimator(it) }
+        if (graph.physics.alpha < 0.5 && viewport.scale > 0.2) vertices.forEach { VertexExpandAnimator(it) }
         edges.filter { it.label !in textRenderer.edgeLabelSizes }.forEach { textRenderer.EdgeLabelMeasurer(it) }
         PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
     }
@@ -153,9 +155,11 @@ class GraphArea(transactionState: TransactionState) {
     }
 
     @Composable
-    private fun VertexAnimator(vertex: Vertex) {
+    private fun VertexExpandAnimator(vertex: Vertex) {
         LaunchedEffect(vertex.geometry.isExpanded) {
-            launch { vertex.geometry.animateExpansion() }
+            // TODO: this should reliably work in both directions (expand and collapse) but when the graph has
+            //  >50 vertices or so, collapsing stops being reliable, so we've delegated that side to a cleanup job
+            if (vertex.geometry.isExpanded) launch { vertex.geometry.animateExpansion() }
         }
     }
 
@@ -265,6 +269,23 @@ class GraphArea(transactionState: TransactionState) {
                     }
                 }
             )
+        }
+    }
+
+    class VertexExpandedStateCleanupJob(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
+        : BackgroundTask(runIntervalMs = 33) {
+
+        private val interactions get() = graphArea.interactions
+
+        override fun run() {
+            graphArea.graph.vertices.forEach {
+                val previousValue = it.geometry.isExpanded
+                val newValue = it == interactions.hoveredVertex || it == interactions.focusedVertex
+                if (previousValue != newValue) {
+                    it.geometry.isExpanded = newValue
+                    if (!newValue) coroutineScope.launch { it.geometry.animateExpansion() }
+                }
+            }
         }
     }
 }

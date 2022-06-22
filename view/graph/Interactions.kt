@@ -30,7 +30,6 @@ class Interactions constructor(private val graphArea: GraphArea) {
     var hoveredVertex: Vertex? by mutableStateOf(null)
     val hoveredVertexChecker = HoveredVertexChecker(graphArea)
     var hoveredVertexExplanations: Set<Explanation> by mutableStateOf(emptySet())
-    val vertexExpandedStateCleanupJob = VertexExpandedStateCleanupJob(graphArea)
 
     private var _focusedVertex: Vertex? by mutableStateOf(null)
     var focusedVertex: Vertex?
@@ -82,17 +81,6 @@ class Interactions constructor(private val graphArea: GraphArea) {
                 else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
             }
             hoveredVertex?.let { it.geometry.isExpanded = true }
-        }
-    }
-
-    class VertexExpandedStateCleanupJob(private val graphArea: GraphArea) : BackgroundTask(runIntervalMs = 33) {
-
-        private val interactions get() = graphArea.interactions
-
-        override fun run() {
-            graphArea.graph.vertices.forEach {
-                it.geometry.isExpanded = it == interactions.hoveredVertex || it == interactions.focusedVertex
-            }
         }
     }
 }
