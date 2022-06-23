@@ -65,7 +65,7 @@ object RunOutputArea {
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
-            pageable.runner.onLaunch { toggle(true) }
+            pageable.runners.onLaunch { toggle(true) }
         }
 
         @Composable
@@ -104,7 +104,7 @@ object RunOutputArea {
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.pageable.runner.active?.let { runner ->
+                state.pageable.runners.active?.let { runner ->
                     OutputGroup(state, runner, Modifier.fillMaxSize())
                 }
             }
@@ -123,7 +123,7 @@ object RunOutputArea {
 
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
-        val runnerMgr = state.pageable.runner
+        val runnerMgr = state.pageable.runners
         fun runnerName(runner: QueryRunner): String {
             return "${state.pageable.name} (${runnerMgr.numberOf(runner)})"
         }

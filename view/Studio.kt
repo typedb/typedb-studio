@@ -57,7 +57,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -117,7 +117,7 @@ object Studio {
 
     @Composable
     private fun MainWindow(exitApplicationFn: () -> Unit) {
-        fun confirmClose() = GlobalState.confirmation.submit(
+        fun confirmClose() = StudioState.confirmation.submit(
             title = Label.CONFIRM_QUITTING_APPLICATION,
             message = Sentence.CONFIRM_QUITING_APPLICATION,
             onConfirm = { quit = true; exitApplicationFn() }
@@ -170,8 +170,8 @@ object Studio {
     }
 
     private fun getMainWindowTitle(): String {
-        val projectName = GlobalState.project.current?.directory?.name
-        val pageName = GlobalState.resource.active?.windowTitle
+        val projectName = StudioState.project.current?.directory?.name
+        val pageName = StudioState.pages.active?.windowTitle
         return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
     }
 
@@ -242,7 +242,7 @@ object Studio {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
                 LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                GlobalState.client.closeBlocking()
+                StudioState.client.closeBlocking()
             }
         })
     }
@@ -274,7 +274,7 @@ object Studio {
             addShutdownHook()
             setConfigurations()
             Message.loadClasses()
-            GlobalState.appData.initialise()
+            StudioState.appData.initialise()
             while (!quit) {
                 application { MainWindow(::exitApplication) }
                 error?.let { exception ->

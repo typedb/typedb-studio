@@ -27,7 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.project.DirectoryState
 import com.vaticle.typedb.studio.state.project.FileState
@@ -55,7 +55,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
 
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
-    override val isActive: Boolean get() = GlobalState.project.current != null
+    override val isActive: Boolean get() = StudioState.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
@@ -73,22 +73,22 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
                 leadingIcon = IconArg(Icon.Code.FOLDER_OPEN)
-            ) { GlobalState.project.openProjectDialog.open() }
+            ) { StudioState.project.openProjectDialog.open() }
         }
     }
 
     @Composable
     private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
-            container = GlobalState.project.current!!,
+            container = StudioState.project.current!!,
             title = Label.PROJECT_BROWSER,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
             liveUpdate = true,
             contextMenuFn = { contextMenuItems(it) }
         ) { openPath(it) }
-        GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
-        GlobalState.project.onContentChange = { navState.reloadEntries() }
+        StudioState.project.onProjectChange = { navState.replaceContainer(it) }
+        StudioState.project.onContentChange = { navState.reloadEntries() }
         buttons = navState.buttons
         Navigator.Layout(
             state = navState,

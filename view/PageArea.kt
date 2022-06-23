@@ -39,7 +39,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -87,7 +87,7 @@ object PageArea {
                 val page = createPage(pageable)
                 pageable.onClose { openedPages.remove(it) }
                 pageable.onReopen {
-                    page.updateResource(it)
+                    page.updatePageable(it)
                     openedPages[it] = page
                 }
                 page
@@ -98,31 +98,31 @@ object PageArea {
         private fun createPage(pageable: Pageable) = when (pageable) {
             is FileState -> FilePage.create(pageable)
             is TypeState.Thing -> TypePage.create(pageable)
-            else -> throw IllegalStateException("Unrecognised resource type")
+            else -> throw IllegalStateException("Unrecognised pageable type")
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateUntitledFile()?.let { it.tryOpen() }
+            StudioState.project.tryCreateUntitledFile()?.let { it.tryOpen() }
             return true
         }
 
         private fun saveActivePage(): Boolean {
-            GlobalState.resource.active?.initiateSave()
+            StudioState.pages.active?.initiateSave()
             return true
         }
 
         private fun showNextPage(): Boolean {
-            GlobalState.resource.next.activate()
+            StudioState.pages.next.activate()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            GlobalState.resource.previous.activate()
+            StudioState.pages.previous.activate()
             return true
         }
 
         private fun closeActivePage(): Boolean {
-            return GlobalState.resource.active?.let { close(it) } ?: false
+            return StudioState.pages.active?.let { close(it) } ?: false
         }
 
         internal fun close(pageable: Pageable, stopRunner: Boolean = false): Boolean {
@@ -130,16 +130,16 @@ object PageArea {
             fun closeFn() {
                 openedPages.remove(pageable)
                 pageable.close()
-                if (pageable.isUnsavedResource) pageable.delete()
+                if (pageable.isUnsavedPageable) pageable.delete()
             }
-            if (pageable.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
-                GlobalState.confirmation.submit(
+            if (pageable.isRunnable && StudioState.client.hasRunningQuery && !stopRunner) {
+                StudioState.confirmation.submit(
                     title = Label.QUERY_IS_RUNNING,
                     message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
                     cancelLabel = Label.OK,
                 )
             } else if (pageable.needSaving) {
-                GlobalState.confirmation.submit(
+                StudioState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
@@ -170,7 +170,7 @@ object PageArea {
             label = Label.SAVE,
             icon = Icon.Code.FLOPPY_DISK,
             info = "${KeyMapper.CURRENT.modKey} + S",
-            enabled = pageable.hasUnsavedChanges || pageable.isUnsavedResource
+            enabled = pageable.hasUnsavedChanges || pageable.isUnsavedPageable
         ) { pageable.initiateSave() }
     }
 
@@ -180,7 +180,7 @@ object PageArea {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
-            if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
+            if (StudioState.pages.opened.isEmpty()) focusReq.requestFocus()
         }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
@@ -189,20 +189,20 @@ object PageArea {
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
-                tabs = GlobalState.resource.opened,
-                iconFn = { resource -> state.openedPage(resource).icon },
+                tabs = StudioState.pages.opened,
+                iconFn = { state.openedPage(it).icon },
                 labelFn = { tabLabel(it) },
-                isActiveFn = { GlobalState.resource.active == it },
+                isActiveFn = { StudioState.pages.active == it },
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,
-                extraBarButtons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
+                extraBarButtons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = StudioState.project.current != null) {
                     state.createAndOpenNewFile()
                 })
             )
             Separator.Horizontal()
-            GlobalState.resource.active?.let { resource -> state.openedPage(resource).Layout() }
+            StudioState.pages.active?.let { state.openedPage(it).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

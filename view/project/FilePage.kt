@@ -54,7 +54,7 @@ class FilePage private constructor(
         }
     }
 
-    override fun updateResource(pageable: Pageable) {
+    override fun updatePageable(pageable: Pageable) {
         // TODO: guarantee that new file has identical content as previous, or update content.
         runOutputState?.let { it.pageable = pageable.asRunnable() }
         file = pageable as FileState

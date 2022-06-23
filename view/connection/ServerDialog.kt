@@ -32,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB
@@ -56,7 +56,7 @@ object ServerDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 340.dp
-    private val appData = GlobalState.appData.connection
+    private val appData = StudioState.appData.connection
 
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
@@ -67,7 +67,7 @@ object ServerDialog {
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
         override fun cancel() {
-            GlobalState.client.connectServerDialog.close()
+            StudioState.client.connectServerDialog.close()
         }
 
         override fun isValid(): Boolean {
@@ -79,14 +79,14 @@ object ServerDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> GlobalState.client.tryConnectToTypeDB(address) { GlobalState.client.connectServerDialog.close() }
+                TYPEDB -> StudioState.client.tryConnectToTypeDB(address) { StudioState.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> GlobalState.client.tryConnectToTypeDBCluster(
+                    caCertificate.isBlank() -> StudioState.client.tryConnectToTypeDBCluster(
                         address, username, password, tlsEnabled
-                    ) { GlobalState.client.connectServerDialog.close() }
-                    else -> GlobalState.client.tryConnectToTypeDBCluster(
+                    ) { StudioState.client.connectServerDialog.close() }
+                    else -> StudioState.client.tryConnectToTypeDBCluster(
                         address, username, password, caCertificate
-                    ) { GlobalState.client.connectServerDialog.close() }
+                    ) { StudioState.client.connectServerDialog.close() }
                 }
             }
             appData.server = server
@@ -99,16 +99,16 @@ object ServerDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (GlobalState.client.connectServerDialog.isOpen) ConnectServer()
+        if (StudioState.client.connectServerDialog.isOpen) ConnectServer()
     }
 
     @Composable
     private fun ConnectServer() {
         val state = remember { ConnectServerForm() }
-        Dialog.Layout(GlobalState.client.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
+        Dialog.Layout(StudioState.client.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)
-                AddressFormField(state, GlobalState.client.isDisconnected)
+                AddressFormField(state, StudioState.client.isDisconnected)
                 if (state.server == TYPEDB_CLUSTER) {
                     UsernameFormField(state)
                     PasswordFormField(state)
@@ -119,7 +119,7 @@ object ServerDialog {
                 Row(verticalAlignment = Alignment.Bottom) {
                     ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
-                    when (GlobalState.client.status) {
+                    when (StudioState.client.status) {
                         DISCONNECTED -> DisconnectedFormButtons(state)
                         CONNECTING -> ConnectingFormButtons()
                         CONNECTED -> ConnectedFormButtons(state)
@@ -136,7 +136,7 @@ object ServerDialog {
                 values = Property.Server.values().toList(),
                 selected = state.server,
                 onSelection = { state.server = it },
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -152,7 +152,7 @@ object ServerDialog {
                 value = state.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { state.address = it },
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
                 modifier = modifier
             )
         }
@@ -166,7 +166,7 @@ object ServerDialog {
                 value = state.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { state.username = it },
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -179,7 +179,7 @@ object ServerDialog {
                 value = state.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { state.password = it },
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -191,7 +191,7 @@ object ServerDialog {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
                 value = state.tlsEnabled,
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
             ) { state.tlsEnabled = it }
         }
     }
@@ -203,7 +203,7 @@ object ServerDialog {
                 value = state.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { state.caCertificate = it },
-                enabled = GlobalState.client.isDisconnected,
+                enabled = StudioState.client.isDisconnected,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -211,9 +211,9 @@ object ServerDialog {
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText = "${Label.STATUS}: ${GlobalState.client.status.name.lowercase()}"
+        val statusText = "${Label.STATUS}: ${StudioState.client.status.name.lowercase()}"
         Text(
-            value = statusText, color = when (GlobalState.client.status) {
+            value = statusText, color = when (StudioState.client.status) {
                 DISCONNECTED -> Theme.studio.errorStroke
                 CONNECTING -> Theme.studio.warningStroke
                 CONNECTED -> Theme.studio.secondary
@@ -231,7 +231,7 @@ object ServerDialog {
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { GlobalState.client.close() }
+        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { StudioState.client.close() }
         FormRowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -240,7 +240,7 @@ object ServerDialog {
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.CANCEL, focusReq = focusReq) { GlobalState.client.close() }
+        TextButton(text = Label.CANCEL, focusReq = focusReq) { StudioState.client.close() }
         FormRowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

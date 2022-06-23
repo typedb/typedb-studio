@@ -27,7 +27,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.KeyMapper.Command
@@ -174,9 +174,9 @@ internal class EventHandler constructor(
             DUPLICATE -> processor.duplicate()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            TEXT_SIZE_INCREASE -> GlobalState.editor.increaseScale()
-            TEXT_SIZE_DECREASE -> GlobalState.editor.decreaseScale()
-            TEXT_SIZE_RESET -> GlobalState.editor.resetScale()
+            TEXT_SIZE_INCREASE -> StudioState.editor.increaseScale()
+            TEXT_SIZE_DECREASE -> StudioState.editor.decreaseScale()
+            TEXT_SIZE_RESET -> StudioState.editor.resetScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
@@ -223,12 +223,12 @@ internal class EventHandler constructor(
     }
 
     private fun mayRunFile() {
-        if (!GlobalState.client.isReadyToRunQuery) return
+        if (!StudioState.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun()
     }
 
     private fun mayRunSelection() {
-        if (!GlobalState.client.isReadyToRunQuery) return
+        if (!StudioState.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun(target.selectedText().text)
     }
 
@@ -308,7 +308,7 @@ internal class EventHandler constructor(
         icon = Icon.Code.PLAY,
         iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && GlobalState.client.isReadyToRunQuery
+        enabled = processor.file?.isRunnable == true && StudioState.client.isReadyToRunQuery
     ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
@@ -316,27 +316,27 @@ internal class EventHandler constructor(
         icon = Icon.Code.PLAY,
         iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && target.selection != null && GlobalState.client.isReadyToRunQuery
+        enabled = processor.file?.isRunnable == true && target.selection != null && StudioState.client.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,
         icon = Icon.Code.ARROWS_MAXIMIZE,
         info = "${KeyMapper.CURRENT.modKey} + =",
-        enabled = !GlobalState.editor.isMaxScale
-    ) { GlobalState.editor.increaseScale() }
+        enabled = !StudioState.editor.isMaxScale
+    ) { StudioState.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
         icon = Icon.Code.ARROWS_MINIMIZE,
         info = "${KeyMapper.CURRENT.modKey} + -",
-        enabled = !GlobalState.editor.isMinScale
-    ) { GlobalState.editor.decreaseScale() }
+        enabled = !StudioState.editor.isMinScale
+    ) { StudioState.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
         icon = Icon.Code.EXPAND,
         info = "${KeyMapper.CURRENT.modKey} + 0",
-        enabled = !GlobalState.editor.isDefaultScale
-    ) { GlobalState.editor.resetScale() }
+        enabled = !StudioState.editor.isDefaultScale
+    ) { StudioState.editor.resetScale() }
 }

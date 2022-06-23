@@ -29,7 +29,7 @@ import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager
 import com.vaticle.typedb.studio.state.schema.SchemaManager
 
-object GlobalState {
+object StudioState {
 
     val preference = PreferenceManager()
     val appData = DataManager()
@@ -37,8 +37,8 @@ object GlobalState {
     val status = StatusManager()
     val notification = NotificationManager()
     val confirmation = ConfirmationManager()
-    val resource = PageManager()
+    val pages = PageManager()
     val client = ClientState(notification)
-    val project = ProjectManager(preference, notification, confirmation, client, resource)
-    val schema = SchemaManager(client.session, resource, notification)
+    val project = ProjectManager(preference, notification, confirmation, client, pages)
+    val schema = SchemaManager(client.session, pages, notification)
 }

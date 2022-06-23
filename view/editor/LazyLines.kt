@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import java.lang.Integer.min
 import java.util.concurrent.LinkedBlockingQueue
@@ -61,7 +61,7 @@ internal object LazyLines {
         private var _offset: Dp by mutableStateOf(0.dp)
         private var _stickToBottom by mutableStateOf(false)
         internal var viewHeight: Dp by mutableStateOf(0.dp)
-        internal val lineHeight: Dp get() = lineHeightUnscaled * GlobalState.editor.scale
+        internal val lineHeight: Dp get() = lineHeightUnscaled * StudioState.editor.scale
         private val contentHeight: Dp get() = lineHeight * lineCount() + bottomSpace
         private val maxOffset: Dp get() = max(contentHeight - viewHeight, 0.dp)
         internal val offset: Dp get() = if (!stickToBottom) _offset.coerceAtMost(maxOffset) else maxOffset

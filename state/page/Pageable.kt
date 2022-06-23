@@ -27,13 +27,13 @@ interface Pageable {
     val isOpen: Boolean
     val isWritable: Boolean
     val isEmpty: Boolean
-    val isUnsavedResource: Boolean
+    val isUnsavedPageable: Boolean
     val hasUnsavedChanges: Boolean
     val isRunnable: Boolean get() = false
-    val needSaving get() = hasUnsavedChanges || (isUnsavedResource && !isEmpty)
+    val needSaving get() = hasUnsavedChanges || (isUnsavedPageable && !isEmpty)
 
     fun asRunnable(): Runnable {
-        throw ClassCastException("Illegal cast of resource into runnable")
+        throw ClassCastException("Illegal cast of pageable into runnable")
     }
 
     fun tryOpen(): Boolean
@@ -59,7 +59,7 @@ interface Pageable {
     interface Runnable : Pageable {
 
         val runContent: String
-        val runner: RunnerManager
+        val runners: RunnerManager
         override val isRunnable: Boolean get() = true
 
         fun mayOpenAndRun(content: String = runContent)

@@ -159,7 +159,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override val isOpen: Boolean get() = isOpenAtomic.get()
         override val isWritable: Boolean = true
         override val isEmpty: Boolean = false
-        override val isUnsavedResource: Boolean = false
+        override val isUnsavedPageable: Boolean = false
         override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
         private val isOpenAtomic = AtomicBoolean(false)
@@ -181,19 +181,19 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun tryOpen(): Boolean {
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
-            schemaMgr.resource.opened(this)
+            schemaMgr.pages.opened(this)
             loadProperties()
             return true
         }
 
         override fun activate() {
-            schemaMgr.resource.active(this)
+            schemaMgr.pages.active(this)
             loadProperties()
         }
 
         override fun close() {
             if (isOpenAtomic.compareAndSet(true, false)) {
-                schemaMgr.resource.close(this)
+                schemaMgr.pages.close(this)
                 callbacks.onClose.forEach { it(this) }
                 callbacks.clear()
             }

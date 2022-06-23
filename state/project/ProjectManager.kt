@@ -53,7 +53,7 @@ class ProjectManager(
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager,
     internal val client: ClientState,
-    internal val resource: PageManager
+    internal val pages: PageManager
 ) {
 
     class CreateItemDialog : DialogManager() {

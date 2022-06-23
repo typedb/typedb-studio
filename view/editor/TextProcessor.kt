@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.project.FileState
@@ -108,7 +108,7 @@ internal interface TextProcessor {
         }
 
         private fun mayDisplayWarning() {
-            file?.path?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
+            file?.path?.let { StudioState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
         }
 
         private fun displayWarningOnStartTyping(): Insertion? {

@@ -69,7 +69,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.project.FileState
@@ -167,7 +167,7 @@ object TextEditor {
         file.onDiskChangeContent {
             editor.reloadContent(it)
             editor.processor.clearHistory()
-            GlobalState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
+            StudioState.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
         }
         file.onDiskChangePermission {
             editor.reloadContent(it)
@@ -186,7 +186,7 @@ object TextEditor {
             editor.toolbar.processor = newProcessor
             editor.handler.processor = newProcessor
             editor.processor = newProcessor
-            GlobalState.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, it.path)
+            StudioState.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, it.path)
         }
     }
 
@@ -266,7 +266,7 @@ object TextEditor {
     @Composable
     fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
-        val textScale = GlobalState.editor.scale
+        val textScale = StudioState.editor.scale
         val density = LocalDensity.current.density
         val fontSize = ((state.font.fontSize.value * textScale * 100).roundToInt() / 100f).sp
         val fontStyle = state.font.copy(color = Theme.studio.onBackground, fontSize = fontSize)

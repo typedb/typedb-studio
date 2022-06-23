@@ -55,7 +55,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -298,7 +298,7 @@ sealed class TypePage(
     @Composable
     private fun OwnsAttributeTypeAddition() {
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
-        val attributeTypeList = GlobalState.schema.rootAttributeType?.subtypes
+        val attributeTypeList = StudioState.schema.rootAttributeType?.subtypes
             ?.filter { !type.ownsAttributeTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
@@ -318,7 +318,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.SELECT_ATTRIBUTE_TYPE,
-                    onExpand = { GlobalState.schema.rootAttributeType?.loadSubtypesRecursively() },
+                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadProperties() },
                     displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -391,7 +391,7 @@ sealed class TypePage(
     @Composable
     private fun PlaysRoleTypeAddition() {
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
-        val roleTypeList = GlobalState.schema.rootRelationType?.subtypes
+        val roleTypeList = StudioState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
             ?.filter { !type.playsRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
@@ -410,7 +410,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = roleType,
                     placeholder = Label.SELECT_ROLE_TYPE,
-                    onExpand = { GlobalState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadProperties() },
                     displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -484,11 +484,11 @@ sealed class TypePage(
         Form.TextButton(
             text = Label.EXPORT,
             leadingIcon = Form.IconArg(Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE),
-            enabled = GlobalState.project.current != null,
+            enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
             type.exportSyntax { syntax ->
-                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
                 }
@@ -536,7 +536,7 @@ sealed class TypePage(
         override var type: TypeState.Entity, coroutineScope: CoroutineScope
     ) : TypePage(type, false, coroutineScope) {
 
-        override fun updateResource(pageable: Pageable) {
+        override fun updatePageable(pageable: Pageable) {
             type = pageable as TypeState.Entity
         }
 
@@ -555,7 +555,7 @@ sealed class TypePage(
         override var type: TypeState.Relation, coroutineScope: CoroutineScope
     ) : TypePage(type, type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResource(pageable: Pageable) {
+        override fun updatePageable(pageable: Pageable) {
             type = pageable as TypeState.Relation
         }
 
@@ -583,7 +583,7 @@ sealed class TypePage(
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
             val overridableTypeList = type.supertype?.relatesRoleTypes
-                ?.filter { GlobalState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
+                ?.filter { StudioState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
             val isRelatable = isEditable && roleType.isNotEmpty()
@@ -627,7 +627,7 @@ sealed class TypePage(
         override var type: TypeState.Attribute, coroutineScope: CoroutineScope
     ) : TypePage(type, type.ownsAttributeTypes.isNotEmpty() || type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResource(pageable: Pageable) {
+        override fun updatePageable(pageable: Pageable) {
             type = pageable as TypeState.Attribute
         }
 

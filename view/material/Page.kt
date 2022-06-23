@@ -43,7 +43,7 @@ abstract class Page {
     protected abstract val hasSecondary: Boolean
     abstract val icon: IconArg
 
-    abstract fun updateResource(pageable: Pageable)
+    abstract fun updatePageable(pageable: Pageable)
 
     @Composable
     abstract fun PrimaryContent()

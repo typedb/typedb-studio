@@ -48,7 +48,7 @@ import mu.KotlinLogging
 @OptIn(ExperimentalTime::class)
 class SchemaManager(
     private val session: SessionState,
-    internal val resource: PageManager,
+    internal val pages: PageManager,
     internal val notificationMgr: NotificationManager
 ) : Navigable<TypeState.Thing> {
 

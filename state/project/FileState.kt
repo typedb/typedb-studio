@@ -120,11 +120,11 @@ class FileState internal constructor(
             callbacks.beforeRun.forEach { it(this) }
             return content.joinToString("\n")
         }
-    override var runner: RunnerManager = RunnerManager()
+    override var runners: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = fileType.isRunnable
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
-    override val isUnsavedResource: Boolean get() = parent == projectMgr.unsavedFilesDir
+    override val isUnsavedPageable: Boolean get() = parent == projectMgr.unsavedFilesDir
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
@@ -155,7 +155,7 @@ class FileState internal constructor(
     }
 
     private fun computeWindowTitle(path: Path, projectMgr: ProjectManager): String {
-        return if (isUnsavedResource) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
+        return if (isUnsavedPageable) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
@@ -167,7 +167,7 @@ class FileState internal constructor(
             readContent()
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
-            projectMgr.resource.opened(this, index)
+            projectMgr.pages.opened(this, index)
             activate()
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
@@ -179,7 +179,7 @@ class FileState internal constructor(
     override fun activate() {
         assert(isOpen) { "Only opened files can be activated" }
         if (watchFileSystem.compareAndSet(false, true)) launchWatcherCoroutine()
-        projectMgr.resource.active(this)
+        projectMgr.pages.active(this)
     }
 
     override fun deactivate() {
@@ -188,7 +188,7 @@ class FileState internal constructor(
 
     override fun mayOpenAndRun(content: String) {
         if (!isRunnable || (!isOpen && !tryOpen())) return
-        projectMgr.client.runner(content)?.let { runner.launch(it) }
+        projectMgr.client.runner(content)?.let { runners.launch(it) }
     }
 
     internal fun tryRename(newName: String): FileState? {
@@ -197,12 +197,12 @@ class FileState internal constructor(
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
-            val clonedRunner = runner.clone()
+            val clonedRunner = runners.clone()
             val clonedCallbacks = callbacks.clone()
             close()
             movePathTo(newPath)
             find(newPath)?.asFile()?.also {
-                it.runner = clonedRunner
+                it.runners = clonedRunner
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
@@ -213,13 +213,13 @@ class FileState internal constructor(
 
     internal fun trySaveTo(newPath: Path, overwrite: Boolean): FileState? {
         return try {
-            val clonedRunner = runner.clone()
+            val clonedRunner = runners.clone()
             val clonedCallbacks = callbacks.clone()
             close()
             if (overwrite && newPath.exists()) find(newPath)?.delete()
             movePathTo(newPath, overwrite)
             find(newPath)?.asFile()?.also {
-                it.runner = clonedRunner
+                it.runners = clonedRunner
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
@@ -291,7 +291,7 @@ class FileState internal constructor(
     override fun initiateRename() {
         saveContent()
         // currentIndex must be computed before passing into lambda
-        val currentIndex = if (isOpen) projectMgr.resource.opened.indexOf(this) else -1
+        val currentIndex = if (isOpen) projectMgr.pages.opened.indexOf(this) else -1
         projectMgr.renameFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
     }
 
@@ -305,9 +305,9 @@ class FileState internal constructor(
 
     private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean) {
         saveContent()
-        if (isUnsavedResource || isMove) {
+        if (isUnsavedPageable || isMove) {
             // currentIndex must be computed before passing into lambda
-            val currentIndex = if (isOpen && reopen) projectMgr.resource.opened.indexOf(this) else -1
+            val currentIndex = if (isOpen && reopen) projectMgr.pages.opened.indexOf(this) else -1
             projectMgr.saveFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
         }
     }
@@ -331,9 +331,9 @@ class FileState internal constructor(
 
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
-            runner.close()
+            runners.close()
             watchFileSystem.set(false)
-            projectMgr.resource.close(this)
+            projectMgr.pages.close(this)
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()
         }

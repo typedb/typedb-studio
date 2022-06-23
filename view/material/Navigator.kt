@@ -68,7 +68,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.View.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.common.util.Message.View.Companion.UNEXPECTED_ERROR
@@ -272,7 +272,7 @@ object Navigator {
                     } while (root == container)
                 } catch (e: CancellationException) {
                 } catch (e: java.lang.Exception) {
-                    GlobalState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
+                    StudioState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
                 }
             }
         }
@@ -292,7 +292,7 @@ object Navigator {
             }
             isExpanding.set(false)
             if (!queue.isEmpty() && i == MAX_ITEM_EXPANDED) {
-                GlobalState.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
+                StudioState.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
         }
 

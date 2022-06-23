@@ -32,8 +32,8 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
-import com.vaticle.typedb.studio.state.GlobalState.notification
+import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.StudioState.notification
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -87,32 +87,32 @@ object ProjectDialog {
 
     @Composable
     fun MayShowDialogs(window: ComposeWindow) {
-        if (GlobalState.project.createItemDialog.isOpen) CreatePath()
-        if (GlobalState.project.openProjectDialog.isOpen) OpenProject()
-        if (GlobalState.project.moveDirectoryDialog.isOpen) MoveDirectory()
-        if (GlobalState.project.renameDirectoryDialog.isOpen) RenameDirectory()
-        if (GlobalState.project.renameFileDialog.isOpen) RenameFile()
-        if (GlobalState.project.saveFileDialog.isOpen) SaveFile(window)
+        if (StudioState.project.createItemDialog.isOpen) CreatePath()
+        if (StudioState.project.openProjectDialog.isOpen) OpenProject()
+        if (StudioState.project.moveDirectoryDialog.isOpen) MoveDirectory()
+        if (StudioState.project.renameDirectoryDialog.isOpen) RenameDirectory()
+        if (StudioState.project.renameFileDialog.isOpen) RenameFile()
+        if (StudioState.project.saveFileDialog.isOpen) SaveFile(window)
     }
 
     @Composable
     private fun OpenProject() {
         val formState = PathForm(
-            initField = GlobalState.appData.project.path?.toString() ?: "",
-            onCancel = { GlobalState.project.openProjectDialog.close() },
+            initField = StudioState.appData.project.path?.toString() ?: "",
+            onCancel = { StudioState.project.openProjectDialog.close() },
             onSubmit = { dir ->
-                val previous = GlobalState.project.current
-                if (GlobalState.project.tryOpenProject(Path(dir))) {
-                    if (previous != GlobalState.project.current) {
+                val previous = StudioState.project.current
+                if (StudioState.project.tryOpenProject(Path(dir))) {
+                    if (previous != StudioState.project.current) {
                         previous?.close()
-                        GlobalState.project.unsavedFiles().forEach { it.tryOpen() }
-                        GlobalState.appData.project.path = GlobalState.project.current!!.path
+                        StudioState.project.unsavedFiles().forEach { it.tryOpen() }
+                        StudioState.appData.project.path = StudioState.project.current!!.path
                     }
                 }
             }
         )
         SelectDirectoryDialog(
-            dialogState = GlobalState.project.openProjectDialog,
+            dialogState = StudioState.project.openProjectDialog,
             formState = formState,
             title = Label.OPEN_PROJECT_DIRECTORY,
             message = Sentence.SELECT_DIRECTORY_FOR_PROJECT,
@@ -122,14 +122,14 @@ object ProjectDialog {
 
     @Composable
     private fun MoveDirectory() {
-        val directory = GlobalState.project.moveDirectoryDialog.directory!!
+        val directory = StudioState.project.moveDirectoryDialog.directory!!
         val state = PathForm(
             initField = directory.path.parent.toString(),
-            onCancel = { GlobalState.project.moveDirectoryDialog.close() },
-            onSubmit = { GlobalState.project.tryMoveDirectory(directory, Path(it)) }
+            onCancel = { StudioState.project.moveDirectoryDialog.close() },
+            onSubmit = { StudioState.project.tryMoveDirectory(directory, Path(it)) }
         )
         SelectDirectoryDialog(
-            dialogState = GlobalState.project.moveDirectoryDialog,
+            dialogState = StudioState.project.moveDirectoryDialog,
             formState = state,
             title = Label.MOVE_DIRECTORY,
             message = Sentence.SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER.format(directory.path),
@@ -203,7 +203,7 @@ object ProjectDialog {
 
     @Composable
     private fun CreatePath() {
-        when (GlobalState.project.createItemDialog.type!!) {
+        when (StudioState.project.createItemDialog.type!!) {
             DIRECTORY -> CreateDirectory()
             FILE -> CreateFile()
         }
@@ -212,14 +212,14 @@ object ProjectDialog {
     @Composable
     private fun CreateDirectory() {
         CreateItem(Label.CREATE_DIRECTORY, Sentence.CREATE_DIRECTORY, { it.nextUntitledDirName() }) { parent, name ->
-            GlobalState.project.tryCreateDirectory(parent, name)
+            StudioState.project.tryCreateDirectory(parent, name)
         }
     }
 
     @Composable
     private fun CreateFile() {
         CreateItem(Label.CREATE_FILE, Sentence.CREATE_FILE, { it.nextUntitledFileName() }) { parent, name ->
-            GlobalState.project.tryCreateFile(parent, name)
+            StudioState.project.tryCreateFile(parent, name)
         }
     }
 
@@ -227,7 +227,7 @@ object ProjectDialog {
     private fun CreateItem(
         title: String, message: String, initNameFn: (DirectoryState) -> String, onSubmit: (DirectoryState, String) -> Unit
     ) {
-        val dialogState = GlobalState.project.createItemDialog
+        val dialogState = StudioState.project.createItemDialog
         val parent = dialogState.parent!!
         val formState = remember {
             PathForm(
@@ -241,14 +241,14 @@ object ProjectDialog {
 
     @Composable
     private fun RenameDirectory() {
-        val dialogState = GlobalState.project.renameDirectoryDialog
+        val dialogState = StudioState.project.renameDirectoryDialog
         val directory = dialogState.directory!!
         val message = Sentence.RENAME_DIRECTORY.format(directory)
         val formState = remember {
             PathForm(
                 initField = directory.name,
                 onCancel = { dialogState.close() },
-                onSubmit = { GlobalState.project.tryRenameDirectory(directory, it) }
+                onSubmit = { StudioState.project.tryRenameDirectory(directory, it) }
             )
         }
         PathNamingDialog(dialogState, formState, Label.RENAME_DIRECTORY, message, Label.RENAME)
@@ -256,14 +256,14 @@ object ProjectDialog {
 
     @Composable
     private fun RenameFile() {
-        val dialogState = GlobalState.project.renameFileDialog
+        val dialogState = StudioState.project.renameFileDialog
         val file = dialogState.file!!
         val message = Sentence.RENAME_FILE.format(file)
         val formState = remember {
             PathForm(
                 initField = file.name,
                 onCancel = { dialogState.close() },
-                onSubmit = { GlobalState.project.tryRenameFile(file, it) }
+                onSubmit = { StudioState.project.tryRenameFile(file, it) }
             )
         }
         PathNamingDialog(dialogState, formState, Label.RENAME_FILE, message, Label.RENAME)
@@ -297,16 +297,16 @@ object ProjectDialog {
 
     @Composable
     private fun SaveFile(window: ComposeWindow) = coroutineScope.launchAndHandle(notification, LOGGER) {
-        val projectFile = GlobalState.project.saveFileDialog.file!!
+        val projectFile = StudioState.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
-            directory = GlobalState.project.current?.path.toString()
+            directory = StudioState.project.current?.path.toString()
             file = projectFile.name
             isMultipleMode = false
             isVisible = true
         }
         fileDialog.directory?.let {
             val newPath = Path(it).resolve(fileDialog.file)
-            GlobalState.project.trySaveFileTo(projectFile, newPath, true)
-        } ?: GlobalState.project.saveFileDialog.close()
+            StudioState.project.trySaveFileTo(projectFile, newPath, true)
+        } ?: StudioState.project.saveFileDialog.close()
     }
 }

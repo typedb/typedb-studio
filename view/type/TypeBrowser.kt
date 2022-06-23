@@ -30,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
@@ -49,13 +49,13 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP
-    override val isActive: Boolean get() = GlobalState.client.isConnected && GlobalState.client.session.isOpen
+    override val isActive: Boolean get() = StudioState.client.isConnected && StudioState.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
     override fun Content() {
-        val client = GlobalState.client
-        val schema = GlobalState.schema
+        val client = StudioState.client
+        val schema = StudioState.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
         else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
@@ -65,13 +65,13 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
     @Composable
     private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
-            container = GlobalState.schema,
+            container = StudioState.schema,
             title = Label.TYPE_BROWSER,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
             // TODO: contextMenuFn = { contextMenuItems(it) }
         ) { it.item.tryOpen() }
-        GlobalState.schema.onRootsUpdated = { navState.reloadEntries() }
+        StudioState.schema.onRootsUpdated = { navState.reloadEntries() }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
@@ -81,7 +81,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
-        GlobalState.schema.refreshReadTx()
+        StudioState.schema.refreshReadTx()
         navState.reloadEntries()
     }
 
@@ -95,12 +95,12 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
     private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
         return IconButtonArg(
             icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
-            enabled = GlobalState.project.current != null,
+            enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
         ) {
-            GlobalState.schema.exportTypeSchema { schema ->
+            StudioState.schema.exportTypeSchema { schema ->
                 refresh(navState)
-                GlobalState.project.tryCreateUntitledFile()?.let { file ->
+                StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)
                     file.tryOpen()
                 }
@@ -120,7 +120,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
                 leadingIcon = Form.IconArg(Icon.Code.SERVER)
-            ) { GlobalState.client.connectServerDialog.open() }
+            ) { StudioState.client.connectServerDialog.open() }
         }
     }
 
@@ -142,7 +142,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(is
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
                 leadingIcon = Form.IconArg(Icon.Code.DATABASE)
-            ) { GlobalState.client.selectDBDialog.open() }
+            ) { StudioState.client.selectDBDialog.open() }
         }
     }
 }
