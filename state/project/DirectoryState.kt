@@ -109,11 +109,11 @@ class DirectoryState internal constructor(
     }
 
     fun initiateCreateDirectory(onSuccess: () -> Unit) {
-        projectMgr.createItemDialog.open(this, Type.DIRECTORY, onSuccess)
+        projectMgr.createPathDialog.open(this, Type.DIRECTORY, onSuccess)
     }
 
     fun initiateCreateFile(onSuccess: () -> Unit) {
-        projectMgr.createItemDialog.open(this, Type.FILE, onSuccess)
+        projectMgr.createPathDialog.open(this, Type.FILE, onSuccess)
     }
 
     override fun initiateRename() {
@@ -133,7 +133,7 @@ class DirectoryState internal constructor(
     }
 
     internal fun createDirectory(name: String): DirectoryState? {
-        return createItem(
+        return createPath(
             newPath = path.resolve(name),
             failureMessage = FAILED_TO_CREATE_DIRECTORY,
             createFn = { it.createDirectory() }
@@ -141,14 +141,14 @@ class DirectoryState internal constructor(
     }
 
     internal fun createFile(name: String): FileState? {
-        return createItem(
+        return createPath(
             newPath = path.resolve(name),
             failureMessage = FAILED_TO_CREATE_FILE,
             createFn = { it.createFile() }
         )?.asFile()
     }
 
-    private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
+    private fun createPath(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
         return if (newPath.exists()) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
@@ -198,8 +198,8 @@ class DirectoryState internal constructor(
         }
     }
 
-    fun remove(item: PathState) {
-        entries = entries.filter { it != item }
+    fun remove(path: PathState) {
+        entries = entries.filter { it != path }
     }
 
     override fun delete() {

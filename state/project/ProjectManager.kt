@@ -56,7 +56,7 @@ class ProjectManager(
     internal val pages: PageManager
 ) {
 
-    class CreateItemDialog : DialogManager() {
+    class CreatePathDialog : DialogManager() {
 
         var parent: DirectoryState? by mutableStateOf(null)
         var type: PathState.Type? by mutableStateOf(null)
@@ -81,9 +81,9 @@ class ProjectManager(
 
         var directory: DirectoryState? by mutableStateOf(null)
 
-        internal fun open(item: DirectoryState) {
+        internal fun open(path: DirectoryState) {
             isOpen = true
-            this.directory = item
+            this.directory = path
         }
 
         override fun close() {
@@ -122,7 +122,7 @@ class ProjectManager(
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
-    val createItemDialog = CreateItemDialog()
+    val createPathDialog = CreatePathDialog()
     val moveDirectoryDialog = ModifyDirectoryDialog()
     val renameDirectoryDialog = ModifyDirectoryDialog()
     val renameFileDialog = ModifyFileDialog()
@@ -177,17 +177,17 @@ class ProjectManager(
     }
 
     fun tryCreateFile(parent: DirectoryState, newFileName: String) {
-        tryCreateItem { parent.createFile(newFileName) }
+        tryCreatePath { parent.createFile(newFileName) }
     }
 
     fun tryCreateDirectory(parent: DirectoryState, newDirectoryName: String) {
-        tryCreateItem { parent.createDirectory(newDirectoryName) }
+        tryCreatePath { parent.createDirectory(newDirectoryName) }
     }
 
-    private fun tryCreateItem(createFn: () -> PathState?) {
+    private fun tryCreatePath(createFn: () -> PathState?) {
         createFn()?.let {
-            createItemDialog.onSuccess?.let { fn -> fn() }
-            createItemDialog.close()
+            createPathDialog.onSuccess?.let { fn -> fn() }
+            createPathDialog.close()
             onContentChange?.let { fn -> fn() }
         }
     }

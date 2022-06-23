@@ -87,7 +87,7 @@ object ProjectDialog {
 
     @Composable
     fun MayShowDialogs(window: ComposeWindow) {
-        if (StudioState.project.createItemDialog.isOpen) CreatePath()
+        if (StudioState.project.createPathDialog.isOpen) CreatePath()
         if (StudioState.project.openProjectDialog.isOpen) OpenProject()
         if (StudioState.project.moveDirectoryDialog.isOpen) MoveDirectory()
         if (StudioState.project.renameDirectoryDialog.isOpen) RenameDirectory()
@@ -203,7 +203,7 @@ object ProjectDialog {
 
     @Composable
     private fun CreatePath() {
-        when (StudioState.project.createItemDialog.type!!) {
+        when (StudioState.project.createPathDialog.type!!) {
             DIRECTORY -> CreateDirectory()
             FILE -> CreateFile()
         }
@@ -230,7 +230,7 @@ object ProjectDialog {
         initNameFn: (DirectoryState) -> String,
         onSubmit: (DirectoryState, String) -> Unit
     ) {
-        val dialogState = StudioState.project.createItemDialog
+        val dialogState = StudioState.project.createPathDialog
         val parent = dialogState.parent!!
         val formState = remember {
             PathForm(
