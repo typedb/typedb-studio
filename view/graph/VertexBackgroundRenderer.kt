@@ -33,9 +33,9 @@ sealed class VertexBackgroundRenderer(
 ) {
     companion object {
         private const val CORNER_RADIUS = 5f
-        private const val HOVERED_ALPHA = .675f
+        private const val HOVERED_ALPHA = 1f
         private const val BACKGROUND_ALPHA = .25f
-        private const val HOVERED_BACKGROUND_ALPHA = .175f
+        private const val HOVERED_BACKGROUND_ALPHA = .25f
 
         fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
             is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, graphArea, ctx)
