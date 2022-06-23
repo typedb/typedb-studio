@@ -27,7 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.material.Form.IconArg
 import com.vaticle.typedb.studio.view.material.Frame.createFrameState
@@ -43,7 +43,7 @@ abstract class Page {
     protected abstract val hasSecondary: Boolean
     abstract val icon: IconArg
 
-    abstract fun updateResource(resource: Resource)
+    abstract fun updateResource(pageable: Pageable)
 
     @Composable
     abstract fun PrimaryContent()

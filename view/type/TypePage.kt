@@ -58,7 +58,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
@@ -536,8 +536,8 @@ sealed class TypePage(
         override var type: TypeState.Entity, coroutineScope: CoroutineScope
     ) : TypePage(type, false, coroutineScope) {
 
-        override fun updateResource(resource: Resource) {
-            type = resource as TypeState.Entity
+        override fun updateResource(pageable: Pageable) {
+            type = pageable as TypeState.Entity
         }
 
         @Composable
@@ -555,8 +555,8 @@ sealed class TypePage(
         override var type: TypeState.Relation, coroutineScope: CoroutineScope
     ) : TypePage(type, type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResource(resource: Resource) {
-            type = resource as TypeState.Relation
+        override fun updateResource(pageable: Pageable) {
+            type = pageable as TypeState.Relation
         }
 
         @Composable
@@ -627,8 +627,8 @@ sealed class TypePage(
         override var type: TypeState.Attribute, coroutineScope: CoroutineScope
     ) : TypePage(type, type.ownsAttributeTypes.isNotEmpty() || type.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
-        override fun updateResource(resource: Resource) {
-            type = resource as TypeState.Attribute
+        override fun updateResource(pageable: Pageable) {
+            type = pageable as TypeState.Attribute
         }
 
         @Composable

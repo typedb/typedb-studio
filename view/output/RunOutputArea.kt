@@ -39,7 +39,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.connection.QueryRunner
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.PANEL_BAR_SPACING
@@ -57,7 +57,7 @@ object RunOutputArea {
 
     const val DEFAULT_OPEN = false
 
-    class State constructor(var resource: Resource.Runnable, private val paneState: Frame.PaneState) {
+    class State constructor(var pageable: Pageable.Runnable, private val paneState: Frame.PaneState) {
 
         internal var isOpen: Boolean by mutableStateOf(DEFAULT_OPEN)
         internal val runnerTabs = Tabs.Horizontal.State<QueryRunner>()
@@ -65,7 +65,7 @@ object RunOutputArea {
         private var unfreezeSize: Dp? by mutableStateOf(null)
 
         init {
-            resource.runner.onLaunch { toggle(true) }
+            pageable.runner.onLaunch { toggle(true) }
         }
 
         @Composable
@@ -104,7 +104,7 @@ object RunOutputArea {
             }
             if (state.isOpen) {
                 Separator.Horizontal()
-                state.resource.runner.active?.let { runner ->
+                state.pageable.runner.active?.let { runner ->
                     OutputGroup(state, runner, Modifier.fillMaxSize())
                 }
             }
@@ -123,9 +123,9 @@ object RunOutputArea {
 
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
-        val runnerMgr = state.resource.runner
+        val runnerMgr = state.pageable.runner
         fun runnerName(runner: QueryRunner): String {
-            return "${state.resource.name} (${runnerMgr.numberOf(runner)})"
+            return "${state.pageable.name} (${runnerMgr.numberOf(runner)})"
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))

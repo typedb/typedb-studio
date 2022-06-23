@@ -16,11 +16,11 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.resource
+package com.vaticle.typedb.studio.state.page
 
 import com.vaticle.typedb.studio.state.connection.RunnerManager
 
-interface Resource {
+interface Pageable {
 
     val name: String
     val windowTitle: String
@@ -42,9 +42,9 @@ interface Resource {
 
     fun deactivate()
 
-    fun onClose(function: (Resource) -> Unit)
+    fun onClose(function: (Pageable) -> Unit)
 
-    fun onReopen(function: (Resource) -> Unit)
+    fun onReopen(function: (Pageable) -> Unit)
 
     fun execBeforeClose()
 
@@ -56,7 +56,7 @@ interface Resource {
 
     fun delete()
 
-    interface Runnable : Resource {
+    interface Runnable : Pageable {
 
         val runContent: String
         val runner: RunnerManager

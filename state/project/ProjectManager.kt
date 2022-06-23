@@ -37,7 +37,7 @@ import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.connection.ClientState
-import com.vaticle.typedb.studio.state.resource.ResourceManager
+import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
@@ -53,7 +53,7 @@ class ProjectManager(
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager,
     internal val client: ClientState,
-    internal val resource: ResourceManager
+    internal val resource: PageManager
 ) {
 
     class CreateItemDialog : DialogManager() {

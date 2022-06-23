@@ -32,8 +32,8 @@ import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.connection.SessionState
-import com.vaticle.typedb.studio.state.resource.Navigable
-import com.vaticle.typedb.studio.state.resource.ResourceManager
+import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -48,7 +48,7 @@ import mu.KotlinLogging
 @OptIn(ExperimentalTime::class)
 class SchemaManager(
     private val session: SessionState,
-    internal val resource: ResourceManager,
+    internal val resource: PageManager,
     internal val notificationMgr: NotificationManager
 ) : Navigable<TypeState.Thing> {
 

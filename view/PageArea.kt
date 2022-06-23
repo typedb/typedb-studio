@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.resource.Resource
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -62,8 +62,8 @@ object PageArea {
 
     internal class State {
 
-        private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
-        internal val tabsState = Tabs.Horizontal.State<Resource>()
+        private val openedPages: MutableMap<Pageable, Page> = mutableMapOf()
+        internal val tabsState = Tabs.Horizontal.State<Pageable>()
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -82,11 +82,11 @@ object PageArea {
         }
 
         @Composable
-        internal fun openedPage(resource: Resource): Page {
-            return openedPages.getOrPut(resource) {
-                val page = createPage(resource)
-                resource.onClose { openedPages.remove(it) }
-                resource.onReopen {
+        internal fun openedPage(pageable: Pageable): Page {
+            return openedPages.getOrPut(pageable) {
+                val page = createPage(pageable)
+                pageable.onClose { openedPages.remove(it) }
+                pageable.onReopen {
                     page.updateResource(it)
                     openedPages[it] = page
                 }
@@ -95,9 +95,9 @@ object PageArea {
         }
 
         @Composable
-        private fun createPage(resource: Resource) = when (resource) {
-            is File -> FilePage.create(resource)
-            is TypeState.Thing -> TypePage.create(resource)
+        private fun createPage(pageable: Pageable) = when (pageable) {
+            is File -> FilePage.create(pageable)
+            is TypeState.Thing -> TypePage.create(pageable)
             else -> throw IllegalStateException("Unrecognised resource type")
         }
 
@@ -125,53 +125,53 @@ object PageArea {
             return GlobalState.resource.active?.let { close(it) } ?: false
         }
 
-        internal fun close(resource: Resource, stopRunner: Boolean = false): Boolean {
-            resource.execBeforeClose()
+        internal fun close(pageable: Pageable, stopRunner: Boolean = false): Boolean {
+            pageable.execBeforeClose()
             fun closeFn() {
-                openedPages.remove(resource)
-                resource.close()
-                if (resource.isUnsavedResource) resource.delete()
+                openedPages.remove(pageable)
+                pageable.close()
+                if (pageable.isUnsavedResource) pageable.delete()
             }
-            if (resource.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
+            if (pageable.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
                 GlobalState.confirmation.submit(
                     title = Label.QUERY_IS_RUNNING,
                     message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
                     cancelLabel = Label.OK,
                 )
-            } else if (resource.needSaving) {
+            } else if (pageable.needSaving) {
                 GlobalState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
                     rejectLabel = Label.DELETE,
                     onReject = { closeFn() },
-                    onConfirm = { resource.initiateSave(reopen = false) }
+                    onConfirm = { pageable.initiateSave(reopen = false) }
                 )
             } else closeFn()
             return true
         }
 
-        internal fun contextMenuFn(resource: Resource): List<List<ContextMenu.Item>> {
+        internal fun contextMenuFn(pageable: Pageable): List<List<ContextMenu.Item>> {
             return listOf(
                 listOf(
-                    saveMenuItem(resource),
-                    closeMenuItem(resource)
+                    saveMenuItem(pageable),
+                    closeMenuItem(pageable)
                 )
             )
         }
 
-        private fun closeMenuItem(resource: Resource) = ContextMenu.Item(
+        private fun closeMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.CLOSE,
             icon = Icon.Code.XMARK,
             info = "${KeyMapper.CURRENT.modKey} + W"
-        ) { close(resource) }
+        ) { close(pageable) }
 
-        private fun saveMenuItem(resource: Resource) = ContextMenu.Item(
+        private fun saveMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.SAVE,
             icon = Icon.Code.FLOPPY_DISK,
             info = "${KeyMapper.CURRENT.modKey} + S",
-            enabled = resource.hasUnsavedChanges || resource.isUnsavedResource
-        ) { resource.initiateSave() }
+            enabled = pageable.hasUnsavedChanges || pageable.isUnsavedResource
+        ) { pageable.initiateSave() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -208,17 +208,17 @@ object PageArea {
     }
 
     @Composable
-    private fun tabLabel(resource: Resource): AnnotatedString {
-        return if (resource.isWritable) {
+    private fun tabLabel(pageable: Pageable): AnnotatedString {
+        return if (pageable.isWritable) {
             val changedIndicator = " *"
-            AnnotatedString(resource.name) + when {
-                resource.needSaving -> AnnotatedString(changedIndicator)
+            AnnotatedString(pageable.name) + when {
+                pageable.needSaving -> AnnotatedString(changedIndicator)
                 else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {
             val builder = AnnotatedString.Builder()
             val style = SpanStyle(color = Theme.studio.onPrimary.copy(alpha = 0.6f))
-            builder.append(resource.name)
+            builder.append(pageable.name)
             builder.pushStyle(style)
             builder.append(" -- (${Label.READ_ONLY.lowercase()})")
             builder.pop()

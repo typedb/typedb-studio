@@ -30,7 +30,7 @@ kt_jvm_library(
         "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
-        "//state/resource:resource",
+        "//state/page:page",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

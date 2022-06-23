@@ -34,7 +34,7 @@ import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.connection.RunnerManager
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -62,7 +62,7 @@ class File internal constructor(
     path: Path,
     parent: Directory,
     projectMgr: ProjectManager
-) : ProjectItem(parent, path, Type.FILE, projectMgr), Resource.Runnable {
+) : ProjectItem(parent, path, Type.FILE, projectMgr), Pageable.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -136,11 +136,11 @@ class File internal constructor(
 
     fun onDiskChangeContent(function: (File) -> Unit) = callbacks.onDiskChangeContent.put(function)
     fun onDiskChangePermission(function: (File) -> Unit) = callbacks.onDiskChangePermission.put(function)
-    fun beforeRun(function: (Resource) -> Unit) = callbacks.beforeRun.put(function)
-    fun beforeSave(function: (Resource) -> Unit) = callbacks.beforeSave.put(function)
-    fun beforeClose(function: (Resource) -> Unit) = callbacks.beforeClose.put(function)
-    override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
-    override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
+    fun beforeRun(function: (Pageable) -> Unit) = callbacks.beforeRun.put(function)
+    fun beforeSave(function: (Pageable) -> Unit) = callbacks.beforeSave.put(function)
+    fun beforeClose(function: (Pageable) -> Unit) = callbacks.beforeClose.put(function)
+    override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
+    override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
     override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
     override fun tryOpen(): Boolean = tryOpen(null)
     override fun reloadEntries() {}

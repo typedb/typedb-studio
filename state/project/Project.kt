@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.util.PreferenceManager
-import com.vaticle.typedb.studio.state.resource.Navigable
+import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path
 
 class Project internal constructor(

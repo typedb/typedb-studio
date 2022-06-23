@@ -24,7 +24,7 @@ package(default_visibility = [
 ])
 
 kt_jvm_library(
-    name = "resource",
+    name = "page",
     srcs = glob(["*.kt"]),
     deps = [
         "//state/app:app",

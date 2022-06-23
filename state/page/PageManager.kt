@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.resource
+package com.vaticle.typedb.studio.state.page
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -24,35 +24,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mu.KotlinLogging
 
-class ResourceManager {
+class PageManager {
 
-    val opened: MutableList<Resource> = mutableStateListOf()
-    var active: Resource? by mutableStateOf(null); private set
-    val next: Resource get() = opened[(opened.indexOf(active) + 1).mod(opened.size)]
-    val previous: Resource get() = opened[(opened.indexOf(active) - 1).mod(opened.size)]
+    val opened: MutableList<Pageable> = mutableStateListOf()
+    var active: Pageable? by mutableStateOf(null); private set
+    val next: Pageable get() = opened[(opened.indexOf(active) + 1).mod(opened.size)]
+    val previous: Pageable get() = opened[(opened.indexOf(active) - 1).mod(opened.size)]
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    fun opened(resource: Resource, index: Int? = null) {
+    fun opened(pageable: Pageable, index: Int? = null) {
         val i = index ?: opened.size
-        if (resource !in opened) opened.add(i.coerceIn(0, (opened.size).coerceAtLeast(0)), resource)
-        active(resource)
+        if (pageable !in opened) opened.add(i.coerceIn(0, (opened.size).coerceAtLeast(0)), pageable)
+        active(pageable)
     }
 
-    fun active(resource: Resource) {
-        if (active == resource) return
+    fun active(pageable: Pageable) {
+        if (active == pageable) return
         active?.deactivate()
-        active = resource
+        active = pageable
     }
 
-    fun close(resource: Resource) {
-        if (!opened.contains(resource)) return
+    fun close(pageable: Pageable) {
+        if (!opened.contains(pageable)) return
         val activeIndex = opened.indexOf(active)
-        val closingIndex = opened.indexOf(resource)
-        opened.remove(resource)
-        resource.close()
+        val closingIndex = opened.indexOf(pageable)
+        opened.remove(pageable)
+        pageable.close()
         val replacementIndex = when {
             activeIndex > closingIndex -> activeIndex - 1
             else -> closingIndex

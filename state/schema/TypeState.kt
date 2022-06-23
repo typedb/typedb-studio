@@ -31,8 +31,8 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
-import com.vaticle.typedb.studio.state.resource.Navigable
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -131,7 +131,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         name: String,
         hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Resource {
+    ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Pageable {
 
         private class Callbacks {
 
@@ -174,8 +174,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun execBeforeClose() {}
         override fun initiateSave(reopen: Boolean) {}
         override fun reloadEntries() = loadSubtypesExplicit()
-        override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
-        override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
+        override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
+        override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
         override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)
 
         override fun tryOpen(): Boolean {
