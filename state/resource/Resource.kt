@@ -42,21 +42,11 @@ interface Resource {
 
     fun deactivate()
 
-    fun beforeRun(function: (Resource) -> Unit)
-
-    fun beforeSave(function: (Resource) -> Unit)
-
-    fun beforeClose(function: (Resource) -> Unit)
-
     fun onClose(function: (Resource) -> Unit)
 
     fun onReopen(function: (Resource) -> Unit)
 
     fun execBeforeClose()
-
-    fun initiateRename()
-
-    fun initiateMove()
 
     fun initiateSave(reopen: Boolean = true)
 

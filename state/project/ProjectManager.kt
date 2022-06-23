@@ -195,7 +195,7 @@ class ProjectManager(
     fun tryRenameDirectory(directory: Directory, newName: String) {
         directory.tryRename(newName)?.let {
             renameDirectoryDialog.close()
-            onContentChange?.let { fn -> fn() }
+            onContentChange?.let { it() }
         }
     }
 
@@ -212,7 +212,7 @@ class ProjectManager(
         mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
             file.tryRename(newName)?.let { newFile ->
                 onSuccess?.let { it(newFile) }
-                onContentChange?.let { fn -> fn() }
+                onContentChange?.let { it() }
             }
         }
     }

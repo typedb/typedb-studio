@@ -171,12 +171,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         }
 
         override fun deactivate() {}
-        override fun beforeRun(function: (Resource) -> Unit) {}
-        override fun beforeSave(function: (Resource) -> Unit) {}
-        override fun beforeClose(function: (Resource) -> Unit) {}
         override fun execBeforeClose() {}
-        override fun initiateRename() {} // TODO
-        override fun initiateMove() {} // TODO
         override fun initiateSave(reopen: Boolean) {}
         override fun reloadEntries() = loadSubtypesExplicit()
         override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)

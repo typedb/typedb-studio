@@ -136,9 +136,9 @@ class File internal constructor(
 
     fun onDiskChangeContent(function: (File) -> Unit) = callbacks.onDiskChangeContent.put(function)
     fun onDiskChangePermission(function: (File) -> Unit) = callbacks.onDiskChangePermission.put(function)
-    override fun beforeRun(function: (Resource) -> Unit) = callbacks.beforeRun.put(function)
-    override fun beforeSave(function: (Resource) -> Unit) = callbacks.beforeSave.put(function)
-    override fun beforeClose(function: (Resource) -> Unit) = callbacks.beforeClose.put(function)
+    fun beforeRun(function: (Resource) -> Unit) = callbacks.beforeRun.put(function)
+    fun beforeSave(function: (Resource) -> Unit) = callbacks.beforeSave.put(function)
+    fun beforeClose(function: (Resource) -> Unit) = callbacks.beforeClose.put(function)
     override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
     override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
     override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
