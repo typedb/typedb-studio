@@ -28,12 +28,12 @@ class Project internal constructor(
     projectMgr: ProjectManager,
     preferenceMgr: PreferenceManager,
     notificationMgr: NotificationManager
-) : Navigable<ProjectItem> {
+) : Navigable<PathState> {
 
-    val directory: Directory = Directory(path, null, projectMgr)
+    val directory: DirectoryState = DirectoryState(path, null, projectMgr)
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
-    override val parent: Navigable<ProjectItem>? = null
+    override val parent: Navigable<PathState>? = null
     override val entries = listOf(directory)
     override val isExpandable: Boolean = true
     override val isBulkExpandable: Boolean = true
@@ -42,7 +42,7 @@ class Project internal constructor(
         directory.reloadEntries()
     }
 
-    override fun compareTo(other: Navigable<ProjectItem>): Int {
+    override fun compareTo(other: Navigable<PathState>): Int {
         return if (other is Project) directory.compareTo(other.directory)
         else -1
     }

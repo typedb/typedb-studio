@@ -45,29 +45,29 @@ import kotlin.io.path.name
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class Directory internal constructor(
+class DirectoryState internal constructor(
     path: Path,
-    parent: Directory?,
+    parent: DirectoryState?,
     projectMgr: ProjectManager
-) : ProjectItem(parent, path, Type.DIRECTORY, projectMgr) {
+) : PathState(parent, path, Type.DIRECTORY, projectMgr) {
 
     companion object {
         private const val UNTITLED = "Untitled"
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    override var entries: List<ProjectItem> = emptyList()
+    override var entries: List<PathState> = emptyList()
     override val isReadable: Boolean get() = path.isReadable()
     override val isWritable: Boolean get() = path.isWritable()
     override val isBulkExpandable: Boolean get() = !isProjectData
     override val isExpandable: Boolean = true
 
-    override fun asDirectory(): Directory {
+    override fun asDirectory(): DirectoryState {
         return this
     }
 
-    override fun asFile(): File {
-        throw TypeCastException(ILLEGAL_CAST.message(Directory::class.simpleName, File::class.simpleName))
+    override fun asFile(): FileState {
+        throw TypeCastException(ILLEGAL_CAST.message(DirectoryState::class.simpleName, FileState::class.simpleName))
     }
 
     override fun reloadEntries() {
@@ -79,13 +79,13 @@ class Directory internal constructor(
             val deleted = old - new
             val added = new - old
             entries.filter { deleted.contains(it.path) }.forEach { it.closeRecursive() }
-            entries = (entries.filter { !deleted.contains(it.path) } + added.map { projectItemOf(it) }).sorted()
+            entries = (entries.filter { !deleted.contains(it.path) } + added.map { pathStateOf(it) }).sorted()
         }
     }
 
-    private fun projectItemOf(it: Path): ProjectItem {
-        return if (it.isDirectory()) Directory(it, this, projectMgr)
-        else File(it, this, projectMgr)
+    private fun pathStateOf(path: Path): PathState {
+        return if (path.isDirectory()) DirectoryState(path, this, projectMgr)
+        else FileState(path, this, projectMgr)
     }
 
     fun nextUntitledDirName(): String {
@@ -132,7 +132,7 @@ class Directory internal constructor(
         )
     }
 
-    internal fun createDirectory(name: String): Directory? {
+    internal fun createDirectory(name: String): DirectoryState? {
         return createItem(
             newPath = path.resolve(name),
             failureMessage = FAILED_TO_CREATE_DIRECTORY,
@@ -140,7 +140,7 @@ class Directory internal constructor(
         )?.asDirectory()
     }
 
-    internal fun createFile(name: String): File? {
+    internal fun createFile(name: String): FileState? {
         return createItem(
             newPath = path.resolve(name),
             failureMessage = FAILED_TO_CREATE_FILE,
@@ -148,7 +148,7 @@ class Directory internal constructor(
         )?.asFile()
     }
 
-    private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): ProjectItem? {
+    private fun createItem(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
         return if (newPath.exists()) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
@@ -162,7 +162,7 @@ class Directory internal constructor(
         }
     }
 
-    internal fun tryRename(newName: String): Directory? {
+    internal fun tryRename(newName: String): DirectoryState? {
         val newPath = path.resolveSibling(newName)
         return if (parent?.contains(newName) == true) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
@@ -177,7 +177,7 @@ class Directory internal constructor(
         }
     }
 
-    internal fun tryMove(newParent: Path): Directory? {
+    internal fun tryMove(newParent: Path): DirectoryState? {
         val newPath = newParent.resolve(name)
         return if (newParent == path.parent) {
             projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
@@ -198,7 +198,7 @@ class Directory internal constructor(
         }
     }
 
-    fun remove(item: ProjectItem) {
+    fun remove(item: PathState) {
         entries = entries.filter { it != item }
     }
 

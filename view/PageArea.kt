@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
-import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -96,7 +96,7 @@ object PageArea {
 
         @Composable
         private fun createPage(pageable: Pageable) = when (pageable) {
-            is File -> FilePage.create(pageable)
+            is FileState -> FilePage.create(pageable)
             is TypeState.Thing -> TypePage.create(pageable)
             else -> throw IllegalStateException("Unrecognised resource type")
         }

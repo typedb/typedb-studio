@@ -39,9 +39,9 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchA
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.project.Directory
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
+import com.vaticle.typedb.studio.state.project.DirectoryState
+import com.vaticle.typedb.studio.state.project.PathState.Type.DIRECTORY
+import com.vaticle.typedb.studio.state.project.PathState.Type.FILE
 import com.vaticle.typedb.studio.view.material.Dialog
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.Field
@@ -60,7 +60,7 @@ import mu.KotlinLogging
 
 object ProjectDialog {
 
-    private class ProjectItemForm constructor(
+    private class PathForm constructor(
         initField: String, val onCancel: () -> Unit, val onSubmit: (String) -> Unit
     ) : Form.State {
 
@@ -87,7 +87,7 @@ object ProjectDialog {
 
     @Composable
     fun MayShowDialogs(window: ComposeWindow) {
-        if (GlobalState.project.createItemDialog.isOpen) CreateProjectItem()
+        if (GlobalState.project.createItemDialog.isOpen) CreatePath()
         if (GlobalState.project.openProjectDialog.isOpen) OpenProject()
         if (GlobalState.project.moveDirectoryDialog.isOpen) MoveDirectory()
         if (GlobalState.project.renameDirectoryDialog.isOpen) RenameDirectory()
@@ -97,7 +97,7 @@ object ProjectDialog {
 
     @Composable
     private fun OpenProject() {
-        val formState = ProjectItemForm(
+        val formState = PathForm(
             initField = GlobalState.appData.project.path?.toString() ?: "",
             onCancel = { GlobalState.project.openProjectDialog.close() },
             onSubmit = { dir ->
@@ -123,7 +123,7 @@ object ProjectDialog {
     @Composable
     private fun MoveDirectory() {
         val directory = GlobalState.project.moveDirectoryDialog.directory!!
-        val state = ProjectItemForm(
+        val state = PathForm(
             initField = directory.path.parent.toString(),
             onCancel = { GlobalState.project.moveDirectoryDialog.close() },
             onSubmit = { GlobalState.project.tryMoveDirectory(directory, Path(it)) }
@@ -139,7 +139,7 @@ object ProjectDialog {
 
     @Composable
     private fun SelectDirectoryDialog(
-        dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
+        dialogState: DialogManager, formState: PathForm, title: String, message: String, submitLabel: String
     ) {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
@@ -150,7 +150,7 @@ object ProjectDialog {
     }
 
     @Composable
-    private fun SelectDirectoryField(state: ProjectItemForm, window: ComposeDialog, title: String) {
+    private fun SelectDirectoryField(state: PathForm, window: ComposeDialog, title: String) {
         val focusReq = remember { FocusRequester() }
         Field(label = Label.DIRECTORY) {
             Row {
@@ -170,14 +170,14 @@ object ProjectDialog {
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
-    private fun launchDirectorySelector(state: ProjectItemForm, parent: ComposeDialog, title: String) {
+    private fun launchDirectorySelector(state: PathForm, parent: ComposeDialog, title: String) {
         when (Property.OS.Current) {
             Property.OS.MACOS -> macOSDirectorySelector(state, parent, title)
             else -> otherOSDirectorySelector(state, title)
         }
     }
 
-    private fun macOSDirectorySelector(state: ProjectItemForm, parent: ComposeDialog, title: String) {
+    private fun macOSDirectorySelector(state: PathForm, parent: ComposeDialog, title: String) {
         val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
         fileDialog.apply {
             directory = state.field
@@ -187,7 +187,7 @@ object ProjectDialog {
         fileDialog.directory?.let { state.field = Path(it).resolve(fileDialog.file).toString() }
     }
 
-    private fun otherOSDirectorySelector(state: ProjectItemForm, title: String) {
+    private fun otherOSDirectorySelector(state: PathForm, title: String) {
         val directoryChooser = JFileChooser().apply {
             currentDirectory = Path(state.field).toFile()
             dialogTitle = title
@@ -202,7 +202,7 @@ object ProjectDialog {
     }
 
     @Composable
-    private fun CreateProjectItem() {
+    private fun CreatePath() {
         when (GlobalState.project.createItemDialog.type!!) {
             DIRECTORY -> CreateDirectory()
             FILE -> CreateFile()
@@ -225,18 +225,18 @@ object ProjectDialog {
 
     @Composable
     private fun CreateItem(
-        title: String, message: String, initNameFn: (Directory) -> String, onSubmit: (Directory, String) -> Unit
+        title: String, message: String, initNameFn: (DirectoryState) -> String, onSubmit: (DirectoryState, String) -> Unit
     ) {
         val dialogState = GlobalState.project.createItemDialog
         val parent = dialogState.parent!!
         val formState = remember {
-            ProjectItemForm(
+            PathForm(
                 initField = initNameFn(parent),
                 onCancel = { dialogState.close() },
                 onSubmit = { onSubmit(parent, it) }
             )
         }
-        ProjectItemNamingDialog(dialogState, formState, title, message.format(parent), Label.CREATE)
+        PathNamingDialog(dialogState, formState, title, message.format(parent), Label.CREATE)
     }
 
     @Composable
@@ -245,13 +245,13 @@ object ProjectDialog {
         val directory = dialogState.directory!!
         val message = Sentence.RENAME_DIRECTORY.format(directory)
         val formState = remember {
-            ProjectItemForm(
+            PathForm(
                 initField = directory.name,
                 onCancel = { dialogState.close() },
                 onSubmit = { GlobalState.project.tryRenameDirectory(directory, it) }
             )
         }
-        ProjectItemNamingDialog(dialogState, formState, Label.RENAME_DIRECTORY, message, Label.RENAME)
+        PathNamingDialog(dialogState, formState, Label.RENAME_DIRECTORY, message, Label.RENAME)
     }
 
     @Composable
@@ -260,29 +260,29 @@ object ProjectDialog {
         val file = dialogState.file!!
         val message = Sentence.RENAME_FILE.format(file)
         val formState = remember {
-            ProjectItemForm(
+            PathForm(
                 initField = file.name,
                 onCancel = { dialogState.close() },
                 onSubmit = { GlobalState.project.tryRenameFile(file, it) }
             )
         }
-        ProjectItemNamingDialog(dialogState, formState, Label.RENAME_FILE, message, Label.RENAME)
+        PathNamingDialog(dialogState, formState, Label.RENAME_FILE, message, Label.RENAME)
     }
 
     @Composable
-    private fun ProjectItemNamingDialog(
-        dialogState: DialogManager, formState: ProjectItemForm, title: String, message: String, submitLabel: String
+    private fun PathNamingDialog(
+        dialogState: DialogManager, formState: PathForm, title: String, message: String, submitLabel: String
     ) {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Form.Text(value = message, softWrap = true)
-                ProjectItemNamingField(formState.field) { formState.field = it }
+                PathNamingField(formState.field) { formState.field = it }
             }
         }
     }
 
     @Composable
-    private fun ProjectItemNamingField(text: String, onChange: (String) -> Unit) {
+    private fun PathNamingField(text: String, onChange: (String) -> Unit) {
         val focusReq = remember { FocusRequester() }
         Field(label = Label.FILE_NAME) {
             TextInput(

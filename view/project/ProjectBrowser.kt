@@ -29,9 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.project.Directory
-import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.project.ProjectItem
+import com.vaticle.typedb.studio.state.project.DirectoryState
+import com.vaticle.typedb.studio.state.project.FileState
+import com.vaticle.typedb.studio.state.project.PathState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
@@ -86,33 +86,33 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
             initExpandDepth = 1,
             liveUpdate = true,
             contextMenuFn = { contextMenuItems(it) }
-        ) { projectItemOpen(it) }
+        ) { openPath(it) }
         GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
         GlobalState.project.onContentChange = { navState.reloadEntries() }
         buttons = navState.buttons
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { projectItemIcon(it) },
-            styleArgs = { projectItemStyles(it) }
+            iconArg = { pathIcon(it) },
+            styleArgs = { pathStyles(it) }
         )
     }
 
-    private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
+    private fun openPath(itemState: Navigator.ItemState<PathState>) {
         when (val item = itemState.item) {
-            is Directory -> itemState.toggle()
-            is File -> item.tryOpen()
+            is DirectoryState -> itemState.toggle()
+            is FileState -> item.tryOpen()
         }
     }
 
-    private fun projectItemIcon(itemState: Navigator.ItemState<ProjectItem>): IconArg {
+    private fun pathIcon(itemState: Navigator.ItemState<PathState>): IconArg {
         return when (itemState.item) {
-            is Directory -> when {
+            is DirectoryState -> when {
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
                 itemState.isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
                 else -> IconArg(Icon.Code.FOLDER_BLANK)
             }
-            is File -> when {
+            is FileState -> when {
                 itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.studio.secondary }
                 itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
@@ -121,18 +121,18 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
         }
     }
 
-    private fun projectItemStyles(itemState: Navigator.ItemState<ProjectItem>): List<Typography.Style> {
+    private fun pathStyles(itemState: Navigator.ItemState<PathState>): List<Typography.Style> {
         return if (itemState.item.isProjectData) listOf(ITALIC, FADED) else listOf()
     }
 
-    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         return when (itemState.item) {
-            is Directory -> directoryContextMenuItems(itemState)
-            is File -> fileContextMenuItems(itemState)
+            is DirectoryState -> directoryContextMenuItems(itemState)
+            is FileState -> fileContextMenuItems(itemState)
         }
     }
 
-    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+    private fun directoryContextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
@@ -170,7 +170,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
         )
     }
 
-    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+    private fun fileContextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         val file = itemState.item.asFile()
         return listOf(
             listOf(

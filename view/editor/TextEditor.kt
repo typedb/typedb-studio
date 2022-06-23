@@ -72,7 +72,7 @@ import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.GlobalState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
-import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -107,7 +107,7 @@ object TextEditor {
     private val LOGGER = KotlinLogging.logger {}
 
     @Composable
-    fun createState(file: File, bottomSpace: Dp = END_OF_FILE_SPACE): State {
+    fun createState(file: FileState, bottomSpace: Dp = END_OF_FILE_SPACE): State {
         val editor = createState(
             bottomSpace = bottomSpace,
             processorFn = when {
@@ -163,7 +163,7 @@ object TextEditor {
         return State(content, font, rendering, finder, target, toolbar, handler, processor)
     }
 
-    private fun onChangeFromDisk(file: File, editor: State) {
+    private fun onChangeFromDisk(file: FileState, editor: State) {
         file.onDiskChangeContent {
             editor.reloadContent(it)
             editor.processor.clearHistory()
@@ -229,13 +229,13 @@ object TextEditor {
             target.clearStatus()
         }
 
-        internal fun reloadContent(file: File) {
+        internal fun reloadContent(file: FileState) {
             content.clear()
             content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
             rendering.reinitialize(content.size)
         }
 
-        fun updateFile(file: File) {
+        fun updateFile(file: FileState) {
             val oldContent = content.map { it.text }
             processor.updateFile(file)
             reloadContent(file)

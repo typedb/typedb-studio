@@ -58,11 +58,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-class File internal constructor(
+class FileState internal constructor(
     path: Path,
-    parent: Directory,
+    parent: DirectoryState,
     projectMgr: ProjectManager
-) : ProjectItem(parent, path, Type.FILE, projectMgr), Pageable.Runnable {
+) : PathState(parent, path, Type.FILE, projectMgr), Pageable.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -72,13 +72,13 @@ class File internal constructor(
 
     private class Callbacks {
 
-        val onDiskChangeContent = LinkedBlockingQueue<(File) -> Unit>()
-        val onDiskChangePermission = LinkedBlockingQueue<(File) -> Unit>()
-        val onReopen = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeRun = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeSave = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeClose = LinkedBlockingQueue<(File) -> Unit>()
-        val onClose = LinkedBlockingQueue<(File) -> Unit>()
+        val onDiskChangeContent = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onDiskChangePermission = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onReopen = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeRun = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeSave = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeClose = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onClose = LinkedBlockingQueue<(FileState) -> Unit>()
 
         fun clone(): Callbacks {
             val newCallbacks = Callbacks()
@@ -130,12 +130,12 @@ class File internal constructor(
     override val isWritable: Boolean get() = isWritableAtomic.get()
     override val isExpandable: Boolean = false
     override val isBulkExpandable: Boolean = false
-    override val entries: List<ProjectItem> = listOf()
+    override val entries: List<PathState> = listOf()
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
-    fun onDiskChangeContent(function: (File) -> Unit) = callbacks.onDiskChangeContent.put(function)
-    fun onDiskChangePermission(function: (File) -> Unit) = callbacks.onDiskChangePermission.put(function)
+    fun onDiskChangeContent(function: (FileState) -> Unit) = callbacks.onDiskChangeContent.put(function)
+    fun onDiskChangePermission(function: (FileState) -> Unit) = callbacks.onDiskChangePermission.put(function)
     fun beforeRun(function: (Pageable) -> Unit) = callbacks.beforeRun.put(function)
     fun beforeSave(function: (Pageable) -> Unit) = callbacks.beforeSave.put(function)
     fun beforeClose(function: (Pageable) -> Unit) = callbacks.beforeClose.put(function)
@@ -144,9 +144,9 @@ class File internal constructor(
     override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
     override fun tryOpen(): Boolean = tryOpen(null)
     override fun reloadEntries() {}
-    override fun asFile(): File = this
-    override fun asDirectory(): Directory {
-        throw TypeCastException(ILLEGAL_CAST.message(File::class.simpleName, Directory::class.simpleName))
+    override fun asFile(): FileState = this
+    override fun asDirectory(): DirectoryState {
+        throw TypeCastException(ILLEGAL_CAST.message(FileState::class.simpleName, DirectoryState::class.simpleName))
     }
 
     private fun checkIsTextFile(): Boolean {
@@ -191,7 +191,7 @@ class File internal constructor(
         projectMgr.client.runner(content)?.let { runner.launch(it) }
     }
 
-    internal fun tryRename(newName: String): File? {
+    internal fun tryRename(newName: String): FileState? {
         val newPath = path.resolveSibling(newName)
         return if (parent!!.contains(newName)) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
@@ -211,7 +211,7 @@ class File internal constructor(
         }
     }
 
-    internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
+    internal fun trySaveTo(newPath: Path, overwrite: Boolean): FileState? {
         return try {
             val clonedRunner = runner.clone()
             val clonedCallbacks = callbacks.clone()
@@ -273,10 +273,10 @@ class File internal constructor(
                     else {
                         if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
                             || isWritableAtomic.compareAndSet(!isWritable, isWritable)
-                        ) callbacks.onDiskChangePermission.forEach { it(this@File) }
+                        ) callbacks.onDiskChangePermission.forEach { it(this@FileState) }
                         if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
                             lastModified.set(path.toFile().lastModified())
-                            callbacks.onDiskChangeContent.forEach { it(this@File) }
+                            callbacks.onDiskChangeContent.forEach { it(this@FileState) }
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?

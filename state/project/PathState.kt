@@ -30,12 +30,12 @@ import kotlin.io.path.readSymbolicLink
 import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
-sealed class ProjectItem constructor(
-    final override val parent: Directory?,
+sealed class PathState constructor(
+    final override val parent: DirectoryState?,
     val path: Path,
     val type: Type,
     val projectMgr: ProjectManager,
-) : Navigable<ProjectItem> {
+) : Navigable<PathState> {
 
     enum class Type(val index: Int) {
         DIRECTORY(0),
@@ -58,8 +58,8 @@ sealed class ProjectItem constructor(
 
     abstract val isReadable: Boolean
     abstract val isWritable: Boolean
-    abstract fun asDirectory(): Directory
-    abstract fun asFile(): File
+    abstract fun asDirectory(): DirectoryState
+    abstract fun asFile(): FileState
     abstract fun initiateRename()
     abstract fun initiateMove()
     abstract fun initiateDelete(onSuccess: () -> Unit)
@@ -72,10 +72,10 @@ sealed class ProjectItem constructor(
         FileChannel.open(newPath, StandardOpenOption.WRITE).lock().release() // This waits till file is ready
     }
 
-    internal fun find(newPath: Path): ProjectItem? {
+    internal fun find(newPath: Path): PathState? {
         if (!newPath.startsWith(projectMgr.current!!.path)) return null
         var relPath = newPath.relativeTo(projectMgr.current!!.path)
-        var dir: Directory = projectMgr.current!!.directory
+        var dir: DirectoryState = projectMgr.current!!.directory
         while (relPath.nameCount > 1) {
             dir.reloadEntries()
             dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
@@ -89,8 +89,8 @@ sealed class ProjectItem constructor(
         return path.toString()
     }
 
-    override fun compareTo(other: Navigable<ProjectItem>): Int {
-        other as ProjectItem
+    override fun compareTo(other: Navigable<PathState>): Int {
+        other as PathState
         return if (this.type == other.type) {
             this.path.toString().compareTo(other.path.toString(), ignoreCase = true)
         } else this.type.index.compareTo(other.type.index)
@@ -99,7 +99,7 @@ sealed class ProjectItem constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as ProjectItem
+        other as PathState
         return path == other.path
     }
 

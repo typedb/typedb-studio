@@ -58,11 +58,11 @@ class ProjectManager(
 
     class CreateItemDialog : DialogManager() {
 
-        var parent: Directory? by mutableStateOf(null)
-        var type: ProjectItem.Type? by mutableStateOf(null)
+        var parent: DirectoryState? by mutableStateOf(null)
+        var type: PathState.Type? by mutableStateOf(null)
         var onSuccess: (() -> Unit)? by mutableStateOf(null)
 
-        internal fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
+        internal fun open(parent: DirectoryState, type: PathState.Type, onSuccess: () -> Unit) {
             isOpen = true
             this.parent = parent
             this.type = type
@@ -79,9 +79,9 @@ class ProjectManager(
 
     class ModifyDirectoryDialog : DialogManager() {
 
-        var directory: Directory? by mutableStateOf(null)
+        var directory: DirectoryState? by mutableStateOf(null)
 
-        internal fun open(item: Directory) {
+        internal fun open(item: DirectoryState) {
             isOpen = true
             this.directory = item
         }
@@ -94,10 +94,10 @@ class ProjectManager(
 
     class ModifyFileDialog : DialogManager() {
 
-        var file: File? by mutableStateOf(null)
-        var onSuccess: ((File) -> Unit)? by mutableStateOf(null)
+        var file: FileState? by mutableStateOf(null)
+        var onSuccess: ((FileState) -> Unit)? by mutableStateOf(null)
 
-        internal fun open(file: File, onSuccess: ((File) -> Unit)? = null) {
+        internal fun open(file: FileState, onSuccess: ((FileState) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess
@@ -117,8 +117,8 @@ class ProjectManager(
     }
 
     var current: Project? by mutableStateOf(null)
-    var dataDir: Directory? by mutableStateOf(null)
-    var unsavedFilesDir: Directory? by mutableStateOf(null)
+    var dataDir: DirectoryState? by mutableStateOf(null)
+    var unsavedFilesDir: DirectoryState? by mutableStateOf(null)
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
@@ -158,12 +158,12 @@ class ProjectManager(
         unsavedFilesDir = dataDir!!.entries.first { it.name == UNSAVED_DATA_DIR_NAME }.asDirectory()
     }
 
-    fun unsavedFiles(): List<File> {
+    fun unsavedFiles(): List<FileState> {
         unsavedFilesDir?.reloadEntries()
         return unsavedFilesDir?.entries?.filter { it.isFile }?.map { it.asFile() } ?: listOf()
     }
 
-    fun tryCreateUntitledFile(): File? {
+    fun tryCreateUntitledFile(): FileState? {
         if (current == null) return null
         val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
@@ -176,15 +176,15 @@ class ProjectManager(
         }
     }
 
-    fun tryCreateFile(parent: Directory, newFileName: String) {
+    fun tryCreateFile(parent: DirectoryState, newFileName: String) {
         tryCreateItem { parent.createFile(newFileName) }
     }
 
-    fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
+    fun tryCreateDirectory(parent: DirectoryState, newDirectoryName: String) {
         tryCreateItem { parent.createDirectory(newDirectoryName) }
     }
 
-    private fun tryCreateItem(createFn: () -> ProjectItem?) {
+    private fun tryCreateItem(createFn: () -> PathState?) {
         createFn()?.let {
             createItemDialog.onSuccess?.let { fn -> fn() }
             createItemDialog.close()
@@ -192,14 +192,14 @@ class ProjectManager(
         }
     }
 
-    fun tryRenameDirectory(directory: Directory, newName: String) {
+    fun tryRenameDirectory(directory: DirectoryState, newName: String) {
         directory.tryRename(newName)?.let {
             renameDirectoryDialog.close()
             onContentChange?.let { it() }
         }
     }
 
-    fun tryMoveDirectory(directory: Directory, newParent: Path) {
+    fun tryMoveDirectory(directory: DirectoryState, newParent: Path) {
         directory.tryMove(newParent)?.let {
             moveDirectoryDialog.close()
             onContentChange?.let { it() }
@@ -208,7 +208,7 @@ class ProjectManager(
         }
     }
 
-    fun tryRenameFile(file: File, newName: String) {
+    fun tryRenameFile(file: FileState, newName: String) {
         mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
             file.tryRename(newName)?.let { newFile ->
                 onSuccess?.let { it(newFile) }
@@ -217,7 +217,7 @@ class ProjectManager(
         }
     }
 
-    fun trySaveFileTo(file: File, newPath: Path, overwrite: Boolean) {
+    fun trySaveFileTo(file: FileState, newPath: Path, overwrite: Boolean) {
         mayConfirmFileTypeChange(file, newPath, saveFileDialog) { onSuccess ->
             file.trySaveTo(newPath, overwrite)?.let { newFile ->
                 onSuccess?.let { it(newFile) }
@@ -229,8 +229,8 @@ class ProjectManager(
     }
 
     private fun mayConfirmFileTypeChange(
-        file: File, newPath: Path, dialog: ModifyFileDialog,
-        confirmedModifyFileFn: (onSuccess: ((File) -> Unit)?) -> Unit
+        file: FileState, newPath: Path, dialog: ModifyFileDialog,
+        confirmedModifyFileFn: (onSuccess: ((FileState) -> Unit)?) -> Unit
     ) {
         if (file.isRunnable && !Property.FileType.of(newPath).isRunnable) {
             // we need to record dialog.onSuccess before dialog.close() which clears it

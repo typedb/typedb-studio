@@ -25,7 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.vaticle.typedb.studio.state.page.Pageable
-import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.material.Form
@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.view.material.Page
 import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 class FilePage private constructor(
-    private var file: File,
+    private var file: FileState,
     private val editor: TextEditor.State
 ) : Page() {
 
@@ -49,7 +49,7 @@ class FilePage private constructor(
 
     companion object {
         @Composable
-        fun create(file: File): FilePage {
+        fun create(file: FileState): FilePage {
             return FilePage(file, TextEditor.createState(file))
         }
     }
@@ -57,7 +57,7 @@ class FilePage private constructor(
     override fun updateResource(pageable: Pageable) {
         // TODO: guarantee that new file has identical content as previous, or update content.
         runOutputState?.let { it.pageable = pageable.asRunnable() }
-        file = pageable as File
+        file = pageable as FileState
         editor.updateFile(file)
     }
 
