@@ -149,7 +149,7 @@ sealed class VertexBackgroundRenderer(
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
         override fun draw() {
-            if (vertex.geometry.isVisiblyCollapsed) {
+            if (vertex.geometry.isVisiblyCollapsed || !vertex.geometry.contentOverflowsBaseShape) {
                 getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
                 ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
             } else {

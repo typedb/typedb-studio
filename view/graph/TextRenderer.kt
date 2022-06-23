@@ -72,7 +72,7 @@ internal class TextRenderer(private val viewport: Viewport) {
                 maxLines = vertex.geometry.labelMaxLines(typography.codeSizeMedium),
                 color = color
             ).also { result ->
-                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.isExpandable = true
+                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.contentOverflowsBaseShape = true
             }
         }
     }
@@ -129,15 +129,17 @@ internal class TextRenderer(private val viewport: Viewport) {
     }
 
     private fun findLineBreak(textLine: TextLine, text: String, lineMaxWidth: Float): LineBreak? {
-        val lineOverflowIndex = textLine.positions
-            .filterIndexed { idx, _ -> idx % 2 == 0 }
-            .indexOfFirst { it > lineMaxWidth }
-            .let { if (it == -1) null else (it - 1).coerceAtLeast(0) } ?: return null
+        if (textLine.width < lineMaxWidth) return null
+        val xPositions = textLine.positions.filterIndexed { idx, _ -> idx % 2 == 0 }
+        val lineOverflowIndex = xPositions.indexOfFirst { it > lineMaxWidth }
+            .let { if (it == -1) xPositions.lastIndex else (it - 1).coerceAtLeast(0) }
         var lineEndIndex = lineOverflowIndex
         while (lineEndIndex > 0) {
             val char = text[lineEndIndex]
             if (char.isWhitespace()) return LineBreak(lineEndIndex, Whitespace)
-            if (char.isWordBreakSymbol()) return LineBreak(lineEndIndex + 1, WordBreak)
+            if (char.isWordBreakSymbol() && lineEndIndex < lineOverflowIndex) { // don't allow line to overflow
+                return LineBreak(lineEndIndex + 1, WordBreak)
+            }
             if (char.isBlockStartSymbol()) return LineBreak(lineEndIndex, BlockStart)
             lineEndIndex--
         }

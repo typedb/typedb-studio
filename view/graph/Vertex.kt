@@ -146,7 +146,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
 
         val baseSize = size
-        open val expandedSize = size * 1.6f
+        val expandedSize get() = when (contentOverflowsBaseShape) {
+            true -> size * expandSizeMultiplierIfContentOverflows
+            false -> size * 1.1f
+        }
+        open val expandSizeMultiplierIfContentOverflows = 1.6f
         val size get() = _size.value
         val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
 
@@ -157,7 +161,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 isYFixed = value
             }
 
-        var isExpandable = false
+        var contentOverflowsBaseShape = false
         var isExpanded by mutableStateOf(false)
         val isVisiblyCollapsed get() = size.width - baseSize.width < 4f
         val isVisiblyExpanded get() = expandedSize.width - size.width < 4f
@@ -200,10 +204,9 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         class Entity : Geometry(ENTITY_SIZE) {
 
-            private val incomingEdgeTargetRect
-                get() = Rect(
-                    Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
-                )
+            private val incomingEdgeTargetRect get() = Rect(
+                Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
+            )
 
             override val labelMaxWidth get() = when {
                 isVisiblyCollapsed -> baseSize.width - PADDING
@@ -260,7 +263,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 else -> size.width - PADDING
             }
 
-            override val expandedSize = baseSize * 2f
+            override val expandSizeMultiplierIfContentOverflows = 2f
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)

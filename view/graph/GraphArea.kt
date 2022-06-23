@@ -281,13 +281,11 @@ class GraphArea(transactionState: TransactionState) {
         private val interactions get() = graphArea.interactions
 
         override fun run() {
-            graphArea.graph.vertices.filter { it.geometry.isExpandable }.forEach {
-                val previousValue = it.geometry.isExpanded
-                val newValue = it == interactions.hoveredVertex || it == interactions.focusedVertex
-                if (previousValue != newValue) {
-                    it.geometry.isExpanded = newValue
-                    if (!newValue) coroutineScope.launch { it.geometry.animateExpansion() }
-                }
+            graphArea.graph.vertices.filter {
+                it != interactions.hoveredVertex && it != interactions.focusedVertex && it.geometry.isExpanded
+            }.forEach {
+                it.geometry.isExpanded = false
+                coroutineScope.launch { it.geometry.animateExpansion() }
             }
         }
     }
