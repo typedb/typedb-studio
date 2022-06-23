@@ -98,7 +98,18 @@ internal class TextRenderer(private val viewport: Viewport) {
                 break
             } else {
                 val breakIndex = lineBreak.index - (if (lineBreak.reason == BlockStart) 1 else 0)
-                lines += TextLine.make(remainingText.substring(0 until breakIndex), font)
+                var lineText = remainingText.substring(0 until breakIndex)
+                var textLine: TextLine
+                if (lines.size == maxLines - 1) {
+                    textLine = TextLine.make("$lineText…", font)
+                    while (textLine.width > maxWidth) {
+                        lineText = lineText.substring(0, lineText.lastIndex)
+                        textLine = TextLine.make("$lineText…", font)
+                    }
+                } else {
+                    textLine = TextLine.make(remainingText.substring(0 until breakIndex), font)
+                }
+                lines += textLine
                 remainingText = remainingText.substring(breakIndex).trim()
             }
         }
