@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
@@ -112,8 +113,26 @@ class DirectoryState internal constructor(
         projectMgr.createPathDialog.open(this, Type.DIRECTORY, onSuccess)
     }
 
+    fun tryCreateDirectory(name: String): DirectoryState? = tryCreatePath(
+        newPath = path.resolve(name),
+        failureMessage = FAILED_TO_CREATE_DIRECTORY,
+        createFn = { it.createDirectory() }
+    )?.asDirectory()?.also {
+        projectMgr.createPathDialog.onSuccess?.let { fn -> fn() }
+        updateContentAndCloseDialog(projectMgr.createPathDialog)
+    }
+
     fun initiateCreateFile(onSuccess: () -> Unit) {
         projectMgr.createPathDialog.open(this, Type.FILE, onSuccess)
+    }
+
+    fun tryCreateFile(name: String): FileState? = tryCreatePath(
+        newPath = path.resolve(name),
+        failureMessage = FAILED_TO_CREATE_FILE,
+        createFn = { it.createFile() }
+    )?.asFile()?.also {
+        projectMgr.createPathDialog.onSuccess?.let { fn -> fn() }
+        updateContentAndCloseDialog(projectMgr.createPathDialog)
     }
 
     override fun initiateRename() {
@@ -132,23 +151,7 @@ class DirectoryState internal constructor(
         )
     }
 
-    internal fun createDirectory(name: String): DirectoryState? {
-        return createPath(
-            newPath = path.resolve(name),
-            failureMessage = FAILED_TO_CREATE_DIRECTORY,
-            createFn = { it.createDirectory() }
-        )?.asDirectory()
-    }
-
-    internal fun createFile(name: String): FileState? {
-        return createPath(
-            newPath = path.resolve(name),
-            failureMessage = FAILED_TO_CREATE_FILE,
-            createFn = { it.createFile() }
-        )?.asFile()
-    }
-
-    private fun createPath(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
+    private fun tryCreatePath(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
         return if (newPath.exists()) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null

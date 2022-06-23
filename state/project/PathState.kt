@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
+import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -83,6 +84,11 @@ sealed class PathState constructor(
         }
         dir.reloadEntries()
         return dir.entries.first { it.name == relPath.first().name }
+    }
+
+    protected fun updateContentAndCloseDialog(dialog: DialogManager) {
+        projectMgr.onContentChange?.let { fn -> fn() }
+        dialog.close()
     }
 
     override fun toString(): String {

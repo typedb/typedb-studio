@@ -211,16 +211,20 @@ object ProjectDialog {
 
     @Composable
     private fun CreateDirectory() {
-        CreateItem(Label.CREATE_DIRECTORY, Sentence.CREATE_DIRECTORY, { it.nextUntitledDirName() }) { parent, name ->
-            StudioState.project.tryCreateDirectory(parent, name)
-        }
+        CreateItem(
+            title = Label.CREATE_DIRECTORY,
+            message = Sentence.CREATE_DIRECTORY,
+            initNameFn = { it.nextUntitledDirName() }
+        ) { parent, name -> parent.tryCreateDirectory(name) }
     }
 
     @Composable
     private fun CreateFile() {
-        CreateItem(Label.CREATE_FILE, Sentence.CREATE_FILE, { it.nextUntitledFileName() }) { parent, name ->
-            StudioState.project.tryCreateFile(parent, name)
-        }
+        CreateItem(
+            title = Label.CREATE_FILE,
+            message = Sentence.CREATE_FILE,
+            initNameFn = { it.nextUntitledFileName() }
+        ) { parent, name -> parent.tryCreateFile(name) }
     }
 
     @Composable

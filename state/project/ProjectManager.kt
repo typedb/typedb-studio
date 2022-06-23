@@ -167,28 +167,12 @@ class ProjectManager(
         if (current == null) return null
         val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
-            val newFile = unsavedFilesDir!!.createFile(newFileName)
+            val newFile = unsavedFilesDir!!.tryCreateFile(newFileName)
             onContentChange?.let { it() }
             newFile
         } catch (e: Exception) {
             notification.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
-        }
-    }
-
-    fun tryCreateFile(parent: DirectoryState, newFileName: String) {
-        tryCreatePath { parent.createFile(newFileName) }
-    }
-
-    fun tryCreateDirectory(parent: DirectoryState, newDirectoryName: String) {
-        tryCreatePath { parent.createDirectory(newDirectoryName) }
-    }
-
-    private fun tryCreatePath(createFn: () -> PathState?) {
-        createFn()?.let {
-            createPathDialog.onSuccess?.let { fn -> fn() }
-            createPathDialog.close()
-            onContentChange?.let { fn -> fn() }
         }
     }
 
