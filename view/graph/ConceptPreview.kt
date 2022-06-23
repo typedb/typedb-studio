@@ -38,10 +38,10 @@ import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
 import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
+import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
@@ -121,11 +121,11 @@ class ConceptPreview constructor(
             }
         }
 
-        class Generic(key: kotlin.String, val valueView: @Composable () -> Unit): Property() {
+        class Generic(key: kotlin.String, val valueView: @Composable () -> Unit) : Property() {
             override val layout = Layout(key) { valueView() }
         }
 
-        class String(key: kotlin.String, val value: kotlin.String): Property() {
+        class String(key: kotlin.String, val value: kotlin.String) : Property() {
             override val layout = Layout(key) { Form.SelectableText(value, singleLine = true) }
         }
     }

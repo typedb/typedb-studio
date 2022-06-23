@@ -300,7 +300,9 @@ object Form {
         color: Color = Theme.studio.onPrimary,
         hoverColor: Color = Theme.studio.secondary,
         onClick: (Int) -> Unit
-    ) { ClickableText(AnnotatedString(value), color, hoverColor, onClick) }
+    ) {
+        ClickableText(AnnotatedString(value), color, hoverColor, onClick)
+    }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
@@ -331,7 +333,9 @@ object Form {
         trailingIcon: IconArg? = null,
         leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
-    ) { TextBox(AnnotatedString(text), modifier, textColor, bgColor, trailingIcon, leadingIcon, roundedCorners) }
+    ) {
+        TextBox(AnnotatedString(text), modifier, textColor, bgColor, trailingIcon, leadingIcon, roundedCorners)
+    }
 
     @Composable
     fun TextBox(

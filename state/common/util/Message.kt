@@ -97,9 +97,15 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val TRANSACTION_CLOSED_IN_QUERY =
                 Connection(8, "Transaction was closed due to an error in the query.")
             val TRANSACTION_ROLLBACK =
-                Connection(9, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
+                Connection(
+                    9,
+                    "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted."
+                )
             val TRANSACTION_COMMIT_SUCCESSFULLY =
-                Connection(10, "Transaction has been successfully committed and closed -- all writes have been persisted.")
+                Connection(
+                    10,
+                    "Transaction has been successfully committed and closed -- all writes have been persisted."
+                )
             val TRANSACTION_COMMIT_FAILED =
                 Connection(11, "Transaction failed to commit: %s")
             val FAILED_TO_DELETE_DATABASE =
@@ -139,7 +145,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FILE_NOT_DELETABLE =
                 Project(10, "File %s is not deletable.")
             val FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION =
-                Project(11, "The path %s is where the directory currently resides in. Choose a different parent or cancel.")
+                Project(
+                    11,
+                    "The path %s is where the directory currently resides in. Choose a different parent or cancel."
+                )
             val FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST =
                 Project(12, "The path %s in which you want to move the directory into, does not exist.")
             val FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE =

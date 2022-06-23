@@ -79,10 +79,11 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
 
         val isCurved get() = edge.curvePoint != null
-        val midpoint get() = com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint(
-            edge.source.geometry.position,
-            edge.target.geometry.position
-        )
+        val midpoint
+            get() = com.vaticle.typedb.studio.view.common.geometry.Geometry.midpoint(
+                edge.source.geometry.position,
+                edge.target.geometry.position
+            )
         val curveMidpoint
             get() = edge.curvePoint?.let {
                 Offset(it.x.toFloat(), it.y.toFloat())

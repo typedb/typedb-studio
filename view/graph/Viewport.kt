@@ -44,7 +44,9 @@ class Viewport(private val graph: Graph) {
     private var _scale by mutableStateOf(1f)
     var scale: Float
         get() = _scale
-        set(value) { _scale = value.coerceIn(0.001f..10f) }
+        set(value) {
+            _scale = value.coerceIn(0.001f..10f)
+        }
     var wasManuallyRescaled = false
     var areInitialWorldCoordinatesSet = AtomicBoolean(false)
     val autoScaler = AutoScaler(this)
@@ -114,13 +116,14 @@ class Viewport(private val graph: Graph) {
         }.take(10)
     }
 
-    class AutoScaler(private val viewport: Viewport): BackgroundTask(runIntervalMs = 33) {
+    class AutoScaler(private val viewport: Viewport) : BackgroundTask(runIntervalMs = 33) {
 
         override fun canRun() = !viewport.wasManuallyRescaled
 
         override fun run() {
             val vertexAreaApprox = 270f * 270f
-            val baseCapacity = (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
+            val baseCapacity =
+                (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
             val requiredCapacity = viewport.graph.vertices.size.coerceAtLeast(10)
             viewport.scale = sqrt(baseCapacity / requiredCapacity)
         }

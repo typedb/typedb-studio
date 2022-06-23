@@ -63,7 +63,7 @@ class Interactions constructor(private val graphArea: GraphArea) {
         } else emptySet()
     }
 
-    class HoveredVertexChecker constructor(private val graphArea: GraphArea): BackgroundTask(runIntervalMs = 33) {
+    class HoveredVertexChecker constructor(private val graphArea: GraphArea) : BackgroundTask(runIntervalMs = 33) {
 
         override fun canRun(): Boolean {
             return graphArea.interactions.pointerPosition != null

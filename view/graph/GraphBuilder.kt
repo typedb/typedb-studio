@@ -76,7 +76,8 @@ class GraphBuilder(
                         }
                     }
                 }
-                is RoleType -> { /* do nothing */ }
+                is RoleType -> { /* do nothing */
+                }
                 else -> throw unsupportedEncodingException(concept)
             }
         }
@@ -326,7 +327,8 @@ class GraphBuilder(
                     ?.match(TypeQL.match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(attr))))
                     ?.forEach { answer ->
                         val attribute = answer.get(attr).asAttribute()
-                        val isEdgeInferred = attributeIsExplainable(attr, answer) || ownershipIsExplainable(attr, answer)
+                        val isEdgeInferred =
+                            attributeIsExplainable(attr, answer) || ownershipIsExplainable(attr, answer)
                         val attributeVertex = graphBuilder.allThingVertices[attribute.iid] as? Vertex.Thing.Attribute
                         if (attributeVertex != null) {
                             graphBuilder.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))

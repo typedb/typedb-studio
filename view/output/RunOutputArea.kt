@@ -165,7 +165,7 @@ object RunOutputArea {
             do {
                 delay(50)
                 outputGroup.publishStatus()
-            } while(!runner.isConsumed)
+            } while (!runner.isConsumed)
         }
     }
 

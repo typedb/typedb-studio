@@ -49,7 +49,8 @@ abstract class Page {
     abstract fun PrimaryContent()
 
     @Composable
-    protected open fun SecondaryContent(paneState: Frame.PaneState) {}
+    protected open fun SecondaryContent(paneState: Frame.PaneState) {
+    }
 
     @Composable
     private fun frameState(): Frame.FrameState {

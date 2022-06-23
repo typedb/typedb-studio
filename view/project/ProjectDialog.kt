@@ -225,7 +225,10 @@ object ProjectDialog {
 
     @Composable
     private fun CreateItem(
-        title: String, message: String, initNameFn: (DirectoryState) -> String, onSubmit: (DirectoryState, String) -> Unit
+        title: String,
+        message: String,
+        initNameFn: (DirectoryState) -> String,
+        onSubmit: (DirectoryState, String) -> Unit
     ) {
         val dialogState = StudioState.project.createItemDialog
         val parent = dialogState.parent!!
