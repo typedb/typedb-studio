@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.project
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
@@ -160,6 +161,31 @@ class DirectoryState internal constructor(
         projectMgr.moveDirectoryDialog.open(this)
     }
 
+    fun tryMove(newParent: Path): DirectoryState? {
+        val newPath = newParent.resolve(name)
+        val newDir = if (newParent == path.parent) {
+            projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
+            null
+        } else if (newParent.notExists()) {
+            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
+            null
+        } else if (newPath.exists()) {
+            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
+            null
+        } else try {
+            closeRecursive()
+            movePathTo(newPath)
+            find(newPath)?.asDirectory()
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_MOVE_DIRECTORY, newParent, e.message ?: UNKNOWN)
+            null
+        }
+        if (!newParent.startsWith(projectMgr.current!!.path)) {
+            projectMgr.notification.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
+        }
+        return newDir?.also { updateContentAndCloseDialog(projectMgr.moveDirectoryDialog) }
+    }
+
     override fun initiateDelete(onSuccess: () -> Unit) {
         projectMgr.confirmation.submit(
             title = Label.CONFIRM_DIRECTORY_DELETION,
@@ -178,27 +204,6 @@ class DirectoryState internal constructor(
             entries.first { it.name == newPath.name }
         } catch (e: Exception) {
             projectMgr.notification.systemError(LOGGER, e, failureMessage, newPath, e.message ?: UNKNOWN)
-            null
-        }
-    }
-
-    internal fun tryMove(newParent: Path): DirectoryState? {
-        val newPath = newParent.resolve(name)
-        return if (newParent == path.parent) {
-            projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
-            null
-        } else if (newParent.notExists()) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
-            null
-        } else if (newPath.exists()) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
-            null
-        } else try {
-            closeRecursive()
-            movePathTo(newPath)
-            find(newPath)?.asDirectory()
-        } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_MOVE_DIRECTORY, newParent, e.message ?: UNKNOWN)
             null
         }
     }

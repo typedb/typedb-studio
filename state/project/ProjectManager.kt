@@ -25,7 +25,6 @@ import com.vaticle.typedb.studio.state.app.ConfirmationManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY
@@ -173,15 +172,6 @@ class ProjectManager(
         } catch (e: Exception) {
             notification.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
-        }
-    }
-
-    fun tryMoveDirectory(directory: DirectoryState, newParent: Path) {
-        directory.tryMove(newParent)?.let {
-            moveDirectoryDialog.close()
-            onContentChange?.let { it() }
-        } ?: if (!newParent.startsWith(current!!.path)) {
-            notification.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
         }
     }
 
