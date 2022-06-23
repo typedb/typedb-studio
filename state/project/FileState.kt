@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_SAVE_FILE
@@ -171,7 +172,7 @@ class FileState internal constructor(
             activate()
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
-            projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
+            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_READABLE, path)
             false
         }
     }
@@ -197,16 +198,16 @@ class FileState internal constructor(
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
-            val clonedRunner = runners.clone()
+            val clonedRunnerMgr = runners.clone()
             val clonedCallbacks = callbacks.clone()
             close()
             movePathTo(newPath)
             find(newPath)?.asFile()?.also {
-                it.runners = clonedRunner
+                it.runners = clonedRunnerMgr
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_FILE, newPath, e.message ?: UNKNOWN)
             null
         }
     }
@@ -223,7 +224,7 @@ class FileState internal constructor(
                 it.callbacks = clonedCallbacks
             }
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_SAVE_FILE, newPath)
             null
         }
     }
@@ -349,7 +350,7 @@ class FileState internal constructor(
             path.deleteExisting()
             parent!!.remove(this)
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
+            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_DELETABLE, path.name)
         }
     }
 }

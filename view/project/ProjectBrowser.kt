@@ -160,7 +160,9 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !directory.isProjectData,
-                ) { directory.initiateMove() },
+                ) { directory.initiateMove() }
+            ),
+            listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,

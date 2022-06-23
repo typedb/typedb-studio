@@ -176,13 +176,6 @@ class ProjectManager(
         }
     }
 
-    fun tryRenameDirectory(directory: DirectoryState, newName: String) {
-        directory.tryRename(newName)?.let {
-            renameDirectoryDialog.close()
-            onContentChange?.let { it() }
-        }
-    }
-
     fun tryMoveDirectory(directory: DirectoryState, newParent: Path) {
         directory.tryMove(newParent)?.let {
             moveDirectoryDialog.close()

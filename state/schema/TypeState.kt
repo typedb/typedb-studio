@@ -29,6 +29,7 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
 import com.vaticle.typedb.studio.state.page.Navigable
@@ -83,7 +84,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             loadOtherProperties()
             loadSubtypesRecursivelyBlocking()
         } catch (e: TypeDBClientException) {
-            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
+            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
         }
     }
 
@@ -209,7 +210,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 close()
                 // TODO
             } catch (e: Exception) {
-                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
+                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
             }
         }
 

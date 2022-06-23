@@ -22,8 +22,9 @@ import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.Objects
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
@@ -70,7 +71,7 @@ sealed class PathState constructor(
 
     internal fun movePathTo(newPath: Path, overwrite: Boolean = false) {
         path.moveTo(newPath, overwrite)
-        FileChannel.open(newPath, StandardOpenOption.WRITE).lock().release() // This waits till file is ready
+        if (newPath.isRegularFile()) FileChannel.open(newPath, WRITE).lock().release() // This waits till file is ready
     }
 
     internal fun find(newPath: Path): PathState? {
@@ -87,7 +88,7 @@ sealed class PathState constructor(
     }
 
     protected fun updateContentAndCloseDialog(dialog: DialogManager) {
-        projectMgr.onContentChange?.let { fn -> fn() }
+        projectMgr.onContentChange?.let { it() }
         dialog.close()
     }
 

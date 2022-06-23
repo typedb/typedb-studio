@@ -255,7 +255,7 @@ object ProjectDialog {
             PathForm(
                 initField = directory.name,
                 onCancel = { dialogState.close() },
-                onSubmit = { StudioState.project.tryRenameDirectory(directory, it) }
+                onSubmit = { directory.tryRename(it) }
             )
         }
         PathNamingDialog(dialogState, formState, Label.RENAME_DIRECTORY, message, Label.RENAME)

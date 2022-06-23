@@ -27,6 +27,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
@@ -98,11 +99,11 @@ class TransactionState constructor(
             val options = typeDBOptions().infer(infer.value)
                 .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
-                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: "Unknown") }
+                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
             }
             isOpenAtomic.set(true)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: "Unknown")
+            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: UNKNOWN)
             isOpenAtomic.set(false)
             hasRunningQueryAtomic.set(false)
         }

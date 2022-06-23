@@ -18,18 +18,19 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
-import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_DIRECTORY
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -118,7 +119,7 @@ class DirectoryState internal constructor(
         failureMessage = FAILED_TO_CREATE_DIRECTORY,
         createFn = { it.createDirectory() }
     )?.asDirectory()?.also {
-        projectMgr.createPathDialog.onSuccess?.let { fn -> fn() }
+        projectMgr.createPathDialog.onSuccess?.let { it() }
         updateContentAndCloseDialog(projectMgr.createPathDialog)
     }
 
@@ -131,12 +132,28 @@ class DirectoryState internal constructor(
         failureMessage = FAILED_TO_CREATE_FILE,
         createFn = { it.createFile() }
     )?.asFile()?.also {
-        projectMgr.createPathDialog.onSuccess?.let { fn -> fn() }
+        projectMgr.createPathDialog.onSuccess?.let { it() }
         updateContentAndCloseDialog(projectMgr.createPathDialog)
     }
 
     override fun initiateRename() {
         projectMgr.renameDirectoryDialog.open(this)
+    }
+
+    fun tryRename(newName: String): DirectoryState? {
+        val newPath = path.resolveSibling(newName)
+        val newDir = if (parent?.contains(newName) == true) {
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            closeRecursive()
+            movePathTo(newPath)
+            find(newPath)?.asDirectory()
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_DIRECTORY, newPath, e.message ?: UNKNOWN)
+            null
+        }
+        return newDir?.also { updateContentAndCloseDialog(projectMgr.renameDirectoryDialog) }
     }
 
     override fun initiateMove() {
@@ -160,22 +177,7 @@ class DirectoryState internal constructor(
             reloadEntries()
             entries.first { it.name == newPath.name }
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, failureMessage, newPath)
-            null
-        }
-    }
-
-    internal fun tryRename(newName: String): DirectoryState? {
-        val newPath = path.resolveSibling(newName)
-        return if (parent?.contains(newName) == true) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
-            null
-        } else try {
-            closeRecursive()
-            movePathTo(newPath)
-            find(newPath)?.asDirectory()
-        } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
+            projectMgr.notification.systemError(LOGGER, e, failureMessage, newPath, e.message ?: UNKNOWN)
             null
         }
     }
@@ -196,7 +198,7 @@ class DirectoryState internal constructor(
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY, newParent)
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_MOVE_DIRECTORY, newParent, e.message ?: UNKNOWN)
             null
         }
     }
@@ -214,7 +216,7 @@ class DirectoryState internal constructor(
             path.deleteExisting()
             parent?.remove(this)
         } catch (e: Exception) {
-            projectMgr.notification.userError(LOGGER, DIRECTORY_NOT_DELETABLE, path.name)
+            projectMgr.notification.systemError(LOGGER, e, DIRECTORY_NOT_DELETABLE, path.name)
         }
     }
 
