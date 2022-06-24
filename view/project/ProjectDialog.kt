@@ -270,7 +270,7 @@ object ProjectDialog {
             PathForm(
                 initField = file.name,
                 onCancel = { dialogState.close() },
-                onSubmit = { StudioState.project.tryRenameFile(file, it) }
+                onSubmit = { file.tryRename(it) }
             )
         }
         PathNamingDialog(dialogState, formState, Label.RENAME_FILE, message, Label.RENAME)
@@ -313,7 +313,7 @@ object ProjectDialog {
         }
         fileDialog.directory?.let {
             val newPath = Path(it).resolve(fileDialog.file)
-            StudioState.project.trySaveFileTo(projectFile, newPath, true)
+            projectFile.trySave(newPath, true)
         } ?: StudioState.project.saveFileDialog.close()
     }
 }

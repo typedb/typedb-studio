@@ -174,46 +174,4 @@ class ProjectManager(
             null
         }
     }
-
-    fun tryRenameFile(file: FileState, newName: String) {
-        mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
-            file.tryRename(newName)?.let { newFile ->
-                onSuccess?.let { it(newFile) }
-                onContentChange?.let { it() }
-            }
-        }
-    }
-
-    fun trySaveFileTo(file: FileState, newPath: Path, overwrite: Boolean) {
-        mayConfirmFileTypeChange(file, newPath, saveFileDialog) { onSuccess ->
-            file.trySaveTo(newPath, overwrite)?.let { newFile ->
-                onSuccess?.let { it(newFile) }
-                onContentChange?.let { it() }
-            } ?: if (!newPath.startsWith(current!!.path)) {
-                notification.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
-            }
-        }
-    }
-
-    private fun mayConfirmFileTypeChange(
-        file: FileState, newPath: Path, dialog: ModifyFileDialog,
-        confirmedModifyFileFn: (onSuccess: ((FileState) -> Unit)?) -> Unit
-    ) {
-        if (file.isRunnable && !Property.FileType.of(newPath).isRunnable) {
-            // we need to record dialog.onSuccess before dialog.close() which clears it
-            val onSuccess = dialog.onSuccess
-            dialog.close()
-            confirmation.submit(
-                title = Label.CONVERT_FILE_TYPE,
-                message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
-                    file.name, newPath.fileName,
-                    Property.FileType.RUNNABLE_EXTENSIONS_STR
-                ),
-                onConfirm = { confirmedModifyFileFn(onSuccess) }
-            )
-        } else confirmedModifyFileFn { newFile ->
-            dialog.onSuccess?.let { it(newFile) }
-            dialog.close()
-        }
-    }
 }

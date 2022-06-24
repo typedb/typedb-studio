@@ -28,6 +28,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_SAVE_FILE
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
@@ -192,43 +193,6 @@ class FileState internal constructor(
         projectMgr.client.runner(content)?.let { runners.launch(it) }
     }
 
-    internal fun tryRename(newName: String): FileState? {
-        val newPath = path.resolveSibling(newName)
-        return if (parent!!.contains(newName)) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
-            null
-        } else try {
-            val clonedRunnerMgr = runners.clone()
-            val clonedCallbacks = callbacks.clone()
-            close()
-            movePathTo(newPath)
-            find(newPath)?.asFile()?.also {
-                it.runners = clonedRunnerMgr
-                it.callbacks = clonedCallbacks
-            }
-        } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_FILE, newPath, e.message ?: UNKNOWN)
-            null
-        }
-    }
-
-    internal fun trySaveTo(newPath: Path, overwrite: Boolean): FileState? {
-        return try {
-            val clonedRunner = runners.clone()
-            val clonedCallbacks = callbacks.clone()
-            close()
-            if (overwrite && newPath.exists()) find(newPath)?.delete()
-            movePathTo(newPath, overwrite)
-            find(newPath)?.asFile()?.also {
-                it.runners = clonedRunner
-                it.callbacks = clonedCallbacks
-            }
-        } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_SAVE_FILE, newPath)
-            null
-        }
-    }
-
     fun isChanged() {
         hasUnsavedChanges = true
     }
@@ -296,20 +260,81 @@ class FileState internal constructor(
         projectMgr.renameFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
     }
 
-    override fun initiateMove() {
-        initiateMoveOrSave(isMove = true, reopen = true)
+    fun tryRename(name: String) = mayConfirm(path.resolveSibling(name), projectMgr.renameFileDialog) { onSuccess ->
+        val newPath = path.resolveSibling(name)
+        if (parent!!.contains(name)) {
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            val clonedRunnerMgr = runners.clone()
+            val clonedCallbacks = callbacks.clone()
+            close()
+            movePathTo(newPath)
+            find(newPath)?.asFile()?.also { newFile ->
+                newFile.runners = clonedRunnerMgr
+                newFile.callbacks = clonedCallbacks
+                onSuccess?.let { it(newFile) }
+                projectMgr.onContentChange?.let { it() }
+            }
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_FILE, newPath, e.message ?: UNKNOWN)
+            null
+        }
     }
 
-    override fun initiateSave(reopen: Boolean) {
-        initiateMoveOrSave(isMove = false, reopen = reopen)
-    }
+    override fun initiateSave(reopen: Boolean) = initiateMoveOrSave(isMove = false, reopen = reopen)
 
-    private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean) {
+    override fun initiateMove() = initiateMoveOrSave(isMove = true)
+
+    private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean = true) {
         saveContent()
         if (isUnsavedPageable || isMove) {
             // currentIndex must be computed before passing into lambda
             val currentIndex = if (isOpen && reopen) projectMgr.pages.opened.indexOf(this) else -1
             projectMgr.saveFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
+        }
+    }
+
+    fun trySave(path: Path, overwrite: Boolean) = mayConfirm(path, projectMgr.saveFileDialog) { onSuccess ->
+        try {
+            val clonedRunner = runners.clone()
+            val clonedCallbacks = callbacks.clone()
+            close()
+            if (overwrite && path.exists()) find(path)?.delete()
+            movePathTo(path, overwrite)
+            if (!path.startsWith(projectMgr.current!!.path)) {
+                projectMgr.notification.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, path)
+                null
+            } else find(path)?.asFile()?.also { newFile ->
+                newFile.runners = clonedRunner
+                newFile.callbacks = clonedCallbacks
+                onSuccess?.let { it(newFile) }
+                projectMgr.onContentChange?.let { it() }
+            }
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_SAVE_FILE, path)
+            null
+        }
+    }
+
+    private fun mayConfirm(
+        newPath: Path,
+        dialog: ProjectManager.ModifyFileDialog,
+        onConfirm: (onSuccess: ((FileState) -> Unit)?) -> FileState?
+    ) {
+        if (isRunnable && !FileType.of(newPath).isRunnable) {
+            // we need to record dialog.onSuccess before dialog.close() which clears it
+            val onSuccess = dialog.onSuccess
+            dialog.close()
+            projectMgr.confirmation.submit(
+                title = Label.CONVERT_FILE_TYPE,
+                message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
+                    name, newPath.fileName, FileType.RUNNABLE_EXTENSIONS_STR
+                )
+            ) { onConfirm(onSuccess) }
+        } else onConfirm { newFile ->
+            dialog.onSuccess?.let { it(newFile) }
+            dialog.close()
         }
     }
 
