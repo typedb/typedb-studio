@@ -32,6 +32,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
+import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
+import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SIZE
+import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SPACING
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.IconButton
+import com.vaticle.typedb.studio.framework.material.Form.LoadingIndicator
+import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
+import com.vaticle.typedb.studio.framework.material.Form.TextButton
+import com.vaticle.typedb.studio.framework.material.Form.TextButtonArg
+import com.vaticle.typedb.studio.framework.material.Form.TextButtonRow
+import com.vaticle.typedb.studio.framework.material.Form.toggleButtonColor
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.Companion.RUNNABLE_EXTENSIONS_STR
@@ -40,24 +57,6 @@ import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
-import com.vaticle.typedb.studio.view.common.URL
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
-import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
-import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
-import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SPACING
-import com.vaticle.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Form.IconButton
-import com.vaticle.typedb.studio.view.material.Form.LoadingIndicator
-import com.vaticle.typedb.studio.view.material.Form.RawIconButton
-import com.vaticle.typedb.studio.view.material.Form.TextButton
-import com.vaticle.typedb.studio.view.material.Form.TextButtonArg
-import com.vaticle.typedb.studio.view.material.Form.TextButtonRow
-import com.vaticle.typedb.studio.view.material.Form.toggleButtonColor
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Separator
-import com.vaticle.typedb.studio.view.material.Tooltip
 
 object Toolbar {
 
@@ -244,7 +243,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.SCHEMA_SESSION,
                                     description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                                    url = URL.DOCS_SESSION_SCHEMA
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_SESSION_SCHEMA
                                 )
                             ),
                             TextButtonArg(
@@ -255,7 +254,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.DATA_SESSION,
                                     description = Sentence.SESSION_DATA_DESCRIPTION,
-                                    url = URL.DOCS_SESSION_DATA
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_SESSION_DATA
                                 )
                             )
                         )
@@ -277,7 +276,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.WRITE_TRANSACTION,
                                     description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
-                                    url = URL.DOCS_TRANSACTION_WRITE
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_WRITE
                                 )
                             ),
                             TextButtonArg(
@@ -288,7 +287,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.READ_TRANSACTION,
                                     description = Sentence.TRANSACTION_READ_DESCRIPTION,
-                                    url = URL.DOCS_TRANSACTION_READ
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_READ
                                 )
                             )
                         )
@@ -308,7 +307,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_SNAPSHOT,
                                     description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_SNAPSHOT
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_SNAPSHOT
                                 )
                             ),
                             TextButtonArg(
@@ -319,7 +318,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE,
                                     description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_INFERENCE
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_INFERENCE
                                 )
                             ),
                             TextButtonArg(
@@ -330,7 +329,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE_EXPLANATION,
                                     description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
+                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
                                 )
                             )
                         )
@@ -381,7 +380,7 @@ object Toolbar {
                         tooltip = Tooltip.Arg(
                             title = Label.CLOSE_TRANSACTION,
                             description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
-                            url = URL.DOCS_TRANSACTION_CLOSE,
+                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_CLOSE,
                         )
                     )
                 }
@@ -396,7 +395,7 @@ object Toolbar {
                         tooltip = Tooltip.Arg(
                             title = Label.ROLLBACK_TRANSACTION,
                             description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
-                            url = URL.DOCS_TRANSACTION_ROLLBACK,
+                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_ROLLBACK,
                         )
                     )
                 }
@@ -411,7 +410,7 @@ object Toolbar {
                         tooltip = Tooltip.Arg(
                             title = Label.COMMIT_TRANSACTION,
                             description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
-                            url = URL.DOCS_TRANSACTION_COMMIT
+                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_COMMIT
                         )
                     )
                 }
@@ -483,7 +482,7 @@ object Toolbar {
                         tooltip = Tooltip.Arg(
                             title = Label.INTERACTIVE_MODE,
                             description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
-                            url = URL.DOCS_MODE_INTERACTIVE,
+                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_MODE_INTERACTIVE,
                         )
                     ),
                     TextButtonArg(
@@ -494,7 +493,7 @@ object Toolbar {
                         tooltip = Tooltip.Arg(
                             title = Label.SCRIPT_MODE,
                             description = Sentence.SCRIPT_MODE_DESCRIPTION,
-                            url = URL.DOCS_MODE_SCRIPT,
+                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_MODE_SCRIPT,
                         )
                     )
                 )

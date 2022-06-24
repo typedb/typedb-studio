@@ -19,7 +19,7 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = [
-    "//view:__pkg__",
+    "//framework:__pkg__",
     "//:__pkg__"
 ])
 
@@ -35,8 +35,8 @@ kt_jvm_library(
         "//state/page:page",
         "//state/schema:schema",
         "//state:state",
-        "//view/common:common",
-        "//view/material:material",
+        "//framework/common:common",
+        "//framework/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api:api",
@@ -54,7 +54,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-types:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-types:{pom_version}"],
 )
 
 checkstyle_test(

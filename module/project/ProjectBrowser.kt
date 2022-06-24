@@ -27,24 +27,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.common.theme.Typography
+import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.FADED
+import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.ITALIC
+import com.vaticle.typedb.studio.framework.material.Browsers
+import com.vaticle.typedb.studio.framework.material.ContextMenu
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.IconArg
+import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Icon.Code.FOLDER_PLUS
+import com.vaticle.typedb.studio.framework.material.Navigator
+import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.project.DirectoryState
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Typography
-import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
-import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
-import com.vaticle.typedb.studio.view.material.Browsers
-import com.vaticle.typedb.studio.view.material.ContextMenu
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Form.IconArg
-import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Icon.Code.FOLDER_PLUS
-import com.vaticle.typedb.studio.view.material.Navigator
-import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import mu.KotlinLogging
 
 class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {

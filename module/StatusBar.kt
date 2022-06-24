@@ -32,6 +32,11 @@ import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.app.StatusManager
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
@@ -39,11 +44,6 @@ import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Separator
-import com.vaticle.typedb.studio.view.material.Tooltip
 
 object StatusBar {
 

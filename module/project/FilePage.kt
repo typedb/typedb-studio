@@ -24,15 +24,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.editor.TextEditor
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Frame
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Pages
+import com.vaticle.typedb.studio.framework.output.RunOutputArea
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.editor.TextEditor
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Frame
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Pages
-import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 class FilePage private constructor(
     private var file: FileState,

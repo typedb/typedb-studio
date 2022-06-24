@@ -57,37 +57,36 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.common.theme.Theme.DIALOG_PADDING
+import com.vaticle.typedb.studio.framework.material.Browsers
+import com.vaticle.typedb.studio.framework.material.ConfirmationDialog
+import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.SelectableText
+import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.framework.material.Form.TextButton
+import com.vaticle.typedb.studio.framework.material.Frame
+import com.vaticle.typedb.studio.framework.material.Notifications
+import com.vaticle.typedb.studio.framework.material.Pages
+import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.module.StatusBar
+import com.vaticle.typedb.studio.module.Toolbar
+import com.vaticle.typedb.studio.module.connection.DatabaseDialog
+import com.vaticle.typedb.studio.module.connection.ServerDialog
+import com.vaticle.typedb.studio.module.project.FilePage
+import com.vaticle.typedb.studio.module.project.ProjectBrowser
+import com.vaticle.typedb.studio.module.project.ProjectDialog
+import com.vaticle.typedb.studio.module.type.TypeBrowser
+import com.vaticle.typedb.studio.module.type.TypePage
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.module.StatusBar
-import com.vaticle.typedb.studio.module.Toolbar
-import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
-import com.vaticle.typedb.studio.view.common.Context.LocalWindow
-import com.vaticle.typedb.studio.view.common.KeyMapper
-import com.vaticle.typedb.studio.view.common.Util.toDP
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
-import com.vaticle.typedb.studio.module.connection.DatabaseDialog
-import com.vaticle.typedb.studio.module.connection.ServerDialog
-import com.vaticle.typedb.studio.view.material.Browsers
-import com.vaticle.typedb.studio.view.material.ConfirmationDialog
-import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
-import com.vaticle.typedb.studio.view.material.Form.SelectableText
-import com.vaticle.typedb.studio.view.material.Form.Text
-import com.vaticle.typedb.studio.view.material.Form.TextButton
-import com.vaticle.typedb.studio.view.material.Frame
-import com.vaticle.typedb.studio.view.material.Notifications
-import com.vaticle.typedb.studio.view.material.Pages
-import com.vaticle.typedb.studio.view.material.Separator
-import com.vaticle.typedb.studio.module.project.FilePage
-import com.vaticle.typedb.studio.module.project.ProjectBrowser
-import com.vaticle.typedb.studio.module.project.ProjectDialog
-import com.vaticle.typedb.studio.module.type.TypeBrowser
-import com.vaticle.typedb.studio.module.type.TypePage
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
@@ -197,9 +196,9 @@ object Studio {
 
     private fun handleKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
-        else KeyMapper.CURRENT.map(event)?.let {
+        else com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)?.let {
             when (it) {
-                KeyMapper.Command.QUIT -> {
+                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.QUIT -> {
                     onClose()
                     true
                 }

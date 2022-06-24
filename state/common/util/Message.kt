@@ -34,7 +34,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
          * function with every new nested class added into ErrorMessage.
          */
         fun loadClasses() {
-            System; View; Connection; Project; Schema
+            System; Framework; Connection; Project; Schema
         }
     }
 
@@ -54,7 +54,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
         }
     }
 
-    class View(codeNumber: Int, messageBody: String) :
+    class Framework(codeNumber: Int, messageBody: String) :
         Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
 
         companion object {
@@ -62,14 +62,14 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val MESSAGE_PREFIX = "TypeDB Studio View"
 
             val UNEXPECTED_ERROR =
-                View(1, "Unexpected error occurred with TypeDB Studio view library.")
+                Framework(1, "Unexpected error occurred with TypeDB Studio view library.")
             val EXPAND_LIMIT_REACHED =
-                View(
+                Framework(
                     2, "%s navigator reached the recommended limit of expanded items (%s). " +
                             "Automated expansion beyond the limit is disabled to improve performance."
                 )
             val TEXT_COPIED_TO_CLIPBOARD =
-                View(3, "Selected text has been successfully copied to the OS clipboard.")
+                Framework(3, "Selected text has been successfully copied to the OS clipboard.")
         }
     }
 

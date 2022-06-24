@@ -17,7 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-package(default_visibility = ["//view/common:__pkg__"])
+package(default_visibility = ["//framework/common:__pkg__"])
 
 filegroup(
     name = "titillium-web",

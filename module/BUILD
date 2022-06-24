@@ -32,8 +32,8 @@ kt_jvm_library(
         "//state/project:project",
         "//state/page:page",
         "//state:state",
-        "//view/common:common",
-        "//view/material:material",
+        "//framework/common:common",
+        "//framework/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",

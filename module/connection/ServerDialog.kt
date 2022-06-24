@@ -32,6 +32,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.Dialog
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.Checkbox
+import com.vaticle.typedb.studio.framework.material.Form.Dropdown
+import com.vaticle.typedb.studio.framework.material.Form.Field
+import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.Submission
+import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.framework.material.Form.TextButton
+import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property
@@ -40,17 +51,6 @@ import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB_CLUSTE
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Dialog
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Form.Checkbox
-import com.vaticle.typedb.studio.view.material.Form.Dropdown
-import com.vaticle.typedb.studio.view.material.Form.Field
-import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
-import com.vaticle.typedb.studio.view.material.Form.Submission
-import com.vaticle.typedb.studio.view.material.Form.Text
-import com.vaticle.typedb.studio.view.material.Form.TextButton
-import com.vaticle.typedb.studio.view.material.Form.TextInput
 
 object ServerDialog {
 

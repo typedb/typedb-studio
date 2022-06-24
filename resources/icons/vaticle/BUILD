@@ -17,7 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-package(default_visibility = ["//:__pkg__", "//view:__pkg__"])
+package(default_visibility = ["//:__pkg__", "//framework:__pkg__"])
 
 filegroup(
     name = "vaticle-bot-linux",

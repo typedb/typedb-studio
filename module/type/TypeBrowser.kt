@@ -30,20 +30,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.Browsers
+import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
+import com.vaticle.typedb.studio.framework.material.ContextMenu
+import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Navigator
+import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
+import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
-import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Browsers
-import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
-import com.vaticle.typedb.studio.view.material.ContextMenu
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Navigator
-import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.view.material.Tooltip
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 

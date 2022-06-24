@@ -19,8 +19,8 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = [
+    "//framework:__subpackages__",
     "//module:__pkg__",
-    "//view:__subpackages__",
     "//:__pkg__"
 ])
 
@@ -35,8 +35,8 @@ kt_jvm_library(
         "//state/project:project",
         "//state/page:page",
         "//state:state",
-        "//view/common:common",
-        "//view/material:material",
+        "//framework/common:common",
+        "//framework/material:material",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

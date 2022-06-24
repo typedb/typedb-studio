@@ -248,7 +248,7 @@ class FileState internal constructor(
                 } while (watchFileSystem.get())
             } catch (e: CancellationException) {
             } catch (e: java.lang.Exception) {
-                projectMgr.notification.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
+                projectMgr.notification.systemError(LOGGER, e, Message.Framework.UNEXPECTED_ERROR)
             }
         }
     }
