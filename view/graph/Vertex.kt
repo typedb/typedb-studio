@@ -285,7 +285,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             override val expandSizeMultiplier = Offset(2f, 2f)
 
             override fun visuallyIntersects(point: Offset): Boolean {
-                if (drawAsRect) return visualRect.contains(point).also { println("visualRect = $visualRect, point = $point") }
+                if (drawAsRect) return visualRect.contains(point)
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
                 val yi = (point.y - position.y).pow(2) / (size.height / 2).pow(2)
                 return xi + yi < 1f
