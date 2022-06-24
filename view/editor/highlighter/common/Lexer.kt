@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.highlighter.common
+package com.vaticle.typedb.studio.view.editor.highlighter.common
 
 interface Lexer {
 

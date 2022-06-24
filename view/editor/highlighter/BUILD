@@ -18,28 +18,28 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//view/highlighter:__pkg__"])
+package(default_visibility = ["//view/editor:__pkg__"])
 
 kt_jvm_library(
-    name = "typeql",
+    name = "highlighter",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//view/highlighter/common:common",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//grammar/java:typeql-grammar",
-        "@vaticle_typeql_lang_java//:typeql-lang",
+        "//state/common:common",
+        "//state/project:project",
+        "//state/page:page",
+        "//view/editor/highlighter/common:common",
+        "//view/editor/highlighter/language:typeql",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_antlr_antlr4_runtime",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    resources = ["typeql_scopes.yml"],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter-language-typeql:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter:{pom_version}"],
 )
 
 checkstyle_test(

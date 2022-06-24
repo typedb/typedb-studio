@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.highlighter
+package com.vaticle.typedb.studio.view.editor.highlighter
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -26,11 +26,11 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.view.highlighter.common.Lexer
-import com.vaticle.typedb.studio.view.highlighter.common.Lexer.Token
-import com.vaticle.typedb.studio.view.highlighter.common.Scheme
-import com.vaticle.typedb.studio.view.highlighter.common.Scope
-import com.vaticle.typedb.studio.view.highlighter.language.TypeQLLexer
+import com.vaticle.typedb.studio.view.editor.highlighter.common.Lexer
+import com.vaticle.typedb.studio.view.editor.highlighter.common.Lexer.Token
+import com.vaticle.typedb.studio.view.editor.highlighter.common.Scheme
+import com.vaticle.typedb.studio.view.editor.highlighter.common.Scope
+import com.vaticle.typedb.studio.view.editor.highlighter.language.TypeQLLexer
 
 object SyntaxHighlighter {
 

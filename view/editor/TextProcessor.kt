@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.view.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.view.editor.TextChange.ReplayType
-import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
+import com.vaticle.typedb.studio.view.editor.highlighter.SyntaxHighlighter
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger

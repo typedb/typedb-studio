@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.highlighter.common
+package com.vaticle.typedb.studio.view.editor.highlighter.common
 
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML

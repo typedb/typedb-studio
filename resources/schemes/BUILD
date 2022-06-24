@@ -17,7 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-package(default_visibility = ["//view/highlighter:__subpackages__"])
+package(default_visibility = ["//view/editor/highlighter:__subpackages__"])
 
 filegroup(
     name = "schemes",

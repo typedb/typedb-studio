@@ -79,8 +79,7 @@ import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
-import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
-import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
+import com.vaticle.typedb.studio.view.editor.highlighter.SyntaxHighlighter.highlight
 import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Scrollbar
 import com.vaticle.typedb.studio.view.material.Separator

@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.highlighter.common
+package com.vaticle.typedb.studio.view.editor.highlighter.common
 
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.common.yaml.YAML
@@ -50,7 +50,7 @@ class Scope private constructor(val name: String, var parent: Scope?) {
     companion object {
 
         internal const val GLOBAL_NAME = "global"
-        private val SCOPE_DEFINITION_FILE = "view/highlighter/common/scope_definitions.yml"
+        private const val SCOPE_DEFINITION_FILE = "view/editor/highlighter/common/scope_definitions.yml"
 
         fun instantiateNewScopes(): Map<String, Scope> {
             val globalScope = Scope(name = GLOBAL_NAME, parent = null)
