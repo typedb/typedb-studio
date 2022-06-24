@@ -140,17 +140,28 @@ sealed class VertexBackgroundRenderer(
 
         override fun draw() {
             with(ctx.drawScope) {
-                withTransform({
-                    scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
-                    rotate(degrees = 45f, pivot = rect.center)
-                }) {
+                if (vertex.geometry.isVisiblyCollapsed || !vertex.geometry.contentOverflowsBaseShape) {
+                    withTransform({
+                        scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
+                        rotate(degrees = 45f, pivot = rect.center)
+                    }) {
+                        getHighlight()?.let {
+                            withOpaqueBackground(it.color, ctx) { color ->
+                                drawRoundRect(color, it.rect.topLeft, it.rect.size, cornerRadius)
+                            }
+                        }
+                        withOpaqueBackground(color, ctx) {
+                            drawRoundRect(it, baseShape.topLeft, baseShape.size, cornerRadius)
+                        }
+                    }
+                } else {
                     getHighlight()?.let {
                         withOpaqueBackground(it.color, ctx) { color ->
-                            drawRoundRect(color, it.rect.topLeft, it.rect.size, cornerRadius)
+                            ctx.drawScope.drawRoundRect(color, it.rect.topLeft, it.rect.size, CornerRadius(8f))
                         }
                     }
                     withOpaqueBackground(color, ctx) {
-                        drawRoundRect(it, baseShape.topLeft, baseShape.size, cornerRadius)
+                        ctx.drawScope.drawRoundRect(it, rect.topLeft, rect.size, CornerRadius(8f))
                     }
                 }
             }

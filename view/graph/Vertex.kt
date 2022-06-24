@@ -139,16 +139,12 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
     }
 
-    sealed class Geometry(size: Size) : BasicVertex(0.0, 0.0) {
+    sealed class Geometry(private val baseSize: Size, private val expandedMaxSize: Size) : BasicVertex(0.0, 0.0) {
 
-        private val baseSize = size
         private val baseScale = 1f
-        private val expandedSize get() = when (contentOverflowsBaseShape) {
-            true -> baseSize * expandSizeMultiplierIfContentOverflows
-            false -> baseSize
-        }
+        private val expandedSize get() = if (contentOverflowsBaseShape) expandedMaxSize else baseSize
         private val expandedScale = 1.15f
-        open val expandSizeMultiplierIfContentOverflows = 1.6f
+        abstract val expandSizeMultiplier: Offset
         val size get() = _sizeAndScale.value.size
         val scale get() = _sizeAndScale.value.scale
 
@@ -172,7 +168,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         val isVisiblyCollapsed get() = scale / baseScale < (baseScale + 0.02f)
         val isVisiblyExpanded get() = scale / baseScale > (expandedScale - 0.02f)
 
-        private val _sizeAndScale = Animatable(SizeAndScale(size, baseScale), SizeAndScale.VectorConverter)
+        private val _sizeAndScale = Animatable(SizeAndScale(baseSize, baseScale), SizeAndScale.VectorConverter)
 
         private data class SizeAndScale(val size: Size, val scale: Float) {
             companion object {
@@ -207,26 +203,24 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
 
         companion object {
-            private const val ENTITY_WIDTH = 100f
-            private const val ENTITY_HEIGHT = 35f
-            private const val RELATION_WIDTH = 110f
-            private const val RELATION_HEIGHT = 55f
-            private const val ATTRIBUTE_WIDTH = 100f
-            private const val ATTRIBUTE_HEIGHT = 35f
             protected const val PADDING = 4f
 
-            val ENTITY_SIZE = Size(ENTITY_WIDTH, ENTITY_HEIGHT)
-            val RELATION_SIZE = Size(RELATION_WIDTH, RELATION_HEIGHT)
-            val ATTRIBUTE_SIZE = Size(ATTRIBUTE_WIDTH, ATTRIBUTE_HEIGHT)
+            val ENTITY_SIZE = Size(100f, 35f)
+            val RELATION_SIZE = Size(110f, 55f)
+            val ATTRIBUTE_SIZE = Size(100f, 35f)
+            val CONCEPT_SIZE_EXPANDED = Size(150f, 55f)
+            val ATTRIBUTE_SIZE_EXPANDED = Size(200f, 70f)
         }
 
-        class Entity : Geometry(ENTITY_SIZE) {
+        class Entity : Geometry(ENTITY_SIZE, CONCEPT_SIZE_EXPANDED) {
 
             private val incomingEdgeTargetRect get() = Rect(
                 Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
             )
 
             override val labelMaxWidth get() = size.width - PADDING
+
+            override val expandSizeMultiplier = Offset(1.6f, 1.6f)
 
             override fun intersects(point: Offset) = rect.contains(point)
 
@@ -240,15 +234,17 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
         }
 
-        class Relation : Geometry(RELATION_SIZE) {
+        class Relation : Geometry(RELATION_SIZE, CONCEPT_SIZE_EXPANDED) {
 
             private val incomingEdgeTargetRect
                 get() = Rect(Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8))
 
             override val labelMaxWidth get() = when {
                 isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
-                else -> size.width * 0.7f - PADDING
+                else -> size.width * 0.66f - PADDING
             }
+
+            override val expandSizeMultiplier = Offset(1.6f, 1.2f)
 
             override fun intersects(point: Offset): Boolean {
                 val r = rect
@@ -268,14 +264,14 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
         }
 
-        class Attribute : Geometry(ATTRIBUTE_SIZE) {
+        class Attribute : Geometry(ATTRIBUTE_SIZE, ATTRIBUTE_SIZE_EXPANDED) {
 
             override val labelMaxWidth get() = when {
                 isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
                 else -> size.width * 0.8f - PADDING
             }
 
-            override val expandSizeMultiplierIfContentOverflows = 2f
+            override val expandSizeMultiplier = Offset(2f, 2f)
 
             override fun intersects(point: Offset): Boolean {
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
