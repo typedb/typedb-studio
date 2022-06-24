@@ -37,7 +37,6 @@ class Interactions constructor(private val graphArea: GraphArea) {
         set(value) {
             rebuildFocusedVertexNetwork(value)
             _focusedVertex = value
-            _focusedVertex?.let { it.geometry.isExpanded = true }
         }
     var focusedVertexNetwork: Set<Vertex> by mutableStateOf(emptySet())
 
@@ -80,7 +79,6 @@ class Interactions constructor(private val graphArea: GraphArea) {
                 null -> emptySet()
                 else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
             }
-            hoveredVertex?.let { it.geometry.isExpanded = true }
         }
     }
 }

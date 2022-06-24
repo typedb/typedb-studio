@@ -32,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
@@ -82,7 +84,7 @@ class GraphArea(transactionState: TransactionState) {
             interactions.hoveredVertexChecker.launch()
         }
         LaunchedEffect(this) {
-            VertexExpandedStateCleanupJob(graphArea = this@GraphArea, coroutineScope = this).launch()
+            VertexExpandAnimator(graphArea = this@GraphArea, coroutineScope = this).launch()
         }
         LaunchedEffect(this) { viewport.autoScaler.launch() }
     }
@@ -104,7 +106,6 @@ class GraphArea(transactionState: TransactionState) {
             drawEdges(edges)
             drawVertices(vertices, vertexLabelColor, typography)
         }
-        if (graph.physics.alpha < 0.5 && viewport.scale > 0.2) vertices.forEach { VertexExpandAnimator(it) }
         edges.filter { it.label !in textRenderer.edgeLabelSizes }.forEach { textRenderer.EdgeLabelMeasurer(it) }
         PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
     }
@@ -157,28 +158,30 @@ class GraphArea(transactionState: TransactionState) {
         return if (shouldDrawLabels) edgesWithVisibleLabels.toSet() else emptySet()
     }
 
-    @Composable
-    private fun VertexExpandAnimator(vertex: Vertex) {
-        LaunchedEffect(vertex.geometry.isExpanded) {
-            // TODO: this should reliably work in both directions (expand and collapse) but when the graph has
-            //  >50 vertices or so, collapsing stops being reliable, so we've delegated that side to a cleanup job
-            if (vertex.geometry.isExpanded) launch { vertex.geometry.animateExpansion() }
-        }
-    }
-
     private fun DrawScope.drawVertices(
         vertices: Collection<Vertex>, labelColor: androidx.compose.ui.graphics.Color, typography: Typography.Theme
     ) {
         // Ensure smooth performance when zoomed out, and during initial explosion
-        val shouldDrawLabels = viewport.scale > 0.2 && when {
+        val drawLabels = viewport.scale > 0.2 && when {
             graph.physics.alpha > 0.5 -> vertices.size < 50
             graph.physics.alpha > 0.05 -> vertices.size < 100
             else -> vertices.size < 500
         }
+        val drawVertexFn = { vertex: Vertex ->
+            drawVertexBackground(vertex)
+            if (drawLabels) with(textRenderer) { drawVertexLabel(vertex, labelColor, typography) }
+        }
         // Draw strongly focused vertices over less focused ones
         sortByZIndex(vertices).forEach { vertex ->
-            drawVertexBackground(vertex)
-            if (shouldDrawLabels) with(textRenderer) { drawVertexLabel(vertex, labelColor, typography) }
+            if (vertex.geometry.isVisiblyCollapsed) {
+                drawVertexFn(vertex)
+            } else {
+                withTransform({
+                    scale(vertex.geometry.scale, pivot = with(viewport) { vertex.geometry.rect.center.toViewport() })
+                }) {
+                    drawVertexFn(vertex)
+                }
+            }
         }
     }
 
@@ -253,6 +256,7 @@ class GraphArea(transactionState: TransactionState) {
             Box(modifier
                 .pointerMoveFilter(
                     onMove = { graphArea.interactions.pointerPosition = it; false },
+                    // TODO: this is not triggered reliably when the pointer leaves the window bounds
                     onExit = { graphArea.interactions.pointerPosition = null; false }
                 )
                 .pointerInput(graphArea) {
@@ -275,17 +279,18 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    class VertexExpandedStateCleanupJob(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
+    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
         : BackgroundTask(runIntervalMs = 33) {
 
         private val interactions get() = graphArea.interactions
 
         override fun run() {
-            graphArea.graph.vertices.filter {
-                it != interactions.hoveredVertex && it != interactions.focusedVertex && it.geometry.isExpanded
-            }.forEach {
-                it.geometry.isExpanded = false
-                coroutineScope.launch { it.geometry.animateExpansion() }
+            graphArea.graph.vertices.forEach {
+                val verticesToExpand = listOfNotNull(interactions.hoveredVertex, interactions.focusedVertex)
+                if (it.geometry.isExpanded != it in verticesToExpand) {
+                    it.geometry.isExpanded = !it.geometry.isExpanded
+                    coroutineScope.launch { it.geometry.animateExpandOrCollapse() }
+                }
             }
         }
     }

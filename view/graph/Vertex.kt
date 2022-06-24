@@ -19,7 +19,8 @@
 package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.AnimationVector3D
+import androidx.compose.animation.core.TwoWayConverter
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -138,20 +139,23 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
     sealed class Geometry(size: Size) : BasicVertex(0.0, 0.0) {
 
+        private val baseSize = size
+        private val baseScale = 1f
+        private val expandedSize get() = when (contentOverflowsBaseShape) {
+            true -> baseSize * expandSizeMultiplierIfContentOverflows
+            false -> baseSize
+        }
+        private val expandedScale = 1.15f
+        open val expandSizeMultiplierIfContentOverflows = 1.6f
+        val size get() = _sizeAndScale.value.size
+        val scale get() = _sizeAndScale.value.scale
+
         var position: Offset
             get() = Offset(x.toFloat(), y.toFloat())
             set(value) {
                 x = value.x.toDouble()
                 y = value.y.toDouble()
             }
-
-        val baseSize = size
-        val expandedSize get() = when (contentOverflowsBaseShape) {
-            true -> size * expandSizeMultiplierIfContentOverflows
-            false -> size * 1.1f
-        }
-        open val expandSizeMultiplierIfContentOverflows = 1.6f
-        val size get() = _size.value
         val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
 
         var isFrozen: Boolean
@@ -163,10 +167,19 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         var contentOverflowsBaseShape = false
         var isExpanded by mutableStateOf(false)
-        val isVisiblyCollapsed get() = size.width - baseSize.width < 4f
-        val isVisiblyExpanded get() = expandedSize.width - size.width < 4f
+        val isVisiblyCollapsed get() = scale / baseScale < (baseScale + 0.02f)
+        val isVisiblyExpanded get() = scale / baseScale > (expandedScale - 0.02f)
 
-        private val _size = Animatable(size, Size.VectorConverter)
+        private val _sizeAndScale = Animatable(SizeAndScale(size, baseScale), SizeAndScale.VectorConverter)
+
+        private data class SizeAndScale(val size: Size, val scale: Float) {
+            companion object {
+                val VectorConverter: TwoWayConverter<SizeAndScale, AnimationVector3D> = TwoWayConverter(
+                    convertToVector = { AnimationVector3D(it.size.width, it.size.height, it.scale) },
+                    convertFromVector = { SizeAndScale(Size(it.v1, it.v2), it.v3) }
+                )
+            }
+        }
 
         abstract val labelMaxWidth: Float
 
@@ -184,8 +197,10 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         /** Find the end angle of the given `Arc` when drawn as a curved edge to this vertex */
         abstract fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.view.common.geometry.Geometry.Arc): Float?
 
-        suspend fun animateExpansion() {
-            _size.animateTo(if (isExpanded) expandedSize else baseSize)
+        suspend fun animateExpandOrCollapse() {
+            _sizeAndScale.animateTo(
+                if (isExpanded) SizeAndScale(expandedSize, expandedScale) else SizeAndScale(baseSize, baseScale)
+            )
         }
 
         companion object {
@@ -208,11 +223,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
             )
 
-            override val labelMaxWidth get() = when {
-                isVisiblyCollapsed -> baseSize.width - PADDING
-                isVisiblyExpanded -> expandedSize.width - PADDING
-                else -> size.width - PADDING
-            }
+            override val labelMaxWidth get() = size.width - PADDING
 
             override fun intersects(point: Offset) = rect.contains(point)
 
@@ -232,9 +243,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 get() = Rect(Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8))
 
             override val labelMaxWidth get() = when {
-                isVisiblyCollapsed -> baseSize.width * 0.7f - PADDING
-                isVisiblyExpanded -> expandedSize.width * 0.7f - PADDING
-                else -> size.width - PADDING
+                isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
+                else -> size.width * 0.7f - PADDING
             }
 
             override fun intersects(point: Offset): Boolean {
@@ -258,9 +268,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Attribute : Geometry(ATTRIBUTE_SIZE) {
 
             override val labelMaxWidth get() = when {
-                isVisiblyCollapsed -> baseSize.width * 0.8f - PADDING
-                isVisiblyExpanded -> expandedSize.width - PADDING
-                else -> size.width - PADDING
+                isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
+                else -> size.width * 0.8f - PADDING
             }
 
             override val expandSizeMultiplierIfContentOverflows = 2f
