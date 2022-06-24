@@ -122,7 +122,7 @@ class QueryRunner constructor(
     var endTime: Long? = null
     val responses = LinkedBlockingQueue<Response>()
     val isConsumed: Boolean get() = consumerLatch.count == 0L
-    private val isRunning = AtomicBoolean(false)
+    internal val isRunning = AtomicBoolean(false)
     private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)

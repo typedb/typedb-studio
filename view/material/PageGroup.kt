@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
@@ -43,20 +43,11 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
-import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Page
-import com.vaticle.typedb.studio.view.material.Separator
-import com.vaticle.typedb.studio.view.material.Tabs
-import com.vaticle.typedb.studio.view.project.FilePage
-import com.vaticle.typedb.studio.view.type.TypePage
 
-object PageArea {
+object PageGroup {
 
     val MIN_WIDTH = 300.dp
 
@@ -65,26 +56,29 @@ object PageArea {
         private val openedPages: MutableMap<Pageable, Page> = mutableMapOf()
         internal val tabsState = Tabs.Horizontal.State<Pageable>()
 
-        fun handleKeyEvent(event: KeyEvent): Boolean {
+        fun handleKeyEvent(event: KeyEvent, onNewPage: () -> Unit): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)?.let { execute(it) } ?: false
+            else KeyMapper.CURRENT.map(event)?.let { execute(it, onNewPage) } ?: false
         }
 
-        private fun execute(command: KeyMapper.Command): Boolean {
+        private fun execute(command: KeyMapper.Command, onNewPage: () -> Unit): Boolean {
             return when (command) {
-                KeyMapper.Command.NEW_PAGE -> createAndOpenNewFile()
                 KeyMapper.Command.SAVE -> saveActivePage()
                 KeyMapper.Command.CLOSE -> closeActivePage()
                 KeyMapper.Command.CTRL_TAB -> showNextPage()
                 KeyMapper.Command.CTRL_TAB_SHIFT -> showPreviousPage()
+                KeyMapper.Command.NEW_PAGE -> {
+                    onNewPage()
+                    true
+                }
                 else -> false
             }
         }
 
         @Composable
-        internal fun openedPage(pageable: Pageable): Page {
+        internal fun openedPage(pageable: Pageable, createPageFn: @Composable (Pageable) -> Page): Page {
             return openedPages.getOrPut(pageable) {
-                val page = createPage(pageable)
+                val page = createPageFn(pageable)
                 pageable.onClose { openedPages.remove(it) }
                 pageable.onReopen {
                     page.updatePageable(it)
@@ -92,18 +86,6 @@ object PageArea {
                 }
                 page
             }
-        }
-
-        @Composable
-        private fun createPage(pageable: Pageable) = when (pageable) {
-            is FileState -> FilePage.create(pageable)
-            is TypeState.Thing -> TypePage.create(pageable)
-            else -> throw IllegalStateException("Unrecognised pageable type")
-        }
-
-        internal fun createAndOpenNewFile(): Boolean {
-            StudioState.project.tryCreateUntitledFile()?.let { it.tryOpen() }
-            return true
         }
 
         private fun saveActivePage(): Boolean {
@@ -132,7 +114,7 @@ object PageArea {
                 pageable.close()
                 if (pageable.isUnsavedPageable) pageable.delete()
             }
-            if (pageable.isRunnable && StudioState.client.hasRunningQuery && !stopRunner) {
+            if (pageable.isRunnable && pageable.asRunnable().isRunning && !stopRunner) {
                 StudioState.confirmation.submit(
                     title = Label.QUERY_IS_RUNNING,
                     message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
@@ -176,7 +158,7 @@ object PageArea {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Layout() {
+    fun Layout(enabled: Boolean, onNewPage: () -> Unit, createPageFn: @Composable (Pageable) -> Page) {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
@@ -185,24 +167,22 @@ object PageArea {
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
-                .onKeyEvent { state.handleKeyEvent(it) }
+                .onKeyEvent { state.handleKeyEvent(it, onNewPage) }
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
                 tabs = StudioState.pages.opened,
-                iconFn = { state.openedPage(it).icon },
+                iconFn = { state.openedPage(it, createPageFn).icon },
                 labelFn = { tabLabel(it) },
                 isActiveFn = { StudioState.pages.active == it },
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,
-                extraBarButtons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = StudioState.project.current != null) {
-                    state.createAndOpenNewFile()
-                })
+                buttons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
-            StudioState.pages.active?.let { state.openedPage(it).Layout() }
+            StudioState.pages.active?.let { state.openedPage(it, createPageFn).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

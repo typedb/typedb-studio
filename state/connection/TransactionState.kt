@@ -109,17 +109,18 @@ class TransactionState constructor(
         }
     }
 
-    internal fun queryRunner(content: String): QueryRunner? {
+    internal fun runQuery(content: String): QueryRunner? {
         if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
-                return if (isOpen) QueryRunner(this, notificationMgr, content) {
+                val runner = if (isOpen) QueryRunner(this, notificationMgr, content, onComplete = {
                     if (!snapshot.value) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
                     hasRunningQueryAtomic.set(false)
-                } else null
+                }) else null
+                return runner?.also { it.launch() }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
                 hasRunningQueryAtomic.set(false)

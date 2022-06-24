@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -53,13 +53,10 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
 import com.vaticle.typedb.studio.view.material.Form.Text
-import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.Scrollbar
 
-object NotificationArea {
+object NotificationGroup {
 
     private val NOTIFICATION_MARGIN = 30.dp
     private val NOTIFICATION_WIDTH = 360.dp

@@ -190,7 +190,7 @@ class FileState internal constructor(
 
     override fun mayOpenAndRun(content: String) {
         if (!isRunnable || (!isOpen && !tryOpen())) return
-        projectMgr.client.runner(content)?.let { runners.launch(it) }
+        projectMgr.client.run(content)?.let { runners.launched(it) }
     }
 
     fun isChanged() {

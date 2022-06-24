@@ -184,7 +184,7 @@ object Tabs {
             contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
             closeButtonFn: ((T) -> IconButtonArg)? = null,
             trailingTabButtonFn: ((T) -> IconButtonArg?)? = null,
-            extraBarButtons: List<IconButtonArg> = listOf()
+            buttons: List<IconButtonArg> = listOf()
         ) {
             state.density = LocalDensity.current.density
             state.coroutineScope = rememberCoroutineScope()
@@ -214,7 +214,7 @@ object Tabs {
                     NextTabsButton(state)
                     Separator.Vertical()
                 }
-                extraBarButtons.forEach {
+                buttons.forEach {
                     Button(it)
                     Separator.Vertical()
                 }

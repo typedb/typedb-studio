@@ -61,6 +61,8 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.state.project.FileState
+import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.KeyMapper
@@ -76,10 +78,14 @@ import com.vaticle.typedb.studio.view.material.Form.SelectableText
 import com.vaticle.typedb.studio.view.material.Form.Text
 import com.vaticle.typedb.studio.view.material.Form.TextButton
 import com.vaticle.typedb.studio.view.material.Frame
+import com.vaticle.typedb.studio.view.material.NotificationGroup
+import com.vaticle.typedb.studio.view.material.PageGroup
 import com.vaticle.typedb.studio.view.material.Separator
+import com.vaticle.typedb.studio.view.project.FilePage
 import com.vaticle.typedb.studio.view.project.ProjectBrowser
 import com.vaticle.typedb.studio.view.project.ProjectDialog
 import com.vaticle.typedb.studio.view.type.TypeBrowser
+import com.vaticle.typedb.studio.view.type.TypePage
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
@@ -151,16 +157,27 @@ object Studio {
                                 initSize = Either.first(BrowserGroup.DEFAULT_WIDTH)
                             ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.LEFT) },
                             Frame.Pane(
-                                id = PageArea.javaClass.name,
-                                minSize = PageArea.MIN_WIDTH,
+                                id = PageGroup.javaClass.name,
+                                minSize = PageGroup.MIN_WIDTH,
                                 initSize = Either.second(1f)
-                            ) { PageArea.Layout() }
+                            ) {
+                                PageGroup.Layout(
+                                    enabled = StudioState.project.current != null,
+                                    onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
+                                ) {
+                                    when (it) {
+                                        is FileState -> FilePage.create(it)
+                                        is TypeState.Thing -> TypePage.create(it)
+                                        else -> throw IllegalStateException("Unrecognised pageable type")
+                                    }
+                                }
+                            }
                         )
                         Separator.Horizontal()
                         StatusBar.Layout()
                     }
                 }
-                NotificationArea.MayShowPopup()
+                NotificationGroup.MayShowPopup()
                 ConfirmationDialog.MayShowDialog()
                 ServerDialog.MayShowDialogs()
                 DatabaseDialog.MayShowDialogs()
