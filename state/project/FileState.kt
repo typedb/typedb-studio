@@ -355,6 +355,8 @@ class FileState internal constructor(
         hasUnsavedChanges = false
     }
 
+    override fun closeRecursive() = close()
+
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
             runners.close()
@@ -363,10 +365,6 @@ class FileState internal constructor(
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()
         }
-    }
-
-    override fun closeRecursive() {
-        close()
     }
 
     override fun delete() {

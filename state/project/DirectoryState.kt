@@ -161,7 +161,7 @@ class DirectoryState internal constructor(
         projectMgr.moveDirectoryDialog.open(this)
     }
 
-    fun tryMove(newParent: Path): DirectoryState? {
+    fun tryMoveTo(newParent: Path): DirectoryState? {
         val newPath = newParent.resolve(name)
         val newDir = if (newParent == path.parent) {
             projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)

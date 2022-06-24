@@ -126,7 +126,7 @@ object ProjectDialog {
         val state = PathForm(
             initField = directory.path.parent.toString(),
             onCancel = { StudioState.project.moveDirectoryDialog.close() },
-            onSubmit = { directory.tryMove(Path(it)) }
+            onSubmit = { directory.tryMoveTo(Path(it)) }
         )
         SelectDirectoryDialog(
             dialogState = StudioState.project.moveDirectoryDialog,
