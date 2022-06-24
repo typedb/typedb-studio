@@ -29,6 +29,8 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.radToDeg
 import com.vaticle.typedb.studio.view.common.theme.Color
 import kotlin.math.abs
 import kotlin.math.atan2
+import org.jetbrains.skia.Font
+import org.jetbrains.skia.TextLine
 
 class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererContext) {
 
@@ -105,7 +107,8 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
         // There should be precisely one intersection point since the arc ends inside the rectangle
         val sweepAngleUnclipped = Geometry.sweepAngle(from = majorArc.start, to = majorArc.label, fullArc.direction)
         val arcSegmentUnclipped = Geometry.Arc(fullArc.topLeft, fullArc.size, majorArc.start, sweepAngleUnclipped)
-        val labelIntersectAngle = Geometry.rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
+        val labelIntersectAngle =
+            Geometry.rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
 
         val sweepAngle = Geometry.sweepAngle(from = majorArc.start, to = labelIntersectAngle, fullArc.direction)
         when {
@@ -129,7 +132,8 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     ) {
         val sweepAngleUnclipped = Geometry.sweepAngle(from = majorArc.label, to = majorArc.end, fullArc.direction)
         val arcSegmentUnclipped = Geometry.Arc(fullArc.topLeft, fullArc.size, majorArc.label, sweepAngleUnclipped)
-        val labelIntersectAngle = Geometry.rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
+        val labelIntersectAngle =
+            Geometry.rectArcIntersectAngles(arcSegmentUnclipped, labelRect).firstOrNull() ?: return
 
         val sweepAngle = Geometry.sweepAngle(from = labelIntersectAngle, to = majorArc.end, fullArc.direction)
         when {

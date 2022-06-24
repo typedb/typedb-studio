@@ -27,14 +27,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.project.Directory
-import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.project.ProjectItem
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.DIRECTORY
-import com.vaticle.typedb.studio.state.project.ProjectItem.Type.FILE
+import com.vaticle.typedb.studio.state.project.DirectoryState
+import com.vaticle.typedb.studio.state.project.FileState
+import com.vaticle.typedb.studio.state.project.PathState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
@@ -58,7 +55,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
 
     override val label: String = Label.PROJECT
     override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
-    override val isActive: Boolean get() = GlobalState.project.current != null
+    override val isActive: Boolean get() = StudioState.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
@@ -76,46 +73,46 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
                 leadingIcon = IconArg(Icon.Code.FOLDER_OPEN)
-            ) { GlobalState.project.openProjectDialog.open() }
+            ) { StudioState.project.openProjectDialog.open() }
         }
     }
 
     @Composable
     private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
-            container = GlobalState.project.current!!,
+            container = StudioState.project.current!!,
             title = Label.PROJECT_BROWSER,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
             liveUpdate = true,
             contextMenuFn = { contextMenuItems(it) }
-        ) { projectItemOpen(it) }
-        GlobalState.project.onProjectChange = { navState.replaceContainer(it) }
-        GlobalState.project.onContentChange = { navState.reloadEntries() }
+        ) { openPath(it) }
+        StudioState.project.onProjectChange = { navState.replaceContainer(it) }
+        StudioState.project.onContentChange = { navState.reloadEntries() }
         buttons = navState.buttons
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { projectItemIcon(it) },
-            styleArgs = { projectItemStyles(it) }
+            iconArg = { pathIcon(it) },
+            styleArgs = { pathStyles(it) }
         )
     }
 
-    private fun projectItemOpen(itemState: Navigator.ItemState<ProjectItem>) {
-        when (itemState.item) {
-            is Directory -> itemState.toggle()
-            is File -> GlobalState.resource.open(itemState.item.asFile())
+    private fun openPath(itemState: Navigator.ItemState<PathState>) {
+        when (val item = itemState.item) {
+            is DirectoryState -> itemState.toggle()
+            is FileState -> item.tryOpen()
         }
     }
 
-    private fun projectItemIcon(itemState: Navigator.ItemState<ProjectItem>): IconArg {
+    private fun pathIcon(itemState: Navigator.ItemState<PathState>): IconArg {
         return when (itemState.item) {
-            is Directory -> when {
+            is DirectoryState -> when {
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
                 itemState.isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
                 else -> IconArg(Icon.Code.FOLDER_BLANK)
             }
-            is File -> when {
+            is FileState -> when {
                 itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.studio.secondary }
                 itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
                 itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
@@ -124,19 +121,18 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
         }
     }
 
-    private fun projectItemStyles(itemState: Navigator.ItemState<ProjectItem>): List<Typography.Style> {
+    private fun pathStyles(itemState: Navigator.ItemState<PathState>): List<Typography.Style> {
         return if (itemState.item.isProjectData) listOf(ITALIC, FADED) else listOf()
     }
 
-    private fun contextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         return when (itemState.item) {
-            is Directory -> directoryContextMenuItems(itemState)
-            is File -> fileContextMenuItems(itemState)
+            is DirectoryState -> directoryContextMenuItems(itemState)
+            is FileState -> fileContextMenuItems(itemState)
         }
     }
 
-    private fun directoryContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
-        val createItemDialog = GlobalState.project.createItemDialog
+    private fun directoryContextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
@@ -147,70 +143,62 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Brows
                     label = Label.CREATE_DIRECTORY,
                     icon = FOLDER_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, DIRECTORY) { itemState.expand() } },
+                ) { directory.initiateCreateDirectory { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
                     icon = Icon.Code.FILE_PLUS,
                     enabled = !directory.isProjectData,
-                ) { createItemDialog.open(directory, FILE) { itemState.expand() } },
+                ) { directory.initiateCreateFile { itemState.expand() } },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.renameDirectoryDialog.open(directory) },
+                ) { directory.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !directory.isProjectData,
-                ) { GlobalState.project.moveDirectoryDialog.open(directory) },
+                ) { directory.initiateMove() }
+            ),
+            listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !directory.isRoot && !directory.isProjectData,
-                ) {
-                    GlobalState.confirmation.submit(
-                        title = Label.CONFIRM_DIRECTORY_DELETION,
-                        message = Sentence.CONFIRM_DIRECTORY_DELETION,
-                        onConfirm = { directory.delete(); itemState.navState.reloadEntries() }
-                    )
-                }
+                ) { directory.initiateDelete { itemState.navState.reloadEntries() } }
             )
         )
     }
 
-    private fun fileContextMenuItems(itemState: Navigator.ItemState<ProjectItem>): List<List<ContextMenu.Item>> {
+    private fun fileContextMenuItems(itemState: Navigator.ItemState<PathState>): List<List<ContextMenu.Item>> {
         val file = itemState.item.asFile()
         return listOf(
             listOf(
                 ContextMenu.Item(
                     label = Label.OPEN,
                     icon = Icon.Code.BLOCK_QUOTE
-                ) { GlobalState.resource.open(file.asFile()) },
+                ) { file.tryOpen() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.Code.PEN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.resource.renameAndReopen(file) else file.rename() },
+                ) { file.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
                     icon = Icon.Code.FOLDER_ARROW_DOWN,
                     enabled = !file.isProjectData,
-                ) { if (file.isOpen) GlobalState.resource.moveAndReopen(file) else file.move() },
+                ) { file.initiateMove() },
+            ),
+            listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !file.isProjectData,
-                ) {
-                    GlobalState.confirmation.submit(
-                        title = Label.CONFIRM_FILE_DELETION,
-                        message = Sentence.CONFIRM_FILE_DELETION,
-                        onConfirm = { file.delete(); itemState.navState.reloadEntries() }
-                    )
-                }
+                ) { file.initiateDelete { itemState.navState.reloadEntries() } }
             )
         )
     }

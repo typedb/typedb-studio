@@ -32,7 +32,8 @@ import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.connection.SessionState
-import com.vaticle.typedb.studio.state.resource.Navigable
+import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -47,6 +48,7 @@ import mu.KotlinLogging
 @OptIn(ExperimentalTime::class)
 class SchemaManager(
     private val session: SessionState,
+    internal val pages: PageManager,
     internal val notificationMgr: NotificationManager
 ) : Navigable<TypeState.Thing> {
 
@@ -166,10 +168,9 @@ class SchemaManager(
         isOpenAtomic.set(true)
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) =
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-            session.typeSchema()?.let { onSuccess(it) }
-        }
+    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+        session.typeSchema()?.let { onSuccess(it) }
+    }
 
     fun refreshReadTx() {
         synchronized(this) {

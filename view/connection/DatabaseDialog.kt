@@ -36,7 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -67,7 +67,7 @@ object DatabaseDialog {
         var name: String by mutableStateOf("")
 
         override fun cancel() {
-            GlobalState.client.manageDatabasesDialog.close()
+            StudioState.client.manageDatabasesDialog.close()
         }
 
         override fun isValid(): Boolean {
@@ -76,13 +76,19 @@ object DatabaseDialog {
 
         override fun trySubmit() {
             assert(name.isNotBlank())
-            GlobalState.client.tryCreateDatabase(name) { name = "" }
+            StudioState.client.tryCreateDatabase(name) { name = "" }
         }
     }
 
     @Composable
-    fun ManageDatabases() {
-        val dialogState = GlobalState.client.manageDatabasesDialog
+    fun MayShowDialogs() {
+        if (StudioState.client.manageDatabasesDialog.isOpen) ManageDatabases()
+        if (StudioState.client.selectDBDialog.isOpen) SelectDatabase()
+    }
+
+    @Composable
+    private fun ManageDatabases() {
+        val dialogState = StudioState.client.manageDatabasesDialog
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
@@ -96,7 +102,7 @@ object DatabaseDialog {
                     TextButton(
                         text = Label.REFRESH,
                         leadingIcon = Form.IconArg(Icon.Code.ROTATE)
-                    ) { GlobalState.client.refreshDatabaseList() }
+                    ) { StudioState.client.refreshDatabaseList() }
                     FormRowSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
                 }
@@ -107,7 +113,7 @@ object DatabaseDialog {
     @Composable
     private fun DeletableDatabaseList(modifier: Modifier) {
         ActionableList.Layout(
-            items = GlobalState.client.databaseList,
+            items = StudioState.client.databaseList,
             modifier = modifier.border(1.dp, Theme.studio.border),
             buttonSide = ActionableList.Side.RIGHT,
             buttonFn = { databaseName ->
@@ -115,12 +121,12 @@ object DatabaseDialog {
                     icon = Icon.Code.TRASH_CAN,
                     color = { Theme.studio.errorStroke },
                     onClick = {
-                        GlobalState.confirmation.submit(
+                        StudioState.confirmation.submit(
                             title = Label.DELETE_DATABASE,
                             message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
                             verificationValue = databaseName,
                             confirmLabel = Label.DELETE,
-                            onConfirm = { GlobalState.client.tryDeleteDatabase(databaseName) }
+                            onConfirm = { StudioState.client.tryDeleteDatabase(databaseName) }
                         )
                     }
                 )
@@ -154,8 +160,8 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun SelectDatabase() {
-        val dialogState = GlobalState.client.selectDBDialog
+    private fun SelectDatabase() {
+        val dialogState = StudioState.client.selectDBDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -173,10 +179,10 @@ object DatabaseDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
         Dropdown(
-            values = GlobalState.client.databaseList,
-            selected = GlobalState.client.session.database,
-            onExpand = { GlobalState.client.refreshDatabaseList() },
-            onSelection = { GlobalState.client.tryOpenSession(it) },
+            values = StudioState.client.databaseList,
+            selected = StudioState.client.session.database,
+            onExpand = { StudioState.client.refreshDatabaseList() },
+            onSelection = { StudioState.client.tryOpenSession(it) },
             placeholder = Label.SELECT_DATABASE,
             enabled = enabled,
             modifier = modifier,

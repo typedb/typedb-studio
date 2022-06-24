@@ -25,7 +25,6 @@ import com.vaticle.typedb.studio.state.app.ConfirmationManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY
@@ -33,10 +32,11 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PAT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.connection.ClientState
+import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
@@ -48,18 +48,20 @@ import kotlin.io.path.notExists
 import mu.KotlinLogging
 
 class ProjectManager(
-    private val preferenceMgr: PreferenceManager,
-    private val confirmationMgr: ConfirmationManager,
-    private val notificationMgr: NotificationManager
+    internal val preference: PreferenceManager,
+    internal val notification: NotificationManager,
+    internal val confirmation: ConfirmationManager,
+    internal val client: ClientState,
+    internal val pages: PageManager
 ) {
 
-    class CreateItemDialog : DialogManager() {
+    class CreatePathDialog : DialogManager() {
 
-        var parent: Directory? by mutableStateOf(null)
-        var type: ProjectItem.Type? by mutableStateOf(null)
+        var parent: DirectoryState? by mutableStateOf(null)
+        var type: PathState.Type? by mutableStateOf(null)
         var onSuccess: (() -> Unit)? by mutableStateOf(null)
 
-        fun open(parent: Directory, type: ProjectItem.Type, onSuccess: () -> Unit) {
+        internal fun open(parent: DirectoryState, type: PathState.Type, onSuccess: () -> Unit) {
             isOpen = true
             this.parent = parent
             this.type = type
@@ -76,11 +78,11 @@ class ProjectManager(
 
     class ModifyDirectoryDialog : DialogManager() {
 
-        var directory: Directory? by mutableStateOf(null)
+        var directory: DirectoryState? by mutableStateOf(null)
 
-        fun open(item: Directory) {
+        internal fun open(path: DirectoryState) {
             isOpen = true
-            this.directory = item
+            this.directory = path
         }
 
         override fun close() {
@@ -91,10 +93,10 @@ class ProjectManager(
 
     class ModifyFileDialog : DialogManager() {
 
-        var file: File? by mutableStateOf(null)
-        var onSuccess: ((File) -> Unit)? by mutableStateOf(null)
+        var file: FileState? by mutableStateOf(null)
+        var onSuccess: ((FileState) -> Unit)? by mutableStateOf(null)
 
-        internal fun open(file: File, onSuccess: ((Resource) -> Unit)? = null) {
+        internal fun open(file: FileState, onSuccess: ((FileState) -> Unit)? = null) {
             isOpen = true
             this.file = file
             this.onSuccess = onSuccess
@@ -114,12 +116,12 @@ class ProjectManager(
     }
 
     var current: Project? by mutableStateOf(null)
-    var dataDir: Directory? by mutableStateOf(null)
-    var unsavedFilesDir: Directory? by mutableStateOf(null)
+    var dataDir: DirectoryState? by mutableStateOf(null)
+    var unsavedFilesDir: DirectoryState? by mutableStateOf(null)
     var onProjectChange: ((Project) -> Unit)? = null
     var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
-    val createItemDialog = CreateItemDialog()
+    val createPathDialog = CreatePathDialog()
     val moveDirectoryDialog = ModifyDirectoryDialog()
     val renameDirectoryDialog = ModifyDirectoryDialog()
     val renameFileDialog = ModifyFileDialog()
@@ -128,14 +130,14 @@ class ProjectManager(
     fun tryOpenProject(dir: Path): Boolean {
         val dataDirPath = dir.resolve(DATA_DIR_NAME)
         val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
-        if (!dir.exists()) notificationMgr.userError(LOGGER, PATH_NOT_EXIST, dir)
-        else if (!dir.isReadable()) notificationMgr.userError(LOGGER, PATH_NOT_READABLE, dir)
-        else if (!dir.isWritable()) notificationMgr.userError(LOGGER, PATH_NOT_WRITABLE, dir)
-        else if (!dir.isDirectory()) notificationMgr.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
+        if (!dir.exists()) notification.userError(LOGGER, PATH_NOT_EXIST, dir)
+        else if (!dir.isReadable()) notification.userError(LOGGER, PATH_NOT_READABLE, dir)
+        else if (!dir.isWritable()) notification.userError(LOGGER, PATH_NOT_WRITABLE, dir)
+        else if (!dir.isDirectory()) notification.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
         else if (dataDirPath.exists() && dataDirPath.isRegularFile()) {
-            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
+            notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
         } else if (unsavedFilesDirPath.exists() && unsavedFilesDirPath.isRegularFile()) {
-            notificationMgr.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
+            notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
         } else {
             initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
             onProjectChange?.let { it(current!!) }
@@ -146,7 +148,7 @@ class ProjectManager(
     }
 
     private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, this, preferenceMgr, notificationMgr)
+        current = Project(dir, this, preference, notification)
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()
@@ -155,95 +157,21 @@ class ProjectManager(
         unsavedFilesDir = dataDir!!.entries.first { it.name == UNSAVED_DATA_DIR_NAME }.asDirectory()
     }
 
-    fun unsavedFiles(): List<File> {
+    fun unsavedFiles(): List<FileState> {
         unsavedFilesDir?.reloadEntries()
         return unsavedFilesDir?.entries?.filter { it.isFile }?.map { it.asFile() } ?: listOf()
     }
 
-    fun tryCreateUntitledFile(): File? {
+    fun tryCreateUntitledFile(): FileState? {
         if (current == null) return null
         val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
-            val newFile = unsavedFilesDir!!.createFile(newFileName)
+            val newFile = unsavedFilesDir!!.tryCreateFile(newFileName)
             onContentChange?.let { it() }
             newFile
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
+            notification.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
-        }
-    }
-
-    fun tryCreateFile(parent: Directory, newFileName: String) {
-        tryCreateItem { parent.createFile(newFileName) }
-    }
-
-    fun tryCreateDirectory(parent: Directory, newDirectoryName: String) {
-        tryCreateItem { parent.createDirectory(newDirectoryName) }
-    }
-
-    private fun tryCreateItem(createFn: () -> ProjectItem?) {
-        createFn()?.let {
-            createItemDialog.onSuccess?.let { fn -> fn() }
-            createItemDialog.close()
-            onContentChange?.let { fn -> fn() }
-        }
-    }
-
-    fun tryRenameDirectory(directory: Directory, newName: String) {
-        directory.tryRename(newName)?.let {
-            renameDirectoryDialog.close()
-            onContentChange?.let { fn -> fn() }
-        }
-    }
-
-    fun tryMoveDirectory(directory: Directory, newParent: Path) {
-        directory.tryMove(newParent)?.let {
-            moveDirectoryDialog.close()
-            onContentChange?.let { it() }
-        } ?: if (!newParent.startsWith(current!!.path)) {
-            notificationMgr.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
-        }
-    }
-
-    fun tryRenameFile(file: File, newName: String) {
-        mayConfirmFileTypeChange(file, file.path.resolveSibling(newName), renameFileDialog) { onSuccess ->
-            file.tryRename(newName)?.let { newFile ->
-                onSuccess?.let { it(newFile) }
-                onContentChange?.let { fn -> fn() }
-            }
-        }
-    }
-
-    fun trySaveFileTo(file: File, newPath: Path, overwrite: Boolean) {
-        mayConfirmFileTypeChange(file, newPath, saveFileDialog) { onSuccess ->
-            file.trySaveTo(newPath, overwrite)?.let { newFile ->
-                onSuccess?.let { it(newFile) }
-                onContentChange?.let { it() }
-            } ?: if (!newPath.startsWith(current!!.path)) {
-                notificationMgr.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, newPath)
-            }
-        }
-    }
-
-    private fun mayConfirmFileTypeChange(
-        file: File, newPath: Path, dialog: ModifyFileDialog,
-        confirmedModifyFileFn: (onSuccess: ((File) -> Unit)?) -> Unit
-    ) {
-        if (file.isRunnable && !Property.FileType.of(newPath).isRunnable) {
-            // we need to record dialog.onSuccess before dialog.close() which clears it
-            val onSuccess = dialog.onSuccess
-            dialog.close()
-            confirmationMgr.submit(
-                title = Label.CONVERT_FILE_TYPE,
-                message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
-                    file.name, newPath.fileName,
-                    Property.FileType.RUNNABLE_EXTENSIONS_STR
-                ),
-                onConfirm = { confirmedModifyFileFn(onSuccess) }
-            )
-        } else confirmedModifyFileFn { newFile ->
-            dialog.onSuccess?.let { it(newFile) }
-            dialog.close()
         }
     }
 }

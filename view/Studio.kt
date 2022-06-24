@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
@@ -58,7 +57,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -118,7 +117,7 @@ object Studio {
 
     @Composable
     private fun MainWindow(exitApplicationFn: () -> Unit) {
-        fun confirmClose() = GlobalState.confirmation.submit(
+        fun confirmClose() = StudioState.confirmation.submit(
             title = Label.CONFIRM_QUITTING_APPLICATION,
             message = Sentence.CONFIRM_QUITING_APPLICATION,
             onConfirm = { quit = true; exitApplicationFn() }
@@ -161,14 +160,18 @@ object Studio {
                         StatusBar.Layout()
                     }
                 }
-                MayShowDialog(window)
+                NotificationArea.MayShowPopup()
+                ConfirmationDialog.MayShowDialog()
+                ServerDialog.MayShowDialogs()
+                DatabaseDialog.MayShowDialogs()
+                ProjectDialog.MayShowDialogs(window)
             }
         }
     }
 
     private fun getMainWindowTitle(): String {
-        val projectName = GlobalState.project.current?.directory?.name
-        val pageName = GlobalState.resource.active?.windowTitle
+        val projectName = StudioState.project.current?.directory?.name
+        val pageName = StudioState.pages.active?.windowTitle
         return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
     }
 
@@ -183,21 +186,6 @@ object Studio {
                 else -> false
             }
         } ?: false
-    }
-
-    @Composable
-    private fun MayShowDialog(window: ComposeWindow) {
-        if (GlobalState.notification.isOpen) NotificationArea.Layout()
-        if (GlobalState.confirmation.isOpen) ConfirmationDialog.Layout()
-        if (GlobalState.client.connectServerDialog.isOpen) ServerDialog.ConnectServer()
-        if (GlobalState.client.manageDatabasesDialog.isOpen) DatabaseDialog.ManageDatabases()
-        if (GlobalState.client.selectDBDialog.isOpen) DatabaseDialog.SelectDatabase()
-        if (GlobalState.project.createItemDialog.isOpen) ProjectDialog.CreateProjectItem()
-        if (GlobalState.project.openProjectDialog.isOpen) ProjectDialog.OpenProject()
-        if (GlobalState.project.moveDirectoryDialog.isOpen) ProjectDialog.MoveDirectory()
-        if (GlobalState.project.renameDirectoryDialog.isOpen) ProjectDialog.RenameDirectory()
-        if (GlobalState.project.saveFileDialog.isOpen) ProjectDialog.SaveFile(window)
-        if (GlobalState.project.renameFileDialog.isOpen) ProjectDialog.RenameFile()
     }
 
     @Composable
@@ -254,7 +242,7 @@ object Studio {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
                 LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                GlobalState.client.closeBlocking()
+                StudioState.client.closeBlocking()
             }
         })
     }
@@ -286,7 +274,7 @@ object Studio {
             addShutdownHook()
             setConfigurations()
             Message.loadClasses()
-            GlobalState.appData.initialise()
+            StudioState.appData.initialise()
             while (!quit) {
                 application { MainWindow(::exitApplication) }
                 error?.let { exception ->

@@ -39,11 +39,11 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
@@ -62,8 +62,8 @@ object PageArea {
 
     internal class State {
 
-        private val openedPages: MutableMap<Resource, Page> = mutableMapOf()
-        internal val tabsState = Tabs.Horizontal.State<Resource>()
+        private val openedPages: MutableMap<Pageable, Page> = mutableMapOf()
+        internal val tabsState = Tabs.Horizontal.State<Pageable>()
 
         fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
@@ -82,12 +82,12 @@ object PageArea {
         }
 
         @Composable
-        internal fun openedPage(resource: Resource): Page {
-            return openedPages.getOrPut(resource) {
-                val page = createPage(resource)
-                resource.onClose { openedPages.remove(it) }
-                resource.onReopen {
-                    page.updateResource(it)
+        internal fun openedPage(pageable: Pageable): Page {
+            return openedPages.getOrPut(pageable) {
+                val page = createPage(pageable)
+                pageable.onClose { openedPages.remove(it) }
+                pageable.onReopen {
+                    page.updatePageable(it)
                     openedPages[it] = page
                 }
                 page
@@ -95,84 +95,83 @@ object PageArea {
         }
 
         @Composable
-        private fun createPage(resource: Resource) = when (resource) {
-            is File -> FilePage.create(resource)
-            is TypeState.Thing -> TypePage.create(resource)
-            else -> throw IllegalStateException("Unrecognised resource type")
+        private fun createPage(pageable: Pageable) = when (pageable) {
+            is FileState -> FilePage.create(pageable)
+            is TypeState.Thing -> TypePage.create(pageable)
+            else -> throw IllegalStateException("Unrecognised pageable type")
         }
 
         internal fun createAndOpenNewFile(): Boolean {
-            GlobalState.project.tryCreateUntitledFile()?.let { GlobalState.resource.open(it) }
+            StudioState.project.tryCreateUntitledFile()?.let { it.tryOpen() }
             return true
         }
 
         private fun saveActivePage(): Boolean {
-            GlobalState.resource.saveAndReopen(GlobalState.resource.active!!)
+            StudioState.pages.active?.initiateSave()
             return true
         }
 
         private fun showNextPage(): Boolean {
-            GlobalState.resource.activateNext()
+            StudioState.pages.next.activate()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            GlobalState.resource.activatePrevious()
+            StudioState.pages.previous.activate()
             return true
         }
 
         private fun closeActivePage(): Boolean {
-            return GlobalState.resource.active?.let { close(it) } ?: false
+            return StudioState.pages.active?.let { close(it) } ?: false
         }
 
-        internal fun close(resource: Resource, stopRunner: Boolean = false): Boolean {
-            resource.execBeforeClose()
+        internal fun close(pageable: Pageable, stopRunner: Boolean = false): Boolean {
+            pageable.execBeforeClose()
             fun closeFn() {
-                openedPages.remove(resource)
-                GlobalState.resource.close(resource)
-                if (resource.isUnsavedResource) resource.delete()
+                openedPages.remove(pageable)
+                pageable.close()
+                if (pageable.isUnsavedPageable) pageable.delete()
             }
-            if (resource.isRunnable && GlobalState.client.hasRunningQuery && !stopRunner) {
-                GlobalState.confirmation.submit(
+            if (pageable.isRunnable && StudioState.client.hasRunningQuery && !stopRunner) {
+                StudioState.confirmation.submit(
                     title = Label.QUERY_IS_RUNNING,
                     message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
                     cancelLabel = Label.OK,
                 )
-            } else if (resource.needSaving) {
-                GlobalState.confirmation.submit(
+            } else if (pageable.needSaving) {
+                StudioState.confirmation.submit(
                     title = Label.SAVE_OR_DELETE,
                     message = Sentence.SAVE_OR_DELETE_FILE,
                     confirmLabel = Label.SAVE,
                     rejectLabel = Label.DELETE,
-                    cancelOnConfirm = false,
                     onReject = { closeFn() },
-                    onConfirm = { resource.save { GlobalState.confirmation.close(); it.close() } }
+                    onConfirm = { pageable.initiateSave(reopen = false) }
                 )
             } else closeFn()
             return true
         }
 
-        internal fun contextMenuFn(resource: Resource): List<List<ContextMenu.Item>> {
+        internal fun contextMenuFn(pageable: Pageable): List<List<ContextMenu.Item>> {
             return listOf(
                 listOf(
-                    saveMenuItem(resource),
-                    closeMenuItem(resource)
+                    saveMenuItem(pageable),
+                    closeMenuItem(pageable)
                 )
             )
         }
 
-        private fun closeMenuItem(resource: Resource) = ContextMenu.Item(
+        private fun closeMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.CLOSE,
             icon = Icon.Code.XMARK,
             info = "${KeyMapper.CURRENT.modKey} + W"
-        ) { close(resource) }
+        ) { close(pageable) }
 
-        private fun saveMenuItem(resource: Resource) = ContextMenu.Item(
+        private fun saveMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.SAVE,
             icon = Icon.Code.FLOPPY_DISK,
             info = "${KeyMapper.CURRENT.modKey} + S",
-            enabled = resource.hasUnsavedChanges || resource.isUnsavedResource
-        ) { GlobalState.resource.saveAndReopen(resource) }
+            enabled = pageable.hasUnsavedChanges || pageable.isUnsavedPageable
+        ) { pageable.initiateSave() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -181,7 +180,7 @@ object PageArea {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
-            if (GlobalState.resource.opened.isEmpty()) focusReq.requestFocus()
+            if (StudioState.pages.opened.isEmpty()) focusReq.requestFocus()
         }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
@@ -190,36 +189,36 @@ object PageArea {
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
-                tabs = GlobalState.resource.opened,
-                iconFn = { resource -> state.openedPage(resource).icon },
+                tabs = StudioState.pages.opened,
+                iconFn = { state.openedPage(it).icon },
                 labelFn = { tabLabel(it) },
-                isActiveFn = { GlobalState.resource.isActive(it) },
-                onClick = { GlobalState.resource.activate(it) },
+                isActiveFn = { StudioState.pages.active == it },
+                onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
                 trailingTabButtonFn = null,
-                extraBarButtons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = GlobalState.project.current != null) {
+                extraBarButtons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = StudioState.project.current != null) {
                     state.createAndOpenNewFile()
                 })
             )
             Separator.Horizontal()
-            GlobalState.resource.active?.let { resource -> state.openedPage(resource).Layout() }
+            StudioState.pages.active?.let { state.openedPage(it).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }
 
     @Composable
-    private fun tabLabel(resource: Resource): AnnotatedString {
-        return if (resource.isWritable) {
+    private fun tabLabel(pageable: Pageable): AnnotatedString {
+        return if (pageable.isWritable) {
             val changedIndicator = " *"
-            AnnotatedString(resource.name) + when {
-                resource.needSaving -> AnnotatedString(changedIndicator)
+            AnnotatedString(pageable.name) + when {
+                pageable.needSaving -> AnnotatedString(changedIndicator)
                 else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
             }
         } else {
             val builder = AnnotatedString.Builder()
             val style = SpanStyle(color = Theme.studio.onPrimary.copy(alpha = 0.6f))
-            builder.append(resource.name)
+            builder.append(pageable.name)
             builder.pushStyle(style)
             builder.append(" -- (${Label.READ_ONLY.lowercase()})")
             builder.pop()

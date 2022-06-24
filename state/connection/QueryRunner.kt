@@ -132,7 +132,7 @@ class QueryRunner constructor(
 
     fun onClose(function: () -> Unit) = onClose.put(function)
 
-    fun launch() {
+    internal fun launch() {
         isRunning.set(true)
         coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runningQueryIndicator() }
         coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }

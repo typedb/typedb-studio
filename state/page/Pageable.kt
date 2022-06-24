@@ -16,22 +16,24 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.resource
+package com.vaticle.typedb.studio.state.page
 
-interface Resource {
+import com.vaticle.typedb.studio.state.connection.RunnerManager
+
+interface Pageable {
 
     val name: String
     val windowTitle: String
     val isOpen: Boolean
     val isWritable: Boolean
     val isEmpty: Boolean
-    val isUnsavedResource: Boolean
+    val isUnsavedPageable: Boolean
     val hasUnsavedChanges: Boolean
     val isRunnable: Boolean get() = false
-    val needSaving get() = hasUnsavedChanges || (isUnsavedResource && !isEmpty)
+    val needSaving get() = hasUnsavedChanges || (isUnsavedPageable && !isEmpty)
 
     fun asRunnable(): Runnable {
-        throw ClassCastException("Illegal cast of resource into runnable")
+        throw ClassCastException("Illegal cast of pageable into runnable")
     }
 
     fun tryOpen(): Boolean
@@ -40,23 +42,13 @@ interface Resource {
 
     fun deactivate()
 
-    fun beforeRun(function: (Resource) -> Unit)
+    fun onClose(function: (Pageable) -> Unit)
 
-    fun beforeSave(function: (Resource) -> Unit)
-
-    fun beforeClose(function: (Resource) -> Unit)
-
-    fun onClose(function: (Resource) -> Unit)
-
-    fun onReopen(function: (Resource) -> Unit)
+    fun onReopen(function: (Pageable) -> Unit)
 
     fun execBeforeClose()
 
-    fun rename(onSuccess: ((Resource) -> Unit)? = null)
-
-    fun save(onSuccess: ((Resource) -> Unit)? = null)
-
-    fun move(onSuccess: ((Resource) -> Unit)? = null)
+    fun initiateSave(reopen: Boolean = true)
 
     fun close()
 
@@ -64,11 +56,13 @@ interface Resource {
 
     fun delete()
 
-    interface Runnable : Resource {
+    interface Runnable : Pageable {
 
         val runContent: String
-        val runner: RunnerManager
+        val runners: RunnerManager
         override val isRunnable: Boolean get() = true
+
+        fun mayOpenAndRun(content: String = runContent)
 
         override fun asRunnable(): Runnable {
             return this

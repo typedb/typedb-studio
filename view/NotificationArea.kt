@@ -45,7 +45,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.ERROR
 import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.INFO
@@ -70,14 +70,19 @@ object NotificationArea {
     data class ColorArgs(val background: Color, val foreground: Color)
 
     @Composable
-    fun Layout() {
+    fun MayShowPopup() {
+        if (StudioState.notification.isOpen) Layout()
+    }
+
+    @Composable
+    private fun Layout() {
         val scrollState = rememberScrollState()
         Popup(alignment = Alignment.BottomEnd) {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
-                    if (GlobalState.notification.queue.size > 1) DismissAllButton()
-                    GlobalState.notification.queue.forEach { notification ->
+                    if (StudioState.notification.queue.size > 1) DismissAllButton()
+                    StudioState.notification.queue.forEach { notification ->
                         Notification(notification = notification)
                     }
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
@@ -89,7 +94,7 @@ object NotificationArea {
 
     @Composable
     private fun DismissAllButton() {
-        val colorArgs = colorArgsOf(GlobalState.notification.queue.first().type)
+        val colorArgs = colorArgsOf(StudioState.notification.queue.first().type)
         Row(modifier = Modifier.padding(MESSAGE_PADDING).width(NOTIFICATION_WIDTH)) {
             Spacer(Modifier.weight(1f))
             Form.TextButton(
@@ -97,7 +102,7 @@ object NotificationArea {
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
                 trailingIcon = Form.IconArg(Icon.Code.XMARK) { colorArgs.foreground },
-            ) { GlobalState.notification.dismissAll() }
+            ) { StudioState.notification.dismissAll() }
         }
     }
 
@@ -123,7 +128,7 @@ object NotificationArea {
                 height = textHeight.coerceAtLeast(NOTIFICATION_HEIGHT_MIN)
             }
             Column(Modifier.fillMaxHeight()) {
-                Button(Icon.Code.XMARK, colorArgs) { GlobalState.notification.dismiss(notification) }
+                Button(Icon.Code.XMARK, colorArgs) { StudioState.notification.dismiss(notification) }
                 Spacer(Modifier.weight(1f))
                 Button(Icon.Code.COPY, colorArgs) { clipboard.setText(AnnotatedString(notification.message)) }
             }

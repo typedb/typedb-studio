@@ -24,10 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.project.File
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.view.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.view.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.view.editor.InputTarget.Cursor
@@ -52,7 +52,7 @@ internal interface TextProcessor {
 
     val version: Int
     val isWritable: Boolean
-    val file: File?
+    val file: FileState?
 
     fun replaceCurrentFound(text: String)
     fun replaceAllFound(text: String)
@@ -69,7 +69,7 @@ internal interface TextProcessor {
     fun redo()
     fun drainChanges()
     fun clearHistory()
-    fun updateFile(file: File)
+    fun updateFile(file: FileState)
 
     companion object {
         internal const val TAB_SIZE = 4
@@ -82,7 +82,7 @@ internal interface TextProcessor {
         }
     }
 
-    class ReadOnly constructor(override var file: File? = null) : TextProcessor {
+    class ReadOnly constructor(override var file: FileState? = null) : TextProcessor {
 
         override val version: Int = 0
         override val isWritable: Boolean = false
@@ -103,12 +103,12 @@ internal interface TextProcessor {
         override fun redo() = mayDisplayWarning()
         override fun drainChanges() {}
         override fun clearHistory() {}
-        override fun updateFile(file: File) {
+        override fun updateFile(file: FileState) {
             this.file = file
         }
 
         private fun mayDisplayWarning() {
-            file?.path?.let { GlobalState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
+            file?.path?.let { StudioState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
         }
 
         private fun displayWarningOnStartTyping(): Insertion? {
@@ -120,7 +120,7 @@ internal interface TextProcessor {
     }
 
     class Writable constructor(
-        override var file: File,
+        override var file: FileState,
         private val content: SnapshotStateList<AnnotatedString>,
         private val rendering: TextRendering,
         private val finder: TextFinder,
@@ -146,7 +146,7 @@ internal interface TextProcessor {
             changeCount.set(0)
         }
 
-        override fun updateFile(file: File) {
+        override fun updateFile(file: FileState) {
             this.file = file
             onChangeStart = { file.isChanged() }
             onChangeEnd = { file.content(it) }

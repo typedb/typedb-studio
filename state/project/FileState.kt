@@ -21,20 +21,22 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_SAVE_FILE
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property.FileType
 import com.vaticle.typedb.studio.state.common.util.Property.FileType.TYPEQL
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
-import com.vaticle.typedb.studio.state.resource.Resource
-import com.vaticle.typedb.studio.state.resource.RunnerManager
+import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.state.connection.RunnerManager
+import com.vaticle.typedb.studio.state.page.Pageable
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -58,13 +60,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-class File internal constructor(
+class FileState internal constructor(
     path: Path,
-    parent: Directory,
-    projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-    notificationMgr: NotificationManager
-) : ProjectItem(Type.FILE, path, parent, preferenceMgr, projectMgr, notificationMgr), Resource.Runnable {
+    parent: DirectoryState,
+    projectMgr: ProjectManager
+) : PathState(parent, path, Type.FILE, projectMgr), Pageable.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -74,13 +74,13 @@ class File internal constructor(
 
     private class Callbacks {
 
-        val onDiskChangeContent = LinkedBlockingQueue<(File) -> Unit>()
-        val onDiskChangePermission = LinkedBlockingQueue<(File) -> Unit>()
-        val onReopen = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeRun = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeSave = LinkedBlockingQueue<(File) -> Unit>()
-        val beforeClose = LinkedBlockingQueue<(File) -> Unit>()
-        val onClose = LinkedBlockingQueue<(File) -> Unit>()
+        val onDiskChangeContent = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onDiskChangePermission = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onReopen = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeRun = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeSave = LinkedBlockingQueue<(FileState) -> Unit>()
+        val beforeClose = LinkedBlockingQueue<(FileState) -> Unit>()
+        val onClose = LinkedBlockingQueue<(FileState) -> Unit>()
 
         fun clone(): Callbacks {
             val newCallbacks = Callbacks()
@@ -117,25 +117,39 @@ class File internal constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override val windowTitle: String = computeWindowTitle(path, projectMgr)
-    override val runContent: String get() {
-        callbacks.beforeRun.forEach { it(this) }
-        return content.joinToString("\n")
-    }
-    override var runner: RunnerManager = RunnerManager()
+    override val runContent: String
+        get() {
+            callbacks.beforeRun.forEach { it(this) }
+            return content.joinToString("\n")
+        }
+    override var runners: RunnerManager = RunnerManager()
     override val isOpen: Boolean get() = isOpenAtomic.get()
     override val isRunnable: Boolean = fileType.isRunnable
     override val isEmpty: Boolean get() = content.size == 1 && content[0].isBlank()
-    override val isUnsavedResource: Boolean get() = parent == projectMgr.unsavedFilesDir
+    override val isUnsavedPageable: Boolean get() = parent == projectMgr.unsavedFilesDir
     override var hasUnsavedChanges: Boolean by mutableStateOf(false)
     override val isReadable: Boolean get() = isReadableAtomic.get()
     override val isWritable: Boolean get() = isWritableAtomic.get()
     override val isExpandable: Boolean = false
     override val isBulkExpandable: Boolean = false
-    override val entries: List<ProjectItem> = listOf()
+    override val entries: List<PathState> = listOf()
     private var isReadableAtomic = AtomicBoolean(path.isReadable())
     private var isWritableAtomic = AtomicBoolean(path.isWritable())
 
+    fun onDiskChangeContent(function: (FileState) -> Unit) = callbacks.onDiskChangeContent.put(function)
+    fun onDiskChangePermission(function: (FileState) -> Unit) = callbacks.onDiskChangePermission.put(function)
+    fun beforeRun(function: (Pageable) -> Unit) = callbacks.beforeRun.put(function)
+    fun beforeSave(function: (Pageable) -> Unit) = callbacks.beforeSave.put(function)
+    fun beforeClose(function: (Pageable) -> Unit) = callbacks.beforeClose.put(function)
+    override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
+    override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
+    override fun execBeforeClose() = callbacks.beforeClose.forEach { it(this) }
+    override fun tryOpen(): Boolean = tryOpen(null)
     override fun reloadEntries() {}
+    override fun asFile(): FileState = this
+    override fun asDirectory(): DirectoryState {
+        throw TypeCastException(ILLEGAL_CAST.message(FileState::class.simpleName, DirectoryState::class.simpleName))
+    }
 
     private fun checkIsTextFile(): Boolean {
         val type = Files.probeContentType(path)
@@ -143,79 +157,40 @@ class File internal constructor(
     }
 
     private fun computeWindowTitle(path: Path, projectMgr: ProjectManager): String {
-        return if (isUnsavedResource) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
+        return if (isUnsavedPageable) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
-    override fun asDirectory(): Directory {
-        throw TypeCastException(ILLEGAL_CAST.message(File::class.simpleName, Directory::class.simpleName))
-    }
-
-    override fun asFile(): File {
-        return this
-    }
-
-    override fun tryOpen(): Boolean {
-        if (!path.isReadable()) {
-            notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
-            return false
-        }
-        return try {
+    private fun tryOpen(index: Int? = null): Boolean {
+        return if (!path.isReadable()) {
+            projectMgr.notification.userError(LOGGER, FILE_NOT_READABLE, path)
+            false
+        } else try {
             readContent()
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
+            projectMgr.pages.opened(this, index)
+            activate()
             true
         } catch (e: Exception) { // TODO: specialise error message to actual error, e.g. read/write permissions
-            notificationMgr.userError(LOGGER, FILE_NOT_READABLE, path)
+            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_READABLE, path)
             false
         }
     }
 
     override fun activate() {
-        if (watchFileSystem.compareAndSet(false, true)) {
-            launchWatcherCoroutine()
-        }
+        assert(isOpen) { "Only opened files can be activated" }
+        if (watchFileSystem.compareAndSet(false, true)) launchWatcherCoroutine()
+        projectMgr.pages.active(this)
     }
 
     override fun deactivate() {
         watchFileSystem.set(false)
     }
 
-    internal fun tryRename(newName: String): File? {
-        val newPath = path.resolveSibling(newName)
-        return if (parent!!.contains(newName)) {
-            notificationMgr.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
-            null
-        } else try {
-            val clonedRunner = runner.clone()
-            val clonedCallbacks = callbacks.clone()
-            close()
-            movePathTo(newPath)
-            find(newPath)?.asFile()?.also {
-                it.runner = clonedRunner
-                it.callbacks = clonedCallbacks
-            }
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_RENAME_FILE, newPath)
-            null
-        }
-    }
-
-    internal fun trySaveTo(newPath: Path, overwrite: Boolean): File? {
-        return try {
-            val clonedRunner = runner.clone()
-            val clonedCallbacks = callbacks.clone()
-            close()
-            if (overwrite && newPath.exists()) find(newPath)?.delete()
-            movePathTo(newPath, overwrite)
-            find(newPath)?.asFile()?.also {
-                it.runner = clonedRunner
-                it.callbacks = clonedCallbacks
-            }
-        } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_SAVE_FILE, newPath)
-            null
-        }
+    override fun mayOpenAndRun(content: String) {
+        if (!isRunnable || (!isOpen && !tryOpen())) return
+        projectMgr.client.runner(content)?.let { runners.launch(it) }
     }
 
     fun isChanged() {
@@ -249,12 +224,12 @@ class File internal constructor(
 
     fun content(lines: List<String>) {
         content = lines
-        if (preferenceMgr.autosave) saveContent()
+        if (projectMgr.preference.autosave) saveContent()
     }
 
     @OptIn(ExperimentalTime::class)
     private fun launchWatcherCoroutine() {
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+        coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
             try {
                 do {
                     val isReadable = path.isReadable()
@@ -263,66 +238,112 @@ class File internal constructor(
                     else {
                         if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
                             || isWritableAtomic.compareAndSet(!isWritable, isWritable)
-                        ) callbacks.onDiskChangePermission.forEach { it(this@File) }
+                        ) callbacks.onDiskChangePermission.forEach { it(this@FileState) }
                         if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
                             lastModified.set(path.toFile().lastModified())
-                            callbacks.onDiskChangeContent.forEach { it(this@File) }
+                            callbacks.onDiskChangeContent.forEach { it(this@FileState) }
                         }
                     }
                     delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
                 } while (watchFileSystem.get())
             } catch (e: CancellationException) {
             } catch (e: java.lang.Exception) {
-                notificationMgr.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
+                projectMgr.notification.systemError(LOGGER, e, Message.View.UNEXPECTED_ERROR)
             }
         }
     }
 
-    fun onDiskChangeContent(function: (File) -> Unit) {
-        callbacks.onDiskChangeContent.put(function)
-    }
-
-    fun onDiskChangePermission(function: (File) -> Unit) {
-        callbacks.onDiskChangePermission.put(function)
-    }
-
-    override fun beforeRun(function: (Resource) -> Unit) {
-        callbacks.beforeRun.put(function)
-    }
-
-    override fun beforeSave(function: (Resource) -> Unit) {
-        callbacks.beforeSave.put(function)
-    }
-
-    override fun beforeClose(function: (Resource) -> Unit) {
-        callbacks.beforeClose.put(function)
-    }
-
-    override fun onClose(function: (Resource) -> Unit) {
-        callbacks.onClose.put(function)
-    }
-
-    override fun onReopen(function: (Resource) -> Unit) {
-        callbacks.onReopen.put(function)
-    }
-
-    override fun execBeforeClose() {
-        callbacks.beforeClose.forEach { it(this) }
-    }
-
-    override fun rename(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedResource) saveContent()
-        projectMgr.renameFileDialog.open(this, onSuccess)
-    }
-
-    override fun move(onSuccess: ((Resource) -> Unit)?) {
-        if (isUnsavedResource) saveContent()
-        projectMgr.saveFileDialog.open(this, onSuccess)
-    }
-
-    override fun save(onSuccess: ((Resource) -> Unit)?) {
+    override fun initiateRename() {
         saveContent()
-        if (isUnsavedResource) projectMgr.saveFileDialog.open(this, onSuccess)
+        // currentIndex must be computed before passing into lambda
+        val currentIndex = if (isOpen) projectMgr.pages.opened.indexOf(this) else -1
+        projectMgr.renameFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
+    }
+
+    fun tryRename(name: String) = mayConfirm(path.resolveSibling(name), projectMgr.renameFileDialog) { onSuccess ->
+        val newPath = path.resolveSibling(name)
+        if (parent!!.contains(name)) {
+            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            null
+        } else try {
+            val clonedRunnerMgr = runners.clone()
+            val clonedCallbacks = callbacks.clone()
+            close()
+            movePathTo(newPath)
+            find(newPath)?.asFile()?.also { newFile ->
+                newFile.runners = clonedRunnerMgr
+                newFile.callbacks = clonedCallbacks
+                onSuccess?.let { it(newFile) }
+                projectMgr.onContentChange?.let { it() }
+            }
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_FILE, newPath, e.message ?: UNKNOWN)
+            null
+        }
+    }
+
+    override fun initiateSave(reopen: Boolean) = initiateMoveOrSave(isMove = false, reopen = reopen)
+
+    override fun initiateMove() = initiateMoveOrSave(isMove = true)
+
+    private fun initiateMoveOrSave(isMove: Boolean, reopen: Boolean = true) {
+        saveContent()
+        if (isUnsavedPageable || isMove) {
+            // currentIndex must be computed before passing into lambda
+            val currentIndex = if (isOpen && reopen) projectMgr.pages.opened.indexOf(this) else -1
+            projectMgr.saveFileDialog.open(this, if (!isOpen) null else ({ it.tryOpen(currentIndex) }))
+        }
+    }
+
+    fun trySave(path: Path, overwrite: Boolean) = mayConfirm(path, projectMgr.saveFileDialog) { onSuccess ->
+        try {
+            val clonedRunner = runners.clone()
+            val clonedCallbacks = callbacks.clone()
+            close()
+            if (overwrite && path.exists()) find(path)?.delete()
+            movePathTo(path, overwrite)
+            if (!path.startsWith(projectMgr.current!!.path)) {
+                projectMgr.notification.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, path)
+                null
+            } else find(path)?.asFile()?.also { newFile ->
+                newFile.runners = clonedRunner
+                newFile.callbacks = clonedCallbacks
+                onSuccess?.let { it(newFile) }
+                projectMgr.onContentChange?.let { it() }
+            }
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_SAVE_FILE, path)
+            null
+        }
+    }
+
+    private fun mayConfirm(
+        newPath: Path,
+        dialog: ProjectManager.ModifyFileDialog,
+        onConfirm: (onSuccess: ((FileState) -> Unit)?) -> FileState?
+    ) {
+        if (isRunnable && !FileType.of(newPath).isRunnable) {
+            // we need to record dialog.onSuccess before dialog.close() which clears it
+            val onSuccess = dialog.onSuccess
+            dialog.close()
+            projectMgr.confirmation.submit(
+                title = Label.CONVERT_FILE_TYPE,
+                message = Sentence.CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE.format(
+                    name, newPath.fileName, FileType.RUNNABLE_EXTENSIONS_STR
+                )
+            ) { onConfirm(onSuccess) }
+        } else onConfirm { newFile ->
+            dialog.onSuccess?.let { it(newFile) }
+            dialog.close()
+        }
+    }
+
+    override fun initiateDelete(onSuccess: () -> Unit) {
+        projectMgr.confirmation.submit(
+            title = Label.CONFIRM_FILE_DELETION,
+            message = Sentence.CONFIRM_FILE_DELETION,
+            onConfirm = { delete(); onSuccess() }
+        )
     }
 
     private fun saveContent() {
@@ -334,17 +355,16 @@ class File internal constructor(
         hasUnsavedChanges = false
     }
 
+    override fun closeRecursive() = close()
+
     override fun close() {
         if (isOpenAtomic.compareAndSet(true, false)) {
-            runner.close()
+            runners.close()
             watchFileSystem.set(false)
+            projectMgr.pages.close(this)
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()
         }
-    }
-
-    override fun closeRecursive() {
-        close()
     }
 
     override fun delete() {
@@ -353,7 +373,7 @@ class File internal constructor(
             path.deleteExisting()
             parent!!.remove(this)
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FILE_NOT_DELETABLE, path.name)
+            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_DELETABLE, path.name)
         }
     }
 }

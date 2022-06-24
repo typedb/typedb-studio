@@ -29,10 +29,11 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
-import com.vaticle.typedb.studio.state.resource.Navigable
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -83,7 +84,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             loadOtherProperties()
             loadSubtypesRecursivelyBlocking()
         } catch (e: TypeDBClientException) {
-            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: "Unknown")
+            schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
         }
     }
 
@@ -131,7 +132,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         name: String,
         hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Resource {
+    ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Pageable {
 
         private class Callbacks {
 
@@ -159,7 +160,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override val isOpen: Boolean get() = isOpenAtomic.get()
         override val isWritable: Boolean = true
         override val isEmpty: Boolean = false
-        override val isUnsavedResource: Boolean = false
+        override val isUnsavedPageable: Boolean = false
         override val hasUnsavedChanges: Boolean by mutableStateOf(false)
 
         private val isOpenAtomic = AtomicBoolean(false)
@@ -171,30 +172,29 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         }
 
         override fun deactivate() {}
-        override fun beforeRun(function: (Resource) -> Unit) {}
-        override fun beforeSave(function: (Resource) -> Unit) {}
-        override fun beforeClose(function: (Resource) -> Unit) {}
         override fun execBeforeClose() {}
-        override fun save(onSuccess: ((Resource) -> Unit)?) {}
-        override fun move(onSuccess: ((Resource) -> Unit)?) {}
+        override fun initiateSave(reopen: Boolean) {}
         override fun reloadEntries() = loadSubtypesExplicit()
-        override fun rename(onSuccess: ((Resource) -> Unit)?) = Unit // TODO
-        override fun onReopen(function: (Resource) -> Unit) = callbacks.onReopen.put(function)
-        override fun onClose(function: (Resource) -> Unit) = callbacks.onClose.put(function)
+        override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
+        override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
         override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)
 
         override fun tryOpen(): Boolean {
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
+            schemaMgr.pages.opened(this)
+            loadProperties()
             return true
         }
 
         override fun activate() {
+            schemaMgr.pages.active(this)
             loadProperties()
         }
 
         override fun close() {
             if (isOpenAtomic.compareAndSet(true, false)) {
+                schemaMgr.pages.close(this)
                 callbacks.onClose.forEach { it(this) }
                 callbacks.clear()
             }
@@ -210,7 +210,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 close()
                 // TODO
             } catch (e: Exception) {
-                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: "Unknown")
+                schemaMgr.notificationMgr.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
             }
         }
 

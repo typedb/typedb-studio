@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
@@ -96,7 +96,7 @@ internal class RunOutputGroup constructor(
     private fun publishQueryResponseTime() {
         runner.startTime?.let { startTime ->
             val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
-            GlobalState.status.publish(QUERY_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+            StudioState.status.publish(QUERY_RESPONSE_TIME, Duration.milliseconds(duration).toString())
         }
     }
 
@@ -104,13 +104,13 @@ internal class RunOutputGroup constructor(
     private fun publishOutputResponseTime() {
         runner.endTime?.let { queryEndTime ->
             val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
-            GlobalState.status.publish(OUTPUT_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+            StudioState.status.publish(OUTPUT_RESPONSE_TIME, Duration.milliseconds(duration).toString())
         }
     }
 
     private fun clearStatus() {
-        GlobalState.status.clear(QUERY_RESPONSE_TIME)
-        GlobalState.status.clear(OUTPUT_RESPONSE_TIME)
+        StudioState.status.clear(QUERY_RESPONSE_TIME)
+        StudioState.status.clear(OUTPUT_RESPONSE_TIME)
     }
 
     internal fun isActive(runOutput: RunOutput): Boolean {
@@ -121,7 +121,7 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
+    private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         while (futuresLatch.count > 0L) {
             delay(COUNT_DOWN_LATCH_PERIOD_MS)
         }
@@ -129,7 +129,7 @@ internal class RunOutputGroup constructor(
         endTime = System.currentTimeMillis()
     }
 
-    private fun concludeNonSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
+    private fun concludeNonSerialOutput() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         val futures = mutableListOf<CompletableFuture<Unit?>>()
         do {
             val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
@@ -143,7 +143,7 @@ internal class RunOutputGroup constructor(
         nonSerialOutputFutures.put(Either.first(future))
     }
 
-    private fun printSerialOutput() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
+    private fun printSerialOutput() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
             if (future.isFirst) future.first().join()?.invoke()
@@ -160,7 +160,7 @@ internal class RunOutputGroup constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun consumeResponses() = coroutineScope.launchAndHandle(GlobalState.notification, LOGGER) {
+    private fun consumeResponses() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
@@ -194,18 +194,18 @@ internal class RunOutputGroup constructor(
 
     private fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
         consumeStreamResponse(response) {
-            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
+            collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
     private fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
         consumeStreamResponse(response) {
-            collectSerial(launchCompletableFuture(GlobalState.notification, LOGGER) { logOutput.outputFn(it) })
+            collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
     private fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
-        val notificationMgr = GlobalState.notification
+        val notificationMgr = StudioState.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()

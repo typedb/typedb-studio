@@ -35,7 +35,7 @@ import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Property
@@ -97,7 +97,7 @@ internal class LogOutput constructor(
 
     private fun copyToClipboard() {
         editorState.copyContentToClipboard()
-        GlobalState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
+        StudioState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
     }
 
     internal fun output(message: Response.Message) {

@@ -32,7 +32,7 @@ import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.app.StatusManager
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
@@ -54,7 +54,7 @@ object StatusBar {
 
     @Composable
     fun Layout() {
-        val statusMgr = GlobalState.status
+        val statusMgr = StudioState.status
         val fontStyle = Theme.typography.body2
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             if (statusMgr.loadingStatus.isNotEmpty()) {

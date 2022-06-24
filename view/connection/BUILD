@@ -29,7 +29,7 @@ kt_jvm_library(
         "//state/common:common",
         "//state/connection:connection",
         "//state/project:project",
-        "//state/resource:resource",
+        "//state/page:page",
         "//state:state",
         "//view/common:common",
         "//view/material:material",

@@ -37,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.state.GlobalState
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Dialog.DIALOG_SPACING
@@ -53,33 +53,38 @@ object ConfirmationDialog {
     internal class State : Form.State {
 
         var verificationInput by mutableStateOf("")
-        val hasReject get() = GlobalState.confirmation.hasReject
-        val hasConfirm get() = GlobalState.confirmation.hasConfirm
-        val cancelLabel get() = GlobalState.confirmation.cancelLabel
-        val rejectLabel get() = GlobalState.confirmation.rejectLabel
-        val confirmLabel get() = GlobalState.confirmation.confirmLabel
+        val hasReject get() = StudioState.confirmation.hasReject
+        val hasConfirm get() = StudioState.confirmation.hasConfirm
+        val cancelLabel get() = StudioState.confirmation.cancelLabel
+        val rejectLabel get() = StudioState.confirmation.rejectLabel
+        val confirmLabel get() = StudioState.confirmation.confirmLabel
 
         fun reject() {
-            GlobalState.confirmation.reject()
+            StudioState.confirmation.reject()
         }
 
         override fun cancel() {
-            GlobalState.confirmation.close()
+            StudioState.confirmation.close()
         }
 
         override fun isValid(): Boolean {
-            val verificationValue = GlobalState.confirmation.verificationValue
+            val verificationValue = StudioState.confirmation.verificationValue
             return verificationValue == null || verificationValue == verificationInput
         }
 
         override fun trySubmit() {
-            GlobalState.confirmation.confirm()
+            StudioState.confirmation.confirm()
         }
     }
 
     @Composable
-    fun Layout() {
-        val dialogState = GlobalState.confirmation
+    fun MayShowDialog() {
+        if (StudioState.confirmation.isOpen) Layout()
+    }
+
+    @Composable
+    private fun Layout() {
+        val dialogState = StudioState.confirmation
         val formState = remember { State() }
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {

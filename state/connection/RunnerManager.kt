@@ -16,33 +16,32 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.resource
+package com.vaticle.typedb.studio.state.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.vaticle.typedb.studio.state.connection.QueryRunner
 import java.util.concurrent.LinkedBlockingQueue
 
 class RunnerManager {
 
-    var activeRunner: QueryRunner? by mutableStateOf(null)
-    val runners: SnapshotStateList<QueryRunner> = mutableStateListOf()
+    var active: QueryRunner? by mutableStateOf(null)
+    val launched: SnapshotStateList<QueryRunner> = mutableStateListOf()
     private val saved: SnapshotStateList<QueryRunner> = mutableStateListOf()
     private val onLaunch = LinkedBlockingQueue<(QueryRunner) -> Unit>()
 
     fun clone(): RunnerManager {
         val newRunnerMgr = RunnerManager()
-        newRunnerMgr.activeRunner = this.activeRunner
-        newRunnerMgr.runners.addAll(this.runners)
+        newRunnerMgr.active = this.active
+        newRunnerMgr.launched.addAll(this.launched)
         newRunnerMgr.onLaunch.addAll(onLaunch)
         return newRunnerMgr
     }
 
     fun numberOf(runner: QueryRunner): Int {
-        return runners.indexOf(runner) + 1
+        return launched.indexOf(runner) + 1
     }
 
     fun onLaunch(function: (QueryRunner) -> Unit) {
@@ -50,11 +49,11 @@ class RunnerManager {
     }
 
     fun isActive(runner: QueryRunner): Boolean {
-        return runner == activeRunner
+        return runner == active
     }
 
     fun activate(runner: QueryRunner) {
-        activeRunner = runner
+        active = runner
     }
 
     fun isSaved(runner: QueryRunner): Boolean {
@@ -65,29 +64,29 @@ class RunnerManager {
         saved.add(runner)
     }
 
-    internal fun launch(runner: QueryRunner) {
-        activeRunner = runner
-        if (runners.isEmpty() || runners.all { saved.contains(it) }) runners.add(runner)
-        else runners[runners.indexOf(runners.first { !saved.contains(it) })] = runner
+    fun launch(runner: QueryRunner) {
+        active = runner
+        if (launched.isEmpty() || launched.all { saved.contains(it) }) launched.add(runner)
+        else launched[launched.indexOf(launched.first { !saved.contains(it) })] = runner
         runner.launch()
         onLaunch.forEach { it(runner) }
     }
 
     fun close(runner: QueryRunner) {
         runner.close()
-        if (activeRunner == runner) {
-            val i = runners.indexOf(activeRunner)
-            activeRunner = if (runners.size == 1) null
-            else if (i > 0) runners[i - 1]
-            else runners[0]
+        if (active == runner) {
+            val i = launched.indexOf(active)
+            active = if (launched.size == 1) null
+            else if (i > 0) launched[i - 1]
+            else launched[0]
         }
-        runners.remove(runner)
+        launched.remove(runner)
     }
 
     fun close() {
-        activeRunner = null
-        runners.forEach { it.close() }
-        runners.clear()
+        active = null
+        launched.forEach { it.close() }
+        launched.clear()
         onLaunch.clear()
     }
 }

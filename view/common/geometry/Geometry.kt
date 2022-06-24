@@ -57,7 +57,13 @@ object Geometry {
 
     data class Circle(val x: Float, val y: Float, val r: Float)
 
-    data class Ellipse(val x: Float, val y: Float, /** half-width */ val hw: Float, /** half-height */ val hh: Float)
+    data class Ellipse(
+        val x: Float, val y: Float,
+        /** half-width */
+        val hw: Float,
+        /** half-height */
+        val hh: Float
+    )
 
     /** Convert radians to degrees */
     fun Float.radToDeg(): Float {
@@ -106,8 +112,10 @@ object Geometry {
     }
 
     fun rayIntersect(ray1: Ray, ray2: Ray): Offset? {
-        return lineIntersect(line1 = Line(ray1.origin, ray1.origin + ray1.directionVector),
-            line2 = Line(ray2.origin, ray2.origin + ray2.directionVector), infiniteLength = true)
+        return lineIntersect(
+            line1 = Line(ray1.origin, ray1.origin + ray1.directionVector),
+            line2 = Line(ray2.origin, ray2.origin + ray2.directionVector), infiniteLength = true
+        )
     }
 
     /**
@@ -118,10 +126,14 @@ object Geometry {
      * Return null if the lines don't intersect
      */
     fun lineIntersect(line1: Line, line2: Line, infiniteLength: Boolean = false): Offset? {
-        val x1 = line1.from.x; val y1 = line1.from.y
-        val x2 = line1.to.x; val y2 = line1.to.y
-        val x3 = line2.from.x; val y3 = line2.from.y
-        val x4 = line2.to.x; val y4 = line2.to.y
+        val x1 = line1.from.x;
+        val y1 = line1.from.y
+        val x2 = line1.to.x;
+        val y2 = line1.to.y
+        val x3 = line2.from.x;
+        val y3 = line2.from.y
+        val x4 = line2.to.x;
+        val y4 = line2.to.y
 
         // Check if any line has length 0
         if ((x1 == x2 && y1 == y2) || (x3 == x4 && y3 == y4)) return null
@@ -148,14 +160,14 @@ object Geometry {
      */
     fun quadraticRoots(a: Float, b: Float, c: Float): Set<Float> {
         if (a == 0f) throw IllegalArgumentException("quadraticRoots: a must be nonzero")
-        val discriminant = b*b - 4f*a*c
+        val discriminant = b * b - 4f * a * c
         return when {
             discriminant > 0 -> {
                 val sqrtDiscriminant = sqrt(discriminant)
-                setOf((-b + sqrtDiscriminant) / (2f*a), (-b - sqrtDiscriminant) / (2f*a))
+                setOf((-b + sqrtDiscriminant) / (2f * a), (-b - sqrtDiscriminant) / (2f * a))
             }
             discriminant < 0 -> emptySet()
-            else -> setOf(-b / (2f*a))
+            else -> setOf(-b / (2f * a))
         }
     }
 
@@ -171,15 +183,19 @@ object Geometry {
                 // Rearranging gives the quadratic: (m^2 + 1)(x^2) + (2(mc-mb-a))x + (a^2 + b^2 + c^2 - r^2 - 2bc) = 0
                 val m = ray.gradient
                 val c = ray.yIntercept
-                val xValues = quadraticRoots(a = m*m + 1, b = 2 * (m*c - m*b - a), c = (a*a + b*b + c*c - r*r - 2*b*c))
-                xValues.map { x -> Offset(x, m*x + c) }.toSet()
+                val xValues = quadraticRoots(
+                    a = m * m + 1,
+                    b = 2 * (m * c - m * b - a),
+                    c = (a * a + b * b + c * c - r * r - 2 * b * c)
+                )
+                xValues.map { x -> Offset(x, m * x + c) }.toSet()
             }
             true -> {
                 // For a vertical ray, x is just a constant, so we need only rearrange (x - a)^2 + (y - b)^2 = r^2
                 // into a quadratic function of y
                 // This yields y^2 - 2by + (b^2 + (x-a)^2 - r^2) = 0
                 val x = ray.origin.x
-                val yValues = quadraticRoots(a = 1f, b = -2*b, c = b*b + (x-a)*(x-a) - r*r)
+                val yValues = quadraticRoots(a = 1f, b = -2 * b, c = b * b + (x - a) * (x - a) - r * r)
                 yValues.map { y -> Offset(x, y) }.toSet()
             }
         }
@@ -237,8 +253,10 @@ object Geometry {
         val circle = arc.toCircle()
         val rayCircleIntersections = rayCircleIntersect(ray, circle)
 
-        val lineRect = Rect(left = min(line.from.x, line.to.x) - 1f, top = min(line.from.y, line.to.y) - 1f,
-            right = max(line.from.x, line.to.x) + 1f, bottom = max(line.from.y, line.to.y) + 1f)
+        val lineRect = Rect(
+            left = min(line.from.x, line.to.x) - 1f, top = min(line.from.y, line.to.y) - 1f,
+            right = max(line.from.x, line.to.x) + 1f, bottom = max(line.from.y, line.to.y) + 1f
+        )
         return rayCircleIntersections
             .filter { lineRect.contains(it) }
             .map { atan2(y = it.y - circle.y, x = it.x - circle.x).radToDeg().normalisedAngle() }
@@ -284,7 +302,8 @@ object Geometry {
      * Find intersection point of a line from `sourcePoint` to the centre of `diamond`, with the edge of `diamond`
      */
     fun diamondIncomingLineIntersect(sourcePoint: Offset, diamond: Rect): Offset? {
-        val px = sourcePoint.x; val py = sourcePoint.y
+        val px = sourcePoint.x;
+        val py = sourcePoint.y
         val incomingLine = Line(from = Offset(px, py), to = diamond.center)
 
         val edgeToCheck: Line =
@@ -312,19 +331,22 @@ object Geometry {
      * Find intersection point of a line from `sourcePoint` through the centre of `ellipse`, with the edge of `ellipse`
      */
     fun ellipseIncomingLineIntersect(sourcePoint: Offset, ellipse: Ellipse): Offset {
-        var px = sourcePoint.x; var py = sourcePoint.y
-        val x = ellipse.x; val y = ellipse.y
-        val a = ellipse.hw; val b = ellipse.hh // ellipse has centre (x,y) and semiaxes of lengths [a,b]
+        var px = sourcePoint.x;
+        var py = sourcePoint.y
+        val x = ellipse.x;
+        val y = ellipse.y
+        val a = ellipse.hw;
+        val b = ellipse.hh // ellipse has centre (x,y) and semiaxes of lengths [a,b]
 
         // translate structure to centre ellipse at origin
         px -= x
         py -= y
 
         // compute intersection points: +-(x0, y0)
-        val x0 = (a * b * px) / sqrt(a*a * py*py + b*b * px*px)
-        val y0 = (a * b * py) / sqrt(a*a * py*py + b*b * px*px)
+        val x0 = (a * b * px) / sqrt(a * a * py * py + b * b * px * px)
+        val y0 = (a * b * py) / sqrt(a * a * py * py + b * b * px * px)
 
-        return Offset(x0+x, y0+y)
+        return Offset(x0 + x, y0 + y)
     }
 
     /**
@@ -333,8 +355,8 @@ object Geometry {
     fun collinear(point1: Offset, point2: Offset, point3: Offset): Boolean {
         val (x1, x2, x3) = listOf(point1.x, point2.x, point3.x)
         val (y1, y2, y3) = listOf(point1.y, point2.y, point3.y)
-        val tolerance = abs(maxOf(x1-x2, x1-x3, x2-x3, y1-y2, y1-y3, y2-y3)) * 0.00001
-        return abs((x2-x1) * (y3-y1) - (x3-x1) * (y2-y1)) < tolerance
+        val tolerance = abs(maxOf(x1 - x2, x1 - x3, x2 - x3, y1 - y2, y1 - y3, y2 - y3)) * 0.00001
+        return abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) < tolerance
     }
 
     /**
@@ -384,12 +406,13 @@ object Geometry {
     fun arrowhead(from: Offset, to: Offset, arrowLength: Float, arrowWidth: Float): Pair<Line, Line>? {
         // first compute normalised vector for the line
         val d = to - from
-        val len = sqrt(d.x*d.x + d.y*d.y)
+        val len = sqrt(d.x * d.x + d.y * d.y)
 
         if (len == 0F) return null; // if length is 0 - can't render arrows
 
         val n = d / len // normal vector in the direction of the line with length 1
-        val s = Offset(from.x + n.x * (len - arrowLength), from.y + n.y * (len - arrowLength)) // wingtip offsets from line
+        val s =
+            Offset(from.x + n.x * (len - arrowLength), from.y + n.y * (len - arrowLength)) // wingtip offsets from line
         val top = Offset(-n.y, n.x) // orthogonal vector to the line vector
 
         return Pair(

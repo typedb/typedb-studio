@@ -61,7 +61,11 @@ object Concept {
             append(primary)
             secondary?.let {
                 append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY))) { append("(${it})") }
+                withStyle(SpanStyle(baseFontColor.copy(com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY))) {
+                    append(
+                        "(${it})"
+                    )
+                }
             }
         }
     }

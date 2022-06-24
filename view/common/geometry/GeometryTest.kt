@@ -22,13 +22,13 @@ import androidx.compose.ui.geometry.Offset
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.Clockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.AngularDirection.CounterClockwise
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Circle
-import com.vaticle.typedb.studio.view.common.geometry.Geometry.quadraticRoots
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.Ray
+import com.vaticle.typedb.studio.view.common.geometry.Geometry.quadraticRoots
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rayCircleIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.sweepAngle
-import org.junit.Test
 import kotlin.math.abs
 import kotlin.test.assertTrue
+import org.junit.Test
 
 class GeometryTest {
     @Test
@@ -106,7 +106,7 @@ class GeometryTest {
 
     @Test
     fun quadraticRootsTwoSolutions() {
-        assertFloatSetEquals(setOf(-1f/3, 1f), quadraticRoots(3f, -2f, -1f))
+        assertFloatSetEquals(setOf(-1f / 3, 1f), quadraticRoots(3f, -2f, -1f))
     }
 
     @Test
@@ -151,7 +151,11 @@ class GeometryTest {
         assert(abs(expected - actual) < precision) { "Expected $expected, actual $actual" }
     }
 
-    private fun <T : Comparable<T>> assertSetEquals(expected: Set<T>, actual: Set<T>, equalsFn: (a: T, b: T) -> Boolean) {
+    private fun <T : Comparable<T>> assertSetEquals(
+        expected: Set<T>,
+        actual: Set<T>,
+        equalsFn: (a: T, b: T) -> Boolean
+    ) {
         assertTrue(message = "Expected $expected, actual $actual") {
             if (expected.size != actual.size) return@assertTrue false
             val expectedSorted = expected.sorted()
@@ -163,8 +167,8 @@ class GeometryTest {
         }
     }
 
-    private fun assertFloatSetEquals(expected: Set<Float>, actual: Set<Float>, precision: Float = 0.0001f)
-            = assertSetEquals(expected, actual) { a, b -> abs(a - b) < precision }
+    private fun assertFloatSetEquals(expected: Set<Float>, actual: Set<Float>, precision: Float = 0.0001f) =
+        assertSetEquals(expected, actual) { a, b -> abs(a - b) < precision }
 
     private fun assertOffsetSetEquals(expected: Set<Offset>, actual: Set<Offset>, precision: Float = 0.0001f) {
         assertTrue(message = "Expected $expected, actual $actual") {

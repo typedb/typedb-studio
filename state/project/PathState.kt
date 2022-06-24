@@ -18,13 +18,13 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
-import com.vaticle.typedb.studio.state.resource.Navigable
+import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.Objects
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
@@ -32,14 +32,12 @@ import kotlin.io.path.readSymbolicLink
 import kotlin.io.path.relativeTo
 import mu.KotlinLogging
 
-sealed class ProjectItem constructor(
-    val projectItemType: Type,
+sealed class PathState constructor(
+    final override val parent: DirectoryState?,
     val path: Path,
-    final override val parent: Directory?,
-    val preferenceMgr: PreferenceManager,
+    val type: Type,
     val projectMgr: ProjectManager,
-    val notificationMgr: NotificationManager
-) : Navigable<ProjectItem> {
+) : Navigable<PathState> {
 
     enum class Type(val index: Int) {
         DIRECTORY(0),
@@ -56,27 +54,30 @@ sealed class ProjectItem constructor(
     val isRoot = parent == null
 
     val isSymbolicLink: Boolean = path.isSymbolicLink()
-    val isDirectory: Boolean = projectItemType == Type.DIRECTORY
-    val isFile: Boolean = projectItemType == Type.FILE
+    val isDirectory: Boolean = type == Type.DIRECTORY
+    val isFile: Boolean = type == Type.FILE
     val isProjectData: Boolean by lazy { if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false }
 
     abstract val isReadable: Boolean
     abstract val isWritable: Boolean
-    abstract fun asDirectory(): Directory
-    abstract fun asFile(): File
+    abstract fun asDirectory(): DirectoryState
+    abstract fun asFile(): FileState
+    abstract fun initiateRename()
+    abstract fun initiateMove()
+    abstract fun initiateDelete(onSuccess: () -> Unit)
     abstract fun close()
     abstract fun closeRecursive()
     abstract fun delete()
 
     internal fun movePathTo(newPath: Path, overwrite: Boolean = false) {
         path.moveTo(newPath, overwrite)
-        FileChannel.open(newPath, StandardOpenOption.WRITE).lock().release() // This waits till file is ready
+        if (newPath.isRegularFile()) FileChannel.open(newPath, WRITE).lock().release() // This waits till file is ready
     }
 
-    internal fun find(newPath: Path): ProjectItem? {
+    internal fun find(newPath: Path): PathState? {
         if (!newPath.startsWith(projectMgr.current!!.path)) return null
         var relPath = newPath.relativeTo(projectMgr.current!!.path)
-        var dir: Directory = projectMgr.current!!.directory
+        var dir: DirectoryState = projectMgr.current!!.directory
         while (relPath.nameCount > 1) {
             dir.reloadEntries()
             dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
@@ -86,21 +87,26 @@ sealed class ProjectItem constructor(
         return dir.entries.first { it.name == relPath.first().name }
     }
 
+    protected fun updateContentAndCloseDialog(dialog: DialogManager) {
+        projectMgr.onContentChange?.let { it() }
+        dialog.close()
+    }
+
     override fun toString(): String {
         return path.toString()
     }
 
-    override fun compareTo(other: Navigable<ProjectItem>): Int {
-        other as ProjectItem
-        return if (this.projectItemType == other.projectItemType) {
+    override fun compareTo(other: Navigable<PathState>): Int {
+        other as PathState
+        return if (this.type == other.type) {
             this.path.toString().compareTo(other.path.toString(), ignoreCase = true)
-        } else this.projectItemType.index.compareTo(other.projectItemType.index)
+        } else this.type.index.compareTo(other.type.index)
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as ProjectItem
+        other as PathState
         return path == other.path
     }
 

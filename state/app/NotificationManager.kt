@@ -87,7 +87,6 @@ class NotificationManager {
 
     fun userError(logger: KLogger, message: Message, vararg params: Any) {
         userNotification(logger, Notification.Type.ERROR, message.code(), stringOf(message, *params))
-
     }
 
     fun userWarning(logger: KLogger, message: Message, vararg params: Any) {

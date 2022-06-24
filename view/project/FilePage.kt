@@ -24,8 +24,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.state.project.File
-import com.vaticle.typedb.studio.state.resource.Resource
+import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.material.Form
@@ -35,29 +35,30 @@ import com.vaticle.typedb.studio.view.material.Page
 import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 class FilePage private constructor(
-    private var file: File,
+    private var file: FileState,
     private val editor: TextEditor.State
 ) : Page() {
 
     override val hasSecondary: Boolean = true
-    override val icon: Form.IconArg get() = when {
-        file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
-        else -> Form.IconArg(Icon.Code.FILE_LINES)
-    }
+    override val icon: Form.IconArg
+        get() = when {
+            file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
+            else -> Form.IconArg(Icon.Code.FILE_LINES)
+        }
 
     private var runOutputState: RunOutputArea.State? by mutableStateOf(null)
 
     companion object {
         @Composable
-        fun create(file: File): FilePage {
+        fun create(file: FileState): FilePage {
             return FilePage(file, TextEditor.createState(file))
         }
     }
 
-    override fun updateResource(resource: Resource) {
+    override fun updatePageable(pageable: Pageable) {
         // TODO: guarantee that new file has identical content as previous, or update content.
-        runOutputState?.let { it.resource = resource.asRunnable() }
-        file = resource as File
+        runOutputState?.let { it.pageable = pageable.asRunnable() }
+        file = pageable as FileState
         editor.updateFile(file)
     }
 
