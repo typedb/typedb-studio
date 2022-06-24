@@ -29,7 +29,7 @@ kt_jvm_library(
         "//state/project:project",
         "//state/page:page",
         "//view/editor/highlighter/common:common",
-        "//view/editor/highlighter/language:typeql",
+        "//view/editor/highlighter/typeql:typeql",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -39,7 +39,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-editor-highlighter:{pom_version}"],
 )
 
 checkstyle_test(

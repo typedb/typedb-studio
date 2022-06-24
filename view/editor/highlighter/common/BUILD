@@ -40,7 +40,7 @@ kt_jvm_library(
         "scope_definitions.yml",
         "//resources/schemes:schemes",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter-common:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-editor-highlighter-common:{pom_version}"],
 )
 
 checkstyle_test(

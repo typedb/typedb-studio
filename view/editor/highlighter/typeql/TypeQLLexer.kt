@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.editor.highlighter.language
+package com.vaticle.typedb.studio.view.editor.highlighter.typeql
 
 import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.studio.view.editor.highlighter.common.Lexer
@@ -31,7 +31,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 //       tokenisation rules using regular expressions
 object TypeQLLexer : Lexer {
 
-    private val TYPEQL_SCOPES_FILE = "view/editor/highlighter/language/typeql_scopes.yml"
+    private val TYPEQL_SCOPES_FILE = "view/editor/highlighter/typeql/typeql_scopes.yml"
     private val tokenScope: Map<String, String> = loadTokenScopeDefinition()
 
     private fun loadTokenScopeDefinition(): Map<String, String> {

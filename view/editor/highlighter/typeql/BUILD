@@ -39,7 +39,7 @@ kt_jvm_library(
         "@maven//:org_slf4j_slf4j_api",
     ],
     resources = ["typeql_scopes.yml"],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter-language-typeql:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-view-highlighter-typeql:{pom_version}"],
 )
 
 checkstyle_test(

@@ -30,7 +30,7 @@ import com.vaticle.typedb.studio.view.editor.highlighter.common.Lexer
 import com.vaticle.typedb.studio.view.editor.highlighter.common.Lexer.Token
 import com.vaticle.typedb.studio.view.editor.highlighter.common.Scheme
 import com.vaticle.typedb.studio.view.editor.highlighter.common.Scope
-import com.vaticle.typedb.studio.view.editor.highlighter.language.TypeQLLexer
+import com.vaticle.typedb.studio.view.editor.highlighter.typeql.TypeQLLexer
 
 object SyntaxHighlighter {
 
