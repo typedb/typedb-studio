@@ -280,13 +280,13 @@ class GraphArea(transactionState: TransactionState) {
     }
 
     class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
-        : BackgroundTask(runIntervalMs = 33) {
+        : BackgroundTask(runIntervalMs = 17) {
 
         private val interactions get() = graphArea.interactions
 
         override fun run() {
+            val verticesToExpand = listOfNotNull(interactions.hoveredVertex, interactions.focusedVertex)
             graphArea.graph.vertices.forEach {
-                val verticesToExpand = listOfNotNull(interactions.hoveredVertex, interactions.focusedVertex)
                 if (it.geometry.isExpanded != it in verticesToExpand) {
                     it.geometry.isExpanded = !it.geometry.isExpanded
                     coroutineScope.launch { it.geometry.animateExpandOrCollapse() }

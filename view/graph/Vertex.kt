@@ -20,7 +20,9 @@ package com.vaticle.typedb.studio.view.graph
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector3D
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.TwoWayConverter
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -199,7 +201,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         suspend fun animateExpandOrCollapse() {
             _sizeAndScale.animateTo(
-                if (isExpanded) SizeAndScale(expandedSize, expandedScale) else SizeAndScale(baseSize, baseScale)
+                if (isExpanded) SizeAndScale(expandedSize, expandedScale) else SizeAndScale(baseSize, baseScale),
+                spring(stiffness = Spring.StiffnessHigh)
             )
         }
 
