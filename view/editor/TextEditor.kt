@@ -72,12 +72,14 @@ import androidx.compose.ui.unit.sp
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
+import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.view.editor.TextProcessor.Companion.normaliseWhiteSpace
+import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter.highlight
 import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Scrollbar
@@ -191,7 +193,7 @@ object TextEditor {
     }
 
     class State internal constructor(
-        val content: SnapshotStateList<AnnotatedString>,
+        internal val content: SnapshotStateList<AnnotatedString>,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
@@ -233,6 +235,14 @@ object TextEditor {
             content.clear()
             content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
             rendering.reinitialize(content.size)
+        }
+
+        fun addContent(text: String, type: Property.FileType = Property.FileType.UNKNOWN) {
+            content.addAll(text.split("\n").map { highlight(it, type) })
+        }
+
+        fun addContent(text: String, highlighter: (String) -> AnnotatedString) {
+            content.addAll(text.split("\n").map { highlighter(it) })
         }
 
         fun updateFile(file: FileState) {

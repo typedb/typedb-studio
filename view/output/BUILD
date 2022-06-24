@@ -33,7 +33,6 @@ kt_jvm_library(
         "//view/common:common",
         "//view/editor:editor",
         "//view/graph:graph",
-        "//view/highlighter:highlighter",
         "//view/material:material",
 
         # External Vaticle Dependencies

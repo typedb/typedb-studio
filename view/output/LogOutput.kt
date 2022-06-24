@@ -48,7 +48,6 @@ import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.editor.TextEditor
-import com.vaticle.typedb.studio.view.highlighter.SyntaxHighlighter
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Tooltip
@@ -100,14 +99,10 @@ internal class LogOutput constructor(
         StudioState.notification.info(LOGGER, Message.View.TEXT_COPIED_TO_CLIPBOARD)
     }
 
-    internal fun output(message: Response.Message) {
-        editorState.content.addAll(message.text.split("\n").map {
-            when (message.type) {
-                INFO -> AnnotatedString(it)
-                SUCCESS, ERROR -> highlightText(message.type, it, colors)
-                TYPEQL -> highlightTypeQL(it)
-            }
-        })
+    internal fun output(message: Response.Message) = when (message.type) {
+        INFO -> editorState.addContent(message.text)
+        SUCCESS, ERROR -> editorState.addContent(message.text) { highlightText(message.type, it, colors) }
+        TYPEQL -> outputTypeQL(message.text)
     }
 
     internal fun output(numeric: Numeric) = outputTypeQL(numeric.toString())
@@ -128,16 +123,10 @@ internal class LogOutput constructor(
     }
 
     private fun outputTypeQL(text: String) {
-        editorState.content.addAll(text.split("\n").map { highlightTypeQL(it) })
+        editorState.addContent(text, Property.FileType.TYPEQL)
     }
 
-    private fun highlightTypeQL(text: String) = SyntaxHighlighter.highlight(text, Property.FileType.TYPEQL)
-
-    private fun highlightText(
-        type: Response.Message.Type,
-        text: String,
-        colors: Color.StudioTheme
-    ): AnnotatedString {
+    private fun highlightText(type: Response.Message.Type, text: String, colors: Color.StudioTheme): AnnotatedString {
         val builder = AnnotatedString.Builder()
         val style = SpanStyle(
             color = when (type) {
