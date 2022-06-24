@@ -85,10 +85,13 @@ class Viewport(private val graph: Graph) {
         worldCoordinates = Offset(-physicalCenter.x.value, -physicalCenter.y.value)
     }
 
-    fun findVertexAt(physicalPoint: Offset): Vertex? {
+    fun findVertexAt(physicalPoint: Offset, interactions: Interactions): Vertex? {
         val worldPoint = physicalPointToWorldPoint(physicalPoint)
+        val priorityHit = interactions.focusedVertex?.takeIf { it.geometry.visuallyIntersects(worldPoint) }
+            ?: interactions.hoveredVertex?.takeIf { it.geometry.visuallyIntersects(worldPoint) }
+        if (priorityHit != null) return priorityHit
         val nearestVertices = nearestVertices(worldPoint)
-        return nearestVertices.find { it.geometry.intersects(worldPoint) }
+        return nearestVertices.find { it.geometry.visuallyIntersects(worldPoint) }
     }
 
     private fun physicalPointToWorldPoint(physicalPoint: Offset): Offset {
@@ -121,9 +124,8 @@ class Viewport(private val graph: Graph) {
         override fun canRun() = !viewport.wasManuallyRescaled
 
         override fun run() {
-            val vertexAreaApprox = 270f * 270f
-            val baseCapacity =
-                (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
+            val vertexAreaApprox = 320f * 320f
+            val baseCapacity = (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
             val requiredCapacity = viewport.graph.vertices.size.coerceAtLeast(10)
             viewport.scale = sqrt(baseCapacity / requiredCapacity)
         }

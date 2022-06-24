@@ -22,31 +22,27 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.withTransform
 import com.vaticle.typedb.client.api.concept.thing.Thing
 import kotlin.math.sqrt
 
 sealed class VertexBackgroundRenderer(
-    private val vertex: Vertex,
+    protected val vertex: Vertex,
     private val graphArea: GraphArea,
     protected val ctx: RendererContext
 ) {
     companion object {
         private const val CORNER_RADIUS = 5f
-        private const val HOVERED_ALPHA = .675f
+        private const val HOVERED_ALPHA = 1f
         private const val BACKGROUND_ALPHA = .25f
-        private const val HOVERED_BACKGROUND_ALPHA = .175f
+        private const val HOVERED_BACKGROUND_ALPHA = .25f
 
-        fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer =
-            when (vertex) {
-                is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(
-                    vertex,
-                    graphArea,
-                    ctx
-                )
-                is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, graphArea, ctx)
-                is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, graphArea, ctx)
-            }
+        fun of(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext): VertexBackgroundRenderer = when (vertex) {
+            is Vertex.Type.Entity, is Vertex.Type.Thing, is Vertex.Thing.Entity -> Entity(vertex, graphArea, ctx)
+            is Vertex.Type.Relation, is Vertex.Thing.Relation -> Relation(vertex, graphArea, ctx)
+            is Vertex.Type.Attribute, is Vertex.Thing.Attribute -> Attribute(vertex, graphArea, ctx)
+        }
     }
 
     private val baseColor = ctx.theme.vertex.let { colors ->
@@ -103,15 +99,18 @@ sealed class VertexBackgroundRenderer(
 
     abstract fun draw()
 
-    class Highlight private constructor(
-        val color: androidx.compose.ui.graphics.Color, val width: Float, val rect: Rect
-    ) {
+    class Highlight private constructor(val color: Color, val width: Float, val rect: Rect) {
         companion object {
-            fun of(color: androidx.compose.ui.graphics.Color, width: Float, renderer: VertexBackgroundRenderer)
-                    : Highlight {
+            fun of(color: Color, width: Float, renderer: VertexBackgroundRenderer): Highlight {
                 return Highlight(color, width, renderer.getHighlightRect(width))
             }
         }
+    }
+
+    protected fun withOpaqueBackground(color: Color, ctx: RendererContext, fn: (Color) -> Unit) {
+        // we want vertices to appear "faded", not "semi-transparent"
+        if (color.alpha < 1f) fn(ctx.theme.background)
+        fn(color)
     }
 
     class Entity(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext) :
@@ -119,9 +118,11 @@ sealed class VertexBackgroundRenderer(
 
         override fun draw() {
             getHighlight()?.let {
-                ctx.drawScope.drawRoundRect(it.color, it.rect.topLeft, it.rect.size, cornerRadius)
+                withOpaqueBackground(it.color, ctx) { color ->
+                    ctx.drawScope.drawRoundRect(color, it.rect.topLeft, it.rect.size, cornerRadius)
+                }
             }
-            ctx.drawScope.drawRoundRect(color, rect.topLeft, rect.size, cornerRadius)
+            withOpaqueBackground(color, ctx) { ctx.drawScope.drawRoundRect(it, rect.topLeft, rect.size, cornerRadius) }
         }
     }
 
@@ -139,12 +140,29 @@ sealed class VertexBackgroundRenderer(
 
         override fun draw() {
             with(ctx.drawScope) {
-                withTransform({
-                    scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
-                    rotate(degrees = 45f, pivot = rect.center)
-                }) {
-                    getHighlight()?.let { drawRoundRect(it.color, it.rect.topLeft, it.rect.size, cornerRadius) }
-                    drawRoundRect(color, baseShape.topLeft, baseShape.size, cornerRadius)
+                if (vertex.geometry.isVisiblyCollapsed || !vertex.geometry.contentOverflowsBaseShape) {
+                    withTransform({
+                        scale(scaleX = rect.width / rect.height, scaleY = 1f, pivot = rect.center)
+                        rotate(degrees = 45f, pivot = rect.center)
+                    }) {
+                        getHighlight()?.let {
+                            withOpaqueBackground(it.color, ctx) { color ->
+                                drawRoundRect(color, it.rect.topLeft, it.rect.size, cornerRadius)
+                            }
+                        }
+                        withOpaqueBackground(color, ctx) {
+                            drawRoundRect(it, baseShape.topLeft, baseShape.size, cornerRadius)
+                        }
+                    }
+                } else {
+                    getHighlight()?.let {
+                        withOpaqueBackground(it.color, ctx) { color ->
+                            ctx.drawScope.drawRoundRect(color, it.rect.topLeft, it.rect.size, CornerRadius(8f))
+                        }
+                    }
+                    withOpaqueBackground(color, ctx) {
+                        ctx.drawScope.drawRoundRect(it, rect.topLeft, rect.size, CornerRadius(8f))
+                    }
                 }
             }
         }
@@ -153,9 +171,25 @@ sealed class VertexBackgroundRenderer(
     class Attribute(vertex: Vertex, graphArea: GraphArea, ctx: RendererContext) :
         VertexBackgroundRenderer(vertex, graphArea, ctx) {
 
+        // TODO: too much duplication
         override fun draw() {
-            getHighlight()?.let { ctx.drawScope.drawOval(it.color, it.rect.topLeft, it.rect.size) }
-            ctx.drawScope.drawOval(color, rect.topLeft, rect.size)
+            if (vertex.geometry.isVisiblyCollapsed || !vertex.geometry.contentOverflowsBaseShape) {
+                getHighlight()?.let {
+                    withOpaqueBackground(it.color, ctx) { color ->
+                        ctx.drawScope.drawOval(color, it.rect.topLeft, it.rect.size)
+                    }
+                }
+                withOpaqueBackground(color, ctx) { ctx.drawScope.drawOval(it, rect.topLeft, rect.size) }
+            } else {
+                getHighlight()?.let {
+                    withOpaqueBackground(it.color, ctx) { color ->
+                        ctx.drawScope.drawRoundRect(color, it.rect.topLeft, it.rect.size, CornerRadius(8f))
+                    }
+                }
+                withOpaqueBackground(color, ctx) {
+                    ctx.drawScope.drawRoundRect(it, rect.topLeft, rect.size, CornerRadius(8f))
+                }
+            }
         }
     }
 }

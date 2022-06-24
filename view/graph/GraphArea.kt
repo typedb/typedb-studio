@@ -31,18 +31,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -52,12 +48,9 @@ import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typedb.studio.view.common.theme.Color
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
-import com.vaticle.typedb.studio.view.material.Form
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.skia.Font
-import org.jetbrains.skia.TextLine
+import kotlinx.coroutines.launch
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -69,9 +62,7 @@ class GraphArea(transactionState: TransactionState) {
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
-
-    // TODO: this needs a better home
-    val edgeLabelSizes: MutableMap<String, DpSize> = ConcurrentHashMap()
+    internal val textRenderer = TextRenderer(viewport)
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -92,6 +83,9 @@ class GraphArea(transactionState: TransactionState) {
         LaunchedEffect(this, viewport.scale, viewport.density) {
             interactions.hoveredVertexChecker.launch()
         }
+        LaunchedEffect(this) {
+            VertexExpandAnimator(graphArea = this@GraphArea, coroutineScope = this).launch()
+        }
         LaunchedEffect(this) { viewport.autoScaler.launch() }
     }
 
@@ -102,14 +96,17 @@ class GraphArea(transactionState: TransactionState) {
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
         // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
         val edges = graph.edges.toList()
-        val vertices = graph.vertices.filter { viewport.rectIsVisible(it.geometry.rect) }
+        val vertices = graph.vertices.filter { it.readyToCompose && viewport.rectIsVisible(it.geometry.rect) }
+        // Since vertices contain MutableStates and are created on a different thread, we need to ensure their lifetime
+        // has been at least one composition cycle before trying to read those states
+        graph.vertices.filter { !it.readyToCompose }.forEach { it.readyToCompose = true }
         val typography = Theme.typography
-        val vertexLabelPaint = Paint().apply { color = Theme.graph.vertexLabel }.asFrameworkPaint()
+        val vertexLabelColor = Theme.graph.vertexLabel
         Canvas(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
             drawEdges(edges)
-            drawVertices(vertices, vertexLabelPaint, typography)
+            drawVertices(vertices, vertexLabelColor, typography)
         }
-        edges.filter { it.label !in edgeLabelSizes }.forEach { EdgeLabelMeasurer(it) }
+        edges.filter { it.label !in textRenderer.edgeLabelSizes }.forEach { textRenderer.EdgeLabelMeasurer(it) }
         PointerInput.Handler(this, Modifier.fillMaxSize().zIndex(100f))
     }
 
@@ -150,7 +147,8 @@ class GraphArea(transactionState: TransactionState) {
         if (edges.size > 500 && viewport.scale < 0.2) return emptySet()
         val edgesWithVisibleLabels = edges.filter { edge ->
             // Only draw visible labels (and only draw curves when label is visible, as curves are expensive)
-            edgeLabelSizes[edge.label]?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
+            textRenderer.edgeLabelSizes[edge.label]
+                ?.let { viewport.rectIsVisible(edge.geometry.labelRect(it, density)) } ?: false
         }
         val shouldDrawLabels = when {
             graph.physics.alpha > 0.5 -> edgesWithVisibleLabels.size < 50
@@ -160,84 +158,46 @@ class GraphArea(transactionState: TransactionState) {
         return if (shouldDrawLabels) edgesWithVisibleLabels.toSet() else emptySet()
     }
 
-    // TODO: get these metrics from EdgeRenderer instead? (via Skia's TextLine.width and TextLine.capHeight)
-    @Composable
-    private fun EdgeLabelMeasurer(edge: Edge) {
-        with(LocalDensity.current) {
-            Form.Text(
-                value = edge.label, textStyle = Theme.typography.code1,
-                modifier = Modifier.graphicsLayer(alpha = 0f).onSizeChanged {
-                    edgeLabelSizes[edge.label] = DpSize(it.width.toDp(), it.height.toDp())
-                }
-            )
-        }
-    }
-
     private fun DrawScope.drawVertices(
-        vertices: Collection<Vertex>, labelPaint: org.jetbrains.skia.Paint, typography: Typography.Theme
+        vertices: Collection<Vertex>, labelColor: androidx.compose.ui.graphics.Color, typography: Typography.Theme
     ) {
         // Ensure smooth performance when zoomed out, and during initial explosion
-        val shouldDrawLabels = viewport.scale > 0.2 && when {
+        val drawLabels = viewport.scale > 0.2 && when {
             graph.physics.alpha > 0.5 -> vertices.size < 50
             graph.physics.alpha > 0.05 -> vertices.size < 100
             else -> vertices.size < 500
         }
-        vertices.forEach { vertex ->
+        val drawVertexFn = { vertex: Vertex ->
             drawVertexBackground(vertex)
-            if (shouldDrawLabels) drawVertexLabel(vertex, labelPaint, typography)
+            if (drawLabels) with(textRenderer) { drawVertexLabel(vertex, labelColor, typography) }
         }
+        // Draw strongly focused vertices over less focused ones
+        sortByZIndex(vertices).forEach { vertex ->
+            if (vertex.geometry.isVisiblyCollapsed) {
+                drawVertexFn(vertex)
+            } else {
+                withTransform({
+                    scale(vertex.geometry.scale, pivot = with(viewport) { vertex.geometry.rect.center.toViewport() })
+                }) {
+                    drawVertexFn(vertex)
+                }
+            }
+        }
+    }
+
+    private fun vertexZIndex(vertex: Vertex) = when (vertex) {
+        interactions.focusedVertex -> 2
+        interactions.hoveredVertex -> 1
+        else -> 0
+    }
+
+    private fun sortByZIndex(vertices: Collection<Vertex>): List<Vertex> {
+        // O(n) sort because the number of possible z-indices is small
+        return vertices.groupBy { vertexZIndex(it) }.toSortedMap().flatMap { it.value }
     }
 
     private fun DrawScope.drawVertexBackground(vertex: Vertex) {
         vertexBackgroundRenderer(vertex, this).draw()
-    }
-
-    private fun DrawScope.drawVertexLabel(
-        vertex: Vertex, paint: org.jetbrains.skia.Paint, typography: Typography.Theme
-    ) {
-        drawIntoCanvas {
-            drawVertexLabelLines(
-                canvas = it,
-                text = vertex.label,
-                font = Font(typography.fixedWidthSkiaTypeface, typography.codeSizeMedium * density),
-                center = (vertex.geometry.position - viewport.worldCoordinates) * density,
-                maxWidth = vertex.geometry.labelMaxWidth * density,
-                paint = paint
-            )
-        }
-    }
-
-    // TODO: this method is expensive for long labels
-    private fun drawVertexLabelLines(
-        canvas: Canvas, text: String, font: Font, center: Offset, maxWidth: Float, paint: org.jetbrains.skia.Paint
-    ) {
-        val line = TextLine.make(text, font)
-        val lineBreakIndex = lineBreakIndex(line, maxWidth)
-        if (lineBreakIndex == null) {
-            canvas.nativeCanvas.drawTextLine(line, center.x - line.width / 2, center.y + line.capHeight / 2, paint)
-        } else {
-            val line1 = TextLine.make(text.substring(0 until lineBreakIndex), font)
-            var line2Text = text.substring(lineBreakIndex)
-            var line2 = TextLine.make(line2Text, font)
-            val line2BreakIndex = lineBreakIndex(line2, maxWidth)
-            if (line2BreakIndex != null) {
-                line2Text = line2Text.substring(0 until line2BreakIndex)
-                line2 = TextLine.make(line2Text, font)
-            }
-            canvas.nativeCanvas.drawTextLine(
-                line1, center.x - line1.width / 2, center.y + line1.capHeight / 2 - line1.height / 2, paint
-            )
-            canvas.nativeCanvas.drawTextLine(
-                line2, center.x - line2.width / 2, center.y + line2.capHeight / 2 + line2.height / 2, paint
-            )
-        }
-    }
-
-    private fun lineBreakIndex(textLine: TextLine, lineMaxWidth: Float): Int? {
-        return textLine.positions
-            .filterIndexed { idx, _ -> idx % 2 == 0 }
-            .indexOfFirst { it > lineMaxWidth }
-            .let { if (it == -1) null else it }
     }
 
     private object PointerInput {
@@ -296,25 +256,44 @@ class GraphArea(transactionState: TransactionState) {
             Box(modifier
                 .pointerMoveFilter(
                     onMove = { graphArea.interactions.pointerPosition = it; false },
+                    // TODO: this is not triggered reliably when the pointer leaves the window bounds
                     onExit = { graphArea.interactions.pointerPosition = null; false }
                 )
                 .pointerInput(graphArea) {
                     detectTapGestures(
                         onPress = { point ->
-                            graphArea.interactions.draggedVertex = graphArea.viewport.findVertexAt(point)
+                            graphArea.interactions.draggedVertex =
+                                graphArea.viewport.findVertexAt(point, graphArea.interactions)
                             if (tryAwaitRelease()) graphArea.interactions.draggedVertex = null
                         },
                         onDoubleTap = { point ->
-                            graphArea.viewport.findVertexAt(point)?.let {
+                            graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
                                 if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
                             }
                         }
                     ) /* onTap = */ { point ->
-                        graphArea.interactions.focusedVertex = graphArea.viewport.findVertexAt(point)
+                        graphArea.interactions.focusedVertex =
+                            graphArea.viewport.findVertexAt(point, graphArea.interactions)
                     }
                 }
             )
+        }
+    }
+
+    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
+        : BackgroundTask(runIntervalMs = 17) {
+
+        private val interactions get() = graphArea.interactions
+
+        override fun run() {
+            val verticesToExpand = listOfNotNull(interactions.hoveredVertex, interactions.focusedVertex)
+            graphArea.graph.vertices.forEach {
+                if (it.geometry.isExpanded != it in verticesToExpand) {
+                    it.geometry.isExpanded = !it.geometry.isExpanded
+                    coroutineScope.launch { it.geometry.animateExpandOrCollapse() }
+                }
+            }
         }
     }
 }

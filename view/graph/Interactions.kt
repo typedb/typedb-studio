@@ -65,19 +65,19 @@ class Interactions constructor(private val graphArea: GraphArea) {
 
     class HoveredVertexChecker constructor(private val graphArea: GraphArea) : BackgroundTask(runIntervalMs = 33) {
 
+        private val interactions get() = graphArea.interactions
+
         override fun canRun(): Boolean {
-            return graphArea.interactions.pointerPosition != null
+            return interactions.pointerPosition != null
         }
 
         override fun run() {
-            graphArea.interactions.pointerPosition?.let { pointerPosition ->
-                val hoveredVertex = graphArea.viewport.findVertexAt(pointerPosition)
-                if (graphArea.interactions.hoveredVertex == hoveredVertex) return
-                graphArea.interactions.hoveredVertex = hoveredVertex
-                graphArea.interactions.hoveredVertexExplanations = when (hoveredVertex) {
-                    null -> emptySet()
-                    else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
-                }
+            val hoveredVertex = interactions.pointerPosition?.let { graphArea.viewport.findVertexAt(it, interactions) }
+            if (interactions.hoveredVertex == hoveredVertex) return
+            interactions.hoveredVertex = hoveredVertex
+            interactions.hoveredVertexExplanations = when (hoveredVertex) {
+                null -> emptySet()
+                else -> graphArea.graph.reasoning.explanationsByVertex[hoveredVertex] ?: emptySet()
             }
         }
     }
