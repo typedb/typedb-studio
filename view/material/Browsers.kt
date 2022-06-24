@@ -43,7 +43,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import java.util.concurrent.LinkedBlockingQueue
 
-object BrowserGroup {
+object Browsers {
 
     val DEFAULT_WIDTH = 300.dp
     val MIN_WIDTH = 120.dp

@@ -36,7 +36,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Typography
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.FADED
 import com.vaticle.typedb.studio.view.common.theme.Typography.Style.ITALIC
-import com.vaticle.typedb.studio.view.material.BrowserGroup
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconArg
@@ -47,7 +47,7 @@ import com.vaticle.typedb.studio.view.material.Navigator
 import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import mu.KotlinLogging
 
-class ProjectBrowser(initOpen: Boolean = false, order: Int) : BrowserGroup.Browser(initOpen, order) {
+class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

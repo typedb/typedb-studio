@@ -39,10 +39,10 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.Concept.ConceptSummaryText
 import com.vaticle.typedb.studio.view.material.Concept.attributeValueString
 import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
-import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Table
@@ -51,7 +51,7 @@ class ConceptPreview constructor(
     private val graphArea: GraphArea,
     order: Int,
     isOpen: Boolean
-) : BrowserGroup.Browser(isOpen, order) {
+) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.PREVIEW
     override val icon: Icon.Code = Icon.Code.EYE

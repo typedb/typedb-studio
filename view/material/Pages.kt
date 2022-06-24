@@ -52,7 +52,7 @@ import com.vaticle.typedb.studio.view.common.KeyMapper
 import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 
-object PageGroup {
+object Pages {
 
     val MIN_WIDTH = 300.dp
 

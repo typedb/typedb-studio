@@ -31,13 +31,13 @@ import com.vaticle.typedb.studio.view.editor.TextEditor
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Icon
-import com.vaticle.typedb.studio.view.material.PageGroup
+import com.vaticle.typedb.studio.view.material.Pages
 import com.vaticle.typedb.studio.view.output.RunOutputArea
 
 class FilePage private constructor(
     private var file: FileState,
     private val editor: TextEditor.State
-) : PageGroup.Page() {
+) : Pages.Page() {
 
     override val hasSecondary: Boolean = true
     override val icon: Form.IconArg

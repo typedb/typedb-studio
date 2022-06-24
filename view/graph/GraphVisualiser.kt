@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.connection.TransactionState
-import com.vaticle.typedb.studio.view.material.BrowserGroup
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.Frame
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Tabs
@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.view.material.Tabs
 class GraphVisualiser constructor(transactionState: TransactionState) {
 
     private val graphArea = GraphArea(transactionState)
-    private val browsers: List<BrowserGroup.Browser> = listOf(ConceptPreview(graphArea, 0, false))
+    private val browsers: List<Browsers.Browser> = listOf(ConceptPreview(graphArea, 0, false))
     private var frameState: Frame.FrameState = Frame.createFrameState(
         separator = Frame.SeparatorArgs(Separator.WEIGHT),
         Frame.Pane(
@@ -44,10 +44,10 @@ class GraphVisualiser constructor(transactionState: TransactionState) {
         Frame.Pane(
             id = ConceptPreview::class.java.name,
             order = 2,
-            minSize = BrowserGroup.DEFAULT_WIDTH,
+            minSize = Browsers.DEFAULT_WIDTH,
             initSize = Either.first(Tabs.Vertical.WIDTH),
             initFreeze = true
-        ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.RIGHT) }
+        ) { Browsers.Layout(browsers, it, Browsers.Position.RIGHT) }
     )
 
     @Composable

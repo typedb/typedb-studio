@@ -56,7 +56,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.material.Form.IconButton
 import com.vaticle.typedb.studio.view.material.Form.Text
 
-object NotificationGroup {
+object Notifications {
 
     private val NOTIFICATION_MARGIN = 30.dp
     private val NOTIFICATION_WIDTH = 360.dp

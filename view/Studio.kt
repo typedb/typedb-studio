@@ -71,15 +71,15 @@ import com.vaticle.typedb.studio.view.common.theme.Theme
 import com.vaticle.typedb.studio.view.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.view.connection.DatabaseDialog
 import com.vaticle.typedb.studio.view.connection.ServerDialog
-import com.vaticle.typedb.studio.view.material.BrowserGroup
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.ConfirmationDialog
 import com.vaticle.typedb.studio.view.material.Form.FormRowSpacer
 import com.vaticle.typedb.studio.view.material.Form.SelectableText
 import com.vaticle.typedb.studio.view.material.Form.Text
 import com.vaticle.typedb.studio.view.material.Form.TextButton
 import com.vaticle.typedb.studio.view.material.Frame
-import com.vaticle.typedb.studio.view.material.NotificationGroup
-import com.vaticle.typedb.studio.view.material.PageGroup
+import com.vaticle.typedb.studio.view.material.Notifications
+import com.vaticle.typedb.studio.view.material.Pages
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.project.FilePage
 import com.vaticle.typedb.studio.view.project.ProjectBrowser
@@ -152,16 +152,16 @@ object Studio {
                             modifier = Modifier.fillMaxWidth().weight(1f),
                             separator = Frame.SeparatorArgs(Separator.WEIGHT),
                             Frame.Pane(
-                                id = BrowserGroup.javaClass.name,
-                                minSize = BrowserGroup.MIN_WIDTH,
-                                initSize = Either.first(BrowserGroup.DEFAULT_WIDTH)
-                            ) { BrowserGroup.Layout(browsers, it, BrowserGroup.Position.LEFT) },
+                                id = Browsers.javaClass.name,
+                                minSize = Browsers.MIN_WIDTH,
+                                initSize = Either.first(Browsers.DEFAULT_WIDTH)
+                            ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
                             Frame.Pane(
-                                id = PageGroup.javaClass.name,
-                                minSize = PageGroup.MIN_WIDTH,
+                                id = Pages.javaClass.name,
+                                minSize = Pages.MIN_WIDTH,
                                 initSize = Either.second(1f)
                             ) {
-                                PageGroup.Layout(
+                                Pages.Layout(
                                     enabled = StudioState.project.current != null,
                                     onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
                                 ) {
@@ -177,7 +177,7 @@ object Studio {
                         StatusBar.Layout()
                     }
                 }
-                NotificationGroup.MayShowPopup()
+                Notifications.MayShowPopup()
                 ConfirmationDialog.MayShowDialog()
                 ServerDialog.MayShowDialogs()
                 DatabaseDialog.MayShowDialogs()

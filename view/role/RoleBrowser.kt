@@ -20,11 +20,11 @@ package com.vaticle.typedb.studio.view.role
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.view.material.BrowserGroup
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
 
-class RoleBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(isOpen, order) {
+class RoleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.ROLES
     override val icon: Icon.Code = Icon.Code.USER_GROUP

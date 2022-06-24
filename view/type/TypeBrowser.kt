@@ -35,8 +35,8 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.theme.Theme
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
-import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
@@ -45,7 +45,7 @@ import com.vaticle.typedb.studio.view.material.Navigator
 import com.vaticle.typedb.studio.view.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.view.material.Tooltip
 
-class TypeBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(isOpen, order) {
+class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.TYPES
     override val icon: Icon.Code = Icon.Code.SITEMAP

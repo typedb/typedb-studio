@@ -20,11 +20,11 @@ package com.vaticle.typedb.studio.view.rule
 
 import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.view.material.BrowserGroup
+import com.vaticle.typedb.studio.view.material.Browsers
 import com.vaticle.typedb.studio.view.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.view.material.Icon
 
-class RuleBrowser(isOpen: Boolean = false, order: Int) : BrowserGroup.Browser(isOpen, order) {
+class RuleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.RULES
     override val icon: Icon.Code = Icon.Code.DIAGRAM_SUBTASK
