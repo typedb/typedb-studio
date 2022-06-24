@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view
+package com.vaticle.typedb.studio
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,6 +63,8 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.view.StatusBar
+import com.vaticle.typedb.studio.view.Toolbar
 import com.vaticle.typedb.studio.view.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.view.common.Context.LocalWindow
 import com.vaticle.typedb.studio.view.common.KeyMapper
@@ -95,6 +97,7 @@ import mu.KotlinLogging
 
 object Studio {
 
+    private const val VATICLE_BOT_ICON = "resources/icons/vaticle/vaticle-bot-32px.png"
     private val ERROR_WINDOW_WIDTH = 1000.dp
     private val ERROR_WINDOW_HEIGHT = 610.dp
     private val ERROR_WINDOW_CONTENT_PADDING = 10.dp
@@ -135,7 +138,7 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
-            icon = painterResource("resources/icons/vaticle/vaticle-bot-32px.png"),
+            icon = painterResource(VATICLE_BOT_ICON),
             onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {

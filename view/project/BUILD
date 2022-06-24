@@ -18,7 +18,10 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//view:__pkg__"])
+package(default_visibility = [
+    "//view:__pkg__",
+    "//:__pkg__"
+])
 
 kt_jvm_library(
     name = "project",

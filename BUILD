@@ -27,11 +27,52 @@ load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 
+kt_jvm_library(
+    name = "studio",
+    srcs = glob(["*.kt"]),
+    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    deps = [
+        "//state/app:app",
+        "//state/common:common",
+        "//state/connection:connection",
+        "//state/project:project",
+        "//state/page:page",
+        "//state/schema:schema",
+        "//state:state",
+        "//view/common:common",
+        "//view/connection:connection",
+        "//view/material:material",
+        "//view/project:project",
+        "//view/role:role",
+        "//view/rule:rule",
+        "//view/type:type",
+        "//view/user:user",
+        "//view:view",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+
+        # External Maven Dependencies
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+        "@maven//:org_slf4j_slf4j_api",
+    ],
+    resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
+)
+
 java_binary(
     name = "studio-bin-mac",
-    main_class = "com.vaticle.typedb.studio.view.Studio",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
-        "//view:view",
+        "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -39,9 +80,9 @@ java_binary(
 
 java_binary(
     name = "studio-bin-windows",
-    main_class = "com.vaticle.typedb.studio.view.Studio",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
-        "//view:view",
+        "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -49,9 +90,9 @@ java_binary(
 
 java_binary(
     name = "studio-bin-linux",
-    main_class = "com.vaticle.typedb.studio.view.Studio",
+    main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
-        "//view:view",
+        "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
@@ -96,7 +137,7 @@ assemble_jvm_platform(
     java_deps = ":assemble-deps",
     java_deps_root = "lib/",
     main_jar_path = "com-vaticle-typedb-typedb-studio-view-0.0.0.jar",
-    main_class = "com.vaticle.typedb.studio.view.Studio",
+    main_class = "com.vaticle.typedb.studio.Studio",
     additional_files = assemble_files,
     verbose = True,
     linux_app_category = "database",
