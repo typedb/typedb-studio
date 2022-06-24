@@ -69,7 +69,7 @@ import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.ClickableText
 import com.vaticle.typedb.studio.view.material.Icon
 import com.vaticle.typedb.studio.view.material.Navigator
-import com.vaticle.typedb.studio.view.material.Page
+import com.vaticle.typedb.studio.view.material.PageGroup
 import com.vaticle.typedb.studio.view.material.Scrollbar
 import com.vaticle.typedb.studio.view.material.Separator
 import com.vaticle.typedb.studio.view.material.Table
@@ -80,7 +80,7 @@ sealed class TypePage(
     type: TypeState.Thing,
     showAdvanced: Boolean = false,
     coroutineScope: CoroutineScope
-) : Page() {
+) : PageGroup.Page() {
 
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = conceptIcon(type.conceptType)

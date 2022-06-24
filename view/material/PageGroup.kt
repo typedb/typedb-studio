@@ -23,7 +23,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -39,6 +43,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -203,6 +208,61 @@ object PageGroup {
             builder.append(" -- (${Label.READ_ONLY.lowercase()})")
             builder.pop()
             builder.toAnnotatedString()
+        }
+    }
+
+    abstract class Page {
+
+        companion object {
+            private val CONTENT_MIN_HEIGHT = 64.dp
+            private val RUN_PANEL_MIN_HEIGHT = 64.dp
+        }
+
+        private var frameState: Frame.FrameState? by mutableStateOf(null)
+        protected abstract val hasSecondary: Boolean
+        abstract val icon: Form.IconArg
+
+        abstract fun updatePageable(pageable: Pageable)
+
+        @Composable
+        abstract fun PrimaryContent()
+
+        @Composable
+        protected open fun SecondaryContent(paneState: Frame.PaneState) {
+        }
+
+        @Composable
+        private fun frameState(): Frame.FrameState {
+            if (frameState == null) {
+                frameState = Frame.createFrameState(
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                    Frame.Pane(
+                        id = Page::class.java.canonicalName + ".primary",
+                        order = 1,
+                        minSize = CONTENT_MIN_HEIGHT,
+                        initSize = Either.second(1f)
+                    ) { PrimaryContent() },
+                    Frame.Pane(
+                        id = Page::class.java.canonicalName + ".secondary",
+                        order = 2,
+                        minSize = RUN_PANEL_MIN_HEIGHT,
+                        initSize = Either.first(Theme.PANEL_BAR_HEIGHT),
+                        initFreeze = true
+                    ) { paneState -> SecondaryContent(paneState) }
+                )
+            }
+            return frameState!!
+        }
+
+        @Composable
+        fun Layout() {
+            key(this) {
+                if (!hasSecondary) PrimaryContent()
+                else Frame.Column(
+                    state = frameState(),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
