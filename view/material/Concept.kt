@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.concept
+package com.vaticle.typedb.studio.view.material
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -32,8 +32,6 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.material.Form
-import com.vaticle.typedb.studio.view.material.Icon
 import java.time.format.DateTimeFormatter
 
 object Concept {

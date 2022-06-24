@@ -33,7 +33,7 @@ import com.vaticle.typedb.studio.view.common.geometry.Geometry.diamondIncomingLi
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectArcIntersectAngles
 import com.vaticle.typedb.studio.view.common.geometry.Geometry.rectIncomingLineIntersect
-import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
+import com.vaticle.typedb.studio.view.material.Concept.attributeValueString
 import java.awt.Polygon
 import kotlin.math.pow
 

@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
+import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.ContextMenu
 import com.vaticle.typedb.studio.view.material.Form

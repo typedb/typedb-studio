@@ -63,8 +63,8 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 import com.vaticle.typedb.studio.view.common.Util.toDP
 import com.vaticle.typedb.studio.view.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
-import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
+import com.vaticle.typedb.studio.view.material.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.ClickableText
 import com.vaticle.typedb.studio.view.material.Icon

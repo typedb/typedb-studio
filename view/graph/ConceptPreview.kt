@@ -39,9 +39,9 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.view.common.theme.Theme
-import com.vaticle.typedb.studio.view.concept.Concept.ConceptSummaryText
-import com.vaticle.typedb.studio.view.concept.Concept.attributeValueString
-import com.vaticle.typedb.studio.view.concept.Concept.conceptIcon
+import com.vaticle.typedb.studio.view.material.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.view.material.Concept.attributeValueString
+import com.vaticle.typedb.studio.view.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.view.material.BrowserGroup
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Icon
