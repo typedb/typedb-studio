@@ -262,17 +262,19 @@ class GraphArea(transactionState: TransactionState) {
                 .pointerInput(graphArea) {
                     detectTapGestures(
                         onPress = { point ->
-                            graphArea.interactions.draggedVertex = graphArea.viewport.findVertexAt(point)
+                            graphArea.interactions.draggedVertex =
+                                graphArea.viewport.findVertexAt(point, graphArea.interactions)
                             if (tryAwaitRelease()) graphArea.interactions.draggedVertex = null
                         },
                         onDoubleTap = { point ->
-                            graphArea.viewport.findVertexAt(point)?.let {
+                            graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
                                 if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
                             }
                         }
                     ) /* onTap = */ { point ->
-                        graphArea.interactions.focusedVertex = graphArea.viewport.findVertexAt(point)
+                        graphArea.interactions.focusedVertex =
+                            graphArea.viewport.findVertexAt(point, graphArea.interactions)
                     }
                 }
             )

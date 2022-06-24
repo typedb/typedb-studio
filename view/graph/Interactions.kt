@@ -72,7 +72,7 @@ class Interactions constructor(private val graphArea: GraphArea) {
         }
 
         override fun run() {
-            val hoveredVertex = interactions.pointerPosition?.let { graphArea.viewport.findVertexAt(it) }
+            val hoveredVertex = interactions.pointerPosition?.let { graphArea.viewport.findVertexAt(it, interactions) }
             if (interactions.hoveredVertex == hoveredVertex) return
             interactions.hoveredVertex = hoveredVertex
             interactions.hoveredVertexExplanations = when (hoveredVertex) {

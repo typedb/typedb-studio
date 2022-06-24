@@ -154,7 +154,8 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 x = value.x.toDouble()
                 y = value.y.toDouble()
             }
-        val rect get() = Rect(offset = position - Offset(size.width, size.height) / 2f, size = size)
+        val rect get() = Rect(position - Offset(size.width, size.height) / 2f, size)
+        val visualRect get() = Rect(position - Offset(size.width, size.height) * scale / 2f, size * scale)
 
         var isFrozen: Boolean
             get() = isXFixed
@@ -165,8 +166,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         var contentOverflowsBaseShape = false
         var isExpanded by mutableStateOf(false)
-        val isVisiblyCollapsed get() = scale / baseScale < (baseScale + 0.02f)
-        val isVisiblyExpanded get() = scale / baseScale > (expandedScale - 0.02f)
+        val isVisiblyCollapsed get() = scale < lerp(baseScale, expandedScale, 0.1f)
 
         private val _sizeAndScale = Animatable(SizeAndScale(baseSize, baseScale), SizeAndScale.VectorConverter)
 
@@ -187,7 +187,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         }
 
         /** Returns `true` if the given `Offset` intersects the given vertex, else, `false` */
-        abstract fun intersects(point: Offset): Boolean
+        abstract fun visuallyIntersects(point: Offset): Boolean
 
         /** Find the endpoint of an edge drawn from `source` position to this vertex */
         abstract fun edgeEndpoint(source: Offset): Offset?
@@ -210,6 +210,10 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             val ATTRIBUTE_SIZE = Size(100f, 35f)
             val CONCEPT_SIZE_EXPANDED = Size(150f, 55f)
             val ATTRIBUTE_SIZE_EXPANDED = Size(200f, 70f)
+
+            private fun lerp(start: Float, stop: Float, fraction: Float): Float {
+                return start + fraction * (stop - start)
+            }
         }
 
         class Entity : Geometry(ENTITY_SIZE, CONCEPT_SIZE_EXPANDED) {
@@ -222,7 +226,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             override val expandSizeMultiplier = Offset(1.6f, 1.6f)
 
-            override fun intersects(point: Offset) = rect.contains(point)
+            override fun visuallyIntersects(point: Offset) = visualRect.contains(point)
 
             override fun edgeEndpoint(source: Offset): Offset? {
                 return rectIncomingLineIntersect(source, incomingEdgeTargetRect)
@@ -239,20 +243,25 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             private val incomingEdgeTargetRect
                 get() = Rect(Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8))
 
+            private val drawAsRect get() = !isVisiblyCollapsed && contentOverflowsBaseShape
+
             override val labelMaxWidth get() = when {
-                isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
+                drawAsRect -> size.width - PADDING
                 else -> size.width * 0.66f - PADDING
             }
 
             override val expandSizeMultiplier = Offset(1.6f, 1.2f)
 
-            override fun intersects(point: Offset): Boolean {
-                val r = rect
-                return Polygon(
-                    intArrayOf(r.left.toInt(), r.center.x.toInt(), r.right.toInt(), r.center.x.toInt()),
-                    intArrayOf(r.center.y.toInt(), r.top.toInt(), r.center.y.toInt(), r.bottom.toInt()),
-                    4
-                ).contains(point.x.toDouble(), point.y.toDouble())
+            override fun visuallyIntersects(point: Offset): Boolean {
+                val r = visualRect
+                return when (drawAsRect) {
+                    true -> r.contains(point)
+                    false -> Polygon(
+                        intArrayOf(r.left.toInt(), r.center.x.toInt(), r.right.toInt(), r.center.x.toInt()),
+                        intArrayOf(r.center.y.toInt(), r.top.toInt(), r.center.y.toInt(), r.bottom.toInt()),
+                        4
+                    ).contains(point.x.toDouble(), point.y.toDouble())
+                }
             }
 
             override fun edgeEndpoint(source: Offset): Offset? {
@@ -266,14 +275,17 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         class Attribute : Geometry(ATTRIBUTE_SIZE, ATTRIBUTE_SIZE_EXPANDED) {
 
+            private val drawAsRect get() = !isVisiblyCollapsed && contentOverflowsBaseShape
+
             override val labelMaxWidth get() = when {
-                isVisiblyExpanded && contentOverflowsBaseShape -> size.width - PADDING
+                drawAsRect -> size.width - PADDING
                 else -> size.width * 0.8f - PADDING
             }
 
             override val expandSizeMultiplier = Offset(2f, 2f)
 
-            override fun intersects(point: Offset): Boolean {
+            override fun visuallyIntersects(point: Offset): Boolean {
+                if (drawAsRect) return visualRect.contains(point).also { println("visualRect = $visualRect, point = $point") }
                 val xi = (point.x - position.x).pow(2) / (size.width / 2).pow(2)
                 val yi = (point.y - position.y).pow(2) / (size.height / 2).pow(2)
                 return xi + yi < 1f
