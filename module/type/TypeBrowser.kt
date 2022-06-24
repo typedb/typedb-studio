@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.type
+package com.vaticle.typedb.studio.module.type
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

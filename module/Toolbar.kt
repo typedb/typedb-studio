@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view
+package com.vaticle.typedb.studio.module
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -46,7 +46,7 @@ import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SIZE
 import com.vaticle.typedb.studio.view.common.theme.Theme.TOOLBAR_SPACING
-import com.vaticle.typedb.studio.view.connection.DatabaseDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
 import com.vaticle.typedb.studio.view.material.Form
 import com.vaticle.typedb.studio.view.material.Form.IconButton
 import com.vaticle.typedb.studio.view.material.Form.LoadingIndicator

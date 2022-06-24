@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.type
+package com.vaticle.typedb.studio.module.type
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background

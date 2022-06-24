@@ -18,28 +18,28 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = [
-    "//view:__subpackages__",
-    "//:__pkg__"
-])
+package(default_visibility = ["//:__pkg__"])
 
 kt_jvm_library(
-    name = "connection",
+    name = "app",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/app:app",
+        "//module/connection:connection",
         "//state/common:common",
         "//state/connection:connection",
+        "//state/app:app",
         "//state/project:project",
         "//state/page:page",
         "//state:state",
         "//view/common:common",
         "//view/material:material",
 
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//api",
+
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_desktop",
@@ -49,8 +49,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    resource_strip_prefix = "resources",
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-dialog:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module:{pom_version}"],
 )
 
 checkstyle_test(

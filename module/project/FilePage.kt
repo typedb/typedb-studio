@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.view.project
+package com.vaticle.typedb.studio.module.project
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
