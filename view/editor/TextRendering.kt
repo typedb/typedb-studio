@@ -76,7 +76,7 @@ internal class TextRendering {
             // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
             // ...
             // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
-            // at com.vaticle.typedb.studio.view.editor.com.vaticle.typedb.studio.view.graph.TextRendering.hasVersion(com.vaticle.typedb.studio.view.graph.TextRendering.kt:65)
+            // at com.vaticle.typedb.studio.view.editor.TextRendering.hasVersion(TextRendering.kt:65)
             // ...
             StudioState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
             false
