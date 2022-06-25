@@ -38,7 +38,7 @@ kt_jvm_library(
         "//module/rule:rule",
         "//module/type:type",
         "//module/user:user",
-        "//module:app",
+        "//module:module",
         "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",

@@ -17,8 +17,9 @@
 #
 
 # RUN COMMAND #1: ./docs/deps.sh global-package-structure //...
-# RUN COMMAND #2: ./docs/deps.sh state-package-structure //state...
-# RUN COMMAND #3: ./docs/deps.sh view-package-structure //framework... //state...
+# RUN COMMAND #2: ./docs/deps.sh state-package-structure //state/...
+# RUN COMMAND #3: ./docs/deps.sh framework-package-structure //framework/... //state...
+# RUN COMMAND #3: ./docs/deps.sh module-package-structure //:studio //framework //state
 
 popd > /dev/null
 
@@ -33,8 +34,15 @@ if [ -z "$3" ]
   else
     exclude="|$3"
 fi
+if [ -z "$4" ]
+  then
+    exclude=$exclude
+  else
+    exclude="$exclude|$4"
+fi
 
-bazel query "filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($2)))" --output graph > "$1".dot
+filter="filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($2)))"
+bazel query $filter --output graph > "$1".dot
 dot -Tpng < "$1".dot > "$1".png
 open "$1".png
 
