@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -78,6 +79,8 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             modifier = Modifier.fillMaxSize(),
             iconArg = { conceptIcon(it.item.conceptType) }
         )
+
+        LaunchedEffect(navState) { navState.launch() }
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {

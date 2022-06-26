@@ -164,8 +164,8 @@ class SchemaManager(
         rootAttributeType = TypeState.Attribute(
             conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
         ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
-        onRootsUpdated?.let { it() }
         isOpenAtomic.set(true)
+        onRootsUpdated?.let { it() }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {

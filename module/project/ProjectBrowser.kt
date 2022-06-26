@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -96,6 +97,8 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             iconArg = { pathIcon(it) },
             styleArgs = { pathStyles(it) }
         )
+
+        LaunchedEffect(navState) { navState.launch() }
     }
 
     private fun openPath(itemState: Navigator.ItemState<PathState>) {
