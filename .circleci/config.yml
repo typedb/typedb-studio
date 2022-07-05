@@ -51,10 +51,10 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
           export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - run: bazel build //:assemble --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - run: bazel build //:assemble-platform --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
       - run: |
-          mkdir -p ~/src && cp bazel-bin/assemble.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble.zip
+          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
+          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
       - persist_to_workspace:
           root: ~/dist
           paths:
@@ -81,15 +81,15 @@ jobs:
     steps:
       - checkout
       - install-bazel-linux
-      - run: bazel build //:assemble
-      - run: bazel build //:linux-java-binary
+      - run: bazel build //:assemble-platform
+      - run: bazel build //:assemble-targz
       - run: |
           mkdir -p ~/src
           mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux-java-binary.tar.gz ~/dist/typedb-studio-linux-java-binary-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble.zip ~/src
+          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-$(cat VERSION).tar.gz
+          cp bazel-bin/assemble-platform.zip ~/src
           cd ~/dist
-          jar xf ~/src/assemble.zip
+          jar xf ~/src/assemble-platform.zip
       - persist_to_workspace:
           root: ~/dist
           paths:
