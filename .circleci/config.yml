@@ -82,7 +82,7 @@ jobs:
       - checkout
       - install-bazel-linux
       - run: bazel build //:assemble-platform
-      - run: bazel build //:assemble-targz
+      - run: bazel build //:assemble-linux-targz
       - run: |
           mkdir -p ~/src
           mkdir -p ~/dist

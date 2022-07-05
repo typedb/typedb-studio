@@ -149,15 +149,13 @@ assemble_jvm_platform(
     windows_menu_group = "TypeDB Studio",
 )
 
+# A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
+# if built on Mac, and fail to produce anything useful if built on Windows.
 assemble_targz(
-    name = "assemble-targz",
+    name = "assemble-linux-targz",
     targets = [":assemble-deps", "//binary:assemble-bash-targz"],
     additional_files = assemble_files,
-    output_filename = "typedb-studio-" + select({
-        "@vaticle_dependencies//util/platform:is_mac": "mac",
-        "@vaticle_dependencies//util/platform:is_linux": "linux",
-        "//conditions:default": "INVALID",
-    }),
+    output_filename = "typedb-studio-linux",
     visibility = ["//:__pkg__"],
 )
 
