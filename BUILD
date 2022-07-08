@@ -185,9 +185,26 @@ deploy_brew(
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", ".grabl/*", ".circleci/**"]),
-    exclude = glob(["docs/*", ".circleci/windows/*"]),
-    license_type = "agpl",
+    include = glob([
+        "*",
+        ".grabl/*",
+        ".circleci/**",
+    ]),
+    exclude = glob([
+        "*.md",
+        ".bazelversion",
+        ".circleci/windows/*",
+        "LICENSE",
+        "VERSION",
+        "docs/*",
+    ]),
+    license_type = "agpl-header",
+)
+
+checkstyle_test(
+    name = "checkstyle-license",
+    include = ["LICENSE"],
+    license_type = "agpl-fulltext",
 )
 
 # CI targets that are not declared in any BUILD file, but are called externally
