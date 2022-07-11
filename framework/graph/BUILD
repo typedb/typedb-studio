@@ -40,9 +40,9 @@ kt_jvm_library(
         "@vaticle_typedb_common//:common",
         "@vaticle_typedb_client_java//api:api",
         "@vaticle_typedb_client_java//common:common",
-        "@vaticle_typeql_lang_java//:typeql-lang",
-        "@vaticle_typeql_lang_java//pattern:pattern",
-        "@vaticle_typeql_lang_java//query:query",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/pattern:pattern",
+        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
