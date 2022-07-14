@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
@@ -142,43 +143,8 @@ object Studio {
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             val density = LocalDensity.current.density
-            var titleBarHeight by remember { mutableStateOf(0.dp) }
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
-                    titleBarHeight = window.height.dp - toDP(it.size.height, density)
-                }) {
-                    CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
-                        Toolbar.Layout()
-                        Separator.Horizontal()
-                        Frame.Row(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                            Frame.Pane(
-                                id = Browsers.javaClass.name,
-                                minSize = Browsers.MIN_WIDTH,
-                                initSize = Either.first(Browsers.DEFAULT_WIDTH)
-                            ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
-                            Frame.Pane(
-                                id = Pages.javaClass.name,
-                                minSize = Pages.MIN_WIDTH,
-                                initSize = Either.second(1f)
-                            ) {
-                                Pages.Layout(
-                                    enabled = StudioState.project.current != null,
-                                    onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
-                                ) {
-                                    when (it) {
-                                        is FileState -> FilePage.create(it)
-                                        is TypeState.Thing -> TypePage.create(it)
-                                        else -> throw IllegalStateException("Unrecognised pageable type")
-                                    }
-                                }
-                            }
-                        )
-                        Separator.Horizontal()
-                        StatusBar.Layout()
-                    }
-                }
+                MainWindowContent(window.height.dp, density)
                 Notifications.MayShowPopup()
                 ConfirmationDialog.MayShowDialog()
                 ServerDialog.MayShowDialogs()
@@ -188,6 +154,45 @@ object Studio {
         }
     }
 
+    @Composable
+    private fun MainWindowContent(windowHeight: Dp, density: Float) {
+        var titleBarHeight by remember { mutableStateOf(0.dp) }
+        Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
+            titleBarHeight = windowHeight - toDP(it.size.height, density)
+        }) {
+            CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
+                Toolbar.Layout()
+                Separator.Horizontal()
+                Frame.Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                    Frame.Pane(
+                        id = Browsers.javaClass.name,
+                        minSize = Browsers.MIN_WIDTH,
+                        initSize = Either.first(Browsers.DEFAULT_WIDTH)
+                    ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
+                    Frame.Pane(
+                        id = Pages.javaClass.name,
+                        minSize = Pages.MIN_WIDTH,
+                        initSize = Either.second(1f)
+                    ) {
+                        Pages.Layout(
+                            enabled = StudioState.project.current != null,
+                            onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
+                        ) {
+                            when (it) {
+                                is FileState -> FilePage.create(it)
+                                is TypeState.Thing -> TypePage.create(it)
+                                else -> throw IllegalStateException("Unrecognised pageable type")
+                            }
+                        }
+                    }
+                )
+                Separator.Horizontal()
+                StatusBar.Layout()
+            }
+        }
+    }
     private fun getMainWindowTitle(): String {
         val projectName = StudioState.project.current?.directory?.name
         val pageName = StudioState.pages.active?.windowTitle
