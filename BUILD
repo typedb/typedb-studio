@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Vaticle
+# Copyright (C) 2022 Vaticle
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -38,7 +38,7 @@ kt_jvm_library(
         "//module/rule:rule",
         "//module/type:type",
         "//module/user:user",
-        "//module:app",
+        "//module:module",
         "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
@@ -115,13 +115,13 @@ assemble_files = {
 }
 
 assemble_jvm_platform(
-    name = "assemble",
+    name = "assemble-platform",
     image_name = "TypeDB Studio",
     image_filename = "typedb-studio-" + select({
         "@vaticle_dependencies//util/platform:is_mac": "mac",
         "@vaticle_dependencies//util/platform:is_linux": "linux",
         "@vaticle_dependencies//util/platform:is_windows": "windows",
-        "//conditions:default": "mac",
+        "//conditions:default": "INVALID",
     }),
     description = "TypeDB's Integrated Development Environment",
     vendor = "Vaticle Ltd",
@@ -152,10 +152,10 @@ assemble_jvm_platform(
 # A little misleading. Because of the way our java_deps target is generated, this will actually produce a Mac runner
 # if built on Mac, and fail to produce anything useful if built on Windows.
 assemble_targz(
-    name = "linux-java-binary",
+    name = "assemble-linux-targz",
     targets = [":assemble-deps", "//binary:assemble-bash-targz"],
     additional_files = assemble_files,
-    output_filename = "typedb-studio-linux-java-binary",
+    output_filename = "typedb-studio-linux",
     visibility = ["//:__pkg__"],
 )
 
@@ -168,7 +168,7 @@ assemble_targz(
 #    title = "TypeDB Studio",
 #    title_append_version = True,
 #    release_description = "//:RELEASE_TEMPLATE.md",
-#    archive = ":assemble",
+#    archive = ":assemble-platform",
 #    version_file = ":VERSION",
 #    draft = False
 #)

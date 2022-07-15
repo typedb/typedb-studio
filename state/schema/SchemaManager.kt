@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Vaticle
+ * Copyright (C) 2022 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -164,8 +164,8 @@ class SchemaManager(
         rootAttributeType = TypeState.Attribute(
             conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
         ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
-        onRootsUpdated?.let { it() }
         isOpenAtomic.set(true)
+        onRootsUpdated?.let { it() }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {

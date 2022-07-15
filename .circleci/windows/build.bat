@@ -20,11 +20,11 @@ REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
 ECHO Building Windows application image...
-bazel build //:assemble
+bazel build //:assemble-platform
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 ECHO Extracting application image archive...
 mkdir dist
 cd dist
-jar xf ..\bazel-bin\assemble.zip
+jar xf ..\bazel-bin\assemble-platform.zip
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%

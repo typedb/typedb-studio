@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Vaticle
+ * Copyright (C) 2022 Vaticle
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -97,7 +97,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -121,7 +121,10 @@ object Navigator {
     private val LOGGER = KotlinLogging.logger {}
 
     class ItemState<T : Navigable<T>> internal constructor(
-        val item: T, internal val parent: ItemState<T>?, val navState: NavigatorState<T>
+        val item: T,
+        val parent: ItemState<T>?,
+        val navState: NavigatorState<T>,
+        val coroutineScope: CoroutineScope
     ) : Comparable<ItemState<T>> {
 
         var isExpanded: Boolean by mutableStateOf(false)
@@ -165,19 +168,17 @@ object Navigator {
             if (recomputeNavigator) navState.recomputeList()
         }
 
-        fun expand() {
-            expand(true)
-        }
+        fun expand() = expand(maxDepth = 1)
 
-        internal fun expand(recomputeNavigator: Boolean, depth: Int = 1) {
-            expand(1, depth)
-            if (recomputeNavigator) navState.recomputeList()
-        }
+        internal fun expand(maxDepth: Int) = expandRecursive(1, maxDepth)
 
-        private fun expand(currentDepth: Int, maxDepth: Int) {
+        private fun expandRecursive(currentDepth: Int = 1, maxDepth: Int) {
             isExpanded = true
             reloadEntries()
-            if (currentDepth < maxDepth) entries.forEach { it.expand(currentDepth + 1, maxDepth) }
+            navState.recomputeList()
+            if (currentDepth < maxDepth) entries.forEach {
+                coroutineScope.launch(Default) { it.expandRecursive(currentDepth + 1, maxDepth) }
+            }
         }
 
         internal fun updateButtonArea(rawRectangle: Rect) {
@@ -192,10 +193,13 @@ object Navigator {
                 val deleted = old - new
                 val added = new - old
                 val updatedEntries = entries.filter { !deleted.contains(it.item) } +
-                        added.map { ItemState(it, this, navState) }.toList()
+                        added.map { ItemState(it, this, navState, coroutineScope) }.toList()
                 entries = updatedEntries.sorted()
             }
-            entries.filter { it.isExpanded }.forEach { it.reloadEntries() }
+            navState.recomputeList()
+            entries.filter { it.isExpanded }.forEach {
+                coroutineScope.launch(Default) { it.reloadEntries() }
+            }
         }
 
         internal fun checkForUpdate(recomputeNavigator: Boolean): Boolean {
@@ -219,7 +223,7 @@ object Navigator {
         }
     }
 
-    class NavigatorState<T : Navigable<T>>(
+    class NavigatorState<T : Navigable<T>> constructor(
         container: Navigable<T>,
         private val title: String,
         internal val mode: Mode,
@@ -229,7 +233,7 @@ object Navigator {
         internal val contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
         private val openFn: (ItemState<T>) -> Unit
     ) {
-        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this))
+        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this, coroutineScope))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
         private var itemWidth by mutableStateOf(0.dp)
@@ -247,24 +251,19 @@ object Navigator {
             IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
         )
 
-        init {
-            initialiseContainer()
-        }
-
-        private fun initialiseContainer() = coroutineScope.launch {
-            container.expand(false, 1 + initExpandDepth)
+        fun launch() = coroutineScope.launch(Default) {
+            container.expand(1 + initExpandDepth)
             if (liveUpdate) launchWatcher(container)
-            recomputeList()
         }
 
         fun replaceContainer(newContainer: Navigable<T>) {
-            container = ItemState(newContainer as T, null, this)
-            initialiseContainer()
+            container = ItemState(newContainer as T, null, this, coroutineScope)
+            launch()
         }
 
         @OptIn(ExperimentalTime::class)
         private fun launchWatcher(root: ItemState<T>) {
-            coroutineScope.launch(IO) {
+            coroutineScope.launch(Default) {
                 try {
                     do {
                         delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
@@ -277,7 +276,7 @@ object Navigator {
             }
         }
 
-        private fun expandAll() = coroutineScope.launch(IO) {
+        private fun expandAll() = coroutineScope.launch(Default) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -285,10 +284,9 @@ object Navigator {
             isExpanding.set(true)
             while (queue.isNotEmpty() && i < MAX_ITEM_EXPANDED && isExpanding.get()) {
                 val item = queue.pop()
-                item.expand(false)
+                item.expand()
                 i += 1 + item.entries.count { !it.isExpandable }
                 queue.addAll(filter(item.entries))
-                recomputeList()
             }
             isExpanding.set(false)
             if (!queue.isEmpty() && i == MAX_ITEM_EXPANDED) {
@@ -296,7 +294,7 @@ object Navigator {
             }
         }
 
-        private fun collapse() = coroutineScope.launch(IO) {
+        private fun collapse() = coroutineScope.launch(Default) {
             val queue = LinkedList(container.entries)
             isExpanding.set(false)
             isCollapsing.set(true)
@@ -309,16 +307,7 @@ object Navigator {
             isCollapsing.set(false)
         }
 
-        fun reloadEntriesAndExpand(depth: Int) = coroutineScope.launch(IO) {
-            container.reloadEntries()
-            container.expand(false, 1 + depth)
-            recomputeList()
-        }
-
-        fun reloadEntries() = coroutineScope.launch(IO) {
-            container.reloadEntries()
-            recomputeList()
-        }
+        fun reloadEntries() = coroutineScope.launch(Default) { container.reloadEntries() }
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null
