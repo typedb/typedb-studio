@@ -6,12 +6,14 @@ package com.vaticle.typedb.studio.test
 
 
 import androidx.compose.ui.test.assertAll
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
@@ -50,9 +52,9 @@ class Experiment {
     fun `Simple Assert Exists`() {
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent()
+                Studio.MainWindowContent(1000.dp, 1.0f)
             }
-            awaitIdle()
+            composeRule.waitForIdle()
             composeRule.onNodeWithText("Open Project").assertExists()
         }
     }
@@ -181,7 +183,7 @@ class Experiment {
 
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent()
+                Studio.MainWindowContent(1000.dp, 1.0f)
             }
 
             composeRule.waitForIdle()
@@ -194,9 +196,10 @@ class Experiment {
             // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
             delay(5_000)
             assertTrue(StudioState.client.isConnected)
+//            composeRule.onNodeWithText("localhost:1729").on
 
             // Same as connecting to typedb, but we can't see dropdowns either.
-            composeRule.onAllNodesWithText("Select Database").assertAll(hasClickAction())
+            composeRule.onNodeWithText("Select Database").assertHasClickAction()
 
             StudioState.client.tryDeleteDatabase("github")
             delay(500)
