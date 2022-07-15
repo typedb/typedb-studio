@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.max
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.mousePoint
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
@@ -293,7 +294,7 @@ object Frame {
     private fun RowPaneResizer(pane: PaneState, separatorWidth: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindow.current!!
+            val windowContext = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxHeight()
@@ -304,7 +305,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.left, density), toDP(bounds.right, density))
                     }.draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).x.dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(windowContext, titleBarHeight).x.dp)
                     })
             )
         } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
@@ -314,7 +315,7 @@ object Frame {
     private fun ColumnPaneResizer(pane: PaneState, separatorHeight: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindow.current!!
+            val windowContext = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -325,7 +326,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.top, density), toDP(bounds.bottom, density))
                     }.draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).y.dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(windowContext, titleBarHeight).y.dp)
                     })
             )
         } else if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))

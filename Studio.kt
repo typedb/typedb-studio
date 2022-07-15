@@ -60,7 +60,9 @@ import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.framework.material.Browsers
@@ -143,56 +145,63 @@ object Studio {
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             val density = LocalDensity.current.density
+
             CompositionLocalProvider(LocalWindow provides window) {
-                MainWindowContent(window.height.dp, density)
-                Notifications.MayShowPopup()
-                ConfirmationDialog.MayShowDialog()
-                ServerDialog.MayShowDialogs()
-                DatabaseDialog.MayShowDialogs()
-                ProjectDialog.MayShowDialogs(window)
+                val windowContext = WindowContext(window)
+                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                    MainWindowContent(windowContext, density)
+                    Notifications.MayShowPopup()
+                    ConfirmationDialog.MayShowDialog()
+                    ServerDialog.MayShowDialogs()
+                    DatabaseDialog.MayShowDialogs()
+                    ProjectDialog.MayShowDialogs(window)
+                }
             }
         }
     }
 
     @Composable
-    private fun MainWindowContent(windowHeight: Dp, density: Float) {
+    private fun MainWindowContent(windowContext: WindowContext, density: Float) {
         var titleBarHeight by remember { mutableStateOf(0.dp) }
         Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
-            titleBarHeight = windowHeight - toDP(it.size.height, density)
+            titleBarHeight = windowContext.height.dp - toDP(it.size.height, density)
         }) {
-            CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
-                Toolbar.Layout()
-                Separator.Horizontal()
-                Frame.Row(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(
-                        id = Browsers.javaClass.name,
-                        minSize = Browsers.MIN_WIDTH,
-                        initSize = Either.first(Browsers.DEFAULT_WIDTH)
-                    ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
-                    Frame.Pane(
-                        id = Pages.javaClass.name,
-                        minSize = Pages.MIN_WIDTH,
-                        initSize = Either.second(1f)
-                    ) {
-                        Pages.Layout(
-                            enabled = StudioState.project.current != null,
-                            onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
+            CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
+                    Toolbar.Layout()
+                    Separator.Horizontal()
+                    Frame.Row(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                        Frame.Pane(
+                            id = Browsers.javaClass.name,
+                            minSize = Browsers.MIN_WIDTH,
+                            initSize = Either.first(Browsers.DEFAULT_WIDTH)
+                        ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
+                        Frame.Pane(
+                            id = Pages.javaClass.name,
+                            minSize = Pages.MIN_WIDTH,
+                            initSize = Either.second(1f)
                         ) {
-                            when (it) {
-                                is FileState -> FilePage.create(it)
-                                is TypeState.Thing -> TypePage.create(it)
-                                else -> throw IllegalStateException("Unrecognised pageable type")
+                            Pages.Layout(
+                                enabled = StudioState.project.current != null,
+                                onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
+                            ) {
+                                when (it) {
+                                    is FileState -> FilePage.create(it)
+                                    is TypeState.Thing -> TypePage.create(it)
+                                    else -> throw IllegalStateException("Unrecognised pageable type")
+                                }
                             }
                         }
-                    }
-                )
-                Separator.Horizontal()
-                StatusBar.Layout()
+                    )
+                    Separator.Horizontal()
+                    StatusBar.Layout()
+                }
             }
         }
     }
+
     private fun getMainWindowTitle(): String {
         val projectName = StudioState.project.current?.directory?.name
         val pageName = StudioState.pages.active?.windowTitle

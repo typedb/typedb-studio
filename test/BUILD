@@ -31,6 +31,7 @@ kt_jvm_test(
     runtime_deps = ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
     deps = [
         "//:studio",
+        "//framework/common",
         "//state",
         "//state/app",
         "//state/connection",

@@ -24,5 +24,6 @@ import androidx.compose.ui.unit.dp
 
 object Context {
     val LocalWindow = staticCompositionLocalOf<ComposeWindow?> { null }
+    val LocalWindowContext = staticCompositionLocalOf<WindowContext?> { null }
     val LocalTitleBarHeight = staticCompositionLocalOf { 0.dp }
 }

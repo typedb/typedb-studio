@@ -19,6 +19,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.Studio
+import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
@@ -52,7 +53,7 @@ class Experiment {
     fun `Simple Assert Exists`() {
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent(1000.dp, 1.0f)
+                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0), 1.0f)
             }
             composeRule.waitForIdle()
             composeRule.onNodeWithText("Open Project").assertExists()
@@ -183,7 +184,7 @@ class Experiment {
 
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent(1000.dp, 1.0f)
+                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0), 1.0f)
             }
 
             composeRule.waitForIdle()
@@ -229,10 +230,10 @@ class Experiment {
             // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
 
             // But we can assert that they exist, which is a test unto itself.
-
             composeRule.onNodeWithText("schema_string.tql").assertExists()
             composeRule.onNodeWithText("data_string.tql").assertExists()
 
+            // Check why we aren't updating transaction/session type on click.
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
             composeRule.waitForIdle()
@@ -240,6 +241,7 @@ class Experiment {
             StudioState.client.session.tryOpen("github", TypeDBSession.Type.SCHEMA)
             delay(500)
             StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+            delay(500)
             StudioState.client.session.transaction.runQuery(schemaString)
             delay(500)
 

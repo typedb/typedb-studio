@@ -93,6 +93,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.framework.common.Context
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
@@ -671,14 +672,14 @@ object Form {
         val density = LocalDensity.current.density
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         var area: Rect? by remember { mutableStateOf(null) }
-        val window = LocalWindow.current!!
+        val windowContext = Context.LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
         val mod = onClick?.let {
             modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
         } ?: modifier
 
         fun mayShowOnTargetHover() {
-            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+            if (area?.let { isMouseHover(it, windowContext, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
         }
 
         Box(
@@ -750,11 +751,11 @@ object Form {
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = rectangleIndication(Theme.studio.indicationBase, density, roundedCorners)
         var area: Rect? by remember { mutableStateOf(null) }
-        val window = LocalWindow.current!!
+        val windowContext = Context.LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
 
         fun mayShowOnTargetHover() {
-            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+            if (area?.let { isMouseHover(it, windowContext, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
         }
 
         CompositionLocalProvider(LocalIndication provides hoverIndication) {
