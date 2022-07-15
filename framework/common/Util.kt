@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.framework.common
 
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size

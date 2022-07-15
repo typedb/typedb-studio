@@ -6,16 +6,12 @@ package com.vaticle.typedb.studio.test
 
 
 import androidx.compose.ui.test.assertAll
-import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.printToString
-import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
@@ -27,7 +23,6 @@ import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -63,7 +58,7 @@ class Experiment {
 
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0), 1.0f)
+                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0), 1f)
             }
 
             composeRule.waitForIdle()
@@ -109,7 +104,6 @@ class Experiment {
             StudioState.project.tryOpenProject(File("./test/data").toPath())
             StudioState.appData.project.path = File("./test/data").toPath()
             composeRule.waitForIdle()
-//            delay(500)
 
             // Attempting to click these throws an errors since we use a pointer system that requires existence of a
             // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
@@ -120,6 +114,7 @@ class Experiment {
 
             // Check why we aren't updating transaction/session type on click.
             composeRule.onNodeWithText("schema").performClick()
+            composeRule.waitForIdle()
             composeRule.onNodeWithText("write").performClick()
             composeRule.waitForIdle()
 
@@ -136,7 +131,6 @@ class Experiment {
             StudioState.client.session.transaction.commit()
             delay(500)
 
-//            composeRule.onAllNodesWithText("data").assertAll(hasClickAction())
             composeRule.onNodeWithText("write").performClick()
             composeRule.waitForIdle()
 
@@ -144,10 +138,10 @@ class Experiment {
             delay(500)
             StudioState.client.session.transaction.runQuery(dataString)
             delay(500)
-//            composeRule.onNodeWithText(CHECK_STRING).performClick()
             StudioState.client.session.transaction.commit()
 
             composeRule.onNodeWithText("infer").performClick()
+            composeRule.waitForIdle()
             composeRule.onNodeWithText("read").performClick()
 
             delay(500)
