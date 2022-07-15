@@ -19,22 +19,21 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = [
-    "//:__pkg__",
     "//framework:__subpackages__",
     "//module:__subpackages__",
     "//state:__subpackages__",
-    "//test:__pkg__",
+    "//:__pkg__",
+    "//test:__pkg__"
 ])
 
 kt_jvm_library(
     name = "project",
     srcs = glob(["*.kt"]),
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-project:{pom_version}"],
     deps = [
-        "//state/app",
-        "//state/common",
-        "//state/connection",
-        "//state/page",
+        "//state/app:app",
+        "//state/common:common",
+        "//state/connection:connection",
+        "//state/page:page",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
@@ -45,13 +44,11 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-project:{pom_version}"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob([
-        "*",
-        "*/*",
-    ]),
+    include = glob(["*", "*/*"]),
     license_type = "agpl",
 )

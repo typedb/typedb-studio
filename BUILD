@@ -20,7 +20,7 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_libra
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "checksum", "java_deps")
+load("@vaticle_bazel_distribution//common:rules.bzl", "checksum", "assemble_targz", "assemble_zip", "java_deps", "assemble_versioned")
 load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
@@ -28,30 +28,27 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 
 package(default_visibility = ["//test:__pkg__"])
-
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
     deps = [
-        "//module/connection",
-        "//module/project",
-        "//module/role",
-        "//module/rule",
-        "//module/type",
-        "//module/user",
-        "//module",
-        "//state/app",
-        "//state/common",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-        "//state/schema",
-        "//state",
-        "//framework/common",
-        "//framework/material",
+        "//module/connection:connection",
+        "//module/project:project",
+        "//module/role:role",
+        "//module/rule:rule",
+        "//module/type:type",
+        "//module/user:user",
+        "//module:module",
+        "//state/app:app",
+        "//state/common:common",
+        "//state/connection:connection",
+        "//state/project:project",
+        "//state/page:page",
+        "//state/schema:schema",
+        "//state:state",
+        "//framework/common:common",
+        "//framework/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
@@ -68,47 +65,49 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
+    resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
 )
 
 java_binary(
     name = "studio-bin-mac",
-    classpath_resources = ["//config/logback:logback-test-xml"],
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
     ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
 )
 
 java_binary(
     name = "studio-bin-windows",
-    classpath_resources = ["//config/logback:logback-test-xml"],
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
     ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
 )
 
 java_binary(
     name = "studio-bin-linux",
-    classpath_resources = ["//config/logback:logback-test-xml"],
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64",
     ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
 )
 
 java_deps(
     name = "assemble-deps",
-    java_deps_root = "lib/",
     target = select({
         "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
         "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
         "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
         "//conditions:default": ":studio-bin-mac",
     }),
+    java_deps_root = "lib/",
 )
 
 assemble_files = {
@@ -118,36 +117,36 @@ assemble_files = {
 
 assemble_jvm_platform(
     name = "assemble-platform",
-    additional_files = assemble_files,
-    copyright = "Copyright (C) 2022 Vaticle",
-    description = "TypeDB's Integrated Development Environment",
-    icon = select({
-        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
-        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
-        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
-        "//conditions:default": "mac",
-    }),
+    image_name = "TypeDB Studio",
     image_filename = "typedb-studio-" + select({
         "@vaticle_dependencies//util/platform:is_mac": "mac",
         "@vaticle_dependencies//util/platform:is_linux": "linux",
         "@vaticle_dependencies//util/platform:is_windows": "windows",
         "//conditions:default": "INVALID",
     }),
-    image_name = "TypeDB Studio",
+    description = "TypeDB's Integrated Development Environment",
+    vendor = "Vaticle Ltd",
+    copyright = "Copyright (C) 2022 Vaticle",
+    license_file = ":LICENSE",
+    version_file = ":VERSION",
+    icon = select({
+        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
+        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
+        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+        "//conditions:default": "mac",
+    }),
     java_deps = ":assemble-deps",
     java_deps_root = "lib/",
-    license_file = ":LICENSE",
+    main_jar_path = "com-vaticle-typedb-typedb-studio-0.0.0.jar",
+    main_class = "com.vaticle.typedb.studio.Studio",
+    additional_files = assemble_files,
+    verbose = True,
     linux_app_category = "database",
     linux_menu_group = "Utility;Development;IDE;",
     mac_app_id = "com.vaticle.typedb.studio",
+    mac_entitlements = "//config/mac:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
     mac_deep_sign_jars_regex = ".*io-netty-netty.*",
-    mac_entitlements = "//config/mac:entitlements-mac-plist",
-    main_class = "com.vaticle.typedb.studio.Studio",
-    main_jar_path = "com-vaticle-typedb-typedb-studio-0.0.0.jar",
-    vendor = "Vaticle Ltd",
-    verbose = True,
-    version_file = ":VERSION",
     windows_menu_group = "TypeDB Studio",
 )
 
@@ -155,12 +154,9 @@ assemble_jvm_platform(
 # if built on Mac, and fail to produce anything useful if built on Windows.
 assemble_targz(
     name = "assemble-linux-targz",
+    targets = [":assemble-deps", "//binary:assemble-bash-targz"],
     additional_files = assemble_files,
     output_filename = "typedb-studio-linux",
-    targets = [
-        ":assemble-deps",
-        "//binary:assemble-bash-targz",
-    ],
     visibility = ["//:__pkg__"],
 )
 
@@ -180,25 +176,18 @@ assemble_targz(
 
 deploy_brew(
     name = "deploy-brew",
+    snapshot = deployment['brew.snapshot'],
+    release = deployment['brew.release'],
     formula = "//config/brew:typedb-studio.rb",
-    release = deployment["brew.release"],
-    snapshot = deployment["brew.snapshot"],
-    type = "cask",
-    #    checksum = "//:checksum",
+#    checksum = "//:checksum",
     version_file = "//:VERSION",
+    type = "cask",
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob([
-        "*",
-        ".grabl/*",
-        ".circleci/**",
-    ]),
-    exclude = glob([
-        "docs/*",
-        ".circleci/windows/*",
-    ]),
+    include = glob(["*", ".grabl/*", ".circleci/**"]),
+    exclude = glob(["docs/*", ".circleci/windows/*"]),
     license_type = "agpl",
 )
 
@@ -206,8 +195,8 @@ checkstyle_test(
 filegroup(
     name = "ci",
     data = [
-        "@vaticle_dependencies//tool/bazelrun:rbe",
         "@vaticle_dependencies//tool/checkstyle:test-coverage",
         "@vaticle_dependencies//tool/release/notes:create",
+        "@vaticle_dependencies//tool/bazelrun:rbe",
     ],
 )

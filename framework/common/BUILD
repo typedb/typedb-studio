@@ -19,31 +19,18 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
 
 package(default_visibility = [
-    "//:__pkg__",
-    "//framework:__subpackages__",
     "//module:__subpackages__",
-    "//test:__pkg__",
+    "//framework:__subpackages__",
+    "//:__pkg__",
+    "//test:__pkg__"
 ])
 
 kt_jvm_library(
     name = "common",
-    srcs = glob(
-        [
-            "*.kt",
-            "*/*.kt",
-        ],
-        exclude = ["*/*Test.kt"],
-    ),
+    srcs = glob(["*.kt", "*/*.kt"], exclude = ["*/*Test.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    resources = [
-        "//resources/fonts/monaco",
-        "//resources/fonts/titilliumweb:titillium-web",
-        "//resources/fonts/ubuntumono:ubuntu-mono",
-        "//resources/icons/fontawesome:icons",
-    ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-common:{pom_version}"],
     deps = [
-        "//state/common",
+        "//state/common:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -58,6 +45,13 @@ kt_jvm_library(
         "@maven//:org_jetbrains_skiko_skiko_awt",
         "@maven//:org_slf4j_slf4j_api",
     ],
+    resources = [
+        "//resources/fonts/monaco:monaco",
+        "//resources/fonts/titilliumweb:titillium-web",
+        "//resources/fonts/ubuntumono:ubuntu-mono",
+        "//resources/icons/fontawesome:icons",
+    ],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-common:{pom_version}"],
 )
 
 kt_jvm_test(
@@ -65,20 +59,18 @@ kt_jvm_test(
     srcs = [
         "geometry/GeometryTest.kt",
     ],
-    test_class = "com.vaticle.typedb.studio.framework.common.geometry.GeometryTest",
     deps = [
         ":common",
+
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
         "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
+    test_class = "com.vaticle.typedb.studio.framework.common.geometry.GeometryTest",
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob([
-        "*",
-        "*/*",
-    ]),
+    include = glob(["*", "*/*"]),
     license_type = "agpl",
 )
