@@ -143,12 +143,10 @@ object Studio {
             onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
-            val density = LocalDensity.current.density
-
             CompositionLocalProvider(LocalWindow provides window) {
                 val windowContext = WindowContext(window)
                 CompositionLocalProvider(LocalWindowContext provides windowContext) {
-                    MainWindowContent(windowContext, density)
+                    MainWindowContent(windowContext)
                     Notifications.MayShowPopup()
                     ConfirmationDialog.MayShowDialog()
                     ServerDialog.MayShowDialogs()
@@ -160,8 +158,9 @@ object Studio {
     }
 
     @Composable
-    private fun MainWindowContent(windowContext: WindowContext, density: Float) {
+    private fun MainWindowContent(windowContext: WindowContext) {
         var titleBarHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current.density
         Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
             titleBarHeight = windowContext.height.dp - toDP(it.size.height, density)
         }) {

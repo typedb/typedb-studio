@@ -76,7 +76,7 @@ class Quickstart {
 
         runComposeRule(composeRule) {
             setContent {
-                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0), 1f)
+                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
 
             composeRule.waitForIdle()
