@@ -22,13 +22,14 @@ filegroup(
     srcs = [
         "data_string.tql",
         "schema_string.tql",
+        "query_string.tql",
     ],
     visibility = ["//test:__pkg__"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    exclude = glob(["*"]),
     include = ["BUILD"],
+    exclude = glob(["*.tql"]),
     license_type = "agpl",
 )
