@@ -22,7 +22,6 @@
 
 package com.vaticle.typedb.studio.test
 
-
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -87,7 +86,7 @@ class Quickstart {
 
             StudioState.client.tryConnectToTypeDB(DB_ADDRESS) {}
             // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
-            delay(5_000)
+            delay(2_500)
             composeRule.waitForIdle()
             assertTrue(StudioState.client.isConnected)
             composeRule.waitForIdle()
@@ -101,15 +100,15 @@ class Quickstart {
             }
             catch (_: Exception) {}
 
-            delay(500)
+            delay(1_000)
 
             StudioState.client.tryCreateDatabase(DB_NAME) {}
             // We wait to create the github database.
-            delay(500)
+            delay(1_000)
 
             StudioState.client.tryOpenSession(DB_NAME)
             // We wait to open the session.
-            delay(500)
+            delay(1_000)
 
 
             // This doesn't work because runQuery doesn't source transaction/session types from the GUI.
@@ -137,32 +136,32 @@ class Quickstart {
             composeRule.waitForIdle()
 
             StudioState.client.session.tryOpen("github", TypeDBSession.Type.SCHEMA)
-            delay(500)
+            delay(1_000)
             StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-            delay(500)
+            delay(1_000)
             StudioState.client.session.transaction.runQuery(schemaString)
-            delay(500)
+            delay(1_000)
 
             // Commit the schema write.
             // Switch these two statements when we can use windows.
 //            composeRule.onNodeWithText(CHECK_STRING).performClick()
             StudioState.client.session.transaction.commit()
-            delay(500)
+            delay(1_000)
 
             composeRule.onNodeWithText("write").performClick()
             composeRule.waitForIdle()
 
             StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
-            delay(500)
+            delay(1_000)
             StudioState.client.session.transaction.runQuery(dataString)
-            delay(500)
+            delay(1_000)
             StudioState.client.session.transaction.commit()
 
             composeRule.onNodeWithText("infer").performClick()
             composeRule.waitForIdle()
             composeRule.onNodeWithText("read").performClick()
 
-            delay(500)
+            delay(1_000)
 
             TypeDB.coreClient(DB_ADDRESS).use { client ->
                 client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
@@ -176,7 +175,7 @@ class Quickstart {
                                 result.get("user-name").asAttribute().value.toString()
                             )
                         }
-                        assertEquals(results.size, 2)
+                        assertEquals(2, results.size)
                         assertTrue(results.contains("jmsfltchr"))
                         assertTrue(results.contains("krishnangovindraj"))
                     }

@@ -59,3 +59,9 @@ kt_jvm_test(
         "@vaticle_typeql_lang_java//query",
     ],
 )
+
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*", "*/*"]),
+    license_type = "agpl",
+)
