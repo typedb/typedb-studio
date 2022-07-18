@@ -72,6 +72,7 @@ class Quickstart {
     fun `Quickstart`() {
         val schemaString = fileNameToString("./test/data/schema_string.tql")
         val dataString = fileNameToString("./test/data/data_string.tql")
+        val queryString = fileNameToString("./test/data/query_string.tql")
 
         runComposeRule(composeRule) {
             setContent {
@@ -167,9 +168,7 @@ class Quickstart {
                 client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
                     session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
                         val results = ArrayList<String>()
-                        val query = TypeQL.parseQuery<TypeQLMatch>("match \$file isa file, has file-name \"typeql/reasoner/negation.feature\"; \n" +
-                                "\$file-collaborator(file: \$file, collaborator: \$c) isa file-collaborator; \n" +
-                                "\$c has user-name \$user-name;")
+                        val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
                         transaction.query().match(query).forEach { result ->
                             results.add(
                                 result.get("user-name").asAttribute().value.toString()

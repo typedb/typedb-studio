@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 filegroup(
@@ -28,5 +29,6 @@ filegroup(
 checkstyle_test(
     name = "checkstyle",
     exclude = glob(["*"]),
+    include = ["BUILD"],
     license_type = "agpl",
 )
