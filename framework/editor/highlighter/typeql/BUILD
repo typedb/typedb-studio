@@ -30,7 +30,7 @@ kt_jvm_library(
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
         "@vaticle_typeql//grammar/java:typeql-grammar",
-        "@vaticle_typeql_lang_java//:typeql-lang",
+        "@vaticle_typeql//java:typeql-lang",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -45,5 +45,5 @@ kt_jvm_library(
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
-    license_type = "agpl",
+    license_type = "agpl-header",
 )
