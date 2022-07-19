@@ -26,6 +26,24 @@ skiko_runtime_platform = select({
      "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
      "//conditions:default": ["INVALID"]})
 
+kt_jvm_library(
+    name = "test-utils",
+    srcs = ["TestUtils.kt"],
+    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    runtime_deps = skiko_runtime_platform,
+    deps = [
+        # External Maven Dependencies
+        "@maven//:junit_junit",
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_test_junit4_desktop",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
+    ],
+)
+
+
 kt_jvm_test(
     name = "test-quickstart",
     srcs = [
@@ -36,6 +54,8 @@ kt_jvm_test(
     test_class = "com.vaticle.typedb.studio.test.Quickstart",
     runtime_deps = skiko_runtime_platform,
     deps = [
+        "test-utils",
+
         "//:studio",
         "//framework/common",
         "//state",

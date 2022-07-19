@@ -196,12 +196,3 @@ class Quickstart {
         val BOLT_STRING = Char(0xf0e7u).toString()
     }
 }
-
-fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
-    runBlocking { compose.rule() }
-}
-
-fun fileNameToString(fileName: String): String {
-    return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8)
-        .joinToString("")
-}
