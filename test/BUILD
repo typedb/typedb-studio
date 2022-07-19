@@ -20,6 +20,12 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test
 
 package(default_visibility = ["//:__pkg__"])
 
+skiko_runtime_platform = select({
+     "@vaticle_dependencies//util/platform:is_mac": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+     "@vaticle_dependencies//util/platform:is_linux": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+     "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+     "//conditions:default": ["INVALID"]})
+
 kt_jvm_test(
     name = "test-quickstart",
     srcs = [
@@ -28,7 +34,7 @@ kt_jvm_test(
     data = ["//test/data:query-string-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.Quickstart",
-    runtime_deps = ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+    runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",
         "//framework/common",
