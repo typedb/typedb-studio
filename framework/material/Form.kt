@@ -671,14 +671,14 @@ object Form {
         val density = LocalDensity.current.density
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         var area: Rect? by remember { mutableStateOf(null) }
-        val windowContext = LocalWindowContext.current!!
+        val window = LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
         val mod = onClick?.let {
             modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
         } ?: modifier
 
         fun mayShowOnTargetHover() {
-            if (area?.let { isMouseHover(it, windowContext, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
         }
 
         Box(
@@ -750,11 +750,11 @@ object Form {
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = rectangleIndication(Theme.studio.indicationBase, density, roundedCorners)
         var area: Rect? by remember { mutableStateOf(null) }
-        val windowContext = LocalWindowContext.current!!
+        val window = LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
 
         fun mayShowOnTargetHover() {
-            if (area?.let { isMouseHover(it, windowContext, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
+            if (area?.let { isMouseHover(it, window, titleBarHeight) } == true) tooltipState?.mayShowOnTargetHover()
         }
 
         CompositionLocalProvider(LocalIndication provides hoverIndication) {

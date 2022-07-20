@@ -158,13 +158,13 @@ object Studio {
     }
 
     @Composable
-    private fun MainWindowContent(windowContext: WindowContext) {
+    private fun MainWindowContent(window: WindowContext) {
         var titleBarHeight by remember { mutableStateOf(0.dp) }
         val density = LocalDensity.current.density
         Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
-            titleBarHeight = windowContext.height.dp - toDP(it.size.height, density)
+            titleBarHeight = window.height.dp - toDP(it.size.height, density)
         }) {
-            CompositionLocalProvider(LocalWindowContext provides windowContext) {
+            CompositionLocalProvider(LocalWindowContext provides window) {
                 CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
                     Toolbar.Layout()
                     Separator.Horizontal()

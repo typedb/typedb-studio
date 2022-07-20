@@ -95,15 +95,12 @@ class Quickstart {
                 StudioState.client.tryDeleteDatabase(DB_NAME)
             }
             catch (_: Exception) {}
-
             delay(1_000)
 
             StudioState.client.tryCreateDatabase(DB_NAME) {}
-            // We wait to create the github database.
             delay(1_000)
 
             StudioState.client.tryOpenSession(DB_NAME)
-            // We wait to open the session.
             delay(1_000)
 
 
@@ -156,7 +153,7 @@ class Quickstart {
             composeRule.onNodeWithText("infer").performClick()
             composeRule.waitForIdle()
             composeRule.onNodeWithText("read").performClick()
-
+            composeRule.waitForIdle()
             delay(1_000)
 
             TypeDB.coreClient(DB_ADDRESS).use { client ->

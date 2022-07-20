@@ -29,6 +29,6 @@ fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContent
 }
 
 fun fileNameToString(fileName: String): String {
-    return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8)
+    return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
         .joinToString("")
 }

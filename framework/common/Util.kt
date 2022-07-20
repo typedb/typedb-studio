@@ -48,13 +48,13 @@ object Util {
         return DpSize(size.width.dp / density, size.height.dp / density)
     }
 
-    fun mousePoint(windowContext: WindowContext, titleBarHeight: Dp): Point {
+    fun mousePoint(window: WindowContext, titleBarHeight: Dp): Point {
         val raw = MouseInfo.getPointerInfo().location
-        return Point(raw.x - windowContext.x, raw.y - windowContext.y - titleBarHeight.value.toInt())
+        return Point(raw.x - window.x, raw.y - window.y - titleBarHeight.value.toInt())
     }
 
-    fun isMouseHover(area: Rect, windowContext: WindowContext, titleBarHeight: Dp): Boolean {
-        val mouse = com.vaticle.typedb.studio.framework.common.Util.mousePoint(windowContext, titleBarHeight)
+    fun isMouseHover(area: Rect, window: WindowContext, titleBarHeight: Dp): Boolean {
+        val mouse = com.vaticle.typedb.studio.framework.common.Util.mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
     }
 
