@@ -46,12 +46,10 @@ kt_jvm_library(
 
 kt_jvm_test(
     name = "test-quickstart",
-    srcs = [
-        "Quickstart.kt",
-    ],
+    srcs = ["Quickstart.kt"],
     data = ["//test/data:query-string-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    test_class = "com.vaticle.typedb.studio.test.Quickstart",
+    test_class = "com.vaticle.typedb.studio.test.integration.Quickstart",
     runtime_deps = skiko_runtime_platform,
     deps = [
         "test-utils",

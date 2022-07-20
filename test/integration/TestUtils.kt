@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.test
+package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import kotlinx.coroutines.runBlocking

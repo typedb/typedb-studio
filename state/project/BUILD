@@ -23,7 +23,7 @@ package(default_visibility = [
     "//module:__subpackages__",
     "//state:__subpackages__",
     "//:__pkg__",
-    "//test:__pkg__"
+    "//test/integration:__pkg__"
 ])
 
 kt_jvm_library(

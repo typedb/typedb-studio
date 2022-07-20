@@ -29,7 +29,7 @@ load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platfo
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
 load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
 
-package(default_visibility = ["//test:__pkg__"])
+package(default_visibility = ["//test/integration:__pkg__"])
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
@@ -199,7 +199,7 @@ native_typedb_artifact(
     linux_artifact = "@vaticle_typedb_artifact_linux//file",
     windows_artifact = "@vaticle_typedb_artifact_windows//file",
     output = "typedb-server-native.tar.gz",
-    visibility = ["//test:__subpackages__"],
+    visibility = ["//test/integration:__subpackages__"],
 )
 
 artifact_extractor(

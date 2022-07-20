@@ -20,11 +20,10 @@
 // Do not use this outside of tests anywhere. It is extremely dangerous to do so.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test
+package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -39,13 +38,9 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -70,9 +65,9 @@ class Quickstart {
     // This test simulates the carrying out of the instructions found at https://docs.vaticle.com/docs/studio/quickstart
     @Test
     fun `Quickstart`() {
-        val schemaString = fileNameToString("./test/data/schema_string.tql")
-        val dataString = fileNameToString("./test/data/data_string.tql")
-        val queryString = fileNameToString("./test/data/query_string.tql")
+        val schemaString = fileNameToString("test/data/schema_string.tql")
+        val dataString = fileNameToString("test/data/data_string.tql")
+        val queryString = fileNameToString("test/data/query_string.tql")
 
         runComposeRule(composeRule) {
             setContent {
@@ -119,8 +114,8 @@ class Quickstart {
             // Could probably also store the file locally, include it in the test and open the file through the
             // project browser then use the GUI to operate.
 
-            StudioState.project.tryOpenProject(File("./test/data").toPath())
-            StudioState.appData.project.path = File("./test/data").toPath()
+            StudioState.project.tryOpenProject(File("test/data").toPath())
+            StudioState.appData.project.path = File("test/data").toPath()
             composeRule.waitForIdle()
 
             // Attempting to click these throws an errors since we use a pointer system that requires existence of a

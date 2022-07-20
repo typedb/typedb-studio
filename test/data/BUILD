@@ -24,7 +24,7 @@ filegroup(
         "schema_string.tql",
         "query_string.tql",
     ],
-    visibility = ["//test:__pkg__"],
+    visibility = ["//test/integration:__pkg__"],
 )
 
 checkstyle_test(

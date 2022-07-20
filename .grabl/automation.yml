@@ -35,8 +35,8 @@ build:
         bazel run //:typedb-extractor -- dist/typedb-all-linux
         sudo systemd-run ./dist/typedb-all-linux/typedb server
         sleep 60
-        bazel build //...
-        bazel test //... --test_output=streamed --spawn_strategy=local
+        bazel build //test/integration/...
+        bazel test //test/... --test_output=streamed --spawn_strategy=local
 
 release:
   #  filter:
