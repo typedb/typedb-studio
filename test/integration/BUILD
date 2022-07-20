@@ -28,7 +28,7 @@ skiko_runtime_platform = select({
 
 kt_jvm_library(
     name = "test-utils",
-    srcs = ["TestUtils.kt"],
+    srcs = ["Utils.kt"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     runtime_deps = skiko_runtime_platform,
     deps = [

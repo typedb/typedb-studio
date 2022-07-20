@@ -65,114 +65,135 @@ class Quickstart {
     // This test simulates the carrying out of the instructions found at https://docs.vaticle.com/docs/studio/quickstart
     @Test
     fun `Quickstart`() {
-        val schemaString = fileNameToString("test/data/schema_string.tql")
-        val dataString = fileNameToString("test/data/data_string.tql")
-        val queryString = fileNameToString("test/data/query_string.tql")
-
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
-
             composeRule.waitForIdle()
 
-            // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
-            // clicked.
-            composeRule.onAllNodesWithText("Connect to TypeDB").assertAll(hasClickAction())
+            connectToTypeDB()
 
-            StudioState.client.tryConnectToTypeDB(DB_ADDRESS) {}
-            // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
-            delay(2_500)
-            composeRule.waitForIdle()
-            assertTrue(StudioState.client.isConnected)
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText(DB_ADDRESS).assertExists()
+            createDatabase()
 
-            // Same as connecting to typedb, but we can't see dropdowns either.
-            composeRule.onAllNodesWithText("Select Database").assertAll(hasClickAction())
+            openProject()
 
-            try {
-                StudioState.client.tryDeleteDatabase(DB_NAME)
-            }
-            catch (_: Exception) {}
-            delay(1_000)
+            writeSchema()
 
-            StudioState.client.tryCreateDatabase(DB_NAME) {}
-            delay(1_000)
+            writeData()
 
-            StudioState.client.tryOpenSession(DB_NAME)
-            delay(1_000)
+            verifyAnswers()
+        }
+    }
 
+    suspend fun connectToTypeDB() {
+        // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
+        // clicked.
+        composeRule.onAllNodesWithText("Connect to TypeDB").assertAll(hasClickAction())
 
-            // This doesn't work because runQuery doesn't source transaction/session types from the GUI.
-            // We could click the relevant buttons as assertions they exist and are clickable and then do a pure-state
-            // query run.
+        StudioState.client.tryConnectToTypeDB(DB_ADDRESS) {}
+        // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
+        delay(10_000)
+        // Order is important here! We delay allowing the connection to take place, then give the program
+        // time to recompose. If we waitForIdle then delay, it recomposes before connecting failing the
+        // next assertExists.
+        composeRule.waitForIdle()
+        assertTrue(StudioState.client.isConnected)
 
-            // Could probably also store the file locally, include it in the test and open the file through the
-            // project browser then use the GUI to operate.
+        composeRule.onNodeWithText(DB_ADDRESS).assertExists()
+    }
 
-            StudioState.project.tryOpenProject(File("test/data").toPath())
-            StudioState.appData.project.path = File("test/data").toPath()
-            composeRule.waitForIdle()
+    suspend fun createDatabase() {
+        // Same as connecting to typedb, but we can't see dropdowns either.
+        composeRule.onAllNodesWithText("Select Database").assertAll(hasClickAction())
 
-            // Attempting to click these throws an errors since we use a pointer system that requires existence of a
-            // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
+        try {
+            StudioState.client.tryDeleteDatabase(DB_NAME)
+        }
+        catch (_: Exception) {}
+        delay(1_000)
 
-            // But we can assert that they exist, which is a test unto itself.
-            composeRule.onNodeWithText("schema_string.tql").assertExists()
-            composeRule.onNodeWithText("data_string.tql").assertExists()
+        StudioState.client.tryCreateDatabase(DB_NAME) {}
+        delay(1_000)
 
-            // Check why we aren't updating transaction/session type on click.
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText("write").performClick()
-            composeRule.waitForIdle()
+        StudioState.client.tryOpenSession(DB_NAME)
+        delay(1_000)
+    }
 
-            StudioState.client.session.tryOpen("github", TypeDBSession.Type.SCHEMA)
-            delay(1_000)
-            StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-            delay(1_000)
-            StudioState.client.session.transaction.runQuery(schemaString)
-            delay(1_000)
+    suspend fun openProject() {
+        // Could probably also store the file locally, include it in the test and open the file through the
+        // project browser then use the GUI to operate.
 
-            // Commit the schema write.
-            // Switch these two statements when we can use windows.
+        StudioState.project.tryOpenProject(File("test/data").toPath())
+        StudioState.appData.project.path = File("test/data").toPath()
+        composeRule.waitForIdle()
+
+        // Attempting to click these throws an errors since we use a pointer system that requires existence of a
+        // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
+
+        // But we can assert that they exist, which is a test unto itself.
+        composeRule.onNodeWithText("schema_string.tql").assertExists()
+        composeRule.onNodeWithText("data_string.tql").assertExists()
+    }
+
+    suspend fun writeSchema() {
+        val schemaString = fileNameToString("test/data/schema_string.tql")
+
+        composeRule.onNodeWithText("schema").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("write").performClick()
+        composeRule.waitForIdle()
+
+        StudioState.client.session.tryOpen("github", TypeDBSession.Type.SCHEMA)
+        delay(1_000)
+        StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+        delay(1_000)
+        StudioState.client.session.transaction.runQuery(schemaString)
+        delay(1_000)
+
+        // Commit the schema write.
+        // Switch these two statements when we can use windows.
 //            composeRule.onNodeWithText(CHECK_STRING).performClick()
-            StudioState.client.session.transaction.commit()
-            delay(1_000)
+        StudioState.client.session.transaction.commit()
+        delay(1_000)
+    }
 
-            composeRule.onNodeWithText("write").performClick()
-            composeRule.waitForIdle()
+    suspend fun writeData() {
+        val dataString = fileNameToString("test/data/data_string.tql")
 
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
-            delay(1_000)
-            StudioState.client.session.transaction.runQuery(dataString)
-            delay(1_000)
-            StudioState.client.session.transaction.commit()
+        composeRule.onNodeWithText("write").performClick()
+        composeRule.waitForIdle()
 
-            composeRule.onNodeWithText("infer").performClick()
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText("read").performClick()
-            composeRule.waitForIdle()
-            delay(1_000)
+        StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
+        delay(1_000)
+        StudioState.client.session.transaction.runQuery(dataString)
+        delay(1_000)
+        StudioState.client.session.transaction.commit()
+    }
 
-            TypeDB.coreClient(DB_ADDRESS).use { client ->
-                client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
-                    session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
-                        val results = ArrayList<String>()
-                        val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
-                        transaction.query().match(query).forEach { result ->
-                            results.add(
-                                result.get("user-name").asAttribute().value.toString()
-                            )
-                        }
-                        assertEquals(2, results.size)
-                        assertTrue(results.contains("jmsfltchr"))
-                        assertTrue(results.contains("krishnangovindraj"))
+    suspend fun verifyAnswers() {
+        val queryString = fileNameToString("test/data/query_string.tql")
+
+        composeRule.onNodeWithText("infer").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("read").performClick()
+        composeRule.waitForIdle()
+        delay(1_000)
+
+        TypeDB.coreClient(DB_ADDRESS).use { client ->
+            client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+                session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
+                    val results = ArrayList<String>()
+                    val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
+                    transaction.query().match(query).forEach { result ->
+                        results.add(
+                            result.get("user-name").asAttribute().value.toString()
+                        )
                     }
+                    assertEquals(2, results.size)
+                    assertTrue(results.contains("jmsfltchr"))
+                    assertTrue(results.contains("krishnangovindraj"))
                 }
             }
-
         }
     }
 
