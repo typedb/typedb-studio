@@ -26,6 +26,8 @@ load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
+load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
+load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
 
 package(default_visibility = ["//test:__pkg__"])
 kt_jvm_library(
@@ -191,10 +193,25 @@ checkstyle_test(
     license_type = "agpl",
 )
 
+native_typedb_artifact(
+    name = "native-typedb-artifact",
+    mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    output = "typedb-server-native.tar.gz",
+    visibility = ["//test:__subpackages__"],
+)
+
+artifact_extractor(
+    name = "typedb-extractor",
+    artifact = ":native-typedb-artifact",
+)
+
 # CI targets that are not declared in any BUILD file, but are called externally
 filegroup(
     name = "ci",
     data = [
+        "@vaticle_dependencies//distribution/artifact:create-netrc",
         "@vaticle_dependencies//tool/checkstyle:test-coverage",
         "@vaticle_dependencies//tool/release/notes:create",
         "@vaticle_dependencies//tool/bazelrun:rbe",

@@ -102,6 +102,9 @@ rules_pkg_dependencies()
 # Load maven artifacts
 load("//dependencies/maven:artifacts.bzl", vaticle_typedb_studio_artifacts = "artifacts")
 
+# Load artifacts
+load("//dependencies/vaticle:artifacts.bzl", "vaticle_typedb_artifact")
+vaticle_typedb_artifact()
 
 ################################
 # Load @vaticle dependencies #
