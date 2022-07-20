@@ -31,5 +31,5 @@ checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
     exclude = glob(["*.ttf", "UFL.txt"]),
-    license_type = "agpl",
+    license_type = "agpl-header",
 )
