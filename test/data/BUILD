@@ -31,5 +31,5 @@ checkstyle_test(
     name = "checkstyle",
     include = ["BUILD"],
     exclude = glob(["*.tql"]),
-    license_type = "agpl",
+    license_type = "agpl-header",
 )
