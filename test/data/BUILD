@@ -29,7 +29,6 @@ filegroup(
 
 checkstyle_test(
     name = "checkstyle",
-    include = ["BUILD"],
-    exclude = glob(["*.tql"]),
+    include = glob(["*"]),
     license_type = "agpl-header",
 )

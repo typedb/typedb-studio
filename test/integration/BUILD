@@ -78,14 +78,14 @@ kt_jvm_test(
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_common//:common",
-        "@vaticle_typeql_lang_java//:typeql-lang",
-        "@vaticle_typeql_lang_java//common",
-        "@vaticle_typeql_lang_java//query",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
     ],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*"]),
     license_type = "agpl-header",
 )

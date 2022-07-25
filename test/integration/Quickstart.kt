@@ -70,17 +70,11 @@ class Quickstart {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
             composeRule.waitForIdle()
-
             connectToTypeDB()
-
             createDatabase()
-
             openProject()
-
             writeSchema()
-
             writeData()
-
             verifyAnswers()
         }
     }
