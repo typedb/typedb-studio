@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.BORDER_WIDTH
@@ -148,8 +148,8 @@ object Tooltip {
             var showAll by remember { mutableStateOf(false) }
             val density = LocalDensity.current.density
             var height by remember { mutableStateOf(0.dp) }
-            val mouseY = MouseInfo.getPointerInfo().location.y - LocalWindow.current!!.y
-            val positionBelowMouse = mouseY < LocalWindow.current!!.height - height.value - TOOLTIP_OFFSET.value
+            val mouseY = MouseInfo.getPointerInfo().location.y - LocalWindowContext.current!!.y
+            val positionBelowMouse = mouseY < LocalWindowContext.current!!.height - height.value - TOOLTIP_OFFSET.value
             val offsetY = if (positionBelowMouse) TOOLTIP_OFFSET else -TOOLTIP_OFFSET
             Popup(
                 focusable = true,

@@ -16,36 +16,19 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
-package(default_visibility = [
-    "//module:__subpackages__",
-    "//framework:__subpackages__",
-    "//:__pkg__",
-    "//test/integration:__pkg__",
-])
-
-kt_jvm_library(
-    name = "state",
-    srcs = glob(["*.kt"]),
-    deps = [
-        "//state/app:app",
-        "//state/common:common",
-        "//state/connection:connection",
-        "//state/project:project",
-        "//state/page:page",
-        "//state/schema:schema",
-
-        # External Maven Dependencies
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_slf4j_slf4j_api",
+filegroup(
+    name = "query-string-files",
+    srcs = [
+        "data_string.tql",
+        "schema_string.tql",
+        "query_string.tql",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state:{pom_version}"],
+    visibility = ["//test/integration:__pkg__"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*"]),
     license_type = "agpl-header",
 )

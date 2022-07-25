@@ -16,14 +16,19 @@
  *
  */
 
-package com.vaticle.typedb.studio.framework.common
+package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import kotlinx.coroutines.runBlocking
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Paths
 
-object Context {
-    val LocalWindow = staticCompositionLocalOf<ComposeWindow?> { null }
-    val LocalWindowContext = staticCompositionLocalOf<WindowContext?> { null }
-    val LocalTitleBarHeight = staticCompositionLocalOf { 0.dp }
+fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
+    runBlocking { compose.rule() }
+}
+
+fun fileNameToString(fileName: String): String {
+    return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
+        .joinToString("")
 }

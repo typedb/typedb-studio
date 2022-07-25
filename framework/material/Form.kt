@@ -93,8 +93,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.Util.toRectDP
@@ -671,7 +671,7 @@ object Form {
         val density = LocalDensity.current.density
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         var area: Rect? by remember { mutableStateOf(null) }
-        val window = LocalWindow.current!!
+        val window = LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
         val mod = onClick?.let {
             modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
@@ -750,7 +750,7 @@ object Form {
         val tooltipState: Tooltip.State? = remember { if (tooltip != null) Tooltip.State(tooltip) else null }
         val hoverIndication = rectangleIndication(Theme.studio.indicationBase, density, roundedCorners)
         var area: Rect? by remember { mutableStateOf(null) }
-        val window = LocalWindow.current!!
+        val window = LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
 
         fun mayShowOnTargetHover() {

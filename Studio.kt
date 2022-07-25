@@ -59,7 +59,9 @@ import androidx.compose.ui.window.rememberWindowState
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.framework.material.Browsers
@@ -141,49 +143,59 @@ object Studio {
             onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
-            val density = LocalDensity.current.density
-            var titleBarHeight by remember { mutableStateOf(0.dp) }
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
-                    titleBarHeight = window.height.dp - toDP(it.size.height, density)
-                }) {
-                    CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
-                        Toolbar.Layout()
-                        Separator.Horizontal()
-                        Frame.Row(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                            Frame.Pane(
-                                id = Browsers.javaClass.name,
-                                minSize = Browsers.MIN_WIDTH,
-                                initSize = Either.first(Browsers.DEFAULT_WIDTH)
-                            ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
-                            Frame.Pane(
-                                id = Pages.javaClass.name,
-                                minSize = Pages.MIN_WIDTH,
-                                initSize = Either.second(1f)
+                val windowContext = WindowContext(window)
+                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                    MainWindowContent(windowContext)
+                    Notifications.MayShowPopup()
+                    ConfirmationDialog.MayShowDialog()
+                    ServerDialog.MayShowDialogs()
+                    DatabaseDialog.MayShowDialogs()
+                    ProjectDialog.MayShowDialogs(window)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun MainWindowContent(window: WindowContext) {
+        var titleBarHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current.density
+        Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
+            titleBarHeight = window.height.dp - toDP(it.size.height, density)
+        }) {
+            CompositionLocalProvider(LocalWindowContext provides window) {
+                CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
+                    Toolbar.Layout()
+                    Separator.Horizontal()
+                    Frame.Row(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                        Frame.Pane(
+                            id = Browsers.javaClass.name,
+                            minSize = Browsers.MIN_WIDTH,
+                            initSize = Either.first(Browsers.DEFAULT_WIDTH)
+                        ) { Browsers.Layout(browsers, it, Browsers.Position.LEFT) },
+                        Frame.Pane(
+                            id = Pages.javaClass.name,
+                            minSize = Pages.MIN_WIDTH,
+                            initSize = Either.second(1f)
+                        ) {
+                            Pages.Layout(
+                                enabled = StudioState.project.current != null,
+                                onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
                             ) {
-                                Pages.Layout(
-                                    enabled = StudioState.project.current != null,
-                                    onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
-                                ) {
-                                    when (it) {
-                                        is FileState -> FilePage.create(it)
-                                        is TypeState.Thing -> TypePage.create(it)
-                                        else -> throw IllegalStateException("Unrecognised pageable type")
-                                    }
+                                when (it) {
+                                    is FileState -> FilePage.create(it)
+                                    is TypeState.Thing -> TypePage.create(it)
+                                    else -> throw IllegalStateException("Unrecognised pageable type")
                                 }
                             }
-                        )
-                        Separator.Horizontal()
-                        StatusBar.Layout()
-                    }
+                        }
+                    )
+                    Separator.Horizontal()
+                    StatusBar.Layout()
                 }
-                Notifications.MayShowPopup()
-                ConfirmationDialog.MayShowDialog()
-                ServerDialog.MayShowDialogs()
-                DatabaseDialog.MayShowDialogs()
-                ProjectDialog.MayShowDialogs(window)
             }
         }
     }

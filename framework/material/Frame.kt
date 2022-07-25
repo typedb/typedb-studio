@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindow
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.mousePoint
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
@@ -293,7 +293,7 @@ object Frame {
     private fun RowPaneResizer(pane: PaneState, separatorWidth: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindow.current!!
+            val window = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxHeight()
@@ -314,7 +314,7 @@ object Frame {
     private fun ColumnPaneResizer(pane: PaneState, separatorHeight: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindow.current!!
+            val window = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxWidth()

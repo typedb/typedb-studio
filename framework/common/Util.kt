@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.framework.common
 
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -49,12 +48,12 @@ object Util {
         return DpSize(size.width.dp / density, size.height.dp / density)
     }
 
-    fun mousePoint(window: ComposeWindow, titleBarHeight: Dp): Point {
+    fun mousePoint(window: WindowContext, titleBarHeight: Dp): Point {
         val raw = MouseInfo.getPointerInfo().location
         return Point(raw.x - window.x, raw.y - window.y - titleBarHeight.value.toInt())
     }
 
-    fun isMouseHover(area: Rect, window: ComposeWindow, titleBarHeight: Dp): Boolean {
+    fun isMouseHover(area: Rect, window: WindowContext, titleBarHeight: Dp): Boolean {
         val mouse = com.vaticle.typedb.studio.framework.common.Util.mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
     }
