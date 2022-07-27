@@ -19,7 +19,9 @@
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import com.vaticle.typedb.studio.state.StudioState
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -31,4 +33,10 @@ fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContent
 fun fileNameToString(fileName: String): String {
     return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
         .joinToString("")
+}
+
+fun openProject(composeRule: ComposeContentTestRule, path: String) {
+    StudioState.project.tryOpenProject(File(path).toPath())
+    StudioState.appData.project.path = File(path).toPath()
+    composeRule.waitForIdle()
 }

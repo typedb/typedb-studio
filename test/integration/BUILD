@@ -78,6 +78,7 @@ kt_jvm_test(
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_common//:common",
+        "@vaticle_typedb_common//test:typedb-runner",
         "@vaticle_typeql//java:typeql-lang",
         "@vaticle_typeql//java/common:common",
         "@vaticle_typeql//java/query:query",

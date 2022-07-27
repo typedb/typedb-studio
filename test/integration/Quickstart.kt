@@ -24,6 +24,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -32,17 +33,23 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.common.test.TypeDBSingleton
+import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+
 
 /**
  * Some of these tests use delay!
@@ -59,27 +66,35 @@ import kotlin.test.assertTrue
  * However, this is a source of non-determinism and a better and easier way may emerge.
  */
 class Quickstart {
-    @get:Rule
-    val composeRule = createComposeRule()
-
     // This test simulates the carrying out of the instructions found at https://docs.vaticle.com/docs/studio/quickstart
     @Test
     fun `Quickstart`() {
+        val composeRule = createComposeRule()
+
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
+            var server: TypeDBCoreRunner
+            try {
+                server = TypeDBCoreRunner()
+            } catch (e: Exception) {
+                throw RuntimeException(e)
+            }
+            server.start()
+//            TypeDBSingleton.setTypeDBRunner(server)
+
             composeRule.waitForIdle()
-            connectToTypeDB()
-            createDatabase()
-            openProject()
-            writeSchema()
-            writeData()
-            verifyAnswers()
+            connectToTypeDB(composeRule)
+            createDatabase(composeRule)
+            openProject(composeRule)
+            writeSchema(composeRule)
+            writeData(composeRule)
+            verifyAnswers(composeRule)
         }
     }
 
-    suspend fun connectToTypeDB() {
+    suspend fun connectToTypeDB(composeRule: ComposeContentTestRule) {
         // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
         // clicked.
         composeRule.onAllNodesWithText("Connect to TypeDB").assertAll(hasClickAction())
@@ -96,7 +111,7 @@ class Quickstart {
         composeRule.onNodeWithText(DB_ADDRESS).assertExists()
     }
 
-    suspend fun createDatabase() {
+    suspend fun createDatabase(composeRule: ComposeContentTestRule) {
         // Same as connecting to typedb, but we can't see dropdowns either.
         composeRule.onAllNodesWithText("Select Database").assertAll(hasClickAction())
 
@@ -113,7 +128,7 @@ class Quickstart {
         delay(1_000)
     }
 
-    suspend fun openProject() {
+    suspend fun openProject(composeRule: ComposeContentTestRule) {
         // Could probably also store the file locally, include it in the test and open the file through the
         // project browser then use the GUI to operate.
 
@@ -129,7 +144,7 @@ class Quickstart {
         composeRule.onNodeWithText("data_string.tql").assertExists()
     }
 
-    suspend fun writeSchema() {
+    suspend fun writeSchema(composeRule: ComposeContentTestRule) {
         val schemaString = fileNameToString("test/data/schema_string.tql")
 
         composeRule.onNodeWithText("schema").performClick()
@@ -151,7 +166,7 @@ class Quickstart {
         delay(1_000)
     }
 
-    suspend fun writeData() {
+    suspend fun writeData(composeRule: ComposeContentTestRule) {
         val dataString = fileNameToString("test/data/data_string.tql")
 
         composeRule.onNodeWithText("write").performClick()
@@ -164,7 +179,7 @@ class Quickstart {
         StudioState.client.session.transaction.commit()
     }
 
-    suspend fun verifyAnswers() {
+    suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
         val queryString = fileNameToString("test/data/query_string.tql")
 
         composeRule.onNodeWithText("infer").performClick()
