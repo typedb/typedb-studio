@@ -1,5 +1,5 @@
 [![Grabl](https://grabl.io/api/status/vaticle/typedb/badge.svg)](https://grabl.io/vaticle/typedb-studio)
-[![Discord](https://img.shields.io/discord/665254494820368395?color=7382D8&label=chat&logo=discord&logoColor=ffffff)](https://vaticle.com/discord)
+[![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://vaticle.com/discord)
 [![Discussion Forum](https://img.shields.io/discourse/https/forum.vaticle.com/topics.svg)](https://forum.vaticle.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
@@ -11,7 +11,7 @@
 TypeDB Studio is TypeDB's Integrated Development Environment to perform knowledge engineering.
 
 You can utilise Studio like [TypeDB Console](https://docs.vaticle.com/docs/console/console)
-and [TypeDB Clients](http://docs.vaticle.com/docs/client-api/overview), to connect to your TypeDB instance and perform
+and [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview), to connect to your TypeDB instance and perform
 queries.
 
 Whether you need a tool to test and experiment with your newly created TypeDB database, or you prefer a graphical
@@ -28,7 +28,7 @@ just enter the address, select your database and start writing queries.
 ### Graph Visualisation
 [![Graph Visualisation](./images/graph_vis_1.png)](./images/graph_vis_1.png)
 Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
-the various [TypeDB Clients](http://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
+the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
 datasets. Studio's graph visualisation makes the underlying structure of data immediately apparent. Studio's intuitive
 and self-explanatory interface also allows for rapid iteration of queries.
 
