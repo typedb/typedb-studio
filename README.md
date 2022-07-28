@@ -28,8 +28,7 @@ these choices explicit so that it's always clear what you're working on at any g
 
 After connecting to TypeDB and selecting a database, Studio will prompt you to open (or create) a project directory. 
 This is where Studio will load and save query files, but we can also freely edit text files in the project directory 
-using Studio. The project browser maintains a live view of the directory contents on the filesystem, much like other 
-major IDEs do.
+using Studio. The project browser maintains a live view of the directory contents on the filesystem.
 
 ### Manage Database Schemas
 [![Log Output](./images/type_browser_1.png)](./images/type_browser_1.png)
@@ -40,14 +39,13 @@ bring up a page that lists in detail its properties - supertype, roles played, a
 ### Run TypeQL Queries
 [![Log Output](./images/log_output_1.png)](./images/log_output_1.png)
 
-Studio sports a fully-featured, performant text editor including all the functionality one would expect from an editor 
-(Undo/Redo, Find/Replace, etc.) It also includes syntax highlighting for TypeQL files (\*.tql). Studio's intuitive and 
+Studio's text editor comes equipped with rich developer tooling, like syntax highlighting
+for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and 
 self-explanatory interface enables a rapid, iterative workflow.
 
 TypeDB Studio brings session and transaction configuration to the forefront, providing greater visibility to the user 
-about the state of the system; and crucially, allows for the running of any kind of TypeQL Query - Define, Insert, 
-Match Aggregate, and so on, which was not possible in previous iterations of Studio. The results of these queries are 
-printed to a Log Output window, which also features TypeQL syntax highlighting and fully-featured search.
+about the state of the system. Studio allows you to run any TypeQL query, pretty-printing results
+to the Log Output window which is easily searchable (and supports regex matching.)
 
 ### Graph Visualisation
 [![Graph Visualisation](./images/graph_vis_1.png)](./images/graph_vis_1.png)
