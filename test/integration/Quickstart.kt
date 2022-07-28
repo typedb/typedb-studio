@@ -66,11 +66,13 @@ import kotlin.test.assertTrue
  * However, this is a source of non-determinism and a better and easier way may emerge.
  */
 class Quickstart {
+    @get:Rule
+    val composeRule = createComposeRule()
+
     // This test simulates the carrying out of the instructions found at https://docs.vaticle.com/docs/studio/quickstart
+    @Ignore
     @Test
     fun `Quickstart`() {
-        val composeRule = createComposeRule()
-
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))

@@ -18,6 +18,12 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 filegroup(
+    name = "sample-file-structure-files",
+    srcs = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
+    visibility = ["//test/integration:__pkg__"],
+)
+
+filegroup(
     name = "query-string-files",
     srcs = [
         "data_string.tql",
@@ -27,14 +33,9 @@ filegroup(
     visibility = ["//test/integration:__pkg__"],
 )
 
-filegroup(
-    name = "sample-file-structure-files",
-    srcs = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
-    visibility = ["//test/integration:__pkg__"],
-)
-
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
+    exclude = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
     license_type = "agpl-header",
 )

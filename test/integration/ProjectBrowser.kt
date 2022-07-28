@@ -25,13 +25,14 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
@@ -53,19 +54,20 @@ import kotlin.test.assertTrue
 
 class ProjectBrowser {
     companion object {
-        private const val DB_ADDRESS = "localhost:1729"
+        val SAMPLE_DATA_PATH = "test/data/sample_file_structure"
     }
+    @get:Rule
+    val composeRule = createComposeRule()
 
     @Test
     fun `Rename a File`() {
-        val composeRule = createComposeRule()
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, "./test/sample_file_structure")
+            openProject(composeRule, SAMPLE_DATA_PATH)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
             delay(500)
@@ -75,29 +77,33 @@ class ProjectBrowser {
 
             composeRule.onNodeWithText("file3_0").assertExists()
             StudioState.project.current!!.directory.entries.find { it.name == "file3_0" }!!.asFile().tryRename("file3")
+            delay(500)
+            composeRule.waitForIdle()
         }
     }
 
     @Test
     fun `Delete a File`() {
-        val composeRule = createComposeRule()
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, "./test/sample_file_structure")
+            openProject(composeRule, SAMPLE_DATA_PATH)
 
-            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().initiateDelete { }
+            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
+//            val entries = StudioState.project.current!!.directory.entries
+//            println(entries)
             delay(500)
             StudioState.project.current!!.reloadEntries()
             delay(500)
             composeRule.waitForIdle()
-
+//            val cTree = composeRule.onRoot().printToString()
+//            println(cTree)
             composeRule.onNodeWithText("file3").assertDoesNotExist()
 
-            StudioState.project.current!!.directory.entries.find { it.name == "sample_file_structure" }!!.asDirectory()
+            StudioState.project.current!!.directory.asDirectory()
                 .tryCreateFile("file3")
             delay(500)
         }
@@ -105,16 +111,15 @@ class ProjectBrowser {
 
     @Test
     fun `Create a Directory`() {
-        val composeRule = createComposeRule()
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, "./test/sample_file_structure")
+            openProject(composeRule, SAMPLE_DATA_PATH)
 
-            StudioState.project.current!!.directory.entries[0].asDirectory().tryCreateDirectory("create_a_directory")
+            StudioState.project.current!!.directory.asDirectory().tryCreateDirectory("create_a_directory")
             delay(500)
             StudioState.project.current!!.reloadEntries()
             delay(500)
@@ -129,16 +134,15 @@ class ProjectBrowser {
 
     @Test
     fun `Create a File`() {
-        val composeRule = createComposeRule()
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, "./test/sample_file_structure")
+            openProject(composeRule, SAMPLE_DATA_PATH)
 
-            StudioState.project.current!!.directory.entries.find{it.name=="sample_file_structure"}!!.asDirectory().tryCreateFile("file4")
+            StudioState.project.current!!.directory.asDirectory().tryCreateFile("file4")
             delay(500)
             StudioState.project.current!!.reloadEntries()
             delay(500)
@@ -154,14 +158,13 @@ class ProjectBrowser {
     @Ignore
     @Test
     fun `Collapse Folders`() {
-        val composeRule = createComposeRule()
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, "./test/sample_file_structure")
+            openProject(composeRule, SAMPLE_DATA_PATH)
 
 //            StudioState.project.current!!.directory.entries[0].asDirectory().isExpandable
             delay(500)

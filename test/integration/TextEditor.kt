@@ -59,6 +59,7 @@ class TextEditor {
     @get:Rule
     val composeRule = createComposeRule()
 
+    @Ignore
     @Test
     fun `Save File`() {
         runComposeRule(composeRule) {

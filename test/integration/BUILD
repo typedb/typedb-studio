@@ -32,6 +32,11 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     runtime_deps = skiko_runtime_platform,
     deps = [
+        "//state",
+        "//state/app",
+        "//state/connection",
+        "//state/project",
+        "//state/page",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
@@ -88,7 +93,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-projectbrowser",
     srcs = ["ProjectBrowser.kt"],
-    data = ["//test/data:query-string-files"],
+    data = ["//test/data:sample-file-structure-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.ProjectBrowser",
     runtime_deps = skiko_runtime_platform,
@@ -129,7 +134,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-queryoutput",
     srcs = ["QueryOutput.kt"],
-    data = ["//test/data:query-string-files"],
+    data = ["//test/data:sample-file-structure-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.QueryOutput",
     runtime_deps = skiko_runtime_platform,
@@ -170,7 +175,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-texteditor",
     srcs = ["TextEditor.kt"],
-    data = ["//test/data:query-string-files"],
+    data = ["//test/data:sample-file-structure-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.TextEditor",
     runtime_deps = skiko_runtime_platform,
@@ -211,7 +216,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-typebrowser",
     srcs = ["TypeBrowser.kt"],
-    data = ["//test/data:query-string-files"],
+    data = ["//test/data:sample-file-structure-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowser",
     runtime_deps = skiko_runtime_platform,
