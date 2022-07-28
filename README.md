@@ -34,12 +34,10 @@ and self-explanatory interface also allows for rapid iteration of queries.
 
 ### Reasoning and Explanations
 [![Inference Visualisation](./images/infer_vis_1.png)](./images/infer_vis_1.png)
-Select infer and explain, then double click highlighted inferred concepts to retrieve their explanations and visualise
+Select infer and explain, then double-click highlighted inferred concepts to retrieve their explanations and visualise
 how the fact was inferred.
 
 ### Log Output
 [![Log Output](./images/log_output_1.png)](./images/log_output_1.png)
 Log output behaviour you might be familiar with from [TypeDB Console](https://docs.vaticle.com/docs/console/console) is 
 available to you within Studio as well. Searching for and understanding your data within TypeDB has never been easier.
-
-
