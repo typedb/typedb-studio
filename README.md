@@ -27,6 +27,7 @@ just enter the address, select your database and start writing queries.
 
 ### Graph Visualisation
 [![Graph Visualisation](./images/graph_vis_1.png)](./images/graph_vis_1.png)
+
 Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
 the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
 datasets. Studio's graph visualisation makes the underlying structure of data immediately apparent. Studio's intuitive
@@ -34,10 +35,12 @@ and self-explanatory interface also allows for rapid iteration of queries.
 
 ### Reasoning and Explanations
 [![Inference Visualisation](./images/infer_vis_1.png)](./images/infer_vis_1.png)
+
 Select infer and explain, then double-click highlighted inferred concepts to retrieve their explanations and visualise
 how the fact was inferred.
 
 ### Log Output
 [![Log Output](./images/log_output_1.png)](./images/log_output_1.png)
+
 Log output behaviour you might be familiar with from [TypeDB Console](https://docs.vaticle.com/docs/console/console) is 
 available to you within Studio as well. Searching for and understanding your data within TypeDB has never been easier.
