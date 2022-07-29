@@ -55,6 +55,13 @@ import kotlin.test.assertTrue
 class ProjectBrowser {
     companion object {
         val SAMPLE_DATA_PATH = "test/data/sample_file_structure"
+
+        val CLOSE_TRANSACTION_STRING = Char(0xf00du).toString()
+        val ROLLBACK_STRING = Char(0xf2eau).toString()
+        val CHECK_STRING = Char(0xf00cu).toString()
+
+        val PLAY_STRING = Char(0xf04bu).toString()
+        val BOLT_STRING = Char(0xf0e7u).toString()
     }
     @get:Rule
     val composeRule = createComposeRule()
@@ -93,19 +100,17 @@ class ProjectBrowser {
             openProject(composeRule, SAMPLE_DATA_PATH)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-//            val entries = StudioState.project.current!!.directory.entries
-//            println(entries)
             delay(500)
             StudioState.project.current!!.reloadEntries()
             delay(500)
             composeRule.waitForIdle()
-//            val cTree = composeRule.onRoot().printToString()
-//            println(cTree)
+
             composeRule.onNodeWithText("file3").assertDoesNotExist()
 
             StudioState.project.current!!.directory.asDirectory()
                 .tryCreateFile("file3")
             delay(500)
+            StudioState.project.current!!.reloadEntries()
         }
     }
 
@@ -128,7 +133,10 @@ class ProjectBrowser {
             composeRule.onNodeWithText("create_a_directory").assertExists()
 
             StudioState.project.current!!.directory.entries.find { it.name == "create_a_directory" }!!.asDirectory()
-                .initiateDelete { }
+                .delete()
+            StudioState.project.current!!.reloadEntries()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText("create_a_directory").assertExists()
         }
     }
 
@@ -151,26 +159,7 @@ class ProjectBrowser {
             composeRule.onNodeWithText("file4").assertExists()
 
             StudioState.project.current!!.directory.entries.find { it.name == "file4" }!!.asFile()
-                .initiateDelete { }
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Collapse Folders`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            openProject(composeRule, SAMPLE_DATA_PATH)
-
-//            StudioState.project.current!!.directory.entries[0].asDirectory().isExpandable
-            delay(500)
-            StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
+                .delete()
         }
     }
 }

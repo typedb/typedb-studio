@@ -33,11 +33,12 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.common.test.TypeDBSingleton
-import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
+//import com.vaticle.typedb.common.test.TypeDBSingleton
+//import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
@@ -66,6 +67,11 @@ import kotlin.test.assertTrue
  * However, this is a source of non-determinism and a better and easier way may emerge.
  */
 class Quickstart {
+    companion object {
+        val DB_ADDRESS = "localhost:1729"
+        val DB_NAME = "github"
+    }
+
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -77,13 +83,13 @@ class Quickstart {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
-            var server: TypeDBCoreRunner
-            try {
-                server = TypeDBCoreRunner()
-            } catch (e: Exception) {
-                throw RuntimeException(e)
-            }
-            server.start()
+//            var server: TypeDBCoreRunner
+//            try {
+//                server = TypeDBCoreRunner()
+//            } catch (e: Exception) {
+//                throw RuntimeException(e)
+//            }
+//            server.start()
 //            TypeDBSingleton.setTypeDBRunner(server)
 
             composeRule.waitForIdle()
@@ -99,7 +105,7 @@ class Quickstart {
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule) {
         // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
         // clicked.
-        composeRule.onAllNodesWithText("Connect to TypeDB").assertAll(hasClickAction())
+        composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(DB_ADDRESS) {}
         // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
@@ -115,7 +121,7 @@ class Quickstart {
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule) {
         // Same as connecting to typedb, but we can't see dropdowns either.
-        composeRule.onAllNodesWithText("Select Database").assertAll(hasClickAction())
+        composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         try {
             StudioState.client.tryDeleteDatabase(DB_NAME)
@@ -206,17 +212,5 @@ class Quickstart {
                 }
             }
         }
-    }
-
-    companion object {
-        val DB_ADDRESS = "localhost:1729"
-        val DB_NAME = "github"
-
-        val CLOSE_TRANSACTION_STRING = Char(0xf00du).toString()
-        val ROLLBACK_STRING = Char(0xf2eau).toString()
-        val CHECK_STRING = Char(0xf00cu).toString()
-
-        val PLAY_STRING = Char(0xf04bu).toString()
-        val BOLT_STRING = Char(0xf0e7u).toString()
     }
 }
