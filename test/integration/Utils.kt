@@ -18,14 +18,21 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.assertAll
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.common.util.Label
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.assertTrue
 
 fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
     runBlocking { compose.rule() }
@@ -46,4 +53,38 @@ fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name:
     StudioState.appData.project.path = absolute.toPath()
     composeRule.waitForIdle()
     return absolute.toPath()
+}
+
+suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
+    // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
+    // clicked.
+    composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
+
+    StudioState.client.tryConnectToTypeDB(address) {}
+    // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
+    delay(10_000)
+    // Order is important here! We delay allowing the connection to take place, then give the program
+    // time to recompose. If we waitForIdle then delay, it recomposes before connecting failing the
+    // next assertExists.
+    composeRule.waitForIdle()
+    assertTrue(StudioState.client.isConnected)
+
+    composeRule.onNodeWithText(address).assertExists()
+}
+
+suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
+    // Same as connecting to typedb, but we can't see dropdowns either.
+    composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
+
+    try {
+        StudioState.client.tryDeleteDatabase(name)
+    }
+    catch (_: Exception) {}
+    delay(1_000)
+
+    StudioState.client.tryCreateDatabase(name) {}
+    delay(1_000)
+
+    StudioState.client.tryOpenSession(name)
+    delay(1_000)
 }

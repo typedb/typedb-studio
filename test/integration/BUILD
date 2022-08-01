@@ -37,6 +37,7 @@ kt_jvm_library(
         "//state/connection",
         "//state/project",
         "//state/page",
+        "//state/common",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
@@ -181,7 +182,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-texteditor",
     srcs = ["TextEditor.kt"],
-    data = ["//test/data:sample-file-structure-files"],
+    data = ["//test/data:sample-file-structure-files", "//test/data:query-string-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.TextEditor",
     runtime_deps = skiko_runtime_platform,
