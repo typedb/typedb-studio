@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
@@ -35,8 +36,14 @@ fun fileNameToString(fileName: String): String {
         .joinToString("")
 }
 
-fun openProject(composeRule: ComposeContentTestRule, path: String) {
-    StudioState.project.tryOpenProject(File(path).toPath())
-    StudioState.appData.project.path = File(path).toPath()
+fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name: String): Path {
+    // This line looks needlessly verbose, but attempting to use File(name) as a unique identifier for a single location
+    // isn't sufficient.
+    val absolute = File(File(name).absolutePath)
+    absolute.deleteRecursively()
+    File(path).copyRecursively(overwrite = true, target = absolute)
+    StudioState.project.tryOpenProject(absolute.toPath())
+    StudioState.appData.project.path = absolute.toPath()
     composeRule.waitForIdle()
+    return absolute.toPath()
 }

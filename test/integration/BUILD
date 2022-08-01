@@ -195,6 +195,8 @@ kt_jvm_test(
         "//state/connection",
         "//state/project",
         "//state/page",
+        "//state/common",
+        "//framework/material",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",

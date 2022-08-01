@@ -22,9 +22,11 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
@@ -32,6 +34,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.test.integration.runComposeRule
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
@@ -52,32 +55,53 @@ import kotlin.test.assertTrue
 
 class TextEditor {
     companion object {
-        val DB_ADDRESS = "localhost:1729"
-        val DB_NAME = "github"
+        private const val DB_ADDRESS = "localhost:1729"
+        private const val DB_NAME = "github"
+
+        private val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
+
+        private val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
+        private val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
     }
 
     @get:Rule
     val composeRule = createComposeRule()
 
-    @Ignore
-    @Test
-    fun `Save File`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
     @Test
     fun `Make a New File and Save It`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
+
+            // We have to open a project to enable the '+' to create a new file.
+            val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+            val x = StudioState.project.current!!.entries
+            println(x)
+
+            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("Untitled1.tql *").assertExists()
+
+            // Clicking this takes us to a window to choose where to save - so we just assert that it exists and
+            // can be clicked.
+            composeRule.onNodeWithText(SAVE_ICON_STRING).assertExists().assertHasClickAction()
+
+            composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
+            val filePath = File("$path/Untitled1.tql").toPath()
+            File("$path/Untitled1.tql").mkdirs()
+            StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
+            StudioState.project.current!!.reloadEntries()
+
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("Untitled1.tql").assertExists()
         }
     }
 

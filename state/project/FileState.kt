@@ -349,6 +349,7 @@ class FileState internal constructor(
     private fun saveContent() {
         callbacks.beforeSave.forEach { it(this) }
         synchronized(this) {
+            println(path)
             Files.write(path, content)
             lastModified.set(path.toFile().lastModified())
         }

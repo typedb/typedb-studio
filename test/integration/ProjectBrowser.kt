@@ -54,27 +54,22 @@ import kotlin.test.assertTrue
 
 class ProjectBrowser {
     companion object {
-        val SAMPLE_DATA_PATH = "test/data/sample_file_structure"
-
-        val CLOSE_TRANSACTION_STRING = Char(0xf00du).toString()
-        val ROLLBACK_STRING = Char(0xf2eau).toString()
-        val CHECK_STRING = Char(0xf00cu).toString()
-
-        val PLAY_STRING = Char(0xf04bu).toString()
-        val BOLT_STRING = Char(0xf0e7u).toString()
+        private val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
     }
+
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
     fun `Rename a File`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, SAMPLE_DATA_PATH)
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
             delay(500)
@@ -91,13 +86,14 @@ class ProjectBrowser {
 
     @Test
     fun `Delete a File`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, SAMPLE_DATA_PATH)
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
             delay(500)
@@ -116,13 +112,14 @@ class ProjectBrowser {
 
     @Test
     fun `Create a Directory`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, SAMPLE_DATA_PATH)
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory("create_a_directory")
             delay(500)
@@ -142,13 +139,14 @@ class ProjectBrowser {
 
     @Test
     fun `Create a File`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
 
-            openProject(composeRule, SAMPLE_DATA_PATH)
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile("file4")
             delay(500)

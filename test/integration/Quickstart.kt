@@ -68,15 +68,21 @@ import kotlin.test.assertTrue
  */
 class Quickstart {
     companion object {
-        val DB_ADDRESS = "localhost:1729"
-        val DB_NAME = "github"
+        private const val DB_ADDRESS = "localhost:1729"
+        private const val DB_NAME = "github"
+
+        private val TQL_FILES_PATH = File("test/data").absolutePath
+        private const val QUERY_FILE_NAME = "query_string.tql"
+        private const val DATA_FILE_NAME = "data_string.tql"
+        private const val SCHEMA_FILE_NAME = "schema_string.tql"
+        private val QUERY_FILE_PATH = File("$TQL_FILES_PATH/$QUERY_FILE_NAME").absolutePath
+        private val DATA_FILE_PATH = File("$TQL_FILES_PATH/$DATA_FILE_NAME").absolutePath
+        private val SCHEMA_FILE_PATH = File("$TQL_FILES_PATH/$SCHEMA_FILE_NAME").absolutePath
     }
 
     @get:Rule
     val composeRule = createComposeRule()
 
-    // This test simulates the carrying out of the instructions found at https://docs.vaticle.com/docs/studio/quickstart
-    @Ignore
     @Test
     fun `Quickstart`() {
         runComposeRule(composeRule) {
@@ -102,7 +108,7 @@ class Quickstart {
         }
     }
 
-    suspend fun connectToTypeDB(composeRule: ComposeContentTestRule) {
+    private suspend fun connectToTypeDB(composeRule: ComposeContentTestRule) {
         // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
@@ -119,7 +125,7 @@ class Quickstart {
         composeRule.onNodeWithText(DB_ADDRESS).assertExists()
     }
 
-    suspend fun createDatabase(composeRule: ComposeContentTestRule) {
+    private suspend fun createDatabase(composeRule: ComposeContentTestRule) {
         // Same as connecting to typedb, but we can't see dropdowns either.
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
@@ -140,20 +146,20 @@ class Quickstart {
         // Could probably also store the file locally, include it in the test and open the file through the
         // project browser then use the GUI to operate.
 
-        StudioState.project.tryOpenProject(File("test/data").toPath())
-        StudioState.appData.project.path = File("test/data").toPath()
+        StudioState.project.tryOpenProject(File(TQL_FILES_PATH).toPath())
+        StudioState.appData.project.path = File(TQL_FILES_PATH).toPath()
         composeRule.waitForIdle()
 
         // Attempting to click these throws an errors since we use a pointer system that requires existence of a
         // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
 
         // But we can assert that they exist, which is a test unto itself.
-        composeRule.onNodeWithText("schema_string.tql").assertExists()
-        composeRule.onNodeWithText("data_string.tql").assertExists()
+        composeRule.onNodeWithText(SCHEMA_FILE_NAME).assertExists()
+        composeRule.onNodeWithText(DATA_FILE_NAME).assertExists()
     }
 
-    suspend fun writeSchema(composeRule: ComposeContentTestRule) {
-        val schemaString = fileNameToString("test/data/schema_string.tql")
+    private suspend fun writeSchema(composeRule: ComposeContentTestRule) {
+        val schemaString = fileNameToString(SCHEMA_FILE_PATH)
 
         composeRule.onNodeWithText("schema").performClick()
         composeRule.waitForIdle()
@@ -174,8 +180,8 @@ class Quickstart {
         delay(1_000)
     }
 
-    suspend fun writeData(composeRule: ComposeContentTestRule) {
-        val dataString = fileNameToString("test/data/data_string.tql")
+    private suspend fun writeData(composeRule: ComposeContentTestRule) {
+        val dataString = fileNameToString(DATA_FILE_PATH)
 
         composeRule.onNodeWithText("write").performClick()
         composeRule.waitForIdle()
@@ -187,8 +193,8 @@ class Quickstart {
         StudioState.client.session.transaction.commit()
     }
 
-    suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
-        val queryString = fileNameToString("test/data/query_string.tql")
+    private suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
+        val queryString = fileNameToString(QUERY_FILE_PATH)
 
         composeRule.onNodeWithText("infer").performClick()
         composeRule.waitForIdle()
