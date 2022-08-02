@@ -38,6 +38,7 @@ import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
 import com.vaticle.typeql.lang.TypeQL
@@ -68,6 +69,9 @@ class TextEditor {
 
         private val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
         private val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
+        private val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
+
+        private val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
     }
 
     @get:Rule
@@ -119,6 +123,7 @@ class TextEditor {
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
 
+            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
             composeRule.waitForIdle()
             delay(500)
 
@@ -134,19 +139,118 @@ class TextEditor {
             delay(500)
             composeRule.waitForIdle()
 
-            val x = composeRule.onRoot(useUnmergedTree = true).printToString()
-            println(x)
+            assertEquals(StudioState.notification.queue.last().code, "CNX10")
+
+            composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            // Trying to click on Log requires an AWT backed API (event).
+//            composeRule.onNodeWithText(Label.LOG).performClick()
+//            delay(500)
+//            composeRule.waitForIdle()
+
+            // We can assert that the schema has been written successfully here as the schema
+            // is shown in the type browser.
+            composeRule.onNodeWithText("commit").assertExists()
         }
     }
 
-    @Ignore
     @Test
-    fun `Data Write and Commit`() {
+    fun `Schema Write and Rollback`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
+
+            // We have to open a project to enable the '+' to create a new file.
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            createDatabase(composeRule, DB_NAME)
+
+            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("schema").performClick()
+            composeRule.onNodeWithText("write").performClick()
+
+            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+
+            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            assertEquals(StudioState.notification.queue.last().code, "CNX09")
+
+            // Trying to click on Log requires an AWT backed API (event).
+//            composeRule.onNodeWithText(Label.LOG).performClick()
+//            delay(500)
+//            composeRule.waitForIdle()
+
+            // We can assert that the schema has been written successfully here as the schema
+            // is shown in the type browser.
+            composeRule.onNodeWithText("commit").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `Data Write and Commit`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            createDatabase(composeRule, DB_NAME)
+
+            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("schema").performClick()
+            composeRule.onNodeWithText("write").performClick()
+
+            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+
+            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            assertEquals(StudioState.notification.queue.last().code, "CNX10")
+
+            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
+
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("data").performClick()
+            composeRule.onNodeWithText("write").performClick()
+
+            StudioState.project.current!!.directory.entries.find { it.name == "data_string.tql" }!!.asFile().tryOpen()
+
+            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            // I think we'll have to read using the client again to verify that the data was actually written.
+
+            assertEquals(StudioState.notification.queue.last().code, "CNX10")
         }
     }
 

@@ -62,7 +62,7 @@ suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String
 
     StudioState.client.tryConnectToTypeDB(address) {}
     // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
-    delay(10_000)
+    delay(5_000)
     // Order is important here! We delay allowing the connection to take place, then give the program
     // time to recompose. If we waitForIdle then delay, it recomposes before connecting failing the
     // next assertExists.

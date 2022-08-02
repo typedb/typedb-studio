@@ -99,47 +99,13 @@ class Quickstart {
 //            TypeDBSingleton.setTypeDBRunner(server)
 
             composeRule.waitForIdle()
-            connectToTypeDB(composeRule)
-            createDatabase(composeRule)
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            createDatabase(composeRule, DB_NAME)
             openProject(composeRule)
             writeSchema(composeRule)
             writeData(composeRule)
             verifyAnswers(composeRule)
         }
-    }
-
-    private suspend fun connectToTypeDB(composeRule: ComposeContentTestRule) {
-        // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
-        // clicked.
-        composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
-
-        StudioState.client.tryConnectToTypeDB(DB_ADDRESS) {}
-        // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
-        delay(10_000)
-        // Order is important here! We delay allowing the connection to take place, then give the program
-        // time to recompose. If we waitForIdle then delay, it recomposes before connecting failing the
-        // next assertExists.
-        composeRule.waitForIdle()
-        assertTrue(StudioState.client.isConnected)
-
-        composeRule.onNodeWithText(DB_ADDRESS).assertExists()
-    }
-
-    private suspend fun createDatabase(composeRule: ComposeContentTestRule) {
-        // Same as connecting to typedb, but we can't see dropdowns either.
-        composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
-
-        try {
-            StudioState.client.tryDeleteDatabase(DB_NAME)
-        }
-        catch (_: Exception) {}
-        delay(1_000)
-
-        StudioState.client.tryCreateDatabase(DB_NAME) {}
-        delay(1_000)
-
-        StudioState.client.tryOpenSession(DB_NAME)
-        delay(1_000)
     }
 
     suspend fun openProject(composeRule: ComposeContentTestRule) {
