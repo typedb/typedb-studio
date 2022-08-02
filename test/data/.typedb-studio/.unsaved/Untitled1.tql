@@ -1,6 +1,0 @@
-define
-    first-name sub attribute,
-        value string;
-        
-    person sub entity,
-        owns first-name;

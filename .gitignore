@@ -24,3 +24,6 @@ bazel-*
 # IntelliJ
 .idea
 .ijwb
+
+# Studio
+.typedb-studio
