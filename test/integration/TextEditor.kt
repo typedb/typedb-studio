@@ -36,7 +36,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.test.integration.runComposeRule
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.project.FileState
@@ -58,20 +57,7 @@ import kotlin.test.assertTrue
 
 class TextEditor {
     companion object {
-        private const val DB_ADDRESS = "localhost:1729"
         private const val DB_NAME = "github"
-
-        private val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
-        private val TQL_DATA_PATH = File("test/data").absolutePath
-
-        private val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
-        private val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
-
-        private val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
-        private val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
-        private val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
-
-        private val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
     }
 
     @get:Rule
@@ -139,7 +125,7 @@ class TextEditor {
             delay(500)
             composeRule.waitForIdle()
 
-            assertEquals(StudioState.notification.queue.last().code, "CNX10")
+            assertEquals("CNX10", StudioState.notification.queue.last().code)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
             delay(500)
@@ -186,15 +172,15 @@ class TextEditor {
             delay(500)
             composeRule.waitForIdle()
 
-            assertEquals(StudioState.notification.queue.last().code, "CNX09")
+            assertEquals("CNX09", StudioState.notification.queue.last().code)
 
             // Trying to click on Log requires an AWT backed API (event).
 //            composeRule.onNodeWithText(Label.LOG).performClick()
 //            delay(500)
 //            composeRule.waitForIdle()
 
-            // We can assert that the schema has been written successfully here as the schema
-            // is shown in the type browser.
+            // We can assert that the schema was not committed successfully here as the schema
+            // isn't shown in the type browser.
             composeRule.onNodeWithText("commit").assertDoesNotExist()
         }
     }
@@ -228,7 +214,7 @@ class TextEditor {
             delay(500)
             composeRule.waitForIdle()
 
-            assertEquals(StudioState.notification.queue.last().code, "CNX10")
+            assertEquals("CNX10", StudioState.notification.queue.last().code)
 
             StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
 
@@ -250,7 +236,7 @@ class TextEditor {
 
             // I think we'll have to read using the client again to verify that the data was actually written.
 
-            assertEquals(StudioState.notification.queue.last().code, "CNX10")
+            assertEquals("CNX10", StudioState.notification.queue.last().code)
         }
     }
 

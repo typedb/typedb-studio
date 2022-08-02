@@ -23,6 +23,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import kotlinx.coroutines.delay
@@ -33,6 +34,25 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertTrue
+
+
+val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
+val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
+val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
+val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
+val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
+val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
+val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
+val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
+
+val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
+val TQL_DATA_PATH = File("test/data").absolutePath
+
+const val QUERY_FILE_NAME = "query_string.tql"
+const val DATA_FILE_NAME = "data_string.tql"
+const val SCHEMA_FILE_NAME = "schema_string.tql"
+
+const val DB_ADDRESS = "localhost:1729"
 
 fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
     runBlocking { compose.rule() }

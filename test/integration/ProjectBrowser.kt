@@ -26,6 +26,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToString
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
@@ -53,10 +54,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ProjectBrowser {
-    companion object {
-        private val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
-    }
-
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -158,6 +155,49 @@ class ProjectBrowser {
 
             StudioState.project.current!!.directory.entries.find { it.name == "file4" }!!.asFile()
                 .delete()
+        }
+    }
+
+    @Test
+    fun `Expand Folders`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("file1_2").assertExists()
+        }
+    }
+
+    @Test
+    fun `Expand Folders then Collapse Folders`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText("file1_2").assertExists()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("Expand Folders then Collapse Folders").assertExists()
+            composeRule.onNodeWithText("file1_2").assertDoesNotExist()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
         }
     }
 }

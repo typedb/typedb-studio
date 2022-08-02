@@ -38,6 +38,7 @@ kt_jvm_library(
         "//state/project",
         "//state/page",
         "//state/common",
+        "//framework/material",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
@@ -153,7 +154,6 @@ kt_jvm_test(
         "//state/project",
         "//state/page",
         "//state/common",
-        "//framework/material",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -197,7 +197,6 @@ kt_jvm_test(
         "//state/project",
         "//state/page",
         "//state/common",
-        "//framework/material",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -226,7 +225,7 @@ kt_jvm_test(
 kt_jvm_test(
     name = "test-typebrowser",
     srcs = ["TypeBrowser.kt"],
-    data = ["//test/data:sample-file-structure-files"],
+    data = ["//test/data:query-string-files"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowser",
     runtime_deps = skiko_runtime_platform,

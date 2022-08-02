@@ -22,11 +22,9 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.assertAll
-import androidx.compose.ui.test.hasClickAction
+
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.TypeDB
@@ -38,16 +36,12 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -68,16 +62,11 @@ import kotlin.test.assertTrue
  */
 class Quickstart {
     companion object {
-        private const val DB_ADDRESS = "localhost:1729"
         private const val DB_NAME = "github"
 
-        private val TQL_FILES_PATH = File("test/data").absolutePath
-        private const val QUERY_FILE_NAME = "query_string.tql"
-        private const val DATA_FILE_NAME = "data_string.tql"
-        private const val SCHEMA_FILE_NAME = "schema_string.tql"
-        private val QUERY_FILE_PATH = File("$TQL_FILES_PATH/$QUERY_FILE_NAME").absolutePath
-        private val DATA_FILE_PATH = File("$TQL_FILES_PATH/$DATA_FILE_NAME").absolutePath
-        private val SCHEMA_FILE_PATH = File("$TQL_FILES_PATH/$SCHEMA_FILE_NAME").absolutePath
+        private val QUERY_FILE_PATH = File("$TQL_DATA_PATH/$QUERY_FILE_NAME").absolutePath
+        private val DATA_FILE_PATH = File("$TQL_DATA_PATH/$DATA_FILE_NAME").absolutePath
+        private val SCHEMA_FILE_PATH = File("$TQL_DATA_PATH/$SCHEMA_FILE_NAME").absolutePath
     }
 
     @get:Rule
@@ -112,8 +101,8 @@ class Quickstart {
         // Could probably also store the file locally, include it in the test and open the file through the
         // project browser then use the GUI to operate.
 
-        StudioState.project.tryOpenProject(File(TQL_FILES_PATH).toPath())
-        StudioState.appData.project.path = File(TQL_FILES_PATH).toPath()
+        StudioState.project.tryOpenProject(File(TQL_DATA_PATH).toPath())
+        StudioState.appData.project.path = File(TQL_DATA_PATH).toPath()
         composeRule.waitForIdle()
 
         // Attempting to click these throws an errors since we use a pointer system that requires existence of a

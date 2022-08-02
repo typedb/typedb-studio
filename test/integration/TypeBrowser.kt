@@ -25,6 +25,7 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
@@ -52,8 +53,7 @@ import kotlin.test.assertTrue
 
 class TypeBrowser {
     companion object {
-        val DB_ADDRESS = "localhost:1729"
-        val DB_NAME = "github"
+        private const val DB_NAME = "github"
     }
 
     @get:Rule
@@ -61,11 +61,42 @@ class TypeBrowser {
 
     @Test
     fun `Refresh Reflects Schema Changes`() {
+        val funcName = object {}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
+
+            // We have to open a project to enable the '+' to create a new file.
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            createDatabase(composeRule, DB_NAME)
+
+            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
+            composeRule.waitForIdle()
+            delay(500)
+
+            composeRule.onNodeWithText("schema").performClick()
+            composeRule.onNodeWithText("write").performClick()
+
+            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+
+            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            // Trying to click on Log requires an AWT backed API (event).
+//            composeRule.onNodeWithText(Label.LOG).performClick()
+//            delay(500)
+//            composeRule.waitForIdle()
+
+            // We can assert that the schema has been written successfully here as the schema
+            // is shown in the type browser.
+            composeRule.onNodeWithText("commit").assertExists()
         }
     }
 
