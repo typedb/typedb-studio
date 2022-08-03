@@ -61,7 +61,6 @@ class TypeBrowser {
     @get:Rule
     val composeRule = createComposeRule()
 
-//    @Ignore
     @Test
     fun `Refresh Reflects Schema Changes`() {
         val funcName = object{}.javaClass.enclosingMethod.name

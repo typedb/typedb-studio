@@ -98,17 +98,7 @@ class Quickstart {
     }
 
     suspend fun openProject(composeRule: ComposeContentTestRule) {
-        // Could probably also store the file locally, include it in the test and open the file through the
-        // project browser then use the GUI to operate.
-
-        StudioState.project.tryOpenProject(File(TQL_DATA_PATH).toPath())
-        StudioState.appData.project.path = File(TQL_DATA_PATH).toPath()
-        composeRule.waitForIdle()
-
-        // Attempting to click these throws an errors since we use a pointer system that requires existence of a
-        // window/awt backed API, but we can't use windows/awt because of limitations in the testing framework.
-
-        // But we can assert that they exist, which is a test unto itself.
+        cloneAndOpenProject(composeRule, TQL_DATA_PATH, "Quickstart")
         composeRule.onNodeWithText(SCHEMA_FILE_NAME).assertExists()
         composeRule.onNodeWithText(DATA_FILE_NAME).assertExists()
     }
