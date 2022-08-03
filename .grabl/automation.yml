@@ -36,12 +36,9 @@ build:
     test-integration:
       image: vaticle-ubuntu-20.04
       command: |
-#        bazel run //:typedb-extractor -- dist/typedb-all-linux
-#        sudo systemd-run ./dist/typedb-all-linux/typedb server
-#        sleep 60
-        export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
-        export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
-        bazel run @vaticle_dependencies//distribution/artifact:create-netrc
+        bazel run //:typedb-extractor -- dist/typedb-all-linux
+        sudo systemd-run ./dist/typedb-all-linux/typedb server
+        sleep 60
         bazel build //test/integration/...
         bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
 
