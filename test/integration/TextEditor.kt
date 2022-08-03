@@ -116,7 +116,7 @@ class TextEditor {
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
 
-            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
             delay(500)
@@ -151,7 +151,6 @@ class TextEditor {
             }
             composeRule.waitForIdle()
 
-            // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
@@ -163,7 +162,7 @@ class TextEditor {
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
 
-            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
             delay(500)
@@ -205,7 +204,7 @@ class TextEditor {
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
 
-            StudioState.project.current!!.directory.entries.find { it.name == "schema_string.tql" }!!.asFile().tryOpen()
+            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
             delay(500)
@@ -224,7 +223,7 @@ class TextEditor {
             composeRule.onNodeWithText("data").performClick()
             composeRule.onNodeWithText("write").performClick()
 
-            StudioState.project.current!!.directory.entries.find { it.name == "data_string.tql" }!!.asFile().tryOpen()
+            StudioState.project.current!!.directory.entries.find { it.name == DATA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
             delay(500)
