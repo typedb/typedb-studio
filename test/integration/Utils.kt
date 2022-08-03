@@ -44,6 +44,8 @@ val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
 val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
 val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
 val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
+val ARROW_FROM_SQUARE_ICON_STRING = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE.unicode
+val XMARK_ICON_STRING = Icon.Code.XMARK.unicode
 
 val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
 val TQL_DATA_PATH = File("test/data").absolutePath

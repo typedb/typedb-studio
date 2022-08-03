@@ -27,3 +27,9 @@ bazel-*
 
 # Studio
 .typedb-studio
+
+# Eclipse
+.metadata
+
+# Sonarqube
+.scannerwork

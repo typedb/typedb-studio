@@ -22,8 +22,9 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
+
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -41,15 +42,10 @@ import com.vaticle.typedb.studio.state.project.PathState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -106,18 +102,6 @@ class TypeBrowser {
         }
     }
 
-    @Ignore
-    @Test
-    fun `Export Schema`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
     @Test
     fun `Collapse Types`() {
         runComposeRule(composeRule) {
@@ -125,6 +109,12 @@ class TypeBrowser {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("commit-date").assertExists()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+
+            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
         }
     }
 
@@ -136,6 +126,31 @@ class TypeBrowser {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
             composeRule.waitForIdle()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+
+            composeRule.onNodeWithText("commit-date").assertExists()
+        }
+    }
+
+    @Test
+    fun `Export Schema`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+//            composeRule.onAllNodesWithText(XMARK_ICON_STRING).fetchSemanticsNodes().map { it. }
+
+            composeRule.onNodeWithText(ARROW_FROM_SQUARE_ICON_STRING).assertExists().performClick()
+            composeRule.waitForIdle()
+
+            val x = composeRule.onRoot(useUnmergedTree = true).printToString()
+            println(x)
+            composeRule.onNodeWithText("define").assertExists()
+            composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
         }
     }
 }
