@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
@@ -23,6 +24,9 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -33,6 +37,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
@@ -45,6 +50,7 @@ val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
 val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
 val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
 val ARROW_FROM_SQUARE_ICON_STRING = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE.unicode
+val REFRESH_ICON_STRING = Icon.Code.ROTATE.unicode
 val XMARK_ICON_STRING = Icon.Code.XMARK.unicode
 
 val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
@@ -106,7 +112,52 @@ suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
 
     StudioState.client.tryCreateDatabase(name) {}
     delay(1_000)
-
-    StudioState.client.tryOpenSession(name)
-    delay(1_000)
 }
+
+suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
+    composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+    delay(500)
+    composeRule.waitForIdle()
+
+    StudioState.client.session.tryOpen(database, TypeDBSession.Type.SCHEMA)
+    delay(500)
+    composeRule.waitForIdle()
+    StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+    delay(500)
+    composeRule.waitForIdle()
+
+    composeRule.onNodeWithText("schema").performClick()
+    composeRule.onNodeWithText("write").performClick()
+
+    StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
+
+    composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+    delay(500)
+    composeRule.waitForIdle()
+    composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+    delay(500)
+    composeRule.waitForIdle()
+
+    assertEquals("CNX10", StudioState.notification.queue.last().code)
+}
+
+suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
+    StudioState.client.session.tryOpen(database, TypeDBSession.Type.DATA)
+
+    delay(500)
+    composeRule.waitForIdle()
+
+    composeRule.onNodeWithText("data").performClick()
+    composeRule.onNodeWithText("write").performClick()
+
+    StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
+
+    composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+    delay(500)
+    composeRule.waitForIdle()
+
+    composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+    delay(500)
+    composeRule.waitForIdle()
+}
+

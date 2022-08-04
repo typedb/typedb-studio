@@ -47,6 +47,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlin_kotlin_test",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
+        "@vaticle_typedb_client_java//api",
     ],
 )
 
@@ -234,6 +235,7 @@ kt_jvm_test(
 
         "//:studio",
         "//framework/common",
+        "//framework/output",
         "//state",
         "//state/app",
         "//state/connection",

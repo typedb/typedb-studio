@@ -57,14 +57,14 @@ import kotlin.test.assertTrue
 
 class TextEditor {
     companion object {
-        private const val DB_NAME = "github"
+        private const val DB_NAME = "texteditor"
     }
 
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
-    fun `Make a New File and Save It`() {
+    fun `Make a new file and save it`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -96,7 +96,7 @@ class TextEditor {
     }
 
     @Test
-    fun `Schema Write and Commit`() {
+    fun `Schema write and commit`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -108,42 +108,63 @@ class TextEditor {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
-
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
-            composeRule.waitForIdle()
-            delay(500)
-
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.onNodeWithText("write").performClick()
-
-            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
-
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            assertEquals("CNX10", StudioState.notification.queue.last().code)
+//            StudioState.client.tryOpenSession(DB_NAME)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
             delay(500)
             composeRule.waitForIdle()
 
-            // Trying to click on Log requires an AWT backed API (event).
-//            composeRule.onNodeWithText(Label.LOG).performClick()
-//            delay(500)
-//            composeRule.waitForIdle()
-
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
-            composeRule.onNodeWithText("commit").assertExists()
+            composeRule.onNodeWithText("commit-date").assertExists()
         }
     }
 
     @Test
-    fun `Schema Write and Rollback`() {
+    fun `Data write and commit`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            createDatabase(composeRule, DB_NAME)
+//            StudioState.client.tryOpenSession(DB_NAME)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
+
+            // We'll have to read using the client again to verify that the data was actually written.
+        }
+    }
+
+    @Ignore
+    @Test
+    fun `Data read query`() {
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+        }
+    }
+
+    @Ignore
+    @Test
+    fun `Data read requiring infer query`() {
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `Schema write and rollback`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -156,8 +177,9 @@ class TextEditor {
             createDatabase(composeRule, DB_NAME)
 
             StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
-            composeRule.waitForIdle()
+
             delay(500)
+            composeRule.waitForIdle()
 
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
@@ -171,93 +193,10 @@ class TextEditor {
             delay(500)
             composeRule.waitForIdle()
 
-            assertEquals("CNX09", StudioState.notification.queue.last().code)
+            composeRule.onNodeWithText("repository-id").assertDoesNotExist()
 
-            // Trying to click on Log requires an AWT backed API (event).
-//            composeRule.onNodeWithText(Label.LOG).performClick()
-//            delay(500)
-//            composeRule.waitForIdle()
-
-            // We can assert that the schema was not committed successfully here as the schema
-            // isn't shown in the type browser.
-            composeRule.onNodeWithText("commit").assertDoesNotExist()
+            StudioState.client.session.close()
         }
     }
 
-    @Test
-    fun `Data Write and Commit`() {
-        val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
-            connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, DB_NAME)
-
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
-            composeRule.waitForIdle()
-            delay(500)
-
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.onNodeWithText("write").performClick()
-
-            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
-
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            assertEquals("CNX10", StudioState.notification.queue.last().code)
-
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
-
-            composeRule.waitForIdle()
-            delay(500)
-
-            composeRule.onNodeWithText("data").performClick()
-            composeRule.onNodeWithText("write").performClick()
-
-            StudioState.project.current!!.directory.entries.find { it.name == DATA_FILE_NAME }!!.asFile().tryOpen()
-
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            // I think we'll have to read using the client again to verify that the data was actually written.
-
-            assertEquals("CNX10", StudioState.notification.queue.last().code)
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data Read Query`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data Read Requiring Infer Query`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
 }

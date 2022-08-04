@@ -1,0 +1,99 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+define
+    repository-id sub attribute,
+        value long;
+    repo-name sub attribute,
+        value string;
+    repo-description sub attribute,
+        value string;
+
+    commit-hash sub attribute,
+        value string;
+    commit-message sub attribute,
+        value string;
+    commit-date sub attribute,
+        value string;
+
+    user-name sub attribute,
+        value string;
+
+    file-name sub attribute,
+        value string;
+
+    repo-file sub relation,
+        relates file,
+        relates repo;
+
+    repo-creator sub relation,
+        relates repo,
+        relates owner;
+
+    commit-author sub relation,
+        relates author,
+        relates commit;
+
+    commit-file sub relation,
+        relates file,
+        relates commit;
+
+    commit-repo sub relation,
+        relates commit,
+        relates repo;
+
+    file-collaborator sub relation,
+        relates file,
+        relates collaborator;
+
+    repo sub entity,
+        plays commit-repo:repo,
+        plays repo-creator:repo,
+        plays repo-file:repo,
+        owns repository-id,
+        owns repo-name,
+        owns repo-description;
+
+    commit sub entity,
+        plays commit-author:commit,
+        plays commit-file:commit,
+        plays commit-repo:commit,
+        owns commit-hash,
+        owns commit-date;
+
+    user sub entity,
+        plays commit-author:author,
+        plays repo-creator:owner,
+        plays file-collaborator:collaborator,
+        owns user-name;
+
+    file sub entity,
+        plays repo-file:file,
+        plays commit-file:file,
+        plays file-collaborator:file,
+        owns file-name;
+
+    rule file-collaborator-rule:
+        when
+        {
+            (file: $f, commit: $c) isa commit-file;
+            (commit: $c, author: $a) isa commit-author;
+        }
+        then
+        {
+            (file: $f, collaborator: $a) isa file-collaborator;
+        };

@@ -23,10 +23,14 @@
 package com.vaticle.typedb.studio.test.integration
 
 
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onSibling
+import androidx.compose.ui.test.onSiblings
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToString
 import com.vaticle.typedb.client.TypeDB
@@ -36,6 +40,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.test.integration.runComposeRule
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
+import com.vaticle.typedb.studio.framework.output.RunOutputArea
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
@@ -51,14 +56,14 @@ import kotlin.test.assertTrue
 
 class TypeBrowser {
     companion object {
-        private const val DB_NAME = "github"
+        private const val DB_NAME = "typebrowser"
     }
 
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
-    fun `Refresh Reflects Schema Changes`() {
+    fun `Schema writes through client are automatically displayed`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -70,71 +75,19 @@ class TypeBrowser {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
-
-            // Weird quirk - we need to have clicked the plus icon before calling tryOpen on a file.
-            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
-            delay(500)
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.onNodeWithText("write").performClick()
-
-            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
-
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
-
-            assertEquals("CNX10", StudioState.notification.queue.last().code)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
             composeRule.onNodeWithText("attribute").assertExists()
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
+            StudioState.client.session.close()
         }
     }
 
     @Test
-    fun `Collapse Types`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText("commit-date").assertExists()
-
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-
-            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Collapse Then Expand Types`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-
-            composeRule.onNodeWithText("commit-date").assertExists()
-        }
-    }
-
-    @Test
-    fun `Export Schema`() {
+    fun `Collapse types`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -142,13 +95,67 @@ class TypeBrowser {
             }
             composeRule.waitForIdle()
 
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            createDatabase(composeRule, DB_NAME)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+
+            composeRule.onAllNodesWithText("Project").get(0).performClick()
+            composeRule.onAllNodesWithText("Project").get(1).performClick()
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `Expand types`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            createDatabase(composeRule, DB_NAME)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("commit-date").assertExists()
+        }
+    }
+
+    @Ignore
+    @Test
+    fun `Export schema`() {
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+
+            composeRule.waitForIdle()
+
 //            composeRule.onAllNodesWithText(XMARK_ICON_STRING).fetchSemanticsNodes().map { it. }
 
             composeRule.onNodeWithText(ARROW_FROM_SQUARE_ICON_STRING).assertExists().performClick()
             composeRule.waitForIdle()
 
-            val x = composeRule.onRoot(useUnmergedTree = true).printToString()
-            println(x)
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
         }

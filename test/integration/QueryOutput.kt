@@ -57,7 +57,7 @@ import kotlin.test.assertTrue
 
 class QueryOutput {
     companion object {
-        private const val DB_NAME = "github"
+        private const val DB_NAME = "queryoutput"
     }
 
     @get:Rule
@@ -65,51 +65,7 @@ class QueryOutput {
 
     @Ignore
     @Test
-    fun `Make a New File and Save It`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Schema Write and Commit`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data Write and Commit`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data Read Query`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data Read Requiring Infer Query`() {
+    fun `Data read log output`() {
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))

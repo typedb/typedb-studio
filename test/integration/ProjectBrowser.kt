@@ -58,56 +58,6 @@ class ProjectBrowser {
     val composeRule = createComposeRule()
 
     @Test
-    fun `Rename a File`() {
-        val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
-
-            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
-            delay(500)
-            StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText("file3_0").assertExists()
-            StudioState.project.current!!.directory.entries.find { it.name == "file3_0" }!!.asFile().tryRename("file3")
-            delay(500)
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Test
-    fun `Delete a File`() {
-        val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
-            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
-
-            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-            delay(500)
-            StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText("file3").assertDoesNotExist()
-
-            StudioState.project.current!!.directory.asDirectory()
-                .tryCreateFile("file3")
-            delay(500)
-            StudioState.project.current!!.reloadEntries()
-        }
-    }
-
-    @Test
     fun `Create a Directory`() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
@@ -155,6 +105,56 @@ class ProjectBrowser {
 
             StudioState.project.current!!.directory.entries.find { it.name == "file4" }!!.asFile()
                 .delete()
+        }
+    }
+
+    @Test
+    fun `Rename a File`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+
+            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
+            delay(500)
+            StudioState.project.current!!.reloadEntries()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("file3_0").assertExists()
+            StudioState.project.current!!.directory.entries.find { it.name == "file3_0" }!!.asFile().tryRename("file3")
+            delay(500)
+            composeRule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `Delete a File`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
+        runComposeRule(composeRule) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            composeRule.waitForIdle()
+
+            cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+
+            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
+            delay(500)
+            StudioState.project.current!!.reloadEntries()
+            delay(500)
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithText("file3").assertDoesNotExist()
+
+            StudioState.project.current!!.directory.asDirectory()
+                .tryCreateFile("file3")
+            delay(500)
+            StudioState.project.current!!.reloadEntries()
         }
     }
 

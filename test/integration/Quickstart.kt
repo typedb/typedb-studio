@@ -22,7 +22,6 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -31,8 +30,6 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-//import com.vaticle.typedb.common.test.TypeDBSingleton
-//import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
@@ -62,7 +59,7 @@ import kotlin.test.assertTrue
  */
 class Quickstart {
     companion object {
-        private const val DB_NAME = "github"
+        private const val DB_NAME = "quickstart"
 
         private val QUERY_FILE_PATH = File("$TQL_DATA_PATH/$QUERY_FILE_NAME").absolutePath
         private val DATA_FILE_PATH = File("$TQL_DATA_PATH/$DATA_FILE_NAME").absolutePath
@@ -78,14 +75,6 @@ class Quickstart {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
             }
-//            var server: TypeDBCoreRunner
-//            try {
-//                server = TypeDBCoreRunner()
-//            } catch (e: Exception) {
-//                throw RuntimeException(e)
-//            }
-//            server.start()
-//            TypeDBSingleton.setTypeDBRunner(server)
 
             composeRule.waitForIdle()
             connectToTypeDB(composeRule, DB_ADDRESS)
@@ -97,7 +86,7 @@ class Quickstart {
         }
     }
 
-    suspend fun openProject(composeRule: ComposeContentTestRule) {
+    private fun openProject(composeRule: ComposeContentTestRule) {
         cloneAndOpenProject(composeRule, TQL_DATA_PATH, "Quickstart")
         composeRule.onNodeWithText(SCHEMA_FILE_NAME).assertExists()
         composeRule.onNodeWithText(DATA_FILE_NAME).assertExists()
@@ -111,7 +100,7 @@ class Quickstart {
         composeRule.onNodeWithText("write").performClick()
         composeRule.waitForIdle()
 
-        StudioState.client.session.tryOpen("github", TypeDBSession.Type.SCHEMA)
+        StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
         delay(1_000)
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
         delay(1_000)
@@ -123,6 +112,7 @@ class Quickstart {
 //            composeRule.onNodeWithText(CHECK_STRING).performClick()
         StudioState.client.session.transaction.commit()
         delay(1_000)
+        StudioState.client.session.close()
     }
 
     private suspend fun writeData(composeRule: ComposeContentTestRule) {
@@ -136,6 +126,7 @@ class Quickstart {
         StudioState.client.session.transaction.runQuery(dataString)
         delay(1_000)
         StudioState.client.session.transaction.commit()
+        StudioState.client.session.close()
     }
 
     private suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
