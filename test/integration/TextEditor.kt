@@ -70,15 +70,22 @@ class TextEditor {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
+            StudioState.reset()
             composeRule.waitForIdle()
+
+            val x = composeRule.onRoot().printToString()
+            println(x)
 
             // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
+            val y = composeRule.onRoot().printToString()
+            println(y)
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-
             composeRule.waitForIdle()
             delay(500)
+
+
 
             composeRule.onNodeWithText("Untitled1.tql *").assertExists()
 
@@ -91,7 +98,7 @@ class TextEditor {
             composeRule.waitForIdle()
             delay(500)
 
-            composeRule.onNodeWithText("Untitled1.tql").assertExists()
+            assertTrue(File("$path/Untitled1.tql").exists())
         }
     }
 
@@ -108,7 +115,6 @@ class TextEditor {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
-//            StudioState.client.tryOpenSession(DB_NAME)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
@@ -138,28 +144,6 @@ class TextEditor {
             writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
 
             // We'll have to read using the client again to verify that the data was actually written.
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data read query`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-        }
-    }
-
-    @Ignore
-    @Test
-    fun `Data read requiring infer query`() {
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
         }
     }
 

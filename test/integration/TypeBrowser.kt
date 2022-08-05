@@ -44,6 +44,7 @@ import com.vaticle.typedb.studio.framework.output.RunOutputArea
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.project.FileState
 import com.vaticle.typedb.studio.state.project.PathState
+import com.vaticle.typedb.studio.state.schema.SchemaManager
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
@@ -141,20 +142,39 @@ class TypeBrowser {
         }
     }
 
+    // This test is ignored as the export schema button doesn't open a new file as expected.
     @Ignore
     @Test
     fun `Export schema`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
-
             composeRule.waitForIdle()
 
-//            composeRule.onAllNodesWithText(XMARK_ICON_STRING).fetchSemanticsNodes().map { it. }
-
-            composeRule.onNodeWithText(ARROW_FROM_SQUARE_ICON_STRING).assertExists().performClick()
+            connectToTypeDB(composeRule, DB_ADDRESS)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            createDatabase(composeRule, DB_NAME)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             composeRule.waitForIdle()
+
+            val x = composeRule.onRoot(useUnmergedTree = true).printToString()
+            println(x)
+            val z = StudioState.project.pages
+            println(z)
+            StudioState.schema.exportTypeSchema { schema ->
+                StudioState.project.current!!.reloadEntries()
+                StudioState.project.tryCreateUntitledFile()?.let { file ->
+                    file.content(schema)
+                    file.tryOpen()
+                }
+            }
+            composeRule.waitForIdle()
+            val a = StudioState.project.pages
+            println(a)
+            val y = composeRule.onRoot(useUnmergedTree = true).printToString()
+            println(y)
 
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
