@@ -48,10 +48,10 @@ class ProjectBrowser {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory("create_a_directory")
-            delay(500)
+            wait(composeRule, 500)
+
             StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("create_a_directory").assertExists()
 
@@ -75,10 +75,11 @@ class ProjectBrowser {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile("file4")
-            delay(500)
+            wait(composeRule, 500)
+
             StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
+
 
             composeRule.onNodeWithText("file4").assertExists()
 
@@ -99,15 +100,15 @@ class ProjectBrowser {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
-            delay(500)
+            wait(composeRule, 500)
+
             StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("file3_0").assertExists()
             StudioState.project.current!!.directory.entries.find { it.name == "file3_0" }!!.asFile().tryRename("file3")
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
+
         }
     }
 
@@ -123,10 +124,10 @@ class ProjectBrowser {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-            delay(500)
+            wait(composeRule, 500)
+
             StudioState.project.current!!.reloadEntries()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("file3").assertDoesNotExist()
 

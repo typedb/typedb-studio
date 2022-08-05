@@ -25,14 +25,20 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.vaticle.typedb.client.TypeDB
+import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TextEditor {
@@ -56,17 +62,14 @@ class TextEditor {
             val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-            composeRule.waitForIdle()
-            delay(500)
+            wait(composeRule, 500)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
             val filePath = File("$path/Untitled1.tql").toPath()
             StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
             StudioState.project.current!!.reloadEntries()
-
-            composeRule.waitForIdle()
-            delay(500)
+            wait(composeRule, 500)
 
             assertTrue(File("$path/Untitled1.tql").exists())
         }
@@ -88,8 +91,7 @@ class TextEditor {
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -112,7 +114,23 @@ class TextEditor {
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
 
-            // We'll have to read using the client again to verify that the data was actually written.
+            val queryString = fileNameToString("$funcName/$QUERY_FILE_NAME")
+            TypeDB.coreClient(DB_ADDRESS).use { client ->
+                client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+                    session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
+                        val results = ArrayList<String>()
+                        val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
+                        transaction.query().match(query).forEach { result ->
+                            results.add(
+                                result.get("user-name").asAttribute().value.toString()
+                            )
+                        }
+                        assertEquals(2, results.size)
+                        assertTrue(results.contains("jmsfltchr"))
+                        assertTrue(results.contains("krishnangovindraj"))
+                    }
+                }
+            }
         }
     }
 
@@ -131,8 +149,7 @@ class TextEditor {
 
             StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
 
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
@@ -140,15 +157,11 @@ class TextEditor {
             StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
             composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
-            composeRule.onNodeWithText("repository-id").assertDoesNotExist()
-
-            StudioState.client.session.close()
+            composeRule.onNodeWithText("repo-id").assertDoesNotExist()
         }
     }
 

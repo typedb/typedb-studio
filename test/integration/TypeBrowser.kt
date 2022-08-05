@@ -64,7 +64,6 @@ class TypeBrowser {
             composeRule.onNodeWithText("attribute").assertExists()
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
-            StudioState.client.session.close()
         }
     }
 
@@ -110,14 +109,12 @@ class TypeBrowser {
             composeRule.waitForIdle()
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("commit-date").assertExists()
         }

@@ -83,6 +83,17 @@ fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name:
     return absolute.toPath()
 }
 
+// Context: waitForIdle() advances the main clock until all recompositions are finished
+//
+// This pattern is so common within the code that we create a utility for it.
+//
+// It's easy to accidentally waitForIdle and then delay instead of vice versa, which leads to recomposing before data
+// has had time to be exchanged between the client and the server.
+suspend fun wait(composeRule: ComposeContentTestRule, time: Int) {
+    delay(time.toLong())
+    composeRule.waitForIdle()
+}
+
 suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
     // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
     // clicked.
@@ -116,15 +127,13 @@ suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
 
 suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
     composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 
     StudioState.client.session.tryOpen(database, TypeDBSession.Type.SCHEMA)
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
+
     StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 
     composeRule.onNodeWithText("schema").performClick()
     composeRule.onNodeWithText("write").performClick()
@@ -132,11 +141,10 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, databa
     StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
+
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 
     assertEquals("CNX10", StudioState.notification.queue.last().code)
 }
@@ -144,8 +152,7 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, databa
 suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
     StudioState.client.session.tryOpen(database, TypeDBSession.Type.DATA)
 
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 
     composeRule.onNodeWithText("data").performClick()
     composeRule.onNodeWithText("write").performClick()
@@ -153,11 +160,9 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database
     StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-    delay(500)
-    composeRule.waitForIdle()
+    wait(composeRule, 500)
 }
 
