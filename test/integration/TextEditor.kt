@@ -70,7 +70,6 @@ class TextEditor {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
             }
-            StudioState.reset()
             composeRule.waitForIdle()
 
             val x = composeRule.onRoot().printToString()
@@ -84,10 +83,6 @@ class TextEditor {
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
             composeRule.waitForIdle()
             delay(500)
-
-
-
-            composeRule.onNodeWithText("Untitled1.tql *").assertExists()
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
