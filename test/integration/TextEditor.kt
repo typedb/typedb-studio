@@ -34,7 +34,6 @@ import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
-import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 import java.io.File

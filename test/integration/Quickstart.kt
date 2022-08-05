@@ -62,8 +62,6 @@ class Quickstart {
         private const val DB_NAME = "quickstart"
 
         private val QUERY_FILE_PATH = File("$TQL_DATA_PATH/$QUERY_FILE_NAME").absolutePath
-        private val DATA_FILE_PATH = File("$TQL_DATA_PATH/$DATA_FILE_NAME").absolutePath
-        private val SCHEMA_FILE_PATH = File("$TQL_DATA_PATH/$SCHEMA_FILE_NAME").absolutePath
     }
 
     @get:Rule
@@ -71,6 +69,7 @@ class Quickstart {
 
     @Test
     fun `Quickstart`() {
+        val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
                 Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
@@ -79,54 +78,11 @@ class Quickstart {
             composeRule.waitForIdle()
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
-            openProject(composeRule)
-            writeSchema(composeRule)
-            writeData(composeRule)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
             verifyAnswers(composeRule)
         }
-    }
-
-    private fun openProject(composeRule: ComposeContentTestRule) {
-        cloneAndOpenProject(composeRule, TQL_DATA_PATH, "Quickstart")
-        composeRule.onNodeWithText(SCHEMA_FILE_NAME).assertExists()
-        composeRule.onNodeWithText(DATA_FILE_NAME).assertExists()
-    }
-
-    private suspend fun writeSchema(composeRule: ComposeContentTestRule) {
-        val schemaString = fileNameToString(SCHEMA_FILE_PATH)
-
-        composeRule.onNodeWithText("schema").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("write").performClick()
-        composeRule.waitForIdle()
-
-        StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
-        delay(1_000)
-        StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        delay(1_000)
-        StudioState.client.session.transaction.runQuery(schemaString)
-        delay(1_000)
-
-        // Commit the schema write.
-        // Switch these two statements when we can use windows.
-//            composeRule.onNodeWithText(CHECK_STRING).performClick()
-        StudioState.client.session.transaction.commit()
-        delay(1_000)
-        StudioState.client.session.close()
-    }
-
-    private suspend fun writeData(composeRule: ComposeContentTestRule) {
-        val dataString = fileNameToString(DATA_FILE_PATH)
-
-        composeRule.onNodeWithText("write").performClick()
-        composeRule.waitForIdle()
-
-        StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.DATA)
-        delay(1_000)
-        StudioState.client.session.transaction.runQuery(dataString)
-        delay(1_000)
-        StudioState.client.session.transaction.commit()
-        StudioState.client.session.close()
     }
 
     private suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
