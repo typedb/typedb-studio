@@ -22,37 +22,17 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.assertHasClickAction
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.printToString
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.test.integration.runComposeRule
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.state.project.PathState
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TextEditor {
@@ -72,14 +52,9 @@ class TextEditor {
             }
             composeRule.waitForIdle()
 
-            val x = composeRule.onRoot().printToString()
-            println(x)
-
             // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
-            val y = composeRule.onRoot().printToString()
-            println(y)
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
             composeRule.waitForIdle()
             delay(500)
@@ -134,7 +109,6 @@ class TextEditor {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
-//            StudioState.client.tryOpenSession(DB_NAME)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
 

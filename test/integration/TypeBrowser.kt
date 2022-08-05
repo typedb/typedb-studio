@@ -23,37 +23,18 @@
 package com.vaticle.typedb.studio.test.integration
 
 
-import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.onSibling
-import androidx.compose.ui.test.onSiblings
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.printToString
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.test.integration.runComposeRule
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.framework.output.RunOutputArea
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.state.project.PathState
-import com.vaticle.typedb.studio.state.schema.SchemaManager
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
 import kotlinx.coroutines.delay
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+
 
 class TypeBrowser {
     companion object {
@@ -159,10 +140,6 @@ class TypeBrowser {
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             composeRule.waitForIdle()
 
-            val x = composeRule.onRoot(useUnmergedTree = true).printToString()
-            println(x)
-            val z = StudioState.project.pages
-            println(z)
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
@@ -171,10 +148,6 @@ class TypeBrowser {
                 }
             }
             composeRule.waitForIdle()
-            val a = StudioState.project.pages
-            println(a)
-            val y = composeRule.onRoot(useUnmergedTree = true).printToString()
-            println(y)
 
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
