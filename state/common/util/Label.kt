@@ -103,6 +103,7 @@ object Label {
     const val NOT = "Not"
     const val OK = "OK"
     const val OPEN = "Open"
+    const val OPEN_PREFERENCES = "Open Preferences"
     const val OPEN_PROJECT = "Open Project"
     const val OPEN_PROJECT_DIRECTORY = "Open Project Directory"
     const val OPTIONAL = "Optional"

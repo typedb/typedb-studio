@@ -135,9 +135,19 @@ object Toolbar {
         @Composable
         internal fun Buttons() {
             ToolbarRow {
+                OpenPreferencesButton()
                 OpenProjectButton()
                 SaveButton()
             }
+        }
+
+        @Composable
+        private fun OpenPreferencesButton() {
+            ToolbarIconButton(
+                icon = Icon.Code.GEAR,
+                onClick = {}, // { StudioState.preference.openPreferenceDialog.toggle() },
+                tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
+            )
         }
 
         @Composable

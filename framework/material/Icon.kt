@@ -96,6 +96,7 @@ object Icon {
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
         FONT_CASE(0xf866u),
+        GEAR(0xf013u),
         HEXAGON(0xf312u),
         LETTER_W(0x57u),
         LINK_SIMPLE(0xe1cdu),
