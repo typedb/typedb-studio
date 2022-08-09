@@ -73,11 +73,10 @@ class TypeBrowser {
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            delay(500)
-            composeRule.waitForIdle()
+            wait(composeRule, 500)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
         }

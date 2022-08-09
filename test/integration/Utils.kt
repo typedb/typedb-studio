@@ -26,8 +26,12 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.vaticle.typedb.client.TypeDB
+import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
@@ -166,5 +170,32 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
+}
+
+suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String, queryFilePath: String) {
+    val queryString = fileNameToString(queryFilePath)
+
+    composeRule.onNodeWithText("infer").performClick()
+    composeRule.waitForIdle()
+    composeRule.onNodeWithText("read").performClick()
+    composeRule.waitForIdle()
+    delay(1_000)
+
+    TypeDB.coreClient(DB_ADDRESS).use { client ->
+        client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+            session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
+                val results = ArrayList<String>()
+                val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
+                transaction.query().match(query).forEach { result ->
+                    results.add(
+                        result.get("user-name").asAttribute().value.toString()
+                    )
+                }
+                assertEquals(2, results.size)
+                assertTrue(results.contains("jmsfltchr"))
+                assertTrue(results.contains("krishnangovindraj"))
+            }
+        }
+    }
 }
 

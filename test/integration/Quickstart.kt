@@ -59,8 +59,6 @@ import kotlin.test.assertTrue
 class Quickstart {
     companion object {
         private const val DB_NAME = "quickstart"
-
-        private val QUERY_FILE_PATH = File("$TQL_DATA_PATH/$QUERY_FILE_NAME").absolutePath
     }
 
     @get:Rule
@@ -75,34 +73,7 @@ class Quickstart {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
-            verifyAnswers(composeRule)
-        }
-    }
-
-    private suspend fun verifyAnswers(composeRule: ComposeContentTestRule) {
-        val queryString = fileNameToString(QUERY_FILE_PATH)
-
-        composeRule.onNodeWithText("infer").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("read").performClick()
-        composeRule.waitForIdle()
-        delay(1_000)
-
-        TypeDB.coreClient(DB_ADDRESS).use { client ->
-            client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
-                session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
-                    val results = ArrayList<String>()
-                    val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
-                    transaction.query().match(query).forEach { result ->
-                        results.add(
-                            result.get("user-name").asAttribute().value.toString()
-                        )
-                    }
-                    assertEquals(2, results.size)
-                    assertTrue(results.contains("jmsfltchr"))
-                    assertTrue(results.contains("krishnangovindraj"))
-                }
-            }
+            verifyDataWrite(composeRule, DB_NAME, "$funcName/$QUERY_FILE_NAME")
         }
     }
 }

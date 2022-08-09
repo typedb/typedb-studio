@@ -25,15 +25,11 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
+
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -97,24 +93,7 @@ class TextEditor {
             createDatabase(composeRule, DB_NAME)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
-
-            val queryString = fileNameToString("$funcName/$QUERY_FILE_NAME")
-            TypeDB.coreClient(DB_ADDRESS).use { client ->
-                client.session(DB_NAME, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
-                    session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
-                        val results = ArrayList<String>()
-                        val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
-                        transaction.query().match(query).forEach { result ->
-                            results.add(
-                                result.get("user-name").asAttribute().value.toString()
-                            )
-                        }
-                        assertEquals(2, results.size)
-                        assertTrue(results.contains("jmsfltchr"))
-                        assertTrue(results.contains("krishnangovindraj"))
-                    }
-                }
-            }
+            verifyDataWrite(composeRule, DB_NAME, "$funcName/$QUERY_FILE_NAME")
         }
     }
 

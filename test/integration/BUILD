@@ -44,6 +44,11 @@ kt_jvm_library(
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
