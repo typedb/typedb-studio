@@ -177,18 +177,9 @@ kt_jvm_test(
         "test-utils",
         "//:studio",
         "//state",
-        "//state/connection",
         "//state/page",
         "//state/project",
         "//state/schema",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
