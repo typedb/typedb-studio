@@ -27,10 +27,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-import kotlinx.coroutines.delay
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test

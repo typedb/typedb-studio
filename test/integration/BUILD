@@ -71,23 +71,7 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "test-utils",
-
         "//:studio",
-        "//framework/common",
-        "//state",
-        "//state/app",
-        "//state/connection",
-        "//state/project",
-        "//state/common",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_common//test:typedb-runner",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
@@ -117,22 +101,9 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "test-utils",
-
-        "//:studio",
-        "//framework/common",
         "//state",
-        "//state/app",
-        "//state/connection",
         "//state/project",
         "//state/page",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
@@ -163,23 +134,18 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "test-utils",
-
         "//:studio",
-        "//framework/common",
         "//state",
         "//state/app",
+        "//state/common",
         "//state/connection",
         "//state/project",
         "//state/page",
-        "//state/common",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
@@ -209,17 +175,13 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "test-utils",
-
         "//:studio",
-        "//framework/common",
-        "//framework/output",
         "//state",
-        "//state/app",
         "//state/connection",
-        "//state/project",
         "//state/page",
-        "//state/common",
+        "//state/project",
         "//state/schema",
+
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api",
@@ -227,6 +189,7 @@ kt_jvm_test(
         "@vaticle_typeql//java:typeql-lang",
         "@vaticle_typeql//java/common:common",
         "@vaticle_typeql//java/query:query",
+
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",

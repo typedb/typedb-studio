@@ -26,15 +26,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-
+import java.io.File
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class TextEditor {
     companion object {

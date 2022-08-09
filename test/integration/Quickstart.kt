@@ -22,25 +22,9 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
-import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Some of these tests use delay!
