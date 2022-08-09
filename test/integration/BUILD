@@ -17,6 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
+load("//test/integration:test_rules.bzl", "studio_test")
 
 package(default_visibility = ["//:__pkg__"])
 
@@ -61,36 +62,43 @@ kt_jvm_library(
     ],
 )
 
-
-kt_jvm_test(
+studio_test(
     name = "test-quickstart",
-    srcs = ["Quickstart.kt"],
+    class_srcs = ["Quickstart.kt"],
     data = ["//test/data:query-string-files"],
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    test_class = "com.vaticle.typedb.studio.test.integration.Quickstart",
-    runtime_deps = skiko_runtime_platform,
-    deps = [
-        "test-utils",
-        "//:studio",
-
-        # External Maven Dependencies
-        "@maven//:junit_junit",
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-        "@maven//:org_jetbrains_compose_material_material_desktop",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_junit4_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-        "@maven//:org_jetbrains_kotlin_kotlin_test",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-        "@maven//:org_jetbrains_skiko_skiko_awt",
-    ],
+    test_class_path = "com.vaticle.typedb.studio.test.integration.Quickstart",
+    deps = ["//:studio"]
 )
+
+#kt_jvm_test(
+#    name = "test-quickstart",
+#    srcs = ["Quickstart.kt"],
+#    data = ["//test/data:query-string-files"],
+#    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+#    test_class = "com.vaticle.typedb.studio.test.integration.Quickstart",
+#    runtime_deps = skiko_runtime_platform,
+#    deps = [
+#        "test-utils",
+#        "//:studio",
+#
+#        # External Maven Dependencies
+#        "@maven//:junit_junit",
+#        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+#        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+#        "@maven//:org_jetbrains_compose_material_material_desktop",
+#        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_test_junit4_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+#        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
+#        "@maven//:org_jetbrains_kotlin_kotlin_test",
+#        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+#        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
+#        "@maven//:org_jetbrains_skiko_skiko_awt",
+#    ],
+#)
 
 kt_jvm_test(
     name = "test-projectbrowser",
