@@ -37,7 +37,7 @@ class ProjectBrowser {
     val composeRule = createComposeRule()
 
     @Test
-    fun `Create a Directory`() {
+    fun createADirectory() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -45,26 +45,22 @@ class ProjectBrowser {
             }
             composeRule.waitForIdle()
 
+            val createdDirectoryName = "created"
+
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
-            StudioState.project.current!!.directory.asDirectory().tryCreateDirectory("create_a_directory")
+            StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
             wait(composeRule, 500)
 
             StudioState.project.current!!.reloadEntries()
             wait(composeRule, 500)
 
-            composeRule.onNodeWithText("create_a_directory").assertExists()
-
-            StudioState.project.current!!.directory.entries.find { it.name == "create_a_directory" }!!.asDirectory()
-                .delete()
-            StudioState.project.current!!.reloadEntries()
-            composeRule.waitForIdle()
-            composeRule.onNodeWithText("create_a_directory").assertExists()
+            composeRule.onNodeWithText(createdDirectoryName).assertExists()
         }
     }
 
     @Test
-    fun `Create a File`() {
+    fun createAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -72,24 +68,23 @@ class ProjectBrowser {
             }
             composeRule.waitForIdle()
 
+            val createdFileName = "created"
+
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
-            StudioState.project.current!!.directory.asDirectory().tryCreateFile("file4")
+            StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
             wait(composeRule, 500)
 
             StudioState.project.current!!.reloadEntries()
             wait(composeRule, 500)
 
+            composeRule.onNodeWithText(createdFileName).assertExists()
 
-            composeRule.onNodeWithText("file4").assertExists()
-
-            StudioState.project.current!!.directory.entries.find { it.name == "file4" }!!.asFile()
-                .delete()
         }
     }
 
     @Test
-    fun `Rename a File`() {
+    fun renameAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -97,23 +92,23 @@ class ProjectBrowser {
             }
             composeRule.waitForIdle()
 
+            val renamedFileName = "renamed"
+
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
-            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryRename("file3_0")
+            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
+                .tryRename(renamedFileName)
             wait(composeRule, 500)
 
             StudioState.project.current!!.reloadEntries()
             wait(composeRule, 500)
 
-            composeRule.onNodeWithText("file3_0").assertExists()
-            StudioState.project.current!!.directory.entries.find { it.name == "file3_0" }!!.asFile().tryRename("file3")
-            wait(composeRule, 500)
-
+            composeRule.onNodeWithText(renamedFileName).assertExists()
         }
     }
 
     @Test
-    fun `Delete a File`() {
+    fun deleteAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -130,16 +125,11 @@ class ProjectBrowser {
             wait(composeRule, 500)
 
             composeRule.onNodeWithText("file3").assertDoesNotExist()
-
-            StudioState.project.current!!.directory.asDirectory()
-                .tryCreateFile("file3")
-            delay(500)
-            StudioState.project.current!!.reloadEntries()
         }
     }
 
     @Test
-    fun `Expand Folders`() {
+    fun expandFolders() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -157,7 +147,7 @@ class ProjectBrowser {
     }
 
     @Test
-    fun `Expand Folders then Collapse Folders`() {
+    fun expandThenCollapseFolders() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -174,7 +164,7 @@ class ProjectBrowser {
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             composeRule.waitForIdle()
 
-            composeRule.onNodeWithText("Expand Folders then Collapse Folders").assertExists()
+            composeRule.onNodeWithText(funcName).assertExists()
             composeRule.onNodeWithText("file1_2").assertDoesNotExist()
         }
     }

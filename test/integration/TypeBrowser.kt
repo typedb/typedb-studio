@@ -45,7 +45,7 @@ class TypeBrowser {
     val composeRule = createComposeRule()
 
     @Test
-    fun `Schema writes through client are automatically displayed`() {
+    fun interactiveSchemaWritesAutomaticallyDisplayed() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -68,7 +68,7 @@ class TypeBrowser {
     }
 
     @Test
-    fun `Collapse types`() {
+    fun collapseTypes() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -94,7 +94,7 @@ class TypeBrowser {
     }
 
     @Test
-    fun `Expand types`() {
+    fun expandTypes() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -123,7 +123,7 @@ class TypeBrowser {
     // This test is ignored as the export schema button doesn't open a new file as expected.
     @Ignore
     @Test
-    fun `Export schema`() {
+    fun exportSchema() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {

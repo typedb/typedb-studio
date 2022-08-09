@@ -39,6 +39,10 @@ kt_jvm_library(
         "//state/page",
         "//state/common",
         "//framework/material",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//api",
+
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
@@ -47,7 +51,6 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlin_kotlin_test",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-        "@vaticle_typedb_client_java//api",
     ],
 )
 
@@ -69,6 +72,16 @@ kt_jvm_test(
         "//state/connection",
         "//state/project",
         "//state/common",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typedb_common//test:typedb-runner",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
+
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -85,13 +98,6 @@ kt_jvm_test(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
         "@maven//:org_jetbrains_skiko_skiko_awt",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_common//test:typedb-runner",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
     ],
 )
 
@@ -112,6 +118,15 @@ kt_jvm_test(
         "//state/connection",
         "//state/project",
         "//state/page",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
+
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -128,12 +143,7 @@ kt_jvm_test(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
         "@maven//:org_jetbrains_skiko_skiko_awt",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
+
     ],
 )
 
@@ -155,6 +165,15 @@ kt_jvm_test(
         "//state/project",
         "//state/page",
         "//state/common",
+
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
+
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -171,12 +190,6 @@ kt_jvm_test(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
         "@maven//:org_jetbrains_skiko_skiko_awt",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
     ],
 )
 
@@ -200,6 +213,13 @@ kt_jvm_test(
         "//state/page",
         "//state/common",
         "//state/schema",
+        # External Vaticle Dependencies
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/common:common",
+        "@vaticle_typeql//java/query:query",
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
@@ -216,12 +236,6 @@ kt_jvm_test(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
         "@maven//:org_jetbrains_skiko_skiko_awt",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
     ],
 )
 

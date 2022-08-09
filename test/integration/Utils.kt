@@ -83,14 +83,9 @@ fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name:
     return absolute.toPath()
 }
 
-// Context: waitForIdle() advances the main clock until all recompositions are finished
-//
-// This pattern is so common within the code that we create a utility for it.
-//
-// It's easy to accidentally waitForIdle and then delay instead of vice versa, which leads to recomposing before data
-// has had time to be exchanged between the client and the server.
-suspend fun wait(composeRule: ComposeContentTestRule, time: Int) {
-    delay(time.toLong())
+/// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
+suspend fun wait(composeRule: ComposeContentTestRule, timeMillis: Int) {
+    delay(timeMillis.toLong())
     composeRule.waitForIdle()
 }
 
@@ -100,29 +95,22 @@ suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String
     composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
     StudioState.client.tryConnectToTypeDB(address) {}
-    // We wait to connect to TypeDB. This can be slow by default on macOS, so we wait a while.
-    delay(5_000)
-    // Order is important here! We delay allowing the connection to take place, then give the program
-    // time to recompose. If we waitForIdle then delay, it recomposes before connecting failing the
-    // next assertExists.
-    composeRule.waitForIdle()
+    // Resolving localhost can take up to 5 seconds on macOS
+    wait(composeRule, 5_000)
     assertTrue(StudioState.client.isConnected)
 
     composeRule.onNodeWithText(address).assertExists()
 }
 
 suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
-    // Same as connecting to typedb, but we can't see dropdowns either.
+    // This opens a dropdown (which we can't see through) so we assert that buttons with that text can be clicked.
     composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-    try {
-        StudioState.client.tryDeleteDatabase(name)
-    }
-    catch (_: Exception) {}
-    delay(1_000)
+    StudioState.client.tryDeleteDatabase(name)
+    wait(composeRule, 500)
 
     StudioState.client.tryCreateDatabase(name) {}
-    delay(1_000)
+    wait(composeRule,500)
 }
 
 suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {

@@ -49,7 +49,7 @@ class TextEditor {
     val composeRule = createComposeRule()
 
     @Test
-    fun `Make a new file and save it`() {
+    fun makeAFileAndSaveIt() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -75,7 +75,7 @@ class TextEditor {
     }
 
     @Test
-    fun `Schema write and commit`() {
+    fun schemaWriteAndCommit() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -99,7 +99,7 @@ class TextEditor {
     }
 
     @Test
-    fun `Data write and commit`() {
+    fun dataWriteAndCommit() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
@@ -134,7 +134,7 @@ class TextEditor {
     }
 
     @Test
-    fun `Schema write and rollback`() {
+    fun schemaWriteAndRollback() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {

@@ -67,7 +67,7 @@ class Quickstart {
     val composeRule = createComposeRule()
 
     @Test
-    fun `Quickstart`() {
+    fun Quickstart() {
         val funcName = object{}.javaClass.enclosingMethod.name
         runComposeRule(composeRule) {
             setContent {
