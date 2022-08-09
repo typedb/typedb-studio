@@ -69,12 +69,7 @@ class Quickstart {
     @Test
     fun Quickstart() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 500, 0, 0))
-            }
-
-            composeRule.waitForIdle()
+        studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)

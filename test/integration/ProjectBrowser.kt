@@ -28,7 +28,6 @@ import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
-import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 
@@ -39,12 +38,7 @@ class ProjectBrowser {
     @Test
     fun createADirectory() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             val createdDirectoryName = "created"
 
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
@@ -62,12 +56,7 @@ class ProjectBrowser {
     @Test
     fun createAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             val createdFileName = "created"
 
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
@@ -86,12 +75,7 @@ class ProjectBrowser {
     @Test
     fun renameAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             val renamedFileName = "renamed"
 
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
@@ -110,12 +94,7 @@ class ProjectBrowser {
     @Test
     fun deleteAFile() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
@@ -131,12 +110,7 @@ class ProjectBrowser {
     @Test
     fun expandFolders() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
@@ -149,12 +123,7 @@ class ProjectBrowser {
     @Test
     fun expandThenCollapseFolders() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()

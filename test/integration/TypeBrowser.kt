@@ -47,12 +47,7 @@ class TypeBrowser {
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
@@ -70,12 +65,7 @@ class TypeBrowser {
     @Test
     fun collapseTypes() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             createDatabase(composeRule, DB_NAME)
@@ -96,17 +86,11 @@ class TypeBrowser {
     @Test
     fun expandTypes() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             createDatabase(composeRule, DB_NAME)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
-            composeRule.waitForIdle()
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
@@ -125,17 +109,11 @@ class TypeBrowser {
     @Test
     fun exportSchema() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             createDatabase(composeRule, DB_NAME)
             writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
-            composeRule.waitForIdle()
 
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()

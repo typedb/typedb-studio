@@ -21,12 +21,15 @@ package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.Studio
+import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -64,6 +67,16 @@ const val DB_ADDRESS = "localhost:1729"
 
 fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
     runBlocking { compose.rule() }
+}
+
+fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
+    runComposeRule(compose) {
+        setContent {
+            Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+        }
+        compose.waitForIdle()
+        funcBody()
+    }
 }
 
 fun fileNameToString(fileName: String): String {

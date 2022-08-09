@@ -32,6 +32,7 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     runtime_deps = skiko_runtime_platform,
     deps = [
+        "//:studio",
         "//state",
         "//state/app",
         "//state/connection",
@@ -39,6 +40,7 @@ kt_jvm_library(
         "//state/page",
         "//state/common",
         "//framework/material",
+        "//framework/common",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",

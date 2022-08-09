@@ -51,12 +51,7 @@ class TextEditor {
     @Test
     fun makeAFileAndSaveIt() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
 
@@ -77,12 +72,7 @@ class TextEditor {
     @Test
     fun schemaWriteAndCommit() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
@@ -101,12 +91,7 @@ class TextEditor {
     @Test
     fun dataWriteAndCommit() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
@@ -136,12 +121,7 @@ class TextEditor {
     @Test
     fun schemaWriteAndRollback() {
         val funcName = object{}.javaClass.enclosingMethod.name
-        runComposeRule(composeRule) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            composeRule.waitForIdle()
-
+        studioTest(composeRule) {
             cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
             connectToTypeDB(composeRule, DB_ADDRESS)
             createDatabase(composeRule, DB_NAME)
