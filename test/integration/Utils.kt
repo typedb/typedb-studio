@@ -85,13 +85,14 @@ fun fileNameToString(fileName: String): String {
 }
 
 fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name: String): Path {
-    // This line looks needlessly verbose, but attempting to use File(name) as a unique identifier for a single location
-    // isn't sufficient.
     val absolute = File(File(name).absolutePath)
+
     absolute.deleteRecursively()
     File(path).copyRecursively(overwrite = true, target = absolute)
+
     StudioState.project.tryOpenProject(absolute.toPath())
     StudioState.appData.project.path = absolute.toPath()
+
     composeRule.waitForIdle()
     return absolute.toPath()
 }
