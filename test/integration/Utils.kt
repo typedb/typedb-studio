@@ -118,7 +118,6 @@ suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String
 }
 
 suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
-    // This opens a dropdown (which we can't see through) so we assert that buttons with that text can be clicked.
     composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
     StudioState.client.tryDeleteDatabase(name)
