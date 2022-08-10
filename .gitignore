@@ -30,6 +30,3 @@ bazel-*
 
 # Eclipse
 .metadata
-
-# Sonarqube
-.scannerwork
