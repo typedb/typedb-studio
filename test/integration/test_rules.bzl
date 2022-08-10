@@ -24,7 +24,7 @@ skiko_runtime_platform = select({
      "//conditions:default": ["INVALID"]})
 
 
-def studio_test(name, class_srcs, data, test_class_path, deps):
+def studio_test(name, class_srcs, data, test_class_path, dependencies = []):
     kt_jvm_test(
         name = name,
         srcs = class_srcs,
@@ -51,5 +51,5 @@ def studio_test(name, class_srcs, data, test_class_path, deps):
             "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
             "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
             "@maven//:org_jetbrains_skiko_skiko_awt",
-        ] + deps,
+        ] + dependencies,
     )
