@@ -31,25 +31,22 @@ import com.vaticle.typedb.studio.state.StudioState
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import java.util.*
 
 
-class TypeBrowser {
-    companion object {
-        private const val DB_NAME = "typebrowser"
-    }
-
+class TypeBrowserTest {
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -61,12 +58,12 @@ class TypeBrowser {
 
     @Test
     fun collapseTypes() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
@@ -81,12 +78,12 @@ class TypeBrowser {
 
     @Test
     fun expandTypes() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
@@ -104,12 +101,12 @@ class TypeBrowser {
     @Ignore
     @Test
     fun exportSchema() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
 
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()

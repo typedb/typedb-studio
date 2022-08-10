@@ -31,21 +31,18 @@ import java.io.File
 import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.util.*
 
-class TextEditor {
-    companion object {
-        private const val DB_NAME = "texteditor"
-    }
-
+class TextEditorTest {
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
     fun makeAFileAndSaveIt() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
-            val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, funcName)
+            val path = cloneAndOpenProject(composeRule, SAMPLE_DATA_PATH, uuid)
 
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
             wait(composeRule, 500)
@@ -63,13 +60,13 @@ class TextEditor {
 
     @Test
     fun schemaWriteAndCommit() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
@@ -82,26 +79,26 @@ class TextEditor {
 
     @Test
     fun dataWriteAndCommit() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, DB_NAME)
-            writeSchemaInteractively(composeRule, DB_NAME, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, DB_NAME, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, DB_NAME, "$funcName/$QUERY_FILE_NAME")
+            createDatabase(composeRule, uuid)
+            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, uuid, DATA_FILE_NAME)
+            verifyDataWrite(composeRule, uuid, "$uuid/$QUERY_FILE_NAME")
         }
     }
 
     @Test
     fun schemaWriteAndRollback() {
-        val funcName = object{}.javaClass.enclosingMethod.name
+        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, funcName)
+            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, DB_NAME)
+            createDatabase(composeRule, uuid)
 
-            StudioState.client.session.tryOpen(DB_NAME, TypeDBSession.Type.SCHEMA)
+            StudioState.client.session.tryOpen(uuid, TypeDBSession.Type.SCHEMA)
 
             wait(composeRule, 500)
 
