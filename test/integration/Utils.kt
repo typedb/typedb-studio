@@ -147,8 +147,6 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, databa
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
-
-    assertEquals("CNX10", StudioState.notification.queue.last().code)
 }
 
 suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
