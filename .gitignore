@@ -15,18 +15,39 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# OSX
+# macOS
 .DS_Store
 
 # Bazel
 bazel-*
 
-# IntelliJ
-.idea
-.ijwb
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+*.geany
+.ijwb/
 
-# Studio
+# TypeDB Studio
 .typedb-studio
 
+# VS Code
+.vscode/
+.settings/
+.project
+.classpath
+
 # Eclipse
-.metadata
+.metadata/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml #
+hs_err_pid*
+
+# Log
+logs/
+*.log
+
+# VIM swap
+*.swp
+*.swo
