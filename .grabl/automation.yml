@@ -41,6 +41,39 @@ build:
         sleep 60
         bazel build //test/integration/...
         bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
+    test-integration2:
+      image: vaticle-ubuntu-20.04
+      command: |
+        bazel run //:typedb-extractor -- dist/typedb-all-linux
+        sudo systemd-run ./dist/typedb-all-linux/typedb server
+        sleep 60
+        bazel build //test/integration/...
+        bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
+    test-integration3:
+      image: vaticle-ubuntu-20.04
+      command: |
+        bazel run //:typedb-extractor -- dist/typedb-all-linux
+        sudo systemd-run ./dist/typedb-all-linux/typedb server
+        sleep 60
+        bazel build //test/integration/...
+        bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
+    test-integration4:
+      image: vaticle-ubuntu-20.04
+      command: |
+        bazel run //:typedb-extractor -- dist/typedb-all-linux
+        sudo systemd-run ./dist/typedb-all-linux/typedb server
+        sleep 60
+        bazel build //test/integration/...
+        bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
+    test-integration5:
+      image: vaticle-ubuntu-20.04
+      command: |
+        bazel run //:typedb-extractor -- dist/typedb-all-linux
+        sudo systemd-run ./dist/typedb-all-linux/typedb server
+        sleep 60
+        bazel build //test/integration/...
+        bazel test $(bazel query 'kind(kt_jvm_test, //test/integration/...)') --test_output=streamed --spawn_strategy=local
+
 
 
 release:
