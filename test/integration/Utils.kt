@@ -70,7 +70,6 @@ fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContent
 }
 
 fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-    StudioState.init()
     runComposeRule(compose) {
         setContent {
             Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
