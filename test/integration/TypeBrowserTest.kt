@@ -45,6 +45,7 @@ class TypeBrowserTest: IntegrationTest() {
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
         }
+        println("Ended interactiveSchema")
     }
 
     @Test
@@ -64,10 +65,11 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
         }
+        println("Ended collapseTypes")
     }
 
     @Test
-    fun expandTypes() {
+    fun collapseThenExpandTypes() {
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
@@ -84,6 +86,7 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onNodeWithText("commit-date").assertExists()
         }
+        println("Ended expandTypes")
     }
 
     // This test is ignored as the export schema button doesn't open a new file during testing.

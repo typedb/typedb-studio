@@ -50,6 +50,7 @@ class TextEditorTest: IntegrationTest() {
 
             assertTrue(File("$path/Untitled1.tql").exists())
         }
+        println("Ended makeAFileAndSaveIt")
     }
 
     @Test
@@ -68,6 +69,7 @@ class TextEditorTest: IntegrationTest() {
             // is shown in the type browser.
             composeRule.onNodeWithText("commit-date").assertExists()
         }
+        println("Ended schemaWriteAndCommit")
     }
 
     @Test
@@ -80,6 +82,7 @@ class TextEditorTest: IntegrationTest() {
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
             verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
+        println("Ended dataWriteAndCommit")
     }
 
     @Test
@@ -105,6 +108,8 @@ class TextEditorTest: IntegrationTest() {
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
         }
+
+        println("Ended dataWriteAndCommit")
     }
 
 }
