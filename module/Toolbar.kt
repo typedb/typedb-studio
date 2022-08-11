@@ -135,19 +135,9 @@ object Toolbar {
         @Composable
         internal fun Buttons() {
             ToolbarRow {
-                OpenPreferencesButton()
                 OpenProjectButton()
                 SaveButton()
             }
-        }
-
-        @Composable
-        private fun OpenPreferencesButton() {
-            ToolbarIconButton(
-                icon = Icon.Code.GEAR,
-                onClick = {}, // { StudioState.preference.openPreferenceDialog.toggle() },
-                tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
-            )
         }
 
         @Composable
@@ -474,6 +464,8 @@ object Toolbar {
             ToolbarRow {
                 // TODO: ModeButtons()
                 ConnectionButton()
+                OpenPreferencesButton()
+
             }
         }
 
@@ -527,6 +519,15 @@ object Toolbar {
                 trailingIcon = Form.IconArg(Icon.Code.SERVER),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             ) { StudioState.client.connectServerDialog.open() }
+        }
+
+        @Composable
+        private fun OpenPreferencesButton() {
+            ToolbarIconButton(
+                icon = Icon.Code.GEAR,
+                onClick = {}, // { StudioState.preference.openPreferenceDialog.toggle() },
+                tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
+            )
         }
     }
 }
