@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -71,6 +70,7 @@ fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContent
 }
 
 fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
+    StudioState.init()
     runComposeRule(compose) {
         setContent {
             Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
@@ -85,11 +85,11 @@ fun fileNameToString(fileName: String): String {
         .joinToString("")
 }
 
-fun cloneAndOpenProject(composeRule: ComposeContentTestRule, path: String, name: String): Path {
-    val absolute = File(File(name).absolutePath)
+fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
+    val absolute = File(File(destination).absolutePath)
 
     absolute.deleteRecursively()
-    File(path).copyRecursively(overwrite = true, target = absolute)
+    File(source).copyRecursively(overwrite = true, target = absolute)
 
     StudioState.project.tryOpenProject(absolute.toPath())
     StudioState.appData.project.path = absolute.toPath()
@@ -117,21 +117,21 @@ suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String
     composeRule.onNodeWithText(address).assertExists()
 }
 
-suspend fun createDatabase(composeRule: ComposeContentTestRule, name: String) {
+suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
     composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-    StudioState.client.tryDeleteDatabase(name)
+    StudioState.client.tryDeleteDatabase(dbName)
     wait(composeRule, 500)
 
-    StudioState.client.tryCreateDatabase(name) {}
-    wait(composeRule,500)
+    StudioState.client.tryCreateDatabase(dbName) {}
+    wait(composeRule, 500)
 }
 
-suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
+suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
     composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
     wait(composeRule, 500)
 
-    StudioState.client.session.tryOpen(database, TypeDBSession.Type.SCHEMA)
+    StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
     wait(composeRule, 500)
 
     StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
@@ -140,7 +140,7 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, databa
     composeRule.onNodeWithText("schema").performClick()
     composeRule.onNodeWithText("write").performClick()
 
-    StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
+    StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
     wait(composeRule, 500)
@@ -149,15 +149,15 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, databa
     wait(composeRule, 500)
 }
 
-suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database: String, fileName: String) {
-    StudioState.client.session.tryOpen(database, TypeDBSession.Type.DATA)
+suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
+    StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
 
     wait(composeRule, 500)
 
     composeRule.onNodeWithText("data").performClick()
     composeRule.onNodeWithText("write").performClick()
 
-    StudioState.project.current!!.directory.entries.find { it.name == fileName }!!.asFile().tryOpen()
+    StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
     wait(composeRule, 500)
@@ -166,14 +166,13 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, database
     wait(composeRule, 500)
 }
 
-suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String, queryFilePath: String) {
-    val queryString = fileNameToString(queryFilePath)
+suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String, queryFileName: String) {
+    val queryString = fileNameToString(queryFileName)
 
     composeRule.onNodeWithText("infer").performClick()
     composeRule.waitForIdle()
     composeRule.onNodeWithText("read").performClick()
-    composeRule.waitForIdle()
-    delay(1_000)
+    wait(composeRule, 1_000)
 
     TypeDB.coreClient(DB_ADDRESS).use { client ->
         client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->

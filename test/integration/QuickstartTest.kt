@@ -22,10 +22,7 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.junit4.createComposeRule
-import org.junit.Rule
 import org.junit.Test
-import java.util.*
 
 /**
  * Some of these tests use delay!
@@ -41,20 +38,17 @@ import java.util.*
  *
  * However, this is a source of non-determinism and a better and easier way may emerge.
  */
-class QuickstartTest {
-    @get:Rule
-    val composeRule = createComposeRule()
+class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
-        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, uuid)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
-            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, uuid, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, uuid, "$uuid/$QUERY_FILE_NAME")
+            createDatabase(composeRule, dbName = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
+            verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
     }
 }

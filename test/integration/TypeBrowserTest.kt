@@ -22,31 +22,22 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.studio.state.StudioState
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
-import java.util.*
 
-
-class TypeBrowserTest {
-    @get:Rule
-    val composeRule = createComposeRule()
+class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
-            // We have to open a project to enable the '+' to create a new file.
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
             connectToTypeDB(composeRule, DB_ADDRESS)
-            createDatabase(composeRule, uuid)
-            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            createDatabase(composeRule, dbName = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -58,12 +49,11 @@ class TypeBrowserTest {
 
     @Test
     fun collapseTypes() {
-        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
-            createDatabase(composeRule, uuid)
-            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            createDatabase(composeRule, dbName = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
@@ -78,12 +68,11 @@ class TypeBrowserTest {
 
     @Test
     fun expandTypes() {
-        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
-            createDatabase(composeRule, uuid)
-            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            createDatabase(composeRule, dbName = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
@@ -97,16 +86,15 @@ class TypeBrowserTest {
         }
     }
 
-    // This test is ignored as the export schema button doesn't open a new file as expected.
+    // This test is ignored as the export schema button doesn't open a new file during testing.
     @Ignore
     @Test
     fun exportSchema() {
-        val uuid = UUID.randomUUID().toString()
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
-            cloneAndOpenProject(composeRule, TQL_DATA_PATH, uuid)
-            createDatabase(composeRule, uuid)
-            writeSchemaInteractively(composeRule, uuid, SCHEMA_FILE_NAME)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            createDatabase(composeRule, dbName = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()
