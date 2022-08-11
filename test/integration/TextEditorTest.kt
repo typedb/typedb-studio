@@ -109,7 +109,7 @@ class TextEditorTest: IntegrationTest() {
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
         }
 
-        println("Ended dataWriteAndCommit")
+        println("Ended schemaWriteAndRollback")
     }
 
 }

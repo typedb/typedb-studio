@@ -33,6 +33,7 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
+        println("Started interactiveSchema")
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
@@ -50,6 +51,7 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseTypes() {
+        println("Started collapseTypes")
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
@@ -70,6 +72,8 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseThenExpandTypes() {
+        println("Started expandTypes")
+
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)

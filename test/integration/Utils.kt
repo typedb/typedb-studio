@@ -142,7 +142,7 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName
     StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    wait(composeRule, 500)
+    wait(composeRule, 2_500)
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
@@ -159,7 +159,7 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: 
     StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
     composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    wait(composeRule, 500)
+    wait(composeRule, 2_500)
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
