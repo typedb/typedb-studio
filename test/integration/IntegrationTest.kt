@@ -37,5 +37,4 @@ abstract class IntegrationTest {
 
     @get:Rule
     var composeRule = createComposeRule()
-
 }
