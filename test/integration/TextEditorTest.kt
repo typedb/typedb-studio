@@ -66,12 +66,16 @@ class TextEditorTest: IntegrationTest() {
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
+            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
             composeRule.onNodeWithText("commit-date").assertExists()
+
+            StudioState.client.session.close()
         }
         println("Ended schemaWriteAndCommit")
     }
@@ -115,6 +119,8 @@ class TextEditorTest: IntegrationTest() {
             wait(composeRule, 500)
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
+
+            StudioState.client.session.close()
         }
 
         println("Ended schemaWriteAndRollback")

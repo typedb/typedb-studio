@@ -146,6 +146,8 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
+
+    StudioState.client.session.close()
 }
 
 suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
@@ -163,6 +165,8 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: 
 
     composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
     wait(composeRule, 500)
+
+    StudioState.client.session.close()
 }
 
 suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String, queryFileName: String) {

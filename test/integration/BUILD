@@ -147,9 +147,13 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//state",
+        "//state/common",
         "//state/page",
         "//state/project",
-        "//state/schema"
+        "//state/schema",
+        "//state/connection",
+
+        "@vaticle_typedb_client_java//api",
     ]
 )
 

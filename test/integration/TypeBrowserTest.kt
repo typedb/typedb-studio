@@ -25,6 +25,7 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.state.StudioState
 import org.junit.Ignore
 import org.junit.Test
@@ -33,7 +34,6 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        println("Started interactiveSchema")
         studioTest(composeRule) {
             connectToTypeDB(composeRule, DB_ADDRESS)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
@@ -46,7 +46,6 @@ class TypeBrowserTest: IntegrationTest() {
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
         }
-        println("Ended interactiveSchema")
     }
 
     @Test
@@ -58,6 +57,8 @@ class TypeBrowserTest: IntegrationTest() {
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
+            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
             wait(composeRule, 500)
@@ -66,6 +67,8 @@ class TypeBrowserTest: IntegrationTest() {
             wait(composeRule, 500)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+
+            StudioState.client.session.close()
         }
         println("Ended collapseTypes")
     }
@@ -80,6 +83,8 @@ class TypeBrowserTest: IntegrationTest() {
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
+            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
 
@@ -89,6 +94,8 @@ class TypeBrowserTest: IntegrationTest() {
             wait(composeRule, 500)
 
             composeRule.onNodeWithText("commit-date").assertExists()
+
+            StudioState.client.session.close()
         }
         println("Ended expandTypes")
     }
@@ -103,6 +110,8 @@ class TypeBrowserTest: IntegrationTest() {
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
+            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
@@ -114,6 +123,8 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
+
+            StudioState.client.session.close()
         }
     }
 }
