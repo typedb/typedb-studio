@@ -36,6 +36,7 @@ kt_jvm_library(
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//module/connection:connection",
+        "//module/preference:preference",
         "//module/project:project",
         "//module/role:role",
         "//module/rule:rule",
@@ -45,6 +46,7 @@ kt_jvm_library(
         "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
+#        "//state/preference:preference",
         "//state/project:project",
         "//state/page:page",
         "//state/schema:schema",
