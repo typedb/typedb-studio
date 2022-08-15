@@ -34,8 +34,6 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun makeAFileAndSaveIt() {
-        println("Started makeAFileAndSaveIt")
-
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
@@ -52,13 +50,10 @@ class TextEditorTest: IntegrationTest() {
 
             assertTrue(File("$path/Untitled1.tql").exists())
         }
-        println("Ended makeAFileAndSaveIt")
     }
 
     @Test
     fun schemaWriteAndCommit() {
-        println("Started schemaWriteAndCommit")
-
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
@@ -77,13 +72,10 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-        println("Ended schemaWriteAndCommit")
     }
 
     @Test
     fun dataWriteAndCommit() {
-        println("Started dataWriteAndCommit")
-
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, DB_ADDRESS)
@@ -92,13 +84,10 @@ class TextEditorTest: IntegrationTest() {
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
             verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
-        println("Ended dataWriteAndCommit")
     }
 
     @Test
     fun schemaWriteAndRollback() {
-        println("Started schemaWriteAndRollback")
-
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, DB_ADDRESS)
@@ -122,8 +111,5 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-
-        println("Ended schemaWriteAndRollback")
     }
-
 }

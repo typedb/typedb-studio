@@ -74,7 +74,7 @@ fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
         setContent {
             Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
         }
-        compose.waitForIdle()
+        wait(compose, 5_000)
         funcBody()
     }
 }
