@@ -525,7 +525,7 @@ object Toolbar {
         private fun OpenPreferencesButton() {
             ToolbarIconButton(
                 icon = Icon.Code.GEAR,
-                onClick = {}, // { StudioState.preference.openPreferenceDialog.toggle() },
+                onClick = { StudioState.preference.openPreferenceDialog.toggle() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
             )
         }

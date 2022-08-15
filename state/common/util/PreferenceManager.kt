@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.common.util
 
+import com.vaticle.typedb.studio.state.app.DialogManager
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -31,6 +32,7 @@ class PreferenceManager {
 
     var autosave: Boolean = AUTO_SAVE_DEFAULT
     var ignoredPaths: List<String> = IGNORED_PATHS_DEFAULT
+    val openPreferenceDialog = DialogManager.Base()
 
     fun isIgnoredPath(path: Path): Boolean {
         return ignoredPaths.contains(path.name)
