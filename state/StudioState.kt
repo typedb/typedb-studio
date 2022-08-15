@@ -31,14 +31,31 @@ import com.vaticle.typedb.studio.state.schema.SchemaManager
 
 object StudioState {
 
-    val preference = PreferenceManager()
-    val appData = DataManager()
-    val editor = EditorManager()
-    val status = StatusManager()
-    val notification = NotificationManager()
-    val confirmation = ConfirmationManager()
-    val pages = PageManager()
-    val client = ClientState(notification)
-    val project = ProjectManager(preference, notification, confirmation, client, pages)
-    val schema = SchemaManager(client.session, pages, notification)
+    lateinit var preference: PreferenceManager
+    lateinit var appData: DataManager
+    lateinit var editor: EditorManager
+    lateinit var status: StatusManager
+    lateinit var notification: NotificationManager
+    lateinit var confirmation: ConfirmationManager
+    lateinit var pages: PageManager
+    lateinit var client: ClientState
+    lateinit var project: ProjectManager
+    lateinit var schema: SchemaManager
+
+    init {
+        init()
+    }
+
+    fun init() {
+        preference = PreferenceManager()
+        appData = DataManager()
+        editor = EditorManager()
+        status = StatusManager()
+        notification = NotificationManager()
+        confirmation = ConfirmationManager()
+        pages = PageManager()
+        client = ClientState(notification)
+        project = ProjectManager(preference, notification, confirmation, client, pages)
+        schema = SchemaManager(client.session, pages, notification)
+    }
 }
