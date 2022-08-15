@@ -51,7 +51,7 @@ kt_jvm_library(
         "@maven//:org_slf4j_slf4j_api",
     ],
     resource_strip_prefix = "resources",
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-dialog:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-connection-dialog:{pom_version}"],
 )
 
 checkstyle_test(
