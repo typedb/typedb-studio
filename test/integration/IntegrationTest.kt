@@ -19,20 +19,21 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.vaticle.typedb.studio.state.StudioState
 import org.junit.Before
 import org.junit.Rule
 import java.util.UUID
+import kotlinx.coroutines.delay
 
 abstract class IntegrationTest {
     lateinit var testID: String
 
     @Before
-    fun setupTest() {
+    suspend fun setupTest() {
         StudioState.init()
         testID = UUID.randomUUID().toString()
+        delay(5_000)
     }
 
     @get:Rule
