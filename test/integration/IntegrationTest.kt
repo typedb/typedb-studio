@@ -30,10 +30,9 @@ abstract class IntegrationTest {
     lateinit var testID: String
 
     @Before
-    suspend fun setupTest() {
+    fun setupTest() {
         StudioState.init()
         testID = UUID.randomUUID().toString()
-        delay(5_000)
     }
 
     @get:Rule
