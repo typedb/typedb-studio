@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.common.util
+package com.vaticle.typedb.studio.state.preference
 
 import com.vaticle.typedb.studio.state.app.DialogManager
 import java.nio.file.Path

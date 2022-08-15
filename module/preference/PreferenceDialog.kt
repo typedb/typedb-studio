@@ -1,5 +1,6 @@
 package com.vaticle.typedb.studio.module.preference
 
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -19,8 +20,8 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
-//            Row { }/
+        Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.OPEN_PREFERENCES, WIDTH, HEIGHT) {
+            Text("hi")
         }
     }
 }
