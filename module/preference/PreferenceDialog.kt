@@ -43,7 +43,7 @@ object PreferenceDialog {
         Dialog.Layout(dialogState, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Form.Text(value = "test", softWrap = true)
-                Form.TextButton("Accept") {}
+                Form.TextButton("Accept") { StudioState.appData.preferences.limit = 1000 }
                 Form.TextButton("Discard Changes") {}
             }
         }

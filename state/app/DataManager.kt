@@ -93,9 +93,18 @@ class DataManager {
             set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
     }
 
+    inner class Preferences {
+        private val QUERY_LIMIT = "query.limit"
+
+        var limit: Int?
+            get() = properties?.getProperty(QUERY_LIMIT)?.toIntOrNull()
+            set(value) = value?.let { setProperty(QUERY_LIMIT, it.toString()) } ?: Unit
+    }
+
     var properties: Properties? by mutableStateOf(null)
     var project = Project()
     var connection = Connection()
+    var preferences = Preferences()
 
     private fun setProperty(key: String, value: String) {
         properties?.setProperty(key, value)
