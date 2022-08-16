@@ -207,6 +207,11 @@ object Form {
     }
 
     @Composable
+    fun FormColumnSpacer() {
+        Spacer(modifier = Modifier.height(INNER_SPACING))
+    }
+
+    @Composable
     fun ButtonSpacer() = Spacer(Modifier.width(TEXT_BUTTON_PADDING))
 
     @Composable

@@ -22,7 +22,6 @@ import com.vaticle.typedb.studio.state.app.DialogManager
 import java.nio.file.Path
 import kotlin.io.path.name
 
-// TODO: make this file configurable through a Preference Dialog
 class PreferenceManager {
 
     companion object {

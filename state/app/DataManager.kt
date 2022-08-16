@@ -95,10 +95,15 @@ class DataManager {
 
     inner class Preferences {
         private val QUERY_LIMIT = "query.limit"
+        private val GRAPH_OUTPUT = "graph.output"
 
-        var limit: Int?
-            get() = properties?.getProperty(QUERY_LIMIT)?.toIntOrNull()
-            set(value) = value?.let { setProperty(QUERY_LIMIT, it.toString()) } ?: Unit
+        var limit: String?
+            get() = properties?.getProperty(QUERY_LIMIT)
+            set(value) = value?.let { setProperty(QUERY_LIMIT, it) } ?: Unit
+
+        var graphOutput: Boolean?
+            get() = properties?.getProperty(GRAPH_OUTPUT).toBoolean()
+            set(value) = value?.let { setProperty(GRAPH_OUTPUT, it.toString()) } ?: Unit
     }
 
     var properties: Properties? by mutableStateOf(null)
