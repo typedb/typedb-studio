@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
@@ -83,9 +84,11 @@ object PreferenceDialog {
         val state = remember { PreferencesForm() }
 
         Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 QueryPreferences(state)
+                Form.FormColumnSpacer()
                 GraphPreferences(state)
+                Form.FormColumnSpacer()
                 ConfirmChanges(state)
             }
         }
@@ -126,7 +129,7 @@ object PreferenceDialog {
 
     @Composable
     private fun PreferencesHeader(text: String) {
-        Text(text)
+        Text(text, fontWeight = FontWeight.Bold)
         Separator.Horizontal()
         Form.FormColumnSpacer()
     }
@@ -140,7 +143,6 @@ object PreferenceDialog {
 
     @Composable
     private fun ConfirmChanges(state: PreferencesForm) {
-        SpacedSeperator()
         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
             // On accept we need to:
             // - Verify all inputs are valid for their given preference
