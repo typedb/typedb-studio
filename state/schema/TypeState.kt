@@ -108,7 +108,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         val retained: List<TypeState>
         if (new != old) {
             val deleted = old - new
-            val added = (new - old).map { schemaMgr.createTypeState(it) }
+            val added = (new - old).mapNotNull { schemaMgr.createTypeState(it) }
             retained = subtypes.filter { !deleted.contains(it.conceptType) }
             updateSubtypes((retained + added).sortedBy { it.conceptType.label.scopedName() })
         } else retained = subtypes
@@ -226,14 +226,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
             fun load(attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
                 loaded.add(attributeType)
-                properties.add(
-                    AttributeTypeProperties(
-                        attributeType = schemaMgr.createTypeState(attributeType),
-                        overriddenType = typeTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) },
-                        isKey = isKey,
-                        isInherited = isInherited
-                    )
-                )
+                schemaMgr.createTypeState(attributeType)?.let { ats ->
+                    val ots = typeTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) }
+                    properties.add(AttributeTypeProperties(ats, ots, isKey, isInherited))
+                }
             }
 
             typeTx.getOwnsExplicit(true).forEach {
@@ -266,13 +262,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
             fun load(roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
-                properties.add(
-                    RoleTypeProperties(
-                        roleType = schemaMgr.createTypeState(roleType),
-                        overriddenType = typeTx.getPlaysOverridden(roleType)?.let { schemaMgr.createTypeState(it) },
-                        isInherited = isInherited
-                    )
-                )
+                schemaMgr.createTypeState(roleType)?.let { rts ->
+                    val ots = typeTx.getPlaysOverridden(roleType)?.let { schemaMgr.createTypeState(it) }
+                    properties.add(RoleTypeProperties(rts, ots, isInherited))
+                }
             }
 
             typeTx.playsExplicit.forEach { load(roleType = it, isInherited = false) }
@@ -319,7 +312,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isEntityType && it != remoteType }
-                .map { schemaMgr.createTypeState(it.asEntityType()) }.toList()
+                .map { schemaMgr.createTypeState(it.asEntityType()) }.filter { it != null }.toList().filterNotNull()
         }
 
         override fun toString(): String {
@@ -358,7 +351,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isAttributeType && it != remoteType }
-                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList()
+                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList().filterNotNull()
         }
 
         override fun loadOtherProperties() {
@@ -371,7 +364,9 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             val typeTx = conceptType.asRemote(schemaMgr.openOrGetReadTx())
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
-                props[ownerType] = OwnerTypeProperties(schemaMgr.createTypeState(ownerType), isKey, isInherited)
+                schemaMgr.createTypeState(ownerType)?.let {
+                    props[ownerType] = OwnerTypeProperties(it, isKey, isInherited)
+                }
             }
 
             typeTx.getOwnersExplicit(true).forEach {
@@ -421,7 +416,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isRelationType && it != remoteType }
-                .map { schemaMgr.createTypeState(it.asRelationType()) }.toList()
+                .map { schemaMgr.createTypeState(it.asRelationType()) }.toList().filterNotNull()
         }
 
         override fun loadOtherProperties() {
@@ -451,15 +446,10 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
             fun load(roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
-                properties.add(
-                    RoleTypeProperties(
-                        roleType = schemaMgr.createTypeState(roleType),
-                        overriddenType = typeTx.getRelatesOverridden(roleType)?.let {
-                            schemaMgr.createTypeState(it)
-                        },
-                        isInherited = isInherited
-                    )
-                )
+                schemaMgr.createTypeState(roleType)?.let { rts ->
+                    val ots = typeTx.getRelatesOverridden(roleType)?.let { schemaMgr.createTypeState(it) }
+                    properties.add(RoleTypeProperties(rts, ots, isInherited))
+                }
             }
 
             typeTx.relatesExplicit.forEach { load(roleType = it, isInherited = false) }
@@ -508,7 +498,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
                 ?.also { it.loadProperties() }
             supertypes = remoteType.supertypes
                 .filter { it.isRoleType && it != remoteType }
-                .map { schemaMgr.createTypeState(it.asRoleType()) }.toList()
+                .map { schemaMgr.createTypeState(it.asRoleType()) }.toList().filterNotNull()
         }
 
         override fun loadOtherProperties() {}
