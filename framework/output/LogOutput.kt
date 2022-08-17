@@ -104,31 +104,31 @@ internal class LogOutput constructor(
         StudioState.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
     }
 
-    internal fun output(message: Response.Message) = when (message.type) {
-        INFO -> editorState.addContent(message.text)
-        SUCCESS, ERROR -> editorState.addContent(message.text) { highlightText(message.type, it, colors) }
-        TYPEQL -> outputTypeQL(message.text)
-    }
+    internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
-    internal fun output(numeric: Numeric) = outputTypeQL(numeric.toString())
+    internal fun outputFn(numeric: Numeric): () -> Unit = { output(TYPEQL, numeric.toString()) }
 
     internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
         val output = loadToString(conceptMap)
-        return { outputTypeQL(output) }
+        return { output(TYPEQL, output) }
     }
 
     internal fun outputFn(conceptMapGroup: ConceptMapGroup): () -> Unit {
         val output = loadToString(conceptMapGroup)
-        return { outputTypeQL(output) }
+        return { output(TYPEQL, output) }
     }
 
     internal fun outputFn(numericGroup: NumericGroup): () -> Unit {
         val output = loadToString(numericGroup)
-        return { outputTypeQL(output) }
+        return { output(TYPEQL, output) }
     }
 
-    private fun outputTypeQL(text: String) {
-        editorState.addContent(text, Property.FileType.TYPEQL)
+    private fun output(type: Response.Message.Type, text: String) {
+        when (type) {
+            INFO -> editorState.addContent(text)
+            SUCCESS, ERROR -> editorState.addContent(text) { highlightText(type, it, colors) }
+            TYPEQL -> editorState.addContent(text, Property.FileType.TYPEQL)
+        }
     }
 
     private fun highlightText(type: Response.Message.Type, text: String, colors: Color.StudioTheme): AnnotatedString {

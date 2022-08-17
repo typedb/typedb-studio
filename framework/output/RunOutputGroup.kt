@@ -186,13 +186,9 @@ internal class RunOutputGroup constructor(
         }
     }
 
-    private fun consumeMessageResponse(response: Response.Message) {
-        collectSerial { logOutput.output(response) }
-    }
+    private fun consumeMessageResponse(response: Response.Message) = collectSerial(logOutput.outputFn(response))
 
-    private fun consumeNumericResponse(response: Response.Numeric) {
-        collectSerial { logOutput.output(response.value) }
-    }
+    private fun consumeNumericResponse(response: Response.Numeric) = collectSerial(logOutput.outputFn(response.value))
 
     private fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
         consumeStreamResponse(response) {
