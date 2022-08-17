@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Property
@@ -53,9 +54,17 @@ import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.T
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
+@OptIn(ExperimentalTime::class)
 internal class LogOutput constructor(
     private val editorState: TextEditor.State,
     private val transactionState: TransactionState,
@@ -64,6 +73,7 @@ internal class LogOutput constructor(
 
     companion object {
         private val END_OF_OUTPUT_SPACE = 20.dp
+        private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
         private val LOGGER = KotlinLogging.logger {}
 
         @Composable
@@ -71,6 +81,10 @@ internal class LogOutput constructor(
             return LogOutput(TextEditor.createState(END_OF_OUTPUT_SPACE), transactionState, Theme.studio)
         }
     }
+
+    private val isCollecting = AtomicBoolean(false)
+    private val lastOutputTime = AtomicLong(System.currentTimeMillis())
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override val name: String = Label.LOG
     override val icon: Icon.Code = Icon.Code.ALIGN_LEFT
@@ -90,6 +104,15 @@ internal class LogOutput constructor(
         editorState.stickToBottom = true
     }
 
+    internal fun start() {
+        isCollecting.set(true)
+        launchRunningIndicator()
+    }
+
+    internal fun stop() {
+        isCollecting.set(false)
+    }
+
     private fun jumpToTop() {
         editorState.stickToBottom = false
         editorState.jumpToTop()
@@ -102,6 +125,21 @@ internal class LogOutput constructor(
     private fun copyToClipboard() {
         editorState.copyContentToClipboard()
         StudioState.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
+    }
+
+    private fun launchRunningIndicator() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+        var duration = RUNNING_INDICATOR_DELAY
+        while (isCollecting.get()) {
+            delay(duration)
+            if (!isCollecting.get()) return@launchAndHandle
+            val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
+            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+                output(INFO, "...")
+                duration = RUNNING_INDICATOR_DELAY
+            } else {
+                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+            }
+        }
     }
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
@@ -129,6 +167,7 @@ internal class LogOutput constructor(
             SUCCESS, ERROR -> editorState.addContent(text) { highlightText(type, it, colors) }
             TYPEQL -> editorState.addContent(text, Property.FileType.TYPEQL)
         }
+        lastOutputTime.set(System.currentTimeMillis())
     }
 
     private fun highlightText(type: Response.Message.Type, text: String, colors: Color.StudioTheme): AnnotatedString {

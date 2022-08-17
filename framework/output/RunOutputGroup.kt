@@ -83,6 +83,7 @@ internal class RunOutputGroup constructor(
 
     internal fun launch() {
         runner.onClose { clearStatus() }
+        logOutput.start()
         launchResponseConsumer()
         launchSerialOutputConsumer()
         launchNonSerialOutputConsumer()
@@ -158,6 +159,7 @@ internal class RunOutputGroup constructor(
             delay(COUNT_DOWN_LATCH_PERIOD_MS)
         }
         runner.setConsumed()
+        logOutput.stop()
         endTime = System.currentTimeMillis()
     }
 

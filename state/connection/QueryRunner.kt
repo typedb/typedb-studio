@@ -42,17 +42,13 @@ import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
 import kotlin.streams.toList
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
 class QueryRunner constructor(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val notificationMgr: NotificationManager,
@@ -114,7 +110,6 @@ class QueryRunner constructor(
             "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
-        private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -123,7 +118,6 @@ class QueryRunner constructor(
     val responses = LinkedBlockingQueue<Response>()
     val isConsumed: Boolean get() = consumerLatch.count == 0L
     internal val isRunning = AtomicBoolean(false)
-    private val lastResponse = AtomicLong(0)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
@@ -132,42 +126,17 @@ class QueryRunner constructor(
 
     fun onClose(function: () -> Unit) = onClose.put(function)
 
-    internal fun launch() {
-        isRunning.set(true)
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runningQueryIndicator() }
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }
-    }
-
     fun setConsumed() = consumerLatch.countDown()
-
-    private fun updateLastResponseTime() = lastResponse.set(System.currentTimeMillis())
 
     private fun collectEmptyLine() = collectMessage(INFO, "")
 
     private fun collectMessage(type: Response.Message.Type, string: String) {
         responses.put(Response.Message(type, string))
-        updateLastResponseTime()
     }
 
-    private suspend fun runningQueryIndicator() {
-        var duration = RUNNING_INDICATOR_DELAY
-        while (isRunning.get()) {
-            delay(duration)
-            synchronized(this) {
-                if (!isRunning.get()) return
-                val sinceLastResponse = System.currentTimeMillis() - lastResponse.get()
-                if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                    collectMessage(INFO, "...")
-                    duration = RUNNING_INDICATOR_DELAY
-                } else {
-                    duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
-                }
-            }
-        }
-    }
-
-    private suspend fun runQueries() {
+    internal fun launch() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         try {
+            isRunning.set(true)
             startTime = System.currentTimeMillis()
             runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
         } catch (e: Exception) {
@@ -175,10 +144,8 @@ class QueryRunner constructor(
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
             endTime = System.currentTimeMillis()
-            synchronized(this) {
-                isRunning.set(false)
-                responses.add(Response.Done)
-            }
+            isRunning.set(false)
+            responses.add(Response.Done)
             var isConsumed: Boolean
             if (!hasStopSignal.get()) {
                 do {
@@ -325,7 +292,6 @@ class QueryRunner constructor(
         }.forEach {
             if (hasStopSignal.get()) return@forEach
             stream.queue.put(Either.first(it))
-            updateLastResponseTime()
         }
         if (started) {
             stream.queue.put(Either.second(Response.Done))
