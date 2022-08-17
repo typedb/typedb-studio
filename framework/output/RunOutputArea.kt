@@ -40,14 +40,12 @@ import androidx.compose.ui.unit.Dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.PANEL_BAR_HEIGHT
 import com.vaticle.typedb.studio.framework.common.theme.Theme.PANEL_BAR_SPACING
-import com.vaticle.typedb.studio.framework.editor.TextEditor
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.framework.output.LogOutput.Companion.END_OF_OUTPUT_SPACE
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -70,9 +68,7 @@ object RunOutputArea {
 
         @Composable
         internal fun outputGroup(runner: QueryRunner): RunOutputGroup {
-            return outputGroup.getOrPut(runner) {
-                RunOutputGroup(runner, TextEditor.createState(END_OF_OUTPUT_SPACE), Theme.studio)
-            }
+            return outputGroup.getOrPut(runner) { RunOutputGroup.createAndLaunch(runner) }
         }
 
         internal fun toggle() {

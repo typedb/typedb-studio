@@ -63,8 +63,13 @@ internal class LogOutput constructor(
 ) : RunOutput() {
 
     companion object {
-        internal val END_OF_OUTPUT_SPACE = 20.dp
+        private val END_OF_OUTPUT_SPACE = 20.dp
         private val LOGGER = KotlinLogging.logger {}
+
+        @Composable
+        fun create(transactionState: TransactionState): LogOutput {
+            return LogOutput(TextEditor.createState(END_OF_OUTPUT_SPACE), transactionState, Theme.studio)
+        }
     }
 
     override val name: String = Label.LOG

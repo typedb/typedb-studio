@@ -18,13 +18,12 @@
 
 package com.vaticle.typedb.studio.framework.output
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.theme.Color
-import com.vaticle.typedb.studio.framework.editor.TextEditor
 import com.vaticle.typedb.studio.framework.material.Tabs
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
@@ -48,13 +47,11 @@ import mu.KotlinLogging
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
-    textEditorState: TextEditor.State,
-    colors: Color.StudioTheme
+    private val logOutput: LogOutput
 ) {
 
     private val graphCount = AtomicInteger(0)
     private val tableCount = AtomicInteger(0)
-    private val logOutput = LogOutput(textEditorState, runner.transactionState, colors)
     internal val outputs: MutableList<RunOutput> = mutableStateListOf(logOutput)
     internal var active: RunOutput by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<(() -> Unit)?>, Done>>()
@@ -71,6 +68,11 @@ internal class RunOutputGroup constructor(
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
         private val LOGGER = KotlinLogging.logger {}
 
+        @Composable
+        fun createAndLaunch(runner: QueryRunner): RunOutputGroup {
+            return RunOutputGroup(runner, LogOutput.create(runner.transactionState)).also { it.launch() }
+        }
+
         private suspend fun <E> LinkedBlockingQueue<E>.takeNonBlocking(periodMS: Long): E {
             while (true) {
                 val item = this.poll(1, MILLISECONDS)
@@ -79,12 +81,12 @@ internal class RunOutputGroup constructor(
         }
     }
 
-    init {
+    internal fun launch() {
         runner.onClose { clearStatus() }
-        consumeResponses()
-        printSerialOutput()
-        concludeNonSerialOutput()
-        concludeRunnerIsConsumed()
+        launchResponseConsumer()
+        launchSerialOutputConsumer()
+        launchNonSerialOutputConsumer()
+        launchRunnerConcluder()
     }
 
     internal fun publishStatus() {
@@ -121,15 +123,27 @@ internal class RunOutputGroup constructor(
         active = runOutput
     }
 
-    private fun concludeRunnerIsConsumed() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
-        while (futuresLatch.count > 0L) {
-            delay(COUNT_DOWN_LATCH_PERIOD_MS)
-        }
-        runner.setConsumed()
-        endTime = System.currentTimeMillis()
+    private fun collectSerial(outputFn: () -> Unit) {
+        collectSerial(CompletableFuture.completedFuture(outputFn))
     }
 
-    private fun concludeNonSerialOutput() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun collectSerial(outputFnFuture: CompletableFuture<(() -> Unit)?>) {
+        serialOutputFutures.put(Either.first(outputFnFuture))
+    }
+
+    private fun collectNonSerial(future: CompletableFuture<Unit?>) {
+        nonSerialOutputFutures.put(Either.first(future))
+    }
+
+    private fun launchSerialOutputConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+        do {
+            val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
+            if (future.isFirst) future.first().join()?.invoke()
+        } while (future.isFirst)
+        futuresLatch.countDown()
+    }
+
+    private fun launchNonSerialOutputConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         val futures = mutableListOf<CompletableFuture<Unit?>>()
         do {
             val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
@@ -139,28 +153,16 @@ internal class RunOutputGroup constructor(
         futuresLatch.countDown()
     }
 
-    private fun collectNonSerial(future: CompletableFuture<Unit?>) {
-        nonSerialOutputFutures.put(Either.first(future))
-    }
-
-    private fun printSerialOutput() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
-        do {
-            val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
-            if (future.isFirst) future.first().join()?.invoke()
-        } while (future.isFirst)
-        futuresLatch.countDown()
-    }
-
-    private fun collectSerial(outputFn: () -> Unit) {
-        collectSerial(CompletableFuture.completedFuture(outputFn))
-    }
-
-    private fun collectSerial(outputFnFuture: CompletableFuture<(() -> Unit)?>) {
-        serialOutputFutures.put(Either.first(outputFnFuture))
+    private fun launchRunnerConcluder() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+        while (futuresLatch.count > 0L) {
+            delay(COUNT_DOWN_LATCH_PERIOD_MS)
+        }
+        runner.setConsumed()
+        endTime = System.currentTimeMillis()
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun consumeResponses() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchResponseConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
             delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
