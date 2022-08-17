@@ -16,9 +16,8 @@
  *
  */
 
-package com.vaticle.typedb.studio.state.preference
+package com.vaticle.typedb.studio.state.app
 
-import com.vaticle.typedb.studio.state.app.DialogManager
 import java.nio.file.Path
 import kotlin.io.path.name
 

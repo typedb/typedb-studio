@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.preference.PreferenceManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path
 

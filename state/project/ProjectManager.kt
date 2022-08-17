@@ -30,7 +30,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PAT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
-import com.vaticle.typedb.studio.state.preference.PreferenceManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path

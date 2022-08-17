@@ -34,7 +34,6 @@ kt_jvm_library(
         "//state/connection:connection",
         "//state/project:project",
         "//state/page:page",
-        "//state/preference:preference",
         "//state/schema:schema",
 
         # External Maven Dependencies

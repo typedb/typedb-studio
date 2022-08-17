@@ -66,6 +66,7 @@ object PreferenceDialog {
 
         override fun isValid(): Boolean {
             return (limit.toIntOrNull() != null)
+
         }
 
         override fun trySubmit() {
@@ -130,6 +131,7 @@ object PreferenceDialog {
     @Composable
     private fun PreferencesHeader(text: String) {
         Text(text, fontWeight = FontWeight.Bold)
+        Form.FormColumnSpacer()
         Separator.Horizontal()
         Form.FormColumnSpacer()
     }
@@ -150,6 +152,7 @@ object PreferenceDialog {
             Form.TextButton("Accept") {
                 if (state.isValid()) {
                     StudioState.appData.preferences.limit = state.limit
+                    StudioState.appData.preferences.graphOutput = state.graphOutput
                     StudioState.preference.openPreferenceDialog.close()
                 } else {
 

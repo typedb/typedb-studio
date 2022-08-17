@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.state.app.DataManager
 import com.vaticle.typedb.studio.state.app.EditorManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.StatusManager
-import com.vaticle.typedb.studio.state.preference.PreferenceManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager

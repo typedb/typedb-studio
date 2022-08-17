@@ -34,7 +34,6 @@ kt_jvm_library(
         "//state/common:common",
         "//state/connection:connection",
         "//state/page:page",
-        "//state/preference:preference",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
