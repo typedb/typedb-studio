@@ -138,17 +138,15 @@ class QueryRunner constructor(
         coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }
     }
 
-    fun setConsumed() {
-        consumerLatch.countDown()
-    }
+    fun setConsumed() = consumerLatch.countDown()
 
-    private fun collectEmptyLine() {
-        collectMessage(INFO, "")
-    }
+    private fun updateLastResponseTime() = lastResponse.set(System.currentTimeMillis())
+
+    private fun collectEmptyLine() = collectMessage(INFO, "")
 
     private fun collectMessage(type: Response.Message.Type, string: String) {
         responses.put(Response.Message(type, string))
-        lastResponse.set(System.currentTimeMillis())
+        updateLastResponseTime()
     }
 
     private suspend fun runningQueryIndicator() {
@@ -327,6 +325,7 @@ class QueryRunner constructor(
         }.forEach {
             if (hasStopSignal.get()) return@forEach
             stream.queue.put(Either.first(it))
+            updateLastResponseTime()
         }
         if (started) {
             stream.queue.put(Either.second(Response.Done))
