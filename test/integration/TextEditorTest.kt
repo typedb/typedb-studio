@@ -57,7 +57,7 @@ class TextEditorTest: IntegrationTest() {
         studioTest(composeRule) {
             // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -78,11 +78,11 @@ class TextEditorTest: IntegrationTest() {
     fun dataWriteAndCommit() {
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
+            verifyDataWrite(composeRule, address, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
     }
 
@@ -90,7 +90,7 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndRollback() {
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
 
             StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)

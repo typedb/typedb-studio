@@ -63,8 +63,6 @@ const val QUERY_FILE_NAME = "query_string.tql"
 const val DATA_FILE_NAME = "data_string.tql"
 const val SCHEMA_FILE_NAME = "schema_string.tql"
 
-const val DB_ADDRESS = "localhost:1729"
-
 fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
     runBlocking { compose.rule() }
 }
@@ -168,7 +166,7 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: 
     StudioState.client.session.close()
 }
 
-suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String, queryFileName: String) {
+suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
     val queryString = fileNameToString(queryFileName)
 
     composeRule.onNodeWithText("infer").performClick()
@@ -176,7 +174,7 @@ suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, dbName: String,
     composeRule.onNodeWithText("read").performClick()
     wait(composeRule, 1_000)
 
-    TypeDB.coreClient(DB_ADDRESS).use { client ->
+    TypeDB.coreClient(address).use { client ->
         client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
             session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
                 val results = ArrayList<String>()

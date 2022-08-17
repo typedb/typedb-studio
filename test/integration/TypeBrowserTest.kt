@@ -35,7 +35,7 @@ class TypeBrowserTest: IntegrationTest() {
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
         studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -51,7 +51,7 @@ class TypeBrowserTest: IntegrationTest() {
     @Test
     fun collapseTypes() {
         studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -74,7 +74,7 @@ class TypeBrowserTest: IntegrationTest() {
     @Test
     fun collapseThenExpandTypes() {
         studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -100,7 +100,7 @@ class TypeBrowserTest: IntegrationTest() {
     @Test
     fun exportSchema() {
         studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)

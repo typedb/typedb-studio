@@ -43,12 +43,12 @@ class QuickstartTest: IntegrationTest() {
     @Test
     fun Quickstart() {
         studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+            connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
+            verifyDataWrite(composeRule, address, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
     }
 }
