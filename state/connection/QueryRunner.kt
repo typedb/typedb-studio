@@ -117,10 +117,10 @@ class QueryRunner constructor(
     var endTime: Long? = null
     val responses = LinkedBlockingQueue<Response>()
     val isConsumed: Boolean get() = consumerLatch.count == 0L
-    internal val isRunning = AtomicBoolean(false)
+    val isRunning = AtomicBoolean(false)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
-    private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
+    private val hasStopSignal get() = transactionState.hasStopSignalAtomic
     private val transaction get() = transactionState.transaction!!
     private val onClose = LinkedBlockingQueue<() -> Unit>()
 
@@ -147,11 +147,11 @@ class QueryRunner constructor(
             isRunning.set(false)
             responses.add(Response.Done)
             var isConsumed: Boolean
-            if (!hasStopSignal.get()) {
+            if (!hasStopSignal.atomic.get()) {
                 do {
                     isConsumed = consumerLatch.count == 0L
                     if (!isConsumed) delay(COUNT_DOWN_LATCH_PERIOD_MS)
-                } while (!isConsumed && !hasStopSignal.get())
+                } while (!isConsumed && !hasStopSignal.atomic.get())
             }
             onComplete()
         }
@@ -159,7 +159,7 @@ class QueryRunner constructor(
 
     private fun runQueries(queries: List<TypeQLQuery>) {
         queries.forEach { query ->
-            if (hasStopSignal.get()) return@forEach
+            if (hasStopSignal.atomic.get()) return@forEach
             when (query) {
                 is TypeQLDefine -> runDefineQuery(query)
                 is TypeQLUndefine -> runUndefineQuery(query)
@@ -290,7 +290,7 @@ class QueryRunner constructor(
             responses.put(stream)
             started = true
         }.forEach {
-            if (hasStopSignal.get()) return@forEach
+            if (hasStopSignal.atomic.get()) return@forEach
             stream.queue.put(Either.first(it))
         }
         if (started) {
@@ -300,6 +300,7 @@ class QueryRunner constructor(
     }
 
     fun close() {
+        hasStopSignal.set(true)
         onClose.forEach { it() }
     }
 }

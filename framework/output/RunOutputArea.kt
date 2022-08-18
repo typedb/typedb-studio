@@ -46,7 +46,9 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tabs
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.page.Pageable
 import kotlinx.coroutines.delay
@@ -120,8 +122,13 @@ object RunOutputArea {
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
         val runnerMgr = state.pageable.runners
-        fun runnerName(runner: QueryRunner): String {
-            return "${state.pageable.name} (${runnerMgr.numberOf(runner)})"
+        fun runnerName(runner: QueryRunner): String = "${state.pageable.name} (${runnerMgr.numberOf(runner)})"
+        fun mayCloseRunner(runner: QueryRunner) {
+            if (runner.isRunning.get()) StudioState.confirmation.submit(
+                title = Label.QUERY_IS_RUNNING,
+                message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_OUTPUT_GROUP_TAB_DESCRIPTION,
+                cancelLabel = Label.OK,
+            ) else runnerMgr.close(runner)
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
@@ -134,8 +141,8 @@ object RunOutputArea {
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
-                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { runnerMgr.close(it) } },
-                    trailingTabButtonFn = {
+                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { mayCloseRunner(it) } },
+                    leadingButtonFn = {
                         IconButtonArg(
                             icon = Icon.Code.THUMBTACK,
                             color = { Theme.studio.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },

@@ -62,11 +62,11 @@ object Sentence {
         "Create a new file under %s."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
-
     //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
     const val ENABLE_INFERENCE_DESCRIPTION =
         "Enabling inference means that you will get inferred answers in your match query. " +
                 BUTTON_ENABLED_WHEN_TRANSACTION_IS_READ
+
     const val ENABLE_INFERENCE_EXPLANATION_DESCRIPTION =
         "Enabling inference explanation means that any inferred concepts returned by your query will include an explanation " +
                 "of how the logical inference was made. This button will only be enabled if 'snapshot' and 'infer' are " +
@@ -125,6 +125,8 @@ object Sentence {
                 BUTTON_ENABLED_WHEN_RUNNING
     const val STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION =
         "The running query associated to this page should be stopped before closing this page."
+    const val STOP_RUNNING_QUERY_BEFORE_CLOSING_OUTPUT_GROUP_TAB_DESCRIPTION =
+        "The running query associated to this output group tab should be stopped before closing this tab."
     const val TRANSACTION_CLOSE_DESCRIPTION =
         "Closing a transaction will close the current transaction, deleting any unsaved writes you've made through it. " +
                 "The next transaction will be opened at a newer and latest snapshot. " + BUTTON_ENABLED_WHEN_SNAPSHOT_ENABLED
