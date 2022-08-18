@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
+@OptIn(ExperimentalTime::class)
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
     private val logOutput: LogOutput
@@ -64,8 +65,8 @@ internal class RunOutputGroup constructor(
     object Done
 
     companion object {
-        private const val CONSUMER_PERIOD_MS = 33 // 30 FPS
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
+        private val CONSUMER_PERIOD_MS = Duration.milliseconds(33) // 30 FPS
         private val LOGGER = KotlinLogging.logger {}
 
         @Composable
@@ -95,7 +96,6 @@ internal class RunOutputGroup constructor(
         publishOutputResponseTime()
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun publishQueryResponseTime() {
         runner.startTime?.let { startTime ->
             val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
@@ -103,7 +103,6 @@ internal class RunOutputGroup constructor(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun publishOutputResponseTime() {
         runner.endTime?.let { queryEndTime ->
             val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
@@ -163,11 +162,10 @@ internal class RunOutputGroup constructor(
         endTime = System.currentTimeMillis()
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun launchResponseConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
-            delay(Duration.Companion.milliseconds(CONSUMER_PERIOD_MS))
+            delay(CONSUMER_PERIOD_MS)
             runner.responses.drainTo(responses)
             if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
         } while (responses.lastOrNull() != Response.Done)
@@ -223,14 +221,14 @@ internal class RunOutputGroup constructor(
     private suspend fun <T> consumeStreamResponse(
         stream: Response.Stream<T>,
         onCompleted: (() -> Unit)? = null,
-        output: (T) -> Unit
+        consumer: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
-            delay(CONSUMER_PERIOD_MS.toLong())
+            delay(CONSUMER_PERIOD_MS)
             responses.clear()
             stream.queue.drainTo(responses)
-            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
+            if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { consumer(it.first()) }
         } while (responses.lastOrNull()?.isSecond != true)
         onCompleted?.let { it() }
     }

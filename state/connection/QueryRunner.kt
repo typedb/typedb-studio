@@ -83,6 +83,7 @@ class QueryRunner constructor(
         const val ERROR_ = "## Error> "
         const val RUNNING_ = "## Running> "
         const val COMPLETED = "## Completed"
+        const val TERMINATED = "## Terminated"
         const val DEFINE_QUERY = "Define query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY = "Undefine query:"
@@ -283,20 +284,26 @@ class QueryRunner constructor(
         stream: Response.Stream<T>
     ) {
         var started = false
-        collectEmptyLine()
-        results.peek {
-            if (started) return@peek
-            collectMessage(SUCCESS, RESULT_ + successMsg)
-            responses.put(stream)
-            started = true
-        }.forEach {
-            if (hasStopSignal.atomic.get()) return@forEach
-            stream.queue.put(Either.first(it))
+        var error = false
+        try {
+            collectEmptyLine()
+            results.peek {
+                if (started) return@peek
+                collectMessage(SUCCESS, RESULT_ + successMsg)
+                responses.put(stream)
+                started = true
+            }.forEach {
+                if (hasStopSignal.atomic.get()) return@forEach
+                stream.queue.put(Either.first(it))
+            }
+        } catch (e: Exception) {
+            collectMessage(ERROR, ERROR_ + e.message)
+        } finally {
+            if (started) stream.queue.put(Either.second(Response.Done))
+            if (error || hasStopSignal.atomic.get()) collectMessage(ERROR, TERMINATED)
+            else if (started) collectMessage(INFO, COMPLETED)
+            else collectMessage(SUCCESS, RESULT_ + noResultMsg)
         }
-        if (started) {
-            stream.queue.put(Either.second(Response.Done))
-            collectMessage(INFO, COMPLETED)
-        } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
     }
 
     fun close() {
