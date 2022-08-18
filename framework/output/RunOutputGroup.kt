@@ -175,7 +175,7 @@ internal class RunOutputGroup constructor(
         nonSerialOutputFutures.add(Either.second(Done))
     }
 
-    private fun consumeResponse(response: Response) {
+    private suspend fun consumeResponse(response: Response) {
         when (response) {
             is Response.Message -> consumeMessageResponse(response)
             is Response.Numeric -> consumeNumericResponse(response)
@@ -192,19 +192,19 @@ internal class RunOutputGroup constructor(
 
     private fun consumeNumericResponse(response: Response.Numeric) = collectSerial(logOutput.outputFn(response.value))
 
-    private fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
+    private suspend fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
         consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
-    private fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
+    private suspend fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
         consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
         }
     }
 
-    private fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
+    private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
         val notificationMgr = StudioState.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
@@ -220,14 +220,14 @@ internal class RunOutputGroup constructor(
         }
     }
 
-    private fun <T> consumeStreamResponse(
+    private suspend fun <T> consumeStreamResponse(
         stream: Response.Stream<T>,
         onCompleted: (() -> Unit)? = null,
         output: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
         do {
-            Thread.sleep(CONSUMER_PERIOD_MS.toLong())
+            delay(CONSUMER_PERIOD_MS.toLong())
             responses.clear()
             stream.queue.drainTo(responses)
             if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { output(it.first()) }
