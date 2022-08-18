@@ -42,7 +42,7 @@ class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
-        studioTest(composeRule) {
+        studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)

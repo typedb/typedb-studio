@@ -34,7 +34,7 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        studioTest(composeRule) {
+        studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
@@ -50,7 +50,7 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseTypes() {
-        studioTest(composeRule) {
+        studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
@@ -73,7 +73,7 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseThenExpandTypes() {
-        studioTest(composeRule) {
+        studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
@@ -99,7 +99,7 @@ class TypeBrowserTest: IntegrationTest() {
     @Ignore
     @Test
     fun exportSchema() {
-        studioTest(composeRule) {
+        studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)

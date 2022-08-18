@@ -29,6 +29,7 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typedb.studio.Studio
@@ -74,6 +75,19 @@ fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
         }
         funcBody()
     }
+}
+
+fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
+    val typeDB = TypeDBCoreRunner()
+    typeDB.start()
+    val address = typeDB.address()
+    runComposeRule(compose) {
+        setContent {
+            Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+        }
+        funcBody(address)
+    }
+    typeDB.stop()
 }
 
 fun fileNameToString(fileName: String): String {

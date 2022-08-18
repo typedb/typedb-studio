@@ -20,30 +20,18 @@
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import com.vaticle.typedb.studio.state.StudioState
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import java.util.UUID
 
 abstract class IntegrationTest {
     lateinit var testID: String
-    lateinit var typeDB: TypeDBCoreRunner
-    lateinit var address: String
 
     @Before
     fun setupTest() {
         StudioState.init()
         testID = UUID.randomUUID().toString()
-        typeDB = TypeDBCoreRunner()
-        typeDB.start()
-        address = typeDB.address()
-    }
-
-    @After
-    fun teardownTest() {
-        typeDB.stop()
     }
 
     @get:Rule
