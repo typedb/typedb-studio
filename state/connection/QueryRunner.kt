@@ -298,6 +298,7 @@ class QueryRunner constructor(
             }
         } catch (e: Exception) {
             collectMessage(ERROR, ERROR_ + e.message)
+            error = true
         } finally {
             if (started) stream.queue.put(Either.second(Response.Done))
             if (error || hasStopSignal.atomic.get()) collectMessage(ERROR, TERMINATED)
