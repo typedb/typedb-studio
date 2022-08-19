@@ -42,6 +42,7 @@ class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
+        println("Starting Quickstart.")
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
@@ -50,5 +51,6 @@ class QuickstartTest: IntegrationTest() {
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
             verifyDataWrite(composeRule, address, dbName = testID, "$testID/$QUERY_FILE_NAME")
         }
+        println("Finishing Quickstart.")
     }
 }
