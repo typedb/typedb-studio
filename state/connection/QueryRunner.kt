@@ -158,71 +158,63 @@ class QueryRunner constructor(
         }
     }
 
-    private fun runQueries(queries: List<TypeQLQuery>) {
-        queries.forEach { query ->
-            if (hasStopSignal.atomic.get()) return@forEach
-            when (query) {
-                is TypeQLDefine -> runDefineQuery(query)
-                is TypeQLUndefine -> runUndefineQuery(query)
-                is TypeQLDelete -> runDeleteQuery(query)
-                is TypeQLInsert -> runInsertQuery(query)
-                is TypeQLUpdate -> runUpdateQuery(query)
-                is TypeQLMatch -> runMatchQuery(query)
-                is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
-                is TypeQLMatch.Group -> runMatchGroupQuery(query)
-                is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
-                else -> throw IllegalStateException("Unrecognised TypeQL query")
-            }
+    private fun runQueries(queries: List<TypeQLQuery>) = queries.forEach { query ->
+        if (hasStopSignal.atomic.get()) return@forEach
+        when (query) {
+            is TypeQLDefine -> runDefineQuery(query)
+            is TypeQLUndefine -> runUndefineQuery(query)
+            is TypeQLDelete -> runDeleteQuery(query)
+            is TypeQLInsert -> runInsertQuery(query)
+            is TypeQLUpdate -> runUpdateQuery(query)
+            is TypeQLMatch -> runMatchQuery(query)
+            is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
+            is TypeQLMatch.Group -> runMatchGroupQuery(query)
+            is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
+            else -> throw IllegalStateException("Unrecognised TypeQL query")
         }
     }
 
-    private fun runDefineQuery(query: TypeQLDefine) {
-        runUnitQuery(DEFINE_QUERY, DEFINE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().define(query).get()
-        }
-    }
+    private fun runDefineQuery(query: TypeQLDefine) = runUnitQuery(
+        name = DEFINE_QUERY,
+        successMsg = DEFINE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().define(query).get() }
 
-    private fun runUndefineQuery(query: TypeQLUndefine) {
-        runUnitQuery(UNDEFINE_QUERY, UNDEFINE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().undefine(query).get()
-        }
-    }
+    private fun runUndefineQuery(query: TypeQLUndefine) = runUnitQuery(
+        name = UNDEFINE_QUERY,
+        successMsg = UNDEFINE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().undefine(query).get() }
 
-    private fun runDeleteQuery(query: TypeQLDelete) {
-        runUnitQuery(DELETE_QUERY, DELETE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().delete(query).get()
-        }
-    }
+    private fun runDeleteQuery(query: TypeQLDelete) = runUnitQuery(
+        name = DELETE_QUERY,
+        successMsg = DELETE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().delete(query).get() }
 
-    private fun runInsertQuery(query: TypeQLInsert) {
-        runStreamingQuery(
-            name = INSERT_QUERY,
-            successMsg = INSERT_QUERY_SUCCESS,
-            noResultMsg = INSERT_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(INSERT)
-        ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
-    }
+    private fun runInsertQuery(query: TypeQLInsert) = runStreamingQuery(
+        name = INSERT_QUERY,
+        successMsg = INSERT_QUERY_SUCCESS,
+        noResultMsg = INSERT_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(INSERT)
+    ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
 
-    private fun runUpdateQuery(query: TypeQLUpdate) {
-        runStreamingQuery(
-            name = UPDATE_QUERY,
-            successMsg = UPDATE_QUERY_SUCCESS,
-            noResultMsg = UPDATE_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(UPDATE)
-        ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
-    }
+    private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
+        name = UPDATE_QUERY,
+        successMsg = UPDATE_QUERY_SUCCESS,
+        noResultMsg = UPDATE_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(UPDATE)
+    ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
 
-    private fun runMatchQuery(query: TypeQLMatch) {
-        runStreamingQuery(
-            name = MATCH_QUERY,
-            successMsg = MATCH_QUERY_SUCCESS,
-            noResultMsg = MATCH_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(MATCH)
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
+        name = MATCH_QUERY,
+        successMsg = MATCH_QUERY_SUCCESS,
+        noResultMsg = MATCH_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(MATCH)
+    ) { transaction.query().match(query) }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
@@ -232,25 +224,21 @@ class QueryRunner constructor(
         responses.put(Response.Numeric(result))
     }
 
-    private fun runMatchGroupQuery(query: TypeQLMatch.Group) {
-        runStreamingQuery(
-            name = MATCH_GROUP_QUERY,
-            successMsg = MATCH_GROUP_QUERY_SUCCESS,
-            noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMapGroups()
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchGroupQuery(query: TypeQLMatch.Group) = runStreamingQuery(
+        name = MATCH_GROUP_QUERY,
+        successMsg = MATCH_GROUP_QUERY_SUCCESS,
+        noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMapGroups()
+    ) { transaction.query().match(query) }
 
-    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) {
-        runStreamingQuery(
-            name = MATCH_GROUP_AGGREGATE_QUERY,
-            successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
-            noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.NumericGroups()
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) = runStreamingQuery(
+        name = MATCH_GROUP_AGGREGATE_QUERY,
+        successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
+        noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.NumericGroups()
+    ) { transaction.query().match(query) }
 
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
         printQueryStart(name, queryStr)
