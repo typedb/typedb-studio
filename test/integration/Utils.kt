@@ -96,6 +96,7 @@ fun fileNameToString(fileName: String): String {
 }
 
 fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
+    println("Cloning and open the project.")
     val absolute = File(File(destination).absolutePath)
 
     absolute.deleteRecursively()
@@ -105,6 +106,7 @@ fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, des
     StudioState.appData.project.path = absolute.toPath()
 
     composeRule.waitForIdle()
+    println("Finished cloning and opening the project.")
     return absolute.toPath()
 }
 
@@ -115,6 +117,7 @@ suspend fun wait(composeRule: ComposeContentTestRule, timeMillis: Int) {
 }
 
 suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
+    println("Connecting to TypeDB.")
     // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
     // clicked.
     composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
@@ -125,9 +128,11 @@ suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String
     assertTrue(StudioState.client.isConnected)
 
     composeRule.onNodeWithText(address).assertExists()
+    println("Finished connecting to TypeDB.")
 }
 
 suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
+    println("Creating the database.")
     composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
     StudioState.client.tryDeleteDatabase(dbName)
@@ -135,9 +140,11 @@ suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) 
 
     StudioState.client.tryCreateDatabase(dbName) {}
     wait(composeRule, 500)
+    println("Finished creating the database.")
 }
 
 suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
+    println("Writing the schema interactively.")
     composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
     wait(composeRule, 500)
 
@@ -159,9 +166,11 @@ suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName
     wait(composeRule, 500)
 
     StudioState.client.session.close()
+    println("Finished writing the schema interactively.")
 }
 
 suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
+    println("Writing the data interactively.")
     StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
 
     wait(composeRule, 500)
@@ -178,9 +187,11 @@ suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: 
     wait(composeRule, 500)
 
     StudioState.client.session.close()
+    println("Finished writing the schema interactively.")
 }
 
 suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
+    println("Verifying the data was written.")
     val queryString = fileNameToString(queryFileName)
 
     composeRule.onNodeWithText("infer").performClick()
@@ -204,5 +215,6 @@ suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String
             }
         }
     }
+    println("Finished verifying the data was written.")
 }
 
