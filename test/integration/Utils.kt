@@ -103,7 +103,6 @@ object Utils {
         File(source).copyRecursively(overwrite = true, target = absolute)
 
         StudioState.project.tryOpenProject(absolute.toPath())
-        StudioState.appData.project.path = absolute.toPath()
 
         composeRule.waitForIdle()
         println("Finished cloning and opening the project.")
@@ -163,7 +162,7 @@ object Utils {
         wait(composeRule, 750)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        wait(composeRule, 750)
+        wait(composeRule, 1_500)
 
         StudioState.client.session.close()
         println("Finished writing the schema interactively.")
@@ -184,7 +183,7 @@ object Utils {
         wait(composeRule, 750)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        wait(composeRule, 750)
+        wait(composeRule, 1_500)
 
         StudioState.client.session.close()
         println("Finished writing the schema interactively.")
