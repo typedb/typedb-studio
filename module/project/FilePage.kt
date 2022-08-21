@@ -68,12 +68,8 @@ class FilePage private constructor(
     }
 
     @Composable
-    override fun PrimaryContent() {
-        TextEditor.Layout(state = editor, modifier = Modifier.fillMaxSize())
-    }
+    override fun PrimaryContent() = TextEditor.Layout(editor, Modifier.fillMaxSize())
 
     @Composable
-    override fun SecondaryContent(paneState: Frame.PaneState) {
-        RunOutputArea.Layout(runOutputState(paneState))
-    }
+    override fun SecondaryContent(paneState: Frame.PaneState) = RunOutputArea.Layout(runOutputState(paneState))
 }

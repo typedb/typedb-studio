@@ -115,29 +115,25 @@ object Pages {
             return StudioState.pages.active?.let { close(it) } ?: false
         }
 
-        internal fun close(pageable: Pageable, stopRunner: Boolean = false): Boolean {
+        internal fun close(pageable: Pageable): Boolean {
             pageable.execBeforeClose()
             fun closeFn() {
                 openedPages.remove(pageable)
                 pageable.close()
                 if (pageable.isUnsavedPageable) pageable.delete()
             }
-            if (pageable.isRunnable && pageable.asRunnable().isRunning && !stopRunner) {
-                StudioState.confirmation.submit(
-                    title = Label.QUERY_IS_RUNNING,
-                    message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
-                    cancelLabel = Label.OK,
-                )
-            } else if (pageable.needSaving) {
-                StudioState.confirmation.submit(
-                    title = Label.SAVE_OR_DELETE,
-                    message = Sentence.SAVE_OR_DELETE_FILE,
-                    confirmLabel = Label.SAVE,
-                    rejectLabel = Label.DELETE,
-                    onReject = { closeFn() },
-                    onConfirm = { pageable.initiateSave(reopen = false) }
-                )
-            } else closeFn()
+            if (pageable.isRunnable && pageable.asRunnable().isRunning) StudioState.confirmation.submit(
+                title = Label.QUERY_IS_RUNNING,
+                message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
+                cancelLabel = Label.OK,
+            ) else if (pageable.needSaving) StudioState.confirmation.submit(
+                title = Label.SAVE_OR_DELETE,
+                message = Sentence.SAVE_OR_DELETE_FILE,
+                confirmLabel = Label.SAVE,
+                rejectLabel = Label.DELETE,
+                onReject = { closeFn() },
+                onConfirm = { pageable.initiateSave(reopen = false) }
+            ) else closeFn()
             return true
         }
 
@@ -186,7 +182,6 @@ object Pages {
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
-                trailingTabButtonFn = null,
                 buttons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
