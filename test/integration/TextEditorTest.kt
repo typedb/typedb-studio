@@ -26,6 +26,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.test.integration.Utils.studioTest
+import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
+import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
+import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.Utils.wait
+import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
 import java.io.File
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -36,13 +45,13 @@ class TextEditorTest: IntegrationTest() {
     fun makeAFileAndSaveIt() {
         studioTest(composeRule) {
         // We have to open a project to enable the '+' to create a new file.
-            val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            val path = cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+            composeRule.onNodeWithText(Utils.PLUS_ICON_STRING).performClick()
             wait(composeRule, 500)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
-            composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
+            composeRule.onNodeWithText(Utils.SAVE_ICON_STRING).performClick()
             val filePath = File("$path/Untitled1.tql").toPath()
             StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
             StudioState.project.current!!.reloadEntries()
@@ -57,14 +66,14 @@ class TextEditorTest: IntegrationTest() {
         println("Starting schemaWriteAndCommit.")
         studioTestWithRunner(composeRule) { address ->
         // We have to open a project to enable the '+' to create a new file.
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-            composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(Utils.CHEVRON_UP_ICON_STRING).performClick()
             wait(composeRule, 500)
 
             // We can assert that the schema has been written successfully here as the schema
@@ -80,12 +89,12 @@ class TextEditorTest: IntegrationTest() {
     fun dataWriteAndCommit() {
         println("Starting dataWriteAndCommit.")
         studioTestWithRunner(composeRule) { address ->
-        cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+        cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, address, dbName = testID, "$testID/$QUERY_FILE_NAME")
+            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, dbName = testID, Utils.DATA_FILE_NAME)
+            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${Utils.QUERY_FILE_NAME}")
         }
         println("Finishing dataWriteAndCommit.")
     }
@@ -94,7 +103,7 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndRollback() {
         println("Starting schemaWriteAndRollback.")
         studioTestWithRunner(composeRule) { address ->
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
 
@@ -105,11 +114,11 @@ class TextEditorTest: IntegrationTest() {
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
 
-            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
+            StudioState.project.current!!.directory.entries.find { it.name == Utils.SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            composeRule.onNodeWithText(Utils.PLAY_ICON_STRING).performClick()
             wait(composeRule, 500)
-            composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
+            composeRule.onNodeWithText(Utils.ROLLBACK_ICON_STRING).performClick()
             wait(composeRule, 500)
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()

@@ -47,174 +47,175 @@ import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+object Utils {
+    val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
+    val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
+    val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
+    val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
+    val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
+    val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
+    val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
+    val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
 
-val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
-val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
-val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
-val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
-val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
-val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
-val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
-val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
+    val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
+    val TQL_DATA_PATH = File("test/data").absolutePath
 
-val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
-val TQL_DATA_PATH = File("test/data").absolutePath
+    const val QUERY_FILE_NAME = "query_string.tql"
+    const val DATA_FILE_NAME = "data_string.tql"
+    const val SCHEMA_FILE_NAME = "schema_string.tql"
 
-const val QUERY_FILE_NAME = "query_string.tql"
-const val DATA_FILE_NAME = "data_string.tql"
-const val SCHEMA_FILE_NAME = "schema_string.tql"
-
-fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
-    runBlocking { compose.rule() }
-}
-
-fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-    runComposeRule(compose) {
-        setContent {
-            Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-        }
-        funcBody()
+    fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
+        runBlocking { compose.rule() }
     }
-}
 
-fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
-    val typeDB = TypeDBCoreRunner()
-    typeDB.start()
-    val address = typeDB.address()
-    runComposeRule(compose) {
-        setContent {
-            Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
+        runComposeRule(compose) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            funcBody()
         }
-        funcBody(address)
     }
-    typeDB.stop()
-}
 
-fun fileNameToString(fileName: String): String {
-    return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
-        .joinToString("")
-}
+    fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
+        val typeDB = TypeDBCoreRunner()
+        typeDB.start()
+        val address = typeDB.address()
+        runComposeRule(compose) {
+            setContent {
+                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+            }
+            funcBody(address)
+        }
+        typeDB.stop()
+    }
 
-fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
-    println("Cloning and open the project.")
-    val absolute = File(File(destination).absolutePath)
+    fun fileNameToString(fileName: String): String {
+        return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
+            .joinToString("")
+    }
 
-    absolute.deleteRecursively()
-    File(source).copyRecursively(overwrite = true, target = absolute)
+    fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
+        println("Cloning and open the project.")
+        val absolute = File(File(destination).absolutePath)
 
-    StudioState.project.tryOpenProject(absolute.toPath())
-    StudioState.appData.project.path = absolute.toPath()
+        absolute.deleteRecursively()
+        File(source).copyRecursively(overwrite = true, target = absolute)
 
-    composeRule.waitForIdle()
-    println("Finished cloning and opening the project.")
-    return absolute.toPath()
-}
+        StudioState.project.tryOpenProject(absolute.toPath())
+        StudioState.appData.project.path = absolute.toPath()
 
-/// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
-suspend fun wait(composeRule: ComposeContentTestRule, timeMillis: Int) {
-    delay(timeMillis.toLong())
-    composeRule.waitForIdle()
-}
+        composeRule.waitForIdle()
+        println("Finished cloning and opening the project.")
+        return absolute.toPath()
+    }
 
-suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
-    println("Connecting to TypeDB.")
-    // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
-    // clicked.
-    composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
+    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
+    suspend fun wait(composeRule: ComposeContentTestRule, timeMillis: Int) {
+        delay(timeMillis.toLong())
+        composeRule.waitForIdle()
+    }
 
-    StudioState.client.tryConnectToTypeDB(address) {}
-    // Resolving localhost can take up to 5 seconds on macOS
-    wait(composeRule, 5_000)
-    assertTrue(StudioState.client.isConnected)
+    suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
+        println("Connecting to TypeDB.")
+        // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
+        // clicked.
+        composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-    composeRule.onNodeWithText(address).assertExists()
-    println("Finished connecting to TypeDB.")
-}
+        StudioState.client.tryConnectToTypeDB(address) {}
+        // Resolving localhost can take up to 5 seconds on macOS
+        wait(composeRule, 5_000)
+        assertTrue(StudioState.client.isConnected)
 
-suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
-    println("Creating the database.")
-    composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
+        composeRule.onNodeWithText(address).assertExists()
+        println("Finished connecting to TypeDB.")
+    }
 
-    StudioState.client.tryDeleteDatabase(dbName)
-    wait(composeRule, 500)
+    suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
+        println("Creating the database.")
+        composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-    StudioState.client.tryCreateDatabase(dbName) {}
-    wait(composeRule, 500)
-    println("Finished creating the database.")
-}
+        StudioState.client.tryDeleteDatabase(dbName)
+        wait(composeRule, 500)
 
-suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
-    println("Writing the schema interactively.")
-    composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-    wait(composeRule, 500)
+        StudioState.client.tryCreateDatabase(dbName) {}
+        wait(composeRule, 500)
+        println("Finished creating the database.")
+    }
 
-    StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-    wait(composeRule, 500)
+    suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
+        println("Writing the schema interactively.")
+        composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+        wait(composeRule, 500)
 
-    StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-    wait(composeRule, 500)
+        StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
+        wait(composeRule, 500)
 
-    composeRule.onNodeWithText("schema").performClick()
-    composeRule.onNodeWithText("write").performClick()
+        StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+        wait(composeRule, 500)
 
-    StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
+        composeRule.onNodeWithText("schema").performClick()
+        composeRule.onNodeWithText("write").performClick()
 
-    composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    wait(composeRule, 2_500)
+        StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
-    composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-    wait(composeRule, 500)
+        composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+        wait(composeRule, 2_500)
 
-    StudioState.client.session.close()
-    println("Finished writing the schema interactively.")
-}
+        composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+        wait(composeRule, 500)
 
-suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
-    println("Writing the data interactively.")
-    StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
+        StudioState.client.session.close()
+        println("Finished writing the schema interactively.")
+    }
 
-    wait(composeRule, 500)
+    suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
+        println("Writing the data interactively.")
+        StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
 
-    composeRule.onNodeWithText("data").performClick()
-    composeRule.onNodeWithText("write").performClick()
+        wait(composeRule, 500)
 
-    StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
+        composeRule.onNodeWithText("data").performClick()
+        composeRule.onNodeWithText("write").performClick()
 
-    composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-    wait(composeRule, 2_500)
+        StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
-    composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-    wait(composeRule, 500)
+        composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+        wait(composeRule, 2_500)
 
-    StudioState.client.session.close()
-    println("Finished writing the schema interactively.")
-}
+        composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+        wait(composeRule, 500)
 
-suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
-    println("Verifying the data was written.")
-    val queryString = fileNameToString(queryFileName)
+        StudioState.client.session.close()
+        println("Finished writing the schema interactively.")
+    }
 
-    composeRule.onNodeWithText("infer").performClick()
-    composeRule.waitForIdle()
-    composeRule.onNodeWithText("read").performClick()
-    wait(composeRule, 1_000)
+    suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
+        println("Verifying the data was written.")
+        val queryString = fileNameToString(queryFileName)
 
-    TypeDB.coreClient(address).use { client ->
-        client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
-            session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
-                val results = ArrayList<String>()
-                val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
-                transaction.query().match(query).forEach { result ->
-                    results.add(
-                        result.get("user-name").asAttribute().value.toString()
-                    )
+        composeRule.onNodeWithText("infer").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("read").performClick()
+        wait(composeRule, 1_000)
+
+        TypeDB.coreClient(address).use { client ->
+            client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+                session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
+                    val results = ArrayList<String>()
+                    val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
+                    transaction.query().match(query).forEach { result ->
+                        results.add(
+                            result.get("user-name").asAttribute().value.toString()
+                        )
+                    }
+                    assertEquals(2, results.size)
+                    assertTrue(results.contains("jmsfltchr"))
+                    assertTrue(results.contains("krishnangovindraj"))
                 }
-                assertEquals(2, results.size)
-                assertTrue(results.contains("jmsfltchr"))
-                assertTrue(results.contains("krishnangovindraj"))
             }
         }
+        println("Finished verifying the data was written.")
     }
-    println("Finished verifying the data was written.")
 }
 
