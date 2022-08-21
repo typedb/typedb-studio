@@ -40,7 +40,6 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        println("Starting interactiveSchemaWritesAutomaticallyDisplayed.")
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
@@ -53,12 +52,10 @@ class TypeBrowserTest: IntegrationTest() {
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
         }
-        println("Finishing interactiveSchemaWritesAutomaticallyDisplayed.")
     }
 
     @Test
     fun collapseTypes() {
-        println("Starting collapseTypes.")
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
@@ -78,12 +75,10 @@ class TypeBrowserTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-        println("Finishing collapseTypes.")
     }
 
     @Test
     fun collapseThenExpandTypes() {
-        println("Starting collapseThenExpandTypes.")
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
@@ -104,7 +99,6 @@ class TypeBrowserTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-        println("Finishing collapseThenExpandTypes.")
     }
 
     // This test is ignored as the export schema button doesn't open a new file during testing.

@@ -69,7 +69,6 @@ kt_jvm_library(
         "@vaticle_typeql//java/common:common",
         "@vaticle_typeql//java/query:query",
 
-
         # External Maven Dependencies
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",

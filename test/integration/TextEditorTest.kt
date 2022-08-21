@@ -63,7 +63,6 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun schemaWriteAndCommit() {
-        println("Starting schemaWriteAndCommit.")
         studioTestWithRunner(composeRule) { address ->
         // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
@@ -82,12 +81,10 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-        println("Finishing schemaWriteAndCommit.")
     }
 
     @Test
     fun dataWriteAndCommit() {
-        println("Starting dataWriteAndCommit.")
         studioTestWithRunner(composeRule) { address ->
         cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
@@ -96,12 +93,10 @@ class TextEditorTest: IntegrationTest() {
             writeDataInteractively(composeRule, dbName = testID, Utils.DATA_FILE_NAME)
             verifyDataWrite(composeRule, address, dbName = testID, "$testID/${Utils.QUERY_FILE_NAME}")
         }
-        println("Finishing dataWriteAndCommit.")
     }
 
     @Test
     fun schemaWriteAndRollback() {
-        println("Starting schemaWriteAndRollback.")
         studioTestWithRunner(composeRule) { address ->
             cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
@@ -125,6 +120,5 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.close()
         }
-        println("Finishing schemaWriteAndRollback.")
     }
 }

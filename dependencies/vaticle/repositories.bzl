@@ -34,8 +34,8 @@ def vaticle_force_graph():
 def vaticle_typedb_common():
     git_repository(
         name = "vaticle_typedb_common",
-        remote = "https://github.com/jamesreprise/typedb-common",
-        commit = "499a4b6a909c467ba268d870f48ee9c127a6b448" # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
+        remote = "https://github.com/vaticle/typedb-common",
+        commit = "3ac0c1069986f8f5dc90aebf06facfb2cb2016f1" # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
     )
 
 def vaticle_typedb_client_java():

@@ -28,7 +28,6 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
 import com.vaticle.typedb.studio.test.integration.Utils.studioTest
 import com.vaticle.typedb.studio.test.integration.Utils.wait
-
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {
