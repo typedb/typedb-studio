@@ -48,14 +48,14 @@ class TextEditorTest: IntegrationTest() {
             val path = cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
 
             composeRule.onNodeWithText(Utils.PLUS_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             composeRule.onNodeWithText(Utils.SAVE_ICON_STRING).performClick()
             val filePath = File("$path/Untitled1.tql").toPath()
             StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             assertTrue(File("$path/Untitled1.tql").exists())
         }
@@ -74,7 +74,7 @@ class TextEditorTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
             composeRule.onNodeWithText(Utils.CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -109,7 +109,7 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
 
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
@@ -117,9 +117,9 @@ class TextEditorTest: IntegrationTest() {
             StudioState.project.current!!.directory.entries.find { it.name == Utils.SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(Utils.PLAY_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
             composeRule.onNodeWithText(Utils.ROLLBACK_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
 

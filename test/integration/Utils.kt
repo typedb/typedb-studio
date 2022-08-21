@@ -123,8 +123,8 @@ object Utils {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(address) {}
-        // Resolving localhost can take up to 5 seconds on macOS
-        wait(composeRule, 5_000)
+
+        wait(composeRule, 2_500)
         assertTrue(StudioState.client.isConnected)
 
         composeRule.onNodeWithText(address).assertExists()
@@ -136,23 +136,23 @@ object Utils {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         StudioState.client.tryDeleteDatabase(dbName)
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         StudioState.client.tryCreateDatabase(dbName) {}
-        wait(composeRule, 500)
+        wait(composeRule, 750)
         println("Finished creating the database.")
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         println("Writing the schema interactively.")
         composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         composeRule.onNodeWithText("schema").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -160,10 +160,10 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        wait(composeRule, 2_500)
+        wait(composeRule, 750)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         StudioState.client.session.close()
         println("Finished writing the schema interactively.")
@@ -173,7 +173,7 @@ object Utils {
         println("Writing the data interactively.")
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
 
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         composeRule.onNodeWithText("data").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -181,10 +181,10 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        wait(composeRule, 2_500)
+        wait(composeRule, 750)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        wait(composeRule, 500)
+        wait(composeRule, 750)
 
         StudioState.client.session.close()
         println("Finished writing the schema interactively.")

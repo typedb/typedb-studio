@@ -41,10 +41,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText(createdDirectoryName).assertExists()
         }
@@ -58,10 +58,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText(createdFileName).assertExists()
 
@@ -77,10 +77,10 @@ class ProjectBrowserTest: IntegrationTest() {
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
                 .tryRename(renamedFileName)
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText(renamedFileName).assertExists()
         }
@@ -92,10 +92,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("file3").assertDoesNotExist()
         }

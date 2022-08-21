@@ -69,10 +69,10 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
@@ -93,12 +93,12 @@ class TypeBrowserTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
             composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
             composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            wait(composeRule, 750)
 
             composeRule.onNodeWithText("commit-date").assertExists()
 
