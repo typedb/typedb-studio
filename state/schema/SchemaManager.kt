@@ -66,7 +66,7 @@ class SchemaManager(
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     var onRootsUpdated: (() -> Unit)? = null
     val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
-    private var readTx: AtomicReference<TypeDBTransaction> = AtomicReference()
+    private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val entityTypes = ConcurrentHashMap<EntityType, TypeState.Entity>()
     private val attributeTypes = ConcurrentHashMap<AttributeType, TypeState.Attribute>()
@@ -91,8 +91,8 @@ class SchemaManager(
     }
 
     override fun reloadEntries() {
-        entries.forEach {
-            it.hasSubtypes = it.conceptType.asRemote(openOrGetReadTx()).subtypesExplicit.findAny().isPresent
+        openOrGetReadTx()?.let { tx ->
+            entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
         }
     }
 
@@ -100,72 +100,82 @@ class SchemaManager(
         return if (other is SchemaManager) 0 else -1
     }
 
-    internal fun createTypeState(type: Type): TypeState = when (type) {
+    internal fun createTypeState(type: Type): TypeState? = when (type) {
         is RoleType -> createTypeState(type)
         else -> createTypeState(type as ThingType)
     }
 
-    internal fun createTypeState(type: ThingType): TypeState.Thing = when (type) {
+    internal fun createTypeState(type: ThingType): TypeState.Thing? = when (type) {
         is EntityType -> createTypeState(type)
         is RelationType -> createTypeState(type)
         is AttributeType -> createTypeState(type)
         else -> throw IllegalStateException("Unrecognised ThingType object")
     }
 
-    internal fun createTypeState(type: EntityType): TypeState.Entity {
-        val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let {
-            if (it.isEntityType) entityTypes[it] ?: createTypeState(it.asEntityType()) else null
-        }
-        return entityTypes.computeIfAbsent(type) {
-            TypeState.Entity(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
-        }
-    }
-
-    internal fun createTypeState(type: AttributeType): TypeState.Attribute {
-        val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let {
-            if (it.isAttributeType) attributeTypes[it] ?: createTypeState(it.asAttributeType()) else null
-        }
-        return attributeTypes.computeIfAbsent(type) {
-            TypeState.Attribute(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+    internal fun createTypeState(entityType: EntityType): TypeState.Entity? {
+        return openOrGetReadTx()?.let {
+            val remote = entityType.asRemote(it)
+            val supertype = remote.supertype?.let { st ->
+                if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
+            }
+            entityTypes.computeIfAbsent(entityType) {
+                TypeState.Entity(entityType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+            }
         }
     }
 
-    internal fun createTypeState(type: RelationType): TypeState.Relation {
-        val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let {
-            if (it.isRelationType) relationTypes[it] ?: createTypeState(it.asRelationType()) else null
-        }
-        return relationTypes.computeIfAbsent(type) {
-            TypeState.Relation(type, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+    internal fun createTypeState(attributeType: AttributeType): TypeState.Attribute? {
+        return openOrGetReadTx()?.let {
+            val remote = attributeType.asRemote(it)
+            val supertype = remote.supertype?.let { st ->
+                if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
+            }
+            attributeTypes.computeIfAbsent(attributeType) {
+                TypeState.Attribute(attributeType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+            }
         }
     }
 
-    internal fun createTypeState(type: RoleType): TypeState.Role {
-        val remote = type.asRemote(openOrGetReadTx())
-        val supertype = remote.supertype?.let {
-            if (it.isRoleType) roleTypes[it] ?: createTypeState(it.asRoleType()) else null
+    internal fun createTypeState(relationType: RelationType): TypeState.Relation? {
+        return openOrGetReadTx()?.let {
+            val remote = relationType.asRemote(it)
+            val supertype = remote.supertype?.let { st ->
+                if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
+            }
+            relationTypes.computeIfAbsent(relationType) {
+                TypeState.Relation(relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+            }
         }
-        return roleTypes.computeIfAbsent(type) {
-            val relationType = createTypeState(remote.relationType)
-            TypeState.Role(type, relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+    }
+
+    internal fun createTypeState(roleType: RoleType): TypeState.Role? {
+        return openOrGetReadTx()?.let { tx ->
+            val remote = roleType.asRemote(tx)
+            val supertype = remote.supertype?.let { st ->
+                if (st.isRoleType) roleTypes[st] ?: createTypeState(st.asRoleType()) else null
+            }
+            roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
+                roleTypes.computeIfAbsent(roleType) {
+                    TypeState.Role(roleType, relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                }
+            }
         }
     }
 
     private fun loadTypesAndOpen() {
-        val conceptMgr = openOrGetReadTx().concepts()
-        rootEntityType = TypeState.Entity(
-            conceptType = conceptMgr.rootEntityType, supertype = null, hasSubtypes = true, schemaMgr = this
-        ).also { entityTypes[conceptMgr.rootEntityType] = it }
-        rootRelationType = TypeState.Relation(
-            conceptType = conceptMgr.rootRelationType, supertype = null, hasSubtypes = true, schemaMgr = this
-        ).also { relationTypes[conceptMgr.rootRelationType] = it }
-        rootAttributeType = TypeState.Attribute(
-            conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
-        ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
-        isOpenAtomic.set(true)
-        onRootsUpdated?.let { it() }
+        openOrGetReadTx()?.concepts()?.let { conceptMgr ->
+            rootEntityType = TypeState.Entity(
+                conceptType = conceptMgr.rootEntityType, supertype = null, hasSubtypes = true, schemaMgr = this
+            ).also { entityTypes[conceptMgr.rootEntityType] = it }
+            rootRelationType = TypeState.Relation(
+                conceptType = conceptMgr.rootRelationType, supertype = null, hasSubtypes = true, schemaMgr = this
+            ).also { relationTypes[conceptMgr.rootRelationType] = it }
+            rootAttributeType = TypeState.Attribute(
+                conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
+            ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
+            isOpenAtomic.set(true)
+            onRootsUpdated?.let { it() }
+        }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
@@ -181,11 +191,11 @@ class SchemaManager(
         }
     }
 
-    internal fun openOrGetReadTx(): TypeDBTransaction {
+    internal fun openOrGetReadTx(): TypeDBTransaction? {
         synchronized(this) {
             lastTransactionUse.set(System.currentTimeMillis())
             if (readTx.get() != null) return readTx.get()
-            readTx.set(session.transaction().also { it?.onClose { closeReadTx() } })
+            readTx.set(session.transaction()?.also { it.onClose { closeReadTx() } })
             scheduleCloseReadTx()
             return readTx.get()
         }

@@ -183,7 +183,7 @@ object Tabs {
             onClick: (T) -> Unit,
             contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)? = null,
             closeButtonFn: ((T) -> IconButtonArg)? = null,
-            trailingTabButtonFn: ((T) -> IconButtonArg?)? = null,
+            leadingButtonFn: ((T) -> IconButtonArg?)? = null,
             buttons: List<IconButtonArg> = listOf()
         ) {
             state.density = LocalDensity.current.density
@@ -204,8 +204,8 @@ object Tabs {
                         val label = labelFn(tab)
                         val isActive = isActiveFn(tab)
                         val closeBtn = closeButtonFn?.let { it(tab) }
-                        val trailingBtn = trailingTabButtonFn?.let { it(tab) }
-                        Tab(state, tab, position, icon, label, isActive, closeBtn, onClick, contextMenuFn, trailingBtn)
+                        val leadingBtn = leadingButtonFn?.let { it(tab) }
+                        Tab(state, tab, position, icon, label, isActive, closeBtn, onClick, contextMenuFn, leadingBtn)
                         Separator.Vertical()
                     }
                 }
@@ -238,7 +238,7 @@ object Tabs {
             state: State<T>, tab: T, position: Position, icon: IconArg?, label: AnnotatedString,
             isActive: Boolean, closeButtonArg: IconButtonArg?, onClick: (T) -> Unit,
             contextMenuFn: ((T) -> List<List<ContextMenu.Item>>)?,
-            trailingButton: IconButtonArg?
+            leadingIconButton: IconButtonArg?
         ) {
             val contextMenuState = remember { ContextMenu.State() }
             val bgColor = if (isActive) Theme.studio.primary else Color.Transparent
@@ -257,13 +257,13 @@ object Tabs {
                             .pointerInput(state, tab) { onPointerInput(contextMenuState) { onClick(tab) } }
                             .onSizeChanged { width = toDP(it.width, state.density) }
                     ) {
-                        trailingButton?.let { Button(it) }
+                        leadingIconButton?.let { Button(it) }
                         icon?.let {
                             Spacer()
                             Icon.Render(icon = it.code, color = it.color(), size = TAB_ICON_SIZE)
                             Spacer()
                         }
-                        if (trailingButton == null && icon == null) Spacer()
+                        if (leadingIconButton == null && icon == null) Spacer()
                         Form.Text(value = label)
                         Spacer()
                         closeButtonArg?.let { Button(it) }

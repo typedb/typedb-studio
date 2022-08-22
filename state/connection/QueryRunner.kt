@@ -42,17 +42,13 @@ import com.vaticle.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
 import kotlin.streams.toList
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
 class QueryRunner constructor(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val notificationMgr: NotificationManager,
@@ -87,6 +83,7 @@ class QueryRunner constructor(
         const val ERROR_ = "## Error> "
         const val RUNNING_ = "## Running> "
         const val COMPLETED = "## Completed"
+        const val TERMINATED = "## Terminated"
         const val DEFINE_QUERY = "Define query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY = "Undefine query:"
@@ -114,7 +111,6 @@ class QueryRunner constructor(
             "Match Group Aggregate query did not match any concept groups to aggregate in the database."
 
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
-        private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -122,54 +118,26 @@ class QueryRunner constructor(
     var endTime: Long? = null
     val responses = LinkedBlockingQueue<Response>()
     val isConsumed: Boolean get() = consumerLatch.count == 0L
-    internal val isRunning = AtomicBoolean(false)
-    private val lastResponse = AtomicLong(0)
+    val isRunning = AtomicBoolean(false)
     private val consumerLatch = CountDownLatch(1)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
-    private val hasStopSignal get() = transactionState.hasStopSignalAtomic.atomic
+    private val hasStopSignal get() = transactionState.hasStopSignalAtomic
     private val transaction get() = transactionState.transaction!!
     private val onClose = LinkedBlockingQueue<() -> Unit>()
 
     fun onClose(function: () -> Unit) = onClose.put(function)
 
-    internal fun launch() {
-        isRunning.set(true)
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runningQueryIndicator() }
-        coroutineScope.launchAndHandle(notificationMgr, LOGGER) { runQueries() }
-    }
+    fun setConsumed() = consumerLatch.countDown()
 
-    fun setConsumed() {
-        consumerLatch.countDown()
-    }
-
-    private fun collectEmptyLine() {
-        collectMessage(INFO, "")
-    }
+    private fun collectEmptyLine() = collectMessage(INFO, "")
 
     private fun collectMessage(type: Response.Message.Type, string: String) {
         responses.put(Response.Message(type, string))
-        lastResponse.set(System.currentTimeMillis())
     }
 
-    private suspend fun runningQueryIndicator() {
-        var duration = RUNNING_INDICATOR_DELAY
-        while (isRunning.get()) {
-            delay(duration)
-            synchronized(this) {
-                if (!isRunning.get()) return
-                val sinceLastResponse = System.currentTimeMillis() - lastResponse.get()
-                if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                    collectMessage(INFO, "...")
-                    duration = RUNNING_INDICATOR_DELAY
-                } else {
-                    duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
-                }
-            }
-        }
-    }
-
-    private suspend fun runQueries() {
+    internal fun launch() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
         try {
+            isRunning.set(true)
             startTime = System.currentTimeMillis()
             runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
         } catch (e: Exception) {
@@ -177,86 +145,76 @@ class QueryRunner constructor(
             collectMessage(ERROR, ERROR_ + e.message)
         } finally {
             endTime = System.currentTimeMillis()
-            synchronized(this) {
-                isRunning.set(false)
-                responses.add(Response.Done)
-            }
+            isRunning.set(false)
+            responses.add(Response.Done)
             var isConsumed: Boolean
-            if (!hasStopSignal.get()) {
+            if (!hasStopSignal.atomic.get()) {
                 do {
                     isConsumed = consumerLatch.count == 0L
                     if (!isConsumed) delay(COUNT_DOWN_LATCH_PERIOD_MS)
-                } while (!isConsumed && !hasStopSignal.get())
+                } while (!isConsumed && !hasStopSignal.atomic.get())
             }
             onComplete()
         }
     }
 
-    private fun runQueries(queries: List<TypeQLQuery>) {
-        queries.forEach { query ->
-            if (hasStopSignal.get()) return@forEach
-            when (query) {
-                is TypeQLDefine -> runDefineQuery(query)
-                is TypeQLUndefine -> runUndefineQuery(query)
-                is TypeQLDelete -> runDeleteQuery(query)
-                is TypeQLInsert -> runInsertQuery(query)
-                is TypeQLUpdate -> runUpdateQuery(query)
-                is TypeQLMatch -> runMatchQuery(query)
-                is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
-                is TypeQLMatch.Group -> runMatchGroupQuery(query)
-                is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
-                else -> throw IllegalStateException("Unrecognised TypeQL query")
-            }
+    private fun runQueries(queries: List<TypeQLQuery>) = queries.forEach { query ->
+        if (hasStopSignal.atomic.get()) return@forEach
+        when (query) {
+            is TypeQLDefine -> runDefineQuery(query)
+            is TypeQLUndefine -> runUndefineQuery(query)
+            is TypeQLDelete -> runDeleteQuery(query)
+            is TypeQLInsert -> runInsertQuery(query)
+            is TypeQLUpdate -> runUpdateQuery(query)
+            is TypeQLMatch -> runMatchQuery(query)
+            is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
+            is TypeQLMatch.Group -> runMatchGroupQuery(query)
+            is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
+            else -> throw IllegalStateException("Unrecognised TypeQL query")
         }
     }
 
-    private fun runDefineQuery(query: TypeQLDefine) {
-        runUnitQuery(DEFINE_QUERY, DEFINE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().define(query).get()
-        }
-    }
+    private fun runDefineQuery(query: TypeQLDefine) = runUnitQuery(
+        name = DEFINE_QUERY,
+        successMsg = DEFINE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().define(query).get() }
 
-    private fun runUndefineQuery(query: TypeQLUndefine) {
-        runUnitQuery(UNDEFINE_QUERY, UNDEFINE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().undefine(query).get()
-        }
-    }
+    private fun runUndefineQuery(query: TypeQLUndefine) = runUnitQuery(
+        name = UNDEFINE_QUERY,
+        successMsg = UNDEFINE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().undefine(query).get() }
 
-    private fun runDeleteQuery(query: TypeQLDelete) {
-        runUnitQuery(DELETE_QUERY, DELETE_QUERY_SUCCESS, query.toString()) {
-            transaction.query().delete(query).get()
-        }
-    }
+    private fun runDeleteQuery(query: TypeQLDelete) = runUnitQuery(
+        name = DELETE_QUERY,
+        successMsg = DELETE_QUERY_SUCCESS,
+        queryStr = query.toString()
+    ) { transaction.query().delete(query).get() }
 
-    private fun runInsertQuery(query: TypeQLInsert) {
-        runStreamingQuery(
-            name = INSERT_QUERY,
-            successMsg = INSERT_QUERY_SUCCESS,
-            noResultMsg = INSERT_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(INSERT)
-        ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
-    }
+    private fun runInsertQuery(query: TypeQLInsert) = runStreamingQuery(
+        name = INSERT_QUERY,
+        successMsg = INSERT_QUERY_SUCCESS,
+        noResultMsg = INSERT_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(INSERT)
+    ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
 
-    private fun runUpdateQuery(query: TypeQLUpdate) {
-        runStreamingQuery(
-            name = UPDATE_QUERY,
-            successMsg = UPDATE_QUERY_SUCCESS,
-            noResultMsg = UPDATE_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(UPDATE)
-        ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
-    }
+    private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
+        name = UPDATE_QUERY,
+        successMsg = UPDATE_QUERY_SUCCESS,
+        noResultMsg = UPDATE_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(UPDATE)
+    ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
 
-    private fun runMatchQuery(query: TypeQLMatch) {
-        runStreamingQuery(
-            name = MATCH_QUERY,
-            successMsg = MATCH_QUERY_SUCCESS,
-            noResultMsg = MATCH_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMaps(MATCH)
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
+        name = MATCH_QUERY,
+        successMsg = MATCH_QUERY_SUCCESS,
+        noResultMsg = MATCH_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMaps(MATCH)
+    ) { transaction.query().match(query) }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
@@ -266,25 +224,21 @@ class QueryRunner constructor(
         responses.put(Response.Numeric(result))
     }
 
-    private fun runMatchGroupQuery(query: TypeQLMatch.Group) {
-        runStreamingQuery(
-            name = MATCH_GROUP_QUERY,
-            successMsg = MATCH_GROUP_QUERY_SUCCESS,
-            noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.ConceptMapGroups()
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchGroupQuery(query: TypeQLMatch.Group) = runStreamingQuery(
+        name = MATCH_GROUP_QUERY,
+        successMsg = MATCH_GROUP_QUERY_SUCCESS,
+        noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.ConceptMapGroups()
+    ) { transaction.query().match(query) }
 
-    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) {
-        runStreamingQuery(
-            name = MATCH_GROUP_AGGREGATE_QUERY,
-            successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
-            noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
-            queryStr = query.toString(),
-            stream = Response.Stream.NumericGroups()
-        ) { transaction.query().match(query) }
-    }
+    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) = runStreamingQuery(
+        name = MATCH_GROUP_AGGREGATE_QUERY,
+        successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
+        noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
+        queryStr = query.toString(),
+        stream = Response.Stream.NumericGroups()
+    ) { transaction.query().match(query) }
 
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
         printQueryStart(name, queryStr)
@@ -318,23 +272,31 @@ class QueryRunner constructor(
         stream: Response.Stream<T>
     ) {
         var started = false
-        collectEmptyLine()
-        results.peek {
-            if (started) return@peek
-            collectMessage(SUCCESS, RESULT_ + successMsg)
-            responses.put(stream)
-            started = true
-        }.forEach {
-            if (hasStopSignal.get()) return@forEach
-            stream.queue.put(Either.first(it))
+        var error = false
+        try {
+            collectEmptyLine()
+            results.peek {
+                if (started) return@peek
+                collectMessage(SUCCESS, RESULT_ + successMsg)
+                responses.put(stream)
+                started = true
+            }.forEach {
+                if (hasStopSignal.atomic.get()) return@forEach
+                stream.queue.put(Either.first(it))
+            }
+        } catch (e: Exception) {
+            collectMessage(ERROR, ERROR_ + e.message)
+            error = true
+        } finally {
+            if (started) stream.queue.put(Either.second(Response.Done))
+            if (error || hasStopSignal.atomic.get()) collectMessage(ERROR, TERMINATED)
+            else if (started) collectMessage(INFO, COMPLETED)
+            else collectMessage(SUCCESS, RESULT_ + noResultMsg)
         }
-        if (started) {
-            stream.queue.put(Either.second(Response.Done))
-            collectMessage(INFO, COMPLETED)
-        } else collectMessage(SUCCESS, RESULT_ + noResultMsg)
     }
 
     fun close() {
+        hasStopSignal.set(true)
         onClose.forEach { it() }
     }
 }
