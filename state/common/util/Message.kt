@@ -128,55 +128,57 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Project(1, "Unexpected error occurred with the project directory file system.")
             val PATH_NOT_EXIST =
                 Project(2, "Project path '%s' does not exist.")
+            val PATH_NO_LONGER_EXIST =
+                Project(3, "Project path '%s' no longer exists or is not longer readable.")
             val PATH_NOT_READABLE =
-                Project(3, "Project path '%s' is not readable.")
+                Project(4, "Project path '%s' is not readable.")
             val PATH_NOT_WRITABLE =
-                Project(4, "Project path '%s' is not writable.")
+                Project(5, "Project path '%s' is not writable.")
             val PATH_NOT_DIRECTORY =
-                Project(5, "Project path '%s' is not a directory.")
+                Project(6, "Project path '%s' is not a directory.")
             val PROJECT_DATA_DIR_PATH_TAKEN =
-                Project(6, "Project data directory cannot be created due to clashing file: %s.")
+                Project(7, "Project data directory cannot be created due to clashing file: %s.")
             val FILE_NOT_READABLE =
-                Project(7, "File '%s' is not readable.")
+                Project(8, "File '%s' is not readable.")
             val FILE_NOT_WRITABLE =
-                Project(8, "File %s is not writable, and you are currently in READ-ONLY mode.")
+                Project(9, "File %s is not writable, and you are currently in READ-ONLY mode.")
             val DIRECTORY_NOT_DELETABLE =
-                Project(9, "Directory %s is not deletable.")
+                Project(10, "Directory %s is not deletable.")
             val FILE_NOT_DELETABLE =
-                Project(10, "File %s is not deletable.")
+                Project(11, "File %s is not deletable.")
             val FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION =
                 Project(
-                    11,
+                    12,
                     "The path %s is where the directory currently resides in. Choose a different parent or cancel."
                 )
             val FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE =
-                Project(12, "Failed to create or rename directory to %s, as it already exists.")
+                Project(13, "Failed to create or rename directory to %s, as it already exists.")
             val FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST =
-                Project(13, "The path %s in which you want to move the directory into, does not exist.")
+                Project(14, "The path %s in which you want to move the directory into, does not exist.")
             val FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE =
-                Project(14, "Failed to move directory to %s, as it already exists.")
+                Project(15, "Failed to move directory to %s, as it already exists.")
             val FAILED_TO_CREATE_DIRECTORY =
-                Project(15, "Failed to create new directory at %s, due to: %s.")
+                Project(16, "Failed to create new directory at %s, due to: %s.")
             val FAILED_TO_MOVE_DIRECTORY =
-                Project(16, "Failed to move directory to %s, due to: %s.")
+                Project(17, "Failed to move directory to %s, due to: %s.")
             val FAILED_TO_RENAME_DIRECTORY =
-                Project(17, "Failed to rename file to %s, due to: %s.")
+                Project(18, "Failed to rename file to %s, due to: %s.")
             val FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE =
-                Project(18, "Failed to create or rename file to %s, as it already exists.")
+                Project(19, "Failed to create or rename file to %s, as it already exists.")
             val FAILED_TO_CREATE_FILE =
-                Project(19, "Failed to create new file at %s, due to: %s.")
+                Project(20, "Failed to create new file at %s, due to: %s.")
             val FAILED_TO_SAVE_FILE =
-                Project(20, "Failed to save file to new location: %s.")
+                Project(21, "Failed to save file to new location: %s.")
             val FAILED_TO_RENAME_FILE =
-                Project(21, "Failed to rename file to %s, due to: %s.")
+                Project(22, "Failed to rename file to %s, due to: %s.")
             val DIRECTORY_HAS_BEEN_MOVED_OUT =
-                Project(22, "Directory has been moved to a location outside of project: %s.")
+                Project(23, "Directory has been moved to a location outside of project: %s.")
             val FILE_HAS_BEEN_MOVED_OUT =
-                Project(23, "File has been moved to a location outside of project: %s.")
+                Project(24, "File has been moved to a location outside of project: %s.")
             val FILE_CONTENT_CHANGED_ON_DISK: Message =
-                Project(24, "Content of file %s on the filesystem has changed, and has been reloaded in Studio.")
+                Project(25, "Content of file %s on the filesystem has changed, and has been reloaded in Studio.")
             val FILE_PERMISSION_CHANGED_ON_DISK: Message =
-                Project(25, "Permission of file %s on the filesystem has changed, and has been updated in Studio.")
+                Project(26, "Permission of file %s on the filesystem has changed, and has been updated in Studio.")
         }
     }
 

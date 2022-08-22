@@ -157,7 +157,7 @@ class FileState internal constructor(
     }
 
     private fun computeWindowTitle(path: Path, projectMgr: ProjectManager): String {
-        return if (isUnsavedPageable) projectMgr.current!!.directory.name + " (unsaved: " + name + ")"
+        return if (isUnsavedPageable) projectMgr.current?.directory?.name + " (unsaved: " + name + ")"
         else path.relativeTo(projectMgr.current!!.directory.path.parent).toString()
     }
 
@@ -180,7 +180,7 @@ class FileState internal constructor(
 
     override fun activate() {
         assert(isOpen) { "Only opened files can be activated" }
-        if (watchFileSystem.compareAndSet(false, true)) launchWatcherCoroutine()
+        if (watchFileSystem.compareAndSet(false, true)) launchWatcher()
         projectMgr.pages.active(this)
     }
 
@@ -228,28 +228,26 @@ class FileState internal constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun launchWatcherCoroutine() {
-        coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
-            try {
-                do {
-                    val isReadable = path.isReadable()
-                    val isWritable = path.isWritable()
-                    if (!path.exists() || !isReadable) close()
-                    else {
-                        if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
-                            || isWritableAtomic.compareAndSet(!isWritable, isWritable)
-                        ) callbacks.onDiskChangePermission.forEach { it(this@FileState) }
-                        if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
-                            lastModified.set(path.toFile().lastModified())
-                            callbacks.onDiskChangeContent.forEach { it(this@FileState) }
-                        }
+    private fun launchWatcher() = coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
+        try {
+            do {
+                val isReadable = path.isReadable()
+                val isWritable = path.isWritable()
+                if (!path.exists() || !isReadable) close()
+                else {
+                    if (isReadableAtomic.compareAndSet(!isReadable, isReadable)
+                        || isWritableAtomic.compareAndSet(!isWritable, isWritable)
+                    ) callbacks.onDiskChangePermission.forEach { it(this@FileState) }
+                    if (synchronized(this) { lastModified.get() < path.toFile().lastModified() }) {
+                        lastModified.set(path.toFile().lastModified())
+                        callbacks.onDiskChangeContent.forEach { it(this@FileState) }
                     }
-                    delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
-                } while (watchFileSystem.get())
-            } catch (e: CancellationException) {
-            } catch (e: java.lang.Exception) {
-                projectMgr.notification.systemError(LOGGER, e, Message.Framework.UNEXPECTED_ERROR)
-            }
+                }
+                delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
+            } while (watchFileSystem.get())
+        } catch (e: CancellationException) {
+        } catch (e: java.lang.Exception) {
+            projectMgr.notification.systemError(LOGGER, e, Message.Framework.UNEXPECTED_ERROR)
         }
     }
 
@@ -274,7 +272,7 @@ class FileState internal constructor(
                 newFile.runners = clonedRunnerMgr
                 newFile.callbacks = clonedCallbacks
                 onSuccess?.let { it(newFile) }
-                projectMgr.onContentChange?.let { it() }
+                projectMgr.execContentChange()
             }
         } catch (e: Exception) {
             projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_FILE, newPath, e.message ?: UNKNOWN)
@@ -309,7 +307,7 @@ class FileState internal constructor(
                 newFile.runners = clonedRunner
                 newFile.callbacks = clonedCallbacks
                 onSuccess?.let { it(newFile) }
-                projectMgr.onContentChange?.let { it() }
+                projectMgr.execContentChange()
             }
         } catch (e: Exception) {
             projectMgr.notification.systemError(LOGGER, e, FAILED_TO_SAVE_FILE, path)

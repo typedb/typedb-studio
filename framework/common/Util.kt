@@ -34,10 +34,10 @@ object Util {
     fun Rect.contains(x: Int, y: Int): Boolean = this.contains(Offset(x.toFloat(), y.toFloat()))
 
     fun toRectDP(rawRectangle: Rect, density: Float) = Rect(
-        left = com.vaticle.typedb.studio.framework.common.Util.toDP(rawRectangle.left, density).value,
-        top = com.vaticle.typedb.studio.framework.common.Util.toDP(rawRectangle.top, density).value,
-        right = com.vaticle.typedb.studio.framework.common.Util.toDP(rawRectangle.right, density).value,
-        bottom = com.vaticle.typedb.studio.framework.common.Util.toDP(rawRectangle.bottom, density).value
+        left = toDP(rawRectangle.left, density).value,
+        top = toDP(rawRectangle.top, density).value,
+        right = toDP(rawRectangle.right, density).value,
+        bottom = toDP(rawRectangle.bottom, density).value
     )
 
     fun toDP(pixel: Number, density: Float): Dp {
@@ -54,7 +54,7 @@ object Util {
     }
 
     fun isMouseHover(area: Rect, window: WindowContext, titleBarHeight: Dp): Boolean {
-        val mouse = com.vaticle.typedb.studio.framework.common.Util.mousePoint(window, titleBarHeight)
+        val mouse = mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
     }
 
