@@ -94,8 +94,18 @@ class DataManager {
     }
 
     inner class Preferences {
+        private val AUTO_SAVE_DEFAULT = "editor.autosave"
+        private val IGNORED_PATH_DEFAULT = "project.ignoredpaths"
         private val QUERY_LIMIT = "query.limit"
         private val GRAPH_OUTPUT = "graph.output"
+
+        var autoSave: Boolean?
+            get() = properties?.getProperty(AUTO_SAVE_DEFAULT).toBoolean()
+            set(value) = value?.let { setProperty(AUTO_SAVE_DEFAULT, it.toString()) } ?: Unit
+
+        var ignoredPaths: List<String>?
+            get() = properties?.getProperty(IGNORED_PATH_DEFAULT)!!.split(",")
+            set(value) = value?.let { setProperty(IGNORED_PATH_DEFAULT, it.joinToString()) } ?: Unit
 
         var limit: String?
             get() = properties?.getProperty(QUERY_LIMIT)

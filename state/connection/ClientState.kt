@@ -61,6 +61,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     val connectServerDialog = DialogManager.Base()
     val selectDBDialog = DialogManager.Base()
     val manageDatabasesDialog = DialogManager.Base()
+
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING

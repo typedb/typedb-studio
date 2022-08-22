@@ -57,6 +57,8 @@ object PreferenceDialog {
     private val appData = StudioState.appData.preferences
 
     private class PreferencesForm : Form.State {
+        var autoSave by mutableStateOf(true)
+        var ignoredPaths by mutableStateOf(listOf(".git"))
         var limit: String by mutableStateOf(appData.limit ?: "")
         var graphOutput: Boolean by mutableStateOf(appData.graphOutput ?: true)
 
@@ -66,7 +68,6 @@ object PreferenceDialog {
 
         override fun isValid(): Boolean {
             return (limit.toIntOrNull() != null)
-
         }
 
         override fun trySubmit() {
@@ -86,13 +87,34 @@ object PreferenceDialog {
 
         Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
             Column(modifier = Modifier.fillMaxSize()) {
-                QueryPreferences(state)
+                EditorPreferences(state)
                 Form.FormColumnSpacer()
+
+                ProjectPreferences(state)
+                Form.FormColumnSpacer()
+
                 GraphPreferences(state)
                 Form.FormColumnSpacer()
+
+                QueryPreferences(state)
+                Form.FormColumnSpacer()
+
                 ConfirmChanges(state)
             }
         }
+    }
+
+
+    @Composable
+    private fun ProjectPreferences(state: PreferencesForm) {
+        PreferencesHeader("Project")
+        ProjectIgnoredPathsField(state)
+    }
+
+    @Composable
+    private fun EditorPreferences(state: PreferencesForm) {
+        PreferencesHeader("Editor")
+        EditorAutoSaveField(state)
     }
 
     @Composable
@@ -104,11 +126,11 @@ object PreferenceDialog {
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
         PreferencesHeader("Graph")
-        EnableGraphOutputField(state)
+        GraphOutputField(state)
     }
 
     @Composable
-    private fun EnableGraphOutputField(state: PreferencesForm) {
+    private fun GraphOutputField(state: PreferencesForm) {
         Form.Field(label = Label.ENABLE_GRAPH_OUTPUT) {
             Form.Checkbox(
                 value = state.graphOutput,
@@ -117,8 +139,29 @@ object PreferenceDialog {
     }
 
     @Composable
+    private fun ProjectIgnoredPathsField(state: PreferencesForm) {
+        Form.Field(label = Label.PROJECT_IGNORED_PATHS) {
+            Form.TextInput(
+                value = state.ignoredPaths.toString(),
+                placeholder = ".git",
+                onValueChange = { state.limit = it },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+
+    @Composable
+    private fun EditorAutoSaveField(state: PreferencesForm) {
+        Form.Field(label = Label.ENABLE_EDITOR_AUTOSAVE) {
+            Form.Checkbox(
+                value = state.autoSave,
+            ) { state.autoSave = it }
+        }
+    }
+
+    @Composable
     private fun QueryLimitField(state: PreferencesForm) {
-        Form.Field(label = Label.QUERY_LIMIT) {
+        Form.Field(label = Label.SET_QUERY_LIMIT) {
             Form.TextInput(
                 value = state.limit,
                 placeholder = "1000",
@@ -131,9 +174,7 @@ object PreferenceDialog {
     @Composable
     private fun PreferencesHeader(text: String) {
         Text(text, fontWeight = FontWeight.Bold)
-        Form.FormColumnSpacer()
-        Separator.Horizontal()
-        Form.FormColumnSpacer()
+        SpacedSeperator()
     }
 
     @Composable
@@ -153,6 +194,8 @@ object PreferenceDialog {
                 if (state.isValid()) {
                     StudioState.appData.preferences.limit = state.limit
                     StudioState.appData.preferences.graphOutput = state.graphOutput
+                    StudioState.appData.preferences.autoSave = state.autoSave
+                    StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
                     StudioState.preference.openPreferenceDialog.close()
                 } else {
 
