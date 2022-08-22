@@ -46,6 +46,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 object Utils {
     val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
@@ -121,7 +122,14 @@ object Utils {
         StudioState.client.tryConnectToTypeDB(address) {}
 
         wait(composeRule, 2_500)
-        assertTrue(StudioState.client.isConnected)
+
+        val deadline = System.currentTimeMillis() + 10_000
+        while (!StudioState.client.isConnected && System.currentTimeMillis() < deadline) {
+            wait(composeRule, 500)
+        }
+        if (!StudioState.client.isConnected) {
+            fail("Couldn't connect to the database.")
+        }
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -134,6 +142,17 @@ object Utils {
 
         StudioState.client.tryCreateDatabase(dbName) {}
         wait(composeRule, 750)
+
+        StudioState.client.refreshDatabaseList()
+
+        val deadline = System.currentTimeMillis() + 10_000
+        while (!StudioState.client.databaseList.contains(dbName) && System.currentTimeMillis() < deadline) {
+            StudioState.client.refreshDatabaseList()
+            wait(composeRule, 250)
+        }
+        if (!StudioState.client.databaseList.contains(dbName)) {
+            fail("Couldn't create the database.")
+        }
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -152,10 +171,18 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        wait(composeRule, 750)
+        wait(composeRule, 1_500)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
+
+        val deadline = System.currentTimeMillis() + 10_000
+        while (StudioState.notification.queue.last().code != "CNX10" && System.currentTimeMillis() < deadline) {
+            wait(composeRule, 500)
+        }
+        if (StudioState.notification.queue.last().code != "CNX10") {
+            fail("Couldn't write the schema.")
+        }
 
         StudioState.client.session.close()
     }
@@ -171,10 +198,18 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        wait(composeRule, 750)
+        wait(composeRule, 1_500)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
+
+        val deadline = System.currentTimeMillis() + 10_000
+        while (StudioState.notification.queue.last().code != "CNX10" && System.currentTimeMillis() < deadline) {
+            wait(composeRule, 500)
+        }
+        if (StudioState.notification.queue.last().code != "CNX10") {
+            fail("Couldn't write the data.")
+        }
 
         StudioState.client.session.close()
     }
