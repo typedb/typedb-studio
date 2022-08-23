@@ -65,6 +65,11 @@ object Utils {
     const val DATA_FILE_NAME = "data_string.tql"
     const val SCHEMA_FILE_NAME = "schema_string.tql"
 
+    const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
+    const val FAIL_CREATE_DATABASE = "Failed to create the database."
+    const val FAIL_DATA_WRITE = "Failed to write the data."
+    const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
+
     fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
         runBlocking { compose.rule() }
     }
@@ -91,11 +96,6 @@ object Utils {
         typeDB.stop()
     }
 
-    fun fileNameToString(fileName: String): String {
-        return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
-            .joinToString("")
-    }
-
     fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
         val absolute = File(File(destination).absolutePath)
 
@@ -120,16 +120,9 @@ object Utils {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(address) {}
-
         wait(composeRule, 2_500)
 
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!StudioState.client.isConnected && System.currentTimeMillis() < deadline) {
-            wait(composeRule, 500)
-        }
-        if (!StudioState.client.isConnected) {
-            fail("Couldn't connect to the database.")
-        }
+        retry(composeRule, {!StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB)
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -145,17 +138,12 @@ object Utils {
 
         StudioState.client.refreshDatabaseList()
 
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!StudioState.client.databaseList.contains(dbName) && System.currentTimeMillis() < deadline) {
-            StudioState.client.refreshDatabaseList()
-            wait(composeRule, 250)
-        }
-        if (!StudioState.client.databaseList.contains(dbName)) {
-            fail("Couldn't create the database.")
-        }
+        retry(composeRule, {!StudioState.client.databaseList.contains(dbName)}, {StudioState.client.refreshDatabaseList()}, FAIL_CREATE_DATABASE)
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
+        StudioState.notification.dismissAll()
+
         composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
         wait(composeRule, 750)
 
@@ -176,20 +164,16 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
 
-        val deadline = System.currentTimeMillis() + 10_000
-        while (StudioState.notification.queue.last().code != "CNX10" && System.currentTimeMillis() < deadline) {
-            wait(composeRule, 500)
-        }
-        if (StudioState.notification.queue.last().code != "CNX10") {
-            fail("Couldn't write the schema.")
-        }
+        retry(composeRule, {StudioState.notification.queue.last().code != "CNX10"}, {}, FAIL_SCHEMA_WRITE)
 
         StudioState.client.session.close()
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
-        StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
+        StudioState.notification.dismissAll()
+        wait(composeRule, 750)
 
+        StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         wait(composeRule, 750)
 
         composeRule.onNodeWithText("data").performClick()
@@ -203,13 +187,7 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
 
-        val deadline = System.currentTimeMillis() + 10_000
-        while (StudioState.notification.queue.last().code != "CNX10" && System.currentTimeMillis() < deadline) {
-            wait(composeRule, 500)
-        }
-        if (StudioState.notification.queue.last().code != "CNX10") {
-            fail("Couldn't write the data.")
-        }
+        retry(composeRule, {StudioState.notification.queue.last().code != "CNX10"}, {}, FAIL_DATA_WRITE)
 
         StudioState.client.session.close()
     }
@@ -238,6 +216,22 @@ object Utils {
                 }
             }
         }
+    }
+
+    private suspend fun retry(composeRule: ComposeContentTestRule, condition: () -> Boolean, intermediate: () -> Unit, failMessage: String) {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (condition() && System.currentTimeMillis() < deadline) {
+            intermediate()
+            wait(composeRule, 500)
+        }
+        if (condition()) {
+            fail(failMessage)
+        }
+    }
+
+    private fun fileNameToString(fileName: String): String {
+        return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
+            .joinToString("")
     }
 }
 
