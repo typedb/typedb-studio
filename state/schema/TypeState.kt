@@ -200,7 +200,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
             }
         }
 
-        override fun closeRecursive() {
+        fun closeRecursive() {
             close()
             entries.forEach { it.closeRecursive() }
         }
