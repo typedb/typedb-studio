@@ -33,6 +33,10 @@ import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
 import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
 import com.vaticle.typedb.studio.test.integration.Utils.wait
 import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
 import org.junit.Ignore
 import org.junit.Test
 
@@ -42,9 +46,9 @@ class TypeBrowserTest: IntegrationTest() {
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -58,18 +62,18 @@ class TypeBrowserTest: IntegrationTest() {
     fun collapseTypes() {
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 750)
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
@@ -81,19 +85,19 @@ class TypeBrowserTest: IntegrationTest() {
     fun collapseThenExpandTypes() {
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 750)
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-            wait(composeRule, 750)
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText("commit-date").assertExists()
 
@@ -107,9 +111,9 @@ class TypeBrowserTest: IntegrationTest() {
     fun exportSchema() {
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 

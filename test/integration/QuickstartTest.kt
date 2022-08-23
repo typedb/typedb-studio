@@ -29,6 +29,10 @@ import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
 import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
 import org.junit.Test
 
 /**
@@ -52,10 +56,10 @@ class QuickstartTest: IntegrationTest() {
         studioTestWithRunner(composeRule) { address ->
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
-            cloneAndOpenProject(composeRule, source = Utils.TQL_DATA_PATH, destination = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, Utils.SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, dbName = testID, Utils.DATA_FILE_NAME)
-            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${Utils.QUERY_FILE_NAME}")
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
+            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
         }
     }
 }

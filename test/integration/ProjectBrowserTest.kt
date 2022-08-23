@@ -28,6 +28,9 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
 import com.vaticle.typedb.studio.test.integration.Utils.studioTest
 import com.vaticle.typedb.studio.test.integration.Utils.wait
+import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {
@@ -37,13 +40,13 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             val createdDirectoryName = "created"
 
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText(createdDirectoryName).assertExists()
         }
@@ -54,13 +57,13 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             val createdFileName = "created"
 
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText(createdFileName).assertExists()
 
@@ -72,14 +75,14 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             val renamedFileName = "renamed"
 
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
                 .tryRename(renamedFileName)
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText(renamedFileName).assertExists()
         }
@@ -88,13 +91,13 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun deleteAFile() {
         studioTest(composeRule) {
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 750)
+            wait(composeRule, Delays.RECOMPOSE)
 
             composeRule.onNodeWithText("file3").assertDoesNotExist()
         }
@@ -103,9 +106,9 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandFolders() {
         studioTest(composeRule) {
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
             composeRule.waitForIdle()
 
             composeRule.onNodeWithText("file1_2").assertExists()
@@ -115,13 +118,13 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandThenCollapseFolders() {
         studioTest(composeRule) {
-            cloneAndOpenProject(composeRule, source = Utils.SAMPLE_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
             composeRule.waitForIdle()
             composeRule.onNodeWithText("file1_2").assertExists()
 
-            composeRule.onNodeWithText(Utils.DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
             composeRule.waitForIdle()
 
             composeRule.onNodeWithText(testID).assertExists()
