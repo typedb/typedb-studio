@@ -88,8 +88,9 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             liveUpdate = true,
             contextMenuFn = { contextMenuItems(it) }
         ) { openPath(it) }
-        StudioState.project.onProjectChange = { navState.replaceContainer(it) }
-        StudioState.project.onContentChange = { navState.reloadEntries() }
+        StudioState.project.onProjectChange { navState.replaceContainer(it) }
+        StudioState.project.onContentChange { navState.reloadEntries() }
+        StudioState.project.onClose { navState.close() }
         buttons = navState.buttons
         Navigator.Layout(
             state = navState,

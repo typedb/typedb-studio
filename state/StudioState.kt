@@ -55,7 +55,7 @@ object StudioState {
         confirmation = ConfirmationManager()
         pages = PageManager()
         client = ClientState(notification)
-        project = ProjectManager(preference, notification, confirmation, client, pages)
+        project = ProjectManager(preference, appData, notification, confirmation, client, pages)
         schema = SchemaManager(client.session, pages, notification)
     }
 }

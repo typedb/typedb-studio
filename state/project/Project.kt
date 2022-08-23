@@ -18,19 +18,27 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.exists
+import kotlin.io.path.isReadable
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import mu.KotlinLogging
 
-class Project internal constructor(
-    val path: Path,
-    projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-    notificationMgr: NotificationManager
-) : Navigable<PathState> {
+@OptIn(ExperimentalTime::class)
+class Project internal constructor(val path: Path, private val projectMgr: ProjectManager) : Navigable<PathState> {
 
+    private val isOpen = AtomicBoolean(false)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     val directory: DirectoryState = DirectoryState(path, null, projectMgr)
+
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
     override val parent: Navigable<PathState>? = null
@@ -38,17 +46,38 @@ class Project internal constructor(
     override val isExpandable: Boolean = true
     override val isBulkExpandable: Boolean = true
 
+    companion object {
+        private val LOGGER = KotlinLogging.logger {}
+        private val WATCHER_REFRESH_RATE = Duration.seconds(1)
+    }
+
     override fun reloadEntries() {
         directory.reloadEntries()
+    }
+
+    fun open() {
+        if (isOpen.compareAndSet(false, true)) launchWatcher()
+    }
+
+    private fun launchWatcher() = coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
+        do {
+            if (!path.exists() || !path.isReadable()) {
+                close()
+                projectMgr.notification.userError(LOGGER, PATH_NO_LONGER_EXIST, path)
+            } else delay(WATCHER_REFRESH_RATE)
+        } while (isOpen.get())
+    }
+
+    fun close() {
+        if (isOpen.compareAndSet(true, false)) {
+            directory.closeRecursive()
+            projectMgr.close(this)
+        }
     }
 
     override fun compareTo(other: Navigable<PathState>): Int {
         return if (other is Project) directory.compareTo(other.directory)
         else -1
-    }
-
-    fun close() {
-        directory.closeRecursive()
     }
 
     override fun toString(): String {

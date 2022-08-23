@@ -88,7 +88,7 @@ sealed class PathState constructor(
     }
 
     protected fun updateContentAndCloseDialog(dialog: DialogManager) {
-        projectMgr.onContentChange?.let { it() }
+        projectMgr.execContentChange()
         dialog.close()
     }
 

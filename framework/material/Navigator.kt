@@ -82,10 +82,10 @@ import com.vaticle.typedb.studio.framework.material.Form.IconArg
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.StudioState.notification
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
-import com.vaticle.typedb.studio.state.common.util.Message.Framework.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
@@ -95,9 +95,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -177,7 +175,9 @@ object Navigator {
             reloadEntries()
             navState.recomputeList()
             if (currentDepth < maxDepth) entries.forEach {
-                coroutineScope.launch(Default) { it.expandRecursive(currentDepth + 1, maxDepth) }
+                coroutineScope.launchAndHandle(notification, LOGGER) {
+                    it.expandRecursive(currentDepth + 1, maxDepth)
+                }
             }
         }
 
@@ -198,7 +198,7 @@ object Navigator {
             }
             navState.recomputeList()
             entries.filter { it.isExpanded }.forEach {
-                coroutineScope.launch(Default) { it.reloadEntries() }
+                coroutineScope.launchAndHandle(notification, LOGGER) { it.reloadEntries() }
             }
         }
 
@@ -246,14 +246,18 @@ object Navigator {
         internal val contextMenu = ContextMenu.State()
         private val isExpanding = AtomicBoolean(false)
         private val isCollapsing = AtomicBoolean(false)
+        private val watchUpdate = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
             IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAll() },
             IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
         )
 
-        fun launch() = coroutineScope.launch(Default) {
+        fun launch() = coroutineScope.launchAndHandle(notification, LOGGER) {
             container.expand(1 + initExpandDepth)
-            if (liveUpdate) launchWatcher(container)
+            if (liveUpdate) {
+                watchUpdate.set(true)
+                launchWatcher(container)
+            }
         }
 
         fun replaceContainer(newContainer: Navigable<T>) {
@@ -261,22 +265,19 @@ object Navigator {
             launch()
         }
 
-        @OptIn(ExperimentalTime::class)
-        private fun launchWatcher(root: ItemState<T>) {
-            coroutineScope.launch(Default) {
-                try {
-                    do {
-                        delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
-                        root.checkForUpdate(true)
-                    } while (root == container)
-                } catch (e: CancellationException) {
-                } catch (e: java.lang.Exception) {
-                    StudioState.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
-                }
-            }
+        fun close() {
+            watchUpdate.set(false)
         }
 
-        private fun expandAll() = coroutineScope.launch(Default) {
+        @OptIn(ExperimentalTime::class)
+        private fun launchWatcher(root: ItemState<T>) = coroutineScope.launchAndHandle(notification, LOGGER) {
+            do {
+                root.checkForUpdate(true)
+                delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
+            } while (root == container && watchUpdate.get())
+        }
+
+        private fun expandAll() = coroutineScope.launchAndHandle(notification, LOGGER) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -290,11 +291,11 @@ object Navigator {
             }
             isExpanding.set(false)
             if (!queue.isEmpty() && i == MAX_ITEM_EXPANDED) {
-                StudioState.notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
+                notification.userWarning(LOGGER, EXPAND_LIMIT_REACHED, title, MAX_ITEM_EXPANDED)
             }
         }
 
-        private fun collapse() = coroutineScope.launch(Default) {
+        private fun collapse() = coroutineScope.launchAndHandle(notification, LOGGER) {
             val queue = LinkedList(container.entries)
             isExpanding.set(false)
             isCollapsing.set(true)
@@ -307,7 +308,7 @@ object Navigator {
             isCollapsing.set(false)
         }
 
-        fun reloadEntries() = coroutineScope.launch(Default) { container.reloadEntries() }
+        fun reloadEntries() = coroutineScope.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null

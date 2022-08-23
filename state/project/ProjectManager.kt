@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.ConfirmationManager
+import com.vaticle.typedb.studio.state.app.DataManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
@@ -30,10 +31,11 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PAT
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.common.util.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.page.PageManager
 import java.nio.file.Path
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -45,6 +47,7 @@ import mu.KotlinLogging
 
 class ProjectManager(
     internal val preference: PreferenceManager,
+    internal val appData: DataManager,
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager,
     internal val client: ClientState,
@@ -76,9 +79,9 @@ class ProjectManager(
 
         var directory: DirectoryState? by mutableStateOf(null)
 
-        internal fun open(path: DirectoryState) {
+        internal fun open(directory: DirectoryState) {
             isOpen = true
-            this.directory = path
+            this.directory = directory
         }
 
         override fun close() {
@@ -114,37 +117,44 @@ class ProjectManager(
     var current: Project? by mutableStateOf(null)
     var dataDir: DirectoryState? by mutableStateOf(null)
     var unsavedFilesDir: DirectoryState? by mutableStateOf(null)
-    var onProjectChange: ((Project) -> Unit)? = null
-    var onContentChange: (() -> Unit)? = null
     val openProjectDialog = DialogManager.Base()
     val createPathDialog = CreatePathDialog()
     val moveDirectoryDialog = ModifyDirectoryDialog()
     val renameDirectoryDialog = ModifyDirectoryDialog()
     val renameFileDialog = ModifyFileDialog()
     val saveFileDialog = ModifyFileDialog()
+    private val onProjectChange = LinkedBlockingQueue<(Project) -> Unit>()
+    private val onContentChange = LinkedBlockingQueue<() -> Unit>()
+    private val onClose = LinkedBlockingQueue<() -> Unit>()
 
-    fun tryOpenProject(dir: Path): Boolean {
-        val dataDirPath = dir.resolve(DATA_DIR_NAME)
+    fun onProjectChange(function: (Project) -> Unit) = onProjectChange.put(function)
+    fun onContentChange(function: () -> Unit) = onContentChange.put(function)
+    fun onClose(function: () -> Unit) = onClose.put(function)
+
+    fun tryOpenProject(newPath: Path) {
+        if (current?.path == newPath) return
+        val dataDirPath = newPath.resolve(DATA_DIR_NAME)
         val unsavedFilesDirPath = dataDirPath.resolve(UNSAVED_DATA_DIR_NAME)
-        if (!dir.exists()) notification.userError(LOGGER, PATH_NOT_EXIST, dir)
-        else if (!dir.isReadable()) notification.userError(LOGGER, PATH_NOT_READABLE, dir)
-        else if (!dir.isWritable()) notification.userError(LOGGER, PATH_NOT_WRITABLE, dir)
-        else if (!dir.isDirectory()) notification.userError(LOGGER, PATH_NOT_DIRECTORY, dir)
+        if (!newPath.exists()) notification.userError(LOGGER, PATH_NOT_EXIST, newPath)
+        else if (!newPath.isReadable()) notification.userError(LOGGER, PATH_NOT_READABLE, newPath)
+        else if (!newPath.isWritable()) notification.userError(LOGGER, PATH_NOT_WRITABLE, newPath)
+        else if (!newPath.isDirectory()) notification.userError(LOGGER, PATH_NOT_DIRECTORY, newPath)
         else if (dataDirPath.exists() && dataDirPath.isRegularFile()) {
             notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, dataDirPath)
         } else if (unsavedFilesDirPath.exists() && unsavedFilesDirPath.isRegularFile()) {
             notification.userError(LOGGER, PROJECT_DATA_DIR_PATH_TAKEN, unsavedFilesDirPath)
         } else {
-            initialiseDirectories(dir, dataDirPath, unsavedFilesDirPath)
-            onProjectChange?.let { it(current!!) }
+            current?.close()
+            initialiseProject(newPath, dataDirPath, unsavedFilesDirPath)
+            execProjectChange()
             openProjectDialog.close()
-            return true
+            unsavedFiles().forEach { it.tryOpen() }
+            appData.project.path = current!!.path
         }
-        return false
     }
 
-    private fun initialiseDirectories(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, this, preference, notification)
+    private fun initialiseProject(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
+        current = Project(dir, this).also { it.open() }
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()
@@ -163,11 +173,21 @@ class ProjectManager(
         val newFileName = unsavedFilesDir!!.nextUntitledFileName()
         return try {
             val newFile = unsavedFilesDir!!.tryCreateFile(newFileName)
-            onContentChange?.let { it() }
+            execContentChange()
             newFile
         } catch (e: Exception) {
             notification.userError(LOGGER, FAILED_TO_CREATE_FILE, unsavedFilesDir!!.path.resolve(newFileName))
             null
         }
+    }
+
+    fun execProjectChange() = onProjectChange.forEach { it(current!!) }
+
+    fun execContentChange() = onContentChange.forEach { it() }
+
+    fun close(project: Project) {
+        project.close()
+        onClose.forEach { it() }
+        if (current == project) current = null
     }
 }
