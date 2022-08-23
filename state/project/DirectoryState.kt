@@ -32,6 +32,7 @@ import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAI
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_RENAME_DIRECTORY
+import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.ILLEGAL_CAST
 import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -74,6 +75,10 @@ class DirectoryState internal constructor(
     }
 
     override fun reloadEntries() {
+        if (!path.exists() || !path.isReadable()) {
+            projectMgr.notification.userError(LOGGER, PATH_NOT_EXIST, path)
+            return
+        }
         val new = path.listDirectoryEntries().filter {
             it.isReadable() && !projectMgr.preference.isIgnoredPath(it)
         }.toSet()
@@ -143,13 +148,17 @@ class DirectoryState internal constructor(
 
     fun tryRename(newName: String): DirectoryState? {
         val newPath = path.resolveSibling(newName)
+        if (newPath == path) return this
         val newDir = if (parent?.contains(newName) == true) {
             projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             closeRecursive()
             movePathTo(newPath)
-            find(newPath)?.asDirectory()
+            if (this == projectMgr.current!!.directory) {
+                projectMgr.tryOpenProject(newPath)
+                projectMgr.current!!.directory
+            } else find(newPath)?.asDirectory()
         } catch (e: Exception) {
             projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_DIRECTORY, newPath, e.message ?: UNKNOWN)
             null
@@ -225,7 +234,7 @@ class DirectoryState internal constructor(
         }
     }
 
-    override fun close() {}
+    override fun close() {} // TODO: Shouldn't close() and closeRecursive be merged?
 
     override fun closeRecursive() {
         entries.forEach { it.closeRecursive() }

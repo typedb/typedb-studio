@@ -61,7 +61,10 @@ import mu.KotlinLogging
 object ProjectDialog {
 
     private class PathForm constructor(
-        initField: String, val onCancel: () -> Unit, val onSubmit: (String) -> Unit
+        initField: String,
+        val isValid: ((String) -> Boolean)? = null,
+        val onCancel: () -> Unit,
+        val onSubmit: (String) -> Unit
     ) : Form.State {
 
         var field: String by mutableStateOf(initField)
@@ -71,7 +74,7 @@ object ProjectDialog {
         }
 
         override fun isValid(): Boolean {
-            return field.isNotBlank()
+            return field.isNotBlank() && isValid?.invoke(field) ?: true
         }
 
         override fun trySubmit() {
@@ -99,17 +102,9 @@ object ProjectDialog {
     private fun OpenProject() {
         val formState = PathForm(
             initField = StudioState.appData.project.path?.toString() ?: "",
+            isValid = { it != StudioState.project.current?.path.toString() },
             onCancel = { StudioState.project.openProjectDialog.close() },
-            onSubmit = { dir ->
-                val previous = StudioState.project.current
-                if (StudioState.project.tryOpenProject(Path(dir))) {
-                    if (previous != StudioState.project.current) {
-                        previous?.close()
-                        StudioState.project.unsavedFiles().forEach { it.tryOpen() }
-                        StudioState.appData.project.path = StudioState.project.current!!.path
-                    }
-                }
-            }
+            onSubmit = { StudioState.project.tryOpenProject(Path(it)) }
         )
         SelectDirectoryDialog(
             dialogState = StudioState.project.openProjectDialog,
@@ -254,6 +249,7 @@ object ProjectDialog {
         val formState = remember {
             PathForm(
                 initField = directory.name,
+                isValid = { it != directory.name },
                 onCancel = { dialogState.close() },
                 onSubmit = { directory.tryRename(it) }
             )
@@ -269,6 +265,7 @@ object ProjectDialog {
         val formState = remember {
             PathForm(
                 initField = file.name,
+                isValid = { it != file.name },
                 onCancel = { dialogState.close() },
                 onSubmit = { file.tryRename(it) }
             )

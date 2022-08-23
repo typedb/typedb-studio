@@ -24,10 +24,11 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KLogger
@@ -43,7 +44,7 @@ class NotificationManager {
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
     val isOpen: Boolean get() = queue.isNotEmpty()
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutineScope = CoroutineScope(Default)
 
     companion object {
         private val HIDE_DELAY = Duration.seconds(10)
@@ -66,9 +67,10 @@ class NotificationManager {
             notificationMgr: NotificationManager,
             logger: KLogger,
             function: suspend () -> Unit
-        ) = this.launch {
+        ) = this.launch(Default) {
             try {
                 function()
+            } catch (e: CancellationException) {
             } catch (e: Throwable) {
                 notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
             }
