@@ -122,7 +122,7 @@ object Utils {
         StudioState.client.tryConnectToTypeDB(address) {}
         wait(composeRule, 2_500)
 
-        retry(composeRule, {!StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB)
+        retry(composeRule, {StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB)
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -138,7 +138,8 @@ object Utils {
 
         StudioState.client.refreshDatabaseList()
 
-        retry(composeRule, {!StudioState.client.databaseList.contains(dbName)}, {StudioState.client.refreshDatabaseList()}, FAIL_CREATE_DATABASE)
+        retry(composeRule, { StudioState.client.databaseList.contains(dbName) },
+            { StudioState.client.refreshDatabaseList() }, FAIL_CREATE_DATABASE)
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -164,7 +165,7 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
 
-        retry(composeRule, {StudioState.notification.queue.last().code != "CNX10"}, {}, FAIL_SCHEMA_WRITE)
+        retry(composeRule, {StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_SCHEMA_WRITE)
 
         StudioState.client.session.close()
     }
@@ -187,7 +188,7 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         wait(composeRule, 1_500)
 
-        retry(composeRule, {StudioState.notification.queue.last().code != "CNX10"}, {}, FAIL_DATA_WRITE)
+        retry(composeRule, {StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_DATA_WRITE)
 
         StudioState.client.session.close()
     }
@@ -218,13 +219,14 @@ object Utils {
         }
     }
 
-    private suspend fun retry(composeRule: ComposeContentTestRule, condition: () -> Boolean, intermediate: () -> Unit, failMessage: String) {
+    private suspend fun retry(composeRule: ComposeContentTestRule, successCondition: () -> Boolean,
+                              intermediate: () -> Unit, failMessage: String) {
         val deadline = System.currentTimeMillis() + 10_000
-        while (condition() && System.currentTimeMillis() < deadline) {
+        while (!successCondition() && System.currentTimeMillis() < deadline) {
             intermediate()
             wait(composeRule, 500)
         }
-        if (condition()) {
+        if (!successCondition()) {
             fail(failMessage)
         }
     }
