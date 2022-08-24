@@ -31,7 +31,7 @@ import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
 import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
 import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.wait
+import com.vaticle.typedb.studio.test.integration.Utils.waitAndRecompose
 import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
@@ -58,14 +58,14 @@ class TextEditorTest: IntegrationTest() {
             val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-            wait(composeRule, Delays.RECOMPOSE)
+            waitAndRecompose(composeRule, Delays.RECOMPOSE)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
             val filePath = File("$path/Untitled1.tql").toPath()
             StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, Delays.FILE_IO)
+            waitAndRecompose(composeRule, Delays.FILE_IO)
 
             assertTrue(File("$path/Untitled1.tql").exists())
         }
@@ -83,7 +83,7 @@ class TextEditorTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, Delays.RECOMPOSE)
+            waitAndRecompose(composeRule, Delays.RECOMPOSE)
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
@@ -114,7 +114,7 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
 
-            wait(composeRule, Delays.NETWORK_IO)
+            waitAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onNodeWithText("schema").performClick()
             composeRule.onNodeWithText("write").performClick()
@@ -122,9 +122,9 @@ class TextEditorTest: IntegrationTest() {
             StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
             composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            wait(composeRule, Delays.NETWORK_IO)
+            waitAndRecompose(composeRule, Delays.NETWORK_IO)
             composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
-            wait(composeRule, Delays.NETWORK_IO)
+            waitAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
 
