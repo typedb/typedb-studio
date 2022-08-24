@@ -35,14 +35,14 @@ sealed interface WindowContext {
 
         override var width: Int
             get() = window.size.height
-            set(value) {value}
+            set(value) { value }
 
         override var x: Int
             get() = window.x
-            set(value) {value}
+            set(value) { value }
 
         override var y: Int
             get() = window.y
-            set(value) {value}
+            set(value) { value }
     }
 }
