@@ -77,8 +77,6 @@ class TypeBrowserTest: IntegrationTest() {
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
-
-            StudioState.client.session.close()
         }
     }
 
@@ -101,8 +99,6 @@ class TypeBrowserTest: IntegrationTest() {
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertExists()
-
-            StudioState.client.session.close()
         }
     }
 
@@ -130,8 +126,6 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
-
-            StudioState.client.session.close()
         }
     }
 }

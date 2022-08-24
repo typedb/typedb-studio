@@ -62,12 +62,12 @@ class TextEditorTest: IntegrationTest() {
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
-            val filePath = File("$path/Untitled1.tql").toPath()
-            StudioState.project.saveFileDialog.file!!.trySave(filePath, true)
+            val file = File("$path/Untitled1.tql")
+            StudioState.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             StudioState.project.current!!.reloadEntries()
             delayAndRecompose(composeRule, Delays.FILE_IO)
 
-            assertTrue(File("$path/Untitled1.tql").exists())
+            assertTrue(file.exists())
         }
     }
 
@@ -89,8 +89,6 @@ class TextEditorTest: IntegrationTest() {
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
             composeRule.onNodeWithText("commit-date").assertExists()
-
-            StudioState.client.session.close()
         }
     }
 
@@ -127,8 +125,6 @@ class TextEditorTest: IntegrationTest() {
             delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onNodeWithText("repo-id").assertDoesNotExist()
-
-            StudioState.client.session.close()
         }
     }
 }

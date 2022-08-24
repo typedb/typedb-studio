@@ -37,8 +37,6 @@ import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -47,6 +45,8 @@ import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 object Utils {
     val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
@@ -81,7 +81,7 @@ object Utils {
             }
             funcBody()
         }
-}
+    }
 
     fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
         val typeDB = TypeDBCoreRunner()
@@ -178,8 +178,6 @@ object Utils {
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_SCHEMA_WRITE, composeRule)
-
-        StudioState.client.session.close()
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
@@ -201,8 +199,6 @@ object Utils {
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_DATA_WRITE, composeRule)
-
-        StudioState.client.session.close()
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
