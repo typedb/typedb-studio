@@ -81,6 +81,7 @@ class TextEditorTest: IntegrationTest() {
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+            delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
@@ -113,7 +114,6 @@ class TextEditorTest: IntegrationTest() {
             createDatabase(composeRule, dbName = testID)
 
             StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-
             delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onNodeWithText("schema").performClick()

@@ -67,6 +67,7 @@ class TypeBrowserTest: IntegrationTest() {
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+            delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
@@ -116,6 +117,7 @@ class TypeBrowserTest: IntegrationTest() {
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+            delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()

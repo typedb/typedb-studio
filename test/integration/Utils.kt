@@ -134,7 +134,7 @@ object Utils {
         StudioState.client.tryConnectToTypeDB(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose({StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB, composeRule)
+        waitForConditionAndRecompose({ StudioState.client.isConnected }, {}, FAIL_CONNECT_TYPEDB, composeRule)
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -161,7 +161,7 @@ object Utils {
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        delayAndRecompose(composeRule)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -177,7 +177,7 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_SCHEMA_WRITE, composeRule)
+        waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_SCHEMA_WRITE, composeRule)
 
         StudioState.client.session.close()
     }
@@ -200,7 +200,7 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_DATA_WRITE, composeRule)
+        waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_DATA_WRITE, composeRule)
 
         StudioState.client.session.close()
     }
