@@ -456,6 +456,7 @@ sealed class TypePage(
                 iconArg = { conceptIcon(it.item.conceptType) }
             )
         }
+        LaunchedEffect(subtypesNavState) { subtypesNavState.launch() }
     }
 
     @Composable
