@@ -163,7 +163,6 @@ object Studio {
         val density = LocalDensity.current.density
         Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
             titleBarHeight = window.height.dp - toDP(it.size.height, density)
-            println(titleBarHeight)
         }) {
             CompositionLocalProvider(LocalWindowContext provides window) {
                 CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
