@@ -21,11 +21,11 @@ package com.vaticle.typedb.studio.framework.common
 import androidx.compose.ui.awt.ComposeWindow
 
 sealed interface WindowContext {
-
     var height: Int
     var width: Int
     var x: Int
     var y: Int
+
     class Test(override var height: Int, override var width: Int, override var x: Int, override var y: Int): WindowContext
 
     class Compose(val window: ComposeWindow): WindowContext {
