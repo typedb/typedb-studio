@@ -84,13 +84,14 @@ sealed class TypePage(
 
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = conceptIcon(type.conceptType)
+
     protected abstract val type: TypeState.Thing
+    protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !StudioState.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
-    protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !GlobalState.client.hasRunningCommand
     private var showAdvanced by mutableStateOf(showAdvanced)
     private var showEditLabelDialog by mutableStateOf(false)
     private var showEditSupertypeDialog by mutableStateOf(false)
@@ -503,7 +504,10 @@ sealed class TypePage(
             text = Label.REFRESH,
             leadingIcon = Form.IconArg(Icon.Code.ROTATE),
             tooltip = Tooltip.Arg(Label.REFRESH)
-        ) { type.loadProperties() }
+        ) {
+            StudioState.schema.mayRefreshReadTx()
+            type.loadProperties()
+        }
     }
 
     @Composable

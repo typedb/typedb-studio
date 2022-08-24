@@ -85,7 +85,7 @@ class SchemaManager(
         session.onOpen { isNewDB -> if (isNewDB) loadTypesAndOpen() }
         session.onClose { willReopenSameDB -> if (willReopenSameDB) closeReadTx() else close() }
         session.transaction.onSchemaWrite {
-            refreshReadTx()
+            mayRefreshReadTx()
             loadTypesAndOpen()
         }
     }
@@ -182,7 +182,7 @@ class SchemaManager(
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    fun refreshReadTx() {
+    fun mayRefreshReadTx() {
         synchronized(this) {
             if (readTx.get() != null) {
                 closeReadTx()
@@ -195,8 +195,10 @@ class SchemaManager(
         synchronized(this) {
             lastTransactionUse.set(System.currentTimeMillis())
             if (readTx.get() != null) return readTx.get()
-            readTx.set(session.transaction()?.also { it.onClose { closeReadTx() } })
-            scheduleCloseReadTx()
+            readTx.set(session.transaction()?.also {
+                it.onClose { closeReadTx() }
+                scheduleCloseReadTx()
+            })
             return readTx.get()
         }
     }
