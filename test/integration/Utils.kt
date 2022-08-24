@@ -96,6 +96,24 @@ object Utils {
         typeDB.stop()
     }
 
+    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
+    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
+        delay(timeMillis.toLong())
+        composeRule.waitForIdle()
+    }
+
+    suspend fun waitForConditionAndRecompose(successCondition: () -> Boolean,
+                                                     beforeRetry: () -> Unit, failMessage: String, context: ComposeContentTestRule) {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (!successCondition() && System.currentTimeMillis() < deadline) {
+            beforeRetry()
+            delayAndRecompose(context, 500)
+        }
+        if (!successCondition()) {
+            fail(failMessage)
+        }
+    }
+
     fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
         val absolute = File(File(destination).absolutePath)
 
@@ -108,21 +126,15 @@ object Utils {
         return absolute.toPath()
     }
 
-    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
-    suspend fun waitAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
-        delay(timeMillis.toLong())
-        composeRule.waitForIdle()
-    }
-
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
         // This opens a dialog box (which we can't see through) so we assert that buttons with that text can be
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(address) {}
-        waitAndRecompose(composeRule, Delays.CONNECT_SERVER)
+        delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForCondition({StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB, composeRule)
+        waitForConditionAndRecompose({StudioState.client.isConnected}, {}, FAIL_CONNECT_TYPEDB, composeRule)
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -131,14 +143,14 @@ object Utils {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         StudioState.client.tryDeleteDatabase(dbName)
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.tryCreateDatabase(dbName) {}
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.refreshDatabaseList()
 
-        waitForCondition({ StudioState.client.databaseList.contains(dbName) },
+        waitForConditionAndRecompose({ StudioState.client.databaseList.contains(dbName) },
             { StudioState.client.refreshDatabaseList() }, FAIL_CREATE_DATABASE, composeRule)
     }
 
@@ -146,13 +158,13 @@ object Utils {
         StudioState.notification.dismissAll()
 
         composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-        waitAndRecompose(composeRule, Delays.RECOMPOSE)
+        delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        waitAndRecompose(composeRule, Delays.RECOMPOSE)
+        delayAndRecompose(composeRule)
 
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText("schema").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -160,22 +172,22 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForCondition({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_SCHEMA_WRITE, composeRule)
+        waitForConditionAndRecompose({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_SCHEMA_WRITE, composeRule)
 
         StudioState.client.session.close()
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
         StudioState.notification.dismissAll()
-        waitAndRecompose(composeRule, Delays.RECOMPOSE)
+        delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText("data").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -183,12 +195,12 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        waitAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForCondition({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_DATA_WRITE, composeRule)
+        waitForConditionAndRecompose({StudioState.notification.queue.last().code == "CNX10"}, {}, FAIL_DATA_WRITE, composeRule)
 
         StudioState.client.session.close()
     }
@@ -199,7 +211,7 @@ object Utils {
         composeRule.onNodeWithText("infer").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("read").performClick()
-        waitAndRecompose(composeRule, Delays.RECOMPOSE)
+        delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->
             client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
@@ -216,18 +228,6 @@ object Utils {
                     assertTrue(results.contains("krishnangovindraj"))
                 }
             }
-        }
-    }
-
-    private suspend fun waitForCondition(successCondition: () -> Boolean,
-                              beforeRetry: () -> Unit, failMessage: String, context: ComposeContentTestRule) {
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!successCondition() && System.currentTimeMillis() < deadline) {
-            beforeRetry()
-            waitAndRecompose(context, 500)
-        }
-        if (!successCondition()) {
-            fail(failMessage)
         }
     }
 
