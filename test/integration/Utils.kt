@@ -74,14 +74,14 @@ object Utils {
         runBlocking { compose.rule() }
     }
 
-    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-        runComposeRule(compose) {
-            setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
-            }
-            funcBody()
+fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
+    runComposeRule(compose) {
+        setContent {
+            Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
         }
+        funcBody()
     }
+}
 
     fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
         val typeDB = TypeDBCoreRunner()
@@ -89,7 +89,7 @@ object Utils {
         val address = typeDB.address()
         runComposeRule(compose) {
             setContent {
-                Studio.MainWindowContent(WindowContext(1000, 1000, 0, 0))
+                Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
             }
             funcBody(address)
         }

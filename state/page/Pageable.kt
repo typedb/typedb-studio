@@ -52,8 +52,6 @@ interface Pageable {
 
     fun close()
 
-    fun closeRecursive()
-
     fun delete()
 
     interface Runnable : Pageable {

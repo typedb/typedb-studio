@@ -144,9 +144,9 @@ object Studio {
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             CompositionLocalProvider(LocalWindow provides window) {
-                val windowContext = WindowContext(window)
+                val windowContext = WindowContext.Compose(window)
+                MainWindowContent(windowContext)
                 CompositionLocalProvider(LocalWindowContext provides windowContext) {
-                    MainWindowContent(windowContext)
                     Notifications.MayShowPopup()
                     ConfirmationDialog.MayShowDialog()
                     ServerDialog.MayShowDialogs()

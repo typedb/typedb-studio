@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Label.UNTITLED
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
@@ -56,7 +57,6 @@ class DirectoryState internal constructor(
 ) : PathState(parent, path, Type.DIRECTORY, projectMgr) {
 
     companion object {
-        private const val UNTITLED = "Untitled"
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -234,9 +234,7 @@ class DirectoryState internal constructor(
         }
     }
 
-    override fun close() {} // TODO: Shouldn't close() and closeRecursive be merged?
+    override fun close() {}
 
-    override fun closeRecursive() {
-        entries.forEach { it.closeRecursive() }
-    }
+    override fun closeRecursive() = entries.forEach { it.closeRecursive() }
 }
