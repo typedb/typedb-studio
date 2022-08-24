@@ -74,13 +74,13 @@ object Utils {
         runBlocking { compose.rule() }
     }
 
-fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-    runComposeRule(compose) {
-        setContent {
-            Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
+    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
+        runComposeRule(compose) {
+            setContent {
+                Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
+            }
+            funcBody()
         }
-        funcBody()
-    }
 }
 
     fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
