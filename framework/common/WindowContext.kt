@@ -20,6 +20,29 @@ package com.vaticle.typedb.studio.framework.common
 
 import androidx.compose.ui.awt.ComposeWindow
 
-class WindowContext(val height: Int, val width: Int, val x: Int, val y: Int) {
-    constructor(window: ComposeWindow): this(window.height, window.width, window.x, window.y)
+sealed interface WindowContext {
+    var height: Int
+    var width: Int
+    var x: Int
+    var y: Int
+
+    class Test(override var height: Int, override var width: Int, override var x: Int, override var y: Int): WindowContext
+
+    class Compose(val window: ComposeWindow): WindowContext {
+        override var height: Int
+            get() = window.size.height
+            set(value) { value }
+
+        override var width: Int
+            get() = window.size.height
+            set(value) { value }
+
+        override var x: Int
+            get() = window.x
+            set(value) { value }
+
+        override var y: Int
+            get() = window.y
+            set(value) { value }
+    }
 }

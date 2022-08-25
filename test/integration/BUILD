@@ -17,6 +17,7 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@vaticle_typedb_common//test:rules.bzl", "typedb_kt_test")
 
 package(default_visibility = ["//:__pkg__"])
 
@@ -50,19 +51,20 @@ kt_jvm_library(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",
+        "//framework/material",
+        "//framework/common",
         "//state",
         "//state/app",
+        "//state/common",
         "//state/connection",
         "//state/project",
         "//state/page",
-        "//state/common",
-        "//framework/material",
-        "//framework/common",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_client_java//api",
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_common//:common",
+        "@vaticle_typedb_common//test:typedb-runner",
         "@vaticle_typeql//java:typeql-lang",
         "@vaticle_typeql//java/common:common",
         "@vaticle_typeql//java/query:query",
@@ -98,13 +100,16 @@ kt_jvm_library(
     ],
 )
 
-kt_jvm_test(
+typedb_kt_test(
     name = "test-quickstart",
     srcs = ["QuickstartTest.kt"],
     data = ["//test/data:query-string-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.QuickstartTest",
     runtime_deps = skiko_runtime_platform,
-    deps = compose_test_libraries
+    deps = compose_test_libraries,
+    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
 )
 
 
@@ -116,12 +121,12 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//state",
+        "//state/page",
         "//state/project",
-        "//state/page"
-    ]
+    ],
 )
 
-kt_jvm_test(
+typedb_kt_test(
     name = "test-texteditor",
     srcs = ["TextEditorTest.kt"],
     data = ["//test/data:sample-file-structure-files", "//test/data:query-string-files"],
@@ -136,10 +141,13 @@ kt_jvm_test(
         "//state/page",
 
         "@vaticle_typedb_client_java//api",
-    ]
+    ],
+    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
 )
 
-kt_jvm_test(
+typedb_kt_test(
     name = "test-typebrowser",
     srcs = ["TypeBrowserTest.kt"],
     data = ["//test/data:sample-file-structure-files", "//test/data:query-string-files"],
@@ -147,14 +155,18 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//state",
+        "//state/app",
         "//state/common",
-        "//state/page",
-        "//state/project",
-        "//state/schema",
         "//state/connection",
+        "//state/project",
+        "//state/page",
+        "//state/schema",
 
         "@vaticle_typedb_client_java//api",
-    ]
+    ],
+    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
 )
 
 checkstyle_test(

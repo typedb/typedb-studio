@@ -84,7 +84,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
-        StudioState.schema.refreshReadTx()
+        StudioState.schema.mayRefreshReadTx()
         navState.reloadEntries()
     }
 

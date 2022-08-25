@@ -25,6 +25,12 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.Utils.studioTest
+import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {
@@ -37,10 +43,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText(createdDirectoryName).assertExists()
         }
@@ -54,10 +60,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText(createdFileName).assertExists()
 
@@ -73,10 +79,10 @@ class ProjectBrowserTest: IntegrationTest() {
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
                 .tryRename(renamedFileName)
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText(renamedFileName).assertExists()
         }
@@ -88,10 +94,10 @@ class ProjectBrowserTest: IntegrationTest() {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             StudioState.project.current!!.reloadEntries()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("file3").assertDoesNotExist()
         }
