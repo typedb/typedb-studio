@@ -31,6 +31,7 @@
 package com.vaticle.typedb.studio.module.preference
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,21 +41,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 
 object PreferenceDialog {
+    private val preferencePages = listOf("Graph Visualiser, Text Editor, Query Runner")
 
     private val WIDTH = 600.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
+    private val preferencesNavState = Navigator.NavigatorState(
+        container = preferencePages,
+        title = Label.SUBTYPES_OF + " " + type.name,
+        mode = Navigator.Mode.LIST,
+        initExpandDepth = 4,
+        coroutineScope = coroutineScope
+    ) { it.item.tryOpen() }
 
     private class PreferencesForm : Form.State {
         var autoSave by mutableStateOf(true)
@@ -87,6 +99,15 @@ object PreferenceDialog {
 
         Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
             Column(modifier = Modifier.fillMaxSize()) {
+                Navigator.Layout(
+                    state = preferencesNavState,
+                    modifier = Modifier.weight(1f),
+                    itemHeight = Navigator.ITEM_HEIGHT,
+                    bottomSpace = 0.dp,
+                    iconArg =
+                )
+            }
+            Submission(state, modifier = Modifier.fillMaxSize()) {
                 EditorPreferences(state)
                 Form.FormColumnSpacer()
 
@@ -98,8 +119,10 @@ object PreferenceDialog {
 
                 QueryPreferences(state)
                 Form.FormColumnSpacer()
-
-                ConfirmChanges(state)
+                Row(verticalAlignment = Alignment.Bottom) {
+                    SpacedSeperator()
+                    ConfirmChanges(state)
+                }
             }
         }
     }
@@ -186,23 +209,21 @@ object PreferenceDialog {
 
     @Composable
     private fun ConfirmChanges(state: PreferencesForm) {
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-            // On accept we need to:
-            // - Verify all inputs are valid for their given preference
-            // - Assign them to their state variable (and thus write them to disk)
-            Form.TextButton("Accept") {
-                if (state.isValid()) {
-                    StudioState.appData.preferences.limit = state.limit
-                    StudioState.appData.preferences.graphOutput = state.graphOutput
-                    StudioState.appData.preferences.autoSave = state.autoSave
-                    StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
-                    StudioState.preference.openPreferenceDialog.close()
-                } else {
+        // On accept we need to:
+        // - Verify all inputs are valid for their given preference
+        // - Assign them to their state variable (and thus write them to disk)
+        Form.TextButton("Accept") {
+            if (state.isValid()) {
+                StudioState.appData.preferences.limit = state.limit
+                StudioState.appData.preferences.graphOutput = state.graphOutput
+                StudioState.appData.preferences.autoSave = state.autoSave
+                StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
+                StudioState.preference.openPreferenceDialog.close()
+            } else {
 
-                }
             }
-            Form.FormRowSpacer()
-            Form.TextButton("Discard") { StudioState.preference.openPreferenceDialog.close() }
         }
+        Form.FormRowSpacer()
+        Form.TextButton("Discard") { StudioState.preference.openPreferenceDialog.close() }
     }
 }
