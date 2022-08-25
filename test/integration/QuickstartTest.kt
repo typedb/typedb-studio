@@ -22,33 +22,30 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
+import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
+import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
 import org.junit.Test
 
-/**
- * Some of these tests use delay!
- *
- * The rationale for this is that substituting in stub classes/methods would create a lot of friction from release to
- * release as the tests would require updating to completely reflect all the internal state that changes with each
- * function. As a heavily state-driven application, duplicating all of this functionality and accurately verifying that
- * the duplicate is like-for-like is out of scope.
- *
- * The delays are:
- *  - used only when necessary (some data is travelling between the test and TypeDB)
- *  - generous with the amount of time for the required action.
- *
- * However, this is a source of non-determinism and a better and easier way may emerge.
- */
 class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
-        studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+        studioTestWithRunner(composeRule) { address ->
+            connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
             writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, dbName = testID, "$testID/$QUERY_FILE_NAME")
+            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
         }
     }
 }

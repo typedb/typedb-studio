@@ -27,6 +27,16 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
+import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
+import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
 import org.junit.Ignore
 import org.junit.Test
 
@@ -34,8 +44,8 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+        studioTestWithRunner(composeRule) { address ->
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -50,31 +60,30 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseTypes() {
-        studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+        studioTestWithRunner(composeRule) { address ->
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+            delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             composeRule.onAllNodesWithText("Project").get(0).performClick()
             composeRule.onAllNodesWithText("Project").get(1).performClick()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
-
-            StudioState.client.session.close()
         }
     }
 
     @Test
     fun collapseThenExpandTypes() {
-        studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+        studioTestWithRunner(composeRule) { address ->
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -82,16 +91,14 @@ class TypeBrowserTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-            wait(composeRule, 500)
+            delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertExists()
-
-            StudioState.client.session.close()
         }
     }
 
@@ -99,13 +106,14 @@ class TypeBrowserTest: IntegrationTest() {
     @Ignore
     @Test
     fun exportSchema() {
-        studioTest(composeRule) {
-            connectToTypeDB(composeRule, DB_ADDRESS)
+        studioTestWithRunner(composeRule) { address ->
+            connectToTypeDB(composeRule, address)
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+            delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
             StudioState.schema.exportTypeSchema { schema ->
                 StudioState.project.current!!.reloadEntries()
@@ -118,8 +126,6 @@ class TypeBrowserTest: IntegrationTest() {
 
             composeRule.onNodeWithText("define").assertExists()
             composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
-
-            StudioState.client.session.close()
         }
     }
 }
