@@ -88,25 +88,21 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         navState.reloadEntries()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
-        return IconButtonArg(
-            icon = Icon.Code.ROTATE,
-            tooltip = Tooltip.Arg(title = Label.REFRESH)
-        ) { refresh(navState) }
-    }
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+        icon = Icon.Code.ROTATE,
+        tooltip = Tooltip.Arg(title = Label.REFRESH)
+    ) { refresh(navState) }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
-        return IconButtonArg(
-            icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
-            enabled = StudioState.project.current != null,
-            tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
-        ) {
-            StudioState.schema.exportTypeSchema { schema ->
-                refresh(navState)
-                StudioState.project.tryCreateUntitledFile()?.let { file ->
-                    file.content(schema)
-                    file.tryOpen()
-                }
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+        icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
+        enabled = StudioState.project.current != null,
+        tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
+    ) {
+        StudioState.schema.exportTypeSchema { schema ->
+            refresh(navState)
+            StudioState.project.tryCreateUntitledFile()?.let { file ->
+                file.content(schema)
+                file.tryOpen()
             }
         }
     }

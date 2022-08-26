@@ -423,13 +423,13 @@ object Toolbar {
         @Composable
         internal fun Buttons() {
             ToolbarRow {
-                PlayButton()
+                RunButton()
                 StopButton()
             }
         }
 
         @Composable
-        private fun PlayButton() {
+        private fun RunButton() {
             ToolbarIconButton(
                 icon = Icon.Code.PLAY,
                 color = Theme.studio.secondary,

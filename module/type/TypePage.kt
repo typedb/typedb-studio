@@ -86,7 +86,8 @@ sealed class TypePage(
     override val icon: Form.IconArg = conceptIcon(type.conceptType)
 
     protected abstract val type: TypeState.Thing
-    protected val isEditable get() = false // TODO: type.schemaMgr.hasWriteTx && !type.isRoot && !StudioState.client.hasRunningCommand
+    protected val isEditable
+        get() = !type.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)

@@ -72,7 +72,7 @@ class TransactionState constructor(
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _transaction: TypeDBTransaction? by mutableStateOf(null)
-    val transaction get() = _transaction // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
+    val transaction get() = _transaction
 
     val snapshot = ConfigState(
         valueFn = { it || type.isWrite },
@@ -93,8 +93,8 @@ class TransactionState constructor(
         hasStopSignalAtomic.set(true)
     }
 
-    private fun tryOpen() {
-        if (isOpen) return
+    fun tryOpen(): TypeDBTransaction? {
+        if (isOpen) return _transaction
         try {
             val options = typeDBOptions().infer(infer.value)
                 .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
@@ -107,6 +107,7 @@ class TransactionState constructor(
             isOpenAtomic.set(false)
             hasRunningQueryAtomic.set(false)
         }
+        return _transaction
     }
 
     internal fun runQuery(content: String): QueryRunner? {

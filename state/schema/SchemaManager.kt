@@ -65,7 +65,8 @@ class SchemaManager(
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     var onRootsUpdated: (() -> Unit)? = null
-    val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
+    val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
+    private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val entityTypes = ConcurrentHashMap<EntityType, TypeState.Entity>()
@@ -83,7 +84,7 @@ class SchemaManager(
 
     init {
         session.onOpen { isNewDB -> if (isNewDB) loadTypesAndOpen() }
-        session.onClose { willReopenSameDB -> if (willReopenSameDB) closeReadTx() else close() }
+        session.onClose { willReopenSameDB -> if (!willReopenSameDB) close() }
         session.transaction.onSchemaWrite {
             mayRefreshReadTx()
             loadTypesAndOpen()
@@ -182,24 +183,29 @@ class SchemaManager(
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    fun mayRefreshReadTx() {
-        synchronized(this) {
-            if (readTx.get() != null) {
-                closeReadTx()
-                openOrGetReadTx()
-            }
-        }
+    internal fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
+        if (!isWritable) return null
+        if (readTx.get() != null) closeReadTx()
+        if (writeTx.get() != null) return writeTx.get()
+        writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
+        return writeTx.get()
     }
 
-    internal fun openOrGetReadTx(): TypeDBTransaction? {
-        synchronized(this) {
-            lastTransactionUse.set(System.currentTimeMillis())
-            if (readTx.get() != null) return readTx.get()
-            readTx.set(session.transaction()?.also {
-                it.onClose { closeReadTx() }
-                scheduleCloseReadTx()
-            })
-            return readTx.get()
+    internal fun openOrGetReadTx(): TypeDBTransaction? = synchronized(this) {
+        lastTransactionUse.set(System.currentTimeMillis())
+        if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
+        if (readTx.get() != null) return readTx.get()
+        readTx.set(session.transaction()?.also {
+            it.onClose { closeReadTx() }
+            scheduleCloseReadTx()
+        })
+        return readTx.get()
+    }
+
+    fun mayRefreshReadTx() = synchronized(this) {
+        if (readTx.get() != null) {
+            closeReadTx()
+            openOrGetReadTx()
         }
     }
 
@@ -215,9 +221,7 @@ class SchemaManager(
         }
     }
 
-    private fun closeReadTx() {
-        synchronized(this) { readTx.getAndSet(null)?.close() }
-    }
+    private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     fun close() {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
