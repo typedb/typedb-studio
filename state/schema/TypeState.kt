@@ -448,12 +448,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
         fun loadRelatesRoleTypeRecursively() =
             schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notificationMgr, LOGGER) {
-                try {
-                    loadRelatesRoleTypeRecursivelyBlocking()
-                } catch (e: Exception) {
-                    LOGGER.error { e }
-                    e.printStackTrace()
-                }
+                loadRelatesRoleTypeRecursivelyBlocking()
             }
 
         private fun loadRelatesRoleTypeRecursivelyBlocking() {
