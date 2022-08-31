@@ -16,28 +16,15 @@
  *
  */
 
-//                var borderColor by remember { mutableStateOf(defaultBorderColor) }
-//                var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) { borderColor }
-//                Form.TextInput(value, preference.placeholder, border = border, onValueChange = {
-//                    value = it
-//                    preference.value = value
-//                    borderColor = if (!preference.validInput()) {
-//                        errorBorderColor
-//                    } else {
-//                        defaultBorderColor
-//                    }
-//                })
-
 package com.vaticle.typedb.studio.module.preference
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -47,26 +34,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.Submission
+import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
+import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 
 object PreferenceDialog {
-    private val preferencePages = listOf("Graph Visualiser, Text Editor, Query Runner")
-
     private val WIDTH = 600.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
-    private val preferencesNavState = Navigator.NavigatorState(
-        container = preferencePages,
-        title = Label.SUBTYPES_OF + " " + type.name,
-        mode = Navigator.Mode.LIST,
-        initExpandDepth = 4,
-        coroutineScope = coroutineScope
-    ) { it.item.tryOpen() }
 
     private class PreferencesForm : Form.State {
         var autoSave by mutableStateOf(true)
@@ -89,6 +69,27 @@ object PreferenceDialog {
     }
 
     @Composable
+    private fun NavigatorLayout() {
+        val pref1 = PrefState("Graph")
+        val pref2 = PrefState("Text Editor")
+        val prefState = PrefState("Root", listOf(pref1, pref2))
+        val navState = rememberNavigatorState(
+            container = prefState,
+            title = Label.MANAGE_PREFERENCES,
+            mode = Navigator.Mode.LIST,
+            initExpandDepth = 1,
+        ) { }
+
+        Navigator.Layout(
+            state = navState,
+            modifier = Modifier.fillMaxSize(),
+            iconArg = { Form.IconArg(Icon.Code.GEAR) }
+        )
+
+        LaunchedEffect(navState) { navState.launch() }
+    }
+
+    @Composable
     fun MayShowDialogs() {
         if (StudioState.preference.openPreferenceDialog.isOpen) Preferences()
     }
@@ -98,57 +99,53 @@ object PreferenceDialog {
         val state = remember { PreferencesForm() }
 
         Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Navigator.Layout(
-                    state = preferencesNavState,
-                    modifier = Modifier.weight(1f),
-                    itemHeight = Navigator.ITEM_HEIGHT,
-                    bottomSpace = 0.dp,
-                    iconArg =
-                )
-            }
-            Submission(state, modifier = Modifier.fillMaxSize()) {
-                EditorPreferences(state)
-                Form.FormColumnSpacer()
+            Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        NavigatorLayout()
+                    }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        EditorPreferences(state)
+                        Form.FormColumnSpacer()
 
-                ProjectPreferences(state)
-                Form.FormColumnSpacer()
+                        ProjectPreferences(state)
+                        Form.FormColumnSpacer()
 
-                GraphPreferences(state)
-                Form.FormColumnSpacer()
+                        GraphPreferences(state)
+                        Form.FormColumnSpacer()
 
-                QueryPreferences(state)
-                Form.FormColumnSpacer()
-                Row(verticalAlignment = Alignment.Bottom) {
-                    SpacedSeperator()
-                    ConfirmChanges(state)
+                        QueryPreferences(state)
+                        Form.FormColumnSpacer()
+                    }
+                }
+                FormRowSpacer()
+                Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        SpacedSeperator()
+                        ConfirmChanges(state)
+                    }
                 }
             }
         }
     }
 
-
     @Composable
     private fun ProjectPreferences(state: PreferencesForm) {
-        PreferencesHeader("Project")
         ProjectIgnoredPathsField(state)
     }
 
     @Composable
     private fun EditorPreferences(state: PreferencesForm) {
-        PreferencesHeader("Editor")
         EditorAutoSaveField(state)
     }
 
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
-        PreferencesHeader("Query")
         QueryLimitField(state)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
-        PreferencesHeader("Graph")
         GraphOutputField(state)
     }
 
@@ -212,18 +209,20 @@ object PreferenceDialog {
         // On accept we need to:
         // - Verify all inputs are valid for their given preference
         // - Assign them to their state variable (and thus write them to disk)
-        Form.TextButton("Accept") {
-            if (state.isValid()) {
-                StudioState.appData.preferences.limit = state.limit
-                StudioState.appData.preferences.graphOutput = state.graphOutput
-                StudioState.appData.preferences.autoSave = state.autoSave
-                StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
-                StudioState.preference.openPreferenceDialog.close()
-            } else {
+        Row {
+            Form.TextButton("Accept") {
+                if (state.isValid()) {
+                    StudioState.appData.preferences.limit = state.limit
+                    StudioState.appData.preferences.graphOutput = state.graphOutput
+                    StudioState.appData.preferences.autoSave = state.autoSave
+                    StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
+                    StudioState.preference.openPreferenceDialog.close()
+                } else {
 
+                }
             }
+            Form.FormRowSpacer()
+            Form.TextButton("Discard") { StudioState.preference.openPreferenceDialog.close() }
         }
-        Form.FormRowSpacer()
-        Form.TextButton("Discard") { StudioState.preference.openPreferenceDialog.close() }
     }
 }
