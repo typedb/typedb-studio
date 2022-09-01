@@ -58,7 +58,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 
 object PreferenceDialog {
     private val WIDTH = 800.dp
-    private val HEIGHT = 800.dp
+    private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
 
     private class PreferencesForm : State {
@@ -83,9 +83,11 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout() {
-        val pref_graph = PrefState("Graph")
+        val pref_graph = PrefState("Graph Visualiser")
         val pref_editor = PrefState("Text Editor")
-        val prefState = PrefState("Root", listOf(pref_graph, pref_editor))
+        val pref_query = PrefState("Query Runner")
+        val pref_project = PrefState("Project Manager")
+        val prefState = PrefState("Root", listOf(pref_graph, pref_editor, pref_query, pref_project))
         val navState = rememberNavigatorState(
             container = prefState,
             title = Label.MANAGE_PREFERENCES,
@@ -96,7 +98,7 @@ object PreferenceDialog {
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { IconArg(Icon.Code.GEAR) }
+            iconArg = { IconArg(Icon.Code.CHEVRON_RIGHT) }
         )
 
         LaunchedEffect(navState) { navState.launch() }
