@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
-sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: SchemaManager) {
+sealed class TypeState private constructor(val schemaMgr: SchemaManager) {
 
     data class AttributeTypeProperties(
         val attributeType: Attribute,
@@ -50,7 +50,6 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     )
 
     data class OwnerTypeProperties(val ownerType: Thing, val isKey: Boolean, val isInherited: Boolean)
-
     data class RoleTypeProperties(val roleType: Role, val overriddenType: Role?, val isInherited: Boolean)
 
     companion object {
@@ -66,7 +65,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
 
     val isRoot get() = conceptType.isRoot
     var isAbstract: Boolean by mutableStateOf(false)
-    var hasSubtypes: Boolean by mutableStateOf(hasSubtypes)
+    var hasSubtypes: Boolean by mutableStateOf(false)
     var ownsAttributeTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.map { it.attributeType }
     var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
@@ -131,9 +130,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     sealed class Thing constructor(
         override val conceptType: ThingType,
         name: String,
-        hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(hasSubtypes, schemaMgr), Navigable<Thing>, Pageable {
+    ) : TypeState(schemaMgr), Navigable<Thing>, Pageable {
 
         private class Callbacks {
 
@@ -196,6 +194,7 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override fun close() {
             if (isOpenAtomic.compareAndSet(true, false)) {
                 schemaMgr.pages.close(this)
+                schemaMgr.remove(this)
                 callbacks.onClose.forEach { it(this) }
                 callbacks.clear()
             }
@@ -303,9 +302,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     class Entity internal constructor(
         override val conceptType: EntityType,
         supertype: Entity?,
-        hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, conceptType.label.name(), hasSubtypes, schemaMgr) {
+    ) : Thing(conceptType, conceptType.label.name(), schemaMgr) {
 
         override val parent: Entity? get() = supertype
         override val baseType = TypeQLToken.Type.ENTITY
@@ -338,9 +336,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     class Attribute internal constructor(
         override val conceptType: AttributeType,
         supertype: Attribute?,
-        hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, conceptType.label.name(), hasSubtypes, schemaMgr) {
+    ) : Thing(conceptType, conceptType.label.name(), schemaMgr) {
 
         override val info get() = valueType
         override val parent: Attribute? get() = supertype
@@ -412,9 +409,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
     class Relation internal constructor(
         override val conceptType: RelationType,
         supertype: Relation?,
-        hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, conceptType.label.name(), hasSubtypes, schemaMgr) {
+    ) : Thing(conceptType, conceptType.label.name(), schemaMgr) {
 
         override val parent: Relation? get() = supertype
         override val baseType = TypeQLToken.Type.RELATION
@@ -497,9 +493,8 @@ sealed class TypeState private constructor(hasSubtypes: Boolean, val schemaMgr: 
         override val conceptType: RoleType,
         val relationType: Relation,
         supertype: Role?,
-        hasSubtypes: Boolean,
         schemaMgr: SchemaManager
-    ) : TypeState(hasSubtypes, schemaMgr) {
+    ) : TypeState(schemaMgr) {
 
         private val name: String by mutableStateOf(conceptType.label.name())
         val scopedName get() = relationType.name + ":" + name

@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.state.page.Navigable
 import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -64,7 +65,6 @@ class SchemaManager(
     var rootEntityType: TypeState.Entity? by mutableStateOf(null); private set
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
-    var onRootsUpdated: (() -> Unit)? = null
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
@@ -74,6 +74,7 @@ class SchemaManager(
     private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
+    private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -83,13 +84,15 @@ class SchemaManager(
     }
 
     init {
-        session.onOpen { isNewDB -> if (isNewDB) loadTypesAndOpen() }
+        session.onOpen { isNewDB -> if (isNewDB) refreshAndPruneTypesAndOpen() }
         session.onClose { willReopenSameDB -> if (!willReopenSameDB) close() }
-        session.transaction.onSchemaWrite {
+        session.transaction.onSchemaWriteClose {
             mayRefreshReadTx()
-            loadTypesAndOpen()
+            refreshAndPruneTypesAndOpen()
         }
     }
+
+    fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
 
     override fun reloadEntries() {
         openOrGetReadTx()?.let { tx ->
@@ -120,7 +123,7 @@ class SchemaManager(
                 if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
             }
             entityTypes.computeIfAbsent(entityType) {
-                TypeState.Entity(entityType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Entity(entityType, supertype, this)
             }
         }
     }
@@ -132,7 +135,7 @@ class SchemaManager(
                 if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
             }
             attributeTypes.computeIfAbsent(attributeType) {
-                TypeState.Attribute(attributeType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Attribute(attributeType, supertype, this)
             }
         }
     }
@@ -144,7 +147,7 @@ class SchemaManager(
                 if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
             }
             relationTypes.computeIfAbsent(relationType) {
-                TypeState.Relation(relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Relation(relationType, supertype, this)
             }
         }
     }
@@ -157,25 +160,28 @@ class SchemaManager(
             }
             roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
                 roleTypes.computeIfAbsent(roleType) {
-                    TypeState.Role(roleType, relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                    TypeState.Role(roleType, relationType, supertype, this)
                 }
             }
         }
     }
 
-    private fun loadTypesAndOpen() {
-        openOrGetReadTx()?.concepts()?.let { conceptMgr ->
-            rootEntityType = TypeState.Entity(
-                conceptType = conceptMgr.rootEntityType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { entityTypes[conceptMgr.rootEntityType] = it }
-            rootRelationType = TypeState.Relation(
-                conceptType = conceptMgr.rootRelationType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { relationTypes[conceptMgr.rootRelationType] = it }
-            rootAttributeType = TypeState.Attribute(
-                conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
+    private fun refreshAndPruneTypesAndOpen() {
+        openOrGetReadTx()?.let { tx ->
+            if (rootEntityType == null) rootEntityType = TypeState.Entity(
+                conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
+            ).also { entityTypes[tx.concepts().rootEntityType] = it }
+            if (rootRelationType == null) rootRelationType = TypeState.Relation(
+                conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
+            ).also { relationTypes[tx.concepts().rootRelationType] = it }
+            if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
+                conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
+            ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
+            (entityTypes.values + relationTypes.values + attributeTypes.values).forEach {
+                if (tx.concepts().getThingType(it.name) == null) it.closeRecursive()
+            }
             isOpenAtomic.set(true)
-            onRootsUpdated?.let { it() }
+            onTypesUpdated.forEach { it() }
         }
     }
 
@@ -222,6 +228,12 @@ class SchemaManager(
     }
 
     private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+
+    fun remove(typeState: TypeState.Thing) = when (typeState) {
+        is TypeState.Entity -> entityTypes.remove(typeState.conceptType)
+        is TypeState.Relation -> relationTypes.remove(typeState.conceptType)
+        is TypeState.Attribute -> attributeTypes.remove(typeState.conceptType)
+    }
 
     fun close() {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {

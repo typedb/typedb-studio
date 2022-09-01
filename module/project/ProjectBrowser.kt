@@ -86,11 +86,13 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
             liveUpdate = true,
+            openFn = { openPath(it) },
             contextMenuFn = { contextMenuItems(it) }
-        ) { openPath(it) }
-        StudioState.project.onProjectChange { navState.replaceContainer(it) }
-        StudioState.project.onContentChange { navState.reloadEntries() }
-        StudioState.project.onClose { navState.close() }
+        ) { navState ->
+            StudioState.project.onProjectChange { navState.replaceContainer(it) }
+            StudioState.project.onContentChange { navState.reloadEntries() }
+            StudioState.project.onClose { navState.close() }
+        }
         buttons = navState.buttons
         Navigator.Layout(
             state = navState,
@@ -98,7 +100,6 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             iconArg = { pathIcon(it) },
             styleArgs = { pathStyles(it) }
         )
-
         LaunchedEffect(navState) { navState.launch() }
     }
 

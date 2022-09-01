@@ -37,6 +37,8 @@ kt_jvm_library(
         "@vaticle_typedb_client_java//:client-java",
         "@vaticle_typedb_client_java//api:api",
         "@vaticle_typedb_client_java//common:common",
+        "@vaticle_typedb_client_java//connection:connection", #TODO: remove this after debugging
+        "@vaticle_typedb_client_java//stream:stream", #TODO: remove this after debugging
         "@vaticle_typedb_common//:common",
         "@vaticle_typeql//java/query:query",
         "@vaticle_typeql//java:typeql-lang",

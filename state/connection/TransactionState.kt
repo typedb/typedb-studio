@@ -67,7 +67,7 @@ class TransactionState constructor(
     val isOpen get() = isOpenAtomic.state
     val hasStopSignal get() = hasStopSignalAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
-    private val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
+    private val onSchemaWriteClose = LinkedBlockingQueue<() -> Unit>()
     internal val hasStopSignalAtomic = AtomicBooleanState(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
@@ -87,19 +87,21 @@ class TransactionState constructor(
         enabledFn = { session.isOpen && infer.value && snapshot.value }
     )
 
-    fun onSchemaWrite(function: () -> Unit) = onSchemaWrite.put(function)
+    fun onSchemaWriteClose(function: () -> Unit) = onSchemaWriteClose.put(function)
 
-    internal fun sendStopSignal() {
-        hasStopSignalAtomic.set(true)
-    }
+    internal fun sendStopSignal() = hasStopSignalAtomic.set(true)
 
     fun tryOpen(): TypeDBTransaction? {
         if (isOpen) return _transaction
         try {
+            val isSchemaWrite = session.type == SCHEMA
             val options = typeDBOptions().infer(infer.value)
                 .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
-                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
+                onClose {
+                    close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN)
+                    if (isSchemaWrite) onSchemaWriteClose.forEach { it() }
+                }
             }
             isOpenAtomic.set(true)
         } catch (e: Exception) {
@@ -136,7 +138,6 @@ class TransactionState constructor(
             try {
                 _transaction?.commit()
                 _transaction = null
-                if (session.type == SCHEMA) onSchemaWrite.forEach { it() }
                 notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)

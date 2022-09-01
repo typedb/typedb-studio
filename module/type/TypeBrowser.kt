@@ -70,16 +70,15 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             title = Label.TYPE_BROWSER,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
+            openFn = { it.item.tryOpen() },
             // TODO: contextMenuFn = { contextMenuItems(it) }
-        ) { it.item.tryOpen() }
-        StudioState.schema.onRootsUpdated = { navState.reloadEntries() }
+        ) { StudioState.schema.onTypesUpdated { it.reloadEntries() } }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
             iconArg = { conceptIcon(it.item.conceptType) }
         )
-
         LaunchedEffect(navState) { navState.launch() }
     }
 
