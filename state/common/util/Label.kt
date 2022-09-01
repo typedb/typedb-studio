@@ -22,6 +22,7 @@ object Label {
     const val ABSTRACT = "Abstract"
     const val ADDRESS = "Address"
     const val ADVANCED = "Advanced"
+    const val APPLY = "Apply"
     const val AS = "As"
     const val ATTRIBUTE_TYPES = "Attribute Types"
     const val ATTRIBUTES = "Attributes"

@@ -19,9 +19,12 @@
 package com.vaticle.typedb.studio.module.preference
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +36,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.IconArg
+import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.FormColumnSpacer
+import com.vaticle.typedb.studio.framework.material.Form.Submission
+import com.vaticle.typedb.studio.framework.material.Form.Field
+import com.vaticle.typedb.studio.framework.material.Form.Checkbox
+import com.vaticle.typedb.studio.framework.material.Form.TextInput
+import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
@@ -44,11 +54,11 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 
 object PreferenceDialog {
-    private val WIDTH = 600.dp
-    private val HEIGHT = 600.dp
+    private val WIDTH = 800.dp
+    private val HEIGHT = 800.dp
     private val appData = StudioState.appData.preferences
 
-    private class PreferencesForm : Form.State {
+    private class PreferencesForm : State {
         var autoSave by mutableStateOf(true)
         var ignoredPaths by mutableStateOf(listOf(".git"))
         var limit: String by mutableStateOf(appData.limit ?: "")
@@ -82,8 +92,7 @@ object PreferenceDialog {
 
         Navigator.Layout(
             state = navState,
-            modifier = Modifier.fillMaxSize(),
-            iconArg = { Form.IconArg(Icon.Code.GEAR) }
+            iconArg = { IconArg(Icon.Code.GEAR) }
         )
 
         LaunchedEffect(navState) { navState.launch() }
@@ -99,30 +108,34 @@ object PreferenceDialog {
         val state = remember { PreferencesForm() }
 
         Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
-            Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(modifier = Modifier.fillMaxSize()) {
-                    Column(modifier = Modifier.fillMaxSize()) {
+            Submission(state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Column() {
                         NavigatorLayout()
                     }
-                    Column(modifier = Modifier.fillMaxSize()) {
+//                    Column {
+//                        SpacedVerticalSeperator()
+//                    }
+                    Column() {
                         EditorPreferences(state)
-                        Form.FormColumnSpacer()
+                        FormColumnSpacer()
 
                         ProjectPreferences(state)
-                        Form.FormColumnSpacer()
+                        FormColumnSpacer()
 
                         GraphPreferences(state)
-                        Form.FormColumnSpacer()
+                        FormColumnSpacer()
 
                         QueryPreferences(state)
-                        Form.FormColumnSpacer()
+                        FormColumnSpacer()
                     }
                 }
-                FormRowSpacer()
-                Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        SpacedSeperator()
-                        ConfirmChanges(state)
+                Row(modifier = Modifier.fillMaxHeight(), verticalAlignment = Alignment.Bottom) {
+                    Column() {
+                        SpacedHorizontalSeperator()
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            ChangeFormButtons(state)
+                        }
                     }
                 }
             }
@@ -151,8 +164,8 @@ object PreferenceDialog {
 
     @Composable
     private fun GraphOutputField(state: PreferencesForm) {
-        Form.Field(label = Label.ENABLE_GRAPH_OUTPUT) {
-            Form.Checkbox(
+        Field(label = Label.ENABLE_GRAPH_OUTPUT) {
+            Checkbox(
                 value = state.graphOutput,
             ) { state.graphOutput = it }
         }
@@ -160,8 +173,8 @@ object PreferenceDialog {
 
     @Composable
     private fun ProjectIgnoredPathsField(state: PreferencesForm) {
-        Form.Field(label = Label.PROJECT_IGNORED_PATHS) {
-            Form.TextInput(
+        Field(label = Label.PROJECT_IGNORED_PATHS) {
+            TextInput(
                 value = state.ignoredPaths.toString(),
                 placeholder = ".git",
                 onValueChange = { state.limit = it },
@@ -172,8 +185,8 @@ object PreferenceDialog {
 
     @Composable
     private fun EditorAutoSaveField(state: PreferencesForm) {
-        Form.Field(label = Label.ENABLE_EDITOR_AUTOSAVE) {
-            Form.Checkbox(
+        Field(label = Label.ENABLE_EDITOR_AUTOSAVE) {
+            Checkbox(
                 value = state.autoSave,
             ) { state.autoSave = it }
         }
@@ -181,8 +194,8 @@ object PreferenceDialog {
 
     @Composable
     private fun QueryLimitField(state: PreferencesForm) {
-        Form.Field(label = Label.SET_QUERY_LIMIT) {
-            Form.TextInput(
+        Field(label = Label.SET_QUERY_LIMIT) {
+            TextInput(
                 value = state.limit,
                 placeholder = "1000",
                 onValueChange = { state.limit = it },
@@ -194,35 +207,35 @@ object PreferenceDialog {
     @Composable
     private fun PreferencesHeader(text: String) {
         Text(text, fontWeight = FontWeight.Bold)
-        SpacedSeperator()
+        SpacedHorizontalSeperator()
     }
 
     @Composable
-    private fun SpacedSeperator() {
-        Form.FormColumnSpacer()
+    private fun SpacedHorizontalSeperator() {
+        FormColumnSpacer()
         Separator.Horizontal()
-        Form.FormColumnSpacer()
+        FormColumnSpacer()
     }
 
     @Composable
-    private fun ConfirmChanges(state: PreferencesForm) {
-        // On accept we need to:
-        // - Verify all inputs are valid for their given preference
-        // - Assign them to their state variable (and thus write them to disk)
-        Row {
-            Form.TextButton("Accept") {
-                if (state.isValid()) {
-                    StudioState.appData.preferences.limit = state.limit
-                    StudioState.appData.preferences.graphOutput = state.graphOutput
-                    StudioState.appData.preferences.autoSave = state.autoSave
-                    StudioState.appData.preferences.ignoredPaths = state.ignoredPaths
-                    StudioState.preference.openPreferenceDialog.close()
-                } else {
+    private fun SpacedVerticalSeperator() {
+        FormRowSpacer()
+        Separator.Vertical()
+        FormRowSpacer()
+    }
 
-                }
-            }
-            Form.FormRowSpacer()
-            Form.TextButton("Discard") { StudioState.preference.openPreferenceDialog.close() }
+    @Composable
+    private fun ChangeFormButtons(state: PreferencesForm) {
+        TextButton(Label.CANCEL) {
+//            state.cancel()
+        }
+        FormRowSpacer()
+        TextButton(Label.APPLY) {
+//            state.apply()
+        }
+        FormRowSpacer()
+        TextButton(Label.OK) {
+//            state.ok()
         }
     }
 }
