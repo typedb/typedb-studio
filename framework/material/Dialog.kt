@@ -64,6 +64,7 @@ object Dialog {
     @Composable
     fun Layout(
         state: DialogManager, title: String, width: Dp, height: Dp,
+        padding: Boolean = true,
         content: @Composable DialogWindowScope.() -> Unit
     ) {
         Dialog(
@@ -72,9 +73,16 @@ object Dialog {
                 size = DpSize(width, height)
             )
         ) {
-            Box(Modifier.background(Theme.studio.backgroundMedium).padding(Theme.DIALOG_PADDING)
-                .onKeyEvent { handleKeyEvent(it, state) }) {
-                content()
+            if (padding) {
+                Box(Modifier.background(Theme.studio.backgroundMedium).padding(Theme.DIALOG_PADDING)
+                    .onKeyEvent { handleKeyEvent(it, state) }) {
+                    content()
+                }
+            } else {
+                Box(Modifier.background(Theme.studio.backgroundMedium)
+                    .onKeyEvent { handleKeyEvent(it, state) }) {
+                    content()
+                }
             }
         }
     }

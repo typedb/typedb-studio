@@ -44,7 +44,7 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.FIELD_HEIGHT
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.FormHorizontalSpacer
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -103,7 +103,7 @@ object DatabaseDialog {
                         text = Label.REFRESH,
                         leadingIcon = Form.IconArg(Icon.Code.ROTATE)
                     ) { StudioState.client.refreshDatabaseList() }
-                    FormRowSpacer()
+                    FormHorizontalSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
                 }
             }
@@ -145,7 +145,7 @@ object DatabaseDialog {
                     onValueChange = { CreateDatabaseForm.name = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                 )
-                FormRowSpacer()
+                FormHorizontalSpacer()
                 TextButton(
                     text = Label.CREATE,
                     enabled = CreateDatabaseForm.isValid(),

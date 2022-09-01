@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.FormHorizontalSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
@@ -155,7 +155,7 @@ object ProjectDialog {
                     onValueChange = { state.field = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                 )
-                FormRowSpacer()
+                FormHorizontalSpacer()
                 Form.IconButton(
                     icon = Icon.Code.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)

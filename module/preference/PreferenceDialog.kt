@@ -18,34 +18,37 @@
 
 package com.vaticle.typedb.studio.module.preference
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form.IconArg
 import com.vaticle.typedb.studio.framework.material.Form.State
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.FormColumnSpacer
+import com.vaticle.typedb.studio.framework.material.Form.FormHorizontalSpacer
+import com.vaticle.typedb.studio.framework.material.Form.FormVerticalSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
@@ -80,9 +83,9 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout() {
-        val pref1 = PrefState("Graph")
-        val pref2 = PrefState("Text Editor")
-        val prefState = PrefState("Root", listOf(pref1, pref2))
+        val pref_graph = PrefState("Graph")
+        val pref_editor = PrefState("Text Editor")
+        val prefState = PrefState("Root", listOf(pref_graph, pref_editor))
         val navState = rememberNavigatorState(
             container = prefState,
             title = Label.MANAGE_PREFERENCES,
@@ -92,6 +95,7 @@ object PreferenceDialog {
 
         Navigator.Layout(
             state = navState,
+            modifier = Modifier.fillMaxSize(),
             iconArg = { IconArg(Icon.Code.GEAR) }
         )
 
@@ -107,37 +111,47 @@ object PreferenceDialog {
     private fun Preferences() {
         val state = remember { PreferencesForm() }
 
-        Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT) {
-            Submission(state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Column() {
-                        NavigatorLayout()
+        Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT, false) {
+//            Submission(state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+            Column {
+                Frame.Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    separator = Frame.SeparatorArgs(Separator.WEIGHT),
+                    Frame.Pane(id = "NavigatorPane", initSize = Either.first(200.dp)) {
+                        Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
+                            FormVerticalSpacer()
+                            NavigatorLayout()
+                        }
+                    },
+                    Frame.Pane(id = "PreferencesPane", initSize = Either.second(1f)) {
+                        Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
+                            PreferencesHeader("Text Editor")
+
+                            EditorPreferences(state)
+                            FormVerticalSpacer()
+
+                            ProjectPreferences(state)
+                            FormVerticalSpacer()
+
+                            GraphPreferences(state)
+                            FormVerticalSpacer()
+
+                            QueryPreferences(state)
+                            FormVerticalSpacer()
+                        }
                     }
-//                    Column {
-//                        SpacedVerticalSeperator()
-//                    }
+                )
+                Separator.Horizontal()
+                FormVerticalSpacer()
+                Row {
                     Column() {
-                        EditorPreferences(state)
-                        FormColumnSpacer()
-
-                        ProjectPreferences(state)
-                        FormColumnSpacer()
-
-                        GraphPreferences(state)
-                        FormColumnSpacer()
-
-                        QueryPreferences(state)
-                        FormColumnSpacer()
-                    }
-                }
-                Row(modifier = Modifier.fillMaxHeight(), verticalAlignment = Alignment.Bottom) {
-                    Column() {
-                        SpacedHorizontalSeperator()
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             ChangeFormButtons(state)
+                            FormHorizontalSpacer()
                         }
                     }
                 }
+                FormVerticalSpacer()
             }
         }
     }
@@ -212,16 +226,16 @@ object PreferenceDialog {
 
     @Composable
     private fun SpacedHorizontalSeperator() {
-        FormColumnSpacer()
+        FormVerticalSpacer()
         Separator.Horizontal()
-        FormColumnSpacer()
+        FormVerticalSpacer()
     }
 
     @Composable
     private fun SpacedVerticalSeperator() {
-        FormRowSpacer()
+        FormHorizontalSpacer()
         Separator.Vertical()
-        FormRowSpacer()
+        FormHorizontalSpacer()
     }
 
     @Composable
@@ -229,11 +243,11 @@ object PreferenceDialog {
         TextButton(Label.CANCEL) {
 //            state.cancel()
         }
-        FormRowSpacer()
+        FormHorizontalSpacer()
         TextButton(Label.APPLY) {
 //            state.apply()
         }
-        FormRowSpacer()
+        FormHorizontalSpacer()
         TextButton(Label.OK) {
 //            state.ok()
         }

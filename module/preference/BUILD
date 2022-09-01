@@ -38,6 +38,8 @@ kt_jvm_library(
         "//framework/common:common",
         "//framework/material:material",
 
+        "@vaticle_typedb_common//:common",
+
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
