@@ -103,15 +103,17 @@ sealed class TypeState private constructor(val schemaMgr: SchemaManager) {
     protected fun loadSubtypesExplicit(): Unit = synchronized(this) {
         schemaMgr.openOrGetReadTx()?.let { tx ->
             val new = conceptType.asRemote(tx).subtypesExplicit.toList().toSet()
-            val old = subtypes.map { it.conceptType }.toSet()
+            val old = subtypesExplicit.map { it.conceptType }.toSet()
             val retained: List<TypeState>
             if (new != old) {
                 val deleted = old - new
                 val added = (new - old).mapNotNull { schemaMgr.createTypeState(it) }
-                retained = subtypes.filter { !deleted.contains(it.conceptType) }
+                retained = subtypesExplicit.filter { !deleted.contains(it.conceptType) }
                 updateSubtypesExplicit((retained + added).sortedBy { it.conceptType.label.scopedName() })
-            } else retained = subtypes
-            retained.onEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
+            }
+            subtypesExplicit.onEach { // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
+                it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent
+            }
             hasSubtypes = subtypesExplicit.isNotEmpty()
         }
     }

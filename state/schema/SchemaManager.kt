@@ -95,7 +95,7 @@ class SchemaManager(
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
 
     override fun reloadEntries() {
-        openOrGetReadTx()?.let { tx ->
+        openOrGetReadTx()?.let { tx -> // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
             entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
         }
     }
