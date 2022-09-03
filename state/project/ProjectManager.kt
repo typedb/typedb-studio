@@ -56,9 +56,9 @@ class ProjectManager(
 
     class CreatePathDialog : DialogManager() {
 
-        var parent: DirectoryState? by mutableStateOf(null)
-        var type: PathState.Type? by mutableStateOf(null)
-        var onSuccess: (() -> Unit)? by mutableStateOf(null)
+        var parent: DirectoryState? by mutableStateOf(null); private set
+        var type: PathState.Type? by mutableStateOf(null); private set
+        var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
 
         internal fun open(parent: DirectoryState, type: PathState.Type, onSuccess: () -> Unit) {
             isOpen = true
@@ -77,7 +77,7 @@ class ProjectManager(
 
     class ModifyDirectoryDialog : DialogManager() {
 
-        var directory: DirectoryState? by mutableStateOf(null)
+        var directory: DirectoryState? by mutableStateOf(null); private set
 
         internal fun open(directory: DirectoryState) {
             isOpen = true
@@ -92,8 +92,8 @@ class ProjectManager(
 
     class ModifyFileDialog : DialogManager() {
 
-        var file: FileState? by mutableStateOf(null)
-        var onSuccess: ((FileState) -> Unit)? by mutableStateOf(null)
+        var file: FileState? by mutableStateOf(null); private set
+        var onSuccess: ((FileState) -> Unit)? by mutableStateOf(null); private set
 
         internal fun open(file: FileState, onSuccess: ((FileState) -> Unit)? = null) {
             isOpen = true
@@ -114,9 +114,9 @@ class ProjectManager(
         const val UNSAVED_DATA_DIR_NAME = ".unsaved"
     }
 
-    var current: Project? by mutableStateOf(null)
-    var dataDir: DirectoryState? by mutableStateOf(null)
-    var unsavedFilesDir: DirectoryState? by mutableStateOf(null)
+    var current: Project? by mutableStateOf(null); private set
+    var dataDir: DirectoryState? by mutableStateOf(null); private set
+    var unsavedFilesDir: DirectoryState? by mutableStateOf(null); private set
     val openProjectDialog = DialogManager.Base()
     val createPathDialog = CreatePathDialog()
     val moveDirectoryDialog = ModifyDirectoryDialog()
