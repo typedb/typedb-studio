@@ -86,7 +86,7 @@ class SchemaManager(
     init {
         session.onOpen { isNewDB -> if (isNewDB) refreshAndPruneTypesAndOpen() }
         session.onClose { willReopenSameDB -> if (!willReopenSameDB) close() }
-        session.transaction.onSchemaWriteClose {
+        session.transaction.onSchemaWriteReset {
             mayRefreshReadTx()
             refreshAndPruneTypesAndOpen()
         }
