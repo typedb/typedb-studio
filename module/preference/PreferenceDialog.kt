@@ -85,20 +85,21 @@ object PreferenceDialog {
     private fun NavigatorLayout() {
         val pref_graph = PrefState("Graph Visualiser")
         val pref_editor = PrefState("Text Editor")
-        val pref_query = PrefState("Query Runner")
+        val query_sub = PrefState("Query Sub 1")
+        val pref_query = PrefState("Query Runner", listOf(query_sub))
         val pref_project = PrefState("Project Manager")
         val prefState = PrefState("Root", listOf(pref_graph, pref_editor, pref_query, pref_project))
         val navState = rememberNavigatorState(
             container = prefState,
             title = Label.MANAGE_PREFERENCES,
-            mode = Navigator.Mode.LIST,
-            initExpandDepth = 1,
+            mode = Navigator.Mode.BROWSER,
+            initExpandDepth = 0,
         ) { }
 
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { IconArg(Icon.Code.CHEVRON_RIGHT) }
+            iconArg = { IconArg(Icon.Code.GEAR) }
         )
 
         LaunchedEffect(navState) { navState.launch() }
@@ -149,6 +150,7 @@ object PreferenceDialog {
                     Column() {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             ChangeFormButtons(state)
+                            FormHorizontalSpacer()
                             FormHorizontalSpacer()
                         }
                     }

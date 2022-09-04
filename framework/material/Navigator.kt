@@ -400,7 +400,7 @@ object Navigator {
         modifier: Modifier = Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
         bottomSpace: Dp = BOTTOM_SPACE,
-        iconArg: (ItemState<T>) -> IconArg,
+        iconArg: ((ItemState<T>) -> IconArg)?,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
     ) {
         val density = LocalDensity.current.density
@@ -432,7 +432,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
-        iconArg: (ItemState<T>) -> IconArg, styleArgs: (ItemState<T>) -> List<Typography.Style>
+        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
@@ -468,7 +468,7 @@ object Navigator {
                 val itemDepth = if (rootsAreExpandable) item.depth else item.depth - 1
                 if (itemDepth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * itemDepth))
                 if (rootsAreExpandable) ItemButton(item, itemHeight) else Spacer(Modifier.width(TEXT_SPACING))
-                ItemIcon(item, iconArg)
+                if (iconArg != null) ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
                 Spacer(modifier = Modifier.width(AREA_PADDING))

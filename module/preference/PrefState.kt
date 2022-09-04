@@ -9,7 +9,7 @@ class PrefState(
 
     override val parent: Navigable<PrefState>? = null
     override val info: String? = null
-    override val isExpandable = false
+    override val isExpandable = true
     override val isBulkExpandable = false
 
     override fun reloadEntries() {}
