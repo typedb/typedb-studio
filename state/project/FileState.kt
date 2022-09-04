@@ -298,7 +298,7 @@ class FileState internal constructor(
             val clonedRunner = runners.clone()
             val clonedCallbacks = callbacks.clone()
             close()
-            if (overwrite && path.exists()) find(path)?.delete()
+            if (overwrite && path.exists()) find(path)?.tryDelete()
             movePathTo(path, overwrite)
             if (!path.startsWith(projectMgr.current!!.path)) {
                 projectMgr.notification.userWarning(LOGGER, FILE_HAS_BEEN_MOVED_OUT, path)
@@ -339,8 +339,8 @@ class FileState internal constructor(
     override fun initiateDelete(onSuccess: () -> Unit) {
         projectMgr.confirmation.submit(
             title = Label.CONFIRM_FILE_DELETION,
-            message = Sentence.CONFIRM_FILE_DELETION,
-            onConfirm = { delete(); onSuccess() }
+            message = Sentence.CONFIRM_FILE_DELETION.format(name),
+            onConfirm = { tryDelete(); onSuccess() }
         )
     }
 
@@ -353,6 +353,16 @@ class FileState internal constructor(
         hasUnsavedChanges = false
     }
 
+    override fun tryDelete() {
+        try {
+            close()
+            path.deleteExisting()
+            parent!!.remove(this)
+        } catch (e: Exception) {
+            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_DELETABLE, path.name)
+        }
+    }
+
     override fun closeRecursive() = close()
 
     override fun close() {
@@ -362,16 +372,6 @@ class FileState internal constructor(
             projectMgr.pages.close(this)
             callbacks.onClose.forEach { it(this) }
             callbacks.clear()
-        }
-    }
-
-    override fun delete() {
-        try {
-            close()
-            path.deleteExisting()
-            parent!!.remove(this)
-        } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FILE_NOT_DELETABLE, path.name)
         }
     }
 }

@@ -115,6 +115,7 @@ object Icon {
         SERVER(0xf233u),
         SITEMAP(0xf0e8u),
         SQUARE_BOLT(0xe265u, 13.sp),
+        SQUARE_PLUS(0xf0feu),
         STOP(0xf04du, 13.sp),
         TABLE_CELLS_LARGE(0xf009u),
         THUMBTACK(0xf08du),

@@ -28,6 +28,8 @@ import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.state.app.ConfirmationManager
+import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -47,11 +49,27 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SchemaManager(
+class SchemaManager constructor(
     private val session: SessionState,
     internal val pages: PageManager,
-    internal val notificationMgr: NotificationManager
+    internal val notification: NotificationManager,
+    internal val confirmation: ConfirmationManager
 ) : Navigable<TypeState.Thing> {
+
+    class EditTypeDialog<T : TypeState.Thing> : DialogManager() {
+
+        var typeState: T? by mutableStateOf(null); private set
+
+        internal fun open(typeState: T) {
+            isOpen = true
+            this.typeState = typeState
+        }
+
+        override fun close() {
+            isOpen = false
+            typeState = null
+        }
+    }
 
     override val name: String = TypeQLToken.Type.THING.name.lowercase()
     override val parent: TypeState.Thing? = null
@@ -66,6 +84,12 @@ class SchemaManager(
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
+    val createEntTypeDialog = EditTypeDialog<TypeState.Entity>()
+    val createRelTypeDialog = EditTypeDialog<TypeState.Relation>()
+    val createAttTypeDialog = EditTypeDialog<TypeState.Attribute>()
+    val renameTypeDialog = EditTypeDialog<TypeState.Thing>()
+    val editSuperTypeDialog = EditTypeDialog<TypeState.Thing>()
+    val editAbstractDialog = EditTypeDialog<TypeState.Thing>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
@@ -166,7 +190,7 @@ class SchemaManager(
         }
     }
 
-    private fun refreshAndPruneTypesAndOpen() {
+    internal fun refreshAndPruneTypesAndOpen() {
         openOrGetReadTx()?.let { tx ->
             if (rootEntityType == null) rootEntityType = TypeState.Entity(
                 conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
@@ -185,7 +209,7 @@ class SchemaManager(
         }
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 
@@ -215,7 +239,7 @@ class SchemaManager(
         }
     }
 
-    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)

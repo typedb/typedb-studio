@@ -37,6 +37,7 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
+import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
@@ -69,13 +70,8 @@ object ProjectDialog {
 
         var field: String by mutableStateOf(initField)
 
-        override fun cancel() {
-            onCancel()
-        }
-
-        override fun isValid(): Boolean {
-            return field.isNotBlank() && isValid?.invoke(field) ?: true
-        }
+        override fun cancel() = onCancel()
+        override fun isValid(): Boolean = field.isNotBlank() && isValid?.invoke(field) ?: true
 
         override fun trySubmit() {
             assert(field.isNotBlank())
@@ -138,7 +134,7 @@ object ProjectDialog {
     ) {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
-                Form.Text(value = message, softWrap = true)
+                Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title)
             }
         }
@@ -208,7 +204,7 @@ object ProjectDialog {
     private fun CreateDirectory() {
         CreateItem(
             title = Label.CREATE_DIRECTORY,
-            message = Sentence.CREATE_DIRECTORY,
+            messageTemplate = Sentence.CREATE_DIRECTORY,
             initNameFn = { it.nextUntitledDirName() }
         ) { parent, name -> parent.tryCreateDirectory(name) }
     }
@@ -217,7 +213,7 @@ object ProjectDialog {
     private fun CreateFile() {
         CreateItem(
             title = Label.CREATE_FILE,
-            message = Sentence.CREATE_FILE,
+            messageTemplate = Sentence.CREATE_FILE,
             initNameFn = { it.nextUntitledFileName() }
         ) { parent, name -> parent.tryCreateFile(name) }
     }
@@ -225,7 +221,7 @@ object ProjectDialog {
     @Composable
     private fun CreateItem(
         title: String,
-        message: String,
+        messageTemplate: String,
         initNameFn: (DirectoryState) -> String,
         onSubmit: (DirectoryState, String) -> Unit
     ) {
@@ -238,7 +234,7 @@ object ProjectDialog {
                 onSubmit = { onSubmit(parent, it) }
             )
         }
-        PathNamingDialog(dialogState, formState, title, message.format(parent), Label.CREATE)
+        PathNamingDialog(dialogState, formState, title, messageTemplate.format(parent), Label.CREATE)
     }
 
     @Composable
@@ -275,11 +271,12 @@ object ProjectDialog {
 
     @Composable
     private fun PathNamingDialog(
-        dialogState: DialogManager, formState: PathForm, title: String, message: String, submitLabel: String
+        dialogState: DialogManager, formState: PathForm,
+        title: String, message: String, submitLabel: String
     ) {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
-                Form.Text(value = message, softWrap = true)
+                Text(value = message, softWrap = true)
                 PathNamingField(formState.field) { formState.field = it }
             }
         }

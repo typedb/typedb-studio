@@ -94,9 +94,6 @@ sealed class TypePage(
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
     private var showAdvanced by mutableStateOf(showAdvanced)
-    private var showEditLabelDialog by mutableStateOf(false)
-    private var showEditSupertypeDialog by mutableStateOf(false)
-    private var showEditAbstractDialog by mutableStateOf(false)
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
@@ -143,25 +140,7 @@ sealed class TypePage(
             Scrollbar.Vertical(rememberScrollbarAdapter(verScroller), Modifier.align(Alignment.CenterEnd))
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
         }
-        if (showEditLabelDialog) EditLabelDialog()
-        if (showEditSupertypeDialog) EditSupertypeDialog()
-        if (showEditAbstractDialog) EditAbstractDialog()
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
-    }
-
-    @Composable
-    private fun EditLabelDialog() {
-
-    }
-
-    @Composable
-    private fun EditSupertypeDialog() {
-
-    }
-
-    @Composable
-    private fun EditAbstractDialog() {
-
     }
 
     @Composable
@@ -228,7 +207,7 @@ sealed class TypePage(
     private fun LabelSection() {
         SectionRow {
             Form.TextBox(text = ConceptSummaryText(type.conceptType), leadingIcon = conceptIcon(type.conceptType))
-            EditButton { } // TODO
+            EditButton { type.initiateRename() }
             Spacer(Modifier.weight(1f))
         }
     }
@@ -244,7 +223,7 @@ sealed class TypePage(
                 leadingIcon = conceptIcon(supertype.conceptType),
                 enabled = !type.isRoot,
             ) { supertype.tryOpen() }
-            EditButton { } // TODO
+            EditButton { type.initiateEditSupertype() }
         }
     }
 
@@ -254,7 +233,7 @@ sealed class TypePage(
             Form.Text(value = Label.ABSTRACT)
             Spacer(Modifier.weight(1f))
             Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            EditButton { } // TODO
+            EditButton(type.canBeAbstract) { type.initiateEditAbstract() }
         }
     }
 
@@ -289,7 +268,7 @@ sealed class TypePage(
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
                         MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
-                            type.undefineOwnsAttributeType(it.attributeType)
+                            type.tryUndefineOwnsAttributeType(it.attributeType)
                         }
                     },
                 )
@@ -350,7 +329,7 @@ sealed class TypePage(
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.defineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
+                onClick = { type.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
             )
         }
     }
@@ -358,7 +337,7 @@ sealed class TypePage(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(type.playsRoleTypeProperties) { type.undefinePlaysRoleType(it) }
+        RoleTypesTable(type.playsRoleTypeProperties) { type.tryUndefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
 
@@ -437,7 +416,7 @@ sealed class TypePage(
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.definePlaysRoleType(roleType!!, overriddenType) }
+                onClick = { type.tryDefinePlaysRoleType(roleType!!, overriddenType) }
             )
         }
     }
@@ -479,7 +458,7 @@ sealed class TypePage(
             leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
             enabled = isEditable,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
-        ) { } // TODO
+        ) { type.initiateDelete() }
     }
 
     @Composable
@@ -529,10 +508,10 @@ sealed class TypePage(
     }
 
     @Composable
-    protected fun EditButton(onClick: () -> Unit) {
+    protected fun EditButton(enabled: Boolean = true, onClick: () -> Unit) {
         Form.IconButton(
             icon = Icon.Code.PEN,
-            enabled = isEditable,
+            enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
         )
@@ -580,7 +559,7 @@ sealed class TypePage(
         @Composable
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
-            RoleTypesTable(type.relatesRoleTypeProperties) { type.undefineRelatesRoleType(it) }
+            RoleTypesTable(type.relatesRoleTypeProperties) { type.tryUndefineRelatesRoleType(it) }
             RelatesRoleTypeAddition()
         }
 
@@ -623,7 +602,7 @@ sealed class TypePage(
                         Label.DEFINE_RELATES_ROLE_TYPE,
                         Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
                     ),
-                    onClick = { type.defineRelatesRoleType(roleType, overriddenType) }
+                    onClick = { type.tryDefineRelatesRoleType(roleType, overriddenType) }
                 )
             }
         }

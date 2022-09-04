@@ -144,7 +144,7 @@ object Toolbar {
         private fun OpenProjectButton() {
             ToolbarIconButton(
                 icon = Icon.Code.FOLDER_OPEN,
-                onClick = { StudioState.project.openProjectDialog.toggle() },
+                onClick = { StudioState.project.openProjectDialog.open() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PROJECT_DIRECTORY)
             )
         }

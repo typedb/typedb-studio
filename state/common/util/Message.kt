@@ -195,7 +195,10 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Schema(2, "Failed to load type properties due to: %s.")
             val FAILED_TO_DELETE_TYPE =
                 Schema(3, "Failed to delete type due to: %s.")
-
+            val FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE =
+                Schema(4, "Failed to create %s type with label '%s', as the label is already used.")
+            val FAILED_TO_CREATE_TYPE =
+                Schema(5, "Failed to create %s type with label '%s' due to: %s.")
         }
     }
 

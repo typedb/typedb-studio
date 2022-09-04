@@ -67,7 +67,7 @@ sealed class PathState constructor(
     abstract fun initiateDelete(onSuccess: () -> Unit)
     abstract fun close()
     abstract fun closeRecursive()
-    abstract fun delete()
+    abstract fun tryDelete()
 
     internal fun movePathTo(newPath: Path, overwrite: Boolean = false) {
         path.moveTo(newPath, overwrite)

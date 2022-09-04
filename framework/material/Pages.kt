@@ -120,7 +120,7 @@ object Pages {
             fun closeFn() {
                 openedPages.remove(pageable)
                 pageable.close()
-                if (pageable.isUnsavedPageable) pageable.delete()
+                if (pageable.isUnsavedPageable) pageable.tryDelete()
             }
             if (pageable.isRunnable && pageable.asRunnable().isRunning) StudioState.confirmation.submit(
                 title = Label.QUERY_IS_RUNNING,

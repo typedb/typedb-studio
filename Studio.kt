@@ -82,6 +82,7 @@ import com.vaticle.typedb.studio.module.project.FilePage
 import com.vaticle.typedb.studio.module.project.ProjectBrowser
 import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
+import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypePage
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -152,6 +153,7 @@ object Studio {
                     ServerDialog.MayShowDialogs()
                     DatabaseDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
+                    TypeDialog.MayShowDialogs()
                 }
             }
         }
