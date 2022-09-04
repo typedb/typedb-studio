@@ -47,10 +47,10 @@ import mu.KotlinLogging
 sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr: SchemaManager) {
 
     enum class Encoding(val label: String) {
-        ENTITY_TYPE(Label.ENTITY),
-        RELATION_TYPE(Label.RELATION),
-        ATTRIBUTE_TYPE(Label.ATTRIBUTE),
-        ROLE_TYPE(Label.ROLE)
+        ENTITY_TYPE(Label.ENTITY.lowercase()),
+        RELATION_TYPE(Label.RELATION.lowercase()),
+        ATTRIBUTE_TYPE(Label.ATTRIBUTE.lowercase()),
+        ROLE_TYPE(Label.ROLE.lowercase())
     }
 
     data class AttributeTypeProperties(

@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -123,7 +124,7 @@ object TypeDialog {
         val supertypeState = dialogState.typeState!!
         val title = if (supertypeState.isRoot) Label.CREATE_TYPE else Label.CREATE_SUBTYPE
         val message = createThingTypeMessage(
-            supertypeState, supertypeState.name + " (" + supertypeState.valueType!! + ")"
+            supertypeState, supertypeState.name + (supertypeState.valueType?.let { " ($it)" } ?: "")
         )
         val formState = remember {
             CreateAttributeTypeForm(
@@ -131,6 +132,7 @@ object TypeDialog {
                 onSubmit = { label, valueType -> supertypeState.tryCreateSubtype(label, valueType) }
             )
         }
+        val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 Form.Text(value = message, softWrap = true)
@@ -138,7 +140,8 @@ object TypeDialog {
                 if (supertypeState.isRoot) Field(label = Label.VALUE_TYPE) {
                     Form.Dropdown(
                         selected = formState.valueType,
-                        values = AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT,
+                        values = valueTypes,
+                        displayFn = { AnnotatedString(it.name.lowercase()) },
                         placeholder = Label.VALUE_TYPE,
                         onSelection = { formState.valueType = it }
                     )
