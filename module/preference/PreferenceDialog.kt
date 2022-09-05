@@ -33,8 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-//import androidx.compose.ui.focus.FocusRequester
-//import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
@@ -59,9 +57,9 @@ object PreferenceDialog {
     private val WIDTH = 800.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
+    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup("", content = {}))
 
-    private class PreferencesForm : State {
-        var focusedPreference by mutableStateOf ("Root")
+    class PreferencesForm : State {
         var autoSave by mutableStateOf(true)
         var ignoredPaths by mutableStateOf(listOf(".git"))
         var limit: String by mutableStateOf(appData.limit ?: "")
@@ -84,18 +82,20 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-        val prefGraph = PrefState("Graph Visualiser")
-        val prefEditor = PrefState("Text Editor")
-        val querySub = PrefState("Query Sub 1")
-        val prefQuery = PrefState("Query Runner", listOf(querySub))
-        val prefProject = PrefState("Project Manager")
-        val prefState = PrefState("Root", listOf(prefGraph, prefEditor, prefQuery, prefProject))
+        val prefGraph = PreferenceGroup("Graph Visualiser", content = { GraphPreferences(state) })
+        val prefEditor = PreferenceGroup("Text Editor", content = { EditorPreferences(state) })
+        val querySub = PreferenceGroup("Query Sub 1")
+        val prefQuery = PreferenceGroup("Query Runner", listOf(querySub), content = { QueryPreferences(state)})
+        val prefProject = PreferenceGroup("Project Manager", content = { ProjectPreferences(state) })
+        val preferenceGroup = PreferenceGroup("Root", listOf(prefGraph, prefEditor, prefQuery, prefProject))
+
         val navState = rememberNavigatorState(
-            container = prefState,
+            container = preferenceGroup,
             title = Label.MANAGE_PREFERENCES,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 0,
-        ) { state.focusedPreference = it.item.name }
+            openFn = { focusedPreferenceGroup = it.item }
+        )
 
         Navigator.Layout(
             state = navState,
@@ -128,12 +128,7 @@ object PreferenceDialog {
                     },
                     Frame.Pane(id = "PreferencesStatePane", initSize = Either.second(1f)) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            when (state.focusedPreference) {
-                                "Graph Visualiser" -> GraphPreferences(state)
-                                "Text Editor" -> EditorPreferences(state)
-                                "Project Manager" -> ProjectPreferences(state)
-                                else -> QueryPreferences(state)
-                            }
+                            focusedPreferenceGroup.showContent()
                         }
                     }
                 )

@@ -131,7 +131,7 @@ object Label {
     const val PREVIOUS_OCCURRENCE = "Previous Occurrence"
     const val PROJECT = "Project"
     const val PROJECT_BROWSER = "Project Browser"
-    const val PROJECT_IGNORED_PATHS = "Ignored Paths"
+    const val PROJECT_IGNORED_PATHS = "Set Ignored Paths"
     const val PROPERTY = "Property"
     const val QUERY = "Query"
     const val QUERY_IS_RUNNING = "Query is Running"
