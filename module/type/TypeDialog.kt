@@ -63,25 +63,26 @@ object TypeDialog {
     }
 
     private class CreateAttributeTypeForm constructor(
+        valueType: AttributeType.ValueType?,
         val isValid: ((String) -> Boolean)? = null,
         val onCancel: () -> Unit,
         val onSubmit: (String, AttributeType.ValueType) -> Unit,
     ) : Form.State {
 
         var label: String by mutableStateOf("")
-        var valueType: AttributeType.ValueType? by mutableStateOf(null)
+        var valueType: AttributeType.ValueType? by mutableStateOf(valueType)
 
         override fun cancel() = onCancel()
         override fun isValid(): Boolean = label.isNotEmpty() && valueType != null && isValid?.invoke(label) ?: true
 
         override fun trySubmit() {
-            assert(label.isNotBlank())
+            assert(isValid())
             onSubmit(label, valueType!!)
         }
     }
 
     private val DIALOG_WIDTH = 500.dp
-    private val DIALOG_HEIGHT = 200.dp
+    private val DIALOG_HEIGHT = 300.dp
 
     @Composable
     fun MayShowDialogs() {
@@ -124,10 +125,11 @@ object TypeDialog {
         val supertypeState = dialogState.typeState!!
         val title = if (supertypeState.isRoot) Label.CREATE_TYPE else Label.CREATE_SUBTYPE
         val message = createThingTypeMessage(
-            supertypeState, supertypeState.name + (supertypeState.valueType?.let { " ($it)" } ?: "")
+            supertypeState, supertypeState.name + (supertypeState.valueType?.let { " (${it.name.lowercase()})" } ?: "")
         )
         val formState = remember {
             CreateAttributeTypeForm(
+                valueType = supertypeState.valueType,
                 onCancel = { dialogState.close() },
                 onSubmit = { label, valueType -> supertypeState.tryCreateSubtype(label, valueType) }
             )
@@ -137,13 +139,14 @@ object TypeDialog {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 Form.Text(value = message, softWrap = true)
                 TypeNamingField(formState.label) { formState.label = it }
-                if (supertypeState.isRoot) Field(label = Label.VALUE_TYPE) {
+                Field(label = Label.VALUE_TYPE) {
                     Form.Dropdown(
                         selected = formState.valueType,
                         values = valueTypes,
                         displayFn = { AnnotatedString(it.name.lowercase()) },
                         placeholder = Label.VALUE_TYPE,
-                        onSelection = { formState.valueType = it }
+                        onSelection = { formState.valueType = it },
+                        enabled = supertypeState.isRoot
                     )
                 }
             }

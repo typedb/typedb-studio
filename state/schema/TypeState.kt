@@ -397,7 +397,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         schemaMgr: SchemaManager
     ) : Thing(conceptType, Encoding.ATTRIBUTE_TYPE, conceptType.label.name(), schemaMgr) {
 
-        override val info get() = valueType
+        override val info get() = valueType?.name?.lowercase()
         override val parent: Attribute? get() = supertype
         override val baseType = TypeQLToken.Type.ATTRIBUTE
         override var supertype: Attribute? by mutableStateOf(supertype)
@@ -405,7 +405,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         override var subtypesExplicit: List<Attribute> by mutableStateOf(listOf())
         override val subtypes: List<Attribute> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
 
-        val valueType: String? = if (!conceptType.isRoot) conceptType.valueType.name.lowercase() else null
+        val valueType: AttributeType.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
         val isKeyable: Boolean get() = conceptType.valueType.isKeyable
         var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
         val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
