@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
@@ -44,7 +45,27 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 
 object TypeDialog {
 
-    private class TypeLabelForm constructor(
+    private class CreateTypeFormState constructor(
+        valueType: AttributeType.ValueType? = null,
+        val isValid: ((CreateTypeFormState) -> Boolean)? = null,
+        val onCancel: () -> Unit,
+        val onSubmit: (label: String, isAbstract: Boolean, valueType: AttributeType.ValueType?) -> Unit,
+    ) : Form.State {
+
+        var label: String by mutableStateOf(""); internal set
+        var isAbstract: Boolean by mutableStateOf(false); internal set
+        var valueType: AttributeType.ValueType? by mutableStateOf(valueType); internal set
+
+        override fun cancel() = onCancel()
+        override fun isValid(): Boolean = label.isNotEmpty() && isValid?.invoke(this) ?: true
+
+        override fun trySubmit() {
+            assert(isValid())
+            onSubmit(label, isAbstract, valueType)
+        }
+    }
+
+    private class RenameTypeFormState constructor(
         initField: String,
         val isValid: ((String) -> Boolean)? = null,
         val onCancel: () -> Unit,
@@ -59,25 +80,6 @@ object TypeDialog {
         override fun trySubmit() {
             assert(label.isNotBlank())
             onSubmit(label)
-        }
-    }
-
-    private class CreateAttributeTypeForm constructor(
-        valueType: AttributeType.ValueType?,
-        val isValid: ((String) -> Boolean)? = null,
-        val onCancel: () -> Unit,
-        val onSubmit: (String, AttributeType.ValueType) -> Unit,
-    ) : Form.State {
-
-        var label: String by mutableStateOf("")
-        var valueType: AttributeType.ValueType? by mutableStateOf(valueType)
-
-        override fun cancel() = onCancel()
-        override fun isValid(): Boolean = label.isNotEmpty() && valueType != null && isValid?.invoke(label) ?: true
-
-        override fun trySubmit() {
-            assert(isValid())
-            onSubmit(label, valueType!!)
         }
     }
 
@@ -115,13 +117,18 @@ object TypeDialog {
         val supertypeState = dialogState.typeState!!
         val message = createThingTypeMessage(supertypeState, supertypeState.name)
         val formState = remember {
-            TypeLabelForm(
-                initField = "",
+            CreateTypeFormState(
                 onCancel = { dialogState.close() },
-                onSubmit = { supertypeState.tryCreateSubtype(it) }
+                onSubmit = { label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
             )
         }
-        TypeNamingDialog(dialogState, formState, title, message, Label.CREATE)
+        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
+                Form.Text(value = message, softWrap = true)
+                TypeLabelField(formState.label) { formState.label = it }
+                TypeAbstractField(formState.isAbstract) { formState.isAbstract = it }
+            }
+        }
     }
 
     @Composable
@@ -132,17 +139,18 @@ object TypeDialog {
             supertypeState, supertypeState.name + (supertypeState.valueType?.let { " (${it.name.lowercase()})" } ?: "")
         )
         val formState = remember {
-            CreateAttributeTypeForm(
+            CreateTypeFormState(
                 valueType = supertypeState.valueType,
+                isValid = { it.valueType != null },
                 onCancel = { dialogState.close() },
-                onSubmit = { label, valueType -> supertypeState.tryCreateSubtype(label, valueType) }
+                onSubmit = { label, isAbstract, valueType -> supertypeState.tryCreateSubtype(label, isAbstract, valueType!!) }
             )
         }
         val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
         Dialog.Layout(dialogState, Label.CREATE_ATTRIBUTE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 Form.Text(value = message, softWrap = true)
-                TypeNamingField(formState.label) { formState.label = it }
+                TypeLabelField(formState.label) { formState.label = it }
                 Field(label = Label.VALUE_TYPE) {
                     Form.Dropdown(
                         selected = formState.valueType,
@@ -153,10 +161,10 @@ object TypeDialog {
                         enabled = supertypeState.isRoot
                     )
                 }
+                TypeAbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
         }
     }
-
 
     @Composable
     private fun RenameTypeDialog() {
@@ -164,41 +172,39 @@ object TypeDialog {
         val typeState = dialogState.typeState!!
         val message = Sentence.RENAME_TYPE.format(typeState.encoding.label, typeState.name)
         val formState = remember {
-            TypeLabelForm(
+            RenameTypeFormState(
                 initField = typeState.name,
                 isValid = { it != typeState.name },
                 onCancel = { dialogState.close() },
                 onSubmit = { typeState.tryRename(it) }
             )
         }
-        TypeNamingDialog(dialogState, formState, Label.RENAME_TYPE, message, Label.RENAME)
-    }
-
-    @Composable
-    private fun <T : TypeState.Thing> TypeNamingDialog(
-        dialogState: SchemaManager.EditTypeDialog<T>, formState: TypeLabelForm,
-        title: String, message: String, submitLabel: String
-    ) {
-        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
-            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
+        Dialog.Layout(dialogState, Label.RENAME_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.RENAME) {
                 Form.Text(value = message, softWrap = true)
-                TypeNamingField(formState.label) { formState.label = it }
+                TypeLabelField(formState.label) { formState.label = it }
             }
         }
     }
 
+
     @Composable
-    private fun TypeNamingField(text: String, onChange: (String) -> Unit) {
+    private fun TypeLabelField(value: String, onChange: (String) -> Unit) {
         val focusReq = remember { FocusRequester() }
-        Field(label = Label.TYPE_LABEL) {
+        Field(label = Label.LABEL) {
             TextInput(
-                value = text,
+                value = value,
                 placeholder = "type-label",
                 onValueChange = onChange,
                 modifier = Modifier.focusRequester(focusReq)
             )
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
+    }
+
+    @Composable
+    private fun TypeAbstractField(value: Boolean, onChange: (Boolean) -> Unit) {
+        Field(label = Label.ABSTRACT) { Checkbox(value = value, onChange = onChange) }
     }
 
     @Composable

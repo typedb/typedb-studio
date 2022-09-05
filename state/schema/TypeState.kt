@@ -264,21 +264,15 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
 
             schemaMgr.openOrGetReadTx()?.let { tx ->
                 val typeTx = conceptType.asRemote(tx)
-                typeTx.playsExplicit.forEach { load(typeTx = typeTx, roleType = it, isInherited = false) }
-                typeTx.plays.filter { !loaded.contains(it) }.forEach {
-                    load(
-                        typeTx = typeTx,
-                        roleType = it,
-                        isInherited = true
-                    )
-                }
+                typeTx.playsExplicit.forEach { load(typeTx, it, false) }
+                typeTx.plays.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
             }
             playsRoleTypeProperties = properties
         }
 
         abstract fun initiateCreateSubtype(onSuccess: () -> Unit)
 
-        abstract fun tryCreateSubtype(label: String)
+        abstract fun tryCreateSubtype(label: String, isAbstract: Boolean)
 
         protected fun tryCreateSubtype(
             label: String, dialogState: SchemaManager.EditTypeDialog<*>, creatorFn: (TypeDBTransaction) -> Unit
@@ -383,9 +377,15 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
 
         override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createEntTypeDialog.open(this, onSuccess)
 
-        override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, schemaMgr.createEntTypeDialog) { tx ->
-            val type = tx.concepts().putEntityType(label)
-            if (!isRoot) type.asRemote(tx).setSupertype(conceptType)
+        override fun tryCreateSubtype(label: String, isAbstract: Boolean) {
+            tryCreateSubtype(label, schemaMgr.createEntTypeDialog) { tx ->
+                val type = tx.concepts().putEntityType(label)
+                if (isAbstract || !isRoot) {
+                    val typeTx = type.asRemote(tx)
+                    if (isAbstract) typeTx.setAbstract()
+                    if (!isRoot) typeTx.setSupertype(conceptType)
+                }
+            }
         }
 
         override fun toString(): String = "TypeState.Entity: $conceptType"
@@ -461,12 +461,18 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
 
         override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createAttTypeDialog.open(this, onSuccess)
 
-        override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, conceptType.valueType)
+        override fun tryCreateSubtype(label: String, isAbstract: Boolean) {
+            tryCreateSubtype(label, isAbstract, conceptType.valueType)
+        }
 
-        fun tryCreateSubtype(label: String, valueType: AttributeType.ValueType) {
+        fun tryCreateSubtype(label: String, isAbstract: Boolean, valueType: AttributeType.ValueType) {
             tryCreateSubtype(label, schemaMgr.createAttTypeDialog) { tx ->
                 val type = tx.concepts().putAttributeType(label, valueType)
-                if (!isRoot) type.asRemote(tx).setSupertype(conceptType)
+                if (isAbstract || !isRoot) {
+                    val typeTx = type.asRemote(tx)
+                    if (isAbstract) typeTx.setAbstract()
+                    if (!isRoot) typeTx.setSupertype(conceptType)
+                }
             }
         }
 
@@ -533,21 +539,23 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
 
             schemaMgr.openOrGetReadTx()?.let { tx ->
                 val typeTx = conceptType.asRemote(tx)
-                typeTx.relatesExplicit.forEach {
-                    load(typeTx = typeTx, roleType = it, isInherited = false)
-                }
-                typeTx.relates.filter { !loaded.contains(it) }.forEach {
-                    load(typeTx = typeTx, roleType = it, isInherited = true)
-                }
+                typeTx.relatesExplicit.forEach { load(typeTx, it, false) }
+                typeTx.relates.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
             }
             relatesRoleTypeProperties = properties
         }
 
         override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createRelTypeDialog.open(this, onSuccess)
 
-        override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, schemaMgr.createRelTypeDialog) { tx ->
-            val type = tx.concepts().putRelationType(label)
-            if (!isRoot) type.asRemote(tx).setSupertype(conceptType)
+        override fun tryCreateSubtype(label: String, isAbstract: Boolean) {
+            tryCreateSubtype(label, schemaMgr.createRelTypeDialog) { tx ->
+                val type = tx.concepts().putRelationType(label)
+                if (isAbstract || !isRoot) {
+                    val typeTx = type.asRemote(tx)
+                    if (isAbstract) typeTx.setAbstract()
+                    if (!isRoot) typeTx.setSupertype(conceptType)
+                }
+            }
         }
 
         fun tryDefineRelatesRoleType(roleType: String, overriddenType: Role?) {
