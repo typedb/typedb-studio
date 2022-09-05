@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+//import androidx.compose.ui.focus.FocusRequester
+//import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
@@ -60,6 +62,8 @@ object PreferenceDialog {
     private val WIDTH = 800.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
+    private val focusedPrefState =
+
 
     private class PreferencesForm : State {
         var autoSave by mutableStateOf(true)
@@ -72,7 +76,8 @@ object PreferenceDialog {
         }
 
         override fun isValid(): Boolean {
-            return (limit.toIntOrNull() != null)
+            return true
+//            return (limit.toIntOrNull() != null)
         }
 
         override fun trySubmit() {
@@ -94,12 +99,11 @@ object PreferenceDialog {
             title = Label.MANAGE_PREFERENCES,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 0,
-        ) { }
+        ) {  }
 
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { IconArg(Icon.Code.GEAR) }
         )
 
         LaunchedEffect(navState) { navState.launch() }
@@ -128,8 +132,6 @@ object PreferenceDialog {
                     },
                     Frame.Pane(id = "PreferencesPane", initSize = Either.second(1f)) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            PreferencesHeader("Text Editor")
-
                             EditorPreferences(state)
                             FormVerticalSpacer()
 
@@ -162,21 +164,25 @@ object PreferenceDialog {
 
     @Composable
     private fun ProjectPreferences(state: PreferencesForm) {
+        PreferencesHeader("Project Manager")
         ProjectIgnoredPathsField(state)
     }
 
     @Composable
     private fun EditorPreferences(state: PreferencesForm) {
+        PreferencesHeader("Text Editor")
         EditorAutoSaveField(state)
     }
 
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
+        PreferencesHeader("Query Runner")
         QueryLimitField(state)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
+        PreferencesHeader("Graph Visualiser")
         GraphOutputField(state)
     }
 

@@ -400,7 +400,7 @@ object Navigator {
         modifier: Modifier = Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
         bottomSpace: Dp = BOTTOM_SPACE,
-        iconArg: ((ItemState<T>) -> IconArg)?,
+        iconArg: ((ItemState<T>) -> IconArg)? = null,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
     ) {
         val density = LocalDensity.current.density
