@@ -40,18 +40,15 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form.IconArg
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.FormHorizontalSpacer
 import com.vaticle.typedb.studio.framework.material.Form.FormVerticalSpacer
-import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Frame
-import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
@@ -87,12 +84,12 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-        val pref_graph = PrefState("Graph Visualiser")
-        val pref_editor = PrefState("Text Editor")
-        val query_sub = PrefState("Query Sub 1")
-        val pref_query = PrefState("Query Runner", listOf(query_sub))
-        val pref_project = PrefState("Project Manager")
-        val prefState = PrefState("Root", listOf(pref_graph, pref_editor, pref_query, pref_project))
+        val prefGraph = PrefState("Graph Visualiser")
+        val prefEditor = PrefState("Text Editor")
+        val querySub = PrefState("Query Sub 1")
+        val prefQuery = PrefState("Query Runner", listOf(querySub))
+        val prefProject = PrefState("Project Manager")
+        val prefState = PrefState("Root", listOf(prefGraph, prefEditor, prefQuery, prefProject))
         val navState = rememberNavigatorState(
             container = prefState,
             title = Label.MANAGE_PREFERENCES,
@@ -123,13 +120,13 @@ object PreferenceDialog {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(id = "NavigatorPane", initSize = Either.first(200.dp)) {
+                    Frame.Pane(id = "PreferencesNavigatorPane", initSize = Either.first(200.dp)) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             FormVerticalSpacer()
                             NavigatorLayout(state)
                         }
                     },
-                    Frame.Pane(id = "PreferencesPane", initSize = Either.second(1f)) {
+                    Frame.Pane(id = "PreferencesStatePane", initSize = Either.second(1f)) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             when (state.focusedPreference) {
                                 "Graph Visualiser" -> GraphPreferences(state)
