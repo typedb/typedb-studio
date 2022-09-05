@@ -50,9 +50,9 @@ interface Pageable {
 
     fun initiateSave(reopen: Boolean = true)
 
-    fun close()
+    fun tryDelete()
 
-    fun delete()
+    fun close()
 
     interface Runnable : Pageable {
 

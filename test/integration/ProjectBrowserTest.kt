@@ -93,7 +93,7 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().delete()
+            StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryDelete()
             delayAndRecompose(composeRule)
 
             StudioState.project.current!!.reloadEntries()

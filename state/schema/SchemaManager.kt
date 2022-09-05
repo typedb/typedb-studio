@@ -28,6 +28,8 @@ import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.state.app.ConfirmationManager
+import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -36,6 +38,7 @@ import com.vaticle.typedb.studio.state.page.Navigable
 import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -46,11 +49,27 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SchemaManager(
+class SchemaManager constructor(
     private val session: SessionState,
     internal val pages: PageManager,
-    internal val notificationMgr: NotificationManager
+    internal val notification: NotificationManager,
+    internal val confirmation: ConfirmationManager
 ) : Navigable<TypeState.Thing> {
+
+    class EditTypeDialog<T : TypeState.Thing> : DialogManager() {
+
+        var typeState: T? by mutableStateOf(null); private set
+
+        internal fun open(typeState: T) {
+            isOpen = true
+            this.typeState = typeState
+        }
+
+        override fun close() {
+            isOpen = false
+            typeState = null
+        }
+    }
 
     override val name: String = TypeQLToken.Type.THING.name.lowercase()
     override val parent: TypeState.Thing? = null
@@ -64,8 +83,14 @@ class SchemaManager(
     var rootEntityType: TypeState.Entity? by mutableStateOf(null); private set
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
-    var onRootsUpdated: (() -> Unit)? = null
-    val hasWriteTx: Boolean get() = session.isSchema && session.transaction.isWrite
+    val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
+    val createEntTypeDialog = EditTypeDialog<TypeState.Entity>()
+    val createRelTypeDialog = EditTypeDialog<TypeState.Relation>()
+    val createAttTypeDialog = EditTypeDialog<TypeState.Attribute>()
+    val renameTypeDialog = EditTypeDialog<TypeState.Thing>()
+    val editSuperTypeDialog = EditTypeDialog<TypeState.Thing>()
+    val editAbstractDialog = EditTypeDialog<TypeState.Thing>()
+    private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val entityTypes = ConcurrentHashMap<EntityType, TypeState.Entity>()
@@ -73,6 +98,7 @@ class SchemaManager(
     private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
+    private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -82,16 +108,18 @@ class SchemaManager(
     }
 
     init {
-        session.onOpen { isNewDB -> if (isNewDB) loadTypesAndOpen() }
-        session.onClose { willReopenSameDB -> if (willReopenSameDB) closeReadTx() else close() }
-        session.transaction.onSchemaWrite {
+        session.onOpen { isNewDB -> if (isNewDB) refreshAndPruneTypesAndOpen() }
+        session.onClose { willReopenSameDB -> if (!willReopenSameDB) close() }
+        session.transaction.onSchemaWriteReset {
             mayRefreshReadTx()
-            loadTypesAndOpen()
+            refreshAndPruneTypesAndOpen()
         }
     }
 
+    fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
+
     override fun reloadEntries() {
-        openOrGetReadTx()?.let { tx ->
+        openOrGetReadTx()?.let { tx -> // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
             entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
         }
     }
@@ -119,7 +147,7 @@ class SchemaManager(
                 if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
             }
             entityTypes.computeIfAbsent(entityType) {
-                TypeState.Entity(entityType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Entity(entityType, supertype, this)
             }
         }
     }
@@ -131,7 +159,7 @@ class SchemaManager(
                 if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
             }
             attributeTypes.computeIfAbsent(attributeType) {
-                TypeState.Attribute(attributeType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Attribute(attributeType, supertype, this)
             }
         }
     }
@@ -143,7 +171,7 @@ class SchemaManager(
                 if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
             }
             relationTypes.computeIfAbsent(relationType) {
-                TypeState.Relation(relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                TypeState.Relation(relationType, supertype, this)
             }
         }
     }
@@ -156,54 +184,62 @@ class SchemaManager(
             }
             roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
                 roleTypes.computeIfAbsent(roleType) {
-                    TypeState.Role(roleType, relationType, supertype, remote.subtypesExplicit.findAny().isPresent, this)
+                    TypeState.Role(roleType, relationType, supertype, this)
                 }
             }
         }
     }
 
-    private fun loadTypesAndOpen() {
-        openOrGetReadTx()?.concepts()?.let { conceptMgr ->
-            rootEntityType = TypeState.Entity(
-                conceptType = conceptMgr.rootEntityType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { entityTypes[conceptMgr.rootEntityType] = it }
-            rootRelationType = TypeState.Relation(
-                conceptType = conceptMgr.rootRelationType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { relationTypes[conceptMgr.rootRelationType] = it }
-            rootAttributeType = TypeState.Attribute(
-                conceptType = conceptMgr.rootAttributeType, supertype = null, hasSubtypes = true, schemaMgr = this
-            ).also { attributeTypes[conceptMgr.rootAttributeType] = it }
+    internal fun refreshAndPruneTypesAndOpen() {
+        openOrGetReadTx()?.let { tx ->
+            if (rootEntityType == null) rootEntityType = TypeState.Entity(
+                conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
+            ).also { entityTypes[tx.concepts().rootEntityType] = it }
+            if (rootRelationType == null) rootRelationType = TypeState.Relation(
+                conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
+            ).also { relationTypes[tx.concepts().rootRelationType] = it }
+            if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
+                conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
+            ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
+            (entityTypes.values + relationTypes.values + attributeTypes.values).forEach {
+                if (tx.concepts().getThingType(it.name) == null) it.closeRecursive()
+            }
             isOpenAtomic.set(true)
-            onRootsUpdated?.let { it() }
+            onTypesUpdated.forEach { it() }
         }
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    fun mayRefreshReadTx() {
-        synchronized(this) {
-            if (readTx.get() != null) {
-                closeReadTx()
-                openOrGetReadTx()
-            }
+    internal fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
+        if (!isWritable) return null
+        if (readTx.get() != null) closeReadTx()
+        if (writeTx.get() != null) return writeTx.get()
+        writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
+        return writeTx.get()
+    }
+
+    internal fun openOrGetReadTx(): TypeDBTransaction? = synchronized(this) {
+        lastTransactionUse.set(System.currentTimeMillis())
+        if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
+        if (readTx.get() != null) return readTx.get()
+        readTx.set(session.transaction()?.also {
+            it.onClose { closeReadTx() }
+            scheduleCloseReadTx()
+        })
+        return readTx.get()
+    }
+
+    fun mayRefreshReadTx() = synchronized(this) {
+        if (readTx.get() != null) {
+            closeReadTx()
+            openOrGetReadTx()
         }
     }
 
-    internal fun openOrGetReadTx(): TypeDBTransaction? {
-        synchronized(this) {
-            lastTransactionUse.set(System.currentTimeMillis())
-            if (readTx.get() != null) return readTx.get()
-            readTx.set(session.transaction()?.also {
-                it.onClose { closeReadTx() }
-                scheduleCloseReadTx()
-            })
-            return readTx.get()
-        }
-    }
-
-    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)
@@ -215,8 +251,12 @@ class SchemaManager(
         }
     }
 
-    private fun closeReadTx() {
-        synchronized(this) { readTx.getAndSet(null)?.close() }
+    private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+
+    fun remove(typeState: TypeState.Thing) = when (typeState) {
+        is TypeState.Entity -> entityTypes.remove(typeState.conceptType)
+        is TypeState.Relation -> relationTypes.remove(typeState.conceptType)
+        is TypeState.Attribute -> attributeTypes.remove(typeState.conceptType)
     }
 
     fun close() {

@@ -28,11 +28,11 @@ build:
       command: |
         bazel build //...
         bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
-        bazel test $(bazel query 'kind(checkstyle_test, //...)')
+        bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=errors
     test-unit:
       image: vaticle-ubuntu-20.04
       command: |
-        bazel test $(bazel query 'kind(kt_jvm_test, //...) except kind(kt_jvm_test, //test/...)')
+        bazel test $(bazel query 'kind(kt_jvm_test, //...) except kind(kt_jvm_test, //test/...)') --test_output=errors
     test-integration:
       image: vaticle-ubuntu-20.04
       command: |

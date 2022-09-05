@@ -56,6 +56,6 @@ object StudioState {
         pages = PageManager()
         client = ClientState(notification)
         project = ProjectManager(preference, appData, notification, confirmation, client, pages)
-        schema = SchemaManager(client.session, pages, notification)
+        schema = SchemaManager(client.session, pages, notification, confirmation)
     }
 }

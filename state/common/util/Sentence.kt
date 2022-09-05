@@ -46,7 +46,9 @@ object Sentence {
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_DELETION =
-        "Are you sure you would like to delete this file? $ACTION_CANNOT_BE_UNDONE"
+        "Are you sure you would like to delete this file named '%s'? $ACTION_CANNOT_BE_UNDONE"
+    const val CONFIRM_TYPE_DELETION =
+        "Are you sure you would like to delete this type labelled '%s'? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE =
         "You are about to convert this runnable file (%s) to a non-runnable file (%s). " +
                 RUNNABLE_FILE_EXTENSIONS +
@@ -56,10 +58,10 @@ object Sentence {
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =
         "Create a new database on your TypeDB Server. This button will only be enabled the provided name is valid, " +
                 "i.e. valid syntax and does not already exist."
-    const val CREATE_DIRECTORY =
-        "Create a new directory under %s."
-    const val CREATE_FILE =
-        "Create a new file under %s."
+    const val CREATE_DIRECTORY = "Create a new directory under %s."
+    const val CREATE_FILE = "Create a new file under %s."
+    const val CREATE_TYPE = "Create a new %s type."
+    const val CREATE_TYPE_AS_SUBTYPE_OF = "Create a new %s type as a subtype of '%s'."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
     //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
@@ -92,10 +94,9 @@ object Sentence {
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION = "Duration to collect all answers of the query from the server."
     const val QUERY_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect auxiliary information/concepts to display informative log & graph output."
-    const val RENAME_DIRECTORY =
-        "Rename the directory at %s."
-    const val RENAME_FILE =
-        "Rename the file at %s."
+    const val RENAME_DIRECTORY = "Rename the directory at %s."
+    const val RENAME_FILE = "Rename the file at %s."
+    const val RENAME_TYPE = "Rename the %s type with label '%s'."
     const val SAVE_CURRENT_FILE_DESCRIPTION =
         "By default, edited text files are automatically saved, except for untitled files that have not been saved. " +
                 "This button will only be enabled if the currently opened file needs saving."

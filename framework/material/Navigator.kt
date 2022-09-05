@@ -384,12 +384,22 @@ object Navigator {
     fun <T : Navigable<T>> rememberNavigatorState(
         container: Navigable<T>, title: String, mode: Mode,
         initExpandDepth: Int = 0, liveUpdate: Boolean = false,
+        openFn: (ItemState<T>) -> Unit,
         contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
-        openFn: (ItemState<T>) -> Unit
+        initFn: ((NavigatorState<T>) -> Unit)? = null
     ): NavigatorState<T> {
         val coroutineScope = rememberCoroutineScope()
         return remember {
-            NavigatorState(container, title, mode, initExpandDepth, liveUpdate, coroutineScope, contextMenuFn, openFn)
+            NavigatorState(
+                container = container,
+                title = title,
+                mode = mode,
+                initExpandDepth = initExpandDepth,
+                liveUpdate = liveUpdate,
+                coroutineScope = coroutineScope,
+                contextMenuFn = contextMenuFn,
+                openFn = openFn
+            ).also { initFn?.let { fn -> fn(it) } }
         }
     }
 

@@ -83,6 +83,7 @@ import com.vaticle.typedb.studio.module.project.FilePage
 import com.vaticle.typedb.studio.module.project.ProjectBrowser
 import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
+import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypePage
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -154,6 +155,7 @@ object Studio {
                     DatabaseDialog.MayShowDialogs()
                     PreferenceDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
+                    TypeDialog.MayShowDialogs()
                 }
             }
         }
@@ -243,28 +245,31 @@ object Studio {
                 "${Label.TITLE}: ${exception.message}\n${Label.TRACE}: ${exception.stackTraceToString()}"
 
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(
-                    modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)
-                        .padding(DIALOG_PADDING),
-                    verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
-                        exception.message?.let { SelectableText(value = it, color = contentColor) }
-                    }
-                    Row(Modifier.weight(1f)) {
-                        Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
-                        SelectableText(
-                            value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
-                        )
-                    }
-                    Row {
-                        Spacer(Modifier.weight(1f))
-                        TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
-                        FormHorizontalSpacer()
-                        TextButton(text = Label.QUIT) { quit = true; onClose() }
-                        FormHorizontalSpacer()
-                        TextButton(text = Label.REOPEN, onClick = onClose)
+                val windowContext = WindowContext.Compose(window)
+                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)
+                            .padding(DIALOG_PADDING),
+                        verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
+                            exception.message?.let { SelectableText(value = it, color = contentColor) }
+                        }
+                        Row(Modifier.weight(1f)) {
+                            Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
+                            SelectableText(
+                                value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
+                            )
+                        }
+                        Row {
+                            Spacer(Modifier.weight(1f))
+                            TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
+                            FormHorizontalSpacer()
+                            TextButton(text = Label.QUIT) { quit = true; onClose() }
+                            FormHorizontalSpacer()
+                            TextButton(text = Label.REOPEN, onClick = onClose)
+                        }
                     }
                 }
             }

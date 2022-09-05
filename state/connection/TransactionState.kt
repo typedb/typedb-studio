@@ -67,12 +67,12 @@ class TransactionState constructor(
     val isOpen get() = isOpenAtomic.state
     val hasStopSignal get() = hasStopSignalAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
-    private val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
+    private val onSchemaWriteReset = LinkedBlockingQueue<() -> Unit>()
     internal val hasStopSignalAtomic = AtomicBooleanState(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
     private var _transaction: TypeDBTransaction? by mutableStateOf(null)
-    val transaction get() = _transaction // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
+    val transaction get() = _transaction
 
     val snapshot = ConfigState(
         valueFn = { it || type.isWrite },
@@ -87,19 +87,20 @@ class TransactionState constructor(
         enabledFn = { session.isOpen && infer.value && snapshot.value }
     )
 
-    fun onSchemaWrite(function: () -> Unit) = onSchemaWrite.put(function)
+    fun onSchemaWriteReset(function: () -> Unit) = onSchemaWriteReset.put(function)
 
-    internal fun sendStopSignal() {
-        hasStopSignalAtomic.set(true)
-    }
+    internal fun sendStopSignal() = hasStopSignalAtomic.set(true)
 
-    private fun tryOpen() {
-        if (isOpen) return
+    fun tryOpen(): TypeDBTransaction? {
+        if (isOpen) return _transaction
         try {
             val options = typeDBOptions().infer(infer.value)
                 .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
-                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
+                onClose {
+                    close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN)
+                    if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
+                }
             }
             isOpenAtomic.set(true)
         } catch (e: Exception) {
@@ -107,6 +108,7 @@ class TransactionState constructor(
             isOpenAtomic.set(false)
             hasRunningQueryAtomic.set(false)
         }
+        return _transaction
     }
 
     internal fun runQuery(content: String): QueryRunner? {
@@ -135,7 +137,6 @@ class TransactionState constructor(
             try {
                 _transaction?.commit()
                 _transaction = null
-                if (session.type == SCHEMA) onSchemaWrite.forEach { it() }
                 notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
@@ -147,6 +148,7 @@ class TransactionState constructor(
         sendStopSignal()
         _transaction?.rollback()
         notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
+        if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {

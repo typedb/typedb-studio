@@ -53,6 +53,8 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     override val isActive: Boolean get() = StudioState.client.isConnected && StudioState.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
+    private val schemaIsWritable get() = StudioState.schema.isWritable
+
     @Composable
     override fun Content() {
         val client = StudioState.client
@@ -70,16 +72,15 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             title = Label.TYPE_BROWSER,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 1,
-            // TODO: contextMenuFn = { contextMenuItems(it) }
-        ) { it.item.tryOpen() }
-        StudioState.schema.onRootsUpdated = { navState.reloadEntries() }
+            openFn = { it.item.tryOpen() },
+            contextMenuFn = { contextMenuItems(it) }
+        ) { StudioState.schema.onTypesUpdated { it.reloadEntries() } }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
             iconArg = { conceptIcon(it.item.conceptType) }
         )
-
         LaunchedEffect(navState) { navState.launch() }
     }
 
@@ -88,33 +89,49 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         navState.reloadEntries()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
-        return IconButtonArg(
-            icon = Icon.Code.ROTATE,
-            tooltip = Tooltip.Arg(title = Label.REFRESH)
-        ) { refresh(navState) }
-    }
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+        icon = Icon.Code.ROTATE,
+        tooltip = Tooltip.Arg(title = Label.REFRESH)
+    ) { refresh(navState) }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>): IconButtonArg {
-        return IconButtonArg(
-            icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
-            enabled = StudioState.project.current != null,
-            tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
-        ) {
-            StudioState.schema.exportTypeSchema { schema ->
-                refresh(navState)
-                StudioState.project.tryCreateUntitledFile()?.let { file ->
-                    file.content(schema)
-                    file.tryOpen()
-                }
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+        icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
+        enabled = StudioState.project.current != null,
+        tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
+    ) {
+        StudioState.schema.exportTypeSchema { schema ->
+            refresh(navState)
+            StudioState.project.tryCreateUntitledFile()?.let { file ->
+                file.content(schema)
+                file.tryOpen()
             }
         }
     }
 
-    private fun contextMenuItems(
-        itemState: Navigator.ItemState<TypeState.Thing>, onChangeEntries: () -> Unit
-    ): List<List<ContextMenu.Item>> {
-        return listOf() // TODO
+    private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing>): List<List<ContextMenu.Item>> {
+        val typeState = itemState.item
+        return listOf(
+            listOf(
+                ContextMenu.Item(
+                    label = Label.OPEN,
+                    icon = Icon.Code.BLOCK_QUOTE
+                ) { typeState.tryOpen() },
+            ),
+            listOf(
+                ContextMenu.Item(
+                    label = Label.CREATE_SUBTYPE,
+                    icon = Icon.Code.SQUARE_PLUS,
+                    enabled = schemaIsWritable
+                ) { typeState.initiateCreateSubtype() }
+            ),
+            listOf(
+                ContextMenu.Item(
+                    label = Label.DELETE,
+                    icon = Icon.Code.TRASH_CAN,
+                    enabled = schemaIsWritable && typeState.canBeDeleted
+                ) { typeState.initiateDelete() }
+            )
+        )
     }
 
     @Composable

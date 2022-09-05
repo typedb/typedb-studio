@@ -199,7 +199,7 @@ class DirectoryState internal constructor(
         projectMgr.confirmation.submit(
             title = Label.CONFIRM_DIRECTORY_DELETION,
             message = Sentence.CONFIRM_DIRECTORY_DELETION,
-            onConfirm = { delete(); onSuccess() }
+            onConfirm = { tryDelete(); onSuccess() }
         )
     }
 
@@ -221,11 +221,11 @@ class DirectoryState internal constructor(
         entries = entries.filter { it != path }
     }
 
-    override fun delete() {
+    override fun tryDelete() {
         try {
             reloadEntries()
-            entries.filter { it.isDirectory }.forEach { it.delete() }
-            entries.filter { it.isFile }.forEach { it.delete() }
+            entries.filter { it.isDirectory }.forEach { it.tryDelete() }
+            entries.filter { it.isFile }.forEach { it.tryDelete() }
             entries = emptyList()
             path.deleteExisting()
             parent?.remove(this)
