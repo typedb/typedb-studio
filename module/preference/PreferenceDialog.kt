@@ -62,10 +62,9 @@ object PreferenceDialog {
     private val WIDTH = 800.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
-    private val focusedPrefState =
-
 
     private class PreferencesForm : State {
+        var focusedPreference by mutableStateOf ("Root")
         var autoSave by mutableStateOf(true)
         var ignoredPaths by mutableStateOf(listOf(".git"))
         var limit: String by mutableStateOf(appData.limit ?: "")
@@ -87,7 +86,7 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun NavigatorLayout() {
+    private fun NavigatorLayout(state: PreferencesForm) {
         val pref_graph = PrefState("Graph Visualiser")
         val pref_editor = PrefState("Text Editor")
         val query_sub = PrefState("Query Sub 1")
@@ -99,7 +98,7 @@ object PreferenceDialog {
             title = Label.MANAGE_PREFERENCES,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 0,
-        ) {  }
+        ) { state.focusedPreference = it.item.name }
 
         Navigator.Layout(
             state = navState,
@@ -127,22 +126,17 @@ object PreferenceDialog {
                     Frame.Pane(id = "NavigatorPane", initSize = Either.first(200.dp)) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             FormVerticalSpacer()
-                            NavigatorLayout()
+                            NavigatorLayout(state)
                         }
                     },
                     Frame.Pane(id = "PreferencesPane", initSize = Either.second(1f)) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            EditorPreferences(state)
-                            FormVerticalSpacer()
-
-                            ProjectPreferences(state)
-                            FormVerticalSpacer()
-
-                            GraphPreferences(state)
-                            FormVerticalSpacer()
-
-                            QueryPreferences(state)
-                            FormVerticalSpacer()
+                            when (state.focusedPreference) {
+                                "Graph Visualiser" -> GraphPreferences(state)
+                                "Text Editor" -> EditorPreferences(state)
+                                "Project Manager" -> ProjectPreferences(state)
+                                else -> QueryPreferences(state)
+                            }
                         }
                     }
                 )
