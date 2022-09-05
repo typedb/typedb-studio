@@ -37,7 +37,7 @@ build:
       image: vaticle-ubuntu-20.04
       command: |
         bazel build //test/integration/...
-        bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local
+        bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local --test_output=errors
 
 release:
   #  filter:
