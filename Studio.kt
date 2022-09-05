@@ -243,28 +243,31 @@ object Studio {
                 "${Label.TITLE}: ${exception.message}\n${Label.TRACE}: ${exception.stackTraceToString()}"
 
             CompositionLocalProvider(LocalWindow provides window) {
-                Column(
-                    modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)
-                        .padding(DIALOG_PADDING),
-                    verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
-                        exception.message?.let { SelectableText(value = it, color = contentColor) }
-                    }
-                    Row(Modifier.weight(1f)) {
-                        Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
-                        SelectableText(
-                            value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
-                        )
-                    }
-                    Row {
-                        Spacer(Modifier.weight(1f))
-                        TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
-                        FormRowSpacer()
-                        TextButton(text = Label.QUIT) { quit = true; onClose() }
-                        FormRowSpacer()
-                        TextButton(text = Label.REOPEN, onClick = onClose)
+                val windowContext = WindowContext.Compose(window)
+                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)
+                            .padding(DIALOG_PADDING),
+                        verticalArrangement = Arrangement.spacedBy(DIALOG_PADDING)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(value = "${Label.TITLE}:", modifier = labelModifier, textStyle = labelStyle)
+                            exception.message?.let { SelectableText(value = it, color = contentColor) }
+                        }
+                        Row(Modifier.weight(1f)) {
+                            Text(value = "${Label.TRACE}:", modifier = labelModifier, textStyle = labelStyle)
+                            SelectableText(
+                                value = exception.stackTraceToString(), color = contentColor, modifier = contentModifier
+                            )
+                        }
+                        Row {
+                            Spacer(Modifier.weight(1f))
+                            TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
+                            FormRowSpacer()
+                            TextButton(text = Label.QUIT) { quit = true; onClose() }
+                            FormRowSpacer()
+                            TextButton(text = Label.REOPEN, onClick = onClose)
+                        }
                     }
                 }
             }
