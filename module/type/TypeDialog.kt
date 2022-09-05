@@ -99,15 +99,20 @@ object TypeDialog {
     }
 
     @Composable
-    private fun CreateEntityTypeDialog() = CreateEntOrRelTypeDialog(StudioState.schema.createEntTypeDialog)
+    private fun CreateEntityTypeDialog() = CreateEntOrRelTypeDialog(
+        StudioState.schema.createEntTypeDialog, Label.CREATE_ENTITY_TYPE
+    )
 
     @Composable
-    private fun CreateRelationTypeDialog() = CreateEntOrRelTypeDialog(StudioState.schema.createRelTypeDialog)
+    private fun CreateRelationTypeDialog() = CreateEntOrRelTypeDialog(
+        StudioState.schema.createRelTypeDialog, Label.CREATE_RELATION_TYPE
+    )
 
     @Composable
-    private fun <T : TypeState.Thing> CreateEntOrRelTypeDialog(dialogState: SchemaManager.EditTypeDialog<T>) {
+    private fun <T : TypeState.Thing> CreateEntOrRelTypeDialog(
+        dialogState: SchemaManager.EditTypeDialog<T>, title: String,
+    ) {
         val supertypeState = dialogState.typeState!!
-        val title = if (supertypeState.isRoot) Label.CREATE_TYPE else Label.CREATE_SUBTYPE
         val message = createThingTypeMessage(supertypeState, supertypeState.name)
         val formState = remember {
             TypeLabelForm(
@@ -123,7 +128,6 @@ object TypeDialog {
     private fun CreateAttributeTypeDialog() {
         val dialogState = StudioState.schema.createAttTypeDialog
         val supertypeState = dialogState.typeState!!
-        val title = if (supertypeState.isRoot) Label.CREATE_TYPE else Label.CREATE_SUBTYPE
         val message = createThingTypeMessage(
             supertypeState, supertypeState.name + (supertypeState.valueType?.let { " (${it.name.lowercase()})" } ?: "")
         )
@@ -135,7 +139,7 @@ object TypeDialog {
             )
         }
         val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
-        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
+        Dialog.Layout(dialogState, Label.CREATE_ATTRIBUTE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 Form.Text(value = message, softWrap = true)
                 TypeNamingField(formState.label) { formState.label = it }
