@@ -101,57 +101,43 @@ object TypeDialog {
     }
 
     @Composable
-    private fun CreateEntityTypeDialog() = CreateEntOrRelTypeDialog(
+    private fun CreateEntityTypeDialog() = CreateThingTypeDialog(
         StudioState.schema.createEntTypeDialog, Label.CREATE_ENTITY_TYPE
-    )
+    ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
-    private fun CreateRelationTypeDialog() = CreateEntOrRelTypeDialog(
+    private fun CreateRelationTypeDialog() = CreateThingTypeDialog(
         StudioState.schema.createRelTypeDialog, Label.CREATE_RELATION_TYPE
-    )
+    ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
-    private fun <T : TypeState.Thing> CreateEntOrRelTypeDialog(
+    private fun CreateAttributeTypeDialog() = CreateThingTypeDialog(
+        StudioState.schema.createAttTypeDialog, Label.CREATE_ATTRIBUTE_TYPE
+    ) { supertypeState, label, isAbstract, valueType ->
+        supertypeState.tryCreateSubtype(label, isAbstract, valueType!!)
+    }
+
+    @Composable
+    private fun <T : TypeState.Thing> CreateThingTypeDialog(
         dialogState: SchemaManager.EditTypeDialog<T>, title: String,
+        creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: AttributeType.ValueType?) -> Unit
     ) {
         val supertypeState = dialogState.typeState!!
         val message = createThingTypeMessage(supertypeState, supertypeState.name)
         val formState = remember {
             CreateTypeFormState(
+                valueType = if (supertypeState is TypeState.Attribute) supertypeState.valueType else null,
+                isValid = if (supertypeState is TypeState.Attribute) { { it.valueType != null } } else null,
                 onCancel = { dialogState.close() },
-                onSubmit = { label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
+                onSubmit = { label, isAbstract, valueType -> creatorFn(supertypeState, label, isAbstract, valueType) }
             )
         }
+        val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 Form.Text(value = message, softWrap = true)
                 TypeLabelField(formState.label) { formState.label = it }
-                TypeAbstractField(formState.isAbstract) { formState.isAbstract = it }
-            }
-        }
-    }
-
-    @Composable
-    private fun CreateAttributeTypeDialog() {
-        val dialogState = StudioState.schema.createAttTypeDialog
-        val supertypeState = dialogState.typeState!!
-        val message = createThingTypeMessage(
-            supertypeState, supertypeState.name + (supertypeState.valueType?.let { " (${it.name.lowercase()})" } ?: "")
-        )
-        val formState = remember {
-            CreateTypeFormState(
-                valueType = supertypeState.valueType,
-                isValid = { it.valueType != null },
-                onCancel = { dialogState.close() },
-                onSubmit = { label, isAbstract, valueType -> supertypeState.tryCreateSubtype(label, isAbstract, valueType!!) }
-            )
-        }
-        val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
-        Dialog.Layout(dialogState, Label.CREATE_ATTRIBUTE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
-            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
-                Form.Text(value = message, softWrap = true)
-                TypeLabelField(formState.label) { formState.label = it }
-                Field(label = Label.VALUE_TYPE) {
+                if (supertypeState is TypeState.Attribute) Field(label = Label.VALUE_TYPE) {
                     Form.Dropdown(
                         selected = formState.valueType,
                         values = valueTypes,
