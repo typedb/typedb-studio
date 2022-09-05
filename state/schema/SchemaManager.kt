@@ -59,15 +59,18 @@ class SchemaManager constructor(
     class EditTypeDialog<T : TypeState.Thing> : DialogManager() {
 
         var typeState: T? by mutableStateOf(null); private set
+        var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
 
-        internal fun open(typeState: T) {
+        internal fun open(typeState: T, onSuccess: (() -> Unit)? = null) {
             isOpen = true
             this.typeState = typeState
+            this.onSuccess = onSuccess
         }
 
         override fun close() {
             isOpen = false
             typeState = null
+            onSuccess = null
         }
     }
 

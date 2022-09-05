@@ -122,7 +122,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
                     label = Label.CREATE_SUBTYPE,
                     icon = Icon.Code.SQUARE_PLUS,
                     enabled = schemaIsWritable
-                ) { typeState.initiateCreateSubtype() }
+                ) { typeState.initiateCreateSubtype { itemState.expand() } }
             ),
             listOf(
                 ContextMenu.Item(

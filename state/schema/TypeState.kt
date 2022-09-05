@@ -276,7 +276,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             playsRoleTypeProperties = properties
         }
 
-        abstract fun initiateCreateSubtype()
+        abstract fun initiateCreateSubtype(onSuccess: () -> Unit)
 
         abstract fun tryCreateSubtype(label: String)
 
@@ -288,8 +288,8 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             ) else schemaMgr.openOrGetWriteTx()?.let { tx ->
                 try {
                     creatorFn(tx)
+                    dialogState.onSuccess?.invoke()
                     dialogState.close()
-                    schemaMgr.refreshAndPruneTypesAndOpen()
                 } catch (e: Exception) {
                     schemaMgr.notification.userError(
                         LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN
@@ -381,7 +381,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        override fun initiateCreateSubtype() = schemaMgr.createEntTypeDialog.open(this)
+        override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createEntTypeDialog.open(this, onSuccess)
 
         override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, schemaMgr.createEntTypeDialog) { tx ->
             val type = tx.concepts().putEntityType(label)
@@ -459,7 +459,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             ownerTypeProperties = props
         }
 
-        override fun initiateCreateSubtype() = schemaMgr.createAttTypeDialog.open(this)
+        override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createAttTypeDialog.open(this, onSuccess)
 
         override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, conceptType.valueType)
 
@@ -543,7 +543,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             relatesRoleTypeProperties = properties
         }
 
-        override fun initiateCreateSubtype() = schemaMgr.createRelTypeDialog.open(this)
+        override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createRelTypeDialog.open(this, onSuccess)
 
         override fun tryCreateSubtype(label: String) = tryCreateSubtype(label, schemaMgr.createRelTypeDialog) { tx ->
             val type = tx.concepts().putRelationType(label)
