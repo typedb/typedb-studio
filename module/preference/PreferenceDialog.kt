@@ -57,7 +57,7 @@ object PreferenceDialog {
     private val WIDTH = 800.dp
     private val HEIGHT = 600.dp
     private val appData = StudioState.appData.preferences
-    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup("", content = {}))
+    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     class PreferencesForm : State {
         var autoSave by mutableStateOf(true)
