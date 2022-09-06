@@ -101,7 +101,7 @@ class SchemaManager constructor(
     private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
-    private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
+    internal val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(Dispatchers.Default)
 

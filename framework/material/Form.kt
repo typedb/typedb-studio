@@ -81,6 +81,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -93,9 +94,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
+import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
+import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.Util.toRectDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
@@ -845,7 +847,7 @@ object Form {
 
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
-        val placeholderAnnStr = AnnotatedString(placeholder)
+        val placeholderAnnStr = italics(placeholder)
         val itemPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING)
         Box {
             TextButton(

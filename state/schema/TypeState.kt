@@ -284,6 +284,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
                     creatorFn(tx)
                     dialogState.onSuccess?.invoke()
                     dialogState.close()
+                    schemaMgr.onTypesUpdated.forEach { it() }
                 } catch (e: Exception) {
                     schemaMgr.notification.userError(
                         LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN

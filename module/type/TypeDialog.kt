@@ -30,7 +30,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.type.AttributeType
+import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
+import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
@@ -45,23 +46,25 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 
 object TypeDialog {
 
-    private class CreateTypeFormState constructor(
-        valueType: AttributeType.ValueType? = null,
-        val isValid: ((CreateTypeFormState) -> Boolean)? = null,
+    private class CreateTypeFormState<T : TypeState.Thing> constructor(
+        supertypeState: T,
+        valueType: ValueType? = null,
+        val isValid: ((CreateTypeFormState<T>) -> Boolean)? = null,
         val onCancel: () -> Unit,
-        val onSubmit: (label: String, isAbstract: Boolean, valueType: AttributeType.ValueType?) -> Unit,
+        val onSubmit: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit,
     ) : Form.State {
 
+        var supertypeState: T by mutableStateOf(supertypeState)
         var label: String by mutableStateOf(""); internal set
         var isAbstract: Boolean by mutableStateOf(false); internal set
-        var valueType: AttributeType.ValueType? by mutableStateOf(valueType); internal set
+        var valueType: ValueType? by mutableStateOf(valueType); internal set
 
         override fun cancel() = onCancel()
         override fun isValid(): Boolean = label.isNotEmpty() && isValid?.invoke(this) ?: true
 
         override fun trySubmit() {
             assert(isValid())
-            onSubmit(label, isAbstract, valueType)
+            onSubmit(supertypeState, label, isAbstract, valueType)
         }
     }
 
@@ -102,52 +105,50 @@ object TypeDialog {
 
     @Composable
     private fun CreateEntityTypeDialog() = CreateThingTypeDialog(
-        StudioState.schema.createEntTypeDialog, Label.CREATE_ENTITY_TYPE
+        dialogState = StudioState.schema.createEntTypeDialog,
+        rootTypeState = StudioState.schema.rootEntityType!!,
+        title = Label.CREATE_ENTITY_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateRelationTypeDialog() = CreateThingTypeDialog(
-        StudioState.schema.createRelTypeDialog, Label.CREATE_RELATION_TYPE
+        dialogState = StudioState.schema.createRelTypeDialog,
+        rootTypeState = StudioState.schema.rootRelationType!!,
+        title = Label.CREATE_RELATION_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateAttributeTypeDialog() = CreateThingTypeDialog(
-        StudioState.schema.createAttTypeDialog, Label.CREATE_ATTRIBUTE_TYPE
+        dialogState = StudioState.schema.createAttTypeDialog,
+        rootTypeState = StudioState.schema.rootAttributeType!!,
+        title = Label.CREATE_ATTRIBUTE_TYPE
     ) { supertypeState, label, isAbstract, valueType ->
         supertypeState.tryCreateSubtype(label, isAbstract, valueType!!)
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Composable
     private fun <T : TypeState.Thing> CreateThingTypeDialog(
-        dialogState: SchemaManager.EditTypeDialog<T>, title: String,
-        creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: AttributeType.ValueType?) -> Unit
+        dialogState: SchemaManager.EditTypeDialog<T>, rootTypeState: T, title: String,
+        creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit
     ) {
         val supertypeState = dialogState.typeState!!
-        val message = createThingTypeMessage(supertypeState, supertypeState.name)
+        createThingTypeMessage(supertypeState, supertypeState.name)
         val formState = remember {
             CreateTypeFormState(
+                supertypeState = supertypeState,
                 valueType = if (supertypeState is TypeState.Attribute) supertypeState.valueType else null,
                 isValid = if (supertypeState is TypeState.Attribute) { { it.valueType != null } } else null,
                 onCancel = { dialogState.close() },
-                onSubmit = { label, isAbstract, valueType -> creatorFn(supertypeState, label, isAbstract, valueType) }
+                onSubmit = creatorFn
             )
         }
-        val valueTypes = remember { AttributeType.ValueType.values().toList() - AttributeType.ValueType.OBJECT }
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
-                Form.Text(value = message, softWrap = true)
-                TypeLabelField(formState.label) { formState.label = it }
-                if (supertypeState is TypeState.Attribute) Field(label = Label.VALUE_TYPE) {
-                    Form.Dropdown(
-                        selected = formState.valueType,
-                        values = valueTypes,
-                        displayFn = { AnnotatedString(it.name.lowercase()) },
-                        placeholder = Label.VALUE_TYPE,
-                        onSelection = { formState.valueType = it },
-                        enabled = supertypeState.isRoot
-                    )
-                }
-                TypeAbstractField(formState.isAbstract) { formState.isAbstract = it }
+                LabelField(formState.label) { formState.label = it }
+                SupertypeField(formState, rootTypeState)
+                if (supertypeState is TypeState.Attribute) ValueTypeField(formState)
+                AbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
         }
     }
@@ -168,14 +169,19 @@ object TypeDialog {
         Dialog.Layout(dialogState, Label.RENAME_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.RENAME) {
                 Form.Text(value = message, softWrap = true)
-                TypeLabelField(formState.label) { formState.label = it }
+                LabelField(formState.label) { formState.label = it }
             }
         }
     }
 
 
     @Composable
-    private fun TypeLabelField(value: String, onChange: (String) -> Unit) {
+    private fun ChangeSupertypeDialog() {
+        // TODO
+    }
+
+    @Composable
+    private fun LabelField(value: String, onChange: (String) -> Unit) {
         val focusReq = remember { FocusRequester() }
         Field(label = Label.LABEL) {
             TextInput(
@@ -189,12 +195,37 @@ object TypeDialog {
     }
 
     @Composable
-    private fun TypeAbstractField(value: Boolean, onChange: (Boolean) -> Unit) {
-        Field(label = Label.ABSTRACT) { Checkbox(value = value, onChange = onChange) }
+    private fun <T : TypeState.Thing> SupertypeField(formState: CreateTypeFormState<T>, rootTypeState: T) {
+        Field(label = Label.SUPERTYPE) {
+            Form.Dropdown(
+                selected = formState.supertypeState,
+                values = (listOf(rootTypeState) + rootTypeState.subtypes).map { it as T },
+                displayFn = { if (it.isRoot) italics(it.name) else AnnotatedString(it.name) },
+                onSelection = {
+                    formState.supertypeState = it
+                    if (it is TypeState.Attribute) formState.valueType = it.valueType
+                }
+            )
+        }
+        LaunchedEffect(formState) { rootTypeState.loadSubtypesRecursively() }
     }
 
     @Composable
-    private fun ChangeSupertypeDialog() {
-        // TODO
+    private fun <T : TypeState.Thing> ValueTypeField(formState: CreateTypeFormState<T>) {
+        Field(label = Label.VALUE_TYPE) {
+            Form.Dropdown(
+                selected = formState.valueType,
+                values = remember { ValueType.values().toList() - ValueType.OBJECT },
+                displayFn = { AnnotatedString(it.name.lowercase()) },
+                placeholder = Label.VALUE_TYPE.lowercase(),
+                onSelection = { formState.valueType = it },
+                enabled = formState.supertypeState.isRoot
+            )
+        }
+    }
+
+    @Composable
+    private fun AbstractField(value: Boolean, onChange: (Boolean) -> Unit) {
+        Field(label = Label.ABSTRACT) { Checkbox(value = value, onChange = onChange) }
     }
 }
