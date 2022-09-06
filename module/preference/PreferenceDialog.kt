@@ -59,29 +59,46 @@ object PreferenceDialog {
     private val HEIGHT = 600.dp
     private val NAVIGATOR_INIT_SIZE = 200.dp
     private val NAVIGATOR_MIN_SIZE = 150.dp
-    private val STATE_INIT_SIZE = 1f
+    private val STATE_INIT_SIZE = 600.dp
     private val STATE_MIN_SIZE = 500.dp
     private val appData = StudioState.appData.preferences
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     class PreferencesForm : State {
         var autoSave by mutableStateOf(true)
-        var ignoredPaths by mutableStateOf(listOf(".git"))
+        var ignoredPaths by mutableStateOf(".git, .typedb-studio")
         var limit: String by mutableStateOf(appData.limit ?: "")
         var graphOutput: Boolean by mutableStateOf(appData.graphOutput ?: true)
 
         override fun cancel() {
+            close()
+        }
+
+        fun close() {
             StudioState.preference.openPreferenceDialog.close()
+        }
+
+        fun apply() {
+            trySubmit()
+        }
+
+        fun ok() {
+            apply()
+            close()
         }
 
         override fun isValid(): Boolean {
             return true
-//            return (limit.toIntOrNull() != null)
         }
 
         override fun trySubmit() {
-            appData.limit = limit
-            appData.graphOutput = graphOutput
+            if (isValid()) {
+                appData.autoSave = autoSave
+                appData.ignoredPaths = ignoredPaths.split(',').map { it.trim() }
+                appData.limit = limit
+                appData.graphOutput = graphOutput
+                println(appData.ignoredPaths)
+            }
         }
     }
 
@@ -138,7 +155,7 @@ object PreferenceDialog {
                             NavigatorLayout(state)
                         }
                     },
-                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary", initSize = Either.second(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
+                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary", initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             if (!focusedPreferenceGroup.isRoot) {
                                 PreferencesHeader(focusedPreferenceGroup.name)
@@ -203,11 +220,12 @@ object PreferenceDialog {
 
     @Composable
     private fun ProjectIgnoredPathsField(state: PreferencesForm) {
+        println(state.ignoredPaths)
         Field(label = Label.PROJECT_IGNORED_PATHS) {
             TextInput(
-                value = state.ignoredPaths.toString(),
+                value = state.ignoredPaths,
                 placeholder = ".git",
-                onValueChange = { state.limit = it },
+                onValueChange = { state.ignoredPaths = it },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -254,11 +272,11 @@ object PreferenceDialog {
         }
         FormHorizontalSpacer()
         TextButton(Label.APPLY) {
-//            state.apply()
+            state.apply()
         }
         FormHorizontalSpacer()
         TextButton(Label.OK) {
-//            state.ok()
+            state.ok()
         }
     }
 }
