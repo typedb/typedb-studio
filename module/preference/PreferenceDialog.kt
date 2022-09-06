@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,10 @@ import com.vaticle.typedb.studio.state.common.util.Label
 object PreferenceDialog {
     private val WIDTH = 800.dp
     private val HEIGHT = 600.dp
+    private val NAVIGATOR_INIT_SIZE = 200.dp
+    private val NAVIGATOR_MIN_SIZE = 150.dp
+    private val STATE_INIT_SIZE = 1f
+    private val STATE_MIN_SIZE = 500.dp
     private val appData = StudioState.appData.preferences
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
@@ -82,15 +87,23 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-        val prefGraph = PreferenceGroup("Graph Visualiser", content = { GraphPreferences(state) })
-        val prefEditor = PreferenceGroup("Text Editor", content = { EditorPreferences(state) })
-        val querySub = PreferenceGroup("Query Sub 1")
-        val prefQuery = PreferenceGroup("Query Runner", listOf(querySub), content = { QueryPreferences(state)})
-        val prefProject = PreferenceGroup("Project Manager", content = { ProjectPreferences(state) })
-        val preferenceGroup = PreferenceGroup("Root", listOf(prefGraph, prefEditor, prefQuery, prefProject))
+        val preferenceGroups = listOf(
+            PreferenceGroup(Label.GRAPH_VISUALISER, content = { GraphPreferences(state) }),
+            PreferenceGroup(Label.TEXT_EDITOR, content = { EditorPreferences(state) }),
+            PreferenceGroup(Label.QUERY_RUNNER, content = { QueryPreferences(state)}),
+            PreferenceGroup(Label.PROJECT_MANAGER, content = { ProjectPreferences(state) }),
+        )
+
+        val rootPreferenceGroup = PreferenceGroup("Root", content = { RootPreferences() })
+
+        for (group in preferenceGroups) {
+            rootPreferenceGroup.addEntry(group)
+        }
+
+        focusedPreferenceGroup = rootPreferenceGroup
 
         val navState = rememberNavigatorState(
-            container = preferenceGroup,
+            container = rootPreferenceGroup,
             title = Label.MANAGE_PREFERENCES,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 0,
@@ -101,7 +114,6 @@ object PreferenceDialog {
             state = navState,
             modifier = Modifier.fillMaxSize(),
         )
-
         LaunchedEffect(navState) { navState.launch() }
     }
 
@@ -120,15 +132,18 @@ object PreferenceDialog {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(id = "PreferencesNavigatorPane", initSize = Either.first(200.dp)) {
+                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".primary", initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             FormVerticalSpacer()
                             NavigatorLayout(state)
                         }
                     },
-                    Frame.Pane(id = "PreferencesStatePane", initSize = Either.second(1f)) {
+                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary", initSize = Either.second(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            focusedPreferenceGroup.showContent()
+                            if (!focusedPreferenceGroup.isRoot) {
+                                PreferencesHeader(focusedPreferenceGroup.name)
+                            }
+                            focusedPreferenceGroup.content()
                         }
                     }
                 )
@@ -149,26 +164,31 @@ object PreferenceDialog {
     }
 
     @Composable
+    private fun RootPreferences() {
+        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center) {
+            Text(Label.SELECT_PREFERENCE_GROUP)
+        }
+
+    }
+
+    @Composable
     private fun ProjectPreferences(state: PreferencesForm) {
-        PreferencesHeader("Project Manager")
         ProjectIgnoredPathsField(state)
     }
 
     @Composable
     private fun EditorPreferences(state: PreferencesForm) {
-        PreferencesHeader("Text Editor")
         EditorAutoSaveField(state)
     }
 
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
-        PreferencesHeader("Query Runner")
         QueryLimitField(state)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
-        PreferencesHeader("Graph Visualiser")
         GraphOutputField(state)
     }
 
@@ -228,16 +248,9 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun SpacedVerticalSeperator() {
-        FormHorizontalSpacer()
-        Separator.Vertical()
-        FormHorizontalSpacer()
-    }
-
-    @Composable
     private fun ChangeFormButtons(state: PreferencesForm) {
         TextButton(Label.CANCEL) {
-//            state.cancel()
+            state.cancel()
         }
         FormHorizontalSpacer()
         TextButton(Label.APPLY) {
