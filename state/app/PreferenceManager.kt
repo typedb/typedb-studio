@@ -21,18 +21,14 @@ package com.vaticle.typedb.studio.state.app
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class PreferenceManager {
-
-    companion object {
-        private const val AUTO_SAVE_DEFAULT = true
-        private val IGNORED_PATHS_DEFAULT = listOf(".git")
-    }
-
-    var autosave: Boolean = AUTO_SAVE_DEFAULT
-    var ignoredPaths: List<String> = IGNORED_PATHS_DEFAULT
+class PreferenceManager(appData: DataManager) {
+    private val preferences = appData.preferences
     val openPreferenceDialog = DialogManager.Base()
 
+    val autoSave: Boolean
+        get() = preferences.autoSave
+
     fun isIgnoredPath(path: Path): Boolean {
-        return ignoredPaths.contains(path.name)
+        return preferences.ignoredPaths?.contains(path.name)
     }
 }

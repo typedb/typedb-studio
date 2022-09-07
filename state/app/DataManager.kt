@@ -99,19 +99,19 @@ class DataManager {
         private val QUERY_LIMIT = "query.limit"
         private val GRAPH_OUTPUT = "graph.output"
 
-        var autoSave: Boolean?
+        var autoSave: Boolean
             get() = properties?.getProperty(AUTO_SAVE_DEFAULT).toBoolean()
             set(value) = value?.let { setProperty(AUTO_SAVE_DEFAULT, it.toString()) } ?: Unit
 
-        var ignoredPaths: List<String>?
+        var ignoredPaths: List<String>
             get() = properties?.getProperty(IGNORED_PATH_DEFAULT)!!.split(",")
             set(value) = value?.let { setProperty(IGNORED_PATH_DEFAULT, it.joinToString()) } ?: Unit
 
-        var limit: String?
-            get() = properties?.getProperty(QUERY_LIMIT)
+        var limit: String
+            get() = properties?.getProperty(QUERY_LIMIT) ?: "1000"
             set(value) = value?.let { setProperty(QUERY_LIMIT, it) } ?: Unit
 
-        var graphOutput: Boolean?
+        var graphOutput: Boolean
             get() = properties?.getProperty(GRAPH_OUTPUT).toBoolean()
             set(value) = value?.let { setProperty(GRAPH_OUTPUT, it.toString()) } ?: Unit
     }

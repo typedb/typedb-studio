@@ -224,7 +224,7 @@ class FileState internal constructor(
 
     fun content(lines: List<String>) {
         content = lines
-        if (projectMgr.preference.autosave) saveContent()
+        if (projectMgr.preference.autoSave) saveContent()
     }
 
     @OptIn(ExperimentalTime::class)

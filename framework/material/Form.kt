@@ -194,7 +194,7 @@ object Form {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL) { state.cancel() }
-                    FormHorizontalSpacer()
+                    FormRowSpacer()
                     TextButton(text = submitLabel, enabled = state.isValid()) { state.trySubmit() }
                 }
             }
@@ -202,12 +202,12 @@ object Form {
     }
 
     @Composable
-    fun FormHorizontalSpacer() {
+    fun FormRowSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 
     @Composable
-    fun FormVerticalSpacer() {
+    fun FormColumnSpacer() {
         Spacer(modifier = Modifier.height(INNER_SPACING))
     }
 

@@ -73,16 +73,9 @@ object Dialog {
                 size = DpSize(width, height)
             )
         ) {
-            if (padding) {
-                Box(Modifier.background(Theme.studio.backgroundMedium).padding(Theme.DIALOG_PADDING)
-                    .onKeyEvent { handleKeyEvent(it, state) }) {
-                    content()
-                }
-            } else {
-                Box(Modifier.background(Theme.studio.backgroundMedium)
-                    .onKeyEvent { handleKeyEvent(it, state) }) {
-                    content()
-                }
+            Box(Modifier.background(Theme.studio.backgroundMedium).padding(if (padding) Theme.DIALOG_PADDING else 0.dp)
+                .onKeyEvent { handleKeyEvent(it, state) }) {
+                content()
             }
         }
     }

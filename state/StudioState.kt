@@ -47,8 +47,8 @@ object StudioState {
     }
 
     fun init() {
-        preference = PreferenceManager()
         appData = DataManager()
+        preference = PreferenceManager(appData)
         editor = EditorManager()
         status = StatusManager()
         notification = NotificationManager()
