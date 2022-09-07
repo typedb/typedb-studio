@@ -134,7 +134,7 @@ object PreferenceDialog {
         var ignoredPaths = Preference.TextInput(ignoredPathsString.substring(1, ignoredPathsString.length - 1),
             Label.PROJECT_IGNORED_PATHS, IGNORED_PATHS_PLACEHOLDER)
         // Query Runner Preferences
-        var limit = Preference.TextInput(appData.limit, Label.SET_QUERY_LIMIT, QUERY_LIMIT_PLACEHOLDER) { it.toIntOrNull() != null }
+        var limit = Preference.TextInput(appData.limit, Label.SET_QUERY_LIMIT, QUERY_LIMIT_PLACEHOLDER) { it.toLongOrNull() != null }
         // Text Editor Preferences
         var autoSave = Preference.Checkbox(appData.autoSave, Label.ENABLE_EDITOR_AUTOSAVE)
 
@@ -302,6 +302,9 @@ object PreferenceDialog {
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
         state.graphOutput.display()
+        FormRowSpacer()
+        FormRowSpacer()
+        Text("When running a match query, a graph output is displayed.")
     }
 
     @Composable

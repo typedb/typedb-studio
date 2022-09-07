@@ -181,7 +181,7 @@ object Label {
     const val SELECT_ROLE_TYPE = "Select Role Type"
     const val SERVER = "Server"
     const val SESSION_TYPE = "Session Type"
-    const val SET_QUERY_LIMIT = "Set Query Limit"
+    const val SET_QUERY_LIMIT = "Match Query Limit"
     const val SHIFT = "Shift"
     const val SNAPSHOT = "Snapshot"
     const val STATUS = "Status"

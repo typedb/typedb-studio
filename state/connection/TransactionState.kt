@@ -25,6 +25,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession.Type.SCHEMA
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
@@ -40,7 +41,8 @@ import mu.KotlinLogging
 
 class TransactionState constructor(
     private val session: SessionState,
-    private val notificationMgr: NotificationManager
+    private val notificationMgr: NotificationManager,
+    private val preferenceMgr: PreferenceManager
 ) {
 
     companion object {
@@ -116,7 +118,7 @@ class TransactionState constructor(
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
-                val runner = if (isOpen) QueryRunner(this, notificationMgr, content, onComplete = {
+                val runner = if (isOpen) QueryRunner(this, notificationMgr, preferenceMgr, content, onComplete = {
                     if (!snapshot.value) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)

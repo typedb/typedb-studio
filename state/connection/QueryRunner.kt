@@ -24,6 +24,7 @@ import com.vaticle.typedb.client.api.answer.NumericGroup
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
@@ -39,6 +40,7 @@ import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
+import com.vaticle.typeql.lang.pattern.Conjunction
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -52,6 +54,7 @@ import mu.KotlinLogging
 class QueryRunner constructor(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val notificationMgr: NotificationManager,
+    private val preferenceMgr: PreferenceManager,
     private val queries: String,
     private val onComplete: () -> Unit
 ) {
@@ -214,7 +217,13 @@ class QueryRunner constructor(
         noResultMsg = MATCH_QUERY_NO_RESULT,
         queryStr = query.toString(),
         stream = Response.Stream.ConceptMaps(MATCH)
-    ) { transaction.query().match(query) }
+    ) { if (query.modifiers().limit().isPresent) {
+            transaction.query().match(query)
+        } else {
+            val queryWithLimit = TypeQLMatch.Limited(query, preferenceMgr.queryLimit)
+            transaction.query().match(queryWithLimit)
+        }
+     }
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())

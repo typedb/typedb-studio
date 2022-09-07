@@ -41,6 +41,7 @@ kt_jvm_library(
         "@vaticle_typedb_client_java//stream:stream", #TODO: remove this after debugging
         "@vaticle_typedb_common//:common",
         "@vaticle_typeql//java/query:query",
+        "@vaticle_typeql//java/pattern:pattern",
         "@vaticle_typeql//java:typeql-lang",
 
         # External Maven Dependencies

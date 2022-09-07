@@ -28,6 +28,12 @@ class PreferenceManager(appData: DataManager) {
     val autoSave: Boolean
         get() = preferences.autoSave
 
+    val graphOutputEnabled: Boolean
+        get() = preferences.graphOutput
+
+    val queryLimit: Long
+        get() = preferences.limit.toLongOrNull()!!
+
     fun isIgnoredPath(path: Path): Boolean {
         return preferences.ignoredPaths?.contains(path.name)
     }
