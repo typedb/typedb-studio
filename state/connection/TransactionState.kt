@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession.Type.SCHEMA
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
@@ -97,10 +96,7 @@ class TransactionState constructor(
             val options = typeDBOptions().infer(infer.value)
                 .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             _transaction = session.transaction(type, options)!!.apply {
-                onClose {
-                    close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN)
-                    if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
-                }
+                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
             }
             isOpenAtomic.set(true)
         } catch (e: Exception) {
@@ -112,7 +108,8 @@ class TransactionState constructor(
     }
 
     internal fun runQuery(content: String): QueryRunner? {
-        if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
+        if (!isOpenAtomic.atomic.get()) return null
+        else if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
@@ -138,6 +135,7 @@ class TransactionState constructor(
                 _transaction?.commit()
                 _transaction = null
                 notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
+                if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
             }
@@ -158,6 +156,7 @@ class TransactionState constructor(
             _transaction = null
             hasRunningQueryAtomic.set(false)
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
+            if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
         }
     }
 

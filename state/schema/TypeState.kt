@@ -335,15 +335,15 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         override fun close() {
             if (isOpenAtomic.compareAndSet(true, false)) {
                 schemaMgr.pages.close(this)
-                schemaMgr.remove(this)
                 callbacks.onClose.forEach { it(this) }
                 callbacks.clear()
             }
         }
 
-        fun closeRecursive() {
+        fun purge() {
             close()
-            entries.forEach { it.closeRecursive() }
+            schemaMgr.remove(this)
+            entries.forEach { it.purge() }
         }
     }
 

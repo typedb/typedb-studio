@@ -79,7 +79,9 @@ class SessionState constructor(
     fun typeSchema(): String? = _session.get()?.database()?.typeSchema()
 
     fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
-        return if (options != null) _session.get()?.transaction(type, options) else _session.get()?.transaction(type)
+        return if (!isOpenAtomic.atomic.get()) null
+        else if (options != null) _session.get()?.transaction(type, options)
+        else _session.get()?.transaction(type)
     }
 
     internal fun close(message: Message? = null, vararg params: Any, willReopenSameDB: Boolean = false) {
