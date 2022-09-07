@@ -465,7 +465,6 @@ object Toolbar {
                 // TODO: ModeButtons()
                 ConnectionButton()
                 OpenPreferencesButton()
-
             }
         }
 

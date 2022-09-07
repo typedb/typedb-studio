@@ -46,7 +46,6 @@ kt_jvm_library(
         "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
-#        "//state/preference:preference",
         "//state/project:project",
         "//state/page:page",
         "//state/schema:schema",

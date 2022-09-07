@@ -31,7 +31,6 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//state/common:common",
-#        "//state:state",
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",

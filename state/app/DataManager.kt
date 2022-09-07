@@ -101,7 +101,7 @@ class DataManager {
 
         var autoSave: Boolean
             get() = properties?.getProperty(AUTO_SAVE_DEFAULT)?.toBoolean() ?: true
-            set(value) = value?.let { setProperty(AUTO_SAVE_DEFAULT, it.toString()) }
+            set(value) = setProperty(AUTO_SAVE_DEFAULT, value.toString())
 
         var ignoredPaths: List<String>
             get() = properties?.getProperty(IGNORED_PATH_DEFAULT)?.split(',') ?: ".git".split(',')
@@ -113,7 +113,7 @@ class DataManager {
 
         var graphOutput: Boolean
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean() ?: true
-            set(value) = value?.let { setProperty(GRAPH_OUTPUT, it.toString()) }
+            set(value) = setProperty(GRAPH_OUTPUT, value.toString())
     }
 
     var properties: Properties? by mutableStateOf(null)
