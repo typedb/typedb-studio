@@ -130,8 +130,8 @@ object PreferenceDialog {
         // Graph Visualiser Preferences
         var graphOutput = Preference.Checkbox(appData.graphOutput, Label.ENABLE_GRAPH_OUTPUT)
         // Project Manager Preferences
-        val ignoredPathsString = appData.ignoredPaths?.toString()
-        var ignoredPaths = Preference.TextInput(ignoredPathsString.substring(1, ignoredPathsString.length - 1),
+        val ignoredPathsData = appData.ignoredPaths.toString()
+        var ignoredPaths = Preference.TextInput(ignoredPathsData.substring(1, ignoredPathsData.length - 1),
             Label.PROJECT_IGNORED_PATHS, IGNORED_PATHS_PLACEHOLDER)
         // Query Runner Preferences
         var limit = Preference.TextInput(appData.limit, Label.SET_QUERY_LIMIT, QUERY_LIMIT_PLACEHOLDER) { it.toLongOrNull() != null }
@@ -139,10 +139,6 @@ object PreferenceDialog {
         var autoSave = Preference.Checkbox(appData.autoSave, Label.ENABLE_EDITOR_AUTOSAVE)
 
         override fun cancel() {
-            close()
-        }
-
-        fun close() {
             StudioState.preference.openPreferenceDialog.close()
         }
 
@@ -152,7 +148,7 @@ object PreferenceDialog {
 
         fun ok() {
             apply()
-            close()
+            cancel()
         }
 
         override fun isValid(): Boolean {
@@ -244,13 +240,15 @@ object PreferenceDialog {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".primary", initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE) {
+                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".primary",
+                        initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             FormColumnSpacer()
                             NavigatorLayout(state)
                         }
                     },
-                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary", initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
+                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary",
+                        initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             if (!focusedPreferenceGroup.isRoot) {
                                 PreferencesHeader(focusedPreferenceGroup.name)

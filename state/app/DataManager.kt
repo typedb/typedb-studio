@@ -100,20 +100,20 @@ class DataManager {
         private val GRAPH_OUTPUT = "graph.output"
 
         var autoSave: Boolean
-            get() = properties?.getProperty(AUTO_SAVE_DEFAULT).toBoolean()
-            set(value) = value?.let { setProperty(AUTO_SAVE_DEFAULT, it.toString()) } ?: Unit
+            get() = properties?.getProperty(AUTO_SAVE_DEFAULT)?.toBoolean() ?: true
+            set(value) = value?.let { setProperty(AUTO_SAVE_DEFAULT, it.toString()) }
 
         var ignoredPaths: List<String>
-            get() = properties?.getProperty(IGNORED_PATH_DEFAULT)!!.split(",")
-            set(value) = value?.let { setProperty(IGNORED_PATH_DEFAULT, it.joinToString()) } ?: Unit
+            get() = properties?.getProperty(IGNORED_PATH_DEFAULT)?.split(',') ?: ".git".split(',')
+            set(value) = setProperty(IGNORED_PATH_DEFAULT, value.joinToString())
 
         var limit: String
             get() = properties?.getProperty(QUERY_LIMIT) ?: "1000"
-            set(value) = value?.let { setProperty(QUERY_LIMIT, it) } ?: Unit
+            set(value) = setProperty(QUERY_LIMIT, value)
 
         var graphOutput: Boolean
-            get() = properties?.getProperty(GRAPH_OUTPUT).toBoolean()
-            set(value) = value?.let { setProperty(GRAPH_OUTPUT, it.toString()) } ?: Unit
+            get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean() ?: true
+            set(value) = value?.let { setProperty(GRAPH_OUTPUT, it.toString()) }
     }
 
     var properties: Properties? by mutableStateOf(null)

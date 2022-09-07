@@ -32,9 +32,9 @@ class PreferenceManager(appData: DataManager) {
         get() = preferences.graphOutput
 
     val queryLimit: Long
-        get() = preferences.limit.toLongOrNull()!!
+        get() = preferences.limit.toLong()
 
     fun isIgnoredPath(path: Path): Boolean {
-        return preferences.ignoredPaths?.contains(path.name)
+        return preferences.ignoredPaths.contains(path.name)
     }
 }
