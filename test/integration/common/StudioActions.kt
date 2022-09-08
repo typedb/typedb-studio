@@ -44,6 +44,7 @@ import com.vaticle.typedb.studio.test.integration.common.Data.PLUS_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Delays.CONNECT_SERVER
 import com.vaticle.typedb.studio.test.integration.common.Delays.NETWORK_IO
 import com.vaticle.typedb.studio.test.integration.common.Delays.RECOMPOSE
+import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
@@ -146,7 +147,7 @@ object StudioActions {
         delayAndRecompose(composeRule, NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
-            StudioState.notification.queue.last().code == "CNX10"
+            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
@@ -169,7 +170,7 @@ object StudioActions {
         delayAndRecompose(composeRule, NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
-            StudioState.notification.queue.last().code == "CNX10"
+            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
