@@ -30,13 +30,13 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typedb.studio.Studio
 import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -76,9 +76,7 @@ object Utils {
 
     fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
         runComposeRule(compose) {
-            setContent {
-                Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
-            }
+            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
             funcBody()
         }
     }
@@ -88,9 +86,7 @@ object Utils {
         typeDB.start()
         val address = typeDB.address()
         runComposeRule(compose) {
-            setContent {
-                Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0))
-            }
+            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
             funcBody(address)
         }
         typeDB.stop()
@@ -102,8 +98,12 @@ object Utils {
         composeRule.waitForIdle()
     }
 
-    suspend fun waitForConditionAndRecompose(successCondition: () -> Boolean,
-                                                     beforeRetry: () -> Unit, failMessage: String, context: ComposeContentTestRule) {
+    suspend fun waitForConditionAndRecompose(
+        context: ComposeContentTestRule,
+        failMessage: String,
+        beforeRetry: (() -> Unit) = {},
+        successCondition: () -> Boolean
+    ) {
         val deadline = System.currentTimeMillis() + 10_000
         while (!successCondition() && System.currentTimeMillis() < deadline) {
             beforeRetry()
@@ -134,7 +134,7 @@ object Utils {
         StudioState.client.tryConnectToTypeDB(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose({ StudioState.client.isConnected }, {}, FAIL_CONNECT_TYPEDB, composeRule)
+        waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
 
         composeRule.onNodeWithText(address).assertExists()
     }
@@ -150,8 +150,11 @@ object Utils {
 
         StudioState.client.refreshDatabaseList()
 
-        waitForConditionAndRecompose({ StudioState.client.databaseList.contains(dbName) },
-            { StudioState.client.refreshDatabaseList() }, FAIL_CREATE_DATABASE, composeRule)
+        waitForConditionAndRecompose(
+            context = composeRule,
+            failMessage = FAIL_CREATE_DATABASE,
+            beforeRetry = { StudioState.client.refreshDatabaseList() }
+        ) { StudioState.client.databaseList.contains(dbName) }
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -177,7 +180,9 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_SCHEMA_WRITE, composeRule)
+        waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
+            StudioState.notification.queue.last().code == "CNX10"
+        }
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
@@ -198,7 +203,9 @@ object Utils {
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose({ StudioState.notification.queue.last().code == "CNX10" }, {}, FAIL_DATA_WRITE, composeRule)
+        waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
+            StudioState.notification.queue.last().code == "CNX10"
+        }
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
