@@ -110,6 +110,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing>): List<List<ContextMenu.Item>> {
         val typeState = itemState.item
+        typeState.loadContextMenuProperties()
         return listOf(
             listOf(
                 ContextMenu.Item(
