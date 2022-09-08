@@ -25,6 +25,7 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.test.integration.common.Data.CHEVRON_UP_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.DATA_FILE_NAME
@@ -116,8 +117,8 @@ class TextEditorTest: IntegrationTest() {
             StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
             delayAndRecompose(composeRule, NETWORK_IO)
 
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.onNodeWithText("write").performClick()
+            composeRule.onNodeWithText(TypeDBSession.Type.SCHEMA.name.lowercase()).performClick()
+            composeRule.onNodeWithText(TypeDBTransaction.Type.WRITE.name.lowercase()).performClick()
 
             StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 

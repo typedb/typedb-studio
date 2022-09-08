@@ -135,8 +135,8 @@ object StudioActions {
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
         delayAndRecompose(composeRule, NETWORK_IO)
 
-        composeRule.onNodeWithText("schema").performClick()
-        composeRule.onNodeWithText("write").performClick()
+        composeRule.onNodeWithText(TypeDBSession.Type.SCHEMA.name.lowercase()).performClick()
+        composeRule.onNodeWithText(TypeDBTransaction.Type.WRITE.name.lowercase()).performClick()
 
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
@@ -158,8 +158,8 @@ object StudioActions {
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         delayAndRecompose(composeRule, NETWORK_IO)
 
-        composeRule.onNodeWithText("data").performClick()
-        composeRule.onNodeWithText("write").performClick()
+        composeRule.onNodeWithText(TypeDBSession.Type.DATA.name.lowercase()).performClick()
+        composeRule.onNodeWithText(TypeDBTransaction.Type.WRITE.name.lowercase()).performClick()
 
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
@@ -179,9 +179,9 @@ object StudioActions {
             .filter { line -> !line.startsWith('#') }
             .joinToString("")
 
-        composeRule.onNodeWithText("infer").performClick()
+        composeRule.onNodeWithText(Label.INFER.lowercase()).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("read").performClick()
+        composeRule.onNodeWithText(TypeDBTransaction.Type.READ.name.lowercase()).performClick()
         delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->

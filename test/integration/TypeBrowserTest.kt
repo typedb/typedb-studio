@@ -27,6 +27,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_DOWN_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_UP_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.SCHEMA_FILE_NAME
@@ -53,7 +54,7 @@ class TypeBrowserTest: IntegrationTest() {
 
             // We can assert that the schema has been written successfully here as the schema
             // is shown in the type browser.
-            composeRule.onNodeWithText("attribute").assertExists()
+            composeRule.onNodeWithText(Label.ATTRIBUTE.lowercase()).assertExists()
             composeRule.onNodeWithText("commit-date").assertExists()
             composeRule.onNodeWithText("commit-hash").assertExists()
         }
@@ -70,8 +71,8 @@ class TypeBrowserTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
             delayAndRecompose(composeRule, NETWORK_IO)
 
-            composeRule.onAllNodesWithText("Project").get(0).performClick()
-            composeRule.onAllNodesWithText("Project").get(1).performClick()
+            composeRule.onAllNodesWithText(Label.PROJECT).get(0).performClick()
+            composeRule.onAllNodesWithText(Label.PROJECT).get(1).performClick()
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
