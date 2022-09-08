@@ -15,9 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+// We need to access private function StudioState.client.session.tryOpen, this allows us to.
+// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration
+package com.vaticle.typedb.studio.test.integration.common
 
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
@@ -29,12 +32,18 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.test.integration.common.Data.CHECK_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_CONNECT_TYPEDB
+import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_CREATE_DATABASE
+import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_DATA_WRITE
+import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_SCHEMA_WRITE
+import com.vaticle.typedb.studio.test.integration.common.Data.PLAY_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.Data.PLUS_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.Delays.CONNECT_SERVER
+import com.vaticle.typedb.studio.test.integration.common.Delays.NETWORK_IO
+import com.vaticle.typedb.studio.test.integration.common.Delays.RECOMPOSE
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
@@ -46,54 +55,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 
-object Utils {
-    val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
-    val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
-    val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
-    val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
-    val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
-    val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
-    val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
-    val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
-
-    val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
-    val TQL_DATA_PATH = File("test/data").absolutePath
-
-    const val QUERY_FILE_NAME = "query_string.tql"
-    const val DATA_FILE_NAME = "data_string.tql"
-    const val SCHEMA_FILE_NAME = "schema_string.tql"
-
-    const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
-    const val FAIL_CREATE_DATABASE = "Failed to create the database."
-    const val FAIL_DATA_WRITE = "Failed to write the data."
-    const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
-
-    fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
-        runBlocking { compose.rule() }
-    }
-
-    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody()
-        }
-    }
-
-    fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
-        val typeDB = TypeDBCoreRunner()
-        typeDB.start()
-        val address = typeDB.address()
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody(address)
-        }
-        typeDB.stop()
-    }
-
+object StudioActions {
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
-    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
+    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = RECOMPOSE) {
         delay(timeMillis.toLong())
         composeRule.waitForIdle()
     }
@@ -132,7 +97,7 @@ object Utils {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(address) {}
-        delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
+        delayAndRecompose(composeRule, CONNECT_SERVER)
 
         waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
 
@@ -143,10 +108,10 @@ object Utils {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         StudioState.client.tryDeleteDatabase(dbName)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         StudioState.client.tryCreateDatabase(dbName) {}
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         StudioState.client.refreshDatabaseList()
 
@@ -164,10 +129,10 @@ object Utils {
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         composeRule.onNodeWithText("schema").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -175,10 +140,10 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
             StudioState.notification.queue.last().code == "CNX10"
@@ -190,7 +155,7 @@ object Utils {
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         composeRule.onNodeWithText("data").performClick()
         composeRule.onNodeWithText("write").performClick()
@@ -198,10 +163,10 @@ object Utils {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        delayAndRecompose(composeRule, NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
             StudioState.notification.queue.last().code == "CNX10"
@@ -209,7 +174,9 @@ object Utils {
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
-        val queryString = fileNameToString(queryFileName)
+        val queryString = Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
+            .filter { line -> !line.startsWith('#') }
+            .joinToString("")
 
         composeRule.onNodeWithText("infer").performClick()
         composeRule.waitForIdle()
@@ -233,16 +200,4 @@ object Utils {
             }
         }
     }
-
-    private fun fileNameToString(fileName: String): String {
-        return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
-            .joinToString("")
-    }
-}
-
-object Delays {
-    const val RECOMPOSE = 500
-    const val FILE_IO = 750
-    const val NETWORK_IO = 1_500
-    const val CONNECT_SERVER = 2_500
 }

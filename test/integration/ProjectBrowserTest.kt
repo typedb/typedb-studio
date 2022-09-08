@@ -16,21 +16,20 @@
  *
  */
 
-// We need to access private function Studio.MainWindowColumn, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+
+//@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.studioTest
-import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_DOWN_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.common.Data.SAMPLE_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.studioTest
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {

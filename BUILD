@@ -29,7 +29,7 @@ load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platfo
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
 load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
 
-package(default_visibility = ["//test/integration:__pkg__"])
+package(default_visibility = ["//test/integration:__subpackages__"])
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),

@@ -22,7 +22,7 @@ package(default_visibility = [
     "//framework:__subpackages__",
     "//module:__subpackages__",
     "//state:__subpackages__",
-    "//test/integration:__pkg__",
+    "//test/integration:__subpackages__",
     "//:__pkg__",
 ])
 

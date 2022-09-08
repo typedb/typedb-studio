@@ -22,17 +22,17 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
-import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
-import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.Data.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Data.QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Data.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Data.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.studioTestWithRunner
 import org.junit.Test
 
 class QuickstartTest: IntegrationTest() {

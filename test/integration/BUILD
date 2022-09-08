@@ -28,8 +28,8 @@ skiko_runtime_platform = select({
      "//conditions:default": ["INVALID"]})
 
 compose_test_libraries = [
-    "test-integration",
-    "test-utils",
+    "//test/integration/common:common",
+    "//test/integration:test-integration",
 
     "@maven//:junit_junit",
     "@maven//:org_jetbrains_compose_ui_ui_desktop",
@@ -43,42 +43,6 @@ compose_test_libraries = [
     "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
     "@maven//:org_jetbrains_skiko_skiko_awt"
 ]
-
-kt_jvm_library(
-    name = "test-utils",
-    srcs = ["Utils.kt"],
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    runtime_deps = skiko_runtime_platform,
-    deps = [
-        "//:studio",
-        "//framework/material",
-        "//framework/common",
-        "//state",
-        "//state/app",
-        "//state/common",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_common//test:typedb-runner",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
-
-        # External Maven Dependencies
-        "@maven//:junit_junit",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_junit4_desktop",
-        "@maven//:org_jetbrains_kotlin_kotlin_test",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-    ],
-)
 
 kt_jvm_library(
     name = "test-integration",

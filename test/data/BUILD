@@ -20,7 +20,7 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 filegroup(
     name = "sample-file-structure-files",
     srcs = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
-    visibility = ["//test/integration:__pkg__"],
+    visibility = ["//test/integration:__subpackages__"],
 )
 
 filegroup(
@@ -30,7 +30,7 @@ filegroup(
         "schema_string.tql",
         "query_string.tql",
     ],
-    visibility = ["//test/integration:__pkg__"],
+    visibility = ["//test/integration:__subpackages__"],
 )
 
 checkstyle_test(
