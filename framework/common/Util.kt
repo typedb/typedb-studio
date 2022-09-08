@@ -22,6 +22,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -57,6 +59,12 @@ object Util {
         val mouse = mousePoint(window, titleBarHeight)
         return area.contains(mouse.x, mouse.y)
     }
+
+    fun italics(placeholder: String) = AnnotatedString.Builder().apply {
+        pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
+        append(placeholder)
+        pop()
+    }.toAnnotatedString()
 
     // TODO: Investigate usages of this method -- why were they needed to begin with. Most likely is race condition.
     fun AnnotatedString.subSequenceSafely(start: Int, end: Int): AnnotatedString {

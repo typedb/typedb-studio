@@ -59,15 +59,18 @@ class SchemaManager constructor(
     class EditTypeDialog<T : TypeState.Thing> : DialogManager() {
 
         var typeState: T? by mutableStateOf(null); private set
+        var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
 
-        internal fun open(typeState: T) {
+        internal fun open(typeState: T, onSuccess: (() -> Unit)? = null) {
             isOpen = true
             this.typeState = typeState
+            this.onSuccess = onSuccess
         }
 
         override fun close() {
             isOpen = false
             typeState = null
+            onSuccess = null
         }
     }
 
@@ -98,7 +101,7 @@ class SchemaManager constructor(
     private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
-    private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
+    internal val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
     internal val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -190,23 +193,21 @@ class SchemaManager constructor(
         }
     }
 
-    internal fun refreshAndPruneTypesAndOpen() {
-        openOrGetReadTx()?.let { tx ->
-            if (rootEntityType == null) rootEntityType = TypeState.Entity(
-                conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
-            ).also { entityTypes[tx.concepts().rootEntityType] = it }
-            if (rootRelationType == null) rootRelationType = TypeState.Relation(
-                conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
-            ).also { relationTypes[tx.concepts().rootRelationType] = it }
-            if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
-                conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
-            ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
-            (entityTypes.values + relationTypes.values + attributeTypes.values).forEach {
-                if (tx.concepts().getThingType(it.name) == null) it.closeRecursive()
-            }
-            isOpenAtomic.set(true)
-            onTypesUpdated.forEach { it() }
+    private fun refreshAndPruneTypesAndOpen() = openOrGetReadTx()?.let { tx ->
+        if (rootEntityType == null) rootEntityType = TypeState.Entity(
+            conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
+        ).also { entityTypes[tx.concepts().rootEntityType] = it }
+        if (rootRelationType == null) rootRelationType = TypeState.Relation(
+            conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
+        ).also { relationTypes[tx.concepts().rootRelationType] = it }
+        if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
+            conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
+        ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
+        (entityTypes.values + relationTypes.values + attributeTypes.values).forEach {
+            if (tx.concepts().getThingType(it.name) == null) it.purge()
         }
+        isOpenAtomic.set(true)
+        onTypesUpdated.forEach { it() }
     }
 
     fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
@@ -261,7 +262,10 @@ class SchemaManager constructor(
 
     fun close() {
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            entries.forEach { it.closeRecursive() }
+            entries.forEach { it.purge() }
+            rootEntityType = null
+            rootRelationType = null
+            rootAttributeType = null
             closeReadTx()
         }
     }
