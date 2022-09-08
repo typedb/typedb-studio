@@ -58,6 +58,7 @@ object Label {
     const val CTRL = "ctrl"
     const val CUT = "Cut"
     const val DATA_SESSION = "Data Session"
+    const val DATABASE = "Database"
     const val DATABASE_NAME = "database_name"
     const val DECREASE_TEXT_SIZE = "Decrease Text Size"
     const val DEFINE_OWNS_ATTRIBUTE_TYPE = "Define Owns Attribute Type"
