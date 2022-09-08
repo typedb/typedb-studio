@@ -16,9 +16,6 @@
  *
  */
 
-
-//@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onNodeWithText

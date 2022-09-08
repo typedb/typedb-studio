@@ -16,10 +16,6 @@
  *
  */
 
-// We need to access private function Studio.MainWindow, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.studio.test.integration.common.Data.DATA_FILE_NAME

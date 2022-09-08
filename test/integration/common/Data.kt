@@ -37,9 +37,4 @@ object Data {
     const val QUERY_FILE_NAME = "query_string.tql"
     const val DATA_FILE_NAME = "data_string.tql"
     const val SCHEMA_FILE_NAME = "schema_string.tql"
-
-    const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
-    const val FAIL_CREATE_DATABASE = "Failed to create the database."
-    const val FAIL_DATA_WRITE = "Failed to write the data."
-    const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
 }

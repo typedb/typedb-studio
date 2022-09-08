@@ -35,10 +35,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.Data.CHECK_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_CONNECT_TYPEDB
-import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_CREATE_DATABASE
-import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_DATA_WRITE
-import com.vaticle.typedb.studio.test.integration.common.Data.FAIL_SCHEMA_WRITE
 import com.vaticle.typedb.studio.test.integration.common.Data.PLAY_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.PLUS_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Delays.CONNECT_SERVER
@@ -58,6 +54,11 @@ import kotlin.test.fail
 import kotlinx.coroutines.delay
 
 object StudioActions {
+    private const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
+    private const val FAIL_CREATE_DATABASE = "Failed to create the database."
+    private const val FAIL_DATA_WRITE = "Failed to write the data."
+    private const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
+
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
     suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = RECOMPOSE) {
         delay(timeMillis.toLong())
