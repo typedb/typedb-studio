@@ -70,17 +70,14 @@ object PreferenceDialog {
     private val appData = StudioState.appData.preferences
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
-    sealed interface Preference<T> {
-        var value: T
-        var label: String
-
+    sealed interface Preference {
         @Composable fun display()
         fun valid(): Boolean
 
-        class TextInput(initial: String, override var label: String, private var placeholder: String,
-                        var validator: (String) -> Boolean = { true }) : Preference<String> {
+        class TextInput(initial: String, var label: String, private var placeholder: String,
+                        var validator: (String) -> Boolean = { true }) : Preference {
 
-            override var value by mutableStateOf(initial)
+            var value by mutableStateOf(initial)
 
             override fun valid(): Boolean {
                 return validator(value)
@@ -107,8 +104,8 @@ object PreferenceDialog {
             }
         }
 
-        class Checkbox(initial: Boolean, override var label: String): Preference<Boolean> {
-            override var value by mutableStateOf(initial)
+        class Checkbox(initial: Boolean, var label: String): Preference {
+            var value by mutableStateOf(initial)
             @Composable
             override fun display() {
                 Field(label = label) {
