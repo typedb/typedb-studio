@@ -92,6 +92,7 @@ object Label {
     const val FOUND = "Found"
     const val GRAPH = "Graph"
     const val GRAPH_CONCEPT_PREVIEW_PLACEHOLDER = "Click on a Concept to inspect it"
+    const val GRAPH_MATCH_CAPTION = "When running a match query, a graph output is displayed."
     const val GRAPH_VISUALISER = "Graph Visualiser"
     const val INCREASE_TEXT_SIZE = "Increase Text Size"
     const val INFER = "Infer"

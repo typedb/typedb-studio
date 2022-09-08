@@ -299,7 +299,7 @@ object PreferenceDialog {
         state.graphOutput.display()
         FormRowSpacer()
         FormRowSpacer()
-        Text("When running a match query, a graph output is displayed.")
+        Text(Label.GRAPH_MATCH_CAPTION)
     }
 
     @Composable
