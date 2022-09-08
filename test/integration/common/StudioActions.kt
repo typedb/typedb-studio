@@ -16,7 +16,7 @@
  *
  */
 
-// We need to access private function StudioState.client.session.tryOpen, this allows us to.
+// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
 // Do not use this outside of tests anywhere. It is extremely dangerous to do so.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
