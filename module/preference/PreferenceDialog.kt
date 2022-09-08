@@ -93,7 +93,7 @@ object PreferenceDialog {
                     }
                 }
 
-                Field(label = label) {
+                Field(label) {
                     TextInput(
                         value = value,
                         placeholder = placeholder,
@@ -108,7 +108,7 @@ object PreferenceDialog {
             var value by mutableStateOf(initial)
             @Composable
             override fun display() {
-                Field(label = label) {
+                Field(label) {
                     Checkbox(
                         value = value,
                         onChange = { value = it }
