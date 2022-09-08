@@ -93,25 +93,31 @@ class TransactionState constructor(
     internal fun sendStopSignal() = hasStopSignalAtomic.set(true)
 
     fun tryOpen(): TypeDBTransaction? {
-        if (isOpen) return _transaction
-        try {
-            val options = typeDBOptions().infer(infer.value)
-                .explain(infer.value).transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
-            _transaction = session.transaction(type, options)!!.apply {
+        return if (!session.isOpen) {
+            notificationMgr.userError(LOGGER, Message.Connection.SESSION_IS_CLOSED)
+            null
+        } else if (isOpen) _transaction
+        else try {
+            val options = typeDBOptions()
+                .infer(infer.value)
+                .explain(infer.value)
+                .transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
+            session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
+            }.also {
+                isOpenAtomic.set(true)
+                _transaction = it
             }
-            isOpenAtomic.set(true)
         } catch (e: Exception) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: UNKNOWN)
             isOpenAtomic.set(false)
             hasRunningQueryAtomic.set(false)
+            null
         }
-        return _transaction
     }
 
     internal fun runQuery(content: String): QueryRunner? {
-        if (!isOpenAtomic.atomic.get()) return null
-        else if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
+        if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) {
             try {
                 hasStopSignalAtomic.set(false)
                 tryOpen()
