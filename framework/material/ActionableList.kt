@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 
 object ActionableList {
@@ -105,9 +105,9 @@ object ActionableList {
                         .background(bgColor(i)),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FormRowSpacer()
+                    RowSpacer()
                     Form.Text(value = item.toString())
-                    FormRowSpacer()
+                    RowSpacer()
                 }
             }
         }
@@ -129,7 +129,7 @@ object ActionableList {
                         .background(bgColor(i)),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FormRowSpacer()
+                    RowSpacer()
                     IconButton(
                         icon = button.icon,
                         hoverIcon = button.hoverIcon,
@@ -140,8 +140,8 @@ object ActionableList {
                         tooltip = button.tooltip,
                         onClick = button.onClick
                     )
-                    FormRowSpacer()
-                    scrollState?.let { if (it.maxValue > 0 && it.maxValue < Int.MAX_VALUE) FormRowSpacer() }
+                    RowSpacer()
+                    scrollState?.let { if (it.maxValue > 0 && it.maxValue < Int.MAX_VALUE) RowSpacer() }
                 }
             }
         }

@@ -42,8 +42,8 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.State
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.FormColumnSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
@@ -55,6 +55,21 @@ import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorS
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.state.common.util.Label.APPLY
+import com.vaticle.typedb.studio.state.common.util.Label.CANCEL
+import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_EDITOR_AUTOSAVE
+import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_GRAPH_OUTPUT
+import com.vaticle.typedb.studio.state.common.util.Label.GRAPH_VISUALISER
+import com.vaticle.typedb.studio.state.common.util.Label.MANAGE_PREFERENCES
+import com.vaticle.typedb.studio.state.common.util.Label.OK
+import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
+import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
+import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
+import com.vaticle.typedb.studio.state.common.util.Label.SELECT_PREFERENCE_GROUP
+import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
+import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
+import com.vaticle.typedb.studio.state.common.util.Sentence.GRAPH_MATCH_CAPTION
+import com.vaticle.typedb.studio.state.common.util.Sentence.QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
 
 object PreferenceDialog {
@@ -71,26 +86,22 @@ object PreferenceDialog {
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     sealed interface Preference {
-        @Composable fun display()
-        fun valid(): Boolean
+        @Composable fun Display()
+        fun isValid(): Boolean
 
-        class TextInput(initial: String, var label: String, private var placeholder: String,
+        class TextInput(initialValue: String, var label: String, private var placeholder: String,
                         var validator: (String) -> Boolean = { true }) : Preference {
 
-            var value by mutableStateOf(initial)
+            var value by mutableStateOf(initialValue)
 
-            override fun valid(): Boolean {
+            override fun isValid(): Boolean {
                 return validator(value)
             }
 
             @Composable
-            override fun display() {
+            override fun Display() {
                 var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
-                    if (this.valid()) {
-                        Theme.studio.border
-                    } else {
-                        Theme.studio.errorStroke
-                    }
+                    if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
                 }
 
                 Field(label) {
@@ -104,10 +115,11 @@ object PreferenceDialog {
             }
         }
 
-        class Checkbox(initial: Boolean, var label: String): Preference {
-            var value by mutableStateOf(initial)
+        class Checkbox(initialValue: Boolean, var label: String): Preference {
+            var value by mutableStateOf(initialValue)
+
             @Composable
-            override fun display() {
+            override fun Display() {
                 Field(label) {
                     Checkbox(
                         value = value,
@@ -116,7 +128,7 @@ object PreferenceDialog {
                 }
             }
 
-            override fun valid(): Boolean {
+            override fun isValid(): Boolean {
                 return true
             }
         }
@@ -125,18 +137,25 @@ object PreferenceDialog {
 
     class PreferencesForm : State {
         // Graph Visualiser Preferences
-        var graphOutput = Preference.Checkbox(appData.graphOutput, Label.ENABLE_GRAPH_OUTPUT)
+        var graphOutput = Preference.Checkbox(initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
         // Project Manager Preferences
-        val ignoredPathsData = appData.ignoredPaths.toString()
-        var ignoredPaths = Preference.TextInput(ignoredPathsData.substring(1, ignoredPathsData.length - 1),
-            Label.PROJECT_IGNORED_PATHS, IGNORED_PATHS_PLACEHOLDER)
+        val ignoredPathsString = appData.ignoredPaths.joinToString(",")
+        var ignoredPaths = Preference.TextInput(
+            initialValue = ignoredPathsString,
+            label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
+        )
         // Query Runner Preferences
-        var limit = Preference.TextInput(appData.limit, Label.SET_QUERY_LIMIT, QUERY_LIMIT_PLACEHOLDER) { it.toLongOrNull() != null }
+        var queryLimit = Preference.TextInput(
+            initialValue = appData.limit, 
+            label = SET_QUERY_LIMIT, 
+            placeholder = QUERY_LIMIT_PLACEHOLDER
+        ) {/* validator = */ it.toLongOrNull() != null }
+        
         // Text Editor Preferences
-        var autoSave = Preference.Checkbox(appData.autoSave, Label.ENABLE_EDITOR_AUTOSAVE)
+        var autoSave = Preference.Checkbox(initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
 
         override fun cancel() {
-            StudioState.preference.openPreferenceDialog.close()
+            StudioState.preference.preferencesDialog.close()
         }
 
         fun apply() {
@@ -149,14 +168,14 @@ object PreferenceDialog {
         }
 
         override fun isValid(): Boolean {
-            return graphOutput.valid() && ignoredPaths.valid() && limit.valid() && autoSave.valid()
+            return graphOutput.isValid() && ignoredPaths.isValid() && queryLimit.isValid() && autoSave.isValid()
         }
 
         override fun trySubmit() {
             if (isValid()) {
                 appData.autoSave = autoSave.value
                 appData.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-                appData.limit = limit.value
+                appData.limit = queryLimit.value
                 appData.graphOutput = graphOutput.value
             }
         }
@@ -194,10 +213,10 @@ object PreferenceDialog {
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
         val preferenceGroups = listOf(
-            PreferenceGroup(Label.GRAPH_VISUALISER, content = { GraphPreferences(state) }),
-            PreferenceGroup(Label.PROJECT_MANAGER, content = { ProjectPreferences(state) }),
-            PreferenceGroup(Label.QUERY_RUNNER, content = { QueryPreferences(state)}),
-            PreferenceGroup(Label.TEXT_EDITOR, content = { EditorPreferences(state) }),
+            PreferenceGroup(GRAPH_VISUALISER, content = { GraphPreferences(state) }),
+            PreferenceGroup(PROJECT_MANAGER, content = { ProjectPreferences(state) }),
+            PreferenceGroup(QUERY_RUNNER, content = { QueryPreferences(state)}),
+            PreferenceGroup(TEXT_EDITOR, content = { EditorPreferences(state) }),
         )
 
         val rootPreferenceGroup = PreferenceGroup("Root", content = { RootPreferences() })
@@ -210,7 +229,7 @@ object PreferenceDialog {
 
         val navState = rememberNavigatorState(
             container = rootPreferenceGroup,
-            title = Label.MANAGE_PREFERENCES,
+            title = MANAGE_PREFERENCES,
             mode = Navigator.Mode.BROWSER,
             initExpandDepth = 0,
             openFn = { focusedPreferenceGroup = it.item }
@@ -225,14 +244,14 @@ object PreferenceDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (StudioState.preference.openPreferenceDialog.isOpen) Preferences()
+        if (StudioState.preference.preferencesDialog.isOpen) Preferences()
     }
 
     @Composable
     private fun Preferences() {
         val state = remember { PreferencesForm() }
 
-        Dialog.Layout(StudioState.preference.openPreferenceDialog, Label.MANAGE_PREFERENCES, WIDTH, HEIGHT, false) {
+        Dialog.Layout(StudioState.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
             Column {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
@@ -240,7 +259,7 @@ object PreferenceDialog {
                     Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".primary",
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
-                            FormColumnSpacer()
+                            ColumnSpacer()
                             NavigatorLayout(state)
                         }
                     },
@@ -255,17 +274,17 @@ object PreferenceDialog {
                     }
                 )
                 Separator.Horizontal()
-                FormColumnSpacer()
+                ColumnSpacer()
                 Row {
                     Column() {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             ChangeFormButtons(state)
-                            FormRowSpacer()
-                            FormRowSpacer()
+                            RowSpacer()
+                            RowSpacer()
                         }
                     }
                 }
-                FormColumnSpacer()
+                ColumnSpacer()
             }
         }
     }
@@ -274,32 +293,35 @@ object PreferenceDialog {
     private fun RootPreferences() {
         Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center) {
-            Text(Label.SELECT_PREFERENCE_GROUP)
+            Text(SELECT_PREFERENCE_GROUP)
         }
 
     }
 
     @Composable
     private fun ProjectPreferences(state: PreferencesForm) {
-        state.ignoredPaths.display()
+        state.ignoredPaths.Display()
     }
 
     @Composable
     private fun EditorPreferences(state: PreferencesForm) {
-        state.autoSave.display()
+        state.autoSave.Display()
     }
 
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
-        state.limit.display()
+        state.queryLimit.Display()
+        RowSpacer()
+        RowSpacer()
+        Caption(QUERY_LIMIT_CAPTION)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
-        state.graphOutput.display()
-        FormRowSpacer()
-        FormRowSpacer()
-        Text(Label.GRAPH_MATCH_CAPTION)
+        state.graphOutput.Display()
+        RowSpacer()
+        RowSpacer()
+        Caption(GRAPH_MATCH_CAPTION)
     }
 
     @Composable
@@ -309,24 +331,29 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun SpacedHorizontalSeperator() {
-        FormColumnSpacer()
-        Separator.Horizontal()
-        FormColumnSpacer()
+    private fun ChangeFormButtons(state: PreferencesForm) {
+        TextButton(CANCEL) {
+            state.cancel()
+        }
+        RowSpacer()
+        TextButton(APPLY) {
+            state.apply()
+        }
+        RowSpacer()
+        TextButton(OK) {
+            state.ok()
+        }
     }
 
     @Composable
-    private fun ChangeFormButtons(state: PreferencesForm) {
-        TextButton(Label.CANCEL) {
-            state.cancel()
-        }
-        FormRowSpacer()
-        TextButton(Label.APPLY) {
-            state.apply()
-        }
-        FormRowSpacer()
-        TextButton(Label.OK) {
-            state.ok()
-        }
+    private fun SpacedHorizontalSeperator() {
+        ColumnSpacer()
+        Separator.Horizontal()
+        ColumnSpacer()
+    }
+
+    @Composable
+    private fun Caption(text: String) {
+        Text(text, textStyle = Theme.typography.code1)
     }
 }

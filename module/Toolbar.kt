@@ -464,7 +464,7 @@ object Toolbar {
             ToolbarRow {
                 // TODO: ModeButtons()
                 ConnectionButton()
-                OpenPreferencesButton()
+                OpenPreferencesDialogButton()
             }
         }
 
@@ -521,10 +521,10 @@ object Toolbar {
         }
 
         @Composable
-        private fun OpenPreferencesButton() {
+        private fun OpenPreferencesDialogButton() {
             ToolbarIconButton(
                 icon = Icon.Code.GEAR,
-                onClick = { StudioState.preference.openPreferenceDialog.toggle() },
+                onClick = { StudioState.preference.preferencesDialog.toggle() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
             )
         }

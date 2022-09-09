@@ -54,7 +54,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-types:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-type:{pom_version}"],
 )
 
 checkstyle_test(

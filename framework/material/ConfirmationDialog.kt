@@ -39,7 +39,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog.DIALOG_SPACING
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -121,10 +121,10 @@ object ConfirmationDialog {
     @Composable
     private fun ConfirmationButtons(formState: State, focusReq: FocusRequester?) {
         TextButton(text = formState.cancelLabel ?: Label.CANCEL, focusReq = focusReq) { formState.cancel() }
-        FormRowSpacer()
+        RowSpacer()
         if (formState.hasReject) {
             TextButton(text = formState.rejectLabel ?: "") { formState.reject() }
-            FormRowSpacer()
+            RowSpacer()
         }
         if (formState.hasConfirm) TextButton(
             text = formState.confirmLabel ?: Label.CONFIRM,

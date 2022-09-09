@@ -38,7 +38,7 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -224,7 +224,7 @@ object ServerDialog {
     @Composable
     private fun DisconnectedFormButtons(state: ConnectServerForm) {
         TextButton(text = Label.CANCEL) { state.cancel() }
-        FormRowSpacer()
+        RowSpacer()
         TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.trySubmit() }
     }
 
@@ -232,7 +232,7 @@ object ServerDialog {
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
         TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { StudioState.client.close() }
-        FormRowSpacer()
+        RowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
@@ -241,7 +241,7 @@ object ServerDialog {
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
         TextButton(text = Label.CANCEL, focusReq = focusReq) { StudioState.client.close() }
-        FormRowSpacer()
+        RowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }

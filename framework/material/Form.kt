@@ -81,7 +81,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -196,7 +195,7 @@ object Form {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL) { state.cancel() }
-                    FormRowSpacer()
+                    RowSpacer()
                     TextButton(text = submitLabel, enabled = state.isValid()) { state.trySubmit() }
                 }
             }
@@ -204,12 +203,12 @@ object Form {
     }
 
     @Composable
-    fun FormRowSpacer() {
+    fun RowSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 
     @Composable
-    fun FormColumnSpacer() {
+    fun ColumnSpacer() {
         Spacer(modifier = Modifier.height(INNER_SPACING))
     }
 

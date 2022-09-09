@@ -23,7 +23,7 @@ import kotlin.io.path.name
 
 class PreferenceManager(appData: DataManager) {
     private val preferences = appData.preferences
-    val openPreferenceDialog = DialogManager.Base()
+    val preferencesDialog = DialogManager.Base()
 
     val autoSave: Boolean
         get() = preferences.autoSave

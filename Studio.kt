@@ -66,7 +66,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.framework.material.Browsers
 import com.vaticle.typedb.studio.framework.material.ConfirmationDialog
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.SelectableText
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -265,9 +265,9 @@ object Studio {
                         Row {
                             Spacer(Modifier.weight(1f))
                             TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
-                            FormRowSpacer()
+                            RowSpacer()
                             TextButton(text = Label.QUIT) { quit = true; onClose() }
-                            FormRowSpacer()
+                            RowSpacer()
                             TextButton(text = Label.REOPEN, onClick = onClose)
                         }
                     }
