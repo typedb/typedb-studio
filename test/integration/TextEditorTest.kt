@@ -57,7 +57,6 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun makeAFileAndSaveIt() {
         studioTest(composeRule) {
-        // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
@@ -77,7 +76,6 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun schemaWriteAndCommit() {
         studioTestWithRunner(composeRule) { address ->
-        // We have to open a project to enable the '+' to create a new file.
             cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
@@ -98,7 +96,7 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun dataWriteAndCommit() {
         studioTestWithRunner(composeRule) { address ->
-        cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
