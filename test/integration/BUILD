@@ -52,6 +52,7 @@ kt_jvm_library(
     deps = [
         "//:studio",
         "//state",
+        "//framework/common",
 
         # External Maven Dependencies
         "@maven//:junit_junit",

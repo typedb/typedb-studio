@@ -16,10 +16,14 @@
  *
  */
 
+// We need to access the private function Studio.MainWindowColumn, this allows us to.
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.vaticle.typedb.studio.Studio
+import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.state.StudioState
 import org.junit.Before
 import org.junit.Rule
@@ -46,6 +50,7 @@ abstract class IntegrationTest {
     fun setupTest() {
         StudioState.init()
         testID = UUID.randomUUID().toString()
+        composeRule.setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
     }
 
     @get:Rule

@@ -16,39 +16,18 @@
  *
  */
 
-// We need to access the private function Studio.MainWindowColumn, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package com.vaticle.typedb.studio.test.integration.common
 
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
-import kotlinx.coroutines.runBlocking
 
 object StudioTestHelpers {
-    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody()
-        }
-    }
-
-    fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
+    fun withTypeDB(funcBody: (String) -> Unit) {
         val typeDB = TypeDBCoreRunner()
         typeDB.start()
-        val address = typeDB.address()
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody(address)
-        }
-        typeDB.stop()
-    }
 
-    private fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
-        runBlocking { compose.rule() }
+        funcBody(typeDB.address())
+
+        typeDB.stop()
     }
 }
 

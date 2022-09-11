@@ -17,7 +17,6 @@
  */
 
 // We need to access the private function StudioState.client.session.tryOpen, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration.common
@@ -37,9 +36,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.Data.CHECK_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.PLAY_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.PLUS_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Delays.CONNECT_SERVER
-import com.vaticle.typedb.studio.test.integration.common.Delays.NETWORK_IO
-import com.vaticle.typedb.studio.test.integration.common.Delays.RECOMPOSE
+import com.vaticle.typedb.studio.test.integration.common.Delays
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
@@ -60,7 +57,7 @@ object StudioActions {
     private const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
 
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
-    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = RECOMPOSE) {
+    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
         delay(timeMillis.toLong())
         composeRule.waitForIdle()
     }
@@ -99,7 +96,7 @@ object StudioActions {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         StudioState.client.tryConnectToTypeDB(address) {}
-        delayAndRecompose(composeRule, CONNECT_SERVER)
+        delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
         waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
 
@@ -110,10 +107,10 @@ object StudioActions {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         StudioState.client.tryDeleteDatabase(dbName)
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.tryCreateDatabase(dbName) {}
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.refreshDatabaseList()
 
@@ -131,21 +128,21 @@ object StudioActions {
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(TypeDBSession.Type.SCHEMA.name.lowercase()).performClick()
-        composeRule.onNodeWithText(TypeDBTransaction.Type.WRITE.name.lowercase()).performClick()
+        composeRule.onNodeWithText(Label.SCHEMA.lowercase()).performClick()
+        composeRule.onNodeWithText(Label.WRITE.lowercase()).performClick()
 
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
@@ -157,18 +154,18 @@ object StudioActions {
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(TypeDBSession.Type.DATA.name.lowercase()).performClick()
-        composeRule.onNodeWithText(TypeDBTransaction.Type.WRITE.name.lowercase()).performClick()
+        composeRule.onNodeWithText(Label.DATA.lowercase()).performClick()
+        composeRule.onNodeWithText(Label.WRITE.lowercase()).performClick()
 
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, NETWORK_IO)
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
@@ -181,8 +178,7 @@ object StudioActions {
             .joinToString("")
 
         composeRule.onNodeWithText(Label.INFER.lowercase()).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(TypeDBTransaction.Type.READ.name.lowercase()).performClick()
+        composeRule.onNodeWithText(Label.READ.lowercase()).performClick()
         delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->

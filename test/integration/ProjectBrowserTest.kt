@@ -26,14 +26,14 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndR
 import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_DOWN_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_UP_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.common.Data.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.studioTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun createADirectory() {
-        studioTest(composeRule) {
+        runBlocking {
             val createdDirectoryName = "created"
 
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
@@ -50,7 +50,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun createAFile() {
-        studioTest(composeRule) {
+        runBlocking {
             val createdFileName = "created"
 
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
@@ -68,7 +68,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun renameAFile() {
-        studioTest(composeRule) {
+        runBlocking {
             val renamedFileName = "renamed"
 
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
@@ -86,7 +86,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun deleteAFile() {
-        studioTest(composeRule) {
+        runBlocking {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryDelete()
@@ -101,7 +101,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun expandFolders() {
-        studioTest(composeRule) {
+        runBlocking {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
@@ -113,7 +113,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
     @Test
     fun expandThenCollapseFolders() {
-        studioTest(composeRule) {
+        runBlocking {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
             composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()

@@ -28,20 +28,23 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.studioTestWithRunner
+import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.withTypeDB
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            createDatabase(composeRule, dbName = testID)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
+        withTypeDB {address ->
+            runBlocking {
+                connectToTypeDB(composeRule, address)
+                createDatabase(composeRule, dbName = testID)
+                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+                writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
+                verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
+            }
         }
     }
 }
