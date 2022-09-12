@@ -18,19 +18,9 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
-import com.vaticle.typedb.studio.framework.material.Icon
 import java.io.File
 
-object Data {
-    val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
-    val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
-    val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
-    val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
-    val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
-    val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
-    val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
-    val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
-
+object Paths {
     val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
     val TQL_DATA_PATH = File("test/data").absolutePath
 

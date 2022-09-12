@@ -20,14 +20,13 @@ package com.vaticle.typedb.studio.test.integration.common
 
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 
-object StudioTestHelpers {
-    fun withTypeDB(funcBody: (String) -> Unit) {
-        val typeDB = TypeDBCoreRunner()
-        typeDB.start()
-
-        funcBody(typeDB.address())
-
-        typeDB.stop()
+object TypeDBRunners {
+    fun withTypeDB(testFunction: (String) -> Unit) {
+        with(TypeDBCoreRunner()) {
+            this.start()
+            testFunction(this.address())
+            this.stop()
+        }
     }
 }
 

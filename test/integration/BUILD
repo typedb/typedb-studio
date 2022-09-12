@@ -85,6 +85,7 @@ kt_jvm_test(
     test_class = "com.vaticle.typedb.studio.test.integration.ProjectBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/page",
         "//state/project",
@@ -98,12 +99,14 @@ typedb_kt_test(
     test_class= "com.vaticle.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/app",
         "//state/common",
         "//state/connection",
         "//state/project",
         "//state/page",
+        "//state/schema",
 
         "@vaticle_typedb_client_java//api",
     ],
@@ -119,6 +122,7 @@ typedb_kt_test(
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/app",
         "//state/common",

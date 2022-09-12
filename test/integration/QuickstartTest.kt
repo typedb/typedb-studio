@@ -18,17 +18,18 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.common.Data.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.TQL_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.common.Paths.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.withTypeDB
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -40,7 +41,8 @@ class QuickstartTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, address)
                 createDatabase(composeRule, dbName = testID)
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
                 writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
                 verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")

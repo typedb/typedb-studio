@@ -21,31 +21,29 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Data.CHEVRON_UP_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.PLAY_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.PLUS_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.ROLLBACK_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.common.Data.SAVE_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.TQL_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.common.Paths.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextDoesNotExist
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.withTypeDB
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import java.io.File
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -55,14 +53,15 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun makeAFileAndSaveIt() {
-       runBlocking {
-            val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+        runBlocking {
+            val path = createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            openProject(composeRule, testID)
 
-            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+            clickIcon(composeRule, Icon.Code.PLUS)
             delayAndRecompose(composeRule)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
-            composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
+            clickIcon(composeRule, Icon.Code.FLOPPY_DISK)
             val file = File("$path/Untitled1.tql")
             StudioState.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             StudioState.project.current!!.reloadEntries()
@@ -76,7 +75,8 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndCommit() {
         withTypeDB { address ->
             runBlocking {
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 connectToTypeDB(composeRule, address)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -84,12 +84,11 @@ class TextEditorTest: IntegrationTest() {
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
-                delayAndRecompose(composeRule)
+                StudioState.schema.reloadEntries()
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
-                composeRule.onNodeWithText("commit-date").assertExists()
+                nodeWithTextExists(composeRule, "commit-date")
             }
         }
     }
@@ -98,7 +97,8 @@ class TextEditorTest: IntegrationTest() {
     fun dataWriteAndCommit() {
         withTypeDB { address ->
             runBlocking {
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 connectToTypeDB(composeRule, address)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -112,24 +112,25 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndRollback() {
         withTypeDB { address ->
             runBlocking {
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 connectToTypeDB(composeRule, address)
                 createDatabase(composeRule, dbName = testID)
 
                 StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                composeRule.onNodeWithText(Label.SCHEMA.lowercase()).performClick()
-                composeRule.onNodeWithText(Label.WRITE.lowercase()).performClick()
+                clickText(composeRule, Label.SCHEMA.lowercase())
+                clickText(composeRule, Label.WRITE.lowercase())
 
                 StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
-                composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+                clickIcon(composeRule, Icon.Code.PLAY)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
-                composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
+                clickIcon(composeRule, Icon.Code.ROTATE)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                composeRule.onNodeWithText("repo-id").assertDoesNotExist()
+                nodeWithTextDoesNotExist(composeRule, "repo-id")
             }
         }
     }

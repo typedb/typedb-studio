@@ -22,22 +22,24 @@
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_DOWN_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.DOUBLE_CHEVRON_UP_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.common.Data.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Data.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.cloneAndOpenProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextDoesNotExist
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioTestHelpers.withTypeDB
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import kotlinx.coroutines.runBlocking
 import org.junit.Ignore
 import org.junit.Test
@@ -49,15 +51,17 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { address ->
             runBlocking {
                 connectToTypeDB(composeRule, address)
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
-                composeRule.onNodeWithText(Label.ATTRIBUTE.lowercase()).assertExists()
-                composeRule.onNodeWithText("commit-date").assertExists()
-                composeRule.onNodeWithText("commit-hash").assertExists()
+
+                nodeWithTextExists(composeRule, Label.ATTRIBUTE.lowercase())
+                nodeWithTextExists(composeRule, "commit-date")
+                nodeWithTextExists(composeRule, "commit-hash")
             }
         }
     }
@@ -67,7 +71,8 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { address ->
             runBlocking {
                 connectToTypeDB(composeRule, address)
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -78,10 +83,10 @@ class TypeBrowserTest: IntegrationTest() {
                 composeRule.onAllNodesWithText(Label.PROJECT).get(1).performClick()
                 delayAndRecompose(composeRule)
 
-                composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+                clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
                 delayAndRecompose(composeRule)
 
-                composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+                nodeWithTextExists(composeRule, "commit-date")
             }
         }
     }
@@ -91,21 +96,22 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { address ->
             runBlocking {
                 connectToTypeDB(composeRule, address)
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-                composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+                clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
                 delayAndRecompose(composeRule)
 
-                composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+                nodeWithTextDoesNotExist(composeRule, "commit-date")
 
-                composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+                clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
                 delayAndRecompose(composeRule)
 
-                composeRule.onNodeWithText("commit-date").assertExists()
+                nodeWithTextExists(composeRule, "commit-date")
             }
         }
     }
@@ -117,7 +123,8 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { address ->
             runBlocking {
                 connectToTypeDB(composeRule, address)
-                cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -133,9 +140,8 @@ class TypeBrowserTest: IntegrationTest() {
                 }
                 composeRule.waitForIdle()
 
-                composeRule.onNodeWithText("define").assertExists()
-                composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify")
-                    .assertDoesNotExist()
+                nodeWithTextExists(composeRule, "define")
+                nodeWithTextDoesNotExist(composeRule, "# This program is free software: you can redistribute it and/or modify")
             }
         }
     }
