@@ -47,6 +47,7 @@ import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeD
 import java.io.File
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.junit.Ignore
 import org.junit.Test
 
 class TextEditorTest: IntegrationTest() {
@@ -54,7 +55,7 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun makeAFileAndSaveIt() {
         runBlocking {
-            val path = createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            val path = createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             clickIcon(composeRule, Icon.Code.PLUS)
@@ -73,11 +74,11 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun schemaWriteAndCommit() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
-                connectToTypeDB(composeRule, address)
+                connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -95,26 +96,26 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun dataWriteAndCommit() {
-        withTypeDB { address ->
+        withTypeDB {typeDB ->  
             runBlocking {
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
-                connectToTypeDB(composeRule, address)
+                connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
                 writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-                verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
+                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${QUERY_FILE_NAME}")
             }
         }
     }
 
     @Test
     fun schemaWriteAndRollback() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
-                connectToTypeDB(composeRule, address)
+                connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
                 StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)

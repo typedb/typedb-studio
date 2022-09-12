@@ -37,7 +37,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val createdDirectoryName = "created"
 
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
@@ -55,7 +55,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val createdFileName = "created"
 
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
@@ -73,7 +73,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val renamedFileName = "renamed"
 
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
@@ -90,7 +90,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun deleteAFile() {
         runBlocking {
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryDelete()
@@ -106,7 +106,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandFolders() {
         runBlocking {
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
@@ -119,7 +119,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandThenCollapseFolders() {
         runBlocking {
-            createData(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+            createData(source = SAMPLE_DATA_PATH, destination = testID)
             openProject(composeRule, testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)

@@ -48,10 +48,10 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                connectToTypeDB(composeRule, address)
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -68,10 +68,10 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseTypes() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                connectToTypeDB(composeRule, address)
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -93,10 +93,10 @@ class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun collapseThenExpandTypes() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                connectToTypeDB(composeRule, address)
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -120,10 +120,10 @@ class TypeBrowserTest: IntegrationTest() {
     @Ignore
     @Test
     fun exportSchema() {
-        withTypeDB { address ->
+        withTypeDB { typeDB ->
             runBlocking {
-                connectToTypeDB(composeRule, address)
-                createData(composeRule, source = TQL_DATA_PATH, destination = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createData(source = TQL_DATA_PATH, destination = testID)
                 openProject(composeRule, testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
