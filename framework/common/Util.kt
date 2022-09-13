@@ -66,6 +66,8 @@ object Util {
         pop()
     }.toAnnotatedString()
 
+    fun String.hyphenate(): String = this.replace(" ", "-")
+
     // TODO: Investigate usages of this method -- why were they needed to begin with. Most likely is race condition.
     fun AnnotatedString.subSequenceSafely(start: Int, end: Int): AnnotatedString {
         val coercedStart = start.coerceIn(0, length)

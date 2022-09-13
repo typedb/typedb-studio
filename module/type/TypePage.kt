@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
@@ -298,7 +299,7 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = attributeType,
-                    placeholder = Label.SELECT_ATTRIBUTE_TYPE,
+                    placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadSupertypes() },
                     displayFn = { ConceptSummaryText(it.conceptType) },
@@ -311,7 +312,7 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = overriddenType,
-                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
                     displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
@@ -390,7 +391,7 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = roleType,
-                    placeholder = Label.SELECT_ROLE_TYPE,
+                    placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadSupertypes() },
                     displayFn = { ConceptSummaryText(it.conceptType) },
@@ -403,7 +404,7 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = overriddenType,
-                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
                     displayFn = { ConceptSummaryText(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
@@ -586,7 +587,7 @@ sealed class TypePage(
                 Box(Modifier.weight(1f)) {
                     Form.Dropdown(
                         selected = overriddenType,
-                        placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                        placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                         onSelection = { overriddenType = it },
                         displayFn = { ConceptSummaryText(it.conceptType) },
                         modifier = Modifier.fillMaxWidth(),

@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
+import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
@@ -216,7 +217,7 @@ object TypeDialog {
                 selected = formState.valueType,
                 values = remember { ValueType.values().toList() - ValueType.OBJECT },
                 displayFn = { AnnotatedString(it.name.lowercase()) },
-                placeholder = Label.VALUE_TYPE.lowercase(),
+                placeholder = Label.VALUE_TYPE.lowercase().hyphenate(),
                 onSelection = { formState.valueType = it },
                 enabled = formState.supertypeState.isRoot
             )
