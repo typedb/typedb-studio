@@ -37,8 +37,8 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectTo
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextDoesNotExist
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
@@ -47,7 +47,6 @@ import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeD
 import java.io.File
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import org.junit.Test
 
 class TextEditorTest: IntegrationTest() {
@@ -89,7 +88,7 @@ class TextEditorTest: IntegrationTest() {
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
-                nodeWithTextExists(composeRule, "commit-date")
+                assertNodeExistsWithText(composeRule, text = "commit-date")
             }
         }
     }
@@ -131,7 +130,7 @@ class TextEditorTest: IntegrationTest() {
                 clickIcon(composeRule, Icon.Code.ROTATE)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                nodeWithTextDoesNotExist(composeRule, "repo-id")
+                assertNodeNotExistsWithText(composeRule, text = "repo-id")
             }
         }
     }

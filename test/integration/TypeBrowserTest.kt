@@ -35,8 +35,8 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectTo
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextDoesNotExist
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -59,9 +59,9 @@ class TypeBrowserTest: IntegrationTest() {
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
 
-                nodeWithTextExists(composeRule, Label.ATTRIBUTE.lowercase())
-                nodeWithTextExists(composeRule, "commit-date")
-                nodeWithTextExists(composeRule, "commit-hash")
+                assertNodeExistsWithText(composeRule, text = Label.ATTRIBUTE.lowercase())
+                assertNodeExistsWithText(composeRule, text = "commit-date")
+                assertNodeExistsWithText(composeRule, text = "commit-hash")
             }
         }
     }
@@ -86,7 +86,7 @@ class TypeBrowserTest: IntegrationTest() {
                 clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
                 delayAndRecompose(composeRule)
 
-                nodeWithTextExists(composeRule, "commit-date")
+                assertNodeExistsWithText(composeRule, text = "commit-date")
             }
         }
     }
@@ -106,42 +106,12 @@ class TypeBrowserTest: IntegrationTest() {
                 clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
                 delayAndRecompose(composeRule)
 
-                nodeWithTextDoesNotExist(composeRule, "commit-date")
+                assertNodeNotExistsWithText(composeRule, text = "commit-date")
 
                 clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
                 delayAndRecompose(composeRule)
 
-                nodeWithTextExists(composeRule, "commit-date")
-            }
-        }
-    }
-
-    // This test is ignored as the export schema button doesn't open a new file during testing.
-    @Ignore
-    @Test
-    fun exportSchema() {
-        withTypeDB { typeDB ->
-            runBlocking {
-                connectToTypeDB(composeRule, typeDB.address())
-                createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
-                createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-
-                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
-                StudioState.schema.exportTypeSchema { schema ->
-                    StudioState.project.current!!.reloadEntries()
-                    StudioState.project.tryCreateUntitledFile()?.let { file ->
-                        file.content(schema)
-                        file.tryOpen()
-                    }
-                }
-                composeRule.waitForIdle()
-
-                nodeWithTextExists(composeRule, "define")
-                nodeWithTextDoesNotExist(composeRule, "# This program is free software: you can redistribute it and/or modify")
+                assertNodeExistsWithText(composeRule, text = "commit-date")
             }
         }
     }

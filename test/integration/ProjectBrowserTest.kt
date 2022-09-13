@@ -24,8 +24,8 @@ import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextDoesNotExist
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.nodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -46,7 +46,7 @@ class ProjectBrowserTest: IntegrationTest() {
             StudioState.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
-            nodeWithTextExists(composeRule, createdDirectoryName)
+            assertNodeExistsWithText(composeRule, text = createdDirectoryName)
         }
     }
 
@@ -64,7 +64,7 @@ class ProjectBrowserTest: IntegrationTest() {
             StudioState.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
-            nodeWithTextExists(composeRule, createdFileName)
+            assertNodeExistsWithText(composeRule, text = createdFileName)
         }
     }
 
@@ -83,7 +83,7 @@ class ProjectBrowserTest: IntegrationTest() {
             StudioState.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
-            nodeWithTextExists(composeRule, renamedFileName)
+            assertNodeExistsWithText(composeRule, text = renamedFileName)
         }
     }
 
@@ -99,7 +99,7 @@ class ProjectBrowserTest: IntegrationTest() {
             StudioState.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
-            nodeWithTextDoesNotExist(composeRule, "file3")
+            assertNodeNotExistsWithText(composeRule, text = "file3")
         }
     }
 
@@ -112,7 +112,7 @@ class ProjectBrowserTest: IntegrationTest() {
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
             composeRule.waitForIdle()
 
-            nodeWithTextExists(composeRule, "file1_2")
+            assertNodeExistsWithText(composeRule, text = "file1_2")
         }
     }
 
@@ -124,13 +124,13 @@ class ProjectBrowserTest: IntegrationTest() {
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
             composeRule.waitForIdle()
-            nodeWithTextExists(composeRule, "file1_2")
+            assertNodeExistsWithText(composeRule, text = "file1_2")
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
             composeRule.waitForIdle()
 
-            nodeWithTextExists(composeRule, testID)
-            nodeWithTextDoesNotExist(composeRule, "file1_2")
+            assertNodeExistsWithText(composeRule, text = testID)
+            assertNodeNotExistsWithText(composeRule, text = "file1_2")
         }
     }
 }

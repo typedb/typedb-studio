@@ -35,7 +35,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Delays
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
@@ -85,11 +84,11 @@ object StudioActions {
         composeRule.onNodeWithText(text).performClick()
     }
 
-    fun nodeWithTextExists(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
+    fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
         return composeRule.onNodeWithText(text).assertExists()
     }
 
-    fun nodeWithTextDoesNotExist(composeRule: ComposeContentTestRule, text: String) {
+    fun assertNodeNotExistsWithText(composeRule: ComposeContentTestRule, text: String) {
         return composeRule.onNodeWithText(text).assertDoesNotExist()
     }
 
@@ -119,7 +118,7 @@ object StudioActions {
 
         waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
 
-        nodeWithTextExists(composeRule, address)
+        assertNodeExistsWithText(composeRule, text = address)
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
@@ -192,9 +191,7 @@ object StudioActions {
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
-        val queryString = Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
-            .filter { line -> !line.startsWith('#') }
-            .joinToString("")
+        val queryString = readQueryFileToString(queryFileName)
 
         clickText(composeRule, Label.INFER.lowercase())
         clickText(composeRule, Label.READ.lowercase())
@@ -217,5 +214,10 @@ object StudioActions {
                 }
             }
         }
+    }
+
+    fun readQueryFileToString(queryFileName: String): String {
+        return Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
+            .joinToString("\n")
     }
 }
