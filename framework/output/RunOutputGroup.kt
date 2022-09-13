@@ -209,9 +209,9 @@ internal class RunOutputGroup constructor(
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph = if (response.source != MATCH) null else GraphOutput(
+        val graph = if (response.source != MATCH || !preferenceMgr.graphOutputEnabled) null else GraphOutput(
                 transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-        ).also { if (preferenceMgr.graphOutputEnabled) {outputs.add(it); activate(it)} }
+        ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { logOutput.outputFn(it) })

@@ -81,8 +81,6 @@ object PreferenceDialog {
     private val NAVIGATOR_MIN_SIZE = 150.dp
     private val STATE_INIT_SIZE = 600.dp
     private val STATE_MIN_SIZE = 500.dp
-    private val QUERY_LIMIT_PLACEHOLDER = "1000"
-    private val IGNORED_PATHS_PLACEHOLDER = ".git, .typedb-studio"
 
     private val appData = StudioState.appData.preferences
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
@@ -91,7 +89,7 @@ object PreferenceDialog {
         @Composable fun Display()
         fun isValid(): Boolean
 
-        class TextInput(initialValue: String, var label: String, private var placeholder: String,
+        class TextInput(val state: PreferencesForm, initialValue: String, var label: String, private var placeholder: String,
                         var validator: (String) -> Boolean = { true }) : Preference {
 
             var value by mutableStateOf(initialValue)
@@ -111,13 +109,13 @@ object PreferenceDialog {
                         value = value,
                         placeholder = placeholder,
                         border = border,
-                        onValueChange = { value = it }
+                        onValueChange = { value = it; state.modified = true }
                     )
                 }
             }
         }
 
-        class Checkbox(initialValue: Boolean, var label: String): Preference {
+        class Checkbox(val state: PreferencesForm, initialValue: Boolean, var label: String): Preference {
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -125,7 +123,7 @@ object PreferenceDialog {
                 Field(label) {
                     Checkbox(
                         value = value,
-                        onChange = { value = it }
+                        onChange = { value = it; state.modified = true }
                     )
                 }
             }
@@ -138,30 +136,40 @@ object PreferenceDialog {
 
 
     class PreferencesForm : State {
+        private val QUERY_LIMIT_PLACEHOLDER = "1000"
+        private val IGNORED_PATHS_PLACEHOLDER = ".git, .typedb-studio"
+        var modified by mutableStateOf(false)
+
         // Graph Visualiser Preferences
-        var graphOutput = Preference.Checkbox(initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
+        var graphOutput = Preference.Checkbox(this, initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
+
         // Project Manager Preferences
         val ignoredPathsString = appData.ignoredPaths.joinToString(",")
         var ignoredPaths = Preference.TextInput(
-            initialValue = ignoredPathsString,
+            this, initialValue = ignoredPathsString,
             label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
         )
+
         // Query Runner Preferences
         var queryLimit = Preference.TextInput(
+            this,
             initialValue = appData.limit, 
             label = SET_QUERY_LIMIT, 
             placeholder = QUERY_LIMIT_PLACEHOLDER
         ) {/* validator = */ it.toLongOrNull() != null }
         
         // Text Editor Preferences
-        var autoSave = Preference.Checkbox(initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
+        var autoSave = Preference.Checkbox(this, initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
         }
 
         fun apply() {
-            trySubmit()
+            if (isValid()) {
+                trySubmit()
+                modified = false
+            }
         }
 
         fun ok() {
@@ -173,18 +181,17 @@ object PreferenceDialog {
             return graphOutput.isValid() && ignoredPaths.isValid() && queryLimit.isValid() && autoSave.isValid()
         }
 
+
         override fun trySubmit() {
-            if (isValid()) {
-                appData.autoSave = autoSave.value
-                appData.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-                appData.limit = queryLimit.value
-                appData.graphOutput = graphOutput.value
-            }
+            appData.autoSave = autoSave.value
+            appData.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+            appData.limit = queryLimit.value
+            appData.graphOutput = graphOutput.value
         }
     }
 
     class PreferenceGroup(
-        override val name: String,
+        override val name: String = "",
         override var entries: List<PreferenceGroup> = emptyList(),
         val content: @Composable () -> Unit = {},
     ) : Navigable<PreferenceGroup> {
@@ -221,13 +228,13 @@ object PreferenceDialog {
             PreferenceGroup(TEXT_EDITOR, content = { EditorPreferences(state) }),
         )
 
-        val rootPreferenceGroup = PreferenceGroup("Root", content = { RootPreferences() })
+        val rootPreferenceGroup = PreferenceGroup(content = { RootPreferences() })
 
         for (group in preferenceGroups) {
             rootPreferenceGroup.addEntry(group)
         }
 
-        focusedPreferenceGroup = rootPreferenceGroup
+        focusedPreferenceGroup = preferenceGroups.first()
 
         val navState = rememberNavigatorState(
             container = rootPreferenceGroup,
@@ -334,7 +341,7 @@ object PreferenceDialog {
             state.cancel()
         }
         RowSpacer()
-        TextButton(APPLY) {
+        TextButton(APPLY, enabled = state.modified) {
             state.apply()
         }
         RowSpacer()
