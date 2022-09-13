@@ -56,7 +56,6 @@ import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Label.APPLY
 import com.vaticle.typedb.studio.state.common.util.Label.CANCEL
 import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_EDITOR_AUTOSAVE
@@ -85,12 +84,12 @@ object PreferenceDialog {
     private val appData = StudioState.appData.preferences
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
-    sealed interface Preference {
+    sealed interface PreferenceField {
         @Composable fun Display()
         fun isValid(): Boolean
 
         class TextInput(val state: PreferencesForm, initialValue: String, var label: String, private var placeholder: String,
-                        var validator: (String) -> Boolean = { true }) : Preference {
+                        var validator: (String) -> Boolean = { true }) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -115,7 +114,7 @@ object PreferenceDialog {
             }
         }
 
-        class Checkbox(val state: PreferencesForm, initialValue: Boolean, var label: String): Preference {
+        class Checkbox(val state: PreferencesForm, initialValue: Boolean, var label: String): PreferenceField {
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -141,17 +140,17 @@ object PreferenceDialog {
         var modified by mutableStateOf(false)
 
         // Graph Visualiser Preferences
-        var graphOutput = Preference.Checkbox(this, initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
+        var graphOutput = PreferenceField.Checkbox(this, initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
 
         // Project Manager Preferences
         val ignoredPathsString = appData.ignoredPaths.joinToString(",")
-        var ignoredPaths = Preference.TextInput(
+        var ignoredPaths = PreferenceField.TextInput(
             this, initialValue = ignoredPathsString,
             label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
         )
 
         // Query Runner Preferences
-        var queryLimit = Preference.TextInput(
+        var queryLimit = PreferenceField.TextInput(
             this,
             initialValue = appData.limit, 
             label = SET_QUERY_LIMIT, 
@@ -159,7 +158,7 @@ object PreferenceDialog {
         ) {/* validator = */ it.toLongOrNull() != null }
         
         // Text Editor Preferences
-        var autoSave = Preference.Checkbox(this, initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
+        var autoSave = PreferenceField.Checkbox(this, initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
