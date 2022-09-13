@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.CaptionSpacer
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
@@ -311,16 +313,12 @@ object PreferenceDialog {
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
         state.queryLimit.Display()
-        RowSpacer()
-        RowSpacer()
         Caption(QUERY_LIMIT_CAPTION)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
         state.graphOutput.Display()
-        RowSpacer()
-        RowSpacer()
         Caption(GRAPH_MATCH_CAPTION)
     }
 
@@ -354,6 +352,10 @@ object PreferenceDialog {
 
     @Composable
     private fun Caption(text: String) {
-        Text(text, textStyle = Theme.typography.code1)
+        CaptionSpacer()
+        Row {
+            RowSpacer()
+            Text(text, alpha = Color.FADED_OPACITY)
+        }
     }
 }
