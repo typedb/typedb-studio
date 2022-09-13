@@ -183,7 +183,7 @@ object DatabaseDialog {
             selected = StudioState.client.session.database,
             onExpand = { StudioState.client.refreshDatabaseList() },
             onSelection = { StudioState.client.tryOpenSession(it) },
-            placeholder = Label.SELECT_DATABASE,
+            placeholder = Label.DATABASE.lowercase(),
             enabled = enabled,
             modifier = modifier,
             focusReq = focusReq,

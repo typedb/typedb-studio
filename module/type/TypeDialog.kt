@@ -31,7 +31,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
-import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
@@ -200,7 +199,7 @@ object TypeDialog {
             Form.Dropdown(
                 selected = formState.supertypeState,
                 values = (listOf(rootTypeState) + rootTypeState.subtypes).map { it as T },
-                displayFn = { if (it.isRoot) italics(it.name) else AnnotatedString(it.name) },
+                displayFn = { AnnotatedString(it.name) },
                 onSelection = {
                     formState.supertypeState = it
                     if (it is TypeState.Attribute) formState.valueType = it.valueType
