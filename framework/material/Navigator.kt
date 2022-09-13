@@ -105,6 +105,7 @@ object Navigator {
     enum class Mode(val clicksToOpenItem: Int) {
         BROWSER(2),
         LIST(1),
+        MENU(1),
     }
 
     @OptIn(ExperimentalTime::class)

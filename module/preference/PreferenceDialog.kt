@@ -230,7 +230,7 @@ object PreferenceDialog {
         val navState = rememberNavigatorState(
             container = rootPreferenceGroup,
             title = MANAGE_PREFERENCES,
-            mode = Navigator.Mode.BROWSER,
+            mode = Navigator.Mode.MENU,
             initExpandDepth = 0,
             openFn = { focusedPreferenceGroup = it.item }
         )
