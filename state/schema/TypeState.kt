@@ -349,8 +349,8 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         )
 
         override fun tryDelete() = try {
-            purge()
             schemaMgr.openOrGetWriteTx()?.let { conceptType.asRemote(it).delete() } ?: Unit
+            purge()
             schemaMgr.onTypesUpdated.forEach { it() }
         } catch (e: Exception) {
             schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
