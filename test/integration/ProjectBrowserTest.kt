@@ -38,7 +38,7 @@ class ProjectBrowserTest: IntegrationTest() {
             val createdDirectoryName = "created"
 
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
             delayAndRecompose(composeRule)
@@ -56,7 +56,7 @@ class ProjectBrowserTest: IntegrationTest() {
             val createdFileName = "created"
 
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
             delayAndRecompose(composeRule)
@@ -74,7 +74,7 @@ class ProjectBrowserTest: IntegrationTest() {
             val renamedFileName = "renamed"
 
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
                 .tryRename(renamedFileName)
@@ -91,7 +91,7 @@ class ProjectBrowserTest: IntegrationTest() {
     fun deleteAFile() {
         runBlocking {
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryDelete()
             delayAndRecompose(composeRule)
@@ -107,7 +107,7 @@ class ProjectBrowserTest: IntegrationTest() {
     fun expandFolders() {
         runBlocking {
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
             delayAndRecompose(composeRule)
@@ -120,7 +120,7 @@ class ProjectBrowserTest: IntegrationTest() {
     fun expandThenCollapseFolders() {
         runBlocking {
             createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
             delayAndRecompose(composeRule)

@@ -42,7 +42,7 @@ class QuickstartTest: IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
                 writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
                 verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${QUERY_FILE_NAME}")

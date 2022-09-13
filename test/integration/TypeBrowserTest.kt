@@ -52,7 +52,7 @@ class TypeBrowserTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -72,7 +72,7 @@ class TypeBrowserTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
@@ -97,7 +97,7 @@ class TypeBrowserTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 

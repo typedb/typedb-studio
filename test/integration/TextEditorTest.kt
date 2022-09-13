@@ -55,7 +55,7 @@ class TextEditorTest: IntegrationTest() {
     fun makeAFileAndSaveIt() {
         runBlocking {
             val path = createData(source = SAMPLE_DATA_PATH, destination = testID)
-            openProject(composeRule, testID)
+            openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.PLUS)
             delayAndRecompose(composeRule)
@@ -76,7 +76,7 @@ class TextEditorTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -98,7 +98,7 @@ class TextEditorTest: IntegrationTest() {
         withTypeDB {typeDB ->  
             runBlocking {
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
@@ -113,7 +113,7 @@ class TextEditorTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 createData(source = TQL_DATA_PATH, destination = testID)
-                openProject(composeRule, testID)
+                openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 

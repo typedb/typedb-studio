@@ -101,8 +101,8 @@ object StudioActions {
         return destination.toPath()
     }
 
-    suspend fun openProject(composeRule: ComposeContentTestRule, project: String) {
-        val projectPath = File(File(project).absolutePath).toPath()
+    suspend fun openProject(composeRule: ComposeContentTestRule, projectDirectory: String) {
+        val projectPath = File(File(projectDirectory).absolutePath).toPath()
         StudioState.project.tryOpenProject(projectPath)
 
         delayAndRecompose(composeRule)
@@ -216,7 +216,7 @@ object StudioActions {
         }
     }
 
-    fun readQueryFileToString(queryFileName: String): String {
+    private fun readQueryFileToString(queryFileName: String): String {
         return Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
             .joinToString("\n")
     }
