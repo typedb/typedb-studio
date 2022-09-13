@@ -486,7 +486,7 @@ sealed class TypePage(
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.mayRefreshReadTx()
-            type.loadProperties()
+            type.loadPageProperties()
         }
     }
 

@@ -67,12 +67,13 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    abstract val conceptType: Type
     internal abstract val baseType: TypeQLToken.Type
     internal abstract val subtypesExplicit: List<TypeState>
-    abstract val subtypes: List<TypeState>
+    abstract val conceptType: Type
     abstract val supertype: TypeState?
+    abstract val subtypes: List<TypeState>
     abstract val supertypes: List<TypeState>
+    abstract val canBeDeleted: Boolean
 
     val isRoot get() = conceptType.isRoot
     var isAbstract: Boolean by mutableStateOf(false)
@@ -81,25 +82,41 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.map { it.attributeType }
     var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
     val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
+    val canBeAbstract get() = false // TODO
 
     abstract fun updateSubtypesExplicit(newSubtypes: List<TypeState>)
     abstract fun loadSupertypes()
-    abstract fun loadOtherProperties()
+    abstract fun loadOtherPageProperties()
+    abstract fun loadOtherContextMenuProperties()
     abstract override fun toString(): String
 
-    fun loadProperties() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+    fun loadPageProperties() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
         try {
             loadSupertypes()
             loadAbstract()
-            loadOtherProperties()
+            loadOtherPageProperties()
             loadSubtypesRecursivelyBlocking()
         } catch (e: TypeDBClientException) {
             schemaMgr.notification.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
         }
     }
 
-    private fun loadAbstract() {
-        schemaMgr.openOrGetReadTx()?.let { isAbstract = conceptType.asRemote(it).isAbstract }
+    fun loadContextMenuProperties() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        loadContextMenuPropertiesBlocking()
+    }
+
+    private fun loadContextMenuPropertiesBlocking() {
+        loadHasSubtypes()
+        loadOtherContextMenuProperties()
+    }
+
+    private fun loadAbstract() = schemaMgr.openOrGetReadTx()?.let {
+        isAbstract = conceptType.asRemote(it).isAbstract
+    }
+
+    private fun loadHasSubtypes() = schemaMgr.openOrGetReadTx()?.let {
+        // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
+        hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
     }
 
     fun loadSubtypesRecursively() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
@@ -122,9 +139,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
                 retained = subtypesExplicit.filter { !deleted.contains(it.conceptType) }
                 updateSubtypesExplicit((retained + added).sortedBy { it.conceptType.label.scopedName() })
             }
-            subtypesExplicit.onEach { // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
-                it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent
-            }
+            subtypesExplicit.onEach { it.loadContextMenuPropertiesBlocking() }
             hasSubtypes = subtypesExplicit.isNotEmpty()
         }
     }
@@ -158,13 +173,12 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        val canBeDeleted get() = false // TODO
-        val canBeAbstract get() = false // TODO
-
+        var hasInstances: Boolean by mutableStateOf(false)
         override val supertype: Thing? = null
         override val supertypes: List<Thing> = emptyList()
         override val subtypesExplicit: List<Thing> by mutableStateOf(listOf())
         override val subtypes: List<Thing> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
+        override val canBeDeleted get() = !hasSubtypes && !hasInstances
 
         override val name: String by mutableStateOf(name)
         override val info: String? = null
@@ -199,13 +213,13 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
             schemaMgr.pages.opened(this)
-            loadProperties()
+            loadPageProperties()
             return true
         }
 
         override fun activate() {
             schemaMgr.pages.active(this)
-            loadProperties()
+            loadPageProperties()
         }
 
         fun exportSyntax(onSuccess: (syntax: String) -> Unit) =
@@ -215,9 +229,18 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
                 }
             }
 
-        override fun loadOtherProperties() {
+        override fun loadOtherPageProperties() {
+            loadHasInstances()
             loadOwnsAttributeTypes()
             loadPlaysRoleTypes()
+        }
+
+        override fun loadOtherContextMenuProperties() {
+            loadHasInstances()
+        }
+
+        private fun loadHasInstances() = schemaMgr.openOrGetReadTx()?.let {
+            hasInstances = conceptType.asRemote(it).instances.findAny().isPresent
         }
 
         private fun loadOwnsAttributeTypes() {
@@ -326,8 +349,9 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         )
 
         override fun tryDelete() = try {
-            close()
-            // TODO
+            purge()
+            schemaMgr.openOrGetWriteTx()?.let { conceptType.asRemote(it).delete() } ?: Unit
+            schemaMgr.onTypesUpdated.forEach { it() }
         } catch (e: Exception) {
             schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
         }
@@ -427,8 +451,8 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        override fun loadOtherProperties() {
-            super.loadOtherProperties()
+        override fun loadOtherPageProperties() {
+            super.loadOtherPageProperties()
             loadOwnerTypes()
         }
 
@@ -511,8 +535,8 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        override fun loadOtherProperties() {
-            super.loadOtherProperties()
+        override fun loadOtherPageProperties() {
+            super.loadOtherPageProperties()
             loadRelatesRoleType()
         }
 
@@ -580,11 +604,13 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         private val name: String by mutableStateOf(conceptType.label.name())
         val scopedName get() = relationType.name + ":" + name
 
+        var hasPlayers: Boolean by mutableStateOf(false)
         override val baseType: TypeQLToken.Type = TypeQLToken.Type.ROLE
         override var subtypesExplicit: List<Role> by mutableStateOf(emptyList())
         override val subtypes: List<Role> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
         override var supertype: Role? by mutableStateOf(supertype)
         override var supertypes: List<Role> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
+        override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayers
 
         override fun updateSubtypesExplicit(newSubtypes: List<TypeState>) {
             subtypesExplicit = newSubtypes.map { it as Role }
@@ -602,7 +628,17 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        override fun loadOtherProperties() {}
+        override fun loadOtherPageProperties() {
+            loadHasPlayers()
+        }
+
+        override fun loadOtherContextMenuProperties() {
+            loadHasPlayers()
+        }
+
+        private fun loadHasPlayers() = schemaMgr.openOrGetReadTx()?.let {
+            hasPlayers = conceptType.asRemote(it).players.findAny().isPresent
+        }
 
         override fun toString(): String = "TypeState.Role: $conceptType"
     }
