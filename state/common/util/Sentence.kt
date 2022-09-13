@@ -80,7 +80,7 @@ object Sentence {
                 "Enabling snapshot in a 'read' transaction allows you to query for explanations of inferred concept answers. " +
                 "The transaction will be opened on the latest snapshot when the first query is ran. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
-    const val GRAPH_MATCH_CAPTION = "When running a match query, a graph output is displayed."
+    const val PREFERENCES_GRAPH_OUTPUT_CAPTION = "When running a match query, a graph output will be displayed."
     const val INTERACTIVE_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
                 "TypeDB server interactively. In 'script' mode, you have to declare the user, database, session, and " +
@@ -93,7 +93,8 @@ object Sentence {
     const val MANAGE_DATABASES_MESSAGE =
         "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION = "Duration to collect all answers of the query from the server."
-    const val QUERY_LIMIT_CAPTION = "This limits the number of results for a match query if no explicit limit is given."
+    const val PREFERENCES_QUERY_LIMIT_CAPTION = "When running a match query, the number of results will be limited to " +
+            "this value."
     const val QUERY_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect auxiliary information/concepts to display informative log & graph output."
     const val RENAME_DIRECTORY = "Rename the directory at %s."

@@ -69,8 +69,8 @@ import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.SELECT_PREFERENCE_GROUP
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.state.common.util.Sentence.GRAPH_MATCH_CAPTION
-import com.vaticle.typedb.studio.state.common.util.Sentence.QUERY_LIMIT_CAPTION
+import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
+import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
 
 object PreferenceDialog {
@@ -82,6 +82,7 @@ object PreferenceDialog {
     private val STATE_MIN_SIZE = 500.dp
 
     private val appData = StudioState.appData.preferences
+    private val preferenceMgr = StudioState.preference
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     sealed interface PreferenceField {
@@ -136,14 +137,14 @@ object PreferenceDialog {
 
     class PreferencesForm : State {
         private val QUERY_LIMIT_PLACEHOLDER = "1000"
-        private val IGNORED_PATHS_PLACEHOLDER = ".git, .typedb-studio"
+        private val IGNORED_PATHS_PLACEHOLDER = ".git"
         var modified by mutableStateOf(false)
 
         // Graph Visualiser Preferences
-        var graphOutput = PreferenceField.Checkbox(this, initialValue = appData.graphOutput, label = ENABLE_GRAPH_OUTPUT)
+        var graphOutput = PreferenceField.Checkbox(this, initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT)
 
         // Project Manager Preferences
-        val ignoredPathsString = appData.ignoredPaths.joinToString(",")
+        val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
         var ignoredPaths = PreferenceField.TextInput(
             this, initialValue = ignoredPathsString,
             label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
@@ -152,13 +153,13 @@ object PreferenceDialog {
         // Query Runner Preferences
         var queryLimit = PreferenceField.TextInput(
             this,
-            initialValue = appData.limit, 
+            initialValue = preferenceMgr.matchQueryLimit.toString(),
             label = SET_QUERY_LIMIT, 
             placeholder = QUERY_LIMIT_PLACEHOLDER
         ) {/* validator = */ it.toLongOrNull() != null }
         
         // Text Editor Preferences
-        var autoSave = PreferenceField.Checkbox(this, initialValue = appData.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
+        var autoSave = PreferenceField.Checkbox(this, initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
@@ -184,8 +185,8 @@ object PreferenceDialog {
         override fun trySubmit() {
             appData.autoSave = autoSave.value
             appData.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-            appData.limit = queryLimit.value
-            appData.graphOutput = graphOutput.value
+            appData.matchQueryLimit = queryLimit.value
+            appData.graphOutputEnabled = graphOutput.value
         }
     }
 
@@ -319,19 +320,19 @@ object PreferenceDialog {
     @Composable
     private fun QueryPreferences(state: PreferencesForm) {
         state.queryLimit.Display()
-        Caption(QUERY_LIMIT_CAPTION)
+        Caption(PREFERENCES_QUERY_LIMIT_CAPTION)
     }
 
     @Composable
     private fun GraphPreferences(state: PreferencesForm) {
         state.graphOutput.Display()
-        Caption(GRAPH_MATCH_CAPTION)
+        Caption(PREFERENCES_GRAPH_OUTPUT_CAPTION)
     }
 
     @Composable
     private fun PreferencesHeader(text: String) {
         Text(text, fontWeight = FontWeight.Bold)
-        SpacedHorizontalSeperator()
+        SpacedHorizontalSeparator()
     }
 
     @Composable
@@ -350,7 +351,7 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun SpacedHorizontalSeperator() {
+    private fun SpacedHorizontalSeparator() {
         ColumnSpacer()
         Separator.Horizontal()
         ColumnSpacer()

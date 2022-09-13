@@ -40,7 +40,6 @@ import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
-import com.vaticle.typeql.lang.pattern.Conjunction
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -220,7 +219,7 @@ class QueryRunner constructor(
     ) { if (query.modifiers().limit().isPresent) {
             transaction.query().match(query)
         } else {
-            val queryWithLimit = TypeQLMatch.Limited(query, preferenceMgr.queryLimit)
+            val queryWithLimit = TypeQLMatch.Limited(query, preferenceMgr.matchQueryLimit)
             transaction.query().match(queryWithLimit)
         }
      }

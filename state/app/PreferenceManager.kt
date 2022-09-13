@@ -25,16 +25,31 @@ class PreferenceManager(appData: DataManager) {
     private val preferences = appData.preferences
     val preferencesDialog = DialogManager.Base()
 
-    val autoSave: Boolean
-        get() = preferences.autoSave
+    var autoSave: Boolean = Defaults.autoSave
+        get() = preferences.autoSave ?: field
+        set(value) = run { preferences.autoSave = value }
 
-    val graphOutputEnabled: Boolean
-        get() = preferences.graphOutput
+    var graphOutputEnabled: Boolean = Defaults.graphOutputEnabled
+        get() = preferences.graphOutputEnabled ?: field
+        set(value) = run { preferences.graphOutputEnabled = value }
 
-    val queryLimit: Long
-        get() = preferences.limit.toLong()
+    var matchQueryLimit: Long = Defaults.matchQueryLimit
+        get() = preferences.matchQueryLimit?.toLong() ?: field
+        set(value) = run { preferences.matchQueryLimit = value.toString() }
+
+    var ignoredPaths: List<String> = Defaults.ignoredPaths
+        get() = preferences.ignoredPaths ?: field
+        set(value) = run { preferences.ignoredPaths = value}
 
     fun isIgnoredPath(path: Path): Boolean {
-        return preferences.ignoredPaths.contains(path.name)
+        val ignoredPaths = preferences.ignoredPaths ?: Defaults.ignoredPaths
+        return ignoredPaths.contains(path.name)
     }
+}
+
+private object Defaults {
+    val autoSave = true
+    val graphOutputEnabled = true
+    val matchQueryLimit = 1000L
+    val ignoredPaths = listOf(".git")
 }

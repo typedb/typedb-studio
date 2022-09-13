@@ -94,25 +94,25 @@ class DataManager {
     }
 
     inner class Preferences {
-        private val AUTO_SAVE_DEFAULT = "editor.autosave"
-        private val IGNORED_PATH_DEFAULT = "project.ignoredpaths"
-        private val QUERY_LIMIT = "query.limit"
+        private val AUTO_SAVE = "editor.autosave"
+        private val IGNORED_PATHS = "project.ignoredpaths"
+        private val MATCH_QUERY_LIMIT = "query.matchlimit"
         private val GRAPH_OUTPUT = "graph.output"
 
-        var autoSave: Boolean
-            get() = properties?.getProperty(AUTO_SAVE_DEFAULT)?.toBoolean() ?: true
-            set(value) = setProperty(AUTO_SAVE_DEFAULT, value.toString())
+        var autoSave: Boolean?
+            get() = properties?.getProperty(AUTO_SAVE)?.toBoolean()
+            set(value) = setProperty(AUTO_SAVE, value.toString())
 
-        var ignoredPaths: List<String>
-            get() = properties?.getProperty(IGNORED_PATH_DEFAULT)?.split(',') ?: ".git".split(',')
-            set(value) = setProperty(IGNORED_PATH_DEFAULT, value.joinToString())
+        var ignoredPaths: List<String>?
+            get() = properties?.getProperty(IGNORED_PATHS)?.split(',')
+            set(value) = setProperty(IGNORED_PATHS, value!!.joinToString())
 
-        var limit: String
-            get() = properties?.getProperty(QUERY_LIMIT) ?: "1000"
-            set(value) = setProperty(QUERY_LIMIT, value)
+        var matchQueryLimit: String?
+            get() = properties?.getProperty(MATCH_QUERY_LIMIT)
+            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!)
 
-        var graphOutput: Boolean
-            get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean() ?: true
+        var graphOutputEnabled: Boolean?
+            get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
     }
 
