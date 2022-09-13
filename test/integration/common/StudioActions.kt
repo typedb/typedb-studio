@@ -101,11 +101,11 @@ object StudioActions {
         return destination.toPath()
     }
 
-    fun openProject(composeRule: ComposeContentTestRule, project: String) {
+    suspend fun openProject(composeRule: ComposeContentTestRule, project: String) {
         val projectPath = File(File(project).absolutePath).toPath()
         StudioState.project.tryOpenProject(projectPath)
 
-        composeRule.waitForIdle()
+        delayAndRecompose(composeRule)
     }
 
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
