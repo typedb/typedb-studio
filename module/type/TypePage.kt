@@ -59,7 +59,7 @@ import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
 import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
@@ -208,7 +208,7 @@ sealed class TypePage(
     private fun LabelSection() {
         SectionRow {
             Form.TextBox(
-                text = ConceptSummaryText(typeState.conceptType),
+                text = ConceptDetailedLabel(typeState.conceptType),
                 leadingIcon = conceptIcon(typeState.conceptType)
             )
             EditButton { typeState.initiateRename() }
@@ -223,7 +223,7 @@ sealed class TypePage(
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = ConceptSummaryText(supertypeState.conceptType),
+                text = ConceptDetailedLabel(supertypeState.conceptType),
                 leadingIcon = conceptIcon(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
@@ -257,13 +257,13 @@ sealed class TypePage(
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(ConceptSummaryText(props.attributeType.conceptType)) {
+                        ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
                             props.attributeType.tryOpen()
                         }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(ConceptSummaryText(ot.conceptType)) { ot.tryOpen() }
+                            ClickableText(ConceptDetailedLabel(ot.conceptType)) { ot.tryOpen() }
                         }
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
@@ -305,7 +305,7 @@ sealed class TypePage(
                     placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadSupertypes() },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = attributeTypeList
@@ -317,7 +317,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -397,7 +397,7 @@ sealed class TypePage(
                     placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadSupertypes() },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = roleTypeList
@@ -409,7 +409,7 @@ sealed class TypePage(
                     selected = overriddenType,
                     placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -592,7 +592,7 @@ sealed class TypePage(
                         selected = overriddenType,
                         placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                         onSelection = { overriddenType = it },
-                        displayFn = { ConceptSummaryText(it.conceptType) },
+                        displayFn = { ConceptDetailedLabel(it.conceptType) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverridable,
                         values = overridableTypeList
@@ -643,7 +643,7 @@ sealed class TypePage(
                     modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
+                            ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)

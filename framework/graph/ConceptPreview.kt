@@ -39,7 +39,7 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
 import com.vaticle.typedb.studio.framework.material.Concept.attributeValueString
 import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.framework.material.Form
@@ -102,7 +102,7 @@ class ConceptPreview constructor(
         Row(verticalAlignment = Alignment.CenterVertically) {
             conceptIcon(type).let { Icon.Render(it.code, it.color()) }
             Form.ButtonSpacer()
-            Form.Text(ConceptSummaryText(type))
+            Form.Text(ConceptDetailedLabel(type))
         }
     }
 

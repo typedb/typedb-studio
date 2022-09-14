@@ -44,7 +44,7 @@ object Concept {
     }
 
     @Composable
-    fun ConceptSummaryText(
+    fun ConceptDetailedLabel(
         concept: com.vaticle.typedb.client.api.concept.Concept,
         baseFontColor: Color = Theme.studio.onPrimary
     ): AnnotatedString {

@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
-sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr: SchemaManager) {
+sealed class TypeState private constructor(name: String, val encoding: Encoding, val schemaMgr: SchemaManager) {
 
     enum class Encoding(val label: String) {
         ENTITY_TYPE(Label.ENTITY.lowercase()),
@@ -76,6 +76,7 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     abstract val canBeDeleted: Boolean
 
     val isRoot get() = conceptType.isRoot
+    var name: String by mutableStateOf(name)
     var isAbstract: Boolean by mutableStateOf(false)
     var hasSubtypes: Boolean by mutableStateOf(false)
     var ownsAttributeTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
@@ -84,7 +85,9 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
     val canBeAbstract get() = false // TODO
 
+    abstract fun updateConceptTypeAndName(label: String)
     abstract fun updateSubtypesExplicit(newSubtypes: List<TypeState>)
+    abstract fun removeSubtypeExplicit(subtype: TypeState)
     abstract fun loadSupertypes()
     abstract fun loadOtherPageProperties()
     abstract fun loadOtherContextMenuProperties()
@@ -144,6 +147,30 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         }
     }
 
+    fun initiateRename() = schemaMgr.renameTypeDialog.open(this)
+
+    fun tryRename(label: String) = try {
+        schemaMgr.openOrGetWriteTx()?.let {
+            conceptType.asRemote(it).setLabel(label)
+            schemaMgr.remove(this)
+            updateConceptTypeAndName(label)
+            schemaMgr.register(this)
+            schemaMgr.onTypesUpdated.forEach { it() }
+            schemaMgr.renameTypeDialog.close()
+        } ?: Unit
+    } catch (e: Exception) {
+        schemaMgr.notification.userError(
+            LOGGER, Message.Schema.FAILED_TO_RENAME_TYPE,
+            encoding.label, conceptType.label, label, e.message ?: UNKNOWN
+        )
+    }
+
+    open fun purge() {
+        supertype?.removeSubtypeExplicit(this)
+        schemaMgr.remove(this)
+        subtypesExplicit.forEach { it.purge() }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -155,12 +182,11 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         return conceptType.hashCode()
     }
 
-    sealed class Thing(
-        override val conceptType: ThingType,
+    sealed class Thing constructor(
         encoding: Encoding,
         name: String,
         schemaMgr: SchemaManager
-    ) : TypeState(encoding, schemaMgr), Navigable<Thing>, Pageable {
+    ) : TypeState(name, encoding, schemaMgr), Navigable<Thing>, Pageable {
 
         private class Callbacks {
 
@@ -174,13 +200,13 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         }
 
         var hasInstances: Boolean by mutableStateOf(false)
+        abstract override val conceptType: ThingType
         override val supertype: Thing? = null
         override val supertypes: List<Thing> = emptyList()
         override val subtypesExplicit: List<Thing> by mutableStateOf(listOf())
         override val subtypes: List<Thing> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
         override val canBeDeleted get() = !hasSubtypes && !hasInstances
 
-        override val name: String by mutableStateOf(name)
         override val info: String? = null
         override val isBulkExpandable: Boolean = true
         override val isExpandable: Boolean get() = hasSubtypes
@@ -316,12 +342,6 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        fun initiateRename() = schemaMgr.renameTypeDialog.open(this)
-
-        fun tryRename(label: String) {
-            // TODO
-        }
-
         fun initiateEditSupertype() = schemaMgr.editSuperTypeDialog.open(this)
 
         fun initiateEditAbstract() = schemaMgr.editAbstractDialog.open(this)
@@ -349,9 +369,11 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         )
 
         override fun tryDelete() = try {
-            schemaMgr.openOrGetWriteTx()?.let { conceptType.asRemote(it).delete() } ?: Unit
-            purge()
-            schemaMgr.onTypesUpdated.forEach { it() }
+            schemaMgr.openOrGetWriteTx()?.let {
+                conceptType.asRemote(it).delete()
+                purge()
+                schemaMgr.onTypesUpdated.forEach { it() }
+            } ?: Unit
         } catch (e: Exception) {
             schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
         }
@@ -364,41 +386,48 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
             }
         }
 
-        fun purge() {
+        override fun purge() {
             close()
-            schemaMgr.remove(this)
-            entries.forEach { it.purge() }
+            super.purge()
         }
     }
 
     class Entity internal constructor(
-        override val conceptType: EntityType,
+        conceptType: EntityType,
         supertype: Entity?,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, Encoding.ENTITY_TYPE, conceptType.label.name(), schemaMgr) {
+    ) : Thing(Encoding.ENTITY_TYPE, conceptType.label.name(), schemaMgr) {
 
         override val parent: Entity? get() = supertype
         override val baseType = TypeQLToken.Type.ENTITY
+        override var conceptType: EntityType by mutableStateOf(conceptType)
         override var supertype: Entity? by mutableStateOf(supertype)
         override var supertypes: List<Entity> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override var subtypesExplicit: List<Entity> by mutableStateOf(listOf())
         override val subtypes: List<Entity> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
 
+        override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
+            conceptType = it.concepts().getEntityType(label)!!
+            name = conceptType.label.name()
+        } ?: Unit
+
         override fun updateSubtypesExplicit(newSubtypes: List<TypeState>) {
             subtypesExplicit = newSubtypes.map { it as Entity }
         }
 
-        override fun loadSupertypes() {
-            schemaMgr.openOrGetReadTx()?.let { tx ->
-                val typeTx = conceptType.asRemote(tx)
-                supertype = typeTx.supertype?.let {
-                    if (it.isEntityType) schemaMgr.createTypeState(it.asEntityType()) else null
-                }
-                supertypes = typeTx.supertypes
-                    .filter { it.isEntityType && it != typeTx }
-                    .map { schemaMgr.createTypeState(it.asEntityType()) }.filter { it != null }.toList().filterNotNull()
-            }
+        override fun removeSubtypeExplicit(subtype: TypeState) {
+            subtypesExplicit = subtypesExplicit.filter { it != subtype as Entity }
         }
+
+        override fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
+            val typeTx = conceptType.asRemote(tx)
+            supertype = typeTx.supertype?.let {
+                if (it.isEntityType) schemaMgr.createTypeState(it.asEntityType()) else null
+            }
+            supertypes = typeTx.supertypes
+                .filter { it.isEntityType && it != typeTx }
+                .map { schemaMgr.createTypeState(it.asEntityType()) }.filter { it != null }.toList().filterNotNull()
+        } ?: Unit
 
         override fun initiateCreateSubtype(onSuccess: () -> Unit) = schemaMgr.createEntTypeDialog.open(this, onSuccess)
 
@@ -417,14 +446,15 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     }
 
     class Attribute internal constructor(
-        override val conceptType: AttributeType,
+        conceptType: AttributeType,
         supertype: Attribute?,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, Encoding.ATTRIBUTE_TYPE, conceptType.label.name(), schemaMgr) {
+    ) : Thing(Encoding.ATTRIBUTE_TYPE, conceptType.label.name(), schemaMgr) {
 
         override val info get() = valueType?.name?.lowercase()
         override val parent: Attribute? get() = supertype
         override val baseType = TypeQLToken.Type.ATTRIBUTE
+        override var conceptType: AttributeType by mutableStateOf(conceptType)
         override var supertype: Attribute? by mutableStateOf(supertype)
         override var supertypes: List<Attribute> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override var subtypesExplicit: List<Attribute> by mutableStateOf(listOf())
@@ -435,21 +465,28 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
         val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
 
+        override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
+            conceptType = it.concepts().getAttributeType(label)!!
+            name = conceptType.label.name()
+        } ?: Unit
+
         override fun updateSubtypesExplicit(newSubtypes: List<TypeState>) {
             subtypesExplicit = newSubtypes.map { it as Attribute }
         }
 
-        override fun loadSupertypes() {
-            schemaMgr.openOrGetReadTx()?.let { tx ->
-                val typeTx = conceptType.asRemote(tx)
-                supertype = typeTx.supertype?.let {
-                    if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null
-                }
-                supertypes = typeTx.supertypes
-                    .filter { it.isAttributeType && it != typeTx }
-                    .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList().filterNotNull()
-            }
+        override fun removeSubtypeExplicit(subtype: TypeState) {
+            subtypesExplicit = subtypesExplicit.filter { it != subtype as Attribute }
         }
+
+        override fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
+            val typeTx = conceptType.asRemote(tx)
+            supertype = typeTx.supertype?.let {
+                if (it.isAttributeType) schemaMgr.createTypeState(it.asAttributeType()) else null
+            }
+            supertypes = typeTx.supertypes
+                .filter { it.isAttributeType && it != typeTx }
+                .map { schemaMgr.createTypeState(it.asAttributeType()) }.toList().filterNotNull()
+        } ?: Unit
 
         override fun loadOtherPageProperties() {
             super.loadOtherPageProperties()
@@ -505,13 +542,14 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     }
 
     class Relation internal constructor(
-        override val conceptType: RelationType,
+        conceptType: RelationType,
         supertype: Relation?,
         schemaMgr: SchemaManager
-    ) : Thing(conceptType, Encoding.RELATION_TYPE, conceptType.label.name(), schemaMgr) {
+    ) : Thing(Encoding.RELATION_TYPE, conceptType.label.name(), schemaMgr) {
 
         override val parent: Relation? get() = supertype
         override val baseType = TypeQLToken.Type.RELATION
+        override var conceptType: RelationType by mutableStateOf(conceptType)
         override var supertype: Relation? by mutableStateOf(supertype)
         override var supertypes: List<Relation> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override var subtypesExplicit: List<Relation> by mutableStateOf(listOf())
@@ -519,21 +557,28 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
         var relatesRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
         val relatesRoleTypes: List<Role> get() = relatesRoleTypeProperties.map { it.roleType }
 
+        override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
+            conceptType = it.concepts().getRelationType(label)!!
+            name = conceptType.label.name()
+        } ?: Unit
+
         override fun updateSubtypesExplicit(newSubtypes: List<TypeState>) {
             subtypesExplicit = newSubtypes.map { it as Relation }
         }
 
-        override fun loadSupertypes() {
-            schemaMgr.openOrGetReadTx()?.let { tx ->
-                val typeTx = conceptType.asRemote(tx)
-                supertype = typeTx.supertype?.let {
-                    if (it.isRelationType) schemaMgr.createTypeState(it.asRelationType()) else null
-                }
-                supertypes = typeTx.supertypes
-                    .filter { it.isRelationType && it != typeTx }
-                    .map { schemaMgr.createTypeState(it.asRelationType()) }.toList().filterNotNull()
-            }
+        override fun removeSubtypeExplicit(subtype: TypeState) {
+            subtypesExplicit = subtypesExplicit.filter { it != subtype as Relation }
         }
+
+        override fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
+            val typeTx = conceptType.asRemote(tx)
+            supertype = typeTx.supertype?.let {
+                if (it.isRelationType) schemaMgr.createTypeState(it.asRelationType()) else null
+            }
+            supertypes = typeTx.supertypes
+                .filter { it.isRelationType && it != typeTx }
+                .map { schemaMgr.createTypeState(it.asRelationType()) }.toList().filterNotNull()
+        } ?: Unit
 
         override fun loadOtherPageProperties() {
             super.loadOtherPageProperties()
@@ -595,38 +640,45 @@ sealed class TypeState private constructor(val encoding: Encoding, val schemaMgr
     }
 
     class Role constructor(
-        override val conceptType: RoleType,
+        conceptType: RoleType,
         val relationType: Relation,
         supertype: Role?,
         schemaMgr: SchemaManager
-    ) : TypeState(Encoding.ROLE_TYPE, schemaMgr) {
+    ) : TypeState(conceptType.label.name(), Encoding.ROLE_TYPE, schemaMgr) {
 
-        private val name: String by mutableStateOf(conceptType.label.name())
         val scopedName get() = relationType.name + ":" + name
 
         var hasPlayers: Boolean by mutableStateOf(false)
         override val baseType: TypeQLToken.Type = TypeQLToken.Type.ROLE
+        override var conceptType: RoleType by mutableStateOf(conceptType)
         override var subtypesExplicit: List<Role> by mutableStateOf(emptyList())
         override val subtypes: List<Role> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
         override var supertype: Role? by mutableStateOf(supertype)
         override var supertypes: List<Role> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayers
 
+        override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
+            conceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
+            name = conceptType.label.name()
+        } ?: Unit
+
         override fun updateSubtypesExplicit(newSubtypes: List<TypeState>) {
             subtypesExplicit = newSubtypes.map { it as Role }
         }
 
-        override fun loadSupertypes() {
-            schemaMgr.openOrGetReadTx()?.let { tx ->
-                val typeTx = conceptType.asRemote(tx)
-                supertype = typeTx.supertype?.let {
-                    if (it.isRoleType) schemaMgr.createTypeState(it.asRoleType()) else null
-                }
-                supertypes = typeTx.supertypes
-                    .filter { it.isRoleType && it != typeTx }
-                    .map { schemaMgr.createTypeState(it.asRoleType()) }.toList().filterNotNull()
-            }
+        override fun removeSubtypeExplicit(subtype: TypeState) {
+            subtypesExplicit = subtypesExplicit.filter { it != subtype as Role }
         }
+
+        override fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
+            val typeTx = conceptType.asRemote(tx)
+            supertype = typeTx.supertype?.let {
+                if (it.isRoleType) schemaMgr.createTypeState(it.asRoleType()) else null
+            }
+            supertypes = typeTx.supertypes
+                .filter { it.isRoleType && it != typeTx }
+                .map { schemaMgr.createTypeState(it.asRoleType()) }.toList().filterNotNull()
+        } ?: Unit
 
         override fun loadOtherPageProperties() {
             loadHasPlayers()
