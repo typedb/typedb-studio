@@ -224,7 +224,7 @@ object PreferenceDialog {
         val preferenceGroups = listOf(
             PreferenceGroup(GRAPH_VISUALISER, content = { GraphPreferences(state) }),
             PreferenceGroup(PROJECT_MANAGER, content = { ProjectPreferences(state) }),
-            PreferenceGroup(QUERY_RUNNER, content = { QueryPreferences(state)}),
+            PreferenceGroup(QUERY_RUNNER, content = { QueryPreferences(state) }),
             PreferenceGroup(TEXT_EDITOR, content = { EditorPreferences(state) }),
         )
 

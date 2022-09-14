@@ -45,11 +45,11 @@ class PreferenceManager(appData: DataManager) {
         val ignoredPaths = preferences.ignoredPaths ?: Defaults.ignoredPaths
         return ignoredPaths.contains(path.name)
     }
-}
 
-private object Defaults {
-    val autoSave = true
-    val graphOutputEnabled = true
-    val matchQueryLimit = 1000L
-    val ignoredPaths = listOf(".git")
+    private object Defaults {
+        val autoSave = true
+        val graphOutputEnabled = true
+        val matchQueryLimit = 1000L
+        val ignoredPaths = listOf(".git")
+    }
 }
