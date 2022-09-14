@@ -49,11 +49,6 @@ import kotlin.test.fail
 import kotlinx.coroutines.delay
 
 object StudioActions {
-    private const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
-    private const val FAIL_CREATE_DATABASE = "Failed to create the database."
-    private const val FAIL_DATA_WRITE = "Failed to write the data."
-    private const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
-
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
     suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
         delay(timeMillis.toLong())
@@ -116,7 +111,7 @@ object StudioActions {
         StudioState.client.tryConnectToTypeDB(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
+        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB) { StudioState.client.isConnected }
 
         assertNodeExistsWithText(composeRule, text = address)
     }
@@ -134,7 +129,7 @@ object StudioActions {
 
         waitForConditionAndRecompose(
             context = composeRule,
-            failMessage = FAIL_CREATE_DATABASE,
+            failMessage = Errors.CREATE_DATABASE,
             beforeRetry = { StudioState.client.refreshDatabaseList() }
         ) { StudioState.client.databaseList.contains(dbName) }
     }
@@ -162,7 +157,7 @@ object StudioActions {
         clickIcon(composeRule, Icon.Code.CHECK)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -185,7 +180,7 @@ object StudioActions {
         clickIcon(composeRule, Icon.Code.CHECK)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -219,5 +214,12 @@ object StudioActions {
     private fun readQueryFileToString(queryFileName: String): String {
         return Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
             .joinToString("\n")
+    }
+
+    object Errors {
+        private const val CONNECT_TYPEDB = "Failed to connect to TypeDB."
+        private const val CREATE_DATABASE = "Failed to create the database."
+        private const val DATA_WRITE = "Failed to write the data."
+        private const val SCHEMA_WRITE = "Failed to write the schema."
     }
 }
