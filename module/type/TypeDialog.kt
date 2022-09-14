@@ -68,24 +68,6 @@ object TypeDialog {
         }
     }
 
-    private class RenameTypeFormState constructor(
-        initField: String,
-        val isValid: ((String) -> Boolean)? = null,
-        val onCancel: () -> Unit,
-        val onSubmit: (String) -> Unit,
-    ) : Form.State {
-
-        var label: String by mutableStateOf(initField)
-
-        override fun cancel() = onCancel()
-        override fun isValid(): Boolean = label.isNotEmpty() && isValid?.invoke(label) ?: true
-
-        override fun trySubmit() {
-            assert(label.isNotBlank())
-            onSubmit(label)
-        }
-    }
-
     private val DIALOG_WIDTH = 500.dp
     private val DIALOG_HEIGHT = 300.dp
 
@@ -157,18 +139,17 @@ object TypeDialog {
     private fun RenameTypeDialog() {
         val dialogState = StudioState.schema.renameTypeDialog
         val typeState = dialogState.typeState!!
-        val message = Sentence.RENAME_TYPE.format(typeState.encoding.label, typeState.name)
         val formState = remember {
-            RenameTypeFormState(
-                initField = typeState.name,
-                isValid = { it != typeState.name },
-                onCancel = { dialogState.close() },
-                onSubmit = { typeState.tryRename(it) }
-            )
+            object : Form.State {
+                var label: String by mutableStateOf(typeState.name)
+                override fun cancel() = dialogState.close()
+                override fun isValid() = label.isNotEmpty() && label != typeState.name
+                override fun trySubmit() = typeState.tryRename(label)
+            }
         }
         Dialog.Layout(dialogState, Label.RENAME_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.RENAME) {
-                Form.Text(value = message, softWrap = true)
+                Form.Text(Sentence.RENAME_TYPE.format(typeState.encoding.label, typeState.name), softWrap = true)
                 LabelField(formState.label) { formState.label = it }
             }
         }
