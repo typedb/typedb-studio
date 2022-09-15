@@ -33,7 +33,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -90,13 +89,16 @@ object PreferenceDialog {
         fun isValid(): Boolean
         @Composable fun Display()
 
-        @Composable fun Field(fieldContent: @Composable () -> Unit) {
+        @Composable
+        fun FieldLayout(fieldContent: @Composable () -> Unit) {
             Field(label) {
                 fieldContent()
             }
             Caption()
         }
-        @Composable fun Caption() {
+
+        @Composable
+        fun Caption() {
             if (caption.isPresent) {
                 Caption(caption.get())
             }
@@ -116,7 +118,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Field @Composable {
+                FieldLayout @Composable {
                     var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
                         if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
                     }
@@ -133,11 +135,12 @@ object PreferenceDialog {
         class Checkbox(val state: PreferencesForm,
                        initialValue: Boolean, override var label: String, override val caption: Optional<String> = Optional.empty(),
                         ): PreferenceField {
+
             var value by mutableStateOf(initialValue)
 
             @Composable
             override fun Display() {
-                Field @Composable {
+                FieldLayout @Composable {
                     Checkbox(
                         value = value,
                         onChange = { value = it; state.modified = true }
@@ -152,11 +155,12 @@ object PreferenceDialog {
 
         class Dropdown<T>(val state: PreferencesForm, val values: List<Any>, override val label: String,
                           override val caption: Optional<String> = Optional.empty()): PreferenceField {
+
             var selected by mutableStateOf(values.first())
 
             @Composable
             override fun Display() {
-                Field @Composable {
+                FieldLayout @Composable {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
@@ -177,8 +181,10 @@ object PreferenceDialog {
         var modified by mutableStateOf(false)
 
         // Graph Visualiser Preferences
-        var graphOutput = PreferenceField.Checkbox(this,
-            initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT, caption = Optional.of(PREFERENCES_GRAPH_OUTPUT_CAPTION))
+        var graphOutput = PreferenceField.Checkbox(
+            this, initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
+            caption = Optional.of(PREFERENCES_GRAPH_OUTPUT_CAPTION)
+        )
 
         // Project Manager Preferences
         private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
@@ -197,7 +203,9 @@ object PreferenceDialog {
         ) {/* validator = */ it.toLongOrNull() != null }
         
         // Text Editor Preferences
-        var autoSave = PreferenceField.Checkbox(this, initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
+        var autoSave = PreferenceField.Checkbox(
+            this, initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
+        )
 
         val preferenceGroups = listOf(
             PreferenceGroup(GRAPH_VISUALISER, preferences = listOf(graphOutput)),
@@ -255,15 +263,6 @@ object PreferenceDialog {
             return this.name.compareTo(other.name);
         }
 
-        private fun addParent(parent: PreferenceGroup) {
-            this.parent = parent
-        }
-
-        fun addEntry(entry: PreferenceGroup) {
-            this.entries = entries + entry
-            entry.addParent(this)
-        }
-
         fun isValid(): Boolean {
             return if (entries.isEmpty()) {
                 preferences.fold(true) { acc, preferenceField -> acc && preferenceField.isValid() }
@@ -287,7 +286,6 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-
         focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
 
         val navState = rememberNavigatorState(
@@ -319,15 +317,19 @@ object PreferenceDialog {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     separator = Frame.SeparatorArgs(Separator.WEIGHT),
-                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".primary",
-                        initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE) {
+                    Frame.Pane(
+                        id = PreferenceDialog.javaClass.canonicalName + ".primary",
+                        initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
+                    ) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             ColumnSpacer()
                             NavigatorLayout(state)
                         }
                     },
-                    Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary",
-                        initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
+                    Frame.Pane(
+                        id = PreferenceDialog.javaClass.canonicalName + ".secondary",
+                        initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE
+                    ) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             focusedPreferenceGroup.Display()
                         }
