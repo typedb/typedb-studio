@@ -115,11 +115,6 @@ object Navigator {
         }
     }
 
-//    enum class Mode(val clicksToOpenItem: Int) {
-//        BROWSER(2),
-//        LIST(1)
-//    }
-
     @OptIn(ExperimentalTime::class)
     private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
     val ITEM_HEIGHT = 26.dp
