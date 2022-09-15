@@ -186,8 +186,6 @@ object Label {
     const val SELECT_OVERRIDDEN_TYPE_OPTIONAL = "Select Overridden Type (Optional)"
     const val SELECT_PREFERENCE_GROUP = "Select a preference group from the menu on the left."
     const val SELECT_ROLE_TYPE = "Select Role Type"
-    const val SELECT_DATABASE = "Select Database"
-    const val ROLE_TYPE = "Role Type"
     const val SERVER = "Server"
     const val SESSION_TYPE = "Session Type"
     const val SET_QUERY_LIMIT = "Default Match Query Limit"
