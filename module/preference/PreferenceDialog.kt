@@ -264,11 +264,8 @@ object PreferenceDialog {
         }
 
         fun isValid(): Boolean {
-            return if (entries.isEmpty()) {
-                preferences.fold(true) { acc, preferenceField -> acc && preferenceField.isValid() }
-            } else {
-                entries.fold(true) { acc, preferenceGroup ->  acc && preferenceGroup.isValid()}
-            }
+            return preferences.fold(true) { acc, preferenceField -> acc && preferenceField.isValid() } &&
+                entries.fold(true) { acc, preferenceGroup ->  acc && preferenceGroup.isValid() }
         }
 
         fun submit() {
