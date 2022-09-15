@@ -199,13 +199,13 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             }
         }
 
-        var hasInstances: Boolean by mutableStateOf(false)
+        var hasInstancesExplicit: Boolean by mutableStateOf(false)
         abstract override val conceptType: ThingType
         override val supertype: Thing? = null
         override val supertypes: List<Thing> = emptyList()
         override val subtypesExplicit: List<Thing> by mutableStateOf(listOf())
         override val subtypes: List<Thing> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
-        override val canBeDeleted get() = !hasSubtypes && !hasInstances
+        override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
 
         override val info: String? = null
         override val isBulkExpandable: Boolean = true
@@ -256,17 +256,17 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             }
 
         override fun loadOtherPageProperties() {
-            loadHasInstances()
+            loadHasInstancesExplicit()
             loadOwnsAttributeTypes()
             loadPlaysRoleTypes()
         }
 
         override fun loadOtherContextMenuProperties() {
-            loadHasInstances()
+            loadHasInstancesExplicit()
         }
 
-        private fun loadHasInstances() = schemaMgr.openOrGetReadTx()?.let {
-            hasInstances = conceptType.asRemote(it).instances.findAny().isPresent
+        private fun loadHasInstancesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+            hasInstancesExplicit = conceptType.asRemote(it).instancesExplicit.findAny().isPresent
         }
 
         private fun loadOwnsAttributeTypes() {

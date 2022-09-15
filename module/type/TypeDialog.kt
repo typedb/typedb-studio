@@ -77,7 +77,7 @@ object TypeDialog {
         if (StudioState.schema.createRelTypeDialog.isOpen) CreateRelationTypeDialog()
         if (StudioState.schema.createAttTypeDialog.isOpen) CreateAttributeTypeDialog()
         if (StudioState.schema.renameTypeDialog.isOpen) RenameTypeDialog()
-        if (StudioState.schema.editSuperTypeDialog.isOpen) ChangeSupertypeDialog()
+        if (StudioState.schema.editSuperTypeDialog.isOpen) EditSupertypeDialog()
     }
 
     private fun createThingTypeMessage(supertypeState: TypeState.Thing, name: String) = when (supertypeState.name) {
@@ -157,7 +157,7 @@ object TypeDialog {
 
 
     @Composable
-    private fun ChangeSupertypeDialog() {
+    private fun EditSupertypeDialog() {
         // TODO
     }
 
