@@ -66,11 +66,10 @@ import com.vaticle.typedb.studio.state.common.util.Label.OK
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
-import com.vaticle.typedb.studio.state.common.util.Label.SELECT_PREFERENCE_GROUP
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
-import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_QUERY_LIMIT_CAPTION
+import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.util.Optional
 
@@ -82,18 +81,30 @@ object PreferenceDialog {
     private val STATE_INIT_SIZE = 600.dp
     private val STATE_MIN_SIZE = 500.dp
 
-    private val appData = StudioState.appData.preferences
     private val preferenceMgr = StudioState.preference
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     sealed interface PreferenceField {
         val label: String
         val caption: Optional<String>
-        @Composable fun Display()
         fun isValid(): Boolean
+        @Composable fun Display()
+
+        @Composable fun Field(fieldContent: @Composable () -> Unit) {
+            Field(label) {
+                fieldContent()
+            }
+            Caption()
+        }
+        @Composable fun Caption() {
+            if (caption.isPresent) {
+                Caption(caption.get())
+            }
+        }
 
         class TextInput(val state: PreferencesForm,
-                        initialValue: String, override val label: String, override val caption: Optional<String> = Optional.empty(),
+                        initialValue: String,
+                        override val label: String, override val caption: Optional<String> = Optional.empty(),
                         private var placeholder: String,
                         var validator: (String) -> Boolean = { true }) : PreferenceField {
 
@@ -105,11 +116,10 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
-                    if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
-                }
-
-                Field(label) {
+                Field @Composable {
+                    var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
+                        if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
+                    }
                     TextInput(
                         value = value,
                         placeholder = placeholder,
@@ -127,7 +137,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Field(label) {
+                Field @Composable {
                     Checkbox(
                         value = value,
                         onChange = { value = it; state.modified = true }
@@ -143,9 +153,10 @@ object PreferenceDialog {
         class Dropdown<T>(val state: PreferencesForm, val values: List<Any>, override val label: String,
                           override val caption: Optional<String> = Optional.empty()): PreferenceField {
             var selected by mutableStateOf(values.first())
+
             @Composable
             override fun Display() {
-                Field(label) {
+                Field @Composable {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
@@ -160,33 +171,42 @@ object PreferenceDialog {
         }
     }
 
-
     class PreferencesForm : State {
         private val QUERY_LIMIT_PLACEHOLDER = "1000"
         private val IGNORED_PATHS_PLACEHOLDER = ".git"
         var modified by mutableStateOf(false)
 
         // Graph Visualiser Preferences
-        var graphOutput = PreferenceField.Checkbox(this, initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT)
+        var graphOutput = PreferenceField.Checkbox(this,
+            initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT, caption = Optional.of(PREFERENCES_GRAPH_OUTPUT_CAPTION))
+
         // Project Manager Preferences
-        val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
+        private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
         var ignoredPaths = PreferenceField.TextInput(
             this, initialValue = ignoredPathsString,
             label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
         )
 
         // Query Runner Preferences
-        var queryLimit = PreferenceField.TextInput(
+        var matchQueryLimit = PreferenceField.TextInput(
             this,
             initialValue = preferenceMgr.matchQueryLimit.toString(),
             label = SET_QUERY_LIMIT, 
-            placeholder = QUERY_LIMIT_PLACEHOLDER
+            placeholder = QUERY_LIMIT_PLACEHOLDER,
+            caption = Optional.of(PREFERENCES_MATCH_QUERY_LIMIT_CAPTION)
         ) {/* validator = */ it.toLongOrNull() != null }
         
         // Text Editor Preferences
         var autoSave = PreferenceField.Checkbox(this, initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
 
-        val x: PreferenceGroup = PreferenceGroup("Graph Visualiser", preferences = listOf(graphOutput, autoSave))
+        val preferenceGroups = listOf(
+            PreferenceGroup(GRAPH_VISUALISER, preferences = listOf(graphOutput)),
+            PreferenceGroup(PROJECT_MANAGER, preferences = listOf(ignoredPaths)),
+            PreferenceGroup(QUERY_RUNNER, preferences = listOf(matchQueryLimit)),
+            PreferenceGroup(TEXT_EDITOR, preferences = listOf(autoSave)),
+        )
+
+        val rootPreferenceGroup = PreferenceGroup(entries = preferenceGroups)
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
@@ -205,22 +225,22 @@ object PreferenceDialog {
         }
 
         override fun isValid(): Boolean {
-            return graphOutput.isValid() && ignoredPaths.isValid() && queryLimit.isValid() && autoSave.isValid()
+            return rootPreferenceGroup.isValid()
         }
 
 
         override fun trySubmit() {
-            appData.autoSave = autoSave.value
-            appData.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-            appData.matchQueryLimit = queryLimit.value
-            appData.graphOutputEnabled = graphOutput.value
+            preferenceMgr.autoSave = autoSave.value
+            preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+            preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
+            preferenceMgr.graphOutputEnabled = graphOutput.value
         }
     }
 
     class PreferenceGroup(
         override val name: String = "",
         override var entries: List<PreferenceGroup> = emptyList(),
-        preferences: List<PreferenceField> = emptyList(),
+        var preferences: List<PreferenceField> = emptyList(),
         val content: @Composable () -> Unit = {},
     ) : Navigable<PreferenceGroup> {
 
@@ -228,8 +248,6 @@ object PreferenceDialog {
         override val info: String? = null
         override val isExpandable = entries.isNotEmpty()
         override val isBulkExpandable = false
-        val isRoot: Boolean
-            get() = parent == null
 
         override fun reloadEntries() {}
 
@@ -245,27 +263,35 @@ object PreferenceDialog {
             this.entries = entries + entry
             entry.addParent(this)
         }
+
+        fun isValid(): Boolean {
+            return if (entries.isEmpty()) {
+                preferences.fold(true) { acc, preferenceField -> acc && preferenceField.isValid() }
+            } else {
+                entries.fold(true) { acc, preferenceGroup ->  acc && preferenceGroup.isValid()}
+            }
+        }
+
+        fun submit() {
+
+        }
+
+        @Composable
+        fun Display() {
+            PreferencesHeader(name)
+            for (preference in preferences) {
+                preference.Display()
+            }
+        }
     }
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-        val preferenceGroups = listOf(
-            PreferenceGroup(GRAPH_VISUALISER, content = { GraphPreferences(state) }),
-            PreferenceGroup(PROJECT_MANAGER, content = { ProjectPreferences(state) }),
-            PreferenceGroup(QUERY_RUNNER, content = { QueryPreferences(state) }),
-            PreferenceGroup(TEXT_EDITOR, content = { EditorPreferences(state) }),
-        )
 
-        val rootPreferenceGroup = PreferenceGroup(content = { RootPreferences() })
-
-        for (group in preferenceGroups) {
-            rootPreferenceGroup.addEntry(group)
-        }
-
-        focusedPreferenceGroup = preferenceGroups.first()
+        focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
 
         val navState = rememberNavigatorState(
-            container = rootPreferenceGroup,
+            container = state.rootPreferenceGroup,
             title = MANAGE_PREFERENCES,
             mode = Navigator.Mode.MENU,
             initExpandDepth = 0,
@@ -303,10 +329,7 @@ object PreferenceDialog {
                     Frame.Pane(id = PreferenceDialog.javaClass.canonicalName + ".secondary",
                         initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            if (!focusedPreferenceGroup.isRoot) {
-                                PreferencesHeader(focusedPreferenceGroup.name)
-                            }
-                            focusedPreferenceGroup.content()
+                            focusedPreferenceGroup.Display()
                         }
                     }
                 )
@@ -316,45 +339,12 @@ object PreferenceDialog {
                     Column() {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             ChangeFormButtons(state)
-                            RowSpacer()
-                            RowSpacer()
                         }
                     }
                 }
                 ColumnSpacer()
             }
         }
-    }
-
-    @Composable
-    private fun RootPreferences() {
-        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center) {
-            Text(SELECT_PREFERENCE_GROUP)
-        }
-
-    }
-
-    @Composable
-    private fun ProjectPreferences(state: PreferencesForm) {
-        state.ignoredPaths.Display()
-    }
-
-    @Composable
-    private fun EditorPreferences(state: PreferencesForm) {
-        state.autoSave.Display()
-    }
-
-    @Composable
-    private fun QueryPreferences(state: PreferencesForm) {
-        state.queryLimit.Display()
-        Caption(PREFERENCES_QUERY_LIMIT_CAPTION)
-    }
-
-    @Composable
-    private fun GraphPreferences(state: PreferencesForm) {
-        state.graphOutput.Display()
-        Caption(PREFERENCES_GRAPH_OUTPUT_CAPTION)
     }
 
     @Composable
@@ -376,6 +366,8 @@ object PreferenceDialog {
         TextButton(OK) {
             state.ok()
         }
+        RowSpacer()
+        RowSpacer()
     }
 
     @Composable
