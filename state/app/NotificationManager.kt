@@ -87,21 +87,21 @@ class NotificationManager {
         }
     }
 
-    fun userError(logger: KLogger, message: Message, vararg params: Any) {
-        userNotification(logger, Notification.Type.ERROR, message.code(), stringOf(message, *params))
-    }
+    fun userError(logger: KLogger, message: Message, vararg params: Any) = userNotification(
+        logger, Notification.Type.ERROR, message.code(), stringOf(message, *params)
+    )
 
-    fun userWarning(logger: KLogger, message: Message, vararg params: Any) {
-        userNotification(logger, Notification.Type.WARNING, message.code(), stringOf(message, *params))
-    }
+    fun userWarning(logger: KLogger, message: Message, vararg params: Any) = userNotification(
+        logger, Notification.Type.WARNING, message.code(), stringOf(message, *params)
+    )
 
-    fun systemWarning(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
-        systemNotification(logger, cause, Notification.Type.WARNING, message.code(), stringOf(message, *params))
-    }
+    fun systemWarning(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) = systemNotification(
+        logger, cause, Notification.Type.WARNING, message.code(), stringOf(message, *params)
+    )
 
-    fun systemError(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) {
-        systemNotification(logger, cause, Notification.Type.ERROR, message.code(), stringOf(message, *params))
-    }
+    fun systemError(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) = systemNotification(
+        logger, cause, Notification.Type.ERROR, message.code(), stringOf(message, *params)
+    )
 
     fun dismiss(notification: Notification) {
         queue -= notification
