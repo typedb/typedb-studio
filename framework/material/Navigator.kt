@@ -102,16 +102,16 @@ import mu.KotlinLogging
 
 object Navigator {
 
-    sealed interface Mode {
+    sealed interface Behaviour {
         val clicksToOpenItem: Int
-        val keepFocus: Boolean
+        val itemsAreFocusable: Boolean
 
-        data class Browser(override val clicksToOpenItem: Int = 2): Mode {
-            override val keepFocus = true
+        class Browser(override val clicksToOpenItem: Int = 2): Behaviour {
+            override val itemsAreFocusable = true
         }
 
-        data class List(override val clicksToOpenItem: Int = 1): Mode {
-            override val keepFocus = false
+        class Menu(override val clicksToOpenItem: Int = 1): Behaviour {
+            override val itemsAreFocusable = false
         }
     }
 
@@ -234,7 +234,7 @@ object Navigator {
     class NavigatorState<T : Navigable<T>> constructor(
         container: Navigable<T>,
         private val title: String,
-        internal val mode: Mode,
+        internal val behaviour: Behaviour,
         private val initExpandDepth: Int = 0,
         private val liveUpdate: Boolean = false,
         private var coroutineScope: CoroutineScope,
@@ -341,7 +341,7 @@ object Navigator {
 
         internal fun open(item: ItemState<T>) {
             openFn(item)
-            if (!mode.keepFocus) hovered = null
+            if (!behaviour.itemsAreFocusable) hovered = null
         }
 
         internal fun maySelectNext(item: ItemState<T>) {
@@ -357,7 +357,7 @@ object Navigator {
         }
 
         internal fun maySelect(item: ItemState<T>) {
-            if (!mode.keepFocus) return
+            if (!behaviour.itemsAreFocusable) return
             selected = item
             item.focusReq.requestFocus()
             mayScrollToAndFocusOnSelected()
@@ -390,7 +390,7 @@ object Navigator {
 
     @Composable
     fun <T : Navigable<T>> rememberNavigatorState(
-        container: Navigable<T>, title: String, mode: Mode,
+        container: Navigable<T>, title: String, behaviour: Behaviour,
         initExpandDepth: Int = 0, liveUpdate: Boolean = false,
         openFn: (ItemState<T>) -> Unit,
         contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
@@ -401,7 +401,7 @@ object Navigator {
             NavigatorState(
                 container = container,
                 title = title,
-                mode = mode,
+                behaviour = behaviour,
                 initExpandDepth = initExpandDepth,
                 liveUpdate = liveUpdate,
                 coroutineScope = coroutineScope,
@@ -461,7 +461,7 @@ object Navigator {
 
         fun mayOpenItem(event: MouseEvent) {
             val isLeftClick = event.button == 1
-            val isOpenClickCount = event.clickCount == state.mode.clicksToOpenItem
+            val isOpenClickCount = event.clickCount == state.behaviour.clicksToOpenItem
             val isHoverExpandButton = item.isHoverExpandButton(event.x, event.y)
             if (isLeftClick && isOpenClickCount && !isHoverExpandButton) state.open(item)
         }

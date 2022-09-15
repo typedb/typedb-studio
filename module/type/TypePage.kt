@@ -98,7 +98,7 @@ sealed class TypePage(
     private val subtypesNavState = Navigator.NavigatorState(
         container = type,
         title = Label.SUBTYPES_OF + " " + type.name,
-        mode = Navigator.Mode.List(),
+        mode = Navigator.Mode.Menu(),
         initExpandDepth = 4,
         coroutineScope = coroutineScope
     ) { it.item.tryOpen() }
