@@ -288,7 +288,7 @@ object PreferenceDialog {
         val navState = rememberNavigatorState(
             container = state.rootPreferenceGroup,
             title = MANAGE_PREFERENCES,
-            mode = Navigator.Mode.Browser(clicksToOpenItem = 1),
+            behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
             openFn = { focusedPreferenceGroup = it.item }
         )
