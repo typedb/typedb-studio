@@ -21,8 +21,6 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
@@ -30,18 +28,17 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
 import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import org.junit.Test
 
 class TypeBrowserTest: IntegrationTest() {
@@ -79,14 +76,11 @@ class TypeBrowserTest: IntegrationTest() {
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                composeRule.onAllNodesWithText(Label.PROJECT).get(0).performClick()
-                composeRule.onAllNodesWithText(Label.PROJECT).get(1).performClick()
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
+
                 delayAndRecompose(composeRule)
 
-                clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
-                delayAndRecompose(composeRule)
-
-                assertNodeExistsWithText(composeRule, text = "commit-date")
+                assertNodeNotExistsWithText(composeRule, text = "commit-date")
             }
         }
     }
@@ -103,12 +97,12 @@ class TypeBrowserTest: IntegrationTest() {
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-                clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
                 delayAndRecompose(composeRule)
 
                 assertNodeNotExistsWithText(composeRule, text = "commit-date")
 
-                clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
                 delayAndRecompose(composeRule)
 
                 assertNodeExistsWithText(composeRule, text = "commit-date")

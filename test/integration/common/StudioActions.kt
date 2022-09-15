@@ -79,6 +79,18 @@ object StudioActions {
         composeRule.onNodeWithText(text).performClick()
     }
 
+    fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
+        val length = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
+        for (i in 0 until length) {
+            composeRule.onAllNodesWithText(text)[i].performClick()
+        }
+    }
+
+    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon.Code) {
+        clickAllInstancesOfText(composeRule, icon.unicode)
+    }
+
+
     fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
         return composeRule.onNodeWithText(text).assertExists()
     }

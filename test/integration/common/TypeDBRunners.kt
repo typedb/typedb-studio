@@ -20,7 +20,6 @@ package com.vaticle.typedb.studio.test.integration.common
 
 import com.vaticle.typedb.common.test.TypeDBRunner
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
-import kotlinx.coroutines.runBlocking
 
 object TypeDBRunners {
     fun withTypeDB(testFunction: (TypeDBRunner) -> Unit) {
