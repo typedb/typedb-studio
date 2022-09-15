@@ -56,7 +56,7 @@ class SchemaManager constructor(
     internal val confirmation: ConfirmationManager
 ) : Navigable<TypeState.Thing> {
 
-    class EditTypeDialog<T : TypeState.Thing> : DialogManager() {
+    class EditTypeDialog<T : TypeState> : DialogManager() {
 
         var typeState: T? by mutableStateOf(null); private set
         var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
@@ -90,7 +90,7 @@ class SchemaManager constructor(
     val createEntTypeDialog = EditTypeDialog<TypeState.Entity>()
     val createRelTypeDialog = EditTypeDialog<TypeState.Relation>()
     val createAttTypeDialog = EditTypeDialog<TypeState.Attribute>()
-    val renameTypeDialog = EditTypeDialog<TypeState.Thing>()
+    val renameTypeDialog = EditTypeDialog<TypeState>()
     val editSuperTypeDialog = EditTypeDialog<TypeState.Thing>()
     val editAbstractDialog = EditTypeDialog<TypeState.Thing>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
@@ -111,8 +111,8 @@ class SchemaManager constructor(
     }
 
     init {
-        session.onOpen { isNewDB -> if (isNewDB) refreshAndPruneTypesAndOpen() }
-        session.onClose { willReopenSameDB -> if (!willReopenSameDB) close() }
+        session.onDBOpen { refreshAndPruneTypesAndOpen() }
+        session.onDBClose { close() }
         session.transaction.onSchemaWriteReset {
             mayRefreshReadTx()
             refreshAndPruneTypesAndOpen()
@@ -203,7 +203,7 @@ class SchemaManager constructor(
         if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
             conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
-        (entityTypes.values + relationTypes.values + attributeTypes.values).forEach {
+        (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
         }
         isOpenAtomic.set(true)
@@ -254,10 +254,18 @@ class SchemaManager constructor(
 
     private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
-    fun remove(typeState: TypeState.Thing) = when (typeState) {
+    fun register(typeState: TypeState) = when (typeState) {
+        is TypeState.Entity -> entityTypes[typeState.conceptType] = typeState
+        is TypeState.Attribute -> attributeTypes[typeState.conceptType] = typeState
+        is TypeState.Relation -> relationTypes[typeState.conceptType] = typeState
+        is TypeState.Role -> roleTypes[typeState.conceptType] = typeState
+    }
+
+    fun remove(typeState: TypeState) = when (typeState) {
         is TypeState.Entity -> entityTypes.remove(typeState.conceptType)
-        is TypeState.Relation -> relationTypes.remove(typeState.conceptType)
         is TypeState.Attribute -> attributeTypes.remove(typeState.conceptType)
+        is TypeState.Relation -> relationTypes.remove(typeState.conceptType)
+        is TypeState.Role -> roleTypes.remove(typeState.conceptType)
     }
 
     fun close() {

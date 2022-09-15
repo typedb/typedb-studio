@@ -440,14 +440,12 @@ object TextToolbar {
     @Composable
     private fun FinderButton(
         icon: Icon.Code, title: String? = null, isActive: Boolean = false, onClick: () -> Unit
-    ): IconButtonArg {
-        return IconButtonArg(
-            icon = icon,
-            color = { if (isActive) Theme.studio.secondary else Theme.studio.icon },
-            tooltip = title?.let { Tooltip.Arg(title) },
-            onClick = onClick
-        )
-    }
+    ) = IconButtonArg(
+        icon = icon,
+        color = { if (isActive) Theme.studio.secondary else Theme.studio.icon },
+        tooltip = title?.let { Tooltip.Arg(title) },
+        onClick = onClick
+    )
 
     @Composable
     private fun ReplacerButtons(state: State) {

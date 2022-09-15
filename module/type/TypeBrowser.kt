@@ -123,7 +123,12 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
                     label = Label.CREATE_SUBTYPE,
                     icon = Icon.Code.SQUARE_PLUS,
                     enabled = schemaIsWritable
-                ) { typeState.initiateCreateSubtype { itemState.expand() } }
+                ) { typeState.initiateCreateSubtype { itemState.expand() } },
+                ContextMenu.Item(
+                    label = Label.RENAME_TYPE,
+                    icon = Icon.Code.PEN,
+                    enabled = schemaIsWritable
+                ) { typeState.initiateRename() }
             ),
             listOf(
                 ContextMenu.Item(

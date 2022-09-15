@@ -591,7 +591,7 @@ object Form {
                 disabledColor = button.disabledColor?.invoke(),
                 bgColor = bgColor,
                 roundedCorners = roundedCorners,
-                enabled = true,
+                enabled = button.enabled,
                 tooltip = button.tooltip,
                 onClick = button.onClick,
             )

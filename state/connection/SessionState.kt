@@ -33,13 +33,14 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import mu.KotlinLogging
 
 class SessionState constructor(
     internal val client: ClientState,
-    internal val notificationMgr: NotificationManager,
-    internal val preferenceMgr: PreferenceManager
+    private val notificationMgr: NotificationManager,
+    private val preferenceMgr: PreferenceManager
 ) {
 
     companion object {
@@ -54,23 +55,22 @@ class SessionState constructor(
     val transaction = TransactionState(this, notificationMgr, preferenceMgr)
     private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
-    private val onOpen = LinkedBlockingQueue<(Boolean) -> Unit>()
-    private val onClose = LinkedBlockingQueue<(Boolean) -> Unit>()
+    private val isResetting = AtomicBoolean(false)
+    private val onDBOpen = LinkedBlockingQueue<() -> Unit>()
+    private val onDBClose = LinkedBlockingQueue<() -> Unit>()
 
-    fun onOpen(function: (isNewDB: Boolean) -> Unit) = onOpen.put(function)
-    fun onClose(function: (willReopenDB: Boolean) -> Unit) = onClose.put(function)
+    fun onDBOpen(function: () -> Unit) = onDBOpen.put(function)
+    fun onDBClose(function: () -> Unit) = onDBClose.put(function)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
         if (isOpen && this.database == database && this.type == type) return
-        val isNewDB = this.database != database
-        close(willReopenSameDB = !isNewDB)
+        if (this.database != database) close() else reset()
         try {
             _session.set(client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
             if (_session.get()?.isOpen == true) {
                 this.database = database
                 this.type = type
-                isOpenAtomic.set(true)
-                onOpen.forEach { it(isNewDB) }
+                if (isOpenAtomic.compareAndSet(expected = false, new = true)) onDBOpen.forEach { it() }
             } else isOpenAtomic.set(false)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
@@ -86,13 +86,20 @@ class SessionState constructor(
         else _session.get()?.transaction(type)
     }
 
-    internal fun close(message: Message? = null, vararg params: Any, willReopenSameDB: Boolean = false) {
-        if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            onClose.forEach { it(willReopenSameDB) }
+    private fun reset() {
+        if (isResetting.compareAndSet(false, true)) {
             transaction.close()
             _session.get()?.close()
             _session.set(null)
             database = null
+        }
+        isResetting.set(false)
+    }
+
+    internal fun close(message: Message? = null, vararg params: Any) {
+        if (!isResetting.get() && isOpenAtomic.compareAndSet(expected = true, new = false)) {
+            onDBClose.forEach { it() }
+            reset()
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }
     }

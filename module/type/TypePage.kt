@@ -55,10 +55,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Concept.ConceptSummaryText
+import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
 import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
@@ -85,9 +86,9 @@ sealed class TypePage(
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = conceptIcon(type.conceptType)
 
-    protected abstract val type: TypeState.Thing
+    protected abstract val typeState: TypeState.Thing
     protected val isEditable
-        get() = !type.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
+        get() = !typeState.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -206,24 +207,27 @@ sealed class TypePage(
     @Composable
     private fun LabelSection() {
         SectionRow {
-            Form.TextBox(text = ConceptSummaryText(type.conceptType), leadingIcon = conceptIcon(type.conceptType))
-            EditButton { type.initiateRename() }
+            Form.TextBox(
+                text = ConceptDetailedLabel(typeState.conceptType),
+                leadingIcon = conceptIcon(typeState.conceptType)
+            )
+            EditButton { typeState.initiateRename() }
             Spacer(Modifier.weight(1f))
         }
     }
 
     @Composable
     private fun SupertypeSection() {
-        val supertype = type.supertype ?: type
+        val supertypeState = typeState.supertype ?: typeState
         SectionRow {
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = ConceptSummaryText(supertype.conceptType),
-                leadingIcon = conceptIcon(supertype.conceptType),
-                enabled = !type.isRoot,
-            ) { supertype.tryOpen() }
-            EditButton { type.initiateEditSupertype() }
+                text = ConceptDetailedLabel(supertypeState.conceptType),
+                leadingIcon = conceptIcon(supertypeState.conceptType),
+                enabled = !typeState.isRoot,
+            ) { supertypeState.tryOpen() }
+            EditButton { typeState.initiateEditSupertype() }
         }
     }
 
@@ -232,8 +236,8 @@ sealed class TypePage(
         SectionRow {
             Form.Text(value = Label.ABSTRACT)
             Spacer(Modifier.weight(1f))
-            Form.TextBox(((if (type.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            EditButton(type.canBeAbstract) { type.initiateEditAbstract() }
+            Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
+            EditButton(typeState.canBeAbstract) { typeState.initiateEditAbstract() }
         }
     }
 
@@ -246,20 +250,20 @@ sealed class TypePage(
 
     @Composable
     private fun OwnsAttributeTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (type.ownsAttributeTypes.size + 1).coerceAtLeast(2)
+        val tableHeight = Table.ROW_HEIGHT * (typeState.ownsAttributeTypes.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
-                items = type.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
+                items = typeState.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(ConceptSummaryText(props.attributeType.conceptType)) {
+                        ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
                             props.attributeType.tryOpen()
                         }
                     },
                     Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(ConceptSummaryText(ot.conceptType)) { ot.tryOpen() }
+                            ClickableText(ConceptDetailedLabel(ot.conceptType)) { ot.tryOpen() }
                         }
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
@@ -268,7 +272,7 @@ sealed class TypePage(
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
                         MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
-                            type.tryUndefineOwnsAttributeType(it.attributeType)
+                            typeState.tryUndefineOwnsAttributeType(it.attributeType)
                         }
                     },
                 )
@@ -280,13 +284,13 @@ sealed class TypePage(
     private fun OwnsAttributeTypeAddition() {
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = StudioState.schema.rootAttributeType?.subtypes
-            ?.filter { !type.ownsAttributeTypes.contains(it) }
+            ?.filter { !typeState.ownsAttributeTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
 
         var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
-            ?.intersect(type.supertype!!.ownsAttributeTypes.toSet())
+            ?.intersect(typeState.supertype!!.ownsAttributeTypes.toSet())
             ?.sortedBy { it.name } ?: listOf()
 
         val isOwnable = isEditable && attributeType != null
@@ -298,10 +302,10 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = attributeType,
-                    placeholder = Label.SELECT_ATTRIBUTE_TYPE,
+                    placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
                     onSelection = { attributeType = it; it.loadSupertypes() },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = attributeTypeList
@@ -311,9 +315,9 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = overriddenType,
-                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -329,7 +333,7 @@ sealed class TypePage(
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
+                onClick = { typeState.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
             )
         }
     }
@@ -337,7 +341,7 @@ sealed class TypePage(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(type.playsRoleTypeProperties) { type.tryUndefinePlaysRoleType(it) }
+        RoleTypesTable(typeState.playsRoleTypeProperties) { typeState.tryUndefinePlaysRoleType(it) }
         PlaysRoleTypeAddition()
     }
 
@@ -374,13 +378,13 @@ sealed class TypePage(
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val roleTypeList = StudioState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
-            ?.filter { !type.playsRoleTypes.contains(it) }
+            ?.filter { !typeState.playsRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
             ?: listOf()
 
         var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Role> = roleType?.supertypes
-            ?.intersect(type.supertype!!.playsRoleTypes.toSet())
+            ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
             ?.sortedBy { it.scopedName } ?: listOf()
 
         val isPlayable = isEditable && roleType != null
@@ -390,10 +394,10 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = roleType,
-                    placeholder = Label.SELECT_ROLE_TYPE,
+                    placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
                     onSelection = { roleType = it; it.loadSupertypes() },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
                     values = roleTypeList
@@ -403,9 +407,9 @@ sealed class TypePage(
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
                     selected = overriddenType,
-                    placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                     onSelection = { overriddenType = it },
-                    displayFn = { ConceptSummaryText(it.conceptType) },
+                    displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isOverridable,
                     values = overridableTypeList
@@ -416,14 +420,14 @@ sealed class TypePage(
                 leadingIcon = Form.IconArg(Icon.Code.PLUS) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { type.tryDefinePlaysRoleType(roleType!!, overriddenType) }
+                onClick = { typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) }
             )
         }
     }
 
     @Composable
     protected fun SubtypesSection() {
-        val visibleSize = type.subtypes.size.coerceAtMost(MAX_VISIBLE_SUBTYPES)
+        val visibleSize = typeState.subtypes.size.coerceAtMost(MAX_VISIBLE_SUBTYPES)
         SectionRow { Form.Text(value = Label.SUBTYPES) }
         SectionRow {
             Navigator.Layout(
@@ -432,7 +436,7 @@ sealed class TypePage(
                     .height((Navigator.ITEM_HEIGHT * visibleSize).coerceAtLeast(EMPTY_BOX_HEIGHT))
                     .border(1.dp, Theme.studio.border)
                     .background(Theme.studio.backgroundMedium),
-                itemHeight = if (type.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
+                itemHeight = if (typeState.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
                 bottomSpace = 0.dp,
                 iconArg = { conceptIcon(it.item.conceptType) }
             )
@@ -456,9 +460,9 @@ sealed class TypePage(
             text = Label.DELETE,
             textColor = Theme.studio.errorStroke,
             leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
-            enabled = isEditable,
+            enabled = isEditable && typeState.canBeDeleted,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
-        ) { type.initiateDelete() }
+        ) { typeState.initiateDelete() }
     }
 
     @Composable
@@ -469,7 +473,7 @@ sealed class TypePage(
             enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
-            type.exportSyntax { syntax ->
+            typeState.exportSyntax { syntax ->
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
@@ -486,7 +490,7 @@ sealed class TypePage(
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.mayRefreshReadTx()
-            type.loadPageProperties()
+            typeState.loadPageProperties()
         }
     }
 
@@ -518,11 +522,11 @@ sealed class TypePage(
     }
 
     class Entity(
-        override var type: TypeState.Entity, coroutineScope: CoroutineScope
-    ) : TypePage(type, false, coroutineScope) {
+        override var typeState: TypeState.Entity, coroutineScope: CoroutineScope
+    ) : TypePage(typeState, false, coroutineScope) {
 
         override fun updatePageable(pageable: Pageable) {
-            type = pageable as TypeState.Entity
+            typeState = pageable as TypeState.Entity
         }
 
         @Composable
@@ -537,11 +541,11 @@ sealed class TypePage(
     }
 
     class Relation(
-        override var type: TypeState.Relation, coroutineScope: CoroutineScope
-    ) : TypePage(type, type.playsRoleTypes.isNotEmpty(), coroutineScope) {
+        override var typeState: TypeState.Relation, coroutineScope: CoroutineScope
+    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutineScope) {
 
         override fun updatePageable(pageable: Pageable) {
-            type = pageable as TypeState.Relation
+            typeState = pageable as TypeState.Relation
         }
 
         @Composable
@@ -559,7 +563,7 @@ sealed class TypePage(
         @Composable
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
-            RoleTypesTable(type.relatesRoleTypeProperties) { type.tryUndefineRelatesRoleType(it) }
+            RoleTypesTable(typeState.relatesRoleTypeProperties) { typeState.tryUndefineRelatesRoleType(it) }
             RelatesRoleTypeAddition()
         }
 
@@ -567,7 +571,7 @@ sealed class TypePage(
         private fun RelatesRoleTypeAddition() {
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
-            val overridableTypeList = type.supertype?.relatesRoleTypes
+            val overridableTypeList = typeState.supertype?.relatesRoleTypes
                 ?.filter { StudioState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
@@ -586,9 +590,9 @@ sealed class TypePage(
                 Box(Modifier.weight(1f)) {
                     Form.Dropdown(
                         selected = overriddenType,
-                        placeholder = Label.SELECT_OVERRIDDEN_TYPE_OPTIONAL,
+                        placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
                         onSelection = { overriddenType = it },
-                        displayFn = { ConceptSummaryText(it.conceptType) },
+                        displayFn = { ConceptDetailedLabel(it.conceptType) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverridable,
                         values = overridableTypeList
@@ -602,18 +606,23 @@ sealed class TypePage(
                         Label.DEFINE_RELATES_ROLE_TYPE,
                         Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
                     ),
-                    onClick = { type.tryDefineRelatesRoleType(roleType, overriddenType) }
+                    onClick = { typeState.tryDefineRelatesRoleType(roleType, overriddenType) }
                 )
             }
         }
     }
 
     class Attribute(
-        override var type: TypeState.Attribute, coroutineScope: CoroutineScope
-    ) : TypePage(type, type.ownsAttributeTypes.isNotEmpty() || type.playsRoleTypes.isNotEmpty(), coroutineScope) {
+        override var typeState: TypeState.Attribute,
+        coroutineScope: CoroutineScope
+    ) : TypePage(
+        type = typeState,
+        showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
+        coroutineScope = coroutineScope
+    ) {
 
         override fun updatePageable(pageable: Pageable) {
-            type = pageable as TypeState.Attribute
+            typeState = pageable as TypeState.Attribute
         }
 
         @Composable
@@ -626,15 +635,15 @@ sealed class TypePage(
 
         @Composable
         private fun OwnersSection() {
-            val tableHeight = Table.ROW_HEIGHT * (type.ownerTypes.size + 1).coerceAtLeast(2)
+            val tableHeight = Table.ROW_HEIGHT * (typeState.ownerTypes.size + 1).coerceAtLeast(2)
             SectionRow { Form.Text(value = Label.OWNERS) }
             SectionRow {
                 Table.Layout(
-                    items = type.ownerTypeProperties.values.sortedBy { it.ownerType.name },
+                    items = typeState.ownerTypeProperties.values.sortedBy { it.ownerType.name },
                     modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(ConceptSummaryText(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
+                            ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isKey)
