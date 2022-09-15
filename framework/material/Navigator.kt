@@ -102,11 +102,23 @@ import mu.KotlinLogging
 
 object Navigator {
 
-    enum class Mode(val clicksToOpenItem: Int) {
-        BROWSER(2),
-        LIST(1),
-        MENU(1),
+    sealed interface Mode {
+        val clicksToOpenItem: Int
+        val keepFocus: Boolean
+
+        data class Browser(override val clicksToOpenItem: Int = 2): Mode {
+            override val keepFocus = true
+        }
+
+        data class List(override val clicksToOpenItem: Int = 1): Mode {
+            override val keepFocus = false
+        }
     }
+
+//    enum class Mode(val clicksToOpenItem: Int) {
+//        BROWSER(2),
+//        LIST(1)
+//    }
 
     @OptIn(ExperimentalTime::class)
     private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
@@ -334,7 +346,7 @@ object Navigator {
 
         internal fun open(item: ItemState<T>) {
             openFn(item)
-            if (mode == Mode.LIST) hovered = null
+            if (!mode.keepFocus) hovered = null
         }
 
         internal fun maySelectNext(item: ItemState<T>) {
@@ -350,7 +362,7 @@ object Navigator {
         }
 
         internal fun maySelect(item: ItemState<T>) {
-            if (mode == Mode.LIST) return
+            if (!mode.keepFocus) return
             selected = item
             item.focusReq.requestFocus()
             mayScrollToAndFocusOnSelected()
