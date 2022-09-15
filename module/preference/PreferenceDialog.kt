@@ -72,6 +72,7 @@ import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
+import java.util.Optional
 
 object PreferenceDialog {
     private val WIDTH = 800.dp
@@ -86,10 +87,14 @@ object PreferenceDialog {
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
 
     sealed interface PreferenceField {
+        val label: String
+        val caption: Optional<String>
         @Composable fun Display()
         fun isValid(): Boolean
 
-        class TextInput(val state: PreferencesForm, initialValue: String, var label: String, private var placeholder: String,
+        class TextInput(val state: PreferencesForm,
+                        initialValue: String, override val label: String, override val caption: Optional<String> = Optional.empty(),
+                        private var placeholder: String,
                         var validator: (String) -> Boolean = { true }) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
@@ -115,7 +120,9 @@ object PreferenceDialog {
             }
         }
 
-        class Checkbox(val state: PreferencesForm, initialValue: Boolean, var label: String): PreferenceField {
+        class Checkbox(val state: PreferencesForm,
+                       initialValue: Boolean, override var label: String, override val caption: Optional<String> = Optional.empty(),
+                        ): PreferenceField {
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -124,6 +131,25 @@ object PreferenceDialog {
                     Checkbox(
                         value = value,
                         onChange = { value = it; state.modified = true }
+                    )
+                }
+            }
+
+            override fun isValid(): Boolean {
+                return true
+            }
+        }
+
+        class Dropdown<T>(val state: PreferencesForm, val values: List<Any>, override val label: String,
+                          override val caption: Optional<String> = Optional.empty()): PreferenceField {
+            var selected by mutableStateOf(values.first())
+            @Composable
+            override fun Display() {
+                Field(label) {
+                    Form.Dropdown(
+                        values = values,
+                        selected = selected,
+                        onSelection = { selected = it; state.modified = true }
                     )
                 }
             }
@@ -142,7 +168,6 @@ object PreferenceDialog {
 
         // Graph Visualiser Preferences
         var graphOutput = PreferenceField.Checkbox(this, initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT)
-
         // Project Manager Preferences
         val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
         var ignoredPaths = PreferenceField.TextInput(
@@ -160,6 +185,8 @@ object PreferenceDialog {
         
         // Text Editor Preferences
         var autoSave = PreferenceField.Checkbox(this, initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE)
+
+        val x: PreferenceGroup = PreferenceGroup("Graph Visualiser", preferences = listOf(graphOutput, autoSave))
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
@@ -193,6 +220,7 @@ object PreferenceDialog {
     class PreferenceGroup(
         override val name: String = "",
         override var entries: List<PreferenceGroup> = emptyList(),
+        preferences: List<PreferenceField> = emptyList(),
         val content: @Composable () -> Unit = {},
     ) : Navigable<PreferenceGroup> {
 
