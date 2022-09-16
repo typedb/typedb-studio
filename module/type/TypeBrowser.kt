@@ -110,7 +110,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing>): List<List<ContextMenu.Item>> {
         val typeState = itemState.item
-        typeState.loadContextMenuProperties()
+        if (!typeState.isOpen) typeState.loadTypeDependencies()
         return listOf(
             listOf(
                 ContextMenu.Item(
@@ -132,10 +132,10 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             ),
             listOf(
                 ContextMenu.Item(
-                    label = Label.DELETE,
+                    label = Label.UNDEFINE,
                     icon = Icon.Code.TRASH_CAN,
-                    enabled = schemaIsWritable && typeState.canBeDeleted
-                ) { typeState.initiateDelete() }
+                    enabled = schemaIsWritable && typeState.canBeUndefined
+                ) { typeState.initiateUndefine() }
             )
         )
     }

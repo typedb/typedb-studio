@@ -46,9 +46,9 @@ object Sentence {
     const val CONFIRM_DIRECTORY_DELETION =
         "Are you sure you would like to delete this directory and all of its content? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_DELETION =
-        "Are you sure you would like to delete this file named '%s'? $ACTION_CANNOT_BE_UNDONE"
-    const val CONFIRM_TYPE_DELETION =
-        "Are you sure you would like to delete this type labelled '%s'? $ACTION_CANNOT_BE_UNDONE"
+        "Are you sure you would like to delete this file with the name '%s'? $ACTION_CANNOT_BE_UNDONE"
+    const val CONFIRM_TYPE_UNDEFINE =
+        "Are you sure you would like to undefine this type with the label '%s'? $ACTION_CANNOT_BE_UNDONE"
     const val CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE =
         "You are about to convert this runnable file (%s) to a non-runnable file (%s). " +
                 RUNNABLE_FILE_EXTENSIONS +
