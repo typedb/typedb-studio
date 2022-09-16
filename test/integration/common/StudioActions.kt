@@ -49,28 +49,6 @@ import kotlin.test.fail
 import kotlinx.coroutines.delay
 
 object StudioActions {
-    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
-    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
-        delay(timeMillis.toLong())
-        composeRule.waitForIdle()
-    }
-
-    suspend fun waitForConditionAndRecompose(
-        context: ComposeContentTestRule,
-        failMessage: String,
-        beforeRetry: (() -> Unit) = {},
-        successCondition: () -> Boolean
-    ) {
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!successCondition() && System.currentTimeMillis() < deadline) {
-            beforeRetry()
-            delayAndRecompose(context, 500)
-        }
-        if (!successCondition()) {
-            fail(failMessage)
-        }
-    }
-
     fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon.Code) {
         clickText(composeRule, icon.unicode)
     }
@@ -106,6 +84,28 @@ object StudioActions {
         File(source).copyRecursively(overwrite = true, target = destination)
 
         return destination.toPath()
+    }
+
+    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
+    suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
+        delay(timeMillis.toLong())
+        composeRule.waitForIdle()
+    }
+
+    suspend fun waitForConditionAndRecompose(
+        context: ComposeContentTestRule,
+        failMessage: String,
+        beforeRetry: (() -> Unit) = {},
+        successCondition: () -> Boolean
+    ) {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (!successCondition() && System.currentTimeMillis() < deadline) {
+            beforeRetry()
+            delayAndRecompose(context, 500)
+        }
+        if (!successCondition()) {
+            fail(failMessage)
+        }
     }
 
     suspend fun openProject(composeRule: ComposeContentTestRule, projectDirectory: String) {
@@ -233,5 +233,12 @@ object StudioActions {
         private const val CREATE_DATABASE = "Failed to create the database."
         private const val DATA_WRITE = "Failed to write the data."
         private const val SCHEMA_WRITE = "Failed to write the schema."
+    }
+
+    object Delays {
+        const val RECOMPOSE = 500
+        const val FILE_IO = 750
+        const val NETWORK_IO = 1_500
+        const val CONNECT_SERVER = 2_500
     }
 }
