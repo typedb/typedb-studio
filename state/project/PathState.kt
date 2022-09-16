@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -37,6 +38,7 @@ sealed class PathState constructor(
     val path: Path,
     val type: Type,
     val projectMgr: ProjectManager,
+    val preferenceMgr: PreferenceManager
 ) : Navigable<PathState> {
 
     enum class Type(val index: Int) {

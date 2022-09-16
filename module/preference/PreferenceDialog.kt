@@ -77,8 +77,8 @@ object PreferenceDialog {
     private val HEIGHT = 600.dp
     private val NAVIGATOR_INIT_SIZE = 200.dp
     private val NAVIGATOR_MIN_SIZE = 150.dp
-    private val STATE_INIT_SIZE = 600.dp
-    private val STATE_MIN_SIZE = 500.dp
+    private val PREFERENCE_GROUP_INIT_SIZE = 600.dp
+    private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
 
     private val preferenceMgr = StudioState.preference
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
@@ -326,7 +326,7 @@ object PreferenceDialog {
                     },
                     Frame.Pane(
                         id = PreferenceDialog.javaClass.canonicalName + ".secondary",
-                        initSize = Either.first(STATE_INIT_SIZE), minSize = STATE_MIN_SIZE
+                        initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             focusedPreferenceGroup.Display()

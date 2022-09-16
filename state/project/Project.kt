@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.project
 
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path
@@ -33,11 +34,11 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class Project internal constructor(val path: Path, private val projectMgr: ProjectManager) : Navigable<PathState> {
+class Project internal constructor(val path: Path, private val projectMgr: ProjectManager, preferenceMgr: PreferenceManager) : Navigable<PathState> {
 
     private val isOpen = AtomicBoolean(false)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
-    val directory: DirectoryState = DirectoryState(path, null, projectMgr)
+    val directory: DirectoryState = DirectoryState(path, null, projectMgr, preferenceMgr)
 
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
