@@ -153,8 +153,8 @@ object PreferenceDialog {
             }
         }
 
-        class Dropdown<T>(val state: PreferencesForm, val values: List<Any>, override val label: String,
-                          override val caption: Optional<String> = Optional.empty()): PreferenceField {
+        class Dropdown<T : Any>(val state: PreferencesForm, val values: List<T>, override val label: String,
+                                override val caption: Optional<String> = Optional.empty()): PreferenceField {
 
             var selected by mutableStateOf(values.first())
 
@@ -297,6 +297,7 @@ object PreferenceDialog {
             state = navState,
             modifier = Modifier.fillMaxSize(),
         )
+
         LaunchedEffect(navState) { navState.launch() }
     }
 
