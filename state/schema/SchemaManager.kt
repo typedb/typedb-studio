@@ -111,12 +111,9 @@ class SchemaManager constructor(
     }
 
     init {
-        session.onDBOpen { refreshAndPruneTypesAndOpen() }
-        session.onDBClose { close() }
-        session.transaction.onSchemaWriteReset {
-            mayRefreshReadTx()
-            refreshAndPruneTypesAndOpen()
-        }
+        session.transaction.onSchemaWriteReset { refreshTypesAndOpen() }
+        session.onOpen { refreshTypesAndOpen() }
+        session.onClose { close() }
     }
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
@@ -193,7 +190,7 @@ class SchemaManager constructor(
         }
     }
 
-    private fun refreshAndPruneTypesAndOpen() = openOrGetReadTx()?.let { tx ->
+    private fun refreshTypesAndOpen() = openOrGetReadTx()?.let { tx ->
         if (rootEntityType == null) rootEntityType = TypeState.Entity(
             conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
         ).also { entityTypes[tx.concepts().rootEntityType] = it }
@@ -205,6 +202,7 @@ class SchemaManager constructor(
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
+            else if (it is TypeState.Thing && it.isOpen) it.loadTypeConstraints()
         }
         isOpenAtomic.set(true)
         onTypesUpdated.forEach { it() }
@@ -233,13 +231,6 @@ class SchemaManager constructor(
         return readTx.get()
     }
 
-    fun mayRefreshReadTx() = synchronized(this) {
-        if (readTx.get() != null) {
-            closeReadTx()
-            openOrGetReadTx()
-        }
-    }
-
     private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
@@ -252,7 +243,7 @@ class SchemaManager constructor(
         }
     }
 
-    private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+    fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     fun register(typeState: TypeState) = when (typeState) {
         is TypeState.Entity -> entityTypes[typeState.conceptType] = typeState

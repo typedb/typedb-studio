@@ -54,11 +54,11 @@ class SessionState constructor(
     private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
     private val isResetting = AtomicBoolean(false)
-    private val onDBOpen = LinkedBlockingQueue<() -> Unit>()
-    private val onDBClose = LinkedBlockingQueue<() -> Unit>()
+    private val onOpen = LinkedBlockingQueue<() -> Unit>()
+    private val onClose = LinkedBlockingQueue<() -> Unit>()
 
-    fun onDBOpen(function: () -> Unit) = onDBOpen.put(function)
-    fun onDBClose(function: () -> Unit) = onDBClose.put(function)
+    fun onOpen(function: () -> Unit) = onOpen.put(function)
+    fun onClose(function: () -> Unit) = onClose.put(function)
 
     internal fun tryOpen(database: String, type: TypeDBSession.Type) {
         if (isOpen && this.database == database && this.type == type) return
@@ -68,7 +68,8 @@ class SessionState constructor(
             if (_session.get()?.isOpen == true) {
                 this.database = database
                 this.type = type
-                if (isOpenAtomic.compareAndSet(expected = false, new = true)) onDBOpen.forEach { it() }
+                isOpenAtomic.set(true)
+                onOpen.forEach { it() }
             } else isOpenAtomic.set(false)
         } catch (exception: TypeDBClientException) {
             notificationMgr.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
@@ -96,7 +97,7 @@ class SessionState constructor(
 
     internal fun close(message: Message? = null, vararg params: Any) {
         if (!isResetting.get() && isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            onDBClose.forEach { it() }
+            onClose.forEach { it() }
             reset()
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
         }

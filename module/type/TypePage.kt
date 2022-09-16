@@ -493,7 +493,7 @@ sealed class TypePage(
             leadingIcon = Form.IconArg(Icon.Code.ROTATE),
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
-            StudioState.schema.mayRefreshReadTx()
+            StudioState.schema.closeReadTx()
             typeState.loadTypeConstraints()
         }
     }
