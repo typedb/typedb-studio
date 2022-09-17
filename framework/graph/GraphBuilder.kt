@@ -42,7 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
 class GraphBuilder(
-    val graph: Graph, val transactionState: TransactionState, val coroutineScope: CoroutineScope,
+    val graph: Graph, val transactionState: TransactionState, val coroutines: CoroutineScope,
     val schema: Schema = Schema()
 ) {
     private val newThingVertices = ConcurrentHashMap<String, Vertex.Thing>()

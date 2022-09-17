@@ -114,7 +114,7 @@ class FileState internal constructor(
     private var watchFileSystem = AtomicBoolean(false)
     private var lastModified = AtomicLong(path.toFile().lastModified())
     private var isOpenAtomic: AtomicBoolean = AtomicBoolean(false)
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
 
     override val windowTitle: String = computeWindowTitle(path, projectMgr)
     override val runContent: String
@@ -228,7 +228,7 @@ class FileState internal constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun launchWatcher() = coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
+    private fun launchWatcher() = coroutines.launchAndHandle(projectMgr.notification, LOGGER) {
         try {
             do {
                 val isReadable = path.isReadable()

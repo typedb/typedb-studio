@@ -80,7 +80,7 @@ import kotlinx.coroutines.CoroutineScope
 sealed class TypePage(
     type: TypeState.Thing,
     showAdvanced: Boolean = false,
-    coroutineScope: CoroutineScope
+    coroutines: CoroutineScope
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
@@ -100,7 +100,7 @@ sealed class TypePage(
         title = Label.SUBTYPES_OF + " " + type.name,
         mode = Navigator.Mode.LIST,
         initExpandDepth = 4,
-        coroutineScope = coroutineScope
+        coroutines = coroutines
     ) { it.item.tryOpen() }
 
     companion object {
@@ -117,11 +117,11 @@ sealed class TypePage(
 
         @Composable
         fun create(type: TypeState.Thing): TypePage {
-            val coroutineScope = rememberCoroutineScope()
+            val coroutines = rememberCoroutineScope()
             return when (type) {
-                is TypeState.Entity -> Entity(type, coroutineScope)
-                is TypeState.Relation -> Relation(type, coroutineScope)
-                is TypeState.Attribute -> Attribute(type, coroutineScope)
+                is TypeState.Entity -> Entity(type, coroutines)
+                is TypeState.Relation -> Relation(type, coroutines)
+                is TypeState.Attribute -> Attribute(type, coroutines)
             }
         }
     }
@@ -399,7 +399,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = roleType,
                     placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursivelyAsync() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     onSelection = { roleType = it; it.loadSupertypes() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -526,8 +526,8 @@ sealed class TypePage(
     }
 
     class Entity(
-        override var typeState: TypeState.Entity, coroutineScope: CoroutineScope
-    ) : TypePage(typeState, false, coroutineScope) {
+        override var typeState: TypeState.Entity, coroutines: CoroutineScope
+    ) : TypePage(typeState, false, coroutines) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Entity
@@ -545,8 +545,8 @@ sealed class TypePage(
     }
 
     class Relation(
-        override var typeState: TypeState.Relation, coroutineScope: CoroutineScope
-    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutineScope) {
+        override var typeState: TypeState.Relation, coroutines: CoroutineScope
+    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutines) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Relation
@@ -620,13 +620,10 @@ sealed class TypePage(
         }
     }
 
-    class Attribute(
-        override var typeState: TypeState.Attribute,
-        coroutineScope: CoroutineScope
-    ) : TypePage(
+    class Attribute(override var typeState: TypeState.Attribute, coroutines: CoroutineScope) : TypePage(
         type = typeState,
         showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
-        coroutineScope = coroutineScope
+        coroutines = coroutines
     ) {
 
         override fun updatePageable(pageable: Pageable) {

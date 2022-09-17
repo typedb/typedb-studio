@@ -57,7 +57,7 @@ internal class RunOutputGroup constructor(
     internal var active: RunOutput by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<(() -> Unit)?>, Done>>()
     private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit?>, Done>>()
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
     private val futuresLatch = CountDownLatch(2)
     private var endTime: Long? = null
     internal val tabsState = Tabs.Horizontal.State<RunOutput>()
@@ -135,7 +135,7 @@ internal class RunOutputGroup constructor(
         nonSerialOutputFutures.put(Either.first(future))
     }
 
-    private fun launchSerialOutputConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchSerialOutputConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
             if (future.isFirst) future.first().join()?.invoke()
@@ -143,7 +143,7 @@ internal class RunOutputGroup constructor(
         futuresLatch.countDown()
     }
 
-    private fun launchNonSerialOutputConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchNonSerialOutputConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
         val futures = mutableListOf<CompletableFuture<Unit?>>()
         do {
             val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
@@ -153,7 +153,7 @@ internal class RunOutputGroup constructor(
         futuresLatch.countDown()
     }
 
-    private fun launchRunnerConcluder() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchRunnerConcluder() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
         while (futuresLatch.count > 0L) {
             delay(COUNT_DOWN_LATCH_PERIOD_MS)
         }
@@ -162,7 +162,7 @@ internal class RunOutputGroup constructor(
         endTime = System.currentTimeMillis()
     }
 
-    private fun launchResponseConsumer() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchResponseConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
         do {
             val responses: MutableList<Response> = mutableListOf()
             delay(CONSUMER_PERIOD_MS)

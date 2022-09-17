@@ -36,7 +36,7 @@ class PhysicsRunner constructor(private val graphArea: GraphArea) {
         while (true) {
             withFrameMillis {
                 return@withFrameMillis if (isReadyToStep()) {
-                    graphArea.coroutineScope.launchAndHandle(StudioState.notification, LOGGER) { step() }
+                    graphArea.coroutines.launchAndHandle(StudioState.notification, LOGGER) { step() }
                 } else Job()
             }.join()
         }

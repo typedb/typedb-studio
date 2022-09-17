@@ -120,7 +120,7 @@ class QueryRunner constructor(
     val isConsumed: Boolean get() = consumerLatch.count == 0L
     val isRunning = AtomicBoolean(false)
     private val consumerLatch = CountDownLatch(1)
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
     private val hasStopSignal get() = transactionState.hasStopSignalAtomic
     private val transaction get() = transactionState.transaction!!
     private val onClose = LinkedBlockingQueue<() -> Unit>()
@@ -135,7 +135,7 @@ class QueryRunner constructor(
         responses.put(Response.Message(type, string))
     }
 
-    internal fun launch() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    internal fun launch() = coroutines.launchAndHandle(notificationMgr, LOGGER) {
         try {
             isRunning.set(true)
             startTime = System.currentTimeMillis()

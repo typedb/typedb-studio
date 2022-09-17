@@ -82,7 +82,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     private var databaseListRefreshedTime = System.currentTimeMillis()
     internal val isCluster get() = _client is TypeDBClient.Cluster
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
@@ -107,7 +107,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     private fun tryConnectAsync(
         newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
-    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
@@ -127,7 +127,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     private fun mayRunCommandAsync(function: () -> Unit) {
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
-            coroutineScope.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
+            coroutines.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
                 hasRunningCommandAtomic.set(false)
             }
         }
@@ -206,9 +206,9 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
 
     fun closeTransactionAsync(
         message: Message? = null, vararg params: Any
-    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) { session.transaction.close(message, *params) }
+    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) { session.transaction.close(message, *params) }
 
-    fun closeAsync() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) { close() }
+    fun closeAsync() = coroutines.launchAndHandle(notificationMgr, LOGGER) { close() }
 
     fun close() {
         if (

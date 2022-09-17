@@ -109,7 +109,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
     }
 
-    fun loadSubtypesRecursivelyAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+    fun loadSubtypesRecursivelyAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
         loadSubtypesRecursively()
     }
 
@@ -241,13 +241,13 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
 
         fun exportSyntaxAsync(
             onSuccess: (syntax: String) -> Unit
-        ) = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        ) = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
             schemaMgr.openOrGetReadTx()?.let { tx ->
                 conceptType.asRemote(tx).syntax?.let { onSuccess(it) }
             }
         }
 
-        fun loadTypeConstraintsAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        fun loadTypeConstraintsAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
             try {
                 loadSupertypes()
                 loadAbstract()
@@ -258,7 +258,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             }
         }
 
-        fun loadTypeDependenciesAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        fun loadTypeDependenciesAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
             loadTypeDependencies()
         }
 
@@ -597,20 +597,20 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
 
         override fun loadOtherTypeConstraints() {
             super.loadOtherTypeConstraints()
-            loadRelatesRoleType()
+            loadRelatesRoleTypes()
         }
 
-        fun loadRelatesRoleTypeRecursivelyAsync() =
-            schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
-                loadRelatesRoleTypeRecursively()
+        fun loadRelatesRoleTypesRecursivelyAsync() =
+            schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
+                loadRelatesRoleTypesRecursively()
             }
 
-        private fun loadRelatesRoleTypeRecursively() {
-            loadRelatesRoleType()
-            subtypesExplicit.forEach { it.loadRelatesRoleTypeRecursively() }
+        private fun loadRelatesRoleTypesRecursively() {
+            loadRelatesRoleTypes()
+            subtypesExplicit.forEach { it.loadRelatesRoleTypesRecursively() }
         }
 
-        private fun loadRelatesRoleType() {
+        private fun loadRelatesRoleTypes() {
             val loaded = mutableSetOf<RoleType>()
             val properties = mutableListOf<RoleTypeProperties>()
 

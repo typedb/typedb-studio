@@ -122,7 +122,7 @@ object Navigator {
         val item: T,
         val parent: ItemState<T>?,
         val navState: NavigatorState<T>,
-        val coroutineScope: CoroutineScope
+        val coroutines: CoroutineScope
     ) : Comparable<ItemState<T>> {
 
         var isExpanded: Boolean by mutableStateOf(false)
@@ -175,7 +175,7 @@ object Navigator {
             reloadEntries()
             navState.recomputeList()
             if (currentDepth < maxDepth) entries.forEach {
-                coroutineScope.launchAndHandle(notification, LOGGER) {
+                coroutines.launchAndHandle(notification, LOGGER) {
                     it.expandRecursive(currentDepth + 1, maxDepth)
                 }
             }
@@ -193,12 +193,12 @@ object Navigator {
                 val deleted = old - new
                 val added = new - old
                 val updatedEntries = entries.filter { !deleted.contains(it.item) } +
-                        added.map { ItemState(it, this, navState, coroutineScope) }.toList()
+                        added.map { ItemState(it, this, navState, coroutines) }.toList()
                 entries = updatedEntries.sorted()
             }
             navState.recomputeList()
             entries.filter { it.isExpanded }.forEach {
-                coroutineScope.launchAndHandle(notification, LOGGER) { it.reloadEntries() }
+                coroutines.launchAndHandle(notification, LOGGER) { it.reloadEntries() }
             }
         }
 
@@ -229,11 +229,11 @@ object Navigator {
         internal val mode: Mode,
         private val initExpandDepth: Int = 0,
         private val liveUpdate: Boolean = false,
-        private var coroutineScope: CoroutineScope,
+        private var coroutines: CoroutineScope,
         internal val contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
         private val openFn: (ItemState<T>) -> Unit
     ) {
-        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this, coroutineScope))
+        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this, coroutines))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
         private var itemWidth by mutableStateOf(0.dp)
@@ -252,7 +252,7 @@ object Navigator {
             IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
         )
 
-        fun launch() = coroutineScope.launchAndHandle(notification, LOGGER) {
+        fun launch() = coroutines.launchAndHandle(notification, LOGGER) {
             container.expand(1 + initExpandDepth)
             if (liveUpdate) {
                 watchUpdate.set(true)
@@ -261,7 +261,7 @@ object Navigator {
         }
 
         fun replaceContainer(newContainer: Navigable<T>) {
-            container = ItemState(newContainer as T, null, this, coroutineScope)
+            container = ItemState(newContainer as T, null, this, coroutines)
             launch()
         }
 
@@ -270,14 +270,14 @@ object Navigator {
         }
 
         @OptIn(ExperimentalTime::class)
-        private fun launchWatcher(root: ItemState<T>) = coroutineScope.launchAndHandle(notification, LOGGER) {
+        private fun launchWatcher(root: ItemState<T>) = coroutines.launchAndHandle(notification, LOGGER) {
             do {
                 root.checkForUpdate(true)
                 delay(LIVE_UPDATE_REFRESH_RATE) // TODO: is there better way?
             } while (root == container && watchUpdate.get())
         }
 
-        private fun expandAllAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
+        private fun expandAllAsync() = coroutines.launchAndHandle(notification, LOGGER) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -295,7 +295,7 @@ object Navigator {
             }
         }
 
-        private fun collapseAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
+        private fun collapseAsync() = coroutines.launchAndHandle(notification, LOGGER) {
             val queue = LinkedList(container.entries)
             isExpanding.set(false)
             isCollapsing.set(true)
@@ -308,7 +308,7 @@ object Navigator {
             isCollapsing.set(false)
         }
 
-        fun reloadEntriesAsync() = coroutineScope.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
+        fun reloadEntriesAsync() = coroutines.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null
@@ -371,11 +371,9 @@ object Navigator {
                 else if (target >= endExc) scrollTo = min(target + offset + 1, layout.totalItemsCount) - visible
             }
 
-            if (scrollTo >= 0) {
-                coroutineScope.launch {
-                    if (scrollTo >= 0) scroller.animateScrollToItem(scrollTo)
-                    selected!!.focusReq.requestFocus()
-                }
+            if (scrollTo >= 0) coroutines.launch {
+                if (scrollTo >= 0) scroller.animateScrollToItem(scrollTo)
+                selected!!.focusReq.requestFocus()
             } else selected!!.focusReq.requestFocus()
         }
     }
@@ -388,7 +386,7 @@ object Navigator {
         contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
         initFn: ((NavigatorState<T>) -> Unit)? = null
     ): NavigatorState<T> {
-        val coroutineScope = rememberCoroutineScope()
+        val coroutines = rememberCoroutineScope()
         return remember {
             NavigatorState(
                 container = container,
@@ -396,7 +394,7 @@ object Navigator {
                 mode = mode,
                 initExpandDepth = initExpandDepth,
                 liveUpdate = liveUpdate,
-                coroutineScope = coroutineScope,
+                coroutines = coroutines,
                 contextMenuFn = contextMenuFn,
                 openFn = openFn
             ).also { initFn?.let { fn -> fn(it) } }

@@ -144,7 +144,7 @@ internal class InputTarget constructor(
     private val lineNumberBorder: Float get() = textAreaBounds.left - horPadding.value
     private val lineCount: Int get() = content.size
     private val end: Cursor get() = Cursor(content.size - 1, content.last().length)
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
 
     internal fun mayIncreaseTextWidth(newRawWidth: Int) {
         val newWidth = toDP(newRawWidth, density)
@@ -257,9 +257,9 @@ internal class InputTarget constructor(
             val right = textAreaBounds.right.toInt() - padding
             val top = textAreaBounds.top.toInt() + padding
             val bottom = textAreaBounds.bottom.toInt() - padding
-            if (x < left) coroutineScope.launch {
+            if (x < left) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
-            } else if (x > right) coroutineScope.launch {
+            } else if (x > right) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
             if (y < top) verScroller.updateOffsetBy((y - top).dp)

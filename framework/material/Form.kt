@@ -442,7 +442,7 @@ object Form {
         internal var density by mutableStateOf(initDensity)
         internal var boxWidth by mutableStateOf(0.dp)
         internal var horScroller = ScrollState(0)
-        private val coroutineScope = CoroutineScope(Dispatchers.Default)
+        private val coroutines = CoroutineScope(Dispatchers.Default)
 
         fun reset() {
             boxWidth = 0.dp
@@ -467,10 +467,10 @@ object Form {
             val viewPadding = MULTILINE_INPUT_PADDING * 2
             if (boxWidth + scrollOffset - viewPadding < cursorOffset) {
                 val scrollTo = (cursorOffset - boxWidth + viewPadding).value.toInt()
-                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+                coroutines.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
             } else if (scrollOffset + viewPadding > cursorOffset) {
                 val scrollTo = (cursorOffset - viewPadding).value.toInt()
-                coroutineScope.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
+                coroutines.launch { horScroller.scrollTo((scrollTo * density).toInt()) }
             }
         }
     }

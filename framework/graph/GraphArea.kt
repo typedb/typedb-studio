@@ -56,8 +56,8 @@ class GraphArea(transactionState: TransactionState) {
 
     val interactions = Interactions(this)
     val graph = Graph(interactions)
-    val coroutineScope = CoroutineScope(Dispatchers.Default)
-    val graphBuilder = GraphBuilder(graph, transactionState, coroutineScope)
+    val coroutines = CoroutineScope(Dispatchers.Default)
+    val graphBuilder = GraphBuilder(graph, transactionState, coroutines)
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
@@ -84,7 +84,7 @@ class GraphArea(transactionState: TransactionState) {
             interactions.hoveredVertexChecker.launch()
         }
         LaunchedEffect(this) {
-            VertexExpandAnimator(graphArea = this@GraphArea, coroutineScope = this).launch()
+            VertexExpandAnimator(graphArea = this@GraphArea, coroutines = this).launch()
         }
         LaunchedEffect(this) { viewport.autoScaler.launch() }
     }
@@ -281,7 +281,7 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutineScope: CoroutineScope)
+    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutines: CoroutineScope)
         : BackgroundTask(runIntervalMs = 17) {
 
         private val interactions get() = graphArea.interactions
@@ -291,7 +291,7 @@ class GraphArea(transactionState: TransactionState) {
             graphArea.graph.vertices.forEach {
                 if (it.geometry.isExpanded != it in verticesToExpand) {
                     it.geometry.isExpanded = !it.geometry.isExpanded
-                    coroutineScope.launch { it.geometry.animateExpandOrCollapse() }
+                    coroutines.launch { it.geometry.animateExpandOrCollapse() }
                 }
             }
         }

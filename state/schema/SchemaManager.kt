@@ -103,7 +103,7 @@ class SchemaManager constructor(
     private val isOpenAtomic = AtomicBooleanState(false)
     internal val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
-    internal val coroutineScope = CoroutineScope(Dispatchers.Default)
+    internal val coroutines = CoroutineScope(Dispatchers.Default)
 
     companion object {
         private val TX_IDLE_TIME = Duration.seconds(16)
@@ -208,7 +208,7 @@ class SchemaManager constructor(
         onTypesUpdated.forEach { it() }
     }
 
-    fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
+    fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 
@@ -231,7 +231,7 @@ class SchemaManager constructor(
         return readTx.get()
     }
 
-    private fun scheduleCloseReadTxAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
+    private fun scheduleCloseReadTxAsync() = coroutines.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)
