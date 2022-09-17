@@ -303,7 +303,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
+                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     onSelection = { attributeType = it; it.loadSupertypes() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -399,7 +399,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = roleType,
                     placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursivelyAsync() },
                     onSelection = { roleType = it; it.loadSupertypes() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -477,7 +477,7 @@ sealed class TypePage(
             enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
-            typeState.exportSyntax { syntax ->
+            typeState.exportSyntaxAsync { syntax ->
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
@@ -494,7 +494,7 @@ sealed class TypePage(
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.closeReadTx()
-            typeState.loadTypeConstraints()
+            typeState.loadTypeConstraintsAsync()
         }
     }
 

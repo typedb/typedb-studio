@@ -248,8 +248,8 @@ object Navigator {
         private val isCollapsing = AtomicBoolean(false)
         private val watchUpdate = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAll() },
-            IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapse() }
+            IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
+            IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
         )
 
         fun launch() = coroutineScope.launchAndHandle(notification, LOGGER) {
@@ -277,7 +277,7 @@ object Navigator {
             } while (root == container && watchUpdate.get())
         }
 
-        private fun expandAll() = coroutineScope.launchAndHandle(notification, LOGGER) {
+        private fun expandAllAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
             var i = 0
             fun filter(el: List<ItemState<T>>) = el.filter { it.isBulkExpandable }
             val queue = LinkedList(filter(container.entries))
@@ -295,7 +295,7 @@ object Navigator {
             }
         }
 
-        private fun collapse() = coroutineScope.launchAndHandle(notification, LOGGER) {
+        private fun collapseAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
             val queue = LinkedList(container.entries)
             isExpanding.set(false)
             isCollapsing.set(true)
@@ -308,7 +308,7 @@ object Navigator {
             isCollapsing.set(false)
         }
 
-        fun reloadEntries() = coroutineScope.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
+        fun reloadEntriesAsync() = coroutineScope.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null

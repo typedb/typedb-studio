@@ -188,7 +188,7 @@ object TypeDialog {
                 }
             )
         }
-        LaunchedEffect(formState) { rootTypeState.loadSubtypesRecursively() }
+        LaunchedEffect(formState) { rootTypeState.loadSubtypesRecursivelyAsync() }
     }
 
     @Composable

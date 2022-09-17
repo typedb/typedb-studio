@@ -99,7 +99,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
     protected abstract fun updateConceptTypeAndName(label: String)
     protected abstract fun updateSubtypesExplicit(newSubtypes: List<TypeState>)
     protected abstract fun removeSubtypeExplicit(subtype: TypeState)
-    protected abstract fun loadTypeDependenciesBlocking()
+    protected abstract fun loadTypeDependencies()
 
     abstract fun loadSupertypes()
     abstract override fun toString(): String
@@ -109,13 +109,13 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
     }
 
-    fun loadSubtypesRecursively() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
-        loadSubtypesRecursivelyBlocking()
+    fun loadSubtypesRecursivelyAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        loadSubtypesRecursively()
     }
 
-    protected fun loadSubtypesRecursivelyBlocking() {
+    protected fun loadSubtypesRecursively() {
         loadSubtypesExplicit()
-        subtypes.forEach { it.loadSubtypesRecursivelyBlocking() }
+        subtypes.forEach { it.loadSubtypesRecursively() }
     }
 
     protected fun loadSubtypesExplicit(): Unit = synchronized(this) {
@@ -129,7 +129,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
                 retained = subtypesExplicit.filter { !deleted.contains(it.conceptType) }
                 updateSubtypesExplicit((retained + added).sortedBy { it.conceptType.label.scopedName() })
             }
-            subtypesExplicit.onEach { it.loadTypeDependenciesBlocking() }
+            subtypesExplicit.onEach { it.loadTypeDependencies() }
             hasSubtypes = subtypesExplicit.isNotEmpty()
         }
     }
@@ -230,38 +230,39 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             isOpenAtomic.set(true)
             callbacks.onReopen.forEach { it(this) }
             schemaMgr.pages.opened(this)
-            loadTypeConstraints()
+            loadTypeConstraintsAsync()
             return true
         }
 
         override fun activate() {
             schemaMgr.pages.active(this)
-            loadTypeConstraints()
+            loadTypeConstraintsAsync()
         }
 
-        fun exportSyntax(onSuccess: (syntax: String) -> Unit) =
-            schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
-                schemaMgr.openOrGetReadTx()?.let { tx ->
-                    conceptType.asRemote(tx).syntax?.let { onSuccess(it) }
-                }
+        fun exportSyntaxAsync(
+            onSuccess: (syntax: String) -> Unit
+        ) = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+            schemaMgr.openOrGetReadTx()?.let { tx ->
+                conceptType.asRemote(tx).syntax?.let { onSuccess(it) }
             }
+        }
 
-        fun loadTypeConstraints() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+        fun loadTypeConstraintsAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
             try {
                 loadSupertypes()
                 loadAbstract()
                 loadOtherTypeConstraints()
-                loadSubtypesRecursivelyBlocking()
+                loadSubtypesRecursively()
             } catch (e: TypeDBClientException) {
                 schemaMgr.notification.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
             }
         }
 
-        fun loadTypeDependencies() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
-            loadTypeDependenciesBlocking()
+        fun loadTypeDependenciesAsync() = schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
+            loadTypeDependencies()
         }
 
-        override fun loadTypeDependenciesBlocking() {
+        override fun loadTypeDependencies() {
             loadHasSubtypes()
             loadHasInstancesExplicit()
         }
@@ -599,14 +600,14 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             loadRelatesRoleType()
         }
 
-        fun loadRelatesRoleTypeRecursively() =
+        fun loadRelatesRoleTypeRecursivelyAsync() =
             schemaMgr.coroutineScope.launchAndHandle(schemaMgr.notification, LOGGER) {
-                loadRelatesRoleTypeRecursivelyBlocking()
+                loadRelatesRoleTypeRecursively()
             }
 
-        private fun loadRelatesRoleTypeRecursivelyBlocking() {
+        private fun loadRelatesRoleTypeRecursively() {
             loadRelatesRoleType()
-            subtypesExplicit.forEach { it.loadRelatesRoleTypeRecursivelyBlocking() }
+            subtypesExplicit.forEach { it.loadRelatesRoleTypeRecursively() }
         }
 
         private fun loadRelatesRoleType() {
@@ -672,7 +673,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         override var supertypes: List<Role> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
         override val canBeUndefined: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
 
-        override fun loadTypeDependenciesBlocking() {}
+        override fun loadTypeDependencies() {}
 
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = relationType.conceptType.asRemote(it).getRelates(label)!!

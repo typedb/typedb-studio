@@ -115,7 +115,7 @@ class TypeBrowserTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
             delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-            StudioState.schema.exportTypeSchema { schema ->
+            StudioState.schema.exportTypeSchemaAsync { schema ->
                 StudioState.project.current!!.reloadEntries()
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(schema)

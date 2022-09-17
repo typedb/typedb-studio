@@ -374,7 +374,7 @@ object Toolbar {
                 private fun CloseButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.Code.XMARK,
-                        onClick = { StudioState.client.closeTransaction() },
+                        onClick = { StudioState.client.closeTransactionAsync() },
                         color = Theme.studio.errorStroke,
                         enabled = enabled,
                         tooltip = Tooltip.Arg(

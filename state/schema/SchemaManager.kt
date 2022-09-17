@@ -202,13 +202,13 @@ class SchemaManager constructor(
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
-            else if (it is TypeState.Thing && it.isOpen) it.loadTypeConstraints()
+            else if (it is TypeState.Thing && it.isOpen) it.loadTypeConstraintsAsync()
         }
         isOpenAtomic.set(true)
         onTypesUpdated.forEach { it() }
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
+    fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 
@@ -226,12 +226,12 @@ class SchemaManager constructor(
         if (readTx.get() != null) return readTx.get()
         readTx.set(session.transaction()?.also {
             it.onClose { closeReadTx() }
-            scheduleCloseReadTx()
+            scheduleCloseReadTxAsync()
         })
         return readTx.get()
     }
 
-    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notification, LOGGER) {
+    private fun scheduleCloseReadTxAsync() = coroutineScope.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)
