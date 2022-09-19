@@ -132,9 +132,9 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             ),
             listOf(
                 ContextMenu.Item(
-                    label = Label.UNDEFINE,
+                    label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
-                    enabled = schemaIsWritable && typeState.canBeUndefined
+                    enabled = schemaIsWritable && typeState.canBeDeleted
                 ) { typeState.initiateDelete() }
             )
         )

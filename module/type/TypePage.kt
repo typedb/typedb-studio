@@ -272,8 +272,8 @@ sealed class TypePage(
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        MayUndefineButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
-                            typeState.tryUndefineOwnsAttributeType(it.attributeType)
+                        MayRemoveIconButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
+                            typeState.initiateRemoveOwnsAttributeType(it.attributeType)
                         }
                     },
                 )
@@ -343,8 +343,8 @@ sealed class TypePage(
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
         RoleTypesTable(typeState.playsRoleTypeProperties) {
-            MayUndefineButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
-                typeState.tryUndefinePlaysRoleType(it.roleType)
+            MayRemoveIconButton(Label.REMOVE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+                typeState.initiateRemovePlaysRoleType(it.roleType)
             }
         }
         PlaysRoleTypeAddition()
@@ -454,20 +454,20 @@ sealed class TypePage(
     private fun ButtonsSection() {
         SectionRow {
             Spacer(Modifier.weight(1f))
-            UndefineButton()
+            DeleteButton()
             ExportButton()
             RefreshButton()
         }
     }
 
     @Composable
-    private fun UndefineButton() {
+    private fun DeleteButton() {
         Form.TextButton(
-            text = Label.UNDEFINE,
+            text = Label.DELETE,
             textColor = Theme.studio.errorStroke,
             leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
-            enabled = isEditable && typeState.canBeUndefined,
-            tooltip = Tooltip.Arg(Label.UNDEFINE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
+            enabled = isEditable && typeState.canBeDeleted,
+            tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { typeState.initiateDelete() }
     }
 
@@ -501,10 +501,30 @@ sealed class TypePage(
     }
 
     @Composable
-    protected fun MayUndefineButton(tooltip: String, isVisible: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+    protected fun MayRemoveIconButton(
+        tooltip: String,
+        isVisible: Boolean,
+        enabled: Boolean = true,
+        onClick: () -> Unit
+    ) {
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
-//            modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
+            iconColor = Theme.studio.errorStroke,
+            enabled = isEditable && enabled,
+            tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+            onClick = onClick
+        )
+    }
+
+    @Composable
+    protected fun MayDeleteIconButton(
+        tooltip: String,
+        isVisible: Boolean,
+        enabled: Boolean = true,
+        onClick: () -> Unit
+    ) {
+        if (!isVisible) Form.IconButton(
+            icon = Icon.Code.TRASH_CAN,
             iconColor = Theme.studio.errorStroke,
             enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -571,7 +591,7 @@ sealed class TypePage(
             SectionRow { Form.Text(value = Label.RELATES) }
             RoleTypesTable(typeState.relatesRoleTypeProperties) {
                 EditButton { it.roleType.initiateRename() }
-                MayUndefineButton(Label.DELETE_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+                MayDeleteIconButton(Label.DELETE_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
                     typeState.initiateDeleteRoleType(it.roleType)
                 }
             }

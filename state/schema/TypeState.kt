@@ -85,7 +85,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
     abstract val supertype: TypeState?
     abstract val subtypes: List<TypeState>
     abstract val supertypes: List<TypeState>
-    abstract val canBeUndefined: Boolean
+    abstract val canBeDeleted: Boolean
 
     val isRoot get() = conceptType.isRoot
     var name: String by mutableStateOf(name)
@@ -195,7 +195,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         override val supertypes: List<Thing> = emptyList()
         override val subtypesExplicit: List<Thing> by mutableStateOf(listOf())
         override val subtypes: List<Thing> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
-        override val canBeUndefined get() = !hasSubtypes && !hasInstancesExplicit
+        override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
 
         override val info: String? = null
         override val isBulkExpandable: Boolean = true
@@ -363,7 +363,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             // TODO
         }
 
-        fun tryUndefinePlaysRoleType(roleType: Role) {
+        fun initiateRemovePlaysRoleType(roleType: Role) {
             // TODO
         }
 
@@ -371,7 +371,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             // TODO
         }
 
-        fun tryUndefineOwnsAttributeType(attributeType: Attribute) {
+        fun initiateRemoveOwnsAttributeType(attributeType: Attribute) {
             // TODO
         }
 
@@ -681,7 +681,7 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         override val subtypes: List<Role> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
         override var supertype: Role? by mutableStateOf(supertype)
         override var supertypes: List<Role> by mutableStateOf(supertype?.let { listOf(it) } ?: listOf())
-        override val canBeUndefined: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
+        override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
 
         override fun loadTypeDependencies() {}
 
